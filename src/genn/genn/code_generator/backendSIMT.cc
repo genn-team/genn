@@ -1382,6 +1382,54 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom connectivity presynaptic update groups" << std::endl;
+    genParallelGroup<CustomConnectivityUpdatePreInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), idStart,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomConnectivityUpdatePreInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing variables" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->size)";
+            {
+                CodeStream::Scope b(os);
+
+                // If this custom update requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                cg.generateInit(*this, os, modelMerged, popSubs);
+            }
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom connectivity postsynaptic update groups" << std::endl;
+    genParallelGroup<CustomConnectivityUpdatePostInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), idStart,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomConnectivityUpdatePostInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing variables" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->size)";
+            {
+                CodeStream::Scope b(os);
+
+                // If this custom update requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                cg.generateInit(*this, os, modelMerged, popSubs);
+            }
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Synapse groups with sparse connectivity" << std::endl;
     genParallelGroup<SynapseConnectivityInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idStart,
@@ -1594,6 +1642,24 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
                 os, modelMerged, cg, popSubs, true,
                 [](CodeStream&, const CustomWUUpdateSparseInitGroupMerged&, Substitutions&){});
+        });
+
+    // Initialise weight update variables for synapse groups with sparse connectivity
+    genParallelGroup<CustomConnectivityUpdateSparseInitGroupMerged>(os, kernelSubs, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), idStart,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
+        [numInitializeThreads, &modelMerged, this](CodeStream &os, const CustomConnectivityUpdateSparseInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            // If this custom update requires an RNG for initialisation,
+            // make copy of global phillox RNG and skip ahead by thread id
+            // **NOTE** not LOCAL id
+            if(cg.getArchetype().isInitRNGRequired()) {
+                genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
+            }
+            
+            // Generate sparse synapse variable initialisation code
+            genSparseSynapseVarInit<CustomConnectivityUpdateSparseInitGroupMerged>(
+                os, modelMerged, cg, popSubs, true,
+                [](CodeStream&, const CustomConnectivityUpdateSparseInitGroupMerged&, Substitutions&){});
         });
 }
 //--------------------------------------------------------------------------

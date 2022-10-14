@@ -863,6 +863,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePreInitStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePostInitStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateSparseInitStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
@@ -872,6 +875,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -885,6 +891,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         modelMerged.getMergedNeuronInitGroups(), [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedSynapseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
+        modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateInitGroups(), [this](const CustomUpdateWUInternal &cg){ return padKernelSize(getNumInitThreads(cg), KernelInitialize); },        
         modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 
@@ -892,7 +900,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedKernelDataStructures(
         os, totalConstMem,
         modelMerged.getMergedSynapseSparseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(sg.getMaxConnections(), KernelInitializeSparse); },
-        modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
+        modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
+        modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
