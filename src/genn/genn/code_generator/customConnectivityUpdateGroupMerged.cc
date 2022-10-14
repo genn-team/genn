@@ -217,6 +217,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
         subs.addVarSubstitution("num_post", "group->numTrgNeurons");
         subs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
+        subs.addVarNameSubstitution(cm->getPreVars(), "", "group->");
+        subs.addVarNameSubstitution(cm->getPostVars(), "", "group->");
         subs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
                                        [this](size_t p) { return isParamHeterogeneous(p); },
                                        "", "group->");
@@ -225,6 +227,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                      "", "group->");
 
         // Loop through EGPs
+        //**TODO** template helpers and use for EGPs too
         const auto egps = cm->getExtraGlobalParams();
         for(size_t i = 0; i < egps.size(); i++) {
             const auto loc = VarLocation::HOST_DEVICE;// **HACK** getArchetype().getExtraGlobalParamLocation(i);
@@ -250,33 +253,10 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
             }
         }
 
-        // **TODO** move into helper addPushPullFuncSubs
-        const auto preVars = cm->getPreVars();
-        for (size_t i = 0; i < preVars.size(); i++) {
-            // If var is located on the host
-            const auto loc = getArchetype().getPreVarLocation(i);
-            if (loc & VarLocation::HOST) {
-                // Generate code to push this variable
-                // **YUCK** these EGP functions should probably just be called dynamic or something
-                std::stringstream pushStream;
-                CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, preVars[i].type, preVars[i].name,
-                                                loc, "group->numSrcNeurons", "group->");
-
-                // Add substitution
-                subs.addFuncSubstitution("push" + preVars[i].name, 0, pushStream.str());
-
-                // Generate code to pull this variable
-                // **YUCK** these EGP functions should probably just be called dynamic or something
-                std::stringstream pullStream;
-                CodeStream pull(pullStream);
-                backend.genExtraGlobalParamPull(pull, preVars[i].type, preVars[i].name,
-                                                loc, "group->numSrcNeurons", "group->");
-
-                // Add substitution
-                subs.addFuncSubstitution("pull" + preVars[i].name, 0, pullStream.str());
-            }
-        }
+        addVarPushPullFuncSubs(backend, subs, cm->getPreVars(), "group->numSrcNeurons",
+                               &CustomConnectivityUpdateInternal::getPreVarLocation);
+        addVarPushPullFuncSubs(backend, subs, cm->getPostVars(), "group->numTrgNeurons",
+                               &CustomConnectivityUpdateInternal::getPostVarLocation);
     }
 }
 //----------------------------------------------------------------------------
@@ -288,4 +268,36 @@ bool CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous(size_t index)
 bool CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
+                                                                     const Models::Base::VarVec &vars, const std::string &count,
+                                                                     VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(size_t) const) const
+{
+    // Loop through variables
+    for (size_t i = 0; i < vars.size(); i++) {
+        // If var is located on the host
+        const auto loc = (getArchetype().*getVarLocationFn)(i);
+        if (loc & VarLocation::HOST) {
+            // Generate code to push this variable
+            // **YUCK** these EGP functions should probably just be called dynamic or something
+            std::stringstream pushStream;
+            CodeStream push(pushStream);
+            backend.genExtraGlobalParamPush(push, vars[i].type, vars[i].name,
+                                            loc, count, "group->");
+
+            // Add substitution
+            subs.addFuncSubstitution("push" + vars[i].name, 0, pushStream.str());
+
+            // Generate code to pull this variable
+            // **YUCK** these EGP functions should probably just be called dynamic or something
+            std::stringstream pullStream;
+            CodeStream pull(pullStream);
+            backend.genExtraGlobalParamPull(pull, vars[i].type, vars[i].name,
+                                            loc, count, "group->");
+
+            // Add substitution
+            subs.addFuncSubstitution("pull" + vars[i].name, 0, pullStream.str());
+        }
+    }
 }

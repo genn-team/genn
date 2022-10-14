@@ -73,5 +73,9 @@ private:
     //----------------------------------------------------------------------------
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
+
+    void addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
+                                const Models::Base::VarVec &vars, const std::string &count,
+                                VarLocation(CustomConnectivityUpdateInternal:: *getVanLocationFn)(size_t) const) const;
 };
 }   // namespace CodeGenerator
