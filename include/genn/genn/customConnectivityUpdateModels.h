@@ -25,7 +25,6 @@
 #define SET_POST_VAR_REFS(...) virtual VarRefVec getPostVarRefs() const override{ return __VA_ARGS__; }
 
 #define SET_ROW_UPDATE_CODE(ROW_UPDATE_CODE) virtual std::string getRowUpdateCode() const override{ return ROW_UPDATE_CODE; }
-#define SET_COL_UPDATE_CODE(COL_UPDATE_CODE) virtual std::string getColUpdateCode() const override{ return COL_UPDATE_CODE; }
 #define SET_HOST_UPDATE_CODE(HOST_UPDATE_CODE) virtual std::string getHostUpdateCode() const override{ return HOST_UPDATE_CODE; }
 
 //----------------------------------------------------------------------------
@@ -59,9 +58,6 @@ public:
 
     //! Gets the code that performs a row-wise update 
     virtual std::string getRowUpdateCode() const { return ""; }
-
-    //! Gets the code that performs a column-wise update 
-    virtual std::string getColUpdateCode() const { return ""; }
 
     //! Gets the code that performs host update 
     virtual std::string getHostUpdateCode() const { return ""; }

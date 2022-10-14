@@ -10,7 +10,6 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateModels::Base::ge
     Models::Base::updateHash(hash);
 
     Utils::updateHash(getRowUpdateCode(), hash);
-    Utils::updateHash(getColUpdateCode(), hash);
     Utils::updateHash(getHostUpdateCode(), hash);
 
     Utils::updateHash(getPreVars(), hash);
