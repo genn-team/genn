@@ -18,6 +18,7 @@ public:
     using ModelSpec::getLocalCurrentSources;
     using ModelSpec::getCustomUpdates;
     using ModelSpec::getCustomWUUpdates;
+    using ModelSpec::getCustomConnectivityUpdates;
 
     using ModelSpec::finalize;
 

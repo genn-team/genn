@@ -475,6 +475,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpda
                                                                                                       CustomConnectivityUpdate,
                                                                                                       &CustomConnectivityUpdate::getPreVarInitialisers>
 {
+public:
     CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
@@ -506,6 +507,7 @@ class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpd
                                                                                                        CustomConnectivityUpdate,
                                                                                                        &CustomConnectivityUpdate::getPostVarInitialisers>
 {
+public:
     CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                 const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
@@ -537,6 +539,7 @@ class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomU
                                                                                                          CustomConnectivityUpdate,
                                                                                                          &CustomConnectivityUpdate::getVarInitialisers>
 {
+public:
     CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                   const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 

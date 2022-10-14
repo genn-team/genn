@@ -76,6 +76,9 @@ private:
 
     void addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
                                 const Models::Base::VarVec &vars, const std::string &count,
-                                VarLocation(CustomConnectivityUpdateInternal:: *getVanLocationFn)(size_t) const) const;
+                                VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(size_t) const) const;
+
+    void addVars(const BackendBase &backend, const Models::Base::VarVec &vars,
+                 VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(size_t) const);
 };
 }   // namespace CodeGenerator

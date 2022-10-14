@@ -104,6 +104,27 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                                return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); 
                            },
                            &CustomUpdateWUInternal::getInitHashDigest);
+    
+    LOGD_CODE_GEN << "Merging custom connectivity update presynaptic initialisation groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePreInitGroups,
+                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isPreVarInitRequired(); },
+                           &CustomConnectivityUpdateInternal::getInitHashDigest);
+
+    LOGD_CODE_GEN << "Merging custom connectivity update postsynaptic initialisation groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePostInitGroups,
+                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isPreVarInitRequired(); },
+                           &CustomConnectivityUpdateInternal::getInitHashDigest);
+
+    LOGD_CODE_GEN << "Merging custom connectivity update sparse initialisation groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateSparseInitGroups,
+                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isVarInitRequired(); },
+                           &CustomConnectivityUpdateInternal::getInitHashDigest);
+
+     LOGD_CODE_GEN << "Merging custom connectivity update groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
+                           [](const CustomConnectivityUpdateInternal &) { return true; },
+                           &CustomConnectivityUpdateInternal::getHashDigest);
+
 
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
@@ -163,6 +184,16 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                                &CustomUpdateWUInternal::getHashDigest);
     }
 
+    LOGD_CODE_GEN << "Merging custom connectivity update groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
+                           [](const CustomConnectivityUpdateInternal &) { return true; },
+                           &CustomConnectivityUpdateInternal::getHashDigest);
+
+    LOGD_CODE_GEN << "Merging custom connectivity host update groups:";
+    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityHostUpdateGroups,
+                           [](const CustomConnectivityUpdateInternal &cg) { return !cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty(); },
+                           &CustomConnectivityUpdateInternal::getHashDigest);
+
     // Get memory spaces available to this backend
     // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
     auto memorySpaces = backend.getMergedGroupMemorySpaces(*this);
@@ -210,6 +241,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomUpdateGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomUpdateWUGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomUpdateTransposeWUGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomConnectivityUpdateGroups, memorySpaces);
 
     // Loop through init groups and assign memory spaces
     assignGroups(backend, m_MergedNeuronInitGroups, memorySpaces);
@@ -219,6 +251,10 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomUpdateInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomConnectivityUpdatePreInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomConnectivityUpdatePostInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomConnectivityUpdateSparseInitGroups, memorySpaces);
+
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
@@ -430,6 +466,28 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateArchetyp
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomConnectivityUpdateArchetypeHashDigest() const
+{
+     boost::uuids::detail::sha1 hash;
+
+    // Add hash of model batch size
+    Utils::updateHash(getModel().getBatchSize(), hash);
+    
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
+    // Concatenate hash digest of archetype custom connectivityupdate group
+    for(const auto &g : m_MergedCustomConnectivityUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getHashDigest(), hash);
+    }
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -476,6 +534,21 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 
     // Concatenate hash digest of archetype custom sparse WU update init group
     for(const auto &g : m_MergedCustomWUUpdateSparseInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom connectivity pre update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdatePreInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom connectivity post update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdatePostInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom connectivity sparse update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdateSparseInitGroups) {
         Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
     }
 

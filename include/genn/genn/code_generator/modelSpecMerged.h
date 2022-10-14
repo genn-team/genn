@@ -12,6 +12,7 @@
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/customConnectivityUpdateGroupMerged.h"
 #include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
@@ -133,6 +134,15 @@ public:
     //! Get merged custom update groups with sparse connectivity which require initialisation
     const std::vector<CustomWUUpdateSparseInitGroupMerged> &getMergedCustomWUUpdateSparseInitGroups() const { return m_MergedCustomWUUpdateSparseInitGroups; }
 
+    //! Get merged custom connectivity update groups with postsynaptic variables which require initialisation
+    const std::vector<CustomConnectivityUpdatePreInitGroupMerged> &getMergedCustomConnectivityUpdatePreInitGroups() const { return m_MergedCustomConnectivityUpdatePreInitGroups; }
+
+    //! Get merged custom connectivity update groups with postsynaptic variables which require initialisation
+    const std::vector<CustomConnectivityUpdatePostInitGroupMerged> &getMergedCustomConnectivityUpdatePostInitGroups() const { return m_MergedCustomConnectivityUpdatePostInitGroups; }
+
+    //! Get merged custom connectivity update groups with sparse synaptic variables which require initialisation
+    const std::vector<CustomConnectivityUpdateSparseInitGroupMerged> &getMergedCustomConnectivityUpdateSparseInitGroups() const { return m_MergedCustomConnectivityUpdateSparseInitGroups; }
+
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
 
@@ -160,6 +170,12 @@ public:
     //! Get merged custom weight update groups where host reduction needs to be performed
     const std::vector<CustomWUUpdateHostReductionGroupMerged> &getMergedCustomWUUpdateHostReductionGroups() const { return m_MergedCustomWUUpdateHostReductionGroups; }
 
+    //! Get merged custom connectivity update groups
+    const std::vector<CustomConnectivityUpdateGroupMerged> &getMergedCustomConnectivityUpdateGroups() const { return m_MergedCustomConnectivityUpdateGroups; }
+
+    //! Get merged custom connectivity update groups where host processing needs to be performed
+    const std::vector<CustomConnectivityHostUpdateGroupMerged> &getMergedCustomConnectivityHostUpdateGroups() const { return m_MergedCustomConnectivityHostUpdateGroups; }
+
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
     void genMergedPostsynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPostsynapticUpdateGroups); }
@@ -171,6 +187,9 @@ public:
     void genMergedSynapseConnectivityInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityInitGroups); }
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
     void genMergedCustomWUUpdateSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
+    void genMergedCustomConnectivityUpdatePreInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdatePreInitGroups); }
+    void genMergedCustomConnectivityUpdatePostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdatePostInitGroups); }
+    void genMergedCustomConnectivityUpdateSparseInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateSparseInitGroups); }
     void genMergedNeuronSpikeQueueUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
     void genMergedNeuronPrevSpikeTimeUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
     void genMergedSynapseDendriticDelayUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
@@ -180,6 +199,8 @@ public:
     void genMergedCustomUpdateTransposeWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateTransposeWUGroups); }
     void genMergedCustomUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateHostReductionGroups); }
     void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
+    void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
+    void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
 
     void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
     void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
@@ -204,6 +225,9 @@ public:
     
     //! Get hash digest of custom update module
     boost::uuids::detail::sha1::digest_type getCustomUpdateArchetypeHashDigest() const;
+
+    //! Get hash digest of custom connectivity update module
+    boost::uuids::detail::sha1::digest_type getCustomConnectivityUpdateArchetypeHashDigest() const;
     
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
@@ -400,6 +424,15 @@ private:
     //! Merged custom update groups with sparse connectivity which require initialisation
     std::vector<CustomWUUpdateSparseInitGroupMerged> m_MergedCustomWUUpdateSparseInitGroups;
 
+    //! Merged custom connectivity update groups with presynaptic variables which require initialisation
+    std::vector<CustomConnectivityUpdatePreInitGroupMerged> m_MergedCustomConnectivityUpdatePreInitGroups;
+
+    //! Merged custom connectivity update groups with postsynaptic variables which require initialisation
+    std::vector<CustomConnectivityUpdatePostInitGroupMerged> m_MergedCustomConnectivityUpdatePostInitGroups;
+
+    //! Merged custom connectivity update groups with sparse synaptic variables which require initialisation
+    std::vector<CustomConnectivityUpdateSparseInitGroupMerged> m_MergedCustomConnectivityUpdateSparseInitGroups;
+
     //! Merged neuron groups which require their spike queues updating
     std::vector<NeuronSpikeQueueUpdateGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;
 
@@ -421,11 +454,17 @@ private:
     //! Merged custom weight update groups where transpose needs to be calculated
     std::vector<CustomUpdateTransposeWUGroupMerged> m_MergedCustomUpdateTransposeWUGroups;
 
-    //! Get merged custom update groups where host reduction needs to be performed
+    //! Merged custom update groups where host reduction needs to be performed
     std::vector<CustomUpdateHostReductionGroupMerged> m_MergedCustomUpdateHostReductionGroups;
 
-    //! Get merged custom weight update groups where host reduction needs to be performed
+    //! Merged custom weight update groups where host reduction needs to be performed
     std::vector<CustomWUUpdateHostReductionGroupMerged> m_MergedCustomWUUpdateHostReductionGroups;
+
+    //! Merged custom connectivity update groups
+    std::vector<CustomConnectivityUpdateGroupMerged> m_MergedCustomConnectivityUpdateGroups;
+
+    //! Merged custom connectivity update groups where host processing needs to be performed
+    std::vector<CustomConnectivityHostUpdateGroupMerged> m_MergedCustomConnectivityHostUpdateGroups;
 
     //! Unique support code strings for neuron update
     SupportCodeMerged m_NeuronUpdateSupportCode;

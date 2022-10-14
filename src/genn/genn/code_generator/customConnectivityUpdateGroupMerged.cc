@@ -180,6 +180,10 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
         [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); },
         &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
 
+    // Add pre and postsynaptic variables
+    addVars(backend, cm->getPreVars(), &CustomConnectivityUpdateInternal::getPreVarLocation);
+    addVars(backend, cm->getPostVars(), &CustomConnectivityUpdateInternal::getPostVarLocation);
+
     // **TODO** add device and host pre and post vars; var refs and EGPs
 
     // Add host extra global parameters
@@ -298,6 +302,29 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
 
             // Add substitution
             subs.addFuncSubstitution("pull" + vars[i].name, 0, pullStream.str());
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend, const Models::Base::VarVec &vars,
+                                                      VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(size_t) const)
+{
+    // Loop through variables
+    for (size_t i = 0; i < vars.size(); i++) {
+        // If var is located on the host
+        const auto var = vars[i];
+        if ((getArchetype().*getVarLocationFn)(i) & VarLocation::HOST) {
+            addField(var.type + "*", var.name,
+                    [var](const CustomConnectivityUpdateInternal &g, size_t) { return var.name + g.getName(); },
+                    FieldType::Host);
+
+            if(!backend.getDeviceVarPrefix().empty()) {
+                addField(var.type + "*", backend.getDeviceVarPrefix() + var.name,
+                         [var, &backend](const CustomConnectivityUpdateInternal &g, size_t)
+                         {
+                             return backend.getDeviceVarPrefix() + var.name + g.getName();
+                         });
+            }
         }
     }
 }
