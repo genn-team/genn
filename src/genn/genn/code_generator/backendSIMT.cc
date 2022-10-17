@@ -1393,6 +1393,12 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             {
                 CodeStream::Scope b(os);
 
+                // If population RNGs are initialised on device and this custom connectivity update 
+                // required one, initialise single RNG using GLOBAL thread id for sequence
+                if(isPopulationRNGInitialisedOnDevice() && cg.getArchetype().isRowSimRNGRequired()) {
+                    genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                }
+
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id

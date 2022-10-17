@@ -79,6 +79,9 @@ public:
     //! Is var init code required for any postsynaptic variables in this custom connectivity update group?
     bool isPostVarInitRequired() const;
 
+    //! Is a per-row RNG required for this custom connectivity update group
+    bool isRowSimRNGRequired() const;
+
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, const SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,

@@ -871,7 +871,7 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename A, typename C, typename R>
+    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
     void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                                       size_t childIndex, size_t varIndex, R isChildParamReferencedFn,
                                       boost::uuids::detail::sha1 &hash) const
@@ -896,7 +896,7 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename A, typename C, typename R>
+    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
     void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                                              size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn,
                                              boost::uuids::detail::sha1 &hash) const
