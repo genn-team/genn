@@ -9,42 +9,24 @@ class CustomUpdateBase;
 class NeuronGroup;
 
 //----------------------------------------------------------------------------
-// VarAdatorBase
-//----------------------------------------------------------------------------
-class VarAdaptorBase
-{
-public:
-    //----------------------------------------------------------------------------
-    // Declared virtuals
-    //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const = 0;
-
-    virtual VarLocation getVarLocation(size_t index) const = 0;
-    
-    virtual Models::Base::VarVec getVars() const = 0;
-
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const = 0;
-};
-
-//----------------------------------------------------------------------------
 // NeuronVarAdaptor
 //----------------------------------------------------------------------------
-class NeuronVarAdaptor : public VarAdaptorBase
+class NeuronVarAdaptor
 {
 public:
     NeuronVarAdaptor(const NeuronGroup &ng) : m_NG(ng)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -56,22 +38,22 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUVarAdaptor
 //----------------------------------------------------------------------------
-class SynapseWUVarAdaptor : public VarAdaptorBase
+class SynapseWUVarAdaptor
 {
 public:
     SynapseWUVarAdaptor(const SynapseGroup &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -83,22 +65,22 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPreVarAdaptor
 //----------------------------------------------------------------------------
-class SynapseWUPreVarAdaptor : public VarAdaptorBase
+class SynapseWUPreVarAdaptor
 {
 public:
     SynapseWUPreVarAdaptor(const SynapseGroup &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -110,22 +92,22 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPostVarAdaptor
 //----------------------------------------------------------------------------
-class SynapseWUPostVarAdaptor : public VarAdaptorBase
+class SynapseWUPostVarAdaptor
 {
 public:
     SynapseWUPostVarAdaptor(const SynapseGroup &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -136,22 +118,22 @@ private:
 //----------------------------------------------------------------------------
 // CustomUpdateVarAdaptor
 //----------------------------------------------------------------------------
-class CustomUpdateVarAdaptor : public VarAdaptorBase
+class CustomUpdateVarAdaptor
 {
 public:
     CustomUpdateVarAdaptor(const CustomUpdateBase &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -163,22 +145,22 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdateVarAdaptor
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateVarAdaptor : public VarAdaptorBase
+class CustomConnectivityUpdateVarAdaptor
 {
 public:
     CustomConnectivityUpdateVarAdaptor(const CustomConnectivityUpdate &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -190,22 +172,22 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePreVarAdaptor
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePreVarAdaptor : public VarAdaptorBase
+class CustomConnectivityUpdatePreVarAdaptor
 {
 public:
     CustomConnectivityUpdatePreVarAdaptor(const CustomConnectivityUpdate &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
@@ -217,22 +199,22 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePreVarAdaptor
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePostVarAdaptor : public VarAdaptorBase
+class CustomConnectivityUpdatePostVarAdaptor
 {
 public:
     CustomConnectivityUpdatePostVarAdaptor(const CustomConnectivityUpdate &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // VarAdaptorBase virtuals
+    // Public methods
     //----------------------------------------------------------------------------
-    virtual VarLocation getVarLocation(const std::string &varName) const final;
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    virtual VarLocation getVarLocation(size_t index) const final;
+    VarLocation getVarLocation(size_t index) const;
     
-    virtual Models::Base::VarVec getVars() const final;
+    Models::Base::VarVec getVars() const;
 
-    virtual const std::vector<Models::VarInit> &getVarInitialisers() const final;
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
 
 private:
     //----------------------------------------------------------------------------
