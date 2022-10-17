@@ -437,12 +437,10 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
             // Loop through variables and update hash with variable initialisation parameters and derived parameters
             const auto &varInit = cs->getVarInitialisers();
             for(size_t v = 0; v < varInit.size(); v++) {
-                updateChildVarInitParamsHash(m_SortedCurrentSources, c, v,
-                                             &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, 
-                                             &CurrentSourceInternal::getVarInitialisers, hash);
-                updateChildVarInitDerivedParamsHash(m_SortedCurrentSources, c, v,
-                                                    &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced, 
-                                                    &CurrentSourceInternal::getVarInitialisers, hash);
+                updateChildVarInitParamsHash<CurrentSourceVarAdaptor>(
+                    m_SortedCurrentSources, c, v, &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, hash);
+                updateChildVarInitDerivedParamsHash<CurrentSourceVarAdaptor>(
+                    m_SortedCurrentSources, c, v, &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced, hash);
             }
         }
 
@@ -454,12 +452,10 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
             const auto &varInit = sg->getPSVarInitialisers();
             for(size_t v = 0; v < varInit.size(); v++) {
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    updateChildVarInitParamsHash(m_SortedMergedInSyns, c, v,
-                                                 &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
-                                                 &SynapseGroupInternal::getPSVarInitialisers, hash);
-                    updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v,
-                                                        &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced,
-                                                        &SynapseGroupInternal::getPSVarInitialisers, hash);
+                    updateChildVarInitParamsHash<SynapsePSMVarAdaptor>(
+                        m_SortedMergedInSyns, c, v, &NeuronGroupMergedBase::isPSMVarInitParamReferenced, hash);
+                    updateChildVarInitDerivedParamsHash<SynapsePSMVarAdaptor>(
+                        m_SortedMergedInSyns, c, v, &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced, hash);
                 }
             }
         }
@@ -1041,12 +1037,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
            || (varInitRole && (individualWeights || kernelWeights))) 
         {
             // Add heterogeneous variable initialization parameters and derived parameters
-            addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
-                wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+            addHeterogeneousVarInitParams<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
                 &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
 
-            addHeterogeneousVarInitDerivedParams<SynapseGroupMergedBase>(
-                wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+            addHeterogeneousVarInitDerivedParams<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
                 &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
         }
 
@@ -1189,10 +1183,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
            || (varInitRole && individualWeights) || (varInitRole && kernelWeights))
         {
             // Update hash with each group's variable initialisation parameters and derived parameters
-            updateVarInitParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers, 
-                                                           &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
-            updateVarInitDerivedParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers,
-                                                                  &SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced, hash);
+            updateVarInitParamHash<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+                &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
+            updateVarInitDerivedParamHash<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+                &SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced, hash);
         }
     }
     return hash.get_digest();

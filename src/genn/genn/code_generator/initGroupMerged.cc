@@ -235,9 +235,9 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
         // Loop through variables and update hash with variable initialisation parameters and derived parameters
         const auto &varInit = sg->getWUPostVarInitialisers();
         for(size_t v = 0; v < varInit.size(); v++) {
-            updateChildVarInitParamsHash<NeuronInitGroupMerged, SynapseWUPostVarAdaptor>(
+            updateChildVarInitParamsHash<SynapseWUPostVarAdaptor, NeuronInitGroupMerged>(
                 m_SortedInSynWithPostVars, c, v, &NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced, hash);
-            updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged, SynapseWUPostVarAdaptor>(
+            updateChildVarInitDerivedParamsHash<SynapseWUPostVarAdaptor, NeuronInitGroupMerged>(
                 m_SortedInSynWithPostVars, c, v, &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamReferenced, hash);
         }
     }
@@ -249,9 +249,9 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
         // Loop through variables and update hash with variable initialisation parameters and derived parameters
         const auto &varInit = sg->getWUPreVarInitialisers();
         for(size_t v = 0; v < varInit.size(); v++) {
-            updateChildVarInitParamsHash<NeuronInitGroupMerged, SynapseWUPreVarAdaptor>(
+            updateChildVarInitParamsHash<SynapseWUPreVarAdaptor, NeuronInitGroupMerged>(
                 m_SortedOutSynWithPreVars, c, v, &NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced, hash);
-            updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged, SynapseWUPreVarAdaptor>(
+            updateChildVarInitDerivedParamsHash<SynapseWUPreVarAdaptor, NeuronInitGroupMerged>(
                 m_SortedOutSynWithPreVars, c, v, &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamReferenced, hash);
         }
     }
