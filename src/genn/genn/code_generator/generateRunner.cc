@@ -10,6 +10,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "groupEGPAdaptors.h"
 
 // GeNN code generator
 #include "code_generator/codeGenUtils.h"
@@ -362,52 +363,119 @@ void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
     mem += MemAlloc::host(sizeof(std::mt19937));
 }
 //-------------------------------------------------------------------------
-template<typename V, typename S>
+template<typename V, typename G, typename S>
+void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                   CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
+                   CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, 
+                   CodeStream &runnerExtraGlobalParamFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, 
+                   const G &group, MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
+{
+    // Loop through variables
+    const V varAdaptor(group);
+    const auto vars = varAdaptor.getVars();
+    std::vector<std::string> groupStatePushPullFunctions;
+    for(size_t i = 0; i < vars.size(); i++) {
+        const auto *varInitSnippet = varAdaptor.getVarInitialisers().at(i).getSnippet();
+        const bool autoInitialized = !varInitSnippet->getCode().empty();
+        genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                    runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + group.getName(), varAdaptor.getVarLocation(i),
+                    autoInitialized, getSizeFn(group, vars[i]), mem, statePushPullFunctions);
+
+        // Loop through EGPs required to initialize variable
+        const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+        for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+            genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                runnerVarDecl, runnerExtraGlobalParamFunc,
+                                extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + group.getName(),
+                                true, VarLocation::HOST_DEVICE);
+        }
+    }
+
+    // Add helper function to push and pull entire group state
+    if(!backend.getPreferences().automaticCopy) {
+        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                         group.getName(), backend.getPreferences().generateEmptyStatePushPull,
+                         groupStatePushPullFunctions, statePushPullFunctions);
+    }
+}
+//-------------------------------------------------------------------------
+template<typename V, typename G, typename S>
+void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                        CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, 
+                        CodeStream &runnerExtraGlobalParamFunc, const G &group, MemAlloc &mem, S getSizeFn)
+{
+    // Loop through variables
+    const V varAdaptor(group);
+    const auto vars = varAdaptor.getVars();
+    for(size_t v = 0; v < vars.size(); v++) {
+        backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                         vars[v].type, vars[v].name + varAdaptor.getFusedVarSuffix(), varAdaptor.getVarLocation(v),
+                         getSizeFn(group, vars[v]), mem);
+
+        // Loop through EGPs required to initialize variable
+        const auto extraGlobalParams = varAdaptor.getVarInitialisers().at(v).getSnippet()->getExtraGlobalParams();
+        for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+            genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                runnerVarDecl, runnerExtraGlobalParamFunc, 
+                                extraGlobalParams[e].type, extraGlobalParams[e].name + vars[v].name + varAdaptor.getFusedVarSuffix(),
+                                true, VarLocation::HOST_DEVICE);
+        }
+    }
+}
+//-------------------------------------------------------------------------
+template<typename V, typename G, typename S>
+void genRunnerFusedVarPushPull(const BackendBase &backend, CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                               const G &group, MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
+{
+    // Loop through variables
+    const V varAdaptor(group);
+    const auto vars = varAdaptor.getVars();
+    for(size_t i = 0; i < vars.size(); i++) {
+        const bool autoInitialized = !varAdaptor.getVarInitialisers().at(i).getSnippet()->getCode().empty();
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getVarLocation(i),
+                            backend.getPreferences().automaticCopy, vars[i].name + group.getName(), statePushPullFunctions,
+                            [&]()
+                            {
+                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + group.getName(), 
+                                                            varAdaptor.getVarLocation(i), autoInitialized, getSizeFn(group, vars[i]));
+                            });
+    }
+}
+//-------------------------------------------------------------------------
+template<typename E, typename G>
+void genRunnerEGPs(const ModelSpecMerged &modelMerged, const BackendBase &backend,
+                   CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
+                   CodeStream &runnerVarDecl, CodeStream &runnerExtraGlobalParamFunc, const G &group)
+{
+    // Loop through EGPs
+    const E egpAdaptor(group);
+    const auto egps = egpAdaptor.getEGPs();
+    for(size_t i = 0; i < egps.size(); i++) {
+        genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                            runnerVarDecl, runnerExtraGlobalParamFunc,
+                            egps[i].type, egps[i].name + group.getName(),
+                            true, egpAdaptor.getEGPLocation(i));
+    }
+}
+//-------------------------------------------------------------------------
+template<typename V, typename E, typename C, typename S>
 void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
                      CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
                      CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerExtraGlobalParamFunc,
-                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const std::map<std::string, V> &customUpdates,
+                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const std::map<std::string, C> &customUpdates,
                      MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
 {
-    // Loop through customupdates
+    // Loop through custom updates
     for(const auto &c : customUpdates) {
-        const auto cuModel = c.second.getCustomUpdateModel();
-        const auto cuVars = cuModel->getVars();
+        // Generate variables
+        genRunnerVars<V>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                         runnerPushFunc, runnerPullFunc, c.second, mem, statePushPullFunctions, getSizeFn);
 
-        std::vector<std::string> customUpdateStatePushPullFunctions;
-        for(size_t i = 0; i < cuVars.size(); i++) {
-            const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
-            const unsigned int size = getVarSize(cuVars[i].access, getSizeFn(c.second), modelMerged.getModel().getBatchSize(),
-                                                 1, c.second.isBatched());
-            const bool autoInitialized = !varInitSnippet->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
-                        autoInitialized, size, mem, customUpdateStatePushPullFunctions);
-
-            // Loop through EGPs required to initialize custom update variable
-            const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-            for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    extraGlobalParams[e].type, extraGlobalParams[e].name + cuVars[i].name + c.first,
-                                    true, VarLocation::HOST_DEVICE);
-            }
-        }
-
-        // Add helper function to push and pull entire custom update state
-        if(!backend.getPreferences().automaticCopy) {
-            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
-                                c.first, backend.getPreferences().generateEmptyStatePushPull,
-                                customUpdateStatePushPullFunctions, statePushPullFunctions);
-        }
-
-        const auto csExtraGlobalParams = cuModel->getExtraGlobalParams();
-        for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                runnerVarDecl, runnerExtraGlobalParamFunc,
-                                csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + c.first,
-                                true, VarLocation::HOST_DEVICE);
-        }
+        // Generate EGPs
+        genRunnerEGPs<E>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
     }
 }
 }   // Anonymous namespace
@@ -1003,41 +1071,15 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             allVarStreams << "// current source variables" << std::endl;
         }
         for (auto const *cs : n.second.getCurrentSources()) {
-            const auto csModel = cs->getCurrentSourceModel();
-            const auto csVars = csModel->getVars();
-
-            std::vector<std::string> currentSourceStatePushPullFunctions;
-            for(size_t i = 0; i < csVars.size(); i++) {
-                const auto *varInitSnippet = cs->getVarInitialisers()[i].getSnippet();
-                const bool autoInitialized = !varInitSnippet->getCode().empty();
-                genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(), cs->getVarLocation(i),
-                            autoInitialized, getVarSize(csVars[i].access, n.second.getNumNeurons(), batchSize), mem, currentSourceStatePushPullFunctions);
-
-                // Loop through EGPs required to initialize current source variable
-                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + cs->getName(),
-                                        true, VarLocation::HOST_DEVICE);
-                }
-            }
-
-            // Add helper function to push and pull entire current source state
-            if(!backend.getPreferences().automaticCopy) {
-                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, 
-                                 cs->getName(), backend.getPreferences().generateEmptyStatePushPull, 
-                                 currentSourceStatePushPullFunctions, statePushPullFunctions);
-            }
-
-            const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
-            for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                    csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(),
-                                    true, cs->getExtraGlobalParamLocation(i));
-            }
+            genRunnerVars<CurrentSourceVarAdaptor>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                   runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                                                   runnerPushFunc, runnerPullFunc, *cs, mem, statePushPullFunctions,
+                                                   [batchSize, &n](const CurrentSourceInternal &c, const Models::Base::Var &var)
+                                                   { 
+                                                       return getVarSize(var.access, n.second.getNumNeurons(), batchSize);
+                                                   });
+            genRunnerEGPs<CurrentSourceEGPAdaptor>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                   runnerVarDecl, runnerExtraGlobalParamFunc, *cs);
         }
     }
     allVarStreams << std::endl;
@@ -1045,27 +1087,28 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// custom update variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    genCustomUpdate(modelMerged, backend,
-                    definitionsVar, definitionsFunc, definitionsInternalVar,
-                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-                    runnerPushFunc, runnerPullFunc, model.getCustomUpdates(),
-                    mem, statePushPullFunctions, [](const CustomUpdateInternal &c) { return c.getSize(); });
+    genCustomUpdate<CustomUpdateVarAdaptor, CustomUpdateEGPAdaptor>(
+        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+        runnerPushFunc, runnerPullFunc, model.getCustomUpdates(), mem, statePushPullFunctions,
+        [batchSize](const CustomUpdateInternal &c, const Models::Base::Var &var)
+        { 
+            return getVarSize(var.access, c.getSize(), batchSize, 1, c.isBatched());
+        });
 
-    genCustomUpdate(modelMerged, backend,
-                    definitionsVar, definitionsFunc, definitionsInternalVar,
-                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-                    runnerPushFunc, runnerPullFunc, model.getCustomWUUpdates(),
-                    mem, statePushPullFunctions, 
-                    [&backend](const CustomUpdateWUInternal &c) 
-                    { 
-                        const SynapseGroupInternal *sg = c.getSynapseGroup();
-                        if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                            return sg->getKernelSizeFlattened();
-                        }
-                        else {
-                            return sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg);
-                        }
-                    });
+    genCustomUpdate<CustomUpdateVarAdaptor, CustomUpdateEGPAdaptor>(
+        modelMerged, backend,
+        definitionsVar, definitionsFunc, definitionsInternalVar,
+        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+        runnerPushFunc, runnerPullFunc, model.getCustomWUUpdates(), mem, statePushPullFunctions, 
+        [batchSize, &backend](const CustomUpdateWUInternal &c, const Models::Base::Var &var) 
+        { 
+            const SynapseGroupInternal *sg = c.getSynapseGroup();
+            const size_t count = ((sg->getMatrixType() & SynapseMatrixWeight::KERNEL)
+                                  ? sg->getKernelSizeFlattened() 
+                                  : sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
+            return getVarSize(var.access, count, batchSize, 1, c.isBatched());
+        });
     allVarStreams << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -1087,21 +1130,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                const auto psmVars = sg->getPSModel()->getVars();
-                for(size_t v = 0; v < psmVars.size(); v++) {
-                    backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     psmVars[v].type, psmVars[v].name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(v),
-                                     getVarSize(psmVars[v].access, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize), mem);
-
-                    // Loop through EGPs required to initialize PSM variable
-                    const auto extraGlobalParams = sg->getPSVarInitialisers()[v].getSnippet()->getExtraGlobalParams();
-                    for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                        genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                            runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getFusedPSVarSuffix(),
-                                            true, VarLocation::HOST_DEVICE);
-                    }
-                }
+                genRunnerFusedVars<SynapsePSMVarAdaptor>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
+                                                         [batchSize](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                         { 
+                                                             return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
+                                                         }); 
             }
         }
         // Loop through fused outgoing synapse populations with weightupdate models that have presynaptic output 
@@ -1113,50 +1147,27 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
-            // Loop through presynaptic W.U.M. variables
             const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
-            const auto wuPreVars = sg->getWUModel()->getPreVars();
-            for(size_t i = 0; i < wuPreVars.size(); i++) {
-                const auto *varInitSnippet = sg->getWUPreVarInitialisers()[i].getSnippet();
-                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 wuPreVars[i].type, wuPreVars[i].name + sg->getFusedWUPreVarSuffix(), sg->getWUPreVarLocation(i), 
-                                 getVarSize(wuPreVars[i].access, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots), mem);
-
-                // Loop through EGPs required to initialize WUM variable
-                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + sg->getFusedWUPreVarSuffix(),
-                                        true, VarLocation::HOST_DEVICE);
-                }
-            }
-
+            genRunnerFusedVars<SynapseWUPreVarAdaptor>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                       runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
+                                                       [batchSize, preDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                       { 
+                                                           return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), 
+                                                                             batchSize, preDelaySlots);
+                                                       }); 
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
-            // Loop through postsynaptic W.U.M. variables
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
-            const auto wuPostVars = sg->getWUModel()->getPostVars();
-            for(size_t i = 0; i < wuPostVars.size(); i++) {
-                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 wuPostVars[i].type, wuPostVars[i].name + sg->getFusedWUPostVarSuffix(), sg->getWUPostVarLocation(i),
-                                 getVarSize(wuPostVars[i].access, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots), mem);
-                
-                // Loop through EGPs required to initialize WUM variable
-                const auto *varInitSnippet = sg->getWUPostVarInitialisers()[i].getSnippet();
-                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + sg->getFusedWUPostVarSuffix(),
-                                        true, VarLocation::HOST_DEVICE);
-                }
-            }
-        }
-        
-        
+            genRunnerFusedVars<SynapseWUPostVarAdaptor>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
+                                                        [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                        { 
+                                                            return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), 
+                                                                              batchSize, postDelaySlots);
+                                                        }); 
+        }  
     }
     allVarStreams << std::endl;
 
@@ -1290,17 +1301,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // If this synapse group has individual postsynaptic model variables
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                const auto psmVars = psm->getVars();
-                for(size_t i = 0; i < psmVars.size(); i++) {
-                    const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
-                                        backend.getPreferences().automaticCopy, psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                        [&]()
-                                        {
-                                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
-                                                                        autoInitialized, getVarSize(psmVars[i].access, s.second.getTrgNeuronGroup()->getNumNeurons(), batchSize));
-                                        });
-                }
+                genRunnerFusedVarPushPull<SynapsePSMVarAdaptor>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, mem, synapseGroupStatePushPullFunctions,
+                                                                [batchSize](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                                { 
+                                                                    return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
+                                                                }); 
             }
         }
         
@@ -1308,18 +1313,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPreModelFused()) {
             const unsigned int preDelaySlots = (s.second.getDelaySteps() == NO_DELAY) ? 1 : s.second.getSrcNeuronGroup()->getNumDelaySlots();
-                
-            const auto wuPreVars = wu->getPreVars();
-            for(size_t i = 0; i < wuPreVars.size(); i++) {
-                const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPreVarLocation(i),
-                                    backend.getPreferences().automaticCopy, wuPreVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                    [&]()
-                                    {
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(), s.second.getWUPreVarLocation(i),
-                                                                    autoInitialized, getVarSize(wuPreVars[i].access, s.second.getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots));
-                                    });
-            }
+            genRunnerFusedVarPushPull<SynapseWUPreVarAdaptor>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, mem, synapseGroupStatePushPullFunctions,
+                                                              [batchSize, preDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                              { 
+                                                                  return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots);
+                                                              }); 
             
         }
         
@@ -1327,18 +1325,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPostModelFused()) {
             const unsigned int postDelaySlots = (s.second.getBackPropDelaySteps() == NO_DELAY) ? 1 : s.second.getTrgNeuronGroup()->getNumDelaySlots();
-            const auto wuPostVars = s.second.getWUModel()->getPostVars();
-            for(size_t i = 0; i < wuPostVars.size(); i++) {
-                const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPostVarLocation(i),
-                                    backend.getPreferences().automaticCopy, wuPostVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                    [&]()
-                                    {
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), s.second.getWUPostVarLocation(i),
-                                                                    autoInitialized, getVarSize(wuPostVars[i].access, s.second.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots));
-                                    });
-            }
-            
+            genRunnerFusedVarPushPull<SynapseWUPostVarAdaptor>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, mem, synapseGroupStatePushPullFunctions,
+                                                              [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                              { 
+                                                                  return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
+                                                              });
         }
         
         // Add helper function to push and pull entire synapse group state

@@ -1,9 +1,11 @@
 #include "groupVarAdaptors.h"
-#include "customUpdate.h"
-#include "customConnectivityUpdate.h"
-#include "currentSource.h"
-#include "neuronGroup.h"
-#include "synapseGroup.h"
+
+// GeNN includes
+#include "customUpdateInternal.h"
+#include "customConnectivityUpdateInternal.h"
+#include "currentSourceInternal.h"
+#include "neuronGroupInternal.h"
+#include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
 // NeuronVarAdaptor
@@ -26,6 +28,57 @@ Models::Base::VarVec NeuronVarAdaptor::getVars() const
 const std::vector<Models::VarInit> &NeuronVarAdaptor::getVarInitialisers() const
 {
     return m_NG.getVarInitialisers();
+}
+
+//----------------------------------------------------------------------------
+// CurrentSourceVarAdaptor
+//----------------------------------------------------------------------------
+VarLocation CurrentSourceVarAdaptor::getVarLocation(const std::string &varName) const
+{
+    return m_CS.getVarLocation(varName);
+}
+//----------------------------------------------------------------------------
+VarLocation CurrentSourceVarAdaptor::getVarLocation(size_t index) const
+{
+    return m_CS.getVarLocation(index);
+}
+//----------------------------------------------------------------------------
+Models::Base::VarVec CurrentSourceVarAdaptor::getVars() const
+{
+    return m_CS.getCurrentSourceModel()->getVars();
+}
+//----------------------------------------------------------------------------
+const std::vector<Models::VarInit> &CurrentSourceVarAdaptor::getVarInitialisers() const
+{
+    return m_CS.getVarInitialisers();
+}
+
+//----------------------------------------------------------------------------
+// SynapsePSMVarAdaptor
+//----------------------------------------------------------------------------
+VarLocation SynapsePSMVarAdaptor::getVarLocation(const std::string & varName) const 
+{
+    return m_SG.getPSVarLocation(varName);
+}
+//----------------------------------------------------------------------------
+VarLocation SynapsePSMVarAdaptor::getVarLocation(size_t index) const
+{
+    return m_SG.getPSVarLocation(index);
+}
+//----------------------------------------------------------------------------
+Models::Base::VarVec SynapsePSMVarAdaptor::getVars() const
+{
+    return m_SG.getPSModel()->getVars();
+}
+//----------------------------------------------------------------------------
+const std::vector<Models::VarInit> &SynapsePSMVarAdaptor::getVarInitialisers() const
+{
+    return m_SG.getPSVarInitialisers();
+}
+//----------------------------------------------------------------------------
+const std::string &SynapsePSMVarAdaptor::getFusedVarSuffix() const
+{
+    return m_SG.getFusedPSVarSuffix();
 }
 
 //----------------------------------------------------------------------------
@@ -73,6 +126,11 @@ const std::vector<Models::VarInit> &SynapseWUPreVarAdaptor::getVarInitialisers()
 {
     return m_SG.getWUPreVarInitialisers();
 }
+//----------------------------------------------------------------------------
+const std::string &SynapseWUPreVarAdaptor::getFusedVarSuffix() const
+{
+    return m_SG.getFusedWUPreVarSuffix();
+}
 
 //----------------------------------------------------------------------------
 // SynapseWUPostVarAdaptor
@@ -95,6 +153,11 @@ Models::Base::VarVec SynapseWUPostVarAdaptor::getVars() const
 const std::vector<Models::VarInit> &SynapseWUPostVarAdaptor::getVarInitialisers() const
 {
     return m_SG.getWUPostVarInitialisers();
+}
+//----------------------------------------------------------------------------
+const std::string &SynapseWUPostVarAdaptor::getFusedVarSuffix() const
+{
+    return m_SG.getFusedWUPostVarSuffix();
 }
 
 //----------------------------------------------------------------------------

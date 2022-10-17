@@ -44,6 +44,7 @@
     <ClCompile Include="customConnectivityUpdateModels.cc" />
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="customUpdateModels.cc" />
+    <ClCompile Include="groupEGPAdaptors.cc" />
     <ClCompile Include="groupVarAdaptors.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initToeplitzConnectivitySnippet.cc" />
@@ -95,6 +96,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\groupEGPAdaptors.h" />
     <ClInclude Include="..\..\..\include\genn\genn\groupVarAdaptors.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initToeplitzConnectivitySnippet.h" />
