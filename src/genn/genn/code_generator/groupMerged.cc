@@ -4,6 +4,7 @@
 #include <plog/Log.h>
 
 // GeNN includes
+#include "groupVarAdaptors.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -259,12 +260,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     // If we're generating a struct for initialization
     if(init) {
         // Add heterogeneous var init parameters
-        addHeterogeneousVarInitParams<NeuronGroupMergedBase>(
-            vars, &NeuronGroupInternal::getVarInitialisers,
+        addHeterogeneousVarInitParams<NeuronGroupMergedBase, NeuronVarAdaptor>(
             &NeuronGroupMergedBase::isVarInitParamHeterogeneous);
 
-        addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase>(
-            vars, &NeuronGroupInternal::getVarInitialisers,
+        addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase, NeuronVarAdaptor>(
             &NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous);
     }
     // Otherwise

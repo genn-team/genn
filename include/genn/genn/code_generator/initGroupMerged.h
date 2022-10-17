@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "groupVarAdaptors.h"
+
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 
@@ -253,17 +256,19 @@ private:
     e.g. const std::vector<Models::VarInit> &(CustomUpdate::*)() const to
     const std::vector<Models::VarInit> &(CustomUpdateInternal::*)() const is legal, 
     the C++ standard forbids (!!) any conversion in this context (see https://stackoverflow.com/q/24404424) */
-template<typename G, typename GF, const std::vector<Models::VarInit> &(GF::*I)() const>
+template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 protected:
     CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
-                                    const std::vector<std::reference_wrapper<const G>> &groups,
-                                    const Models::Base::VarVec &vars)
+                                    const std::vector<std::reference_wrapper<const G>> &groups)
     :   GroupMerged<G>(index, precision, groups)
     {
+        A archetypeAdaptor(this->getArchetype());
+
         // Loop through variables
-        const auto &varInit = (this->getArchetype().*I)();
+        const auto &varInit = archetypeAdaptor.getVarInitialisers();
+        const auto vars = archetypeAdaptor.getVars();
         assert(vars.size() == varInit.size());
         for (size_t v = 0; v < vars.size(); v++) {
             // If we're not initialising or if there is initialization code for this variable
@@ -276,11 +281,11 @@ protected:
             this->addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
         }
 
-        this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G, GF, I>>(
-            vars, I, &CustomUpdateInitGroupMergedBase<G, GF, I>::isVarInitParamHeterogeneous);
+        this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G, A>, A>(
+            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitParamHeterogeneous);
 
-        this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G, GF, I>>(
-            vars, I, &CustomUpdateInitGroupMergedBase<G, GF, I>::isVarInitDerivedParamHeterogeneous);
+        this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G, A>, A>(
+            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitDerivedParamHeterogeneous);
     }
 
     //----------------------------------------------------------------------------
@@ -293,7 +298,8 @@ protected:
                 this->isParamValueHeterogeneous(paramIndex, 
                                                 [varIndex](const G &cg)
                                                 { 
-                                                    return (cg.*I)().at(varIndex).getParams(); 
+                                                    A archetypeAdaptor(cg);
+                                                    return archetypeAdaptor.getVarInitialisers().at(varIndex).getParams(); 
                                                 }));
     }
 
@@ -304,7 +310,8 @@ protected:
                 this->isParamValueHeterogeneous(paramIndex, 
                                                 [varIndex](const G &cg) 
                                                 { 
-                                                    return (cg.*I)().at(varIndex).getDerivedParams();
+                                                    A archetypeAdaptor(cg);
+                                                    return archetypeAdaptor.getVarInitialisers().at(varIndex).getDerivedParams();
                                                 }));
     }
 
@@ -314,11 +321,11 @@ protected:
         Utils::updateHash(this->getArchetype().getInitHashDigest(), hash);
 
         // Update hash with each group's variable initialisation parameters and derived parameters
-        this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G, GF, I>>(
-            I, &CustomUpdateInitGroupMergedBase<G, GF, I>::isVarInitParamHeterogeneous, hash);
+        this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G, A>, A>(
+            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitParamHeterogeneous, hash);
 
-        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<G, GF, I>>(
-            I, &CustomUpdateInitGroupMergedBase<G, GF, I>::isVarInitDerivedParamHeterogeneous, hash);
+        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<G, A>, A>(
+            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitDerivedParamHeterogeneous, hash);
     }
 
 private:
@@ -329,7 +336,8 @@ private:
     bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
     {
         // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = (this->getArchetype().*I)().at(varIndex).getSnippet();
+        A archetypeAdaptor(this->getArchetype());
+        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varIndex).getSnippet();
         const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
@@ -338,7 +346,8 @@ private:
     bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const
     {
         // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = (this->getArchetype().*I)().at(varIndex).getSnippet();
+        A archetypeAdaptor(this->getArchetype());
+        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varIndex).getSnippet();
         const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
         return this->isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
     }
@@ -347,9 +356,7 @@ private:
 // ----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, 
-                                                                                       CustomUpdateBase, 
-                                                                                       &CustomUpdateBase::getVarInitialisers>
+class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdaptor>
 {
 public:
     CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -381,8 +388,7 @@ public:
 // CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                         CustomUpdateBase,
-                                                                                         &CustomUpdateBase::getVarInitialisers>
+                                                                                         CustomUpdateVarAdaptor>
 {
 public:
     CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -440,8 +446,7 @@ private:
 // CodeGenerator::CustomWUUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                               CustomUpdateBase,
-                                                                                               &CustomUpdateBase::getVarInitialisers>
+                                                                                               CustomUpdateVarAdaptor>
 {
 public:
     CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -472,8 +477,7 @@ public:
 // CustomConnectivityUpdatePreInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                      CustomConnectivityUpdate,
-                                                                                                      &CustomConnectivityUpdate::getPreVarInitialisers>
+                                                                                                      CustomConnectivityUpdatePreVarAdaptor>
 {
 public:
     CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -504,8 +508,7 @@ public:
 // CustomConnectivityUpdatePostInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                       CustomConnectivityUpdate,
-                                                                                                       &CustomConnectivityUpdate::getPostVarInitialisers>
+                                                                                                       CustomConnectivityUpdatePostVarAdaptor>
 {
 public:
     CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -536,8 +539,7 @@ public:
 // CustomConnectivityUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                         CustomConnectivityUpdate,
-                                                                                                         &CustomConnectivityUpdate::getVarInitialisers>
+                                                                                                         CustomConnectivityUpdateVarAdaptor>
 {
 public:
     CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

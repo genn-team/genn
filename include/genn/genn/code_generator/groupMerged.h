@@ -306,20 +306,22 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
+    template<typename T, typename A, typename H>
+    void addHeterogeneousVarInitParams(H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const A archetypeAdaptor(getArchetype());
+        const auto &varInitialisers = archetypeAdaptor.getVarInitialisers();
+        const auto vars = archetypeAdaptor.getVars();
+        for(size_t v = 0; v < varInitialisers.size(); v++) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            const Models::VarInit &varInit = varInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v, p)) {
                     addScalarField(varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                                   [p, v, getVarInitialisers](const G &g, size_t)
+                                   [p, v](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getParams();
+                                       const auto &values = A(g).getVarInitialisers().at(v).getParams();
                                        return Utils::writePreciseString(values.at(p));
                                    });
                 }
@@ -327,20 +329,22 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
+    template<typename T, typename A, typename H>
+    void addHeterogeneousVarInitDerivedParams(H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const A archetypeAdaptor(getArchetype());
+        const auto &varInitialisers = archetypeAdaptor.getVarInitialisers();
+        const auto vars = archetypeAdaptor.getVars();
+        for(size_t v = 0; v < varInitialisers.size(); v++) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            const Models::VarInit &varInit = varInitialisers[v];
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v, d)) {
                     addScalarField(varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                                   [d, v, getVarInitialisers](const G &g, size_t)
+                                   [d, v](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
+                                       const auto &values = A(g).getVarInitialisers().at(v).getDerivedParams();
                                        return Utils::writePreciseString(values.at(d));
                                    });
                 }
@@ -374,11 +378,11 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename R>
-    void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename T, typename A, typename R>
+    void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
         for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
@@ -387,7 +391,7 @@ protected:
                 if((static_cast<const T *>(this)->*isParamReferencedFn)(v, p)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)()[v].getParams();
+                        const auto &values = A(g.get()).getVarInitialisers().at(v).getParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(p), hash);
@@ -397,11 +401,11 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename R>
-    void updateVarInitDerivedParamHash(V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename T, typename A, typename R>
+    void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
         for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
@@ -410,7 +414,7 @@ protected:
                 if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(v, d)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)()[v].getDerivedParams();
+                        const auto &values = A(g.get()).getVarInitialisers().at(v).getDerivedParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(d), hash);
@@ -867,13 +871,14 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    template<typename T = NeuronGroupMergedBase, typename A, typename C, typename R>
     void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                      size_t childIndex, size_t varIndex, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                      size_t childIndex, size_t varIndex, R isChildParamReferencedFn,
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
         const auto &archetypeParams = archetypeVarInit.at(varIndex).getParams();
         for(size_t p = 0; p < archetypeParams.size(); p++) {
             // If parameter is referenced
@@ -882,7 +887,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
+                    const std::vector<Models::VarInit> &varInit = A(*child).getVarInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varIndex).getParams().at(p), hash);
@@ -891,13 +896,13 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    template<typename T = NeuronGroupMergedBase, typename A, typename C, typename R>
     void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                             size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
+                                             size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn,
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
         const auto &archetypeDerivedParams = archetypeVarInit.at(varIndex).getDerivedParams();
         for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
             // If parameter is referenced
@@ -906,7 +911,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = A(*child).getVarInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varIndex).getDerivedParams().at(p), hash);
