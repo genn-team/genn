@@ -1112,6 +1112,37 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// custom connectivity update variables" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    genCustomUpdate<CustomConnectivityUpdateVarAdaptor, CustomConnectivityUpdateEGPAdaptor>(
+        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
+        [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var &var)
+        { 
+            const SynapseGroupInternal *sg = c.getSynapseGroup();
+            return (sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
+        });
+
+    genCustomUpdate<CustomConnectivityUpdatePreVarAdaptor, CustomConnectivityUpdateEGPAdaptor>(
+        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
+        [](const CustomConnectivityUpdateInternal &c, const Models::Base::Var &var)
+        { 
+            return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons();
+        });
+
+    genCustomUpdate<CustomConnectivityUpdatePostVarAdaptor, CustomConnectivityUpdateEGPAdaptor>(
+        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
+        [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var &var)
+        { 
+            return backend.getSynapticMatrixRowStride(*c.getSynapseGroup());
+        });
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// pre and postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
