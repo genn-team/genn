@@ -126,9 +126,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
 
-    VarLocation getEGPLocation(size_t index) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getEGPLocation(size_t) const{ return VarLocation::HOST_DEVICE; }
     
     Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
 
