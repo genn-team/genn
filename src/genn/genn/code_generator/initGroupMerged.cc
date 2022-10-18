@@ -225,8 +225,8 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
     Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
     // Update hash with each group's variable initialisation parameters and derived parameters
-    updateVarInitParamHash<NeuronInitGroupMerged, NeuronVarAdaptor>(&NeuronInitGroupMerged::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<NeuronInitGroupMerged, NeuronVarAdaptor>(&NeuronInitGroupMerged::isVarInitDerivedParamReferenced, hash);
+    updateVarInitParamHash<NeuronInitGroupMerged, NeuronVarAdapter>(&NeuronInitGroupMerged::isVarInitParamReferenced, hash);
+    updateVarInitDerivedParamHash<NeuronInitGroupMerged, NeuronVarAdapter>(&NeuronInitGroupMerged::isVarInitDerivedParamReferenced, hash);
     
     // Loop through child incoming synapse groups with postsynaptic variables
     for(size_t c = 0; c < getSortedArchetypeInSynWithPostVars().size(); c++) {
@@ -235,9 +235,9 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
         // Loop through variables and update hash with variable initialisation parameters and derived parameters
         const auto &varInit = sg->getWUPostVarInitialisers();
         for(size_t v = 0; v < varInit.size(); v++) {
-            updateChildVarInitParamsHash<SynapseWUPostVarAdaptor, NeuronInitGroupMerged>(
+            updateChildVarInitParamsHash<SynapseWUPostVarAdapter, NeuronInitGroupMerged>(
                 m_SortedInSynWithPostVars, c, v, &NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced, hash);
-            updateChildVarInitDerivedParamsHash<SynapseWUPostVarAdaptor, NeuronInitGroupMerged>(
+            updateChildVarInitDerivedParamsHash<SynapseWUPostVarAdapter, NeuronInitGroupMerged>(
                 m_SortedInSynWithPostVars, c, v, &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamReferenced, hash);
         }
     }
@@ -249,9 +249,9 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
         // Loop through variables and update hash with variable initialisation parameters and derived parameters
         const auto &varInit = sg->getWUPreVarInitialisers();
         for(size_t v = 0; v < varInit.size(); v++) {
-            updateChildVarInitParamsHash<SynapseWUPreVarAdaptor, NeuronInitGroupMerged>(
+            updateChildVarInitParamsHash<SynapseWUPreVarAdapter, NeuronInitGroupMerged>(
                 m_SortedOutSynWithPreVars, c, v, &NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced, hash);
-            updateChildVarInitDerivedParamsHash<SynapseWUPreVarAdaptor, NeuronInitGroupMerged>(
+            updateChildVarInitDerivedParamsHash<SynapseWUPreVarAdapter, NeuronInitGroupMerged>(
                 m_SortedOutSynWithPreVars, c, v, &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamReferenced, hash);
         }
     }
@@ -885,7 +885,7 @@ const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
 CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -920,7 +920,7 @@ const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
 CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
@@ -1028,7 +1028,7 @@ const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSpa
 //----------------------------------------------------------------------------
 CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
@@ -1098,7 +1098,7 @@ const std::string CustomConnectivityUpdatePreInitGroupMerged::name = "CustomConn
 //----------------------------------------------------------------------------
 CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                        const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdapter>(index, precision, backend, groups)
 {
     addField("unsigned int", "size",
              [](const CustomConnectivityUpdateInternal &c, size_t) 
@@ -1139,7 +1139,7 @@ const std::string CustomConnectivityUpdatePostInitGroupMerged::name = "CustomCon
 //----------------------------------------------------------------------------
 CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdapter>(index, precision, backend, groups)
 {
     addField("unsigned int", "size",
              [](const CustomConnectivityUpdateInternal &c, size_t)
@@ -1180,7 +1180,7 @@ const std::string CustomConnectivityUpdateSparseInitGroupMerged::name = "CustomC
 //----------------------------------------------------------------------------
 CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdateVarAdaptor>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdateVarAdapter>(index, precision, backend, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });

@@ -260,10 +260,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     // If we're generating a struct for initialization
     if(init) {
         // Add heterogeneous var init parameters
-        addHeterogeneousVarInitParams<NeuronGroupMergedBase, NeuronVarAdaptor>(
+        addHeterogeneousVarInitParams<NeuronGroupMergedBase, NeuronVarAdapter>(
             &NeuronGroupMergedBase::isVarInitParamHeterogeneous);
 
-        addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase, NeuronVarAdaptor>(
+        addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase, NeuronVarAdapter>(
             &NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous);
     }
     // Otherwise
@@ -437,9 +437,9 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
             // Loop through variables and update hash with variable initialisation parameters and derived parameters
             const auto &varInit = cs->getVarInitialisers();
             for(size_t v = 0; v < varInit.size(); v++) {
-                updateChildVarInitParamsHash<CurrentSourceVarAdaptor>(
+                updateChildVarInitParamsHash<CurrentSourceVarAdapter>(
                     m_SortedCurrentSources, c, v, &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, hash);
-                updateChildVarInitDerivedParamsHash<CurrentSourceVarAdaptor>(
+                updateChildVarInitDerivedParamsHash<CurrentSourceVarAdapter>(
                     m_SortedCurrentSources, c, v, &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced, hash);
             }
         }
@@ -452,9 +452,9 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
             const auto &varInit = sg->getPSVarInitialisers();
             for(size_t v = 0; v < varInit.size(); v++) {
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    updateChildVarInitParamsHash<SynapsePSMVarAdaptor>(
+                    updateChildVarInitParamsHash<SynapsePSMVarAdapter>(
                         m_SortedMergedInSyns, c, v, &NeuronGroupMergedBase::isPSMVarInitParamReferenced, hash);
-                    updateChildVarInitDerivedParamsHash<SynapsePSMVarAdaptor>(
+                    updateChildVarInitDerivedParamsHash<SynapsePSMVarAdapter>(
                         m_SortedMergedInSyns, c, v, &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced, hash);
                 }
             }
@@ -1037,10 +1037,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
            || (varInitRole && (individualWeights || kernelWeights))) 
         {
             // Add heterogeneous variable initialization parameters and derived parameters
-            addHeterogeneousVarInitParams<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+            addHeterogeneousVarInitParams<SynapseGroupMergedBase, SynapseWUVarAdapter>(
                 &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
 
-            addHeterogeneousVarInitDerivedParams<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+            addHeterogeneousVarInitDerivedParams<SynapseGroupMergedBase, SynapseWUVarAdapter>(
                 &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
         }
 
@@ -1183,9 +1183,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
            || (varInitRole && individualWeights) || (varInitRole && kernelWeights))
         {
             // Update hash with each group's variable initialisation parameters and derived parameters
-            updateVarInitParamHash<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+            updateVarInitParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
                 &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
-            updateVarInitDerivedParamHash<SynapseGroupMergedBase, SynapseWUVarAdaptor>(
+            updateVarInitDerivedParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
                 &SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced, hash);
         }
     }

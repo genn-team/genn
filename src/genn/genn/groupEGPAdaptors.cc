@@ -8,97 +8,97 @@
 #include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// NeuronEGPAdaptor
+// NeuronEGPAdapter
 //----------------------------------------------------------------------------
-VarLocation NeuronEGPAdaptor::getEGPLocation(const std::string &varName) const
+VarLocation NeuronEGPAdapter::getEGPLocation(const std::string &varName) const
 {
     return m_NG.getExtraGlobalParamLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation NeuronEGPAdaptor::getEGPLocation(size_t index) const
+VarLocation NeuronEGPAdapter::getEGPLocation(size_t index) const
 {
     return m_NG.getExtraGlobalParamLocation(index);
 }
 //----------------------------------------------------------------------------    
-Snippet::Base::EGPVec NeuronEGPAdaptor::getEGPs() const
+Snippet::Base::EGPVec NeuronEGPAdapter::getEGPs() const
 {
     return m_NG.getNeuronModel()->getExtraGlobalParams();
 }
 
 //----------------------------------------------------------------------------
-// CurrentSourceEGPAdaptor
+// CurrentSourceEGPAdapter
 //----------------------------------------------------------------------------
-VarLocation CurrentSourceEGPAdaptor::getEGPLocation(const std::string &varName) const
+VarLocation CurrentSourceEGPAdapter::getEGPLocation(const std::string &varName) const
 {
     return m_CS.getExtraGlobalParamLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CurrentSourceEGPAdaptor::getEGPLocation(size_t index) const
+VarLocation CurrentSourceEGPAdapter::getEGPLocation(size_t index) const
 {
     return m_CS.getExtraGlobalParamLocation(index);
 }
 //----------------------------------------------------------------------------    
-Snippet::Base::EGPVec CurrentSourceEGPAdaptor::getEGPs() const
+Snippet::Base::EGPVec CurrentSourceEGPAdapter::getEGPs() const
 {
     return m_CS.getCurrentSourceModel()->getExtraGlobalParams();
 }
 
 //----------------------------------------------------------------------------
-// SynapseWUEGPAdaptor
+// SynapseWUEGPAdapter
 //----------------------------------------------------------------------------
-VarLocation SynapseWUEGPAdaptor::getEGPLocation(const std::string &varName) const
+VarLocation SynapseWUEGPAdapter::getEGPLocation(const std::string &varName) const
 {
     return m_SG.getWUExtraGlobalParamLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation SynapseWUEGPAdaptor::getEGPLocation(size_t index) const
+VarLocation SynapseWUEGPAdapter::getEGPLocation(size_t index) const
 {
     return m_SG.getWUExtraGlobalParamLocation(index);
 }
 //----------------------------------------------------------------------------
-Snippet::Base::EGPVec SynapseWUEGPAdaptor::getEGPs() const
+Snippet::Base::EGPVec SynapseWUEGPAdapter::getEGPs() const
 {
     return m_SG.getWUModel()->getExtraGlobalParams();
 }
 
 
 //----------------------------------------------------------------------------
-// CustomUpdateEGPAdaptor
+// CustomUpdateEGPAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateEGPAdaptor::getEGPLocation(const std::string &varName) const
+VarLocation CustomUpdateEGPAdapter::getEGPLocation(const std::string &varName) const
 {
     // **YUCK**
     return VarLocation::HOST_DEVICE;
 }
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateEGPAdaptor::getEGPLocation(size_t index) const
+VarLocation CustomUpdateEGPAdapter::getEGPLocation(size_t index) const
 {
     // **YUCK**
     return VarLocation::HOST_DEVICE;
 }
 //----------------------------------------------------------------------------    
-Snippet::Base::EGPVec CustomUpdateEGPAdaptor::getEGPs() const
+Snippet::Base::EGPVec CustomUpdateEGPAdapter::getEGPs() const
 {
     return m_CU.getCustomUpdateModel()->getExtraGlobalParams();
 }
 
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateEGPAdaptor
+// CustomConnectivityUpdateEGPAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdateEGPAdaptor::getEGPLocation(const std::string &varName) const
+VarLocation CustomConnectivityUpdateEGPAdapter::getEGPLocation(const std::string &varName) const
 {
     // **YUCK**
     return VarLocation::HOST_DEVICE;
 }
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdateEGPAdaptor::getEGPLocation(size_t index) const
+VarLocation CustomConnectivityUpdateEGPAdapter::getEGPLocation(size_t index) const
 {
     // **YUCK**
     return VarLocation::HOST_DEVICE;
 }
 //----------------------------------------------------------------------------
-Snippet::Base::EGPVec CustomConnectivityUpdateEGPAdaptor::getEGPs() const
+Snippet::Base::EGPVec CustomConnectivityUpdateEGPAdapter::getEGPs() const
 {
     return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams();
 }

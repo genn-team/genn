@@ -356,7 +356,7 @@ private:
 // ----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdaptor>
+class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
 {
 public:
     CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -388,7 +388,7 @@ public:
 // CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                         CustomUpdateVarAdaptor>
+                                                                                         CustomUpdateVarAdapter>
 {
 public:
     CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -446,7 +446,7 @@ private:
 // CodeGenerator::CustomWUUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                               CustomUpdateVarAdaptor>
+                                                                                               CustomUpdateVarAdapter>
 {
 public:
     CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -477,7 +477,7 @@ public:
 // CustomConnectivityUpdatePreInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                      CustomConnectivityUpdatePreVarAdaptor>
+                                                                                                      CustomConnectivityUpdatePreVarAdapter>
 {
 public:
     CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -508,7 +508,7 @@ public:
 // CustomConnectivityUpdatePostInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                       CustomConnectivityUpdatePostVarAdaptor>
+                                                                                                       CustomConnectivityUpdatePostVarAdapter>
 {
 public:
     CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -539,7 +539,7 @@ public:
 // CustomConnectivityUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                         CustomConnectivityUpdateVarAdaptor>
+                                                                                                         CustomConnectivityUpdateVarAdapter>
 {
 public:
     CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

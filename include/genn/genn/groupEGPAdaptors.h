@@ -12,12 +12,12 @@ class CustomUpdateBase;
 class NeuronGroupInternal;
 
 //----------------------------------------------------------------------------
-// NeuronEGPAdaptor
+// NeuronEGPAdapter
 //----------------------------------------------------------------------------
-class NeuronEGPAdaptor
+class NeuronEGPAdapter
 {
 public:
-    NeuronEGPAdaptor(const NeuronGroupInternal &ng) : m_NG(ng)
+    NeuronEGPAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
     {}
 
     //----------------------------------------------------------------------------
@@ -38,12 +38,12 @@ private:
 
 
 //----------------------------------------------------------------------------
-// CurrentSourceEGPAdaptor
+// CurrentSourceEGPAdapter
 //----------------------------------------------------------------------------
-class CurrentSourceEGPAdaptor
+class CurrentSourceEGPAdapter
 {
 public:
-    CurrentSourceEGPAdaptor(const CurrentSourceInternal &cs) : m_CS(cs)
+    CurrentSourceEGPAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
     {}
 
     //----------------------------------------------------------------------------
@@ -63,12 +63,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SynapseWUEGPAdaptor
+// SynapseWUEGPAdapter
 //----------------------------------------------------------------------------
-class SynapseWUEGPAdaptor
+class SynapseWUEGPAdapter
 {
 public:
-    SynapseWUEGPAdaptor(const SynapseGroupInternal &sg) : m_SG(sg)
+    SynapseWUEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
@@ -88,12 +88,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CustomUpdateEGPAdaptor
+// CustomUpdateEGPAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateEGPAdaptor
+class CustomUpdateEGPAdapter
 {
 public:
-    CustomUpdateEGPAdaptor(const CustomUpdateBase &cu) : m_CU(cu)
+    CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
@@ -113,12 +113,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateEGPAdaptor
+// CustomConnectivityUpdateEGPAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateEGPAdaptor
+class CustomConnectivityUpdateEGPAdapter
 {
 public:
-    CustomConnectivityUpdateEGPAdaptor(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    CustomConnectivityUpdateEGPAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------

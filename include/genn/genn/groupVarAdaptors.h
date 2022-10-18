@@ -12,12 +12,12 @@ class NeuronGroupInternal;
 class SynapseGroupInternal;
 
 //----------------------------------------------------------------------------
-// NeuronVarAdaptor
+// NeuronVarAdapter
 //----------------------------------------------------------------------------
-class NeuronVarAdaptor
+class NeuronVarAdapter
 {
 public:
-    NeuronVarAdaptor(const NeuronGroupInternal &ng) : m_NG(ng)
+    NeuronVarAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
     {}
 
     //----------------------------------------------------------------------------
@@ -39,12 +39,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CurrentSourceVarAdaptor
+// CurrentSourceVarAdapter
 //----------------------------------------------------------------------------
-class CurrentSourceVarAdaptor
+class CurrentSourceVarAdapter
 {
 public:
-    CurrentSourceVarAdaptor(const CurrentSourceInternal &cs) : m_CS(cs)
+    CurrentSourceVarAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
     {}
 
     //----------------------------------------------------------------------------
@@ -66,12 +66,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SynapsePSMVarAdaptor
+// SynapsePSMVarAdapter
 //----------------------------------------------------------------------------
-class SynapsePSMVarAdaptor
+class SynapsePSMVarAdapter
 {
 public:
-    SynapsePSMVarAdaptor(const SynapseGroupInternal &sg) : m_SG(sg)
+    SynapsePSMVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
@@ -95,12 +95,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SynapseWUVarAdaptor
+// SynapseWUVarAdapter
 //----------------------------------------------------------------------------
-class SynapseWUVarAdaptor
+class SynapseWUVarAdapter
 {
 public:
-    SynapseWUVarAdaptor(const SynapseGroupInternal &sg) : m_SG(sg)
+    SynapseWUVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
@@ -122,41 +122,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// SynapseWUPreVarAdaptor
+// SynapseWUPreVarAdapter
 //----------------------------------------------------------------------------
-class SynapseWUPreVarAdaptor
+class SynapseWUPreVarAdapter
 {
 public:
-    SynapseWUPreVarAdaptor(const SynapseGroupInternal &sg) : m_SG(sg)
-    {}
-
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const;
-
-    VarLocation getVarLocation(size_t index) const;
-    
-    Models::Base::VarVec getVars() const;
-
-    const std::vector<Models::VarInit> &getVarInitialisers() const;
-
-    const std::string &getFusedVarSuffix() const;
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const SynapseGroupInternal &m_SG;
-};
-
-//----------------------------------------------------------------------------
-// SynapseWUPostVarAdaptor
-//----------------------------------------------------------------------------
-class SynapseWUPostVarAdaptor
-{
-public:
-    SynapseWUPostVarAdaptor(const SynapseGroupInternal &sg) : m_SG(sg)
+    SynapseWUPreVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
@@ -178,13 +149,42 @@ private:
     //----------------------------------------------------------------------------
     const SynapseGroupInternal &m_SG;
 };
+
 //----------------------------------------------------------------------------
-// CustomUpdateVarAdaptor
+// SynapseWUPostVarAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateVarAdaptor
+class SynapseWUPostVarAdapter
 {
 public:
-    CustomUpdateVarAdaptor(const CustomUpdateBase &cu) : m_CU(cu)
+    SynapseWUPostVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const;
+
+    VarLocation getVarLocation(size_t index) const;
+    
+    Models::Base::VarVec getVars() const;
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const;
+
+    const std::string &getFusedVarSuffix() const;
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+//----------------------------------------------------------------------------
+// CustomUpdateVarAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarAdapter
+{
+public:
+    CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
@@ -206,12 +206,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateVarAdaptor
+// CustomConnectivityUpdateVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateVarAdaptor
+class CustomConnectivityUpdateVarAdapter
 {
 public:
-    CustomConnectivityUpdateVarAdaptor(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    CustomConnectivityUpdateVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
@@ -233,12 +233,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePreVarAdaptor
+// CustomConnectivityUpdatePreVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePreVarAdaptor
+class CustomConnectivityUpdatePreVarAdapter
 {
 public:
-    CustomConnectivityUpdatePreVarAdaptor(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    CustomConnectivityUpdatePreVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
@@ -260,12 +260,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePreVarAdaptor
+// CustomConnectivityUpdatePreVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePostVarAdaptor
+class CustomConnectivityUpdatePostVarAdapter
 {
 public:
-    CustomConnectivityUpdatePostVarAdaptor(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    CustomConnectivityUpdatePostVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------

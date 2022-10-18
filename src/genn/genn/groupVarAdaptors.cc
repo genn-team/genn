@@ -8,246 +8,246 @@
 #include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// NeuronVarAdaptor
+// NeuronVarAdapter
 //----------------------------------------------------------------------------
-VarLocation NeuronVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation NeuronVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_NG.getVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation NeuronVarAdaptor::getVarLocation(size_t index) const
+VarLocation NeuronVarAdapter::getVarLocation(size_t index) const
 {
     return m_NG.getVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec NeuronVarAdaptor::getVars() const
+Models::Base::VarVec NeuronVarAdapter::getVars() const
 {
     return m_NG.getNeuronModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &NeuronVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &NeuronVarAdapter::getVarInitialisers() const
 {
     return m_NG.getVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// CurrentSourceVarAdaptor
+// CurrentSourceVarAdapter
 //----------------------------------------------------------------------------
-VarLocation CurrentSourceVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation CurrentSourceVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_CS.getVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CurrentSourceVarAdaptor::getVarLocation(size_t index) const
+VarLocation CurrentSourceVarAdapter::getVarLocation(size_t index) const
 {
     return m_CS.getVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec CurrentSourceVarAdaptor::getVars() const
+Models::Base::VarVec CurrentSourceVarAdapter::getVars() const
 {
     return m_CS.getCurrentSourceModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &CurrentSourceVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &CurrentSourceVarAdapter::getVarInitialisers() const
 {
     return m_CS.getVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// SynapsePSMVarAdaptor
+// SynapsePSMVarAdapter
 //----------------------------------------------------------------------------
-VarLocation SynapsePSMVarAdaptor::getVarLocation(const std::string & varName) const 
+VarLocation SynapsePSMVarAdapter::getVarLocation(const std::string & varName) const 
 {
     return m_SG.getPSVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation SynapsePSMVarAdaptor::getVarLocation(size_t index) const
+VarLocation SynapsePSMVarAdapter::getVarLocation(size_t index) const
 {
     return m_SG.getPSVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec SynapsePSMVarAdaptor::getVars() const
+Models::Base::VarVec SynapsePSMVarAdapter::getVars() const
 {
     return m_SG.getPSModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &SynapsePSMVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &SynapsePSMVarAdapter::getVarInitialisers() const
 {
     return m_SG.getPSVarInitialisers();
 }
 //----------------------------------------------------------------------------
-const std::string &SynapsePSMVarAdaptor::getFusedVarSuffix() const
+const std::string &SynapsePSMVarAdapter::getFusedVarSuffix() const
 {
     return m_SG.getFusedPSVarSuffix();
 }
 
 //----------------------------------------------------------------------------
-// SynapseWUVarAdaptor
+// SynapseWUVarAdapter
 //----------------------------------------------------------------------------
-VarLocation SynapseWUVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation SynapseWUVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_SG.getWUVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation SynapseWUVarAdaptor::getVarLocation(size_t index) const
+VarLocation SynapseWUVarAdapter::getVarLocation(size_t index) const
 {
     return m_SG.getWUVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec SynapseWUVarAdaptor::getVars() const
+Models::Base::VarVec SynapseWUVarAdapter::getVars() const
 {
     return m_SG.getWUModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &SynapseWUVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &SynapseWUVarAdapter::getVarInitialisers() const
 {
     return m_SG.getWUVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// SynapseWUPreVarAdaptor
+// SynapseWUPreVarAdapter
 //----------------------------------------------------------------------------
-VarLocation SynapseWUPreVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation SynapseWUPreVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_SG.getWUPreVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation SynapseWUPreVarAdaptor::getVarLocation(size_t index) const
+VarLocation SynapseWUPreVarAdapter::getVarLocation(size_t index) const
 {
     return m_SG.getWUPreVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec SynapseWUPreVarAdaptor::getVars() const
+Models::Base::VarVec SynapseWUPreVarAdapter::getVars() const
 {
     return m_SG.getWUModel()->getPreVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &SynapseWUPreVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &SynapseWUPreVarAdapter::getVarInitialisers() const
 {
     return m_SG.getWUPreVarInitialisers();
 }
 //----------------------------------------------------------------------------
-const std::string &SynapseWUPreVarAdaptor::getFusedVarSuffix() const
+const std::string &SynapseWUPreVarAdapter::getFusedVarSuffix() const
 {
     return m_SG.getFusedWUPreVarSuffix();
 }
 
 //----------------------------------------------------------------------------
-// SynapseWUPostVarAdaptor
+// SynapseWUPostVarAdapter
 //----------------------------------------------------------------------------
-VarLocation SynapseWUPostVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation SynapseWUPostVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_SG.getWUPostVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation SynapseWUPostVarAdaptor::getVarLocation(size_t index) const
+VarLocation SynapseWUPostVarAdapter::getVarLocation(size_t index) const
 {
     return m_SG.getWUPostVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec SynapseWUPostVarAdaptor::getVars() const
+Models::Base::VarVec SynapseWUPostVarAdapter::getVars() const
 {
     return m_SG.getWUModel()->getPostVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &SynapseWUPostVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &SynapseWUPostVarAdapter::getVarInitialisers() const
 {
     return m_SG.getWUPostVarInitialisers();
 }
 //----------------------------------------------------------------------------
-const std::string &SynapseWUPostVarAdaptor::getFusedVarSuffix() const
+const std::string &SynapseWUPostVarAdapter::getFusedVarSuffix() const
 {
     return m_SG.getFusedWUPostVarSuffix();
 }
 
 //----------------------------------------------------------------------------
-// CustomUpdateVarAdaptor
+// CustomUpdateVarAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation CustomUpdateVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_CU.getVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateVarAdaptor::getVarLocation(size_t index) const
+VarLocation CustomUpdateVarAdapter::getVarLocation(size_t index) const
 {
     return m_CU.getVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec CustomUpdateVarAdaptor::getVars() const
+Models::Base::VarVec CustomUpdateVarAdapter::getVars() const
 {
     return m_CU.getCustomUpdateModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &CustomUpdateVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &CustomUpdateVarAdapter::getVarInitialisers() const
 {
     return m_CU.getVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateVarAdaptor
+// CustomConnectivityUpdateVarAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdateVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation CustomConnectivityUpdateVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_CU.getVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdateVarAdaptor::getVarLocation(size_t index) const
+VarLocation CustomConnectivityUpdateVarAdapter::getVarLocation(size_t index) const
 {
     return m_CU.getVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec CustomConnectivityUpdateVarAdaptor::getVars() const
+Models::Base::VarVec CustomConnectivityUpdateVarAdapter::getVars() const
 {
     return m_CU.getCustomConnectivityUpdateModel()->getVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &CustomConnectivityUpdateVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &CustomConnectivityUpdateVarAdapter::getVarInitialisers() const
 {
     return m_CU.getVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePreVarAdaptor
+// CustomConnectivityUpdatePreVarAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdatePreVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation CustomConnectivityUpdatePreVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_CU.getPreVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdatePreVarAdaptor::getVarLocation(size_t index) const
+VarLocation CustomConnectivityUpdatePreVarAdapter::getVarLocation(size_t index) const
 {
     return m_CU.getPreVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec CustomConnectivityUpdatePreVarAdaptor::getVars() const
+Models::Base::VarVec CustomConnectivityUpdatePreVarAdapter::getVars() const
 {
     return m_CU.getCustomConnectivityUpdateModel()->getPreVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &CustomConnectivityUpdatePreVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &CustomConnectivityUpdatePreVarAdapter::getVarInitialisers() const
 {
     return m_CU.getPreVarInitialisers();
 }
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePostVarAdaptor
+// CustomConnectivityUpdatePostVarAdapter
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdatePostVarAdaptor::getVarLocation(const std::string &varName) const
+VarLocation CustomConnectivityUpdatePostVarAdapter::getVarLocation(const std::string &varName) const
 {
     return m_CU.getPostVarLocation(varName);
 }
 //----------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdatePostVarAdaptor::getVarLocation(size_t index) const
+VarLocation CustomConnectivityUpdatePostVarAdapter::getVarLocation(size_t index) const
 {
     return m_CU.getPostVarLocation(index);
 }
 //----------------------------------------------------------------------------
-Models::Base::VarVec CustomConnectivityUpdatePostVarAdaptor::getVars() const
+Models::Base::VarVec CustomConnectivityUpdatePostVarAdapter::getVars() const
 {
     return m_CU.getCustomConnectivityUpdateModel()->getPostVars();
 }
 //----------------------------------------------------------------------------
-const std::vector<Models::VarInit> &CustomConnectivityUpdatePostVarAdaptor::getVarInitialisers() const
+const std::vector<Models::VarInit> &CustomConnectivityUpdatePostVarAdapter::getVarInitialisers() const
 {
     return m_CU.getPostVarInitialisers();
 }
