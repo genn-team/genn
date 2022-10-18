@@ -378,7 +378,7 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
         const bool autoInitialized = !varInitSnippet->getCode().empty();
         genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                     runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + group.getName(), varAdaptor.getVarLocation(i),
-                    autoInitialized, getSizeFn(group, vars[i]), mem, statePushPullFunctions);
+                    autoInitialized, getSizeFn(group, vars[i]), mem, groupStatePushPullFunctions);
 
         // Loop through EGPs required to initialize variable
         const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
@@ -425,7 +425,7 @@ void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &b
 //-------------------------------------------------------------------------
 template<typename V, typename G, typename S>
 void genRunnerFusedVarPushPull(const BackendBase &backend, CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                               const G &group, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
+                               const G &group, std::vector<std::string> &groupStatePushPullFunctions, S getSizeFn)
 {
     // Loop through variables
     const V varAdaptor(group);
@@ -433,7 +433,7 @@ void genRunnerFusedVarPushPull(const BackendBase &backend, CodeStream &definitio
     for(size_t i = 0; i < vars.size(); i++) {
         const bool autoInitialized = !varAdaptor.getVarInitialisers().at(i).getSnippet()->getCode().empty();
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getVarLocation(i),
-                            backend.getPreferences().automaticCopy, vars[i].name + group.getName(), statePushPullFunctions,
+                            backend.getPreferences().automaticCopy, vars[i].name + group.getName(), groupStatePushPullFunctions,
                             [&]()
                             {
                                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + group.getName(), 
