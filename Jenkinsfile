@@ -146,7 +146,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
 
                             // If node has suitable CUDA, add -c option
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel || "cuda11" in nodeLabel) {
                                 runTestArguments += " -c";
                             }
 
