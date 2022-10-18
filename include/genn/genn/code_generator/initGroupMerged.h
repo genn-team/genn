@@ -1,8 +1,5 @@
 #pragma once
 
-// GeNN includes
-#include "groupVarAdaptors.h"
-
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 

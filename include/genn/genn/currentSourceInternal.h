@@ -28,3 +28,55 @@ public:
     using CurrentSource::getInitHashDigest;
     using CurrentSource::getVarLocationHashDigest;
 };
+
+//----------------------------------------------------------------------------
+// CurrentSourceVarAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceVarAdapter
+{
+public:
+    CurrentSourceVarAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_CS.getVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_CS.getVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};
+
+//----------------------------------------------------------------------------
+// CurrentSourceEGPAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceEGPAdapter
+{
+public:
+    CurrentSourceEGPAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
+
+    VarLocation getEGPLocation(size_t index) const{ return m_CS.getExtraGlobalParamLocation(index); }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};

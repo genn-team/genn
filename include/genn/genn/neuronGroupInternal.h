@@ -45,3 +45,56 @@ public:
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
     using NeuronGroup::getVarLocationHashDigest;
 };
+
+
+//----------------------------------------------------------------------------
+// NeuronVarAdapter
+//----------------------------------------------------------------------------
+class NeuronVarAdapter
+{
+public:
+    NeuronVarAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_NG.getVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_NG.getNeuronModel()->getVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_NG.getVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const NeuronGroupInternal &m_NG;
+};
+
+//----------------------------------------------------------------------------
+// NeuronEGPAdapter
+//----------------------------------------------------------------------------
+class NeuronEGPAdapter
+{
+public:
+    NeuronEGPAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
+
+    VarLocation getEGPLocation(size_t index) const{ return m_NG.getExtraGlobalParamLocation(index); }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_NG.getNeuronModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const NeuronGroupInternal &m_NG;
+};

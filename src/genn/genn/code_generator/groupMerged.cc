@@ -4,7 +4,6 @@
 #include <plog/Log.h>
 
 // GeNN includes
-#include "groupVarAdaptors.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes

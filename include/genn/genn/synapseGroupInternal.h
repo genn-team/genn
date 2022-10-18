@@ -68,3 +68,144 @@ public:
     using SynapseGroup::getConnectivityHostInitHashDigest;
     using SynapseGroup::getVarLocationHashDigest;
 };
+
+
+//----------------------------------------------------------------------------
+// SynapsePSMVarAdapter
+//----------------------------------------------------------------------------
+class SynapsePSMVarAdapter
+{
+public:
+    SynapsePSMVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_SG.getPSVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_SG.getPSModel()->getVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUVarAdapter
+{
+public:
+    SynapseWUVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_SG.getWUVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPreVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPreVarAdapter
+{
+public:
+    SynapseWUPreVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_SG.getWUPreVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPreVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPostVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPostVarAdapter
+{
+public:
+    SynapseWUPostVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_SG.getWUPostVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPostVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+
+//----------------------------------------------------------------------------
+// SynapseWUEGPAdapter
+//----------------------------------------------------------------------------
+class SynapseWUEGPAdapter
+{
+public:
+    SynapseWUEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
+
+    VarLocation getEGPLocation(size_t index) const{ return m_SG.getWUExtraGlobalParamLocation(index); }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};

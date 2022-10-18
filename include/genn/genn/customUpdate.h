@@ -171,6 +171,58 @@ private:
     bool m_Batched;
 };
 
+//----------------------------------------------------------------------------
+// CustomUpdateVarAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarAdapter
+{
+public:
+    CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+
+    VarLocation getVarLocation(size_t index) const{ return m_CU.getVarLocation(index); }
+    
+    Models::Base::VarVec getVars() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateEGPAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateEGPAdapter
+{
+public:
+    CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return VarLocation::HOST_DEVICE; }
+
+    VarLocation getEGPLocation(size_t index) const{ return VarLocation::HOST_DEVICE; }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
+};
+
 //------------------------------------------------------------------------
 // CustomUpdate
 //------------------------------------------------------------------------

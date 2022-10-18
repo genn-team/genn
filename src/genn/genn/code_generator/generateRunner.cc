@@ -10,7 +10,6 @@
 
 // GeNN includes
 #include "gennUtils.h"
-#include "groupEGPAdaptors.h"
 
 // GeNN code generator
 #include "code_generator/codeGenUtils.h"
