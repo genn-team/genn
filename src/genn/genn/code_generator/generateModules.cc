@@ -222,6 +222,7 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
         },
         // Push EGP handler
         // **TODO** this needs to be per-update group
@@ -230,13 +231,8 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdateGroupMerged>(os, backend);
         });
-}
-//--------------------------------------------------------------------------
-void CodeGenerator::generateCustomConnectivityUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged,
-                                                     const BackendBase &backend, const std::string &suffix)
-{
-
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
@@ -287,6 +283,9 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
@@ -297,6 +296,8 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
             modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomWUUpdateInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePreInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePostInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<SynapseInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
         },
@@ -305,5 +306,6 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
         {
             modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomWUUpdateSparseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdateSparseInitGroupMerged>(os, backend);
         });
 }

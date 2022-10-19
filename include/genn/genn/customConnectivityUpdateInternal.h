@@ -23,7 +23,9 @@ public:
 
     using CustomConnectivityUpdate::initDerivedParams;
     using CustomConnectivityUpdate::getDerivedParams;
-    using CustomConnectivityUpdate::isInitRNGRequired;
+    using CustomConnectivityUpdate::isPreVarInitRNGRequired;
+    using CustomConnectivityUpdate::isPostVarInitRNGRequired;
+    using CustomConnectivityUpdate::isVarInitRNGRequired;
     using CustomConnectivityUpdate::isZeroCopyEnabled;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
     using CustomConnectivityUpdate::getSynapseGroup;

@@ -103,8 +103,14 @@ protected:
     //------------------------------------------------------------------------
     const std::vector<double> &getDerivedParams() const { return m_DerivedParams; }
 
-    //! Does this current source group require an RNG for it's init code
-    bool isInitRNGRequired() const;
+    //! Does this current source group require an RNG for initialising its presynaptic variables
+    bool isPreVarInitRNGRequired() const;
+
+    //! Does this current source group require an RNG for initialising its postsynaptic variables
+    bool isPostVarInitRNGRequired() const;
+
+    //! Does this current source group require an RNG for initialising its synaptic variables
+    bool isVarInitRNGRequired() const;
 
     bool isZeroCopyEnabled() const;
 

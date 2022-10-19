@@ -1287,6 +1287,32 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
         });
 }
 //--------------------------------------------------------------------------
+void BackendSIMT::genCustomConnectivityUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                                    const std::string &updateGroup, size_t &idStart) const
+{
+    // Parallelise across presynaptic neurons
+    genParallelGroup<CustomConnectivityUpdateGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomConnectivityUpdateGroups(), idStart,
+        [this](const CustomConnectivityUpdateInternal &cg)
+        {
+            return padSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate);
+        },
+        [&updateGroup](const CustomConnectivityUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
+        [&modelMerged, this](CodeStream &os, const CustomConnectivityUpdateGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing presynaptic neurons" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
+            {
+                CodeStream::Scope b(os);
+
+                // Configure substitutions
+                popSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                
+                cg.generateUpdate(*this, os, modelMerged, popSubs);
+            }
+        });
+}
+//--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -1402,7 +1428,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
+                if(cg.getArchetype().isPreVarInitRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 
@@ -1426,7 +1452,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
+                if(cg.getArchetype().isPostVarInitRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 
@@ -1658,7 +1684,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             // If this custom update requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
-            if(cg.getArchetype().isInitRNGRequired()) {
+            if(cg.getArchetype().isVarInitRNGRequired()) {
                 genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
             

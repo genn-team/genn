@@ -198,11 +198,19 @@ void CustomConnectivityUpdate::finalize(unsigned int batchSize)
     }*/
 }
 //------------------------------------------------------------------------
-bool CustomConnectivityUpdate::isInitRNGRequired() const
+bool CustomConnectivityUpdate::isPreVarInitRNGRequired() const
 {
-    return (Utils::isRNGRequired(getVarInitialisers())
-            || Utils::isRNGRequired(getPreVarInitialisers())
-            || Utils::isRNGRequired(getPostVarInitialisers()));
+    return Utils::isRNGRequired(getPreVarInitialisers());
+}
+//------------------------------------------------------------------------
+bool CustomConnectivityUpdate::isPostVarInitRNGRequired() const
+{
+    return Utils::isRNGRequired(getPostVarInitialisers());
+}
+//------------------------------------------------------------------------
+bool CustomConnectivityUpdate::isVarInitRNGRequired() const
+{
+    return Utils::isRNGRequired(getVarInitialisers());
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isZeroCopyEnabled() const

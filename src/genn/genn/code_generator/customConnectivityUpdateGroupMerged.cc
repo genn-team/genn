@@ -136,7 +136,108 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
+    Substitutions updateSubs(&popSubs);
 
+    // Calculate index of start of row
+    os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
+
+    // Add substitutions for number of pre and postsynaptic neurons
+    updateSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+    updateSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+
+    // Define synapse loop function
+    // **NOTE** index is signed integer so generated code can safely use i-- to process same synapse again
+    // **YUCK** ideally id_post, id_syn, remove_synapse and all synaptic and postsynaptic variable substitutions would only be allowable within this scope but that's not currently possible
+    updateSubs.addFuncSubstitution("for_each_synapse", 1, "for(int i = 0; i < group->rowLength[" + updateSubs["id_pre"] + "]; i++){ const unsigned int idx = rowStartIdx + i; $(0) }");
+
+    updateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + i]");
+    updateSubs.addVarSubstitution("id_syn", "idx");
+
+    // Get variables which will need to be manipulated when adding and removing synapses
+    const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+    const auto ccuVars = cm->getVars();
+    const auto wumVars = getArchetype().getSynapseGroup()->getWUModel()->getVars();
+
+    // Generate code to add a synapse to this row
+    std::stringstream addSynapseStream;
+    CodeStream addSynapse(addSynapseStream);
+    {
+        CodeStream::Scope b(addSynapse);
+
+        // Calculate index to insert synapse
+        addSynapse << "const unsigned newIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "];" << std::endl;
+
+        // Set postsynaptic target to parameter 0
+        addSynapse << "group->ind[newIdx] = $(0);" << std::endl;
+            
+        // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
+        for (size_t i = 0; i < ccuVars.size(); i++) {
+            addSynapse << "group->" << ccuVars[i].name << "[newIdx] = $(" << (1 + i) << ");" << std::endl;
+        }
+
+        // Use subsequent parameters to initialise new synapse's weight update model variables
+        for (size_t i = 0; i < wumVars.size(); i++) {
+            addSynapse << "group->" << wumVars[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+        }
+
+        // Increment row length
+        // **NOTE** this will also effect any forEachSynapse loop currently in operation
+        addSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]++;" << std::endl;
+    }
+        
+    // Add function substitution
+    updateSubs.addFuncSubstitution("add_synapse", 1 + ccuVars.size() + wumVars.size(), addSynapseStream.str());
+
+    // Generate code to remove a synapse from this row
+    std::stringstream removeSynapseStream;
+    CodeStream removeSynapse(removeSynapseStream);
+    {
+        CodeStream::Scope b(removeSynapse);
+
+        // Calculate index we want to copy synapse from
+        removeSynapse << "const unsigned lastIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "];" << std::endl;
+
+        // Copy postsynaptic target from end of row over synapse to be deleted
+        removeSynapse << "group->ind[idx] = group->ind[lastIdx];" << std::endl;
+
+        // Copy custom connectivity update model variables from end of row over synapse to be deleted
+        for (size_t i = 0; i < ccuVars.size(); i++) {
+            removeSynapse << "group->" << ccuVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
+        }
+
+        // Copy weight update model variables from end of row over synapse to be deleted
+        for (size_t i = 0; i < wumVars.size(); i++) {
+            removeSynapse << "group->" << wumVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
+        }
+
+        // Decrement row length
+        // **NOTE** this will also effect any forEachSynapse loop currently in operation
+        removeSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]--;" << std::endl;
+    }
+    updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
+    
+    // **TODO** presynaptic variables and variable references could be read into registers at start of row
+    // **TODO** delays
+    updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs["id_syn"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getPreVars(), "", "group->", "[" + updateSubs["id_pre"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
+    
+    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs["id_syn"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["is_pre"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->", "[" + updateSubs["id_post"] + "]");
+    updateSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
+                                         [this](size_t i) { return isParamHeterogeneous(i);  },
+                                         "", "group->");
+    updateSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
+                                       [this](size_t i) { return isDerivedParamHeterogeneous(i);  },
+                                       "", "group->");
+    updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
+
+    // Apply substitutons to row update code and write out
+    std::string code = cm->getRowUpdateCode();
+    updateSubs.applyCheckUnreplaced(code, "custom connectivity update : merged" + std::to_string(getIndex()));
+    code = ensureFtype(code, modelMerged.getModel().getPrecision());
+    os << code;
 }
 //----------------------------------------------------------------------------
 std::string CustomConnectivityUpdateGroupMerged::getPrePostVarRefIndex(bool delay, const std::string &index) const

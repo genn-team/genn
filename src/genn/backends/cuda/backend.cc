@@ -690,11 +690,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
     
     // Generate preamble
     preambleHandler(os);
@@ -716,6 +718,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
                    [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
@@ -724,7 +729,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
                        [&g](const CustomUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); })
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
-                       [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
+                       [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); })
+           || std::any_of(modelMerged.getMergedCustomConnectivityUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityUpdateGroups().cend(),
+                          [&g](const CustomConnectivityUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
         {
             genFilteredMergedKernelDataStructures(os, totalConstMem,
                                                   modelMerged.getMergedCustomUpdateGroups(),
@@ -733,7 +740,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                                                   modelMerged.getMergedCustomUpdateWUGroups(),
                                                   [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
-                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
+                                                  
+                                                  modelMerged.getMergedCustomConnectivityUpdateGroups(),
+                                                  [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
+                                                  [g](const CustomConnectivityUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
 
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
@@ -751,6 +762,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom WU updates" << std::endl;
                 genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
+                
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom connectivity updates" << std::endl;
+                genCustomConnectivityUpdateKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
             }
         }
 
