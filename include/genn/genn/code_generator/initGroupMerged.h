@@ -30,6 +30,18 @@ public:
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
+    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -47,18 +59,6 @@ private:
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
                        bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const,
                        const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
-
-    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //! Is the incoming synapse weight update model var init parameter referenced?
     bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
