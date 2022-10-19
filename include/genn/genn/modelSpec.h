@@ -192,8 +192,7 @@ public:
     typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
     typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
     typedef std::map<std::string, CustomUpdateWUInternal>::value_type CustomUpdateWUValueType;
-
-    //typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
+    typedef std::map<std::string, CustomConnectivityUpdateInternal>::value_type CustomConnectivityUpdateValueType;
 
     ModelSpec();
     ModelSpec(const ModelSpec&) = delete;
