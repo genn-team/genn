@@ -26,4 +26,18 @@ class SimTest : public SimulationTest
 
 TEST_F(SimTest, CustomConnectivityUpdateRemove)
 {
+    pullgSynFromDevice();
+    pulldSynFromDevice();
+    pullSynConnectivityFromDevice();
+    
+    for(unsigned int i = 0; i < 100; i++) {
+        ASSERT_EQ(rowLengthSyn[i], 99 - i);
+
+        for(unsigned int s = 0; s < rowLengthSyn[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn) + s;
+            const unsigned int j = indSyn[idx];
+            
+            
+        }
+    }
 }

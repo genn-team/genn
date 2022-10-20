@@ -60,7 +60,7 @@ public:
     DECLARE_SNIPPET(Triangle, 0);
 
     SET_ROW_BUILD_CODE(
-        "if(j > $(num_post)) {\n"
+        "if(j < $(num_post)) {\n"
         "   if(j > $(id_pre)) {\n"
         "       $(addSynapse, j);\n"
         "   }\n"
