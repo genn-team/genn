@@ -1092,6 +1092,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     if(updateRole) {
         Utils::updateHash(getArchetype().getWUHashDigest(), hash);
     }
+    else if (role == Role::ConnectivityInit) {
+        Utils::updateHash(getArchetype().getConnectivityInitHashDigest(), hash);
+    }
     else {
         Utils::updateHash(getArchetype().getWUInitHashDigest(), hash);
     }
