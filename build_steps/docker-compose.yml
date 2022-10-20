@@ -1,0 +1,28 @@
+version: "3.4"
+
+services:
+    pygenn:
+        image: pygenn:latest
+        container_name: pygenn
+        restart: always
+        ports:
+            - 8888:8888
+        volumes:
+            - ../pygenn/notebooks:/root/pygenn/notebooks
+        networks:
+            - pygenn
+        command: /bin/bash /root/build/entrypoint.sh
+        user: pygennuser:pygennuser
+        healthcheck:
+            test: ["CMD", "curl", "-f", "host.docker.internal:8888"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 5m
+
+volumes:
+    pygenn_notebooks:
+
+networks:
+    pygenn:
+        driver: bridge

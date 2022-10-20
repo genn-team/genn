@@ -1,0 +1,10 @@
+.git
+build
+dist
+docs
+doxygenn
+lib
+obj*
+tests
+userproject
+!userproject/include
