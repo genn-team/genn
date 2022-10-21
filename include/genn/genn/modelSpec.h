@@ -758,7 +758,7 @@ public:
     /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param synapseGroup SynapseGroup whose connectivity this update will apply to
+        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in CustomConnectivityUpdateModel::ParamValues object.
         \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in CustomConnectivityUpdateModel::VarValues object.
@@ -770,7 +770,7 @@ public:
         \return pointer to newly created CustomConnectivityUpdate */
     template<typename CustomConnectivityUpdateModel>
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
-                                                          const SynapseGroup *synapseGroup, const CustomConnectivityUpdateModel *model, 
+                                                          const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModel *model, 
                                                           const typename CustomConnectivityUpdateModel::ParamValues &paramValues,
                                                           const typename CustomConnectivityUpdateModel::VarValues &varInitialisers,
                                                           const typename CustomConnectivityUpdateModel::PreVarValues &preVarInitialisers,
@@ -779,10 +779,13 @@ public:
                                                           const typename CustomConnectivityUpdateModel::PreVarReferences &preVarReferences,
                                                           const typename CustomConnectivityUpdateModel::PostVarReferences &postVarReferences)
     {
+        // Find target synapse group
+        auto targetSynapseGroup = findSynapseGroupInternal(targetSynapseGroupName);
+
         // Add neuron group to map
         auto result = m_CustomConnectivityUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, updateGroupName, synapseGroup, model,
+            std::forward_as_tuple(name, updateGroupName, targetSynapseGroup, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), preVarInitialisers.getInitialisers(),
                                   postVarInitialisers.getInitialisers(), varReferences.getInitialisers(), preVarReferences.getInitialisers(),
                                   postVarReferences.getInitialisers(), m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
@@ -801,7 +804,7 @@ public:
     /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param synapseGroup SynapseGroup whose connectivity this update will apply to
+        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in CustomConnectivityUpdateModel::ParamValues object.
         \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in CustomConnectivityUpdateModel::VarValues object.
@@ -813,7 +816,7 @@ public:
         \return pointer to newly created CustomConnectivityUpdate */
     template<typename CustomConnectivityUpdateModel>
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
-                                                          const SynapseGroup *synapseGroup,
+                                                          const std::string &targetSynapseGroupName,
                                                           const typename CustomConnectivityUpdateModel::ParamValues &paramValues,
                                                           const typename CustomConnectivityUpdateModel::VarValues &varInitialisers,
                                                           const typename CustomConnectivityUpdateModel::PreVarValues &preVarInitialisers,
@@ -822,8 +825,9 @@ public:
                                                           const typename CustomConnectivityUpdateModel::PreVarReferences &preVarReferences,
                                                           const typename CustomConnectivityUpdateModel::PostVarReferences &postVarReferences)
     {
-        return addCustomConnectivityUpdate<CustomConnectivityUpdateModel>(name, updateGroupName, CustomConnectivityUpdateModel::getInstance(),
-                                                                          synapseGroup, paramValues, varInitialisers, preVarInitialisers,
+        return addCustomConnectivityUpdate<CustomConnectivityUpdateModel>(name, updateGroupName, targetSynapseGroupName, 
+                                                                          CustomConnectivityUpdateModel::getInstance(),
+                                                                          paramValues, varInitialisers, preVarInitialisers,
                                                                           postVarInitialisers, varReferences, preVarReferences, postVarReferences);
     }
 
