@@ -73,6 +73,22 @@ public:
 };
 IMPLEMENT_SNIPPET(Triangle);
 
+class ConnectUpdate : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(ConnectUpdate, 0, 1, 0, 0, 0, 0, 0);
+    
+    SET_VARS({{"v", "scalar"}});
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   $(remove_synapse);\n"
+        "   break;\n"
+        "});\n");
+        
+};
+IMPLEMENT_MODEL(ConnectUpdate);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -91,11 +107,16 @@ void modelDefinition(ModelSpec &model)
     model.addNeuronPopulation<TestNeuron>("Neuron", 64, {}, {0.0});
     
     TestWUM::VarValues testWUMInit(initVar<Weight>(), initVar<Delay>());
-    model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+    auto *sg = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
         "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "SpikeSource", "Neuron",
         {}, testWUMInit,
         {}, {},
         initConnectivity<Triangle>({}));
-
+    
+    ConnectUpdate::VarValues connectUpdateInit(initVar<Weight>());
+    model.addCustomConnectivityUpdate<ConnectUpdate>(
+        "CustomConnectivityUpdate", "Update", "Syn",
+        {}, connectUpdateInit, {}, {},
+        {}, {}, {});
     model.setPrecision(GENN_FLOAT);
 }
