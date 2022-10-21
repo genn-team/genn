@@ -372,13 +372,12 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
     // Loop through variables
     const V varAdaptor(group);
     const auto vars = varAdaptor.getVars();
-    std::vector<std::string> groupStatePushPullFunctions;
     for(size_t i = 0; i < vars.size(); i++) {
         const auto *varInitSnippet = varAdaptor.getVarInitialisers().at(i).getSnippet();
         const bool autoInitialized = !varInitSnippet->getCode().empty();
         genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                     runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + group.getName(), varAdaptor.getVarLocation(i),
-                    autoInitialized, getSizeFn(group, vars[i]), mem, groupStatePushPullFunctions);
+                    autoInitialized, getSizeFn(group, vars[i]), mem, statePushPullFunctions);
 
         // Loop through EGPs required to initialize variable
         const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
@@ -388,13 +387,6 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
                                 extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + group.getName(),
                                 true, VarLocation::HOST_DEVICE);
         }
-    }
-
-    // Add helper function to push and pull entire group state
-    if(!backend.getPreferences().automaticCopy) {
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
-                         group.getName(), backend.getPreferences().generateEmptyStatePushPull,
-                         groupStatePushPullFunctions, statePushPullFunctions);
     }
 }
 //-------------------------------------------------------------------------
@@ -468,13 +460,21 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
     // Loop through custom updates
     for(const auto &c : customUpdates) {
         // Generate variables
+        std::vector<std::string> groupStatePushPullFunctions;
         genRunnerVars<V>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                          runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-                         runnerPushFunc, runnerPullFunc, c.second, mem, statePushPullFunctions, getSizeFn);
+                         runnerPushFunc, runnerPullFunc, c.second, mem, groupStatePushPullFunctions, getSizeFn);
 
         // Generate EGPs
         genRunnerEGPs<E>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                          runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
+
+        // Add helper function to push and pull entire group state
+        if(!backend.getPreferences().automaticCopy) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                             c.first, backend.getPreferences().generateEmptyStatePushPull,
+                             groupStatePushPullFunctions, statePushPullFunctions);
+        }
     }
 }
 }   // Anonymous namespace
@@ -1100,15 +1100,22 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             allVarStreams << "// current source variables" << std::endl;
         }
         for (auto const *cs : n.second.getCurrentSources()) {
+            std::vector<std::string> currentSourcePushPullFunctions;
             genRunnerVars<CurrentSourceVarAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-                                                   runnerPushFunc, runnerPullFunc, *cs, mem, statePushPullFunctions,
+                                                   runnerPushFunc, runnerPullFunc, *cs, mem, currentSourcePushPullFunctions,
                                                    [batchSize, &n](const CurrentSourceInternal&, const Models::Base::Var &var)
                                                    { 
                                                        return getVarSize(var.access, n.second.getNumNeurons(), batchSize);
                                                    });
             genRunnerEGPs<CurrentSourceEGPAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                                    runnerVarDecl, runnerExtraGlobalParamFunc, *cs);
+            // Add helper function to push and pull entire group state
+            if(!backend.getPreferences().automaticCopy) {
+                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                 cs->getName(), backend.getPreferences().generateEmptyStatePushPull,
+                                 currentSourcePushPullFunctions, statePushPullFunctions);
+            }
         }
     }
     allVarStreams << std::endl;
@@ -1143,33 +1150,50 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// custom connectivity update variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    genCustomUpdate<CustomConnectivityUpdateVarAdapter, CustomConnectivityUpdateEGPAdapter>(
-        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
-        [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
-        { 
-            const SynapseGroupInternal *sg = c.getSynapseGroup();
-            return (sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
-        });
+    // Loop through custom updates
+    for(const auto &c : model.getCustomConnectivityUpdates()) {
+        // Generate variables
+        std::vector<std::string> customConnectivityPushPullFunctions;
+        genRunnerVars<CustomConnectivityUpdateVarAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                          runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                                                          runnerPushFunc, runnerPullFunc, c.second, mem, customConnectivityPushPullFunctions,
+                                                          [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
+                                                          { 
+                                                              const SynapseGroupInternal *sg = c.getSynapseGroup();
+                                                              return (sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
+                                                          });
+        
+        // Generate presynaptic variables
+        genRunnerVars<CustomConnectivityUpdatePreVarAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                             runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                                                             runnerPushFunc, runnerPullFunc, c.second, mem, customConnectivityPushPullFunctions,
+                                                             [](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
+                                                             { 
+                                                                 return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons();
+                                                             });
 
-    genCustomUpdate<CustomConnectivityUpdatePreVarAdapter, CustomConnectivityUpdateEGPAdapter>(
-        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
-        [](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
-        { 
-            return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons();
-        });
 
-    genCustomUpdate<CustomConnectivityUpdatePostVarAdapter, CustomConnectivityUpdateEGPAdapter>(
-        modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-        runnerPushFunc, runnerPullFunc, model.getCustomConnectivityUpdates(), mem, statePushPullFunctions,
-        [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
-        { 
-            return backend.getSynapticMatrixRowStride(*c.getSynapseGroup());
-        });
+        // Generate postsynaptic variables
+        genRunnerVars<CustomConnectivityUpdatePostVarAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                              runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                                                              runnerPushFunc, runnerPullFunc, c.second, mem, customConnectivityPushPullFunctions,
+                                                              [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
+                                                              { 
+                                                                  return backend.getSynapticMatrixRowStride(*c.getSynapseGroup());
+                                                              });
+
+        // Generate EGPs
+        genRunnerEGPs<CustomConnectivityUpdateEGPAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                                          runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
+
+        // Add helper function to push and pull entire group state
+        if(!backend.getPreferences().automaticCopy) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                             c.first, backend.getPreferences().generateEmptyStatePushPull,
+                             customConnectivityPushPullFunctions, statePushPullFunctions);
+        }
+    }
+
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// pre and postsynaptic variables" << std::endl;
