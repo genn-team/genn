@@ -18,7 +18,9 @@ WORKDIR ${HOME}
 
 COPY . ${HOME}
 
-RUN adduser --disabled-password --gecos "" $USERNAME
-RUN chown -R ${USERNAME}:${USERNAME} "/root"
+RUN adduser --disabled-password --gecos "" $USERNAME && chown -R ${USERNAME}:${USERNAME} "/root"
+
 RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${HOME}/pygenn/genn_wrapper/
 RUN python3 setup.py develop
+
+USER $USERNAME
