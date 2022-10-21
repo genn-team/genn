@@ -34,7 +34,7 @@ public:
     DECLARE_WEIGHT_UPDATE_MODEL(TestWUM, 0, 2, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY},
-              {"d", "uint8_t", VarAccess::READ_ONLY}});
+              {"d", "unsigned int", VarAccess::READ_ONLY}});
 };
 IMPLEMENT_MODEL(TestWUM);
 
@@ -42,7 +42,7 @@ class Weight : public InitVarSnippet::Base
 {
     DECLARE_SNIPPET(Weight, 0);
     
-    SET_CODE("$(value) = ($(id_pre) * 100) + $(id_post);");
+    SET_CODE("$(value) = ($(id_pre) * 64) + $(id_post);");
 };
 IMPLEMENT_SNIPPET(Weight);
 
@@ -50,7 +50,7 @@ class Delay : public InitVarSnippet::Base
 {
     DECLARE_SNIPPET(Delay, 0);
     
-    SET_CODE("$(value) = ($(id_post) * 100) + $(id_pre);");
+    SET_CODE("$(value) = ($(id_post) * 64) + $(id_pre);");
 };
 IMPLEMENT_SNIPPET(Delay);
 
@@ -87,8 +87,8 @@ void modelDefinition(ModelSpec &model)
     model.setDT(1.0);
     model.setName("custom_connectivity_update_remove");
     
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
-    model.addNeuronPopulation<TestNeuron>("Neuron", 100, {}, {0.0});
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 64, {}, {});
+    model.addNeuronPopulation<TestNeuron>("Neuron", 64, {}, {0.0});
     
     TestWUM::VarValues testWUMInit(initVar<Weight>(), initVar<Delay>());
     model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
