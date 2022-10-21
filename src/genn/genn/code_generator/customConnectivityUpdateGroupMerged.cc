@@ -207,7 +207,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
         // Copy weight update model variables from end of row over synapse to be deleted
         for (size_t i = 0; i < wumVars.size(); i++) {
-            removeSynapse << "group->" << wumVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
+            removeSynapse << "group->" << wumVars[i].name << "[idx] = group->" << wumVars[i].name << "[lastIdx];" << std::endl;
         }
 
         // Decrement row length
@@ -223,7 +223,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
     
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs["id_syn"] + "]");
-    updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["is_pre"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->", "[" + updateSubs["id_post"] + "]");
     updateSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
                                          [this](size_t i) { return isParamHeterogeneous(i);  },
