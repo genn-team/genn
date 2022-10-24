@@ -29,6 +29,35 @@ class SimTest : public SimulationTest
 
 TEST_F(SimTest, CustomConnectivityUpdateRemove)
 {
+    // Download state
+    pullgSynFromDevice();
+    pulldSynFromDevice();
+    pullSynConnectivityFromDevice();
+    pullvCustomConnectivityUpdateFromDevice();
+    
+    // Loop through rows
+    for(unsigned int i = 0; i < 64; i++) {
+        // Check correct triangle row length
+        ASSERT_EQ(rowLengthSyn[i], 63 - i);
+
+        // Loop through row
+        std::bitset<64> row;
+        for(unsigned int s = 0; s < rowLengthSyn[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn) + s;
+            const unsigned int j = indSyn[idx];
+
+            // Check that all variables are correct given the pre and postsynaptic index
+            ASSERT_EQ(dSyn[idx], (j * 64) + i);
+            ASSERT_FLOAT_EQ(gSyn[idx], (i * 64.0f) + j);
+            ASSERT_FLOAT_EQ(vCustomConnectivityUpdate[idx], (i * 64.0f) + j);
+
+            // Set bit in row bitset
+            row.set(j);
+        }
+        const uint64_t correct = 0xFFFFFFFFFFFFFFFEULL << i;
+        ASSERT_EQ(row.to_ullong(), correct);
+    }
+
     // Launch custom update
     updateUpdate();
 
@@ -38,21 +67,27 @@ TEST_F(SimTest, CustomConnectivityUpdateRemove)
     pullSynConnectivityFromDevice();
     pullvCustomConnectivityUpdateFromDevice();
     
+    // Loop through rows
     for(unsigned int i = 0; i < 64; i++) {
-        ASSERT_EQ(rowLengthSyn[i], 62 - i);
+        // Check correct triangle row length
+        ASSERT_EQ(rowLengthSyn[i], (i > 62) ? 0 : (62 - i));
 
+        // Loop through row
         std::bitset<64> row;
         for(unsigned int s = 0; s < rowLengthSyn[i]; s++) {
             const unsigned int idx = (i * maxRowLengthSyn) + s;
             const unsigned int j = indSyn[idx];
-            
-            ASSERT_EQ(dSyn[idx], (j * 64) + i);
-            ASSERT_FLOAT_EQ(gSyn[idx], (i * 64.0f) + j);
-            ASSERT_FLOAT_EQ(vCustomConnectivityUpdate[idx], (i * 64.0f) + j);
+
+            // Check that all variables are correct given the pre and postsynaptic index
+            EXPECT_EQ(dSyn[idx], (j * 64) + i);
+            EXPECT_FLOAT_EQ(gSyn[idx], (i * 64.0f) + j);
+            EXPECT_FLOAT_EQ(vCustomConnectivityUpdate[idx], (i * 64.0f) + j);
+
+            // Set bit in row bitset
             row.set(j);
         }
         
-        const uint64_t correct = 0xFFFFFFFFFFFFFFFEULL << i;
+        const uint64_t correct = 0xFFFFFFFFFFFFFFFCULL << i;
         ASSERT_EQ(row.to_ullong(), correct);
     }
 }
