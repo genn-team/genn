@@ -120,12 +120,6 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            [](const CustomConnectivityUpdateInternal &cg) { return cg.isVarInitRequired(); },
                            &CustomConnectivityUpdateInternal::getInitHashDigest);
 
-     LOGD_CODE_GEN << "Merging custom connectivity update groups:";
-    createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
-                           [](const CustomConnectivityUpdateInternal &) { return true; },
-                           &CustomConnectivityUpdateInternal::getHashDigest);
-
-
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                            [](const NeuronGroupInternal &){ return true; },
