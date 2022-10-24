@@ -29,12 +29,17 @@ class SimTest : public SimulationTest
 
 TEST_F(SimTest, CustomConnectivityUpdateRemove)
 {
+    // Launch custom update
+    updateUpdate();
+
+    // Download state
     pullgSynFromDevice();
     pulldSynFromDevice();
     pullSynConnectivityFromDevice();
+    pullvCustomConnectivityUpdateFromDevice();
     
     for(unsigned int i = 0; i < 64; i++) {
-        ASSERT_EQ(rowLengthSyn[i], 63 - i);
+        ASSERT_EQ(rowLengthSyn[i], 62 - i);
 
         std::bitset<64> row;
         for(unsigned int s = 0; s < rowLengthSyn[i]; s++) {
@@ -43,6 +48,7 @@ TEST_F(SimTest, CustomConnectivityUpdateRemove)
             
             ASSERT_EQ(dSyn[idx], (j * 64) + i);
             ASSERT_FLOAT_EQ(gSyn[idx], (i * 64.0f) + j);
+            ASSERT_FLOAT_EQ(vCustomConnectivityUpdate[idx], (i * 64.0f) + j);
             row.set(j);
         }
         
