@@ -63,21 +63,33 @@ public:
 };
 IMPLEMENT_SNIPPET(Triangle);
 
-class ConnectUpdate : public CustomConnectivityUpdateModels::Base
+class RemoveSynapseUpdate : public CustomConnectivityUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(ConnectUpdate, 0, 1, 0, 0, 0, 0, 0);
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseUpdate, 0, 1, 0, 0, 0, 0, 0);
     
-    SET_VARS({{"v", "scalar"}});
+    SET_VARS({{"a", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "$(for_each_synapse,\n"
         "{\n"
-        "   $(remove_synapse);\n"
-        "   break;\n"
+        "   if($(id_post) == ($(id_pre) + 1)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
         "});\n");
+};
+IMPLEMENT_MODEL(RemoveSynapseUpdate);
+
+class AddSynapseUpdate : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(AddSynapseUpdate, 0, 0, 0, 0, 0, 0, 0);
+    
+    //SET_VARS({{"b", "scalar"}});
+    SET_ROW_UPDATE_CODE("$(add_synapse, $(id_pre) + 1);\n");
         
 };
-IMPLEMENT_MODEL(ConnectUpdate);
+IMPLEMENT_MODEL(AddSynapseUpdate);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -103,10 +115,10 @@ void modelDefinition(ModelSpec &model)
         {}, {},
         initConnectivity<Triangle>({}));
     
-    ConnectUpdate::VarValues connectUpdateInit(initVar<Weight>());
-    model.addCustomConnectivityUpdate<ConnectUpdate>(
-        "CustomConnectivityUpdate", "Update", "Syn",
-        {}, connectUpdateInit, {}, {},
+    RemoveSynapseUpdate::VarValues removeSynapseInit(initVar<Weight>());
+    model.addCustomConnectivityUpdate<RemoveSynapseUpdate>(
+        "RemoveSynapse", "RemoveSynapse", "Syn",
+        {}, removeSynapseInit, {}, {},
         {}, {}, {});
     model.setPrecision(GENN_FLOAT);
 }
