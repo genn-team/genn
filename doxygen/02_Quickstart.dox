@@ -181,7 +181,7 @@ completed to define a neuronal network model.
       \endcode
       \note
       All provided examples and pre-defined model elements in GeNN work with
-      units of mV, ms, nF and muS. However, the choice of units is entirely
+      units of mV, ms, nF and uS. However, the choice of units is entirely
       left to the user if custom model elements are used.
 
    `MBody1.cc` shows a typical example of a model definition function. In
@@ -189,7 +189,7 @@ completed to define a neuronal network model.
    ModelSpec::addSynapsePopulation to build up the network. For a full range
    of options for defining a network, refer to the \link UserManual User
    Manual\endlink.
-	
+
 3. The programmer defines their own "simulation" code similar to
    the code in `userproject/MBody1_project/model/MBody1Sim.cc`. In this code,
 
