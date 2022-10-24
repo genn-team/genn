@@ -211,55 +211,99 @@ TEST(NeuronGroup, InvalidName)
 
 TEST(NeuronGroup, ConstantVarIzhikevich)
 {
-    ModelSpec model;
+    ModelSpecInternal model;
 
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
+    model.finalize();
+
     ASSERT_FALSE(ng->isZeroCopyEnabled());
     ASSERT_FALSE(ng->isSimRNGRequired());
     ASSERT_FALSE(ng->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
 }
 
-TEST(NeuronGroup, UnitialisedVarIzhikevich)
+TEST(NeuronGroup, UninitialisedVarIzhikevich)
 {
-    ModelSpec model;
+    ModelSpecInternal model;
 
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(uninitialisedVar(), uninitialisedVar());
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
+    model.finalize();
+
     ASSERT_FALSE(ng->isZeroCopyEnabled());
     ASSERT_FALSE(ng->isSimRNGRequired());
     ASSERT_FALSE(ng->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
 }
 
-TEST(NeuronGroup, UnitialisedVarRand)
+TEST(NeuronGroup, RandVarIzhikevich)
 {
-    ModelSpec model;
+    ModelSpecInternal model;
 
     InitVarSnippet::Uniform::ParamValues dist(0.0, 1.0);
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, initVar<InitVarSnippet::Uniform>(dist));
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
+    model.finalize();
+
     ASSERT_FALSE(ng->isZeroCopyEnabled());
     ASSERT_FALSE(ng->isSimRNGRequired());
     ASSERT_TRUE(ng->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
 }
 
 TEST(NeuronGroup, Poisson)
 {
-    ModelSpec model;
+    ModelSpecInternal model;
 
     NeuronModels::PoissonNew::ParamValues paramVals(20.0);
     NeuronModels::PoissonNew::VarValues varVals(0.0);
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::PoissonNew>("Neurons0", 10, paramVals, varVals);
 
+    model.finalize();
+
     ASSERT_FALSE(ng->isZeroCopyEnabled());
     ASSERT_TRUE(ng->isSimRNGRequired());
     ASSERT_FALSE(ng->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
 }
 
 TEST(NeuronGroup, FuseWUMPrePost)
