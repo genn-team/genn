@@ -46,7 +46,7 @@
       <FunctionLevelLinking Condition="'$(Configuration)'=='Release'">true</FunctionLevelLinking>
       <IntrinsicFunctions Condition="'$(Configuration)'=='Release'">true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>custom_connectivity_update_remove_CODE;$(GTEST_DIR);$(GTEST_DIR)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>custom_connectivity_update_CODE;$(GTEST_DIR);$(GTEST_DIR)/include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

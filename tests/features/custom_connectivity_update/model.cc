@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file custom_connectivity_update_remove/model.cc
+/*! \file custom_connectivity_update/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -8,16 +8,6 @@ suite of minimal models with known analytic outcomes that are used for continuou
 
 
 #include "modelSpec.h"
-// 10 pre, 10 post neurons
-// Triangle connectivity i.e. pre connected to all subsequent post
-// Initialise weights to  postsynaptic index * (presynaptic index + 1)
-// Initialise custom connectivity update variable to something else
-// connectivity update which removes first synapse in each row
-
-// Initialise model
-// Launch custom update
-// pull connectivity, state variables et
-// check all synapse variables and connectivity match expectations
 
 class TestNeuron : public NeuronModels::Base
 {
@@ -101,7 +91,7 @@ void modelDefinition(ModelSpec &model)
     }
 #endif
     model.setDT(1.0);
-    model.setName("custom_connectivity_update_remove");
+    model.setName("custom_connectivity_update");
     
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 64, {}, {});
     model.addNeuronPopulation<TestNeuron>("Neuron", 64, {}, {0.0});
