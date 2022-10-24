@@ -66,7 +66,7 @@ bool CustomConnectivityUpdate::isRowSimRNGRequired() const
     return Utils::isRNGRequired(getCustomConnectivityUpdateModel()->getRowUpdateCode());
 }
 //------------------------------------------------------------------------
-CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, const SynapseGroupInternal *synapseGroup,
+CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                                                    const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                                                    const std::vector<Models::VarInit> &preVarInitialisers, const std::vector<Models::VarInit> &postVarInitialisers,
@@ -79,7 +79,6 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences),
     m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
 {
-   
     // If connectivity is bitmask, give error if any variables are referenced
     if (getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         if (!getVarInitialisers().empty() || !getVarReferences().empty()) {

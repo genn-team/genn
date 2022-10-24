@@ -299,7 +299,7 @@ protected:
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isTransposeOperation() const;
 
-    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+    SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -314,5 +314,5 @@ private:
     // Members
     //------------------------------------------------------------------------
     const std::vector<Models::WUVarReference> m_VarReferences;
-    const SynapseGroupInternal *m_SynapseGroup;
+    SynapseGroupInternal *m_SynapseGroup;
 };

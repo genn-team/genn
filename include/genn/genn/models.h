@@ -193,27 +193,27 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    const NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
+    NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
 
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
-    static VarReference createVarRef(const NeuronGroup *ng, const std::string &varName);
-    static VarReference createVarRef(const CurrentSource *cs, const std::string &varName);
-    static VarReference createVarRef(const CustomUpdate *su, const std::string &varName);
-    static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
+    static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
+    static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
+    static VarReference createVarRef(CustomUpdate *su, const std::string &varName);
+    static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
     
 private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<const NeuronGroup*(void)> GetDelayNeuronGroupFn;
+    typedef std::function<NeuronGroup*(void)> GetDelayNeuronGroupFn;
 
-    VarReference(const NeuronGroupInternal *ng, const std::string &varName);
-    VarReference(const CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(const CustomUpdate *cu, const std::string &varName);
+    VarReference(NeuronGroupInternal *ng, const std::string &varName);
+    VarReference(CurrentSourceInternal *cs, const std::string &varName);
+    VarReference(CustomUpdate *cu, const std::string &varName);
     VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
@@ -236,16 +236,16 @@ using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference
 class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
 public:
-    WUVarReference(const SynapseGroup *sg, const std::string &varName,
-                   const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
-    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
+    WUVarReference(SynapseGroup *sg, const std::string &varName,
+                   SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    WUVarReference(CustomUpdateWU *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const SynapseGroup *getSynapseGroup() const;
+    SynapseGroup *getSynapseGroup() const;
 
-    const SynapseGroup *getTransposeSynapseGroup() const;
+    SynapseGroup *getTransposeSynapseGroup() const;
     const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
     size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
     std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
@@ -254,8 +254,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
-    const SynapseGroupInternal *m_TransposeSG;
+    SynapseGroupInternal *m_SG;
+    SynapseGroupInternal *m_TransposeSG;
     size_t m_TransposeVarIndex;
     Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;

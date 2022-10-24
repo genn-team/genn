@@ -2,6 +2,7 @@
 
 // GeNN includes
 #include "customConnectivityUpdate.h"
+#include "synapseGroupInternal.h"
 
 //------------------------------------------------------------------------
 // CustomUpdateInternal
@@ -9,7 +10,7 @@
 class CustomConnectivityUpdateInternal : public CustomConnectivityUpdate
 {
 public:
-    CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, const SynapseGroupInternal *synapseGroup, 
+    CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
                                      const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                                      const std::vector<Models::VarInit> &preVarInitialisers, const std::vector<Models::VarInit> &postVarInitialisers,
@@ -19,6 +20,7 @@ public:
     :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers, preVarInitialisers, postVarInitialisers,
                                  varReferences, preVarReferences, postVarReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
+        getSynapseGroup()->addCustomUpdateReference(this);
     }
 
     using CustomConnectivityUpdate::initDerivedParams;

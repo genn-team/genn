@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "neuronGroupInternal.h"
 #include "synapseGroup.h"
 
 //------------------------------------------------------------------------
@@ -33,14 +34,13 @@ public:
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
-    using SynapseGroup::setWUVarReferencedByCustomUpdate;
     using SynapseGroup::setFusedPSVarSuffix;
     using SynapseGroup::setFusedPreOutputSuffix;
     using SynapseGroup::setFusedWUPreVarSuffix;
     using SynapseGroup::setFusedWUPostVarSuffix;
     using SynapseGroup::initDerivedParams;
+    using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::isEventThresholdReTestRequired;
-    using SynapseGroup::areWUVarReferencedByCustomUpdate;
     using SynapseGroup::getFusedPSVarSuffix;
     using SynapseGroup::getFusedPreOutputSuffix;
     using SynapseGroup::getFusedWUPreVarSuffix;

@@ -2,6 +2,7 @@
 
 // GeNN includes
 #include "customUpdate.h"
+#include "synapseGroupInternal.h"
 
 //------------------------------------------------------------------------
 // CustomUpdateInternal
@@ -46,6 +47,7 @@ public:
     :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
                        defaultVarLocation, defaultExtraGlobalParamLocation)
     {
+        getSynapseGroup()->addCustomUpdateReference(this);
     }
 
     using CustomUpdateBase::initDerivedParams;

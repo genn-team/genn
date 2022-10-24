@@ -83,7 +83,7 @@ public:
     bool isRowSimRNGRequired() const;
 
 protected:
-    CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, const SynapseGroupInternal *synapseGroup,
+    CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                              const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                              const std::vector<Models::VarInit> &preVarInitialisers, const std::vector<Models::VarInit> &postVarInitialisers,
@@ -114,7 +114,7 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
-    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+    SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -132,7 +132,7 @@ private:
     //------------------------------------------------------------------------
     const std::string m_Name;
     const std::string m_UpdateGroupName;
-    const SynapseGroupInternal *m_SynapseGroup;
+    SynapseGroupInternal *m_SynapseGroup;
 
     const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
     const std::vector<double> m_Params;

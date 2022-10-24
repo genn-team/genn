@@ -130,50 +130,50 @@ inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::Va
 }
 
 //! Creates a reference to a neuron group variable
-inline Models::VarReference createVarRef(const NeuronGroup *ng, const std::string &varName)
+inline Models::VarReference createVarRef(NeuronGroup *ng, const std::string &varName)
 {
     return Models::VarReference::createVarRef(ng, varName);
 }
 
 //! Creates a reference to a current source variable
-inline Models::VarReference createVarRef(const CurrentSource *cs, const std::string &varName)
+inline Models::VarReference createVarRef(CurrentSource *cs, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cs, varName);
 }
 
 //! Creates a reference to a custom update variable
-inline Models::VarReference createVarRef(const CustomUpdate *cu, const std::string &varName)
+inline Models::VarReference createVarRef(CustomUpdate *cu, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cu, varName);
 }
 
 //! Creates a reference to a postsynaptic model variable
-inline Models::VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createPSMVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model presynaptic variable
-inline Models::VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPreVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model postsynapticvariable
-inline Models::VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPostVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model variable
-inline Models::WUVarReference createWUVarRef(const SynapseGroup *sg, const std::string &varName,
-                                             const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
+inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
+                                             SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
     return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
 //! Creates a reference to a custom weight update variable
-inline Models::WUVarReference createWUVarRef(const CustomUpdateWU *cu, const std::string &varName)
+inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
 {
     return Models::WUVarReference(cu, varName);
 }
