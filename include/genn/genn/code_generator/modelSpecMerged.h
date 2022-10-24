@@ -226,9 +226,6 @@ public:
     //! Get hash digest of custom update module
     boost::uuids::detail::sha1::digest_type getCustomUpdateArchetypeHashDigest() const;
 
-    //! Get hash digest of custom connectivity update module
-    boost::uuids::detail::sha1::digest_type getCustomConnectivityUpdateArchetypeHashDigest() const;
-    
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
 

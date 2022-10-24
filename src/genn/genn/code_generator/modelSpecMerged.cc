@@ -458,23 +458,6 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateArchetyp
         Utils::updateHash(g.getArchetype().getHashDigest(), hash);
     }
 
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomConnectivityUpdateArchetypeHashDigest() const
-{
-     boost::uuids::detail::sha1 hash;
-
-    // Add hash of model batch size
-    Utils::updateHash(getModel().getBatchSize(), hash);
-    
-    // Concatenate hash digest of GeNN version
-    Utils::updateHash(GENN_VERSION, hash);
-
-    // Concatenate hash digest of git hash
-    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
-    Utils::updateHash(GIT_HASH, hash);
-
     // Concatenate hash digest of archetype custom connectivityupdate group
     for(const auto &g : m_MergedCustomConnectivityUpdateGroups) {
         Utils::updateHash(g.getArchetype().getHashDigest(), hash);
