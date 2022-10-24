@@ -94,6 +94,21 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+
+    // If row update code includes add or remove synapse functions
+    const std::string rowUpdateCode = cm->getRowUpdateCode();
+    if (rowUpdateCode.find("$(add_synapse") != std::string::npos
+        || rowUpdateCode.find("$(remove_synapse") != std::string::npos)
+    {
+        // Add fields with references to all weight update model variables
+        for (const auto &v : getArchetype().getSynapseGroup()->getWUModel()->getVars()) {
+            addField(v.type + "*", "_" + v.name, 
+                     [v, &backend](const CustomConnectivityUpdateInternal &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + v.name + cg.getSynapseGroup()->getName(); 
+                     });
+        }
+    }
 }
 //----------------------------------------------------------------------------
 bool CustomConnectivityUpdateGroupMerged::isParamHeterogeneous(size_t index) const
@@ -177,7 +192,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
         // Use subsequent parameters to initialise new synapse's weight update model variables
         for (size_t i = 0; i < wumVars.size(); i++) {
-            addSynapse << "group->" << wumVars[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+            addSynapse << "group->_" << wumVars[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
         }
 
         // Increment row length
@@ -207,7 +222,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
         // Copy weight update model variables from end of row over synapse to be deleted
         for (size_t i = 0; i < wumVars.size(); i++) {
-            removeSynapse << "group->" << wumVars[i].name << "[idx] = group->" << wumVars[i].name << "[lastIdx];" << std::endl;
+            removeSynapse << "group->_" << wumVars[i].name << "[idx] = group->_" << wumVars[i].name << "[lastIdx];" << std::endl;
         }
 
         // Decrement row length
