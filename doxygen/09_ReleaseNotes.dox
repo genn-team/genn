@@ -8,19 +8,19 @@ User Side Changes
 ----
 1. Custom updates extended to work on ``SynapseMatrixWeight::KERNEL`` weight update model variables.
 2. Custom updates extended to perform reduction operations across neurons as well as batches (see \ref custom_update_neuron_reduction).
-3. PyGeNN can now automatically find Visual Studio build tools using ``setuptools.msvc.msvc14_get_vc_env``
+3. PyGeNN can now automatically find Visual Studio build tools using functionality in ``setuptools.msvc.msvc14_get_vc_env``
 
 
 Bug fixes
 ---------
-1. Fixed bug relating to merging of synapse groups which perform presynaptic updates.
+1. Fixed bug relating to merging of synapse groups which perform presynaptic "revInSyn" updates.
 2. Added missing parameter to PyGeNN. pygenn.genn_model.create_custom_postsynaptic_class function so postsynaptic models with extra global parameters can be created.
 3. Correctly substitute 0 for \$(batch) when using single-threaded CPU backend.
-4. Fixed issues building PyGeNN using Visual Studio 2017.
-6. Fixed bug where model might not be rebuild if sparse connectivity initialisation snippet was changed.
-7. Fixed longstanding bug in ``gen_input_structured`` tool used by some userprojects where data was written outside of array bounds.
-8. Fixed issue with debug mode of ``genn-builmodel.bat`` when using single-threaded CPU backend.
-9. Fixed issue where, if only custom update models required an RNG for initialisation, one might not be instantiated.
+4. Fixed issues building PyGeNN with Visual Studio 2017.
+6. Fixed bug where model might not be rebuilt if sparse connectivity initialisation snippet was changed.
+7. Fixed longstanding bug in the ``gen_input_structured`` tool -- used by some userprojects -- where data was written outside of array bounds.
+8. Fixed issue with debug mode of ``genn-builmodel.bat`` when used with single-threaded CPU backend.
+9. Fixed issue where, if custom update models were the only part of a model that required an RNG for initialisation, one might not be instantiated.
 
 Release Notes for GeNN v4.7.1
 ====
