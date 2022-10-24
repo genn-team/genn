@@ -1235,7 +1235,7 @@ void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBa
     // Initialise custom connectivity update variables
     genInitWUVarCode(os, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(),
                      getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), false,
+                     modelMerged.getModel().getPrecision(), 1,
                      [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
                      [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
