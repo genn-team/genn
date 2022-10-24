@@ -210,7 +210,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         CodeStream::Scope b(removeSynapse);
 
         // Calculate index we want to copy synapse from
-        removeSynapse << "const unsigned lastIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "];" << std::endl;
+        removeSynapse << "const unsigned lastIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "] - 1;" << std::endl;
 
         // Copy postsynaptic target from end of row over synapse to be deleted
         removeSynapse << "group->ind[idx] = group->ind[lastIdx];" << std::endl;
