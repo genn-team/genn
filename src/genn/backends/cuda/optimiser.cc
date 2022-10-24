@@ -200,6 +200,21 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         }
     }
 
+    for (const auto &c : model.getCustomConnectivityUpdates()) {
+        const auto *sg = c.second.getSynapseGroup();
+        groupSizes[KernelCustomUpdate].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
+        if(c.second.isVarInitRequired()) {
+            groupSizes[KernelInitializeSparse].push_back(sg->getSrcNeuronGroup()->getNumNeurons() * sg->getMaxConnections());
+        }
+        if(c.second.isPreVarInitRequired()) {
+            groupSizes[KernelInitialize].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
+        }
+        if(c.second.isPostVarInitRequired()) {
+            groupSizes[KernelInitialize].push_back(sg->getTrgNeuronGroup()->getNumNeurons());
+        }
+        customUpdateKernels.insert(c.second.getUpdateGroupName());
+    }
+
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
