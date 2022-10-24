@@ -199,7 +199,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
         addSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]++;" << std::endl;
     }
-        
+
     // Add function substitution
     updateSubs.addFuncSubstitution("add_synapse", 1 + ccuVars.size() + wumVars.size(), addSynapseStream.str());
 
@@ -228,6 +228,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Decrement row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
         removeSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]--;" << std::endl;
+
+        // Decrement loop counter so synapse i will get processed
+        addSynapse << "i--;" << std::endl;
     }
     updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
     
