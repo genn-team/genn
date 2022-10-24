@@ -69,3 +69,11 @@ clean:
 	@# Delete libGeNN
 	@rm -f $(LIBGENN)
 	@rm -f $(BACKEND_LIBS)
+
+.PHONY docker-build:
+docker-build:
+	@docker build -f ./build_steps/Dockerfile -t pygenn:latest .
+
+.PHONY docker-jupyter:
+docker-jupyter:
+	@docker run -p 127.0.0.1:8888:8888/tcp -v '$(CURDIR)'/pygenn/notebooks:/root/pygenn/notebooks pygenn jupyter notebook --ip 0.0.0.0 --no-browser
