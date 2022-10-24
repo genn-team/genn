@@ -298,6 +298,11 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
+    // Concatenate hash digest of custom connectivity update groups
+    for(const auto &g : m_MergedCustomConnectivityUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
     // Concatenate hash digest of custom transpose WU update groups
     for(const auto &g : m_MergedCustomUpdateTransposeWUGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
@@ -338,6 +343,21 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
+    // Concatenate hash digest of archetype custom connectivity pre update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdatePreInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom connectivity post update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdatePostInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom connectivity sparse update init group
+    for (const auto &g : m_MergedCustomConnectivityUpdateSparseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
     // Update hash with each group's variable locations
     // **NOTE** these only effects the runner - doesn't matter for modules so this is done he
     for(const auto &g : getModel().getNeuronGroups()) {
@@ -361,6 +381,11 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
     }
 
     for(const auto &g : getModel().getCustomWUUpdates()) {
+        Utils::updateHash(g.second.getName(), hash);
+        Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
+    }
+
+    for(const auto &g : getModel().getCustomConnectivityUpdates()) {
         Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
