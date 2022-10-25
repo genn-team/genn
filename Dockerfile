@@ -1,9 +1,8 @@
 FROM nvidia/cuda:11.5.0-devel-ubuntu20.04
 
 # Update APT database and upgrade any outdated packages
-RUN apt-get update
-#RUN apt-get update && \
-#    apt-get upgrade -y
+RUN apt-get update && \
+    apt-get upgrade -y
 
 # Install Python, pip and swig
 RUN apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano
@@ -28,6 +27,9 @@ WORKDIR ${GENN_PATH}
 # Install PyGeNN
 RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
 RUN python3 setup.py develop
+
+# Default command will be to launch bash
+CMD ["/bin/bash"]
 
 # Start entrypoint
 # **NOTE** in 'exec' mode shell arguments aren't expanded so can't use environment variables

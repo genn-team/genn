@@ -20,10 +20,15 @@ groupadd -g $GROUP_ID pygenn
 useradd --shell /bin/bash -u $USER_ID -g pygenn -o -c "" -m pygenn
 export HOME=/home/pygenn
 
-# If interactive command passed, pass remainder of arguments to python interpreter
-if [[ "$1" = "interactive" ]]; then
+# If script command passed
+if [[ "$1" = "script" ]]; then
+    # Shift script command itself off arguments
     shift
-    exec gosu pygenn:pygenn python3 "$@"
+
+    # Change to directory script is in and launch
+    # **YUCK** this should not really be necessary but PyGeNN does
+    # not work nicely running scripts not in working directory
+    exec gosu pygenn:pygenn /bin/bash -c 'cd `dirname "'$2'"` && python3 "'$@'"'
 # Otherwise, if notebook is passes, launch notebook
 elif [[ "$1" = "notebook" ]]; then
     exec gosu pygenn:pygenn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
