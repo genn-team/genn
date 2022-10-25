@@ -8,22 +8,8 @@ RUN apt-get update
 # Install Python, pip and swig
 RUN apt-get install -yq --no-install-recommends python3-dev python3-pip swig
 
-
 # Set CUDA environment variable
 ENV CUDA_PATH=/usr/local/cuda-11.5
-
-# From username, configure environment variable containing home directory
-ENV USERNAME=pygenn
-ENV HOME=/home/${USERNAME}
-
-# Add local bin to path
-ENV PATH="${PATH}:${HOME}/.local/bin"
-
-# Add user non-interactively
-RUN adduser --disabled-password --gecos "" ${USERNAME}
-
-# Switch to user
-USER $USERNAME
 
 # Upgrade pip itself
 RUN pip install --upgrade pip
@@ -31,13 +17,20 @@ RUN pip install --upgrade pip
 # Install numpy and jupyter
 RUN pip install numpy jupyter
 
-# Copy GeNN into home directory
-COPY  --chown=${USERNAME}:${USERNAME} . ${HOME}
+# Copy GeNN into /tmp
+COPY  . /tmp/genn
 
-# Set GeNN directory as current working directory
-WORKDIR ${HOME}
+# Use this as working directory
+WORKDIR /tmp/genn
 
 # Install PyGeNN
-RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${HOME}/pygenn/genn_wrapper/ -j 8
-RUN python3 setup.py develop --user
+RUN make DYNAMIC=1 LIBRARY_DIRECTORY=/tmp/genn/pygenn/genn_wrapper/ -j 8
+RUN python3 setup.py install 
+RUN python3 setup.py install 
 
+# Add non-elevated user non-interactively
+ENV USERNAME=pygenn
+RUN adduser --disabled-password --gecos "" ${USERNAME}
+
+# Switch to user
+USER ${USERNAME}
