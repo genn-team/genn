@@ -20,10 +20,7 @@ ENV HOME=/home/${USERNAME}
 ENV PATH="${PATH}:${HOME}/.local/bin"
 
 # Add user non-interactively
-RUN adduser --disabled-password --gecos "" $USERNAME 
-
-# Set home directory as current working directory
-WORKDIR ${HOME}
+RUN adduser --disabled-password --gecos "" ${USERNAME}
 
 # Switch to user
 USER $USERNAME
@@ -35,9 +32,12 @@ RUN pip install --upgrade pip
 RUN pip install numpy jupyter
 
 # Copy GeNN into home directory
-COPY . ${HOME}
+COPY  --chown=${USERNAME}:${USERNAME} . ${HOME}
+
+# Set GeNN directory as current working directory
+WORKDIR ${HOME}
 
 # Install PyGeNN
-#RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${HOME}/pygenn/genn_wrapper/ -j 8
-#RUN python3 setup.py develop 
+RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${HOME}/pygenn/genn_wrapper/ -j 8
+RUN python3 setup.py develop --user
 
