@@ -15,17 +15,19 @@
 USER_ID=${LOCAL_USER_ID:-9001}
 GROUP_ID=${LOCAL_GROUP_ID:-$USER_ID}
 
-echo "Starting with UID : $USER_ID, GID: $GROUP_ID"
-groupadd -g $GROUP_ID thegroup
-useradd --shell /bin/bash -u $USER_ID -g thegroup -o -c "" -m user
-export HOME=/home/user
+# Add PyGeNN user with matching user and group ID
+groupadd -g $GROUP_ID pygenn
+useradd --shell /bin/bash -u $USER_ID -g pygenn -o -c "" -m pygenn
+export HOME=/home/pygenn
 
-
+# If interactive command passed, pass remainder of arguments to python interpreter
 if [[ "$1" = "interactive" ]]; then
     shift
-    exec gosu user:thegroup python3 "$@"
-elif [[ "$2" = "notebook" ]]; then
-    exec gosu user:group "jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser"
+    exec gosu pygenn:pygenn python3 "$@"
+# Otherwise, if notebook is passes, launch notebook
+elif [[ "$1" = "notebook" ]]; then
+    exec gosu pygenn:pygenn /usr/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
+# Otherwise, execute arguments
 else
-    exec gosu user:thegroup "$@"
+    exec gosu pygenn:pygenn "$@"
 fi
