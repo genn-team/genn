@@ -26,7 +26,7 @@ COPY  . ${GENN_PATH}
 WORKDIR ${GENN_PATH}
 
 # Install PyGeNN
-RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j 8
+RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
 RUN python3 setup.py develop
 
 # Start entrypoint
