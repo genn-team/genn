@@ -26,7 +26,7 @@ if [[ "$1" = "interactive" ]]; then
     exec gosu pygenn:pygenn python3 "$@"
 # Otherwise, if notebook is passes, launch notebook
 elif [[ "$1" = "notebook" ]]; then
-    exec gosu pygenn:pygenn /usr/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
+    exec gosu pygenn:pygenn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
 # Otherwise, execute arguments
 else
     exec gosu pygenn:pygenn "$@"
