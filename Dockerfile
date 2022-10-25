@@ -6,31 +6,29 @@ RUN apt-get update
 #    apt-get upgrade -y
 
 # Install Python, pip and swig
-RUN apt-get install -yq --no-install-recommends python3-dev python3-pip swig
+RUN apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano
 
 # Set CUDA environment variable
 ENV CUDA_PATH=/usr/local/cuda-11.5
+
+ENV GENN_PATH=/opt/genn
 
 # Upgrade pip itself
 RUN pip install --upgrade pip
 
 # Install numpy and jupyter
-RUN pip install numpy jupyter
+RUN pip install numpy jupyter matplotlib
 
-# Copy GeNN into /tmp
-COPY  . /tmp/genn
+# Copy GeNN into /opt
+COPY  . ${GENN_PATH}
 
 # Use this as working directory
-WORKDIR /tmp/genn
+WORKDIR ${GENN_PATH}
 
 # Install PyGeNN
-RUN make DYNAMIC=1 LIBRARY_DIRECTORY=/tmp/genn/pygenn/genn_wrapper/ -j 8
-RUN python3 setup.py install 
-RUN python3 setup.py install 
+RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j 8
+RUN python3 setup.py develop
 
-# Add non-elevated user non-interactively
-ENV USERNAME=pygenn
-RUN adduser --disabled-password --gecos "" ${USERNAME}
-
-# Switch to user
-USER ${USERNAME}
+# Start entrypoint
+# **NOTE** in 'exec' mode shell arguments aren't expanded so can't use environment variables
+ENTRYPOINT ["/opt/genn/bin/docker-entrypoint.sh"]
