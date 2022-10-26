@@ -30,9 +30,11 @@ if [[ "$1" = "script" ]]; then
     # not work nicely running scripts not in working directory
     CWD=$(dirname "$1")
     exec gosu genn:genn /bin/bash -c "cd \"$CWD\" && python3 \"$@\""
-# Otherwise, if notebook is passes, launch notebook
+# Otherwise, if notebook is passes
 elif [[ "$1" = "notebook" ]]; then
-    exec gosu genn:genn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
+    # Extract working directory from next command line argument, otherwise use home
+    CWD=${2:-$HOME}
+    exec gosu genn:genn /bin/bash -c "/usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser --notebook-dir=\"$CWD\""
 # Otherwise, execute arguments
 else
     exec gosu genn:genn "$@"
