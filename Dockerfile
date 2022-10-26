@@ -5,7 +5,7 @@ LABEL maintainer="J.C.Knight@sussex.ac.uk"
 LABEL version="4.8.0"
 LABEL org.opencontainers.image.documentation="https://genn-team.github.io/"
 LABEL org.opencontainers.image.source="https://github.com/genn-team/genn"
-LABEL org.opencontainers.image.title="PyGeNN Docker image"
+LABEL org.opencontainers.image.title="GeNN Docker image"
 
 # Update APT database and upgrade any outdated packages
 RUN apt-get update && \

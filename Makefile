@@ -72,4 +72,4 @@ clean:
 
 .PHONY docker-build:
 docker-build:
-	@docker build -f ./docker/Dockerfile -t pygenn:latest .
+	@docker build -t genn:latest .

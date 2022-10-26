@@ -13,8 +13,3 @@ PyGeNN wraps the C++ GeNN API using SWIG, allowing GeNN to be used either direct
  - Navigate to the GeNN directory and build GeNN as a dll using ``msbuild genn.sln /t:Build /p:Configuration=Release_DLL`` (if you don't have CUDA installed, building the CUDA backend will fail but it should still build the CPU backend).
  - Copy the newly built DLLs into pygenn using ``copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper``
  - Build the Python extension with setup tools using ``python setup.py develop`` command
-
-### Docker
- - `make docker-build` (from project root) to build Docker image
- - `docker-compose up` (from /buildsteps) to launch the container. This will start a Jupyter notebook that can be accessed at `localhost:8888` with the token printed to screen
- - Note that a volume is created so that notebooks created in `pygenn/notebooks` will be persisted
