@@ -31,7 +31,8 @@ COPY  . ${GENN_PATH}
 # Use this as working directory
 WORKDIR ${GENN_PATH}
 
-# Install PyGeNN
+# Install GeNN and PyGeNN
+RUN make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
 RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
 RUN python3 setup.py develop
 
