@@ -15,10 +15,10 @@
 USER_ID=${LOCAL_USER_ID:-9001}
 GROUP_ID=${LOCAL_GROUP_ID:-$USER_ID}
 
-# Add PyGeNN user with matching user and group ID
-groupadd -g $GROUP_ID pygenn
-useradd --shell /bin/bash -u $USER_ID -g pygenn -o -c "" -m pygenn
-export HOME=/home/pygenn
+# Add GeNN user with matching user and group ID
+groupadd -g $GROUP_ID genn
+useradd --shell /bin/bash -u $USER_ID -g genn -o -c "" -m genn
+export HOME=/home/genn
 
 # If script command passed
 if [[ "$1" = "script" ]]; then
@@ -29,11 +29,11 @@ if [[ "$1" = "script" ]]; then
     # **YUCK** this should not really be necessary but PyGeNN does
     # not work nicely running scripts not in working directory
     CWD=$(dirname "$1")
-    exec gosu pygenn:pygenn /bin/bash -c "cd \"$CWD\" && python3 \"$@\""
+    exec gosu genn:genn /bin/bash -c "cd \"$CWD\" && python3 \"$@\""
 # Otherwise, if notebook is passes, launch notebook
 elif [[ "$1" = "notebook" ]]; then
-    exec gosu pygenn:pygenn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
+    exec gosu genn:genn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
 # Otherwise, execute arguments
 else
-    exec gosu pygenn:pygenn "$@"
+    exec gosu genn:genn "$@"
 fi
