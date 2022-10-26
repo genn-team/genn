@@ -7,7 +7,7 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
 ## Installation
 
 You can download GeNN either as a zip file of a stable release, checkout the development
-version using the Git version control system or use our Docker image.
+version using the Git version control system or use our Docker container.
 
 ### Downloading a release
 Point your browser to https://github.com/genn-team/genn/releases
@@ -102,7 +102,7 @@ Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt.
 create a shortcut for this tool on the desktop, for convenience.
 
 ### Docker
-We have also developed an Ubuntu-based docker container with GeNN pre-installed.
+You can also use GeNN by using our CUDA-enabled docker container which comes with GeNN pre-installed.
 You can build this yourself or download it from Dockerhub
 
 ### Building the container
@@ -126,11 +126,11 @@ Assuming they have no additional dependencies, Python scripts using PyGeNN can b
 ```bash
 docker run  --gpus=all -v .:/home gennteam/genn:latest script /home/test.py
 ```
-Typically, this script will be in a volume mounted into the container. Here the current directory on the host is mounted as ``/home`` inside the container.
+Typically, such scripts will be in a volume mounted into the container. Here the current directory on the host is mounted as ``/home`` inside the container.
 In order for this command to work correctly, you typically need to use the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables described below to give the container correct permissions.
 
 ### Interactive mode
-If you want to use the GeNN C++ tools or install some additional packages you can also launch your own executable in the GeNN container.
+If you want to use the GeNN C++ tools, install some additional packages etc you can also launch your own executable with the GeNN container.
 For examples you could run an interactive dash shell with:
 ```bash
 docker run -it --gpus=all gennteam/genn:latest /bin/sh
@@ -138,13 +138,13 @@ docker run -it --gpus=all gennteam/genn:latest /bin/sh
 If the last argument is omitted, the default is to launch a bash shell.
 
 ### Accessing your files
-All of the above options are performed using a non-elevated 'genn' user inside the container. 
-This user won't necessarily have the correct permissions to access files in volumes mounted into the container and files they write may also not have correct permissions.
-However, by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables like:
+All of the above options are performed using a non-elevated user called 'genn' created inside the container. 
+By default, this user probably won't have the correct permissions to access files in volumes mounted into the container and files they write will also not have correct permissions.
+However, by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables when running the container:
 ```bash
 docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` gennteam/genn:latest
 ```
-the 'genn' user will be created with the same UID and GID as your local user user, meaning that output files will have correct permissions.
+the 'genn' user will be created with the same UID and GID as your local user, meaning that output files will have correct permissions.
 
 ## Usage
 
