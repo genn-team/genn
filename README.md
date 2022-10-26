@@ -102,8 +102,8 @@ Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt.
 create a shortcut for this tool on the desktop, for convenience.
 
 ### Docker
-You can also use GeNN by using our CUDA-enabled docker container which comes with GeNN pre-installed.
-You can build this yourself or download it from Dockerhub
+You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
+You can build this container yourself or download it from Dockerhub
 
 ### Building the container
 The following command can be used from the GeNN source directory to build the GeNN container:
@@ -111,6 +111,8 @@ The following command can be used from the GeNN source directory to build the Ge
 ```bash
 make docker-build
 ```
+
+This builds a container tagged as ``genn:latest`` so, to use this container rather than downloading the prebuild one from dockerhub, just replace ``gennteam/genn:latest`` with ``genn:latest`` in the following instructions.
 
 ### Running Jupyter Notebooks
 A Jupyter Notebook environment running in the container can be launched using the ``notebook'' command:
