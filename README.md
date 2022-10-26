@@ -115,7 +115,7 @@ make docker-build
 This builds a container tagged as ``genn:latest`` so, to use this container rather than downloading the prebuild one from dockerhub, just replace ``gennteam/genn:latest`` with ``genn:latest`` in the following instructions.
 
 ### Running Jupyter Notebooks
-A Jupyter Notebook environment running in the container can be launched using the ``notebook'' command:
+A Jupyter Notebook environment running in the container can be launched using the ``notebook`` command:
 
 ```bash
 docker run -p 8080:8080 --gpus=all gennteam/genn:latest notebook
@@ -128,11 +128,11 @@ Assuming they have no additional dependencies, Python scripts using PyGeNN can b
 ```bash
 docker run  --gpus=all -v .:/home gennteam/genn:latest script /home/test.py
 ```
-Typically, such scripts will be in a volume mounted into the container. Here the current directory on the host is mounted as ``/home`` inside the container.
+Typically, such scripts will be in a volume mounted into the container and, here the current directory on the host is mounted into ``/home`` in the container.
 In order for this command to work correctly, you typically need to use the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables described below to give the container correct permissions.
 
 ### Interactive mode
-If you want to use the GeNN C++ tools, install some additional packages etc you can also launch your own executable with the GeNN container.
+If you want to use the GeNN C++ tools or install some additional packages etc you can also launch your own executable from the GeNN container.
 For examples you could run an interactive dash shell with:
 ```bash
 docker run -it --gpus=all gennteam/genn:latest /bin/sh
@@ -141,7 +141,7 @@ If the last argument is omitted, the default is to launch a bash shell.
 
 ### Accessing your files
 All of the above options are performed using a non-elevated user called 'genn' created inside the container. 
-By default, this user probably won't have the correct permissions to access files in volumes mounted into the container and files they write will also not have correct permissions.
+By default, this user probably won't have the correct permissions to create files in volumes mounted into the container.
 However, by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables when running the container:
 ```bash
 docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` gennteam/genn:latest
