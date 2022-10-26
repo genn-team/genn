@@ -1,4 +1,11 @@
-FROM nvidia/cuda:11.5.0-devel-ubuntu20.04
+ARG BASE=11.5.0-devel-ubuntu20.04
+FROM nvidia/cuda:${BASE}
+
+LABEL maintainer="J.C.Knight@sussex.ac.uk"
+LABEL version="4.8.0"
+LABEL org.opencontainers.image.documentation="https://genn-team.github.io/"
+LABEL org.opencontainers.image.source="https://github.com/genn-team/genn"
+LABEL org.opencontainers.image.title="PyGeNN Docker image"
 
 # Update APT database and upgrade any outdated packages
 RUN apt-get update && \
@@ -33,4 +40,4 @@ CMD ["/bin/bash"]
 
 # Start entrypoint
 # **NOTE** in 'exec' mode shell arguments aren't expanded so can't use environment variables
-ENTRYPOINT ["/opt/genn/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/opt/genn/bin/genn-docker-entrypoint.sh"]

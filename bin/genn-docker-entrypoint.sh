@@ -29,8 +29,7 @@ if [[ "$1" = "script" ]]; then
     # **YUCK** this should not really be necessary but PyGeNN does
     # not work nicely running scripts not in working directory
     CWD=$(dirname "$1")
-    CMD="cd $CWD && python3 \"$@\""
-    exec gosu pygenn:pygenn /bin/bash -c "$CMD"
+    exec gosu pygenn:pygenn /bin/bash -c "cd \"$CWD\" && python3 \"$@\""
 # Otherwise, if notebook is passes, launch notebook
 elif [[ "$1" = "notebook" ]]; then
     exec gosu pygenn:pygenn /usr/local/bin/jupyter-notebook --ip=0.0.0.0 --port=8080 --no-browser
