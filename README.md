@@ -128,7 +128,7 @@ Assuming they have no additional dependencies, Python scripts using PyGeNN can b
 ```bash
 docker run  --gpus=all -v .:/home gennteam/genn:latest script /home/test.py
 ```
-Typically, such scripts will be in a volume mounted into the container and, here the current directory on the host is mounted into ``/home`` in the container.
+Typically, such scripts will be located in a volume mounted into the container. For example, here, ``test.py`` is in the current directory on the host which is mounted into ``/home`` in the container.
 In order for this command to work correctly, you typically need to use the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables described below to give the container correct permissions.
 
 ### Interactive mode
