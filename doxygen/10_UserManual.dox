@@ -300,7 +300,7 @@ For convenience, \add_cpp_python_text{the methods this class should implement ca
   referred to by \$(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
-  time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
+  time step size and \$(Isyn) for the total incoming synaptic current. It can also refer to a unique ID (within the population) using \$(id).
 - \add_cpp_python_text{SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE),`threshold_condition_code=THRESHOLD_CONDITION_CODE`} defines the condition for true spike detection.
 - \add_cpp_python_text{SET_RESET_CODE(RESET_CODE),`reset_code=RESET_CODE`} defines code to be run after a true spike is emitted.
 - \add_cpp_python_text{SET_PARAM_NAMES(),`param_names`} defines the names of the model parameters. 
@@ -494,7 +494,7 @@ SET_SIM_CODE(
 \add_toggle_code_python
 sim_code="$(addToInSynDelay, $(inc), $(delay));"
 \end_toggle_code
-where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
+where, once again, \$(inc) is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
 \note
 When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
 
