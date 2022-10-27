@@ -103,7 +103,8 @@ create a shortcut for this tool on the desktop, for convenience.
 
 ### Docker
 You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
-You can build this container yourself or download it from Dockerhub
+To work with such CUDA-enabled containers, you need to first install CUDA on your host system as described above and then install docker and the NVIDIA Container Toolkit as described in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker.
+You can then build the GeNN container yourself or download it from Dockerhub
 
 ### Building the container
 The following command can be used from the GeNN source directory to build the GeNN container:
