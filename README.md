@@ -124,17 +124,17 @@ You can also provide a final argument to launch a different executable e.g. ``/b
 
 ### Accessing your files
 When using the GeNN container you often want to access files on your host system.
-This can be easily configured using the ``-v`` option to mount a local directory into the container. For example:
+This can be easily achieved by using the ``-v`` option to mount a local directory into the container. For example:
 ```bash
 docker run -it --gpus=all -v $HOME:/home gennteam/genn:latest
 ```
-mounts the local users home directory into ``/home`` within the container.
+mounts the local user's home directory into ``/home`` within the container.
 However, all of the commands provided by the GeNN container operate using a non-elevated, internal user called 'genn' who, by default, won't have the correct permissions to create files in volumes mounted into the container.
 This can be resolved by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables when running the container like:
 ```bash
 docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/home gennteam/genn:latest
 ```
-which will create the 'genn' with the same UID and GID as your local user, meaning that they will have the same permissions to access the files mountd into ``/home``. 
+which will ensure that that 'genn' user has the same UID and GID as the local user, meaning that they will have the same permissions to access the files mountd into ``/home``. 
 
 ### Running Jupyter Notebooks
 A Jupyter Notebook environment running in the container can be launched using the ``notebook`` command. Typically, you would combine this with the ``-p 8080:8080`` option to 'publish' port 8080, allowing the notebook server to be accessed on the host. By default, notebooks are created in the home directory of the 'genn' user inside the container. However, to create notebooks which persist beyond the lifetime of the container, the notebook command needs to be combined with the options discussed previously. For example:
