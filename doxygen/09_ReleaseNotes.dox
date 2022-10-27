@@ -9,7 +9,7 @@ User Side Changes
 1. Custom updates extended to work on ``SynapseMatrixWeight::KERNEL`` weight update model variables.
 2. Custom updates extended to perform reduction operations across neurons as well as batches (see \ref custom_update_neuron_reduction).
 3. PyGeNN can now automatically find Visual Studio build tools using functionality in ``setuptools.msvc.msvc14_get_vc_env``
-
+4. GeNN now comes with a fully-functional Docker image and releases will be distributed via <a href="https://hub.docker.com/repository/docker/gennteam/genn">Dockerhub</a> as well as existing channels. Special thanks to Edward Stevinson, James Turner and Benjamin Evans for their help on this (see the <a href="https://github.com/genn-team/genn/blob/master/README.md">README</a> for more information).
 
 Bug fixes
 ---------
