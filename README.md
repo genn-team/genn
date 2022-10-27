@@ -126,27 +126,27 @@ You can also provide a final argument to launch a different executable e.g. ``/b
 When using the GeNN container you often want to access files on your host system.
 This can be easily achieved by using the ``-v`` option to mount a local directory into the container. For example:
 ```bash
-docker run -it --gpus=all -v $HOME:/home gennteam/genn:latest
+docker run -it --gpus=all -v $HOME:/local_home gennteam/genn:latest
 ```
-mounts the local user's home directory into ``/home`` within the container.
+mounts the local user's home directory into ``/local_home`` within the container.
 However, all of the commands provided by the GeNN container operate using a non-elevated, internal user called 'genn' who, by default, won't have the correct permissions to create files in volumes mounted into the container.
 This can be resolved by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables when running the container like:
 ```bash
-docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/home gennteam/genn:latest
+docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest
 ```
-which will ensure that that 'genn' user has the same UID and GID as the local user, meaning that they will have the same permissions to access the files mountd into ``/home``. 
+which will ensure that that 'genn' user has the same UID and GID as the local user, meaning that they will have the same permissions to access the files mounted into ``/local_home``. 
 
 ### Running Jupyter Notebooks
 A Jupyter Notebook environment running in the container can be launched using the ``notebook`` command. Typically, you would combine this with the ``-p 8080:8080`` option to 'publish' port 8080, allowing the notebook server to be accessed on the host. By default, notebooks are created in the home directory of the 'genn' user inside the container. However, to create notebooks which persist beyond the lifetime of the container, the notebook command needs to be combined with the options discussed previously. For example:
 ```bash
-docker run --gpus=all -p 8080:8080 -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/home gennteam/genn:latest notebook /home
+docker run --gpus=all -p 8080:8080 -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest notebook /local_home
 ```
 will create notebooks in the current users home directory.
 
 ### Running PyGeNN scripts
 Assuming they have no additional dependencies, PyGeNN scripts can be run directly using the container with the ``script`` command. As scripts are likely to be located outside of the container, the script command is often combined with the options discussed previously. For example, to run a script called ``test.py`` in your home directory, the script command could be invoked with:
 ```bash
-docker run --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/home gennteam/genn:latest script /home/test.py
+docker run --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest script /local_home/test.py
 ```
 
 ## Usage
