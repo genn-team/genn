@@ -69,3 +69,7 @@ clean:
 	@# Delete libGeNN
 	@rm -f $(LIBGENN)
 	@rm -f $(BACKEND_LIBS)
+
+.PHONY docker-build:
+docker-build:
+	@docker build -t genn:latest .
