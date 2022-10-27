@@ -1,0 +1,12 @@
+.git
+build
+dist
+documentation
+doxygen
+lib
+obj*
+tests
+userproject
+!userproject/include
+**/*.so
+**/*.lib

@@ -6,9 +6,8 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
 
 ## Installation
 
-You can download GeNN either as a zip file of a stable release or a
-snapshot of the most recent stable version or the unstable development
-version using the Git version control system.
+You can download GeNN either as a zip file of a stable release, checkout the development
+version using the Git version control system or use our Docker container.
 
 ### Downloading a release
 Point your browser to https://github.com/genn-team/genn/releases
@@ -101,6 +100,54 @@ window used. One can open an instance of CMD.EXE with the development
 environment already set up by navigating to Start - All Programs - 
 Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may also wish to
 create a shortcut for this tool on the desktop, for convenience.
+
+### Docker
+You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
+To work with such CUDA-enabled containers, you need to first install CUDA on your host system as described above and then install docker and the NVIDIA Container Toolkit as described in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker.
+You can then build the GeNN container yourself or download it from Dockerhub.
+
+### Building the container
+The following command can be used from the GeNN source directory to build the GeNN container:
+
+```bash
+make docker-build
+```
+
+This builds a container tagged as ``genn:latest`` so, to use this container rather than downloading the prebuild one from dockerhub, just replace ``gennteam/genn:latest`` with ``genn:latest`` in the following instructions.
+
+### Interactive mode
+If you wish to use GeNN or PyGeNN interactively, you can launch a bash shell in the GeNN container using the following command:
+```bash
+docker run -it --gpus=all gennteam/genn:latest
+```
+You can also provide a final argument to launch a different executable e.g. ``/bin/sh`` to launch a dash shell.
+
+### Accessing your files
+When using the GeNN container you often want to access files on your host system.
+This can be easily achieved by using the ``-v`` option to mount a local directory into the container. For example:
+```bash
+docker run -it --gpus=all -v $HOME:/local_home gennteam/genn:latest
+```
+mounts the local user's home directory into ``/local_home`` within the container.
+However, all of the commands provided by the GeNN container operate using a non-elevated, internal user called 'genn' who, by default, won't have the correct permissions to create files in volumes mounted into the container.
+This can be resolved by setting the ``LOCAL_USER_ID`` and ``LOCAL_GROUP_ID`` environment variables when running the container like:
+```bash
+docker run -it --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest
+```
+which will ensure that that 'genn' user has the same UID and GID as the local user, meaning that they will have the same permissions to access the files mounted into ``/local_home``. 
+
+### Running Jupyter Notebooks
+A Jupyter Notebook environment running in the container can be launched using the ``notebook`` command. Typically, you would combine this with the ``-p 8080:8080`` option to 'publish' port 8080, allowing the notebook server to be accessed on the host. By default, notebooks are created in the home directory of the 'genn' user inside the container. However, to create notebooks which persist beyond the lifetime of the container, the notebook command needs to be combined with the options discussed previously. For example:
+```bash
+docker run --gpus=all -p 8080:8080 -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest notebook /local_home
+```
+will create notebooks in the current users home directory.
+
+### Running PyGeNN scripts
+Assuming they have no additional dependencies, PyGeNN scripts can be run directly using the container with the ``script`` command. As scripts are likely to be located outside of the container, the script command is often combined with the options discussed previously. For example, to run a script called ``test.py`` in your home directory, the script command could be invoked with:
+```bash
+docker run --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` -v $HOME:/local_home gennteam/genn:latest script /local_home/test.py
+```
 
 ## Usage
 
