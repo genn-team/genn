@@ -113,7 +113,7 @@ make docker-build
 ```
 
 This builds a container tagged as ``genn:latest`` so, to use this container rather than downloading the prebuild one from dockerhub, just replace ``gennteam/genn:latest`` with ``genn:latest`` in the following instructions.
-By default, the container image is based off the Ubuntu 20.04 image with CUDA 11.5 provided by NVIDIA but, if you want to use a different base image, for example to use the container on a machine with an older version of CUDA, you can invoke ``docker build`` directly with an alternative tag (listed on https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md) specified via the ``BASE`` build argument:
+By default, the container image is based off the Ubuntu 20.04 image with CUDA 11.5 provided by NVIDIA but, if you want to use a different base image, for example to use the container on a machine with an older version of CUDA, you can invoke ``docker build`` directly and specify a different tag (listed on https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md)  via the ``BASE`` build argument:
 ```bash
 docker build  --build-arg BASE=11.3.0-devel-ubuntu20.04 -t genn:latest_cuda_11_3 .
 ```
