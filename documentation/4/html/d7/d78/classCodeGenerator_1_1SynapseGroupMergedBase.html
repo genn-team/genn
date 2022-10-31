@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -96,7 +96,6 @@ $(document).ready(function(){initNavTree('d7/d78/classCodeGenerator_1_1SynapseGr
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pro-types">Protected Types</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="../../db/d03/classCodeGenerator_1_1SynapseGroupMergedBase-members.html">List of all members</a>  </div>
@@ -112,14 +111,13 @@ Inheritance diagram for CodeGenerator::SynapseGroupMergedBase:</div>
  <div class="center">
   <img src="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.png" usemap="#CodeGenerator::SynapseGroupMergedBase_map" alt=""/>
   <map id="CodeGenerator::SynapseGroupMergedBase_map" name="CodeGenerator::SynapseGroupMergedBase_map">
-<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="1032,0,1366,24"/>
+<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="860,0,1194,24"/>
 <area href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html" alt="CodeGenerator::PostsynapticUpdateGroupMerged" shape="rect" coords="0,112,334,136"/>
 <area href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html" alt="CodeGenerator::PresynapticUpdateGroupMerged" shape="rect" coords="344,112,678,136"/>
 <area href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html" alt="CodeGenerator::SynapseConnectivityInitGroupMerged" shape="rect" coords="688,112,1022,136"/>
-<area href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html" alt="CodeGenerator::SynapseDenseInitGroupMerged" shape="rect" coords="1032,112,1366,136"/>
-<area href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html" alt="CodeGenerator::SynapseDynamicsGroupMerged" shape="rect" coords="1376,112,1710,136"/>
-<area href="../../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html" alt="CodeGenerator::SynapseKernelInitGroupMerged" shape="rect" coords="1720,112,2054,136"/>
-<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="2064,112,2398,136"/>
+<area href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html" alt="CodeGenerator::SynapseDynamicsGroupMerged" shape="rect" coords="1032,112,1366,136"/>
+<area href="../../d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html" alt="CodeGenerator::SynapseInitGroupMerged" shape="rect" coords="1376,112,1710,136"/>
+<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="1720,112,2054,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -164,15 +162,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abad2b9c46891145436204850b1b7e48e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#abad2b9c46891145436204850b1b7e48e">isTrgNeuronDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
 <tr class="memdesc:abad2b9c46891145436204850b1b7e48e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is postsynaptic neuron derived parameter heterogeneous?  <a href="#abad2b9c46891145436204850b1b7e48e">More...</a><br /></td></tr>
 <tr class="separator:abad2b9c46891145436204850b1b7e48e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acca59d8446d804a2721ef5779c259bb1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#acca59d8446d804a2721ef5779c259bb1">isKernelSizeHeterogeneous</a> (size_t dimensionIndex) const</td></tr>
-<tr class="memdesc:acca59d8446d804a2721ef5779c259bb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is kernel size heterogeneous in this dimension?  <a href="#acca59d8446d804a2721ef5779c259bb1">More...</a><br /></td></tr>
-<tr class="separator:acca59d8446d804a2721ef5779c259bb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9db92b2d369be4fbdbad1d7c0e53f01e">getKernelSize</a> (size_t dimensionIndex) const</td></tr>
-<tr class="memdesc:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX)  <a href="#a9db92b2d369be4fbdbad1d7c0e53f01e">More...</a><br /></td></tr>
-<tr class="separator:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad0a1400ca86aafdce60e4bbc142c68a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad0a1400ca86aafdce60e4bbc142c68a">genKernelIndex</a> (std::ostream &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;subs) const</td></tr>
-<tr class="memdesc:aad0a1400ca86aafdce60e4bbc142c68a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate an index into a kernel based on the id_kernel_XXX variables in subs.  <a href="#aad0a1400ca86aafdce60e4bbc142c68a">More...</a><br /></td></tr>
-<tr class="separator:aad0a1400ca86aafdce60e4bbc142c68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53f111c14e9195e36275600aded4c1bb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a53f111c14e9195e36275600aded4c1bb">isKernelSizeHeterogeneous</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:a53f111c14e9195e36275600aded4c1bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is kernel size heterogeneous in this dimension?  <a href="#a53f111c14e9195e36275600aded4c1bb">More...</a><br /></td></tr>
+<tr class="separator:a53f111c14e9195e36275600aded4c1bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40293a9292c8a9c4d9bb9652c1a1062b"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a40293a9292c8a9c4d9bb9652c1a1062b">getKernelSize</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:a40293a9292c8a9c4d9bb9652c1a1062b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX)  <a href="#a40293a9292c8a9c4d9bb9652c1a1062b">More...</a><br /></td></tr>
+<tr class="separator:a40293a9292c8a9c4d9bb9652c1a1062b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fecc0d1780b7bc52da9df5310c72f60"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a6fecc0d1780b7bc52da9df5310c72f60">genKernelIndex</a> (std::ostream &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;subs) const</td></tr>
+<tr class="memdesc:a6fecc0d1780b7bc52da9df5310c72f60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate an index into a kernel based on the id_kernel_XXX variables in subs.  <a href="#a6fecc0d1780b7bc52da9df5310c72f60">More...</a><br /></td></tr>
+<tr class="separator:a6fecc0d1780b7bc52da9df5310c72f60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7d89910f2cbd43fc65e81f01da34b88"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#af7d89910f2cbd43fc65e81f01da34b88">getPreSlot</a> (unsigned int batchSize) const</td></tr>
 <tr class="separator:af7d89910f2cbd43fc65e81f01da34b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7cebbb3164080a52c10ba1305cfd6b0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa7cebbb3164080a52c10ba1305cfd6b0">getPostSlot</a> (unsigned int batchSize) const</td></tr>
@@ -187,6 +185,22 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab2fdd18d6c10a49a178a5311bc80b5df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4cabd91a75593320f837f959d6a6bb0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ae4cabd91a75593320f837f959d6a6bb0">getPostDenDelayIndex</a> (unsigned int batchSize, const std::string &amp;index, const std::string &amp;offset) const</td></tr>
 <tr class="separator:ae4cabd91a75593320f837f959d6a6bb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0cac77ac8e77a6850f927fecabf1ba4"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad0cac77ac8e77a6850f927fecabf1ba4">getPreVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:ad0cac77ac8e77a6850f927fecabf1ba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a148fb6f73ffe2d9eb040228ff3c17edc"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a148fb6f73ffe2d9eb040228ff3c17edc">getPostVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:a148fb6f73ffe2d9eb040228ff3c17edc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a426e621e0eb7680faba09ee36eccfb80"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a426e621e0eb7680faba09ee36eccfb80">getPrePrevSpikeTimeIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:a426e621e0eb7680faba09ee36eccfb80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68255e9ad541215462e74b356e989167"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a68255e9ad541215462e74b356e989167">getPostPrevSpikeTimeIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:a68255e9ad541215462e74b356e989167"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae17cafc9602af73d9f379b1ba8c804f7"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ae17cafc9602af73d9f379b1ba8c804f7">getPostISynIndex</a> (unsigned int batchSize, const std::string &amp;index) const</td></tr>
+<tr class="separator:ae17cafc9602af73d9f379b1ba8c804f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3ce40ced515620a814670d8edea8844"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ac3ce40ced515620a814670d8edea8844">getPreISynIndex</a> (unsigned int batchSize, const std::string &amp;index) const</td></tr>
+<tr class="separator:ac3ce40ced515620a814670d8edea8844"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3d9d2c9b4a9197e4fa0f788218b6915"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad3d9d2c9b4a9197e4fa0f788218b6915">getSynVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:ad3d9d2c9b4a9197e4fa0f788218b6915"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab09291f6ecc467b38b5335c5b79782ea"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab09291f6ecc467b38b5335c5b79782ea">getKernelVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:ab09291f6ecc467b38b5335c5b79782ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;</a></td></tr>
 <tr class="memitem:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a2e7e24c877ed71443ddba4ef3625fdd9">GroupMerged</a> (size_t index, const std::string &amp;precision, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt;&gt; groups)</td></tr>
 <tr class="separator:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,35 +232,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:af92aaeb21f030deb215087d03e6039ae inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign memory spaces to group.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af92aaeb21f030deb215087d03e6039ae">More...</a><br /></td></tr>
 <tr class="separator:af92aaeb21f030deb215087d03e6039ae inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9cae7646505967de99350aeb64392f8b"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9cae7646505967de99350aeb64392f8b">getPreVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a9cae7646505967de99350aeb64392f8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37e21ca4e4fc33071530a0930eb1fcc5"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a37e21ca4e4fc33071530a0930eb1fcc5">getPostVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a37e21ca4e4fc33071530a0930eb1fcc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acab2066c2bdfd7213199234c8b232216"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#acab2066c2bdfd7213199234c8b232216">getPrePrevSpikeTimeIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:acab2066c2bdfd7213199234c8b232216"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adaee0630271800f5580f0e4a65002e78"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#adaee0630271800f5580f0e4a65002e78">getPostPrevSpikeTimeIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:adaee0630271800f5580f0e4a65002e78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fe2b272dd708047e7ae4cb6aa9f16ca"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a4fe2b272dd708047e7ae4cb6aa9f16ca">getPostISynIndex</a> (unsigned int batchSize, const std::string &amp;index)</td></tr>
-<tr class="separator:a4fe2b272dd708047e7ae4cb6aa9f16ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad57a3c081554608923d52eeef586a8a"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad57a3c081554608923d52eeef586a8a">getPreISynIndex</a> (unsigned int batchSize, const std::string &amp;index)</td></tr>
-<tr class="separator:aad57a3c081554608923d52eeef586a8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a874ee6a0be984907c272fde4dfb08f53"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a874ee6a0be984907c272fde4dfb08f53">getSynVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a874ee6a0be984907c272fde4dfb08f53"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52b43e04ae3eab2414aeaabdda6878cc"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a52b43e04ae3eab2414aeaabdda6878cc">getKernelVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a52b43e04ae3eab2414aeaabdda6878cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
 Protected Types</h2></td></tr>
 <tr class="memitem:aa46d3df803bad1c0d293faa1dd5edea1"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1">Role</a> { <br />
 &#160;&#160;<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a8af1da03f6cd57ab93b3816d4429fccf">Role::PresynapticUpdate</a>, 
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a0c518ae62358fa911c59c2b73a27aefb">Role::PostsynapticUpdate</a>, 
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d">Role::SynapseDynamics</a>, 
-<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758">Role::DenseInit</a>, 
+<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a95b19f7739b0b7ea7d6b07586be54f36">Role::Init</a>, 
 <br />
 &#160;&#160;<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8">Role::SparseInit</a>, 
-<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1add547bb5d4f0509eb28ba750444c1ef1">Role::KernelInit</a>, 
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8">Role::ConnectivityInit</a>
 <br />
  }</td></tr>
@@ -335,9 +329,8 @@ Additional Inherited Members</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a8af1da03f6cd57ab93b3816d4429fccf"></a>PresynapticUpdate&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a0c518ae62358fa911c59c2b73a27aefb"></a>PostsynapticUpdate&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d"></a>SynapseDynamics&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758"></a>DenseInit&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a95b19f7739b0b7ea7d6b07586be54f36"></a>Init&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8"></a>SparseInit&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1add547bb5d4f0509eb28ba750444c1ef1"></a>KernelInit&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8"></a>ConnectivityInit&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -411,14 +404,17 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aad0a1400ca86aafdce60e4bbc142c68a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad0a1400ca86aafdce60e4bbc142c68a">&#9670;&nbsp;</a></span>genKernelIndex()</h2>
+<a id="a6fecc0d1780b7bc52da9df5310c72f60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fecc0d1780b7bc52da9df5310c72f60">&#9670;&nbsp;</a></span>genKernelIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void SynapseGroupMergedBase::genKernelIndex </td>
+          <td class="memname">void CodeGenerator::SynapseGroupMergedBase::genKernelIndex </td>
           <td>(</td>
           <td class="paramtype">std::ostream &amp;&#160;</td>
           <td class="paramname"><em>os</em>, </td>
@@ -435,6 +431,11 @@ Additional Inherited Members</h2></td></tr>
           <td></td><td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Generate an index into a kernel based on the id_kernel_XXX variables in subs. </p>
@@ -492,34 +493,39 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a9db92b2d369be4fbdbad1d7c0e53f01e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9db92b2d369be4fbdbad1d7c0e53f01e">&#9670;&nbsp;</a></span>getKernelSize()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::string SynapseGroupMergedBase::getKernelSize </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX) </p>
-
-</div>
-</div>
-<a id="a52b43e04ae3eab2414aeaabdda6878cc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a52b43e04ae3eab2414aeaabdda6878cc">&#9670;&nbsp;</a></span>getKernelVarIndex()</h2>
+<a id="a40293a9292c8a9c4d9bb9652c1a1062b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40293a9292c8a9c4d9bb9652c1a1062b">&#9670;&nbsp;</a></span>getKernelSize()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::SynapseGroupMergedBase::getKernelSize </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX) </p>
+
+</div>
+</div>
+<a id="ab09291f6ecc467b38b5335c5b79782ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab09291f6ecc467b38b5335c5b79782ea">&#9670;&nbsp;</a></span>getKernelVarIndex()</h2>
+
+<div class="memitem">
+<div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getKernelVarIndex </td>
@@ -542,14 +548,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -588,8 +589,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a4fe2b272dd708047e7ae4cb6aa9f16ca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4fe2b272dd708047e7ae4cb6aa9f16ca">&#9670;&nbsp;</a></span>getPostISynIndex()</h2>
+<a id="ae17cafc9602af73d9f379b1ba8c804f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae17cafc9602af73d9f379b1ba8c804f7">&#9670;&nbsp;</a></span>getPostISynIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -598,7 +599,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static std::string CodeGenerator::SynapseGroupMergedBase::getPostISynIndex </td>
+          <td class="memname">std::string CodeGenerator::SynapseGroupMergedBase::getPostISynIndex </td>
           <td>(</td>
           <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>batchSize</em>, </td>
@@ -612,26 +613,23 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="adaee0630271800f5580f0e4a65002e78"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adaee0630271800f5580f0e4a65002e78">&#9670;&nbsp;</a></span>getPostPrevSpikeTimeIndex()</h2>
+<a id="a68255e9ad541215462e74b356e989167"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68255e9ad541215462e74b356e989167">&#9670;&nbsp;</a></span>getPostPrevSpikeTimeIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex </td>
@@ -660,14 +658,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -732,14 +725,11 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a37e21ca4e4fc33071530a0930eb1fcc5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37e21ca4e4fc33071530a0930eb1fcc5">&#9670;&nbsp;</a></span>getPostVarIndex() <span class="overload">[2/2]</span></h2>
+<a id="a148fb6f73ffe2d9eb040228ff3c17edc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a148fb6f73ffe2d9eb040228ff3c17edc">&#9670;&nbsp;</a></span>getPostVarIndex() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getPostVarIndex </td>
@@ -768,14 +758,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -822,8 +807,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="aad57a3c081554608923d52eeef586a8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad57a3c081554608923d52eeef586a8a">&#9670;&nbsp;</a></span>getPreISynIndex()</h2>
+<a id="ac3ce40ced515620a814670d8edea8844"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3ce40ced515620a814670d8edea8844">&#9670;&nbsp;</a></span>getPreISynIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -832,7 +817,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static std::string CodeGenerator::SynapseGroupMergedBase::getPreISynIndex </td>
+          <td class="memname">std::string CodeGenerator::SynapseGroupMergedBase::getPreISynIndex </td>
           <td>(</td>
           <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>batchSize</em>, </td>
@@ -846,26 +831,23 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="acab2066c2bdfd7213199234c8b232216"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acab2066c2bdfd7213199234c8b232216">&#9670;&nbsp;</a></span>getPrePrevSpikeTimeIndex()</h2>
+<a id="a426e621e0eb7680faba09ee36eccfb80"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a426e621e0eb7680faba09ee36eccfb80">&#9670;&nbsp;</a></span>getPrePrevSpikeTimeIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex </td>
@@ -894,14 +876,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -966,14 +943,11 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a9cae7646505967de99350aeb64392f8b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9cae7646505967de99350aeb64392f8b">&#9670;&nbsp;</a></span>getPreVarIndex() <span class="overload">[2/2]</span></h2>
+<a id="ad0cac77ac8e77a6850f927fecabf1ba4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0cac77ac8e77a6850f927fecabf1ba4">&#9670;&nbsp;</a></span>getPreVarIndex() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getPreVarIndex </td>
@@ -1002,14 +976,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -1056,14 +1025,11 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a874ee6a0be984907c272fde4dfb08f53"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a874ee6a0be984907c272fde4dfb08f53">&#9670;&nbsp;</a></span>getSynVarIndex()</h2>
+<a id="ad3d9d2c9b4a9197e4fa0f788218b6915"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3d9d2c9b4a9197e4fa0f788218b6915">&#9670;&nbsp;</a></span>getSynVarIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string SynapseGroupMergedBase::getSynVarIndex </td>
@@ -1086,32 +1052,35 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="acca59d8446d804a2721ef5779c259bb1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acca59d8446d804a2721ef5779c259bb1">&#9670;&nbsp;</a></span>isKernelSizeHeterogeneous()</h2>
+<a id="a53f111c14e9195e36275600aded4c1bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53f111c14e9195e36275600aded4c1bb">&#9670;&nbsp;</a></span>isKernelSizeHeterogeneous()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool SynapseGroupMergedBase::isKernelSizeHeterogeneous </td>
+          <td class="memname">bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous </td>
           <td>(</td>
           <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Is kernel size heterogeneous in this dimension? </p>
@@ -1409,7 +1378,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a></li>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

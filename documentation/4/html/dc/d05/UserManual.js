@@ -34,7 +34,8 @@ var UserManual =
     ] ],
     [ "Custom update models", "d7/d98/sectCustomUpdate.html", [
       [ "Defining your own custom update model", "d7/d98/sectCustomUpdate.html#sect_own_custom_update", [
-        [ "Batch reduction", "d7/d98/sectCustomUpdate.html#custom_update_reduction", null ]
+        [ "Batch reduction", "d7/d98/sectCustomUpdate.html#custom_update_reduction", null ],
+        [ "Neuron reductions", "d7/d98/sectCustomUpdate.html#custom_update_neuron_reduction", null ]
       ] ]
     ] ],
     [ "Synaptic matrix types", "d5/d39/subsect34.html", null ],

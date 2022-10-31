@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -96,7 +96,6 @@ $(document).ready(function(){initNavTree('d3/d7d/classCodeGenerator_1_1NeuronUpd
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="../../de/dbd/classCodeGenerator_1_1NeuronUpdateGroupMerged-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -147,6 +146,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac136a287ec1a50696c77afbdea6f6f9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f72120af1ee2bdbd5db18b2aaa72be5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a2f72120af1ee2bdbd5db18b2aaa72be5">generateWUVarUpdate</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs) const</td></tr>
 <tr class="separator:a2f72120af1ee2bdbd5db18b2aaa72be5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0772d8959d5eeb19a5229927789e0f2"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#af0772d8959d5eeb19a5229927789e0f2">getVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:af0772d8959d5eeb19a5229927789e0f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8353235581dd13d83b8ab01113e6a63c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a8353235581dd13d83b8ab01113e6a63c">getReadVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:a8353235581dd13d83b8ab01113e6a63c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a183ebe12795c92e948ec86e410b4e58f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a183ebe12795c92e948ec86e410b4e58f">getWriteVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
+<tr class="separator:a183ebe12795c92e948ec86e410b4e58f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCodeGenerator_1_1NeuronGroupMergedBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCodeGenerator_1_1NeuronGroupMergedBase')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html">CodeGenerator::NeuronGroupMergedBase</a></td></tr>
 <tr class="memitem:a94005d01ff4e9c0545a53e39aa422baa inherit pub_methods_classCodeGenerator_1_1NeuronGroupMergedBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a94005d01ff4e9c0545a53e39aa422baa">isParamHeterogeneous</a> (size_t index) const</td></tr>
 <tr class="memdesc:a94005d01ff4e9c0545a53e39aa422baa inherit pub_methods_classCodeGenerator_1_1NeuronGroupMergedBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the parameter be implemented heterogeneously?  <a href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a94005d01ff4e9c0545a53e39aa422baa">More...</a><br /></td></tr>
@@ -226,15 +231,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af92aaeb21f030deb215087d03e6039ae inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af92aaeb21f030deb215087d03e6039ae">assignMemorySpaces</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">BackendBase::MemorySpaces</a> &amp;memorySpaces)</td></tr>
 <tr class="memdesc:af92aaeb21f030deb215087d03e6039ae inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign memory spaces to group.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af92aaeb21f030deb215087d03e6039ae">More...</a><br /></td></tr>
 <tr class="separator:af92aaeb21f030deb215087d03e6039ae inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:adf3410d8826ea60bfa7dac0a35118cc2"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#adf3410d8826ea60bfa7dac0a35118cc2">getVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:adf3410d8826ea60bfa7dac0a35118cc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80f990c747854fd8f6935c863437ddcf"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a80f990c747854fd8f6935c863437ddcf">getReadVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a80f990c747854fd8f6935c863437ddcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28365582d8837d74131767b265564d8a"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a28365582d8837d74131767b265564d8a">getWriteVarIndex</a> (bool delay, unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
-<tr class="separator:a28365582d8837d74131767b265564d8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -585,14 +581,11 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a80f990c747854fd8f6935c863437ddcf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80f990c747854fd8f6935c863437ddcf">&#9670;&nbsp;</a></span>getReadVarIndex()</h2>
+<a id="a8353235581dd13d83b8ab01113e6a63c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8353235581dd13d83b8ab01113e6a63c">&#9670;&nbsp;</a></span>getReadVarIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string NeuronUpdateGroupMerged::getReadVarIndex </td>
@@ -621,14 +614,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -687,14 +675,11 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="adf3410d8826ea60bfa7dac0a35118cc2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adf3410d8826ea60bfa7dac0a35118cc2">&#9670;&nbsp;</a></span>getVarIndex()</h2>
+<a id="af0772d8959d5eeb19a5229927789e0f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0772d8959d5eeb19a5229927789e0f2">&#9670;&nbsp;</a></span>getVarIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string NeuronUpdateGroupMerged::getVarIndex </td>
@@ -717,26 +702,18 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a28365582d8837d74131767b265564d8a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28365582d8837d74131767b265564d8a">&#9670;&nbsp;</a></span>getWriteVarIndex()</h2>
+<a id="a183ebe12795c92e948ec86e410b4e58f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a183ebe12795c92e948ec86e410b4e58f">&#9670;&nbsp;</a></span>getWriteVarIndex()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string NeuronUpdateGroupMerged::getWriteVarIndex </td>
@@ -765,14 +742,9 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td>
+          <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -931,7 +903,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a></li>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

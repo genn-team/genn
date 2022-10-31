@@ -3,13 +3,17 @@ var varAccess_8h =
     [ "VarAccess", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f", [
       [ "READ_WRITE", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144", null ],
       [ "READ_ONLY", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa47c7e7cb36a953a8c47e02000036bb44", null ],
+      [ "READ_ONLY_SHARED_NEURON", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa9cd46d2c0b3bdc2515fd96e0b3f48eef", null ],
       [ "READ_ONLY_DUPLICATE", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae", null ],
       [ "REDUCE_BATCH_SUM", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5", null ],
-      [ "REDUCE_BATCH_MAX", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86", null ]
+      [ "REDUCE_BATCH_MAX", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86", null ],
+      [ "REDUCE_NEURON_SUM", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fafcc91fa465993daed247e7f28ce7797a", null ],
+      [ "REDUCE_NEURON_MAX", "de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa048d00755458ff8befad791122a00dfd", null ]
     ] ],
     [ "VarAccessDuplication", "de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764", [
       [ "DUPLICATE", "de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a5c57b592f6421079706484abebcab81b", null ],
-      [ "SHARED", "de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63", null ]
+      [ "SHARED", "de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63", null ],
+      [ "SHARED_NEURON", "de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764ab7fd9fc8f33b14088492410047d1a241", null ]
     ] ],
     [ "VarAccessMode", "de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b", [
       [ "READ_WRITE", "de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72baa7b843fb734e3b3fea8e5f902d3f4144", null ],

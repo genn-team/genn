@@ -94,13 +94,12 @@ var files =
     [ "initGroupMerged.cc", "d8/d16/initGroupMerged_8cc.html", null ],
     [ "initGroupMerged.h", "d7/d70/initGroupMerged_8h.html", [
       [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],
-      [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
+      [ "SynapseInitGroupMerged", "d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html", "d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged" ],
       [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ],
-      [ "SynapseKernelInitGroupMerged", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged" ],
       [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ],
       [ "CustomUpdateInitGroupMergedBase", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase" ],
       [ "CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged" ],
-      [ "CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged" ],
+      [ "CustomWUUpdateInitGroupMerged", "dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html", "dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged" ],
       [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ]
     ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],

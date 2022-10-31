@@ -92,9 +92,9 @@ var searchData=
   ['create_5fcustom_5fcurrent_5fsource_5fclass',['create_custom_current_source_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fcustom_5fupdate_5fclass',['create_custom_custom_update_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a9914061f9946583d9c2fd4959fa8bff1',1,'pygenn::genn_model']]],
   ['create_5fcustom_5finit_5fvar_5fsnippet_5fclass',['create_custom_init_var_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#ab404f74c9628546ff3dc41feab504833',1,'pygenn::genn_model']]],
-  ['create_5fcustom_5fmodel_5fclass',['create_custom_model_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a603410a2e8454498c99148657de8c460',1,'pygenn::genn_model']]],
+  ['create_5fcustom_5fmodel_5fclass',['create_custom_model_class',['../de/d6e/namespacepygenn_1_1genn__model.html#acbc8ed3b33d16e998ee0b0b0f92ec4b6',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fneuron_5fclass',['create_custom_neuron_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a80f3b56cb2dc934ea04ed15a629c7db9',1,'pygenn::genn_model']]],
-  ['create_5fcustom_5fpostsynaptic_5fclass',['create_custom_postsynaptic_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a091ea4fe261201327c877528287f9611',1,'pygenn::genn_model']]],
+  ['create_5fcustom_5fpostsynaptic_5fclass',['create_custom_postsynaptic_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a61c75fa163260aca5c4bded3d6854d2f',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fsparse_5fconnect_5finit_5fsnippet_5fclass',['create_custom_sparse_connect_init_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8',1,'pygenn::genn_model']]],
   ['create_5fcustom_5ftoeplitz_5fconnect_5finit_5fsnippet_5fclass',['create_custom_toeplitz_connect_init_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#ade8879268d2849fd60e6bb5f8e99a66b',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fweight_5fupdate_5fclass',['create_custom_weight_update_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b',1,'pygenn::genn_model']]],
@@ -128,7 +128,7 @@ var searchData=
   ['customupdatewugroupmerged',['CustomUpdateWUGroupMerged',['../de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html#a883a5d5a6df3f8bb1034700f19ad1762',1,'CodeGenerator::CustomUpdateWUGroupMerged']]],
   ['customupdatewugroupmergedbase',['CustomUpdateWUGroupMergedBase',['../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#a2a6042749c0e3e1306eb3ef1f68aa62a',1,'CodeGenerator::CustomUpdateWUGroupMergedBase']]],
   ['customupdatewuinternal',['CustomUpdateWUInternal',['../da/ddf/classCustomUpdateWUInternal.html#ad193d2ec4a9aa0ff72d5fb67e6a368eb',1,'CustomUpdateWUInternal']]],
-  ['customwuupdatedenseinitgroupmerged',['CustomWUUpdateDenseInitGroupMerged',['../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html#a0744f998af50a853a401fde92786122b',1,'CodeGenerator::CustomWUUpdateDenseInitGroupMerged']]],
   ['customwuupdatehostreductiongroupmerged',['CustomWUUpdateHostReductionGroupMerged',['../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html#ac0b88aa6d24ec9c98f8f633ce6555fe1',1,'CodeGenerator::CustomWUUpdateHostReductionGroupMerged']]],
+  ['customwuupdateinitgroupmerged',['CustomWUUpdateInitGroupMerged',['../dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html#ab8bb65c1e6976b60a14649367c6819a4',1,'CodeGenerator::CustomWUUpdateInitGroupMerged']]],
   ['customwuupdatesparseinitgroupmerged',['CustomWUUpdateSparseInitGroupMerged',['../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html#af6d31f1287f8ec8bbb8cd30f61ec77d9',1,'CodeGenerator::CustomWUUpdateSparseInitGroupMerged']]]
 ];

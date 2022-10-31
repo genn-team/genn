@@ -7,7 +7,6 @@ var NAVTREE =
       [ "Obtaining a Git snapshot", "d8/d99/Installation.html#GitSnapshot", null ],
       [ "Installing GeNN", "d8/d99/Installation.html#installing", null ],
       [ "Installing PyGeNN", "d8/d99/Installation.html#pygenn", [
-        [ "Installing PyGeNN from binary wheels", "d8/d99/Installation.html#pygenn_wheel", null ],
         [ "Installing PyGeNN from source on Linux or Mac OSX", "d8/d99/Installation.html#pygenn_source_nix", null ],
         [ "Installing PyGeNN from source on Windows", "d8/d99/Installation.html#pygenn_source_windows", null ]
       ] ]
@@ -28,6 +27,7 @@ var NAVTREE =
       [ "Pulse-coupled Izhikevich network", "d9/d61/Examples.html#ex_izhnetwork", null ],
       [ "Izhikevich network with delayed synapses", "d9/d61/Examples.html#ex_izhdelay", null ],
       [ "Insect olfaction model", "d9/d61/Examples.html#ex_mbody", null ],
+      [ "Cortical microcircuit model", "d9/d61/Examples.html#ex_microcircuit", null ],
       [ "Voltage clamp simulation to estimate Hodgkin-Huxley parameters", "d9/d61/Examples.html#ex_Vclamp", null ],
       [ "A neuromorphic network for generic multivariate data classification", "d9/d61/Examples.html#ex_Schmuker", null ]
     ] ],
@@ -110,19 +110,19 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197",
-"d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ad2ef2e2d4142eaae9fa55fcce997ae11",
-"d3/df5/customUpdateModels_8h.html#acb2777aee9463ed36d489705851f74ed",
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#adeae076892f9c8028bb381f4691ce6c3",
-"d6/d97/classModels_1_1Base.html#a5da12b4e51f0b969510dd97d45ad285a",
-"d7/da1/classCurrentSourceModels_1_1DC.html#a3999840df60dc6284d6209e8f21f72b3",
-"d9/d7e/classSharedLibraryModel.html#a5a9558f98933a4fe9ff2c7d7dcc054a1",
-"da/dff/gccfeatures_8h.html#a7cb2f1536230a1bef301ea883e840d5b",
-"db/da3/connectors_8h.html",
-"dc/dfa/classSynapseGroup.html#a0948f8acc0ef725a79504c743642f4b2",
-"dd/dfd/groupMerged_8h_source.html",
-"de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f",
-"globals_defs_d.html"
+"d1/db3/classpygenn_1_1genn__groups_1_1Group.html#abcec12cb1265ccbf88598a3d6865fafd",
+"d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ae3cd6c57e64345b295e5584c5279a13d",
+"d3/de9/namespaceSpineMLSimulator_1_1Input.html",
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab8253488d655ab2e1f6291689a973ee1",
+"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ab2f884afe4c5dba8f4e34a42ca8ddad0",
+"d7/d98/Quickstart.html",
+"d9/d7e/classSharedLibraryModel.html#a31d7457c771aa2b88ab7824da25bd779",
+"da/dfd/classModelSpec.html#af98330272efa74a925d29854830106de",
+"db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48",
+"dc/de1/modelSpec_8h_source.html",
+"dd/de9/neuronGroup_8cc.html",
+"de/ded/input_8h.html",
+"functions_func_v.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

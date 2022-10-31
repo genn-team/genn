@@ -1,5 +1,13 @@
 var NAVTREEINDEX4 =
 {
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab8253488d655ab2e1f6291689a973ee1":[18,0,9,0,4,40],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#abc7df7f3c37f091bea75d067d1e87835":[18,0,9,0,4,41],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac4de8bf08ebcf36115712b639dee0b3f":[18,0,9,0,4,12],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac97387dee5002396ddc6da5bd2fe16e1":[18,0,9,0,4,56],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#acf0622c21f3ab6a873acdd8a0d513874":[18,0,9,0,4,50],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1":[18,0,9,0,4,9],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f":[18,0,9,0,4,3],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb":[18,0,9,0,4,46],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#adeae076892f9c8028bb381f4691ce6c3":[18,0,9,0,4,53],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aeda75ea52b1cc1c75444a0371fe4b664":[18,0,9,0,4,13],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af366111954258048aacaa0f0a03850b4":[18,0,9,0,4,27],
@@ -241,13 +249,5 @@ var NAVTREEINDEX4 =
 "d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57":[19,0,143,0,2],
 "d6/d8f/variableMode_8h_source.html":[19,0,143],
 "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html":[18,0,11,0,5],
-"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#a58798b936db6a6c4de5195afd6c21e39":[18,0,11,0,5,2],
-"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ab2f884afe4c5dba8f4e34a42ca8ddad0":[18,0,11,0,5,0],
-"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ad0a160bf01c3caf42466a665ac7d2773":[18,0,11,0,5,3],
-"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ada03f5aa003c9e527de47f1577c36a9a":[18,0,11,0,5,1],
-"d6/d97/classModels_1_1Base.html":[18,0,6,0],
-"d6/d97/classModels_1_1Base.html#a0278f97a8bbcf2928c563c08ec99a2a5":[18,0,6,0,6],
-"d6/d97/classModels_1_1Base.html#a39479ebc663055cfc5e6d09a9cb2e901":[18,0,6,0,7],
-"d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a":[18,0,6,0,2],
-"d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75":[18,0,6,0,3]
+"d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#a58798b936db6a6c4de5195afd6c21e39":[18,0,11,0,5,2]
 };

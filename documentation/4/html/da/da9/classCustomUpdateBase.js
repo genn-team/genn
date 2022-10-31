@@ -17,7 +17,7 @@ var classCustomUpdateBase =
     [ "initDerivedParams", "da/da9/classCustomUpdateBase.html#a2b57c046eda3a4675b78f39769ab8cdf", null ],
     [ "isBatched", "da/da9/classCustomUpdateBase.html#a70d7ff78782d9978c1501b7d2598ff6d", null ],
     [ "isInitRNGRequired", "da/da9/classCustomUpdateBase.html#a2c67f76c6f65556e1e263bd036f4a296", null ],
-    [ "isReduction", "da/da9/classCustomUpdateBase.html#af1589576f2bb0ef75378db2a2b83f567", null ],
+    [ "isReduction", "da/da9/classCustomUpdateBase.html#a49595cd8b9bc50d4a5d335570bb8c8cb", null ],
     [ "isVarInitRequired", "da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf", null ],
     [ "isZeroCopyEnabled", "da/da9/classCustomUpdateBase.html#abaf93f6fbceea11013ddac8d46c6831f", null ],
     [ "setVarLocation", "da/da9/classCustomUpdateBase.html#a07ae72c62ddb9e1b8c66f46d42e5c163", null ],

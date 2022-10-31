@@ -19,7 +19,6 @@ var searchData=
   ['dense_5fglobalg_5findividual_5fpsm',['DENSE_GLOBALG_INDIVIDUAL_PSM',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca05bf2ba82e234d9d8ba1b92b6287945e',1,'synapseMatrixType.h']]],
   ['dense_5findividualg',['DENSE_INDIVIDUALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cac125fea63eb10ca9b8951ddbe787d7ce',1,'synapseMatrixType.h']]],
   ['dense_5fproceduralg',['DENSE_PROCEDURALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9caad60cd331dc84ca330a3b0c479b7cfb8',1,'synapseMatrixType.h']]],
-  ['denseinit',['DenseInit',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['derivedparam',['DerivedParam',['../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html',1,'Snippet::Base']]],
   ['derivedparamvec',['DerivedParamVec',['../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb',1,'Snippet::Base']]],
   ['device',['device',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a07e73ba804957f36166395d41f89640c',1,'CodeGenerator::MemAlloc::device()'],['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d',1,'DEVICE():&#160;variableMode.h']]],

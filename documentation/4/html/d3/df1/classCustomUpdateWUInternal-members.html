@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -124,21 +124,22 @@ $(document).ready(function(){initNavTree('da/ddf/classCustomUpdateWUInternal.htm
   <tr class="even"><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a55a22fc6b7c0ce01c51287b2dd652b8c">getVarReferences</a>() const</td><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a2b57c046eda3a4675b78f39769ab8cdf">initDerivedParams</a>(double dt)</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a70d7ff78782d9978c1501b7d2598ff6d">isBatched</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span></td></tr>
-  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a2c67f76c6f65556e1e263bd036f4a296">isInitRNGRequired</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#af1589576f2bb0ef75378db2a2b83f567">isReduction</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span></td></tr>
-  <tr><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a64a6f218f085f4b9d80e0494f5f16320">isTransposeOperation</a>() const</td><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf">isVarInitRequired</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#abaf93f6fbceea11013ddac8d46c6831f">isZeroCopyEnabled</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a07ae72c62ddb9e1b8c66f46d42e5c163">setVarLocation</a>(const std::string &amp;varName, VarLocation loc)</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a88d3c1572240717c7f94e8330b7a2f9a">updateHash</a>(boost::uuids::detail::sha1 &amp;hash) const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#ac38c2950058bf76b8acb1d380826a4be">updateInitHash</a>(boost::uuids::detail::sha1 &amp;hash) const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a1e366aaa010497304d73c3c16f4d3527">isBatchReduction</a>() const</td><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a2c67f76c6f65556e1e263bd036f4a296">isInitRNGRequired</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a49595cd8b9bc50d4a5d335570bb8c8cb">isReduction</a>(const std::vector&lt; V &gt; &amp;varRefs, VarAccessDuplication duplication) const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a64a6f218f085f4b9d80e0494f5f16320">isTransposeOperation</a>() const</td><td class="entry"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf">isVarInitRequired</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#abaf93f6fbceea11013ddac8d46c6831f">isZeroCopyEnabled</a>() const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a07ae72c62ddb9e1b8c66f46d42e5c163">setVarLocation</a>(const std::string &amp;varName, VarLocation loc)</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a88d3c1572240717c7f94e8330b7a2f9a">updateHash</a>(boost::uuids::detail::sha1 &amp;hash) const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html#ac38c2950058bf76b8acb1d380826a4be">updateInitHash</a>(boost::uuids::detail::sha1 &amp;hash) const</td><td class="entry"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

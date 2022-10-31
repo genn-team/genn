@@ -23,11 +23,10 @@ var searchData=
   ['synapseconnectivityhostinitgroupmerged',['SynapseConnectivityHostInitGroupMerged',['../d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html',1,'CodeGenerator']]],
   ['synapseconnectivityinitgroupmerged',['SynapseConnectivityInitGroupMerged',['../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html',1,'CodeGenerator']]],
   ['synapsedendriticdelayupdategroupmerged',['SynapseDendriticDelayUpdateGroupMerged',['../d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html',1,'CodeGenerator']]],
-  ['synapsedenseinitgroupmerged',['SynapseDenseInitGroupMerged',['../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html',1,'CodeGenerator']]],
   ['synapsedynamicsgroupmerged',['SynapseDynamicsGroupMerged',['../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html',1,'CodeGenerator']]],
   ['synapsegroup',['SynapseGroup',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html',1,'pygenn.genn_groups.SynapseGroup'],['../dc/dfa/classSynapseGroup.html',1,'SynapseGroup']]],
   ['synapsegroupinternal',['SynapseGroupInternal',['../dd/d48/classSynapseGroupInternal.html',1,'']]],
   ['synapsegroupmergedbase',['SynapseGroupMergedBase',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html',1,'CodeGenerator']]],
-  ['synapsekernelinitgroupmerged',['SynapseKernelInitGroupMerged',['../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html',1,'CodeGenerator']]],
+  ['synapseinitgroupmerged',['SynapseInitGroupMerged',['../d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html',1,'CodeGenerator']]],
   ['synapsesparseinitgroupmerged',['SynapseSparseInitGroupMerged',['../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

@@ -1,5 +1,8 @@
 var NAVTREEINDEX3 =
 {
+"d3/de9/namespaceSpineMLSimulator_1_1Input.html":[18,0,11,0],
+"d3/df5/customUpdateModels_8h.html":[19,0,37],
+"d3/df5/customUpdateModels_8h.html#a8d6d4a547def292ea8860a85ed80c1a7":[19,0,37,3],
 "d3/df5/customUpdateModels_8h.html#acb2777aee9463ed36d489705851f74ed":[19,0,37,2],
 "d3/df5/customUpdateModels_8h.html#af5fc31e556cfb8724ac72739462fee53":[19,0,37,4],
 "d3/df5/customUpdateModels_8h_source.html":[19,0,37],
@@ -115,6 +118,11 @@ var NAVTREEINDEX3 =
 "d4/dc6/sectVariableInitialisation.html#sect_var_init_modes":[8,9,1],
 "d4/dc9/stateVar_8h.html":[19,0,127],
 "d4/dc9/stateVar_8h_source.html":[19,0,127],
+"d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html":[18,0,0,36],
+"d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html#a36bdf11e7aea573b23c7b76dab8033c1":[18,0,0,36,1],
+"d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html#a482ef8f4a5ab6de62946c3f89d0025c2":[18,0,0,36,3],
+"d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html#abe41faa2efee095ccd849334cffbe8dd":[18,0,0,36,0],
+"d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html#abea14d8745e128ad622ac4a64fbc373f":[18,0,0,36,2],
 "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html":[18,0,0,2,3],
 "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a491dd71793dad064b253bcb5c6ceedc6":[18,0,0,2,3,0],
 "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a4c950d0dada4da6f62a072d568e3ee00":[18,0,0,2,3,4],
@@ -241,13 +249,5 @@ var NAVTREEINDEX3 =
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a9ee1a8bddf8d5264916e6cc779c79c23":[18,0,9,0,4,24],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aa612fcee6df468ea292c05065459704d":[18,0,9,0,4,7],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aaba1d5e1be34233a72ee11ad29232882":[18,0,9,0,4,1],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab033e98cc959663f97752c5c1244995d":[18,0,9,0,4,61],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab8253488d655ab2e1f6291689a973ee1":[18,0,9,0,4,40],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#abc7df7f3c37f091bea75d067d1e87835":[18,0,9,0,4,41],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac4de8bf08ebcf36115712b639dee0b3f":[18,0,9,0,4,12],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac97387dee5002396ddc6da5bd2fe16e1":[18,0,9,0,4,56],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#acf0622c21f3ab6a873acdd8a0d513874":[18,0,9,0,4,50],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1":[18,0,9,0,4,9],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f":[18,0,9,0,4,3],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb":[18,0,9,0,4,46]
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab033e98cc959663f97752c5c1244995d":[18,0,9,0,4,61]
 };

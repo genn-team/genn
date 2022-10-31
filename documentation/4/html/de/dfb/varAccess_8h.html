@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -124,17 +124,21 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr class="separator:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afabbd457a93205e571bff448ec134764"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a5c57b592f6421079706484abebcab81b">VarAccessDuplication::DUPLICATE</a> = (1 &lt;&lt; 5), 
-<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63">VarAccessDuplication::SHARED</a> = (1 &lt;&lt; 6)
+<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63">VarAccessDuplication::SHARED</a> = (1 &lt;&lt; 6), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764ab7fd9fc8f33b14088492410047d1a241">VarAccessDuplication::SHARED_NEURON</a> = (1 &lt;&lt; 7)
  }<tr class="memdesc:afabbd457a93205e571bff448ec134764"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags defining how variables should be duplicated across multiple batches.  <a href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:afabbd457a93205e571bff448ec134764"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8a5891c5d3beb45321e2f850539452f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> : unsigned int { <br />
 &#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144">VarAccess::READ_WRITE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_WRITE) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE), 
 <a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa47c7e7cb36a953a8c47e02000036bb44">VarAccess::READ_ONLY</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa9cd46d2c0b3bdc2515fd96e0b3f48eef">VarAccess::READ_ONLY_SHARED_NEURON</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED_NEURON), 
 <a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae">VarAccess::READ_ONLY_DUPLICATE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE), 
-<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5">VarAccess::REDUCE_BATCH_SUM</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_SUM) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
 <br />
-&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86">VarAccess::REDUCE_BATCH_MAX</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_MAX) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED)
+&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5">VarAccess::REDUCE_BATCH_SUM</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_SUM) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86">VarAccess::REDUCE_BATCH_MAX</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_MAX) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fafcc91fa465993daed247e7f28ce7797a">VarAccess::REDUCE_NEURON_SUM</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_SUM) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED_NEURON), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa048d00755458ff8befad791122a00dfd">VarAccess::REDUCE_NEURON_MAX</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_MAX) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED_NEURON)
 <br />
  }<tr class="memdesc:ae8a5891c5d3beb45321e2f850539452f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported combinations of VarAccessMode and VarAccessDuplication.  <a href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">More...</a><br /></td></tr>
 </td></tr>
@@ -180,9 +184,12 @@ Functions</h2></td></tr>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144"></a>READ_WRITE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa47c7e7cb36a953a8c47e02000036bb44"></a>READ_ONLY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa9cd46d2c0b3bdc2515fd96e0b3f48eef"></a>READ_ONLY_SHARED_NEURON&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae"></a>READ_ONLY_DUPLICATE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5"></a>REDUCE_BATCH_SUM&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86"></a>REDUCE_BATCH_MAX&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fafcc91fa465993daed247e7f28ce7797a"></a>REDUCE_NEURON_SUM&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa048d00755458ff8befad791122a00dfd"></a>REDUCE_NEURON_MAX&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -211,6 +218,8 @@ Functions</h2></td></tr>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="afabbd457a93205e571bff448ec134764a5c57b592f6421079706484abebcab81b"></a>DUPLICATE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63"></a>SHARED&#160;</td><td class="fielddoc"><p>This variable should be duplicated in each batch. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="afabbd457a93205e571bff448ec134764ab7fd9fc8f33b14088492410047d1a241"></a>SHARED_NEURON&#160;</td><td class="fielddoc"><p>This variable should be shared between batches. </p>
 </td></tr>
 </table>
 
@@ -484,7 +493,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/dfb/varAccess_8h.html">varAccess.h</a></li>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

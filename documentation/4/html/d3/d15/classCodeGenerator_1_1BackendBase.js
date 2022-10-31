@@ -1,5 +1,6 @@
 var classCodeGenerator_1_1BackendBase =
 [
+    [ "ReductionTarget", "da/d83/structCodeGenerator_1_1BackendBase_1_1ReductionTarget.html", "da/d83/structCodeGenerator_1_1BackendBase_1_1ReductionTarget" ],
     [ "GroupHandler", "d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2", null ],
     [ "Handler", "d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5", null ],
     [ "HostHandler", "d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549", null ],
@@ -30,7 +31,10 @@ var classCodeGenerator_1_1BackendBase =
     [ "genFreeMemPreamble", "d3/d15/classCodeGenerator_1_1BackendBase.html#a5b96349acc1446012cf6019c5defdf7d", null ],
     [ "genGlobalDeviceRNG", "d3/d15/classCodeGenerator_1_1BackendBase.html#a0889e2c7845e915f61864208f4877eff", null ],
     [ "genInit", "d3/d15/classCodeGenerator_1_1BackendBase.html#aea064baa987d5c6c8e996c3afbac6006", null ],
-    [ "genKernelSynapseVariableInit", "d3/d15/classCodeGenerator_1_1BackendBase.html#a97615f9ae6aeff2b8034e1be34d60d74", null ],
+    [ "genInitReductionTargets", "d3/d15/classCodeGenerator_1_1BackendBase.html#abcbdafa2b624d17c73d2df1e29e77d46", null ],
+    [ "genInitReductionTargets", "d3/d15/classCodeGenerator_1_1BackendBase.html#a630a11ad051b03053772acc84c08bc12", null ],
+    [ "genKernelCustomUpdateVariableInit", "d3/d15/classCodeGenerator_1_1BackendBase.html#a46a2b3d23f7f5c0d1596bbe2a790e3f6", null ],
+    [ "genKernelSynapseVariableInit", "d3/d15/classCodeGenerator_1_1BackendBase.html#a37033ca9890a125ec20f246aae783551", null ],
     [ "genMakefileCompileRule", "d3/d15/classCodeGenerator_1_1BackendBase.html#a5835ec300bc0b5c6b2b476164d9da13b", null ],
     [ "genMakefileLinkRule", "d3/d15/classCodeGenerator_1_1BackendBase.html#ac28594d0b0b207844932ffb105846ce5", null ],
     [ "genMakefilePreamble", "d3/d15/classCodeGenerator_1_1BackendBase.html#a05760de268731a3432901739b1a69ee5", null ],

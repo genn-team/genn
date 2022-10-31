@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,27 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.7.1 </h1>
+<div class="textblock"><h1>Release Notes for GeNN 4.8.0 </h1>
+<p>This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.7.1 release.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Custom updates extended to work on <code><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa35c10219c45ccfb5b07444fd7e17214c">SynapseMatrixWeight::KERNEL</a></code> weight update model variables.</li>
+<li>Custom updates extended to perform reduction operations across neurons as well as batches (see <a class="el" href="../../d7/d98/sectCustomUpdate.html#custom_update_neuron_reduction">Neuron reductions</a>).</li>
+<li>PyGeNN can now automatically find Visual Studio build tools using functionality in <code>setuptools.msvc.msvc14_get_vc_env</code></li>
+<li>GeNN now comes with a fully-functional Docker image and releases will be distributed via <a href="https://hub.docker.com/repository/docker/gennteam/genn">Dockerhub</a> as well as existing channels. Special thanks to Edward Stevinson, James Turner and Benjamin Evans for their help on this (see the <a href="https://github.com/genn-team/genn/blob/master/README.md">README</a> for more information).</li>
+</ol>
+<h2>Bug fixes </h2>
+<ol type="1">
+<li>Fixed bug relating to merging of synapse groups which perform presynaptic "revInSyn" updates.</li>
+<li>Added missing parameter to PyGeNN. <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a61c75fa163260aca5c4bded3d6854d2f" title="This helper function creates a custom PostsynapticModel class. ">pygenn.genn_model.create_custom_postsynaptic_class</a> function so postsynaptic models with extra global parameters can be created.</li>
+<li>Correctly substitute 0 for $(batch) when using single-threaded CPU backend.</li>
+<li>Fixed issues building PyGeNN with Visual Studio 2017.</li>
+<li>Fixed bug where model might not be rebuilt if sparse connectivity initialisation snippet was changed.</li>
+<li>Fixed longstanding bug in the <code>gen_input_structured</code> tool &ndash; used by some userprojects &ndash; where data was written outside of array bounds.</li>
+<li>Fixed issue with debug mode of <code>genn-builmodel.bat</code> when used with single-threaded CPU backend.</li>
+<li>Fixed issue where, if custom update models were the only part of a model that required an RNG for initialisation, one might not be instantiated.</li>
+</ol>
+<h1>Release Notes for GeNN v4.7.1 </h1>
 <p>This release fixes a plethora of issues found in the 4.7.0 release and also includes an optimisation which could be very beneficial for some classes of model.</p>
 <h2>Bug fixes </h2>
 <ol type="1">
@@ -579,7 +599,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

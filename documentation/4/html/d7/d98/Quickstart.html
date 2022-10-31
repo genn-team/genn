@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -129,7 +129,7 @@ Defining a new model in GeNN using C++</h1>
 <p class="startli">a) The GeNN file <code><a class="el" href="../../dc/de1/modelSpec_8h.html" title="Header file that contains the class (struct) definition of neuronModel for defining a neuron model an...">modelSpec.h</a></code> needs to be included, </p><div class="fragment"><div class="line"><span class="preprocessor">#include &quot;<a class="code" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a>&quot;</span></div></div><!-- fragment --><p class="startli">b) The values for initial variables and parameters for neuron and synapse populations need to be defined, e.g. </p><div class="fragment"><div class="line"><a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">NeuronModels::PoissonNew::ParamValues</a> poissonParams(</div><div class="line">  10.0);      <span class="comment">// 0 - firing rate</span></div></div><!-- fragment --><p> would define the (homogeneous) parameters for a population of Poisson neurons. </p><dl class="section note"><dt>Note</dt><dd>The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the <a class="el" href="../../dc/d05/UserManual.html">User Manual </a> for details. We recommend, however, to use comments like in the above example to achieve maximal clarity of each parameter's meaning.</dd></dl>
 <p>If heterogeneous parameter values are required for a particular population of neurons (or synapses), they need to be defined as "variables" rather than parameters. See the <a class="el" href="../../dc/d05/UserManual.html">User Manual </a> for how to define new neuron (or synapse) types and the <a class="el" href="../../d4/dc6/sectVariableInitialisation.html#sect_new_var_init">Defining a new variable initialisation snippet</a> section for more information on initialising these variables to hetererogenous values.</p>
 <p class="startli">c) The actual network needs to be defined in the form of a function <code>modelDefinition</code>, i.e. </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> modelDefinition(<a class="code" href="../../da/dfd/classModelSpec.html">ModelSpec</a> &amp;model); </div></div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The name <code>modelDefinition</code> and its parameter of type <code><a class="el" href="../../da/dfd/classModelSpec.html" title="Object used for specifying a neuronal network model. ">ModelSpec</a>&amp;</code> are fixed and cannot be changed if GeNN is to recognize it as a model definition.</dd></dl>
-<p>d) Inside modelDefinition(), The time step <code>DT</code> needs to be defined, e.g. </p><div class="fragment"><div class="line">model.setDT(0.1);</div></div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>All provided examples and pre-defined model elements in GeNN work with units of mV, ms, nF and muS. However, the choice of units is entirely left to the user if custom model elements are used.</dd></dl>
+<p>d) Inside modelDefinition(), The time step <code>DT</code> needs to be defined, e.g. </p><div class="fragment"><div class="line">model.setDT(0.1);</div></div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>All provided examples and pre-defined model elements in GeNN work with units of mV, ms, nF and uS. However, the choice of units is entirely left to the user if custom model elements are used.</dd></dl>
 <p><code>MBody1.cc</code> shows a typical example of a model definition function. In its core it contains calls to <a class="el" href="../../da/dfd/classModelSpec.html#ad990a7f4af4616daf1ba633133616269" title="Adds a new neuron group to the model using a neuron model managed by the user. ">ModelSpec::addNeuronPopulation</a> and <a class="el" href="../../da/dfd/classModelSpec.html#abd4e9128a5d4f5f993907134218af0c2" title="Adds a synapse population to the model using weight update and postsynaptic models managed by the use...">ModelSpec::addSynapsePopulation</a> to build up the network. For a full range of options for defining a network, refer to the <a class="el" href="../../dc/d05/UserManual.html">User Manual</a>.</p>
 </li>
 <li><p class="startli">The programmer defines their own "simulation" code similar to the code in <code>userproject/MBody1_project/model/MBody1Sim.cc</code>. In this code,</p>
@@ -168,7 +168,7 @@ Defining a new model in GeNN using Python</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

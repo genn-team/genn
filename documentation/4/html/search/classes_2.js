@@ -32,7 +32,7 @@ var searchData=
   ['customupdatewugroupmerged',['CustomUpdateWUGroupMerged',['../de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html',1,'CodeGenerator']]],
   ['customupdatewugroupmergedbase',['CustomUpdateWUGroupMergedBase',['../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html',1,'CodeGenerator']]],
   ['customupdatewuinternal',['CustomUpdateWUInternal',['../da/ddf/classCustomUpdateWUInternal.html',1,'']]],
-  ['customwuupdatedenseinitgroupmerged',['CustomWUUpdateDenseInitGroupMerged',['../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html',1,'CodeGenerator']]],
   ['customwuupdatehostreductiongroupmerged',['CustomWUUpdateHostReductionGroupMerged',['../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html',1,'CodeGenerator']]],
+  ['customwuupdateinitgroupmerged',['CustomWUUpdateInitGroupMerged',['../dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html',1,'CodeGenerator']]],
   ['customwuupdatesparseinitgroupmerged',['CustomWUUpdateSparseInitGroupMerged',['../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

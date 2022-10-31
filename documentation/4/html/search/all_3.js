@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['access',['access',['../d5/d42/structModels_1_1Base_1_1Var.html#a43fa55b9b858bb7b6fd9927267aa61ae',1,'Models::Base::Var::access()'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a1336962247173e71bceaf52a5b2fd716',1,'Models::Base::VarRef::access()']]],
+  ['access',['access',['../da/d83/structCodeGenerator_1_1BackendBase_1_1ReductionTarget.html#a2e15ff3c50f5cabc5bea02167a5f1d67',1,'CodeGenerator::BackendBase::ReductionTarget::access()'],['../d5/d42/structModels_1_1Base_1_1Var.html#a43fa55b9b858bb7b6fd9927267aa61ae',1,'Models::Base::Var::access()'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a1336962247173e71bceaf52a5b2fd716',1,'Models::Base::VarRef::access()']]],
   ['add',['ADD',['../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a8f14c05ac0d013316a18d606864863e8a9eeb52badb613229884838847294b90d',1,'CodeGenerator::BackendSIMT']]],
   ['add_5fcurrent_5fsource',['add_current_source',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45',1,'pygenn::genn_model::GeNNModel']]],
   ['add_5fcustom_5fupdate',['add_custom_update',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afb3bb39a2b69df18cf4ac6d0fcc45ece',1,'pygenn::genn_model::GeNNModel']]],

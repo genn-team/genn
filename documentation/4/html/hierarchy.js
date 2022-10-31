@@ -169,7 +169,7 @@ var hierarchy =
         [ "CodeGenerator::CustomWUUpdateHostReductionGroupMerged", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html", null ]
       ] ],
       [ "CodeGenerator::CustomUpdateInitGroupMergedBase< CustomUpdateWUInternal >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", [
-        [ "CodeGenerator::CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", null ],
+        [ "CodeGenerator::CustomWUUpdateInitGroupMerged", "dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html", null ],
         [ "CodeGenerator::CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", null ]
       ] ]
     ] ],
@@ -188,9 +188,8 @@ var hierarchy =
         [ "CodeGenerator::PostsynapticUpdateGroupMerged", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html", null ],
         [ "CodeGenerator::PresynapticUpdateGroupMerged", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html", null ],
         [ "CodeGenerator::SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", null ],
-        [ "CodeGenerator::SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", null ],
-        [ "CodeGenerator::SynapseKernelInitGroupMerged", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html", null ],
+        [ "CodeGenerator::SynapseInitGroupMerged", "d4/dcf/classCodeGenerator_1_1SynapseInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", null ]
       ] ]
     ] ],
@@ -243,6 +242,7 @@ var hierarchy =
       [ "CodeGenerator::OpenCL::Preferences", "dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html", null ],
       [ "CodeGenerator::SingleThreadedCPU::Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ]
     ] ],
+    [ "CodeGenerator::BackendBase::ReductionTarget", "da/d83/structCodeGenerator_1_1BackendBase_1_1ReductionTarget.html", null ],
     [ "CodeGenerator::CodeStream::Scope", "d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html", null ],
     [ "Utils::SHA1Hash", "d1/df4/structUtils_1_1SHA1Hash.html", null ],
     [ "SharedLibraryModel< scalar >", "d9/d7e/classSharedLibraryModel.html", null ],

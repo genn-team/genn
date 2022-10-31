@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -550,6 +550,69 @@ T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organizatio
 olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
 doi:10.1007/s00422-005-0019-7 </pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[5]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[9]</a> <br />
  </p>
+<h1><a class="anchor" id="ex_microcircuit"></a>
+Cortical microcircuit model</h1>
+<pre class="fragment">The Cell-Type Specific Cortical Microcircuit
+============================================
+
+This example model is a reimplementation of the microcircuit model developed by Tobias C. Potjans and Markus Diesmann.
+It is a full-scale spiking network model of the local cortical microcircuit. 
+The simulated spontaneous activity is asynchronous irregular and cell-type specific firing rates are in agreement 
+with in vivo recordings in awake animals, including the low rate of layer 2/3 excitatory cells.
+Potjans, T. C., &amp; Diesmann, M. (2014). The Cell-Type Specific Cortical Microcircuit: Relating Structure and Activity in a Full-Scale Spiking Network Model. Cerebral Cortex, 24(3), 785–806. https://doi.org/10.1093/cercor/bhs358
+
+To compile it, navigate to genn/userproject/PotjansMicrocircuit_project and type:
+
+msbuild ..\userprojects.sln /t:generate_potjans_microcircuit_runner /p:Configuration=Release
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users.
+
+
+USAGE
+-----
+
+generate_run [OPTIONS] &lt;outname&gt; 
+
+Mandatory arguments:
+outname: The base name of the output location and output files
+
+Optional arguments:
+--debug: Builds a debug version of the simulation and attaches the debugger
+--cpu-only: Uses CPU rather than CUDA backend for GeNN
+--timing: Uses GeNN's timing mechanism to measure performance and displays it at the end of the simulation
+--ftype: Sets the floating point precision of the model to either float or double (defaults to float)
+--neuron-scale: Scaling factor for number of neurons (defaults to 0.5)
+--connectivity-scale: Scaling factor for connectivity (defaults to 0.5)
+--duration: Duration of simulation [ms] (defaults to 1000ms)
+
+An example invocation of generate_run using these defaults and recording results with a base name of `test' would be:
+
+generate_run.exe test
+
+for Windows users, or:
+
+./generate_run test
+
+for Linux, Mac and other UNIX users.
+
+This would create a microcircuit model with 38582 neurons and 74715499 synapses
+The results of the simulation are saved in the directory `outdir_output`.
+
+Another example of an invocation that runs the simulation at full-scale for 10s and records timing information would be: 
+
+generate_run.exe --timing --neuron-scale 1.0 --connectivity-scale 1.0 --duration 10000 test
+
+for Windows users, or:
+
+./generate_run --timing --neuron-scale 1.0 --connectivity-scale 1.0 --duration 10000 test
+
+for Linux, Mac and other UNIX users.
+</pre><p> Potjans &amp; Diesmann cortical microcircuit model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Potjans2012">[6]</a> <br />
+ </p>
 <h1><a class="anchor" id="ex_Vclamp"></a>
 Voltage clamp simulation to estimate Hodgkin-Huxley parameters</h1>
 <pre class="fragment">
@@ -690,7 +753,7 @@ just hasn't been tweaked yet to allow for this (a small change).
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

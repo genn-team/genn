@@ -1,7 +1,7 @@
 var searchData=
 [
   ['networkclient',['NetworkClient',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html',1,'SpineMLSimulator']]],
-  ['neurongroup',['NeuronGroup',['../d7/d3b/classNeuronGroup.html',1,'NeuronGroup'],['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html',1,'pygenn.genn_groups.NeuronGroup']]],
+  ['neurongroup',['NeuronGroup',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html',1,'pygenn.genn_groups.NeuronGroup'],['../d7/d3b/classNeuronGroup.html',1,'NeuronGroup']]],
   ['neurongroupinternal',['NeuronGroupInternal',['../dc/da3/classNeuronGroupInternal.html',1,'']]],
   ['neurongroupmergedbase',['NeuronGroupMergedBase',['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html',1,'CodeGenerator']]],
   ['neuroninitgroupmerged',['NeuronInitGroupMerged',['../dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html',1,'CodeGenerator']]],

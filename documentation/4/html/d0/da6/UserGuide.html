@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -183,7 +183,15 @@ Built-in Variables in GeNN</h2>
 <p>GeNN has no explicitly hard-coded synapse and neuron variables. Users are free to name the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.</p>
 <ul>
 <li><code>DT</code> : Time step (typically in ms) for simulation; Neuron integration can be done in multiple sub-steps inside the neuron model for numerical stability (see Traub-Miles and Izhikevich neuron model variations in <a class="el" href="../../de/ded/sectNeuronModels.html">Neuron models</a>).</li>
-<li><code>inSyn:</code> This is an intermediary synapse variable which contains the summed input into a postsynaptic neuron (originating from the $(addToInSyn, X) or $(addToInSynDelay, X, Y) functions of the weight update model used by incoming synapses) .</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>DT exceptionally does not require bracketing with $(.)</dd></dl>
+<ul>
+<li><code>t</code> : The current time as a floating point value, typically interpreted as in units of ms</li>
+<li><code>id</code> : The index of a neuron in a neuron population; can be used in the context of neurons, current sources, postsynaptic models, and pre- and postsynaptic weight update models</li>
+<li><code>id_syn</code> : index of a synapse in a synapse population</li>
+<li><code>id_pre</code> : Used in a synapse context. The index of the pre-synaptic neuron in its population.</li>
+<li><code>id_post</code> : Used in a synapse context. The index of the post-synaptic neuron in its population.</li>
+<li><code>inSyn</code> : Used in the context of post_synaptic models. This is an intermediary synapse variable which contains the summed input into a postsynaptic neuron (originating from the $(addToInSyn, X) or $(addToInSynDelay, X, Y) functions of the weight update model used by incoming synapses).</li>
 <li><code>Isyn</code> : This is a local variable which contains the (summed) input current to a neuron. It is typically the sum of any explicit current input and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postsynaptic model. For example, the standard <a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html" title="Exponential decay with synaptic input treated as a conductance value. ">PostsynapticModels::ExpCond</a> postsynaptic model defines  <div class='toggleable_div label_cpp' style='display: none;'><div class="fragment"><div class="line"><a class="code" href="../../d8/d47/postsynapticModels_8h.html#a41d7141aeae91e2840c2629106b6a3b1">SET_APPLY_INPUT_CODE</a>(<span class="stringliteral">&quot;$(Isyn) += $(inSyn)*($(E)-$(V));&quot;</span>);</div></div><!-- fragment --> </div>  <div class='toggleable_div label_python' style='display: none;'><div class="fragment"><div class="line">apply_input_code=<span class="stringliteral">&quot;$(Isyn) += $(inSyn)*($(E)-$(V));&quot;</span></div></div><!-- fragment --> </div> which implements a conductance based synapse in which the postsynaptic current is given by <img class="formulaInl" alt="$I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})$" src="../../form_6.png"/>. The value of $(Isyn) resulting from the apply input code can then be used in neuron sim code like so: <div class="fragment"><div class="line">$(V)+= (-$(V)+$(Isyn))*DT </div></div><!-- fragment --></li>
 <li><code>sT</code> : This is a neuron variable containing the spike time of each neuron and is automatically generated for pre and postsynaptic neuron groups if they are connected using a synapse population with a weight update model that has <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#ad06378df00a5d9ffe4068ba2c01b09ab">SET_NEEDS_PRE_SPIKE_TIME(true)</a> or <a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a4f3e008922887cba8cfafc0fb0e53965">SET_NEEDS_POST_SPIKE_TIME(true)</a></span><span class='toggleable_div label_python' style='display: none;'><code>is_pre_spike_time_required=True</code> or <code>is_post_spike_time_required=True</code> </span> set.</li>
 <li><code>prev_sT:</code> This is a neuron variable containing the <em>previous</em> spike time of each neuron and is automatically generated for pre and postsynaptic neuron groups if they are connected using a synapse population with a weight update model that has <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#abe55020d64a8ec4a28679655ef8c4eb1">SET_NEEDS_PREV_PRE_SPIKE_TIME(true)</a> or <a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a689cf929f3384f6ac4e47d3cfe89182e">SET_NEEDS_PREV_POST_SPIKE_TIME(true)</a></span><span class='toggleable_div label_python' style='display: none;'><code>is_prev_pre_spike_time_required=True</code> or <code>is_prev_post_spike_time_required=True</code> </span> set.</li>
@@ -205,7 +213,7 @@ Debugging suggestions</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

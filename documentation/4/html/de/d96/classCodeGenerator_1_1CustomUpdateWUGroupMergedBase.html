@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.1</span>
+   &#160;<span id="projectnumber">4.8.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,6 +128,15 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a37b7d6ff1266759ede147bf5ad084e07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9dea591a61e8ce8dfce6b4fc67efc95c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#a9dea591a61e8ce8dfce6b4fc67efc95c">getVarRefIndex</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index) const</td></tr>
 <tr class="separator:a9dea591a61e8ce8dfce6b4fc67efc95c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afea625d911d95efbc31919bf2039dc73"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#afea625d911d95efbc31919bf2039dc73">isKernelSizeHeterogeneous</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:afea625d911d95efbc31919bf2039dc73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is kernel size heterogeneous in this dimension?  <a href="#afea625d911d95efbc31919bf2039dc73">More...</a><br /></td></tr>
+<tr class="separator:afea625d911d95efbc31919bf2039dc73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe4a11e122c3ddb99e03744e44af3e6f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#abe4a11e122c3ddb99e03744e44af3e6f">getKernelSize</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:abe4a11e122c3ddb99e03744e44af3e6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX)  <a href="#abe4a11e122c3ddb99e03744e44af3e6f">More...</a><br /></td></tr>
+<tr class="separator:abe4a11e122c3ddb99e03744e44af3e6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6392e9034878e58e7307e3caa2f5d073"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#a6392e9034878e58e7307e3caa2f5d073">genKernelIndex</a> (std::ostream &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;subs) const</td></tr>
+<tr class="memdesc:a6392e9034878e58e7307e3caa2f5d073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate an index into a kernel based on the id_kernel_XXX variables in subs.  <a href="#a6392e9034878e58e7307e3caa2f5d073">More...</a><br /></td></tr>
+<tr class="separator:a6392e9034878e58e7307e3caa2f5d073"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; CustomUpdateWUInternal &gt;</a></td></tr>
 <tr class="memitem:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a2e7e24c877ed71443ddba4ef3625fdd9">GroupMerged</a> (size_t index, const std::string &amp;precision, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt;&gt; groups)</td></tr>
 <tr class="separator:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -270,6 +279,44 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a6392e9034878e58e7307e3caa2f5d073"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6392e9034878e58e7307e3caa2f5d073">&#9670;&nbsp;</a></span>genKernelIndex()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CodeGenerator::CustomUpdateWUGroupMergedBase::genKernelIndex </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;&#160;</td>
+          <td class="paramname"><em>subs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Generate an index into a kernel based on the id_kernel_XXX variables in subs. </p>
+
+</div>
+</div>
 <a id="aabfd0f5a7baf8be1081ca25ee907fa56"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aabfd0f5a7baf8be1081ca25ee907fa56">&#9670;&nbsp;</a></span>getHashDigest()</h2>
 
@@ -284,6 +331,34 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="abe4a11e122c3ddb99e03744e44af3e6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe4a11e122c3ddb99e03744e44af3e6f">&#9670;&nbsp;</a></span>getKernelSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::CustomUpdateWUGroupMergedBase::getKernelSize </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX) </p>
 
 </div>
 </div>
@@ -361,6 +436,34 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="afea625d911d95efbc31919bf2039dc73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afea625d911d95efbc31919bf2039dc73">&#9670;&nbsp;</a></span>isKernelSizeHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CodeGenerator::CustomUpdateWUGroupMergedBase::isKernelSizeHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Is kernel size heterogeneous in this dimension? </p>
+
+</div>
+</div>
 <a id="a9ec3ac8d14e021e45bc17f910508195c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9ec3ac8d14e021e45bc17f910508195c">&#9670;&nbsp;</a></span>isParamHeterogeneous()</h2>
 
@@ -390,7 +493,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html">CustomUpdateWUGroupMergedBase</a></li>
-    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
+    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
