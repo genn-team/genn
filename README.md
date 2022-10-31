@@ -1,5 +1,6 @@
 
-[![Build Status](https://gen-ci.inf.sussex.ac.uk/buildStatus/icon?job=GeNN/genn/master)](https://gen-ci.inf.sussex.ac.uk/job/GeNN/genn/master) [![codecov.io](https://codecov.io/github/genn-team/genn/coverage.svg?branch=master)](https://codecov.io/github/genn-team/genn?branch=master) [![DOI](https://zenodo.org/badge/24633934.svg)](https://zenodo.org/badge/latestdoi/24633934)
+[![Build Status](https://gen-ci.inf.sussex.ac.uk/buildStatus/icon?job=GeNN%2Fgenn%2Fmaster)](https://gen-ci.inf.sussex.ac.uk/job/GeNN/job/genn/job/master/)[![codecov.io](https://codecov.io/github/genn-team/genn/coverage.svg?branch=master)](https://codecov.io/github/genn-team/genn?branch=master) [![DOI](https://zenodo.org/badge/24633934.svg)](https://zenodo.org/badge/latestdoi/24633934)
+[![Dockerhub](https://img.shields.io/badge/dockerhub-images-orange.svg?logo=docker)](https://hub.docker.com/repository/docker/gennteam/genn)
 # GPU-enhanced Neuronal Networks (GeNN)
 
 GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for Nvidia CUDA.
