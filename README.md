@@ -124,6 +124,7 @@ If you wish to use GeNN or PyGeNN interactively, you can launch a bash shell in 
 docker run -it --gpus=all gennteam/genn:latest
 ```
 You can also provide a final argument to launch a different executable e.g. ``/bin/sh`` to launch a dash shell.
+**NOTE** PyGeNN is installed in the system Python 3 environment, the interpreter for which is launched with ``python3`` (rather than just ``python``) on Ubuntu 20.04.
 
 ### Accessing your files
 When using the GeNN container you often want to access files on your host system.
