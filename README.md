@@ -108,12 +108,15 @@ You can then build the GeNN container yourself or download it from Dockerhub.
 
 ### Building the container
 The following command can be used from the GeNN source directory to build the GeNN container:
-
 ```bash
 make docker-build
 ```
 
 This builds a container tagged as ``genn:latest`` so, to use this container rather than downloading the prebuild one from dockerhub, just replace ``gennteam/genn:latest`` with ``genn:latest`` in the following instructions.
+By default, the container image is based off the Ubuntu 20.04 image with CUDA 11.5 provided by NVIDIA but, if you want to use a different base image, for example to use the container on a machine with an older version of CUDA, you can invoke ``docker build`` directly and specify a different tag (listed on https://gitlab.com/nvidia/container-images/cuda/blob/master/doc/supported-tags.md)  via the ``BASE`` build argument. For example to build using CUDA 11.3 you could run:
+```bash
+docker build  --build-arg BASE=11.3.0-devel-ubuntu20.04 -t genn:latest_cuda_11_3 .
+```
 
 ### Interactive mode
 If you wish to use GeNN or PyGeNN interactively, you can launch a bash shell in the GeNN container using the following command:
@@ -121,6 +124,7 @@ If you wish to use GeNN or PyGeNN interactively, you can launch a bash shell in 
 docker run -it --gpus=all gennteam/genn:latest
 ```
 You can also provide a final argument to launch a different executable e.g. ``/bin/sh`` to launch a dash shell.
+**NOTE** PyGeNN is installed in the system Python 3 environment, the interpreter for which is launched with ``python3`` (rather than just ``python``) on Ubuntu 20.04.
 
 ### Accessing your files
 When using the GeNN container you often want to access files on your host system.

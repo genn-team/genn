@@ -15,7 +15,7 @@ RUN apt-get update && \
 RUN apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano
 
 # Set CUDA environment variable
-ENV CUDA_PATH=/usr/local/cuda-11.5
+ENV CUDA_PATH=/usr/local/cuda
 
 ENV GENN_PATH=/opt/genn
 
