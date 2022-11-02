@@ -264,8 +264,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                        return hash.get_digest();
                    });
     
-    // Add hashes of custom update var types and duplication modes to vector
+    // Loop through custom updates which reference this synapse group
     for(const auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
+        // Add hashes of custom update var types and duplication modes to vector
         const auto &vars = c->getCustomUpdateModel()->getVars();
         std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
                        [](const Models::Base::Var &v)
@@ -277,8 +278,14 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                        });
     }
     
-    // Add hashes of custom connectivity update var types and duplication modes to vector
+    // Loop through custom connectivity updates which reference this synapse group
     for(const auto *c : getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
+        // Skip this custom connectivity update group
+        if(c == this) {
+            continue;
+        }
+        
+        // Add hashes of custom connectivity update var types and duplication modes to vector
         const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
         std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
                        [](const Models::Base::Var &v)
