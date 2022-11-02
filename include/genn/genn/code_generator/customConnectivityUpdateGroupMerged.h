@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C++ includes
+#include <tuple>
+
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/groupMerged.h"
@@ -15,6 +18,11 @@ public:
     CustomConnectivityUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::tuple<std::string, std::string, VarAccessDuplication> UpdateVar;
+    
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -35,10 +43,22 @@ public:
 
     std::string getPrePostVarRefIndex(bool delay, const std::string &index) const;
 
+    //! Get sorted vector of variable names, types and duplication modes which 
+    //! need updating when synapses are added and removed, belonging to archetype group
+    const std::vector<UpdateVar> &getSortedArchetypeUpdateVars() const { return m_SortedUpdateVars.front(); }
+    
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    //! Sorted vectors of variable names, types and duplication modes which 
+    //! need updating when synapses are added and removed to each group
+    std::vector<std::vector<UpdateVar>> m_SortedUpdateVars;
 };
 
 //----------------------------------------------------------------------------

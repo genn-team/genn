@@ -324,6 +324,14 @@ protected:
     const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
     const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
 
+    //! Gets custom connectivity updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    const std::vector<const CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
+
+    //! Gets custom updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    const std::vector<const CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
+    
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
     bool canPSBeFused() const;
     

@@ -46,6 +46,8 @@ public:
     using SynapseGroup::getFusedWUPreVarSuffix;
     using SynapseGroup::getFusedWUPostVarSuffix;
     using SynapseGroup::getSparseIndType;
+    using SynapseGroup::getCustomConnectivityUpdateReferences;
+    using SynapseGroup::getCustomUpdateReferences;
     using SynapseGroup::canPSBeFused;
     using SynapseGroup::canWUMPreUpdateBeFused;
     using SynapseGroup::canWUMPostUpdateBeFused;

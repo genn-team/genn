@@ -7,6 +7,8 @@
 // GeNN includes
 #include "gennUtils.h"
 #include "currentSource.h"
+#include "customConnectivityUpdateInternal.h"
+#include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
@@ -244,10 +246,59 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     Utils::updateHash(getCustomConnectivityUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
 
-    // Because connectivity update has to update ALL weight update model variables when
-    // it adds and removes synapses, these need to be considered when merging
-    Utils::updateHash(getSynapseGroup()->getWUModel()->getVars(), hash);
+    // Because it adds and removes synapses, connectivity update has to update 
+    // ALL variables associated with synapse group being modified as well as 
+    // with custom WU updates and this and other custom connectivity updates.
+    // Therefore, for custom connectivity updates to be merged, 
+    // the unordered types and number of these variables should match
+    std::vector<boost::uuids::detail::sha1::digest_type> varTypeDigests;
 
+    // Add hashes of weight update model variable types and duplication modes to vector
+    const auto &vars = getSynapseGroup()->getWUModel()->getVars();
+    std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
+                   [](const Models::Base::Var &v)
+                   { 
+                       boost::uuids::detail::sha1 hash;  
+                       Utils::updateHash(v.type, hash);
+                       Utils::updateHash(getVarAccessDuplication(v.access), hash);
+                       return hash.get_digest();
+                   });
+    
+    // Add hashes of custom update var types and duplication modes to vector
+    for(const auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
+        const auto &vars = c->getCustomUpdateModel()->getVars();
+        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
+                       [](const Models::Base::Var &v)
+                       { 
+                           boost::uuids::detail::sha1 hash;  
+                           Utils::updateHash(v.type, hash);
+                           Utils::updateHash(getVarAccessDuplication(v.access), hash);
+                           return hash.get_digest();
+                       });
+    }
+    
+    // Add hashes of custom connectivity update var types and duplication modes to vector
+    for(const auto *c : getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
+        const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
+        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
+                       [](const Models::Base::Var &v)
+                       { 
+                           boost::uuids::detail::sha1 hash;  
+                           Utils::updateHash(v.type, hash);
+                           Utils::updateHash(getVarAccessDuplication(v.access), hash);
+                           return hash.get_digest();
+                       });
+    }
+    
+    // Sort digests
+    std::sort(varTypeDigests.begin(), varTypeDigests.end());
+
+    // Concatenate the digests to the hash
+    Utils::updateHash(varTypeDigests, hash);
+    
+    
+    /*getCustomConnectivityUpdateReferences;
+    using SynapseGroup::getCustomUpdateReferences*/
     /*// Update hash with whether delay is required
     const bool delayed = (getDelayNeuronGroup() != nullptr);
     Utils::updateHash(delayed, hash);

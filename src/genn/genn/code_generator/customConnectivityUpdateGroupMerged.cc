@@ -14,6 +14,72 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
 {
+    // Reserve vector of vectors to hold variables to update for all custom connectivity update groups, in archetype order
+    m_SortedUpdateVars.reserve(getGroups().size());
+
+    // Loop through groups
+    for(const auto &g : getGroups()) {
+        // Add vector for this groups update vars
+        m_SortedUpdateVars.emplace_back();
+        
+        // Add tuple for each synapse variable with (full) name, type and access
+        const auto &vars = g.get().getSynapseGroup()->getWUModel()->getVars();
+        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
+                       [g](const Models::Base::Var &v)
+                       { 
+                           return std::make_tuple(v.name + g.get().getSynapseGroup()->getName(), v.type, getVarAccessDuplication(v.access));
+                       });
+        
+        // Add tuple for each custom update variable with (full) name, type and access
+        for(const auto *c : g.get().getSynapseGroup()->getCustomUpdateReferences()) {
+            const auto &vars = c->getCustomUpdateModel()->getVars();
+            std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
+                           [c](const Models::Base::Var &v)
+                           { 
+                               return std::make_tuple(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
+                           });
+        }
+        
+        // Add tuple for each custom connectivity update variable with (full) name, type and access
+        for(const auto *c : g.get().getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
+            const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
+            std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
+                           [c](const Models::Base::Var &v)
+                           { 
+                               return std::make_tuple(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
+                           });
+        }
+        
+        // Sort update variables
+        std::sort(m_SortedUpdateVars.back().begin(), m_SortedUpdateVars.back().end(),
+                  [](const UpdateVar &a, const UpdateVar &b)
+                  {
+                      // Get hash of a's type ane duplication
+                      // **NOTE** name is irrelevant
+                      boost::uuids::detail::sha1 hashA;  
+                      Utils::updateHash(std::get<1>(a), hashA);
+                      Utils::updateHash(std::get<2>(a), hashA);
+                        
+                      // Get hash of b's type ane duplication
+                      // **NOTE** name is irrelevant
+                      boost::uuids::detail::sha1 hashB;
+                      Utils::updateHash(std::get<1>(b), hashB);
+                      Utils::updateHash(std::get<2>(b), hashB);
+                        
+                      // Compare digest
+                      return (hashA.get_digest() < hashB.get_digest());
+                  });
+
+    }
+    
+    // Check all vectors are the same size
+    assert(std::all_of(m_SortedUpdateVars.cbegin(), m_SortedUpdateVars.cend(),
+                       [this](const std::vector<UpdateVar> &vars)
+                       {
+                           return (vars.size() == m_SortedUpdateVars.front().size());
+                       }));
+    
+    
     addField("unsigned int", "rowStride",
             [&backend](const CustomConnectivityUpdateInternal &cg, size_t) 
             { 
@@ -95,19 +161,14 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
-    // If row update code includes add or remove synapse functions
-    const std::string rowUpdateCode = cm->getRowUpdateCode();
-    if (rowUpdateCode.find("$(add_synapse") != std::string::npos
-        || rowUpdateCode.find("$(remove_synapse") != std::string::npos)
-    {
-        // Add fields with references to all weight update model variables
-        for (const auto &v : getArchetype().getSynapseGroup()->getWUModel()->getVars()) {
-            addField(v.type + "*", "_" + v.name, 
-                     [v, &backend](const CustomConnectivityUpdateInternal &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + v.name + cg.getSynapseGroup()->getName(); 
-                     });
-        }
+    
+    // Loop through sorted update variables
+    for(size_t i = 0; i < getSortedArchetypeUpdateVars().size(); i++) {
+        addField(std::get<1>(getSortedArchetypeUpdateVars().at(i)) + "*", "_updateVar" + std::to_string(i), 
+                 [i, &backend, this](const CustomConnectivityUpdateInternal&, size_t g) 
+                 { 
+                     return backend.getDeviceVarPrefix() + std::get<0>(m_SortedUpdateVars[g][i]);
+                 });
     }
 }
 //----------------------------------------------------------------------------
@@ -166,12 +227,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     updateSubs.addFuncSubstitution("for_each_synapse", 1, "for(int i = 0; i < group->rowLength[" + updateSubs["id_pre"] + "]; i++){ const unsigned int idx = rowStartIdx + i; $(0) }");
 
     updateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + i]");
-    updateSubs.addVarSubstitution("id_syn", "idx");
+    updateSubs.addVarSubstitution("id_syn", "idccuVarsx");
 
     // Get variables which will need to be manipulated when adding and removing synapses
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-    const auto ccuVars = cm->getVars();
-    const auto wumVars = getArchetype().getSynapseGroup()->getWUModel()->getVars();
+    const auto &updateVars = getSortedArchetypeUpdateVars();
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
@@ -184,16 +244,20 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
 
         // Set postsynaptic target to parameter 0
         addSynapse << "group->ind[newIdx] = $(0);" << std::endl;
-            
+ 
+        // **THINK** update vars shouldn't include our custom connectivity update variables OR  any referenced already by custom connectivity update
+        // THESE variables should be initialised via parameters, remainder should be zerod
+        // This is also better as it means $(add_synapse) calls won't be broken by model changes
+        
         // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
-        for (size_t i = 0; i < ccuVars.size(); i++) {
+        /*for (size_t i = 0; i < ccuVars.size(); i++) {
             addSynapse << "group->" << ccuVars[i].name << "[newIdx] = $(" << (1 + i) << ");" << std::endl;
         }
 
         // Use subsequent parameters to initialise new synapse's weight update model variables
         for (size_t i = 0; i < wumVars.size(); i++) {
             addSynapse << "group->_" << wumVars[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
-        }
+        }*/
 
         // Increment row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
@@ -201,7 +265,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     }
 
     // Add function substitution
-    updateSubs.addFuncSubstitution("add_synapse", 1 + ccuVars.size() + wumVars.size(), addSynapseStream.str());
+    updateSubs.addFuncSubstitution("add_synapse", 1 /*+ ccuVars.size() + wumVars.size()*/, addSynapseStream.str());
 
     // Generate code to remove a synapse from this row
     std::stringstream removeSynapseStream;
@@ -215,14 +279,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Copy postsynaptic target from end of row over synapse to be deleted
         removeSynapse << "group->ind[idx] = group->ind[lastIdx];" << std::endl;
 
-        // Copy custom connectivity update model variables from end of row over synapse to be deleted
-        for (size_t i = 0; i < ccuVars.size(); i++) {
-            removeSynapse << "group->" << ccuVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
-        }
-
-        // Copy weight update model variables from end of row over synapse to be deleted
-        for (size_t i = 0; i < wumVars.size(); i++) {
-            removeSynapse << "group->_" << wumVars[i].name << "[idx] = group->_" << wumVars[i].name << "[lastIdx];" << std::endl;
+        // Copy update variables from end of row over synapse to be deleted
+        for (size_t i = 0; i < updateVars.size(); i++) {
+            removeSynapse << "group->_updateVar" << i << "[idx] = group->_updateVar" << i << "[lastIdx];" << std::endl;
         }
 
         // Decrement row length
@@ -303,7 +362,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
     addVars(backend, cm->getPreVars(), &CustomConnectivityUpdateInternal::getPreVarLocation);
     addVars(backend, cm->getPostVars(), &CustomConnectivityUpdateInternal::getPostVarLocation);
 
-    // **TODO** add device and host pre and post vars; var refs and EGPs
+    // **TODO** add device and host pre and post vars; var refs and EGPsaddVars
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {
