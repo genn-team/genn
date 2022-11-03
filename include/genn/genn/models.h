@@ -12,6 +12,7 @@
 #include "varAccess.h"
 
 // Forward declarations
+class CustomConnectivityUpdate;
 class CustomUpdate;
 class CustomUpdateWU;
 class NeuronGroup;
@@ -200,7 +201,9 @@ public:
     //------------------------------------------------------------------------
     static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
     static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
-    static VarReference createVarRef(CustomUpdate *su, const std::string &varName);
+    static VarReference createVarRef(CustomUpdate *cu, const std::string &varName);
+    static VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
+    static VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
@@ -239,6 +242,7 @@ public:
     WUVarReference(SynapseGroup *sg, const std::string &varName,
                    SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
     WUVarReference(CustomUpdateWU *cu, const std::string &varName);
+    WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API
