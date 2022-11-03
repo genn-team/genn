@@ -42,6 +42,10 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         
         // Add tuple for each custom connectivity update variable with (full) name, type and access
         for(const auto *c : g.get().getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
+            // Skip references to underlying synapse group from group
+            if (c == &g.get()) {
+                continue;
+            }
             const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
             std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
                            [c](const Models::Base::Var &v)

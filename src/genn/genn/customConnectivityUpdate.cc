@@ -264,6 +264,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                        return hash.get_digest();
                    });
     
+    // **TODO** skip variables already referenced by variable references
+    // > Could point to any of these
     // Loop through custom updates which reference this synapse group
     for(const auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
         // Add hashes of custom update var types and duplication modes to vector
