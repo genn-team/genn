@@ -50,7 +50,7 @@ VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *cu, const s
 {
     CustomConnectivityUpdateInternal *cuInternal = static_cast<CustomConnectivityUpdateInternal*>(cu);
     const auto *cum = cuInternal->getCustomConnectivityUpdateModel();
-    const auto *sg = cuInternal->getSynapseGroup();
+    auto *sg = cuInternal->getSynapseGroup();
     auto getDelayNG = [sg]() { return (sg->getDelaySteps() > 0) ? sg->getSrcNeuronGroup() : nullptr; };
     return VarReference(sg->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
                         cum->getPreVarIndex(varName), cum->getPreVars(),
@@ -61,13 +61,12 @@ VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *cu, const 
 {
     CustomConnectivityUpdateInternal *cuInternal = static_cast<CustomConnectivityUpdateInternal*>(cu);
     const auto *cum = cuInternal->getCustomConnectivityUpdateModel();
-    const auto *sg = cuInternal->getSynapseGroup();
+    auto *sg = cuInternal->getSynapseGroup();
     auto getDelayNG = [sg]() { return (sg->getBackPropDelaySteps() > 0) ? sg->getTrgNeuronGroup() : nullptr; };
     return VarReference(sg->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
                         cum->getPostVarIndex(varName), cum->getPostVars(),
                         [cuInternal]() { return cuInternal->getName(); });
 }
-//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
