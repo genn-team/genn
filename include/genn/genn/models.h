@@ -191,10 +191,26 @@ class GENN_EXPORT VarReference : public VarReferenceBase
 {
 public:
     //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class Type
+    {
+        Neuron,
+        CurrentSource,
+        CustomUpdate,
+        CustomConnectivityUpdatePre,
+        CustomConnectivityUpdatePost,
+        SynapsePSM,
+        SynapseWUPre,
+        SynapseWUPost,
+    };
+
+    //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
     NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
+    Type getType() const{ return m_Type; }
 
     //------------------------------------------------------------------------
     // Static API
@@ -217,13 +233,14 @@ private:
     VarReference(NeuronGroupInternal *ng, const std::string &varName);
     VarReference(CurrentSourceInternal *cs, const std::string &varName);
     VarReference(CustomUpdate *cu, const std::string &varName);
-    VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
+    VarReference(unsigned int size, Type type, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    unsigned int m_Size;
+    const unsigned int m_Size;
+    const Type m_Type;
     GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
 };
 
@@ -245,8 +262,19 @@ public:
     WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class Type
+    {
+        SynapseWU,
+        CustomUpdate,
+        CustomConnectivityUpdate,
+    };
+
+    //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    Type getType() const{ return m_Type; }
     SynapseGroup *getSynapseGroup() const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
@@ -258,9 +286,10 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    const Type m_Type;
     SynapseGroupInternal *m_SG;
     SynapseGroupInternal *m_TransposeSG;
-    size_t m_TransposeVarIndex;
+    const size_t m_TransposeVarIndex;
     Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;
 };
