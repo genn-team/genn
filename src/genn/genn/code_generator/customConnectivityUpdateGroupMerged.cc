@@ -24,9 +24,17 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         
         // Sort update variables
         std::sort(dependentVars.begin(), dependentVars.end(),
-                  [](const CustomConnectivityUpdate::DependentVar &a, const CustomConnectivityUpdate::DependentVar &b)
+                  [](const Models::WUVarReference &a, const Models::WUVarReference &b)
                   {  
-                      return (a.getHashDigest() < a.getHashDigest());
+                      boost::uuids::detail::sha1 hashA;  
+                      Utils::updateHash(a.getVar().type, hashA);
+                      Utils::updateHash(getVarAccessDuplication(a.getVar().access), hashA);
+
+                      boost::uuids::detail::sha1 hashB;
+                      Utils::updateHash(b.getVar().type, hashB);
+                      Utils::updateHash(getVarAccessDuplication(b.getVar().access), hashB);
+
+                      return (hashA.get_digest() < hashB.get_digest());
                   });
 
         // Add vector for this groups update vars
@@ -35,7 +43,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Check all vectors are the same size
     assert(std::all_of(m_SortedDependentVars.cbegin(), m_SortedDependentVars.cend(),
-                       [this](const std::vector<CustomConnectivityUpdate::DependentVar> &vars)
+                       [this](const std::vector<Models::WUVarReference> &vars)
                        {
                            return (vars.size() == m_SortedDependentVars.front().size());
                        }));
@@ -125,10 +133,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted update variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(getSortedArchetypeDependentVars().at(i).type + "*", "_updateVar" + std::to_string(i), 
+        addField(getSortedArchetypeDependentVars().at(i).getVar().type + "*", "_updateVar" + std::to_string(i), 
                  [i, &backend, this](const CustomConnectivityUpdateInternal&, size_t g) 
                  { 
-                     return backend.getDeviceVarPrefix() + m_SortedDependentVars[g][i].target;
+                     const auto &varRef = m_SortedDependentVars[g][i];
+                     return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
                  });
     }
 }

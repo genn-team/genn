@@ -19,23 +19,6 @@ public:
     CustomConnectivityUpdate(const CustomConnectivityUpdate &) = delete;
     CustomConnectivityUpdate() = delete;
 
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    struct DependentVar
-    {
-        DependentVar(const std::string &g, const std::string &t, VarAccessDuplication d)
-        :   target(g), type(t), duplication(d)
-        {}
-
-        std::string target;
-        std::string type;
-        VarAccessDuplication duplication;
-
-        boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
-    };
-
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -136,7 +119,7 @@ protected:
     //! Get vector of group names and variables in synapse groups, custom updates and other 
     //! custom connectivity updates which are attached to the same sparse connectivity this 
     //! custom connectivty update will update and thus will need modifying when we add and remove synapses
-    std::vector<DependentVar> getDependentVariables() const;
+    std::vector<Models::WUVarReference> getDependentVariables() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */

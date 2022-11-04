@@ -40,7 +40,7 @@ public:
 
     //! Get sorted vector of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed, belonging to archetype group
-    const std::vector<CustomConnectivityUpdate::DependentVar> &getSortedArchetypeDependentVars() const { return m_SortedDependentVars.front(); }
+    const std::vector<Models::WUVarReference> &getSortedArchetypeDependentVars() const { return m_SortedDependentVars.front(); }
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -53,7 +53,7 @@ private:
     //----------------------------------------------------------------------------
     //! Sorted vectors of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed to each group
-    std::vector<std::vector<CustomConnectivityUpdate::DependentVar>> m_SortedDependentVars;
+    std::vector<std::vector<Models::WUVarReference>> m_SortedDependentVars;
 };
 
 //----------------------------------------------------------------------------

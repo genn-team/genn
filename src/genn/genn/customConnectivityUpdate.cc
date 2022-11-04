@@ -15,17 +15,6 @@
 //------------------------------------------------------------------------
 // CustomConnectivityUpdate
 //------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::DependentVar::getHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;  
-    Utils::updateHash(type, hash);
-    Utils::updateHash(duplication, hash);
-    return hash.get_digest();
-}
-
-//------------------------------------------------------------------------
-// CustomConnectivityUpdate
-//------------------------------------------------------------------------
 void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)] = loc;
@@ -251,32 +240,33 @@ bool CustomConnectivityUpdate::isZeroCopyEnabled() const
     return false;
 }
 //------------------------------------------------------------------------
-std::vector<CustomConnectivityUpdate::DependentVar> CustomConnectivityUpdate::getDependentVariables() const
+std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariables() const
 {
+    // 1) Get synapse group var references
     // Add hashes of weight update model variable types and duplication modes to vector
-    std::vector<DependentVar> dependentVars;
+    std::vector<Models::WUVarReference> dependentVars;
     const auto &vars = getSynapseGroup()->getWUModel()->getVars();
     std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
                    [this](const Models::Base::Var &v)
                    { 
-                       return DependentVar(v.name + getSynapseGroup()->getName(), v.type, getVarAccessDuplication(v.access));
+                       return Models::WUVarReference(getSynapseGroup(), v.name);
                    });
     
     // **TODO** skip variables already referenced by variable references
     // > Could point to any of these
     // Loop through custom updates which reference this synapse group
-    for(const auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
+    for(auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
         // Add hashes of custom update var types and duplication modes to vector
         const auto &vars = c->getCustomUpdateModel()->getVars();
         std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
                        [c](const Models::Base::Var &v)
                        { 
-                           return DependentVar(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
+                           return Models::WUVarReference(c, v.name);
                        });
     }
     
     // Loop through custom connectivity updates which reference this synapse group
-    for(const auto *c : getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
+    for(auto *c : getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
         // Skip this custom connectivity update group
         if(c == this) {
             continue;
@@ -287,7 +277,7 @@ std::vector<CustomConnectivityUpdate::DependentVar> CustomConnectivityUpdate::ge
         std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
                        [c](const Models::Base::Var &v)
                        { 
-                           return DependentVar(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
+                           return Models::WUVarReference(c, v.name);
                        });
     }
 
@@ -310,9 +300,12 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     // Build vector of hashes of variable types and duplication modes
     std::vector<boost::uuids::detail::sha1::digest_type> varTypeDigests;
     std::transform(dependentVars.cbegin(), dependentVars.cend(), std::back_inserter(varTypeDigests),
-                   [](const DependentVar &v)
+                   [](const Models::WUVarReference &v)
                    {
-                       return v.getHashDigest();
+                       boost::uuids::detail::sha1 hash;  
+                       Utils::updateHash(v.getVar().type, hash);
+                       Utils::updateHash(getVarAccessDuplication(v.getVar().access), hash);
+                       return hash.get_digest();
                    });
     
     // Sort digests

@@ -299,10 +299,10 @@ protected:
     void initDerivedParams(double dt);
 
     //! Add reference to custom connectivity update, referencing this synapse group
-    void addCustomUpdateReference(const CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }
+    void addCustomUpdateReference(CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }
 
     //! Add reference to custom update, referencing this synapse group
-    void addCustomUpdateReference(const CustomUpdateWUInternal *cu){ m_CustomUpdateReferences.push_back(cu); }
+    void addCustomUpdateReference(CustomUpdateWUInternal *cu){ m_CustomUpdateReferences.push_back(cu); }
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -326,11 +326,11 @@ protected:
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<const CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
+    const std::vector<CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
 
     //! Gets custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<const CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
+    const std::vector<CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
     
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
     bool canPSBeFused() const;
@@ -552,9 +552,9 @@ private:
 
     //! Custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    std::vector<const CustomConnectivityUpdateInternal*> m_CustomConnectivityUpdateReferences;
+    std::vector<CustomConnectivityUpdateInternal*> m_CustomConnectivityUpdateReferences;
 
     //! Custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    std::vector<const CustomUpdateWUInternal*> m_CustomUpdateReferences;
+    std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
 };

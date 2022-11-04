@@ -239,8 +239,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const unsigned int m_Size;
-    const Type m_Type;
+    unsigned int m_Size;
+    Type m_Type;
     GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
 };
 
@@ -286,10 +286,10 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const Type m_Type;
+    Type m_Type;
     SynapseGroupInternal *m_SG;
     SynapseGroupInternal *m_TransposeSG;
-    const size_t m_TransposeVarIndex;
+    size_t m_TransposeVarIndex;
     Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;
 };
