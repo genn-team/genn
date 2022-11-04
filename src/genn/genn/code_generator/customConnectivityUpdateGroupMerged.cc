@@ -15,72 +15,29 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 :   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
 {
     // Reserve vector of vectors to hold variables to update for all custom connectivity update groups, in archetype order
-    m_SortedUpdateVars.reserve(getGroups().size());
+    m_SortedDependentVars.reserve(getGroups().size());
 
     // Loop through groups
     for(const auto &g : getGroups()) {
-        // Add vector for this groups update vars
-        m_SortedUpdateVars.emplace_back();
-        
-        // Add tuple for each synapse variable with (full) name, type and access
-        const auto &vars = g.get().getSynapseGroup()->getWUModel()->getVars();
-        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
-                       [g](const Models::Base::Var &v)
-                       { 
-                           return std::make_tuple(v.name + g.get().getSynapseGroup()->getName(), v.type, getVarAccessDuplication(v.access));
-                       });
-        
-        // Add tuple for each custom update variable with (full) name, type and access
-        for(const auto *c : g.get().getSynapseGroup()->getCustomUpdateReferences()) {
-            const auto &vars = c->getCustomUpdateModel()->getVars();
-            std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
-                           [c](const Models::Base::Var &v)
-                           { 
-                               return std::make_tuple(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
-                           });
-        }
-        
-        // Add tuple for each custom connectivity update variable with (full) name, type and access
-        for(const auto *c : g.get().getSynapseGroup()->getCustomConnectivityUpdateReferences()) {
-            // Skip references to underlying synapse group from group
-            if (c == &g.get()) {
-                continue;
-            }
-            const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
-            std::transform(vars.cbegin(), vars.cend(), std::back_inserter(m_SortedUpdateVars.back()),
-                           [c](const Models::Base::Var &v)
-                           { 
-                               return std::make_tuple(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
-                           });
-        }
+        // Get group's dependent variables
+        auto dependentVars = g.get().getDependentVariables();
         
         // Sort update variables
-        std::sort(m_SortedUpdateVars.back().begin(), m_SortedUpdateVars.back().end(),
-                  [](const UpdateVar &a, const UpdateVar &b)
-                  {
-                      // Get hash of a's type ane duplication
-                      // **NOTE** name is irrelevant
-                      boost::uuids::detail::sha1 hashA;  
-                      Utils::updateHash(std::get<1>(a), hashA);
-                      Utils::updateHash(std::get<2>(a), hashA);
-                        
-                      // Get hash of b's type ane duplication
-                      // **NOTE** name is irrelevant
-                      boost::uuids::detail::sha1 hashB;
-                      Utils::updateHash(std::get<1>(b), hashB);
-                      Utils::updateHash(std::get<2>(b), hashB);
-                        
-                      // Compare digest
-                      return (hashA.get_digest() < hashB.get_digest());
+        std::sort(dependentVars.begin(), dependentVars.end(),
+                  [](const CustomConnectivityUpdate::DependentVar &a, const CustomConnectivityUpdate::DependentVar &b)
+                  {  
+                      return (a.getHashDigest() < a.getHashDigest());
                   });
 
+        // Add vector for this groups update vars
+        m_SortedDependentVars.emplace_back(dependentVars);
     }
     
     // Check all vectors are the same size
-    assert(std::all_of(m_SortedUpdateVars.cbegin(), m_SortedUpdateVars.cend(),
-                       [this](const std::vector<UpdateVar> &vars)
+    assert(std::all_of(m_SortedDependentVars.cbegin(), m_SortedDependentVars.cend(),
+                       [this](const std::vector<CustomConnectivityUpdate::DependentVar> &vars)
                        {
-                           return (vars.size() == m_SortedUpdateVars.front().size());
+                           return (vars.size() == m_SortedDependentVars.front().size());
                        }));
     
     
@@ -167,11 +124,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     
     // Loop through sorted update variables
-    for(size_t i = 0; i < getSortedArchetypeUpdateVars().size(); i++) {
-        addField(std::get<1>(getSortedArchetypeUpdateVars().at(i)) + "*", "_updateVar" + std::to_string(i), 
+    for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
+        addField(getSortedArchetypeDependentVars().at(i).type + "*", "_updateVar" + std::to_string(i), 
                  [i, &backend, this](const CustomConnectivityUpdateInternal&, size_t g) 
                  { 
-                     return backend.getDeviceVarPrefix() + std::get<0>(m_SortedUpdateVars[g][i]);
+                     return backend.getDeviceVarPrefix() + m_SortedDependentVars[g][i].target;
                  });
     }
 }
@@ -235,7 +192,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
 
     // Get variables which will need to be manipulated when adding and removing synapses
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-    const auto &updateVars = getSortedArchetypeUpdateVars();
+    const auto &updateVars = getSortedArchetypeDependentVars();
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;

@@ -19,11 +19,6 @@ public:
                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::tuple<std::string, std::string, VarAccessDuplication> UpdateVar;
-    
-    //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     bool isParamHeterogeneous(size_t index) const;
@@ -45,7 +40,7 @@ public:
 
     //! Get sorted vector of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed, belonging to archetype group
-    const std::vector<UpdateVar> &getSortedArchetypeUpdateVars() const { return m_SortedUpdateVars.front(); }
+    const std::vector<CustomConnectivityUpdate::DependentVar> &getSortedArchetypeDependentVars() const { return m_SortedDependentVars.front(); }
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -58,7 +53,7 @@ private:
     //----------------------------------------------------------------------------
     //! Sorted vectors of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed to each group
-    std::vector<std::vector<UpdateVar>> m_SortedUpdateVars;
+    std::vector<std::vector<CustomConnectivityUpdate::DependentVar>> m_SortedDependentVars;
 };
 
 //----------------------------------------------------------------------------

@@ -31,6 +31,7 @@ public:
     using CustomConnectivityUpdate::isZeroCopyEnabled;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
     using CustomConnectivityUpdate::getSynapseGroup;
+    using CustomConnectivityUpdate::getDependentVariables;
     using CustomConnectivityUpdate::finalize;
     using CustomConnectivityUpdate::getHashDigest;
     using CustomConnectivityUpdate::getInitHashDigest;

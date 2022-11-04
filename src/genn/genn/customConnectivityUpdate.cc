@@ -15,6 +15,17 @@
 //------------------------------------------------------------------------
 // CustomConnectivityUpdate
 //------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::DependentVar::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;  
+    Utils::updateHash(type, hash);
+    Utils::updateHash(duplication, hash);
+    return hash.get_digest();
+}
+
+//------------------------------------------------------------------------
+// CustomConnectivityUpdate
+//------------------------------------------------------------------------
 void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)] = loc;
@@ -240,28 +251,15 @@ bool CustomConnectivityUpdate::isZeroCopyEnabled() const
     return false;
 }
 //------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest() const
+std::vector<CustomConnectivityUpdate::DependentVar> CustomConnectivityUpdate::getDependentVariables() const
 {
-    boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getCustomConnectivityUpdateModel()->getHashDigest(), hash);
-    Utils::updateHash(getUpdateGroupName(), hash);
-
-    // Because it adds and removes synapses, connectivity update has to update 
-    // ALL variables associated with synapse group being modified as well as 
-    // with custom WU updates and this and other custom connectivity updates.
-    // Therefore, for custom connectivity updates to be merged, 
-    // the unordered types and number of these variables should match
-    std::vector<boost::uuids::detail::sha1::digest_type> varTypeDigests;
-
     // Add hashes of weight update model variable types and duplication modes to vector
+    std::vector<DependentVar> dependentVars;
     const auto &vars = getSynapseGroup()->getWUModel()->getVars();
-    std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
-                   [](const Models::Base::Var &v)
+    std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
+                   [this](const Models::Base::Var &v)
                    { 
-                       boost::uuids::detail::sha1 hash;  
-                       Utils::updateHash(v.type, hash);
-                       Utils::updateHash(getVarAccessDuplication(v.access), hash);
-                       return hash.get_digest();
+                       return DependentVar(v.name + getSynapseGroup()->getName(), v.type, getVarAccessDuplication(v.access));
                    });
     
     // **TODO** skip variables already referenced by variable references
@@ -270,13 +268,10 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     for(const auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
         // Add hashes of custom update var types and duplication modes to vector
         const auto &vars = c->getCustomUpdateModel()->getVars();
-        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
-                       [](const Models::Base::Var &v)
+        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
+                       [c](const Models::Base::Var &v)
                        { 
-                           boost::uuids::detail::sha1 hash;  
-                           Utils::updateHash(v.type, hash);
-                           Utils::updateHash(getVarAccessDuplication(v.access), hash);
-                           return hash.get_digest();
+                           return DependentVar(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
                        });
     }
     
@@ -289,15 +284,36 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
         
         // Add hashes of custom connectivity update var types and duplication modes to vector
         const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
-        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(varTypeDigests),
-                       [](const Models::Base::Var &v)
+        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
+                       [c](const Models::Base::Var &v)
                        { 
-                           boost::uuids::detail::sha1 hash;  
-                           Utils::updateHash(v.type, hash);
-                           Utils::updateHash(getVarAccessDuplication(v.access), hash);
-                           return hash.get_digest();
+                           return DependentVar(v.name + c->getName(), v.type, getVarAccessDuplication(v.access));
                        });
     }
+
+    return dependentVars;
+}
+//------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getCustomConnectivityUpdateModel()->getHashDigest(), hash);
+    Utils::updateHash(getUpdateGroupName(), hash);
+
+    // Because it adds and removes synapses, connectivity update has to update 
+    // ALL variables associated with synapse group being modified as well as 
+    // with custom WU updates and this and other custom connectivity updates.
+    // Therefore, for custom connectivity updates to be merged, 
+    // the unordered types and number of these variables should match
+    const auto dependentVars = getDependentVariables();
+
+    // Build vector of hashes of variable types and duplication modes
+    std::vector<boost::uuids::detail::sha1::digest_type> varTypeDigests;
+    std::transform(dependentVars.cbegin(), dependentVars.cend(), std::back_inserter(varTypeDigests),
+                   [](const DependentVar &v)
+                   {
+                       return v.getHashDigest();
+                   });
     
     // Sort digests
     std::sort(varTypeDigests.begin(), varTypeDigests.end());
