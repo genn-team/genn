@@ -42,30 +42,14 @@ public:
         //! state variables from different synapse groups will not get combined together in neuron update
         bool operator < (const SpikeEventThreshold &other) const
         {
-            if(other.eventThresholdCode < eventThresholdCode) {
-                return false;
+            if (synapseStateInThresholdCode) {
+                return (std::tie(eventThresholdCode, supportCode, synapseGroup) 
+                        < std::tie(other.eventThresholdCode, other.supportCode, other.synapseGroup));
             }
-            else if(eventThresholdCode < other.eventThresholdCode) {
-                return true;
+            else {
+                return (std::tie(eventThresholdCode, supportCode) 
+                        < std::tie(other.eventThresholdCode, other.supportCode));
             }
-
-            if(other.supportCode < supportCode) {
-                return false;
-            }
-            else if(supportCode < other.supportCode) {
-                return true;
-            }
-
-            if(synapseStateInThresholdCode) {
-                if(other.synapseGroup < synapseGroup) {
-                    return false;
-                }
-                else if(synapseGroup < other.synapseGroup) {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         //! Equality operator (used for set::set equality used when testing neuron groups mergability),

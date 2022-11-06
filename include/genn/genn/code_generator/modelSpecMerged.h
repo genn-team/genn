@@ -51,28 +51,8 @@ public:
         //! lexicographically compares all three struct members
         bool operator < (const EGPField &other) const
         {
-            if(other.mergedGroupIndex < mergedGroupIndex) {
-                return false;
-            }
-            else if(mergedGroupIndex < other.mergedGroupIndex) {
-                return true;
-            }
-
-            if(other.type < type) {
-                return false;
-            }
-            else if(type < other.type) {
-                return true;
-            }
-
-            if(other.fieldName < fieldName) {
-                return false;
-            }
-            else if(fieldName < other.fieldName) {
-                return true;
-            }
-
-            return false;
+            return (std::tie(mergedGroupIndex, type, fieldName) 
+                    < std::tie(other.mergedGroupIndex, other.type, other.fieldName));
         }
     };
     
