@@ -67,7 +67,7 @@ public:
 
         bool operator == (const Var &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
@@ -86,7 +86,7 @@ public:
 
         bool operator == (const VarRef &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
@@ -164,6 +164,13 @@ public:
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
     std::string getTargetName() const { return m_GetTargetName(); }
+
+    bool operator < (const VarReferenceBase &other) const
+    {
+        // **NOTE** variable and target names are enough to guarantee uniqueness
+        return (std::tie(m_Var.name, m_GetTargetName()) 
+                < std::tie(other.m_Var.name, other.m_GetTargetName()));
+    }
 
 protected:
     //------------------------------------------------------------------------
@@ -282,6 +289,26 @@ public:
     size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
     std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
 
+    bool operator < (const WUVarReference &other) const
+    {
+        if(other.m_TransposeVar.name < m_TransposeVar.name) {
+            return false;
+        }
+        else if(m_TransposeVar.name < other.m_TransposeVar.name) {
+            return true;
+        }
+
+        auto transposeTargetName = m_GetTransposeTargetName();
+        auto otherTransposeTargetName = other.m_GetTransposeTargetName();
+        if(otherTransposeTargetName < transposeTargetName) {
+            return false;
+        }
+        else if(transposeTargetName < otherTransposeTargetName) {
+            return true;
+        }
+        
+        return (VarReferenceBase::operator < (other));
+    }
 private:
     //------------------------------------------------------------------------
     // Members

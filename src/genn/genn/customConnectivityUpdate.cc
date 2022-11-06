@@ -242,27 +242,36 @@ bool CustomConnectivityUpdate::isZeroCopyEnabled() const
 //------------------------------------------------------------------------
 std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariables() const
 {
-    // 1) Get synapse group var references
-    // Add hashes of weight update model variable types and duplication modes to vector
+    // Build set of 'manual' variable references
+    // If variables are already referenced by this mechanism they shouldn't be included in dependent variables
+    const std::set<Models::WUVarReference> manualReferences(getVarReferences().cbegin(), getVarReferences().cend());
+
+    // Loop through synapse group variables
     std::vector<Models::WUVarReference> dependentVars;
-    const auto &vars = getSynapseGroup()->getWUModel()->getVars();
-    std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
-                   [this](const Models::Base::Var &v)
-                   { 
-                       return Models::WUVarReference(getSynapseGroup(), v.name);
-                   });
+    for (const auto &v : getSynapseGroup()->getWUModel()->getVars()) {
+        // Create reference to variable
+        Models::WUVarReference ref(getSynapseGroup(), v.name);
+
+        // Add to dependent variables if it isn't already 'manually' referenced
+        if (manualReferences.find(ref) == manualReferences.cend()) {
+            dependentVars.emplace_back(ref);
+        }
+    }
     
     // **TODO** skip variables already referenced by variable references
     // > Could point to any of these
     // Loop through custom updates which reference this synapse group
     for(auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
-        // Add hashes of custom update var types and duplication modes to vector
-        const auto &vars = c->getCustomUpdateModel()->getVars();
-        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
-                       [c](const Models::Base::Var &v)
-                       { 
-                           return Models::WUVarReference(c, v.name);
-                       });
+        // Loop through custom update variables
+        for (const auto &v : c->getCustomUpdateModel()->getVars()) {
+            // Create reference to variable
+            Models::WUVarReference ref(c, v.name);
+
+            // Add to dependent variables if it isn't already 'manually' referenced
+            if (manualReferences.find(ref) == manualReferences.cend()) {
+                dependentVars.emplace_back(ref);
+            }
+        }
     }
     
     // Loop through custom connectivity updates which reference this synapse group
@@ -272,13 +281,16 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
             continue;
         }
         
-        // Add hashes of custom connectivity update var types and duplication modes to vector
-        const auto &vars = c->getCustomConnectivityUpdateModel()->getVars();
-        std::transform(vars.cbegin(), vars.cend(), std::back_inserter(dependentVars),
-                       [c](const Models::Base::Var &v)
-                       { 
-                           return Models::WUVarReference(c, v.name);
-                       });
+        // Loop through custom connectivity update variables
+        for (const auto &v : c->getCustomConnectivityUpdateModel()->getVars()) {
+            // Create reference to variable
+            Models::WUVarReference ref(c, v.name);
+
+            // Add to dependent variables if it isn't already 'manually' referenced
+            if (manualReferences.find(ref) == manualReferences.cend()) {
+                dependentVars.emplace_back(ref);
+            }
+        }
     }
 
     return dependentVars;
