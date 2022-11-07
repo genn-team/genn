@@ -158,13 +158,18 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateGroups().size() << " merged custom update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateWUGroups().size() << " merged custom weight update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateTransposeWUGroups().size() << " merged custom weight transpose update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdateGroups().size() << " merged custom connectivity update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityHostUpdateGroups().size() << " merged custom connectivity host update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateInitGroups().size() << " merged custom update init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateInitGroups().size() << " merged custom WU update init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdatePreInitGroups().size() << " merged custom connectivity update presynaptic init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdatePostInitGroups().size() << " merged custom connectivity update postsynaptic init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseInitGroups().size() << " merged synapse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() << " merged custom WU update sparse init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().size() << " merged custom connectivity update sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
