@@ -141,6 +141,94 @@ IMPLEMENT_MODEL(ReduceNeuronSharedVar);
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
+
+TEST(CustomUpdates, ConstantVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
+
+TEST(CustomUpdates, UninitialisedVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    Sum::VarValues sumVarValues(uninitialisedVar());
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
+
+TEST(CustomUpdates, RandVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    InitVarSnippet::Uniform::ParamValues dist(0.0, 1.0);
+    Sum::VarValues sumVarValues(initVar<InitVarSnippet::Uniform>(dist));
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_TRUE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
 TEST(CustomUpdates, VarReferenceTypeChecks)
 {
     ModelSpecInternal model;

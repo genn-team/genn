@@ -55,7 +55,6 @@ int main(int argc, char *argv[])
     const int nact= (int) (pact*nNo);
     int *patns = new int[nact];
     const int npert= (int) (pperturb*nact);
-    int theno, newno;
     ofstream os(argv[8], ios::binary);
     double *fpt= new double[patternNo*nNo];
 
@@ -66,8 +65,8 @@ int main(int argc, char *argv[])
     cerr << endl;
   
     std::mt19937 rng;
-    std::uniform_int_distribution<int> nNoDist(0, nNo);
-    std::uniform_int_distribution<int> nActDist(0, nact);
+    std::uniform_int_distribution<int> nNoDist(0, nNo - 1);
+    std::uniform_int_distribution<int> nActDist(0, nact - 1);
 
     for (int c= 0; c < classNo; c++)
     {
@@ -77,6 +76,7 @@ int main(int argc, char *argv[])
         for (int x= 0; x < nact; x++)
         {
             // get exactly nact active neurons in mother pattern
+            int theno;
             do {
                 theno= nNoDist(rng);
             } while (pat[theno] == 1);
@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
             }
             for (int x= 0; x < npert; x++)
             {
-                theno= nActDist(rng);  // number of switched off one;
+                const int theno= nActDist(rng);  // number of switched off one;
+                int newno;
                 do {
 	                newno= nNoDist(rng);
                 } while (pat[newno] == 1);
