@@ -951,7 +951,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()) {
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()
+       || !modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().empty()) {
         os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(os);
