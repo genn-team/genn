@@ -168,8 +168,9 @@ public:
     bool operator < (const VarReferenceBase &other) const
     {
         // **NOTE** variable and target names are enough to guarantee uniqueness
-        return (std::tie(m_Var.name, m_GetTargetName()) 
-                < std::tie(other.m_Var.name, other.m_GetTargetName()));
+        const std::string targetName = m_GetTargetName();
+        const std::string otherTargetName = other.m_GetTargetName();
+        return (std::tie(m_Var.name, targetName) < std::tie(other.m_Var.name, otherTargetName));
     }
 
 protected:
