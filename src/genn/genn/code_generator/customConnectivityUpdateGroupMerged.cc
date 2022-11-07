@@ -368,7 +368,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
              
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged&) const
+void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     CodeStream::Scope b(os);
     os << "// merged custom connectivity host update group " << getIndex() << std::endl;
@@ -424,6 +424,12 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                &CustomConnectivityUpdateInternal::getPreVarLocation);
         addVarPushPullFuncSubs(backend, subs, cm->getPostVars(), "group->numTrgNeurons",
                                &CustomConnectivityUpdateInternal::getPostVarLocation);
+
+        // Apply substitutons to row update code and write out
+        std::string code = cm->getHostUpdateCode();
+        subs.applyCheckUnreplaced(code, "custom connectivity host update : merged" + std::to_string(getIndex()));
+        code = ensureFtype(code, modelMerged.getModel().getPrecision());
+        os << code;
     }
 }
 //----------------------------------------------------------------------------

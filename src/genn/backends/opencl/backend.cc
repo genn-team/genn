@@ -987,6 +987,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         {
             CodeStream::Scope b(os);
 
+            // Loop through host update groups and generate code for those in this custom update group
+            for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
+                if (cg.getArchetype().getUpdateGroupName() == g.first) {
+                    cg.generateUpdate(*this, os, modelMerged);
+                }
+            }
+
             // Push any required EGPs
             pushEGPHandler(os);
 
