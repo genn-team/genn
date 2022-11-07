@@ -80,6 +80,31 @@ public:
 };
 IMPLEMENT_MODEL(RemoveSynapseUpdate);
 
+class RemoveSynapseHostUpdate : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostUpdate, 0, 0, 0, 0, 0, 0, 0);
+    
+    SET_EXTRA_GLOBAL_PARAMS({{"d", "uint32_t*"}});
+    SET_ROW_UPDATE_CODE(
+        "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
+        "const uint32_t *dRow = &$(d)[wordsPerRow * $(id_pre)];\n"
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if(dRow[$(id_post) / 32] & (1 << ($(id_post) % 32))) {\n"
+        "       $(remove_synapse);\n"
+        "   }\n"
+        "});\n");
+    SET_HOST_UPDATE_CODE(
+        "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
+        "memset($(d), 0, wordsPerRow * $(num_pre) * sizeof(uint32_t));\n"
+        "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
+        "   uint32_t *dRow = $(d)[wordsPerRow * i];\n"
+        "   dRow[i / 32] |= (1 << (i % 32));\n"
+        "}\n");
+};
+IMPLEMENT_MODEL(RemoveSynapseHostUpdate);
+
 class AddSynapseUpdate : public CustomConnectivityUpdateModels::Base
 {
 public:
@@ -112,23 +137,34 @@ void modelDefinition(ModelSpec &model)
     model.addNeuronPopulation<TestNeuron>("Neuron", 64, {}, {0.0});
     
     TestWUM::VarValues testWUMInit(initVar<Weight>(), initVar<Delay>());
-    auto *sg = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "SpikeSource", "Neuron",
+    auto *sg1 = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Syn1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "SpikeSource", "Neuron",
+        {}, testWUMInit,
+        {}, {},
+        initConnectivity<Triangle>({}));
+    
+    model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Syn2", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "SpikeSource", "Neuron",
         {}, testWUMInit,
         {}, {},
         initConnectivity<Triangle>({}));
     
     RemoveSynapseUpdate::VarValues removeSynapseVarInit(initVar<Weight>());
     auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseUpdate>(
-        "RemoveSynapse", "RemoveSynapse", "Syn",
+        "RemoveSynapse", "RemoveSynapse", "Syn1",
         {}, removeSynapseVarInit, {}, {},
         {}, {}, {});
     
-    AddSynapseUpdate::VarReferences addSynapseVarRefInit(createWUVarRef(sg, "g"), createWUVarRef(sg, "d"), createWUVarRef(ccu, "a"));
+    AddSynapseUpdate::VarReferences addSynapseVarRefInit(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"), createWUVarRef(ccu, "a"));
     model.addCustomConnectivityUpdate<AddSynapseUpdate>(
-        "AddSynapse", "AddSynapse", "Syn",
+        "AddSynapse", "AddSynapse", "Syn1",
         {}, {}, {}, {},
         addSynapseVarRefInit, {}, {});
+    
+    model.addCustomConnectivityUpdate<RemoveSynapseHostUpdate>(
+        "RemoveSynapseHostUpdate", "RemoveSynapse", "Syn2",
+        {}, {}, {}, {},
+        {}, {}, {});
     
     model.setPrecision(GENN_FLOAT);
 }
