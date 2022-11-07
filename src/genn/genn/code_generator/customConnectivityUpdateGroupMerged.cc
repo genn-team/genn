@@ -192,12 +192,12 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     updateSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
     // Define synapse loop function
-    // **NOTE** index is signed integer so generated code can safely use i-- to process same synapse again
+    // **NOTE** index is signed integer so generated code can safely use j-- to process same synapse again
     // **YUCK** ideally id_post, id_syn, remove_synapse and all synaptic and postsynaptic variable substitutions would only be allowable within this scope but that's not currently possible
-    updateSubs.addFuncSubstitution("for_each_synapse", 1, "for(int i = 0; i < group->rowLength[" + updateSubs["id_pre"] + "]; i++){ const unsigned int idx = rowStartIdx + i; $(0) }");
+    updateSubs.addFuncSubstitution("for_each_synapse", 1, "for(int j = 0; j < group->rowLength[" + updateSubs["id_pre"] + "]; j++){ const unsigned int idx = rowStartIdx + j; $(0) }");
 
-    updateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + i]");
-    updateSubs.addVarSubstitution("id_syn", "idccuVarsx");
+    updateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + j]");
+    updateSubs.addVarSubstitution("id_syn", "idx");
 
     // Get variables which will need to be manipulated when adding and removing synapses
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
@@ -275,8 +275,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
         removeSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]--;" << std::endl;
 
-        // Decrement loop counter so synapse i will get processed
-        addSynapse << "i--;" << std::endl;
+        // Decrement loop counter so synapse j will get processed
+        addSynapse << "j--;" << std::endl;
     }
     updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
     
