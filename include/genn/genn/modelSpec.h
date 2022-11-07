@@ -147,6 +147,18 @@ inline Models::VarReference createVarRef(CustomUpdate *cu, const std::string &va
     return Models::VarReference::createVarRef(cu, varName);
 }
 
+//! Creates a reference to a presynaptic custom connectivity update variable
+inline Models::VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createPreVarRef(cu, varName);
+}
+
+//! Creates a reference to a postsynaptic custom connectivity update variable
+inline Models::VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createPostVarRef(cu, varName);
+}
+
 //! Creates a reference to a postsynaptic model variable
 inline Models::VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
@@ -174,6 +186,12 @@ inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string
 
 //! Creates a reference to a custom weight update variable
 inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
+{
+    return Models::WUVarReference(cu, varName);
+}
+
+//! Creates a reference to a custom connectivity update update variable
+inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
     return Models::WUVarReference(cu, varName);
 }
