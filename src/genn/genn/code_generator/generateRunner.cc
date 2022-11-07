@@ -1182,7 +1182,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                                               runnerPushFunc, runnerPullFunc, c.second, mem, customConnectivityPushPullFunctions,
                                                               [&backend](const CustomConnectivityUpdateInternal &c, const Models::Base::Var&)
                                                               { 
-                                                                  return backend.getSynapticMatrixRowStride(*c.getSynapseGroup());
+                                                                  return c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons();
                                                               });
 
         // Generate EGPs
