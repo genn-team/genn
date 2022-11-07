@@ -51,7 +51,7 @@ public:
 
     SET_ROW_BUILD_CODE(
         "if(j < $(num_post)) {\n"
-        "   if(j > $(id_pre)) {\n"
+        "   if(j >= $(id_pre)) {\n"
         "       $(addSynapse, j);\n"
         "   }\n"
         "}\n"
@@ -72,7 +72,7 @@ public:
     SET_ROW_UPDATE_CODE(
         "$(for_each_synapse,\n"
         "{\n"
-        "   if($(id_post) == ($(id_pre) + 1)) {\n"
+        "   if($(id_post) == $(id_pre)) {\n"
         "       $(remove_synapse);\n"
         "       break;\n"
         "   }\n"
@@ -83,10 +83,13 @@ IMPLEMENT_MODEL(RemoveSynapseUpdate);
 class AddSynapseUpdate : public CustomConnectivityUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(AddSynapseUpdate, 0, 0, 0, 0, 0, 0, 0);
-    
-    //SET_VARS({{"b", "scalar"}});
-    SET_ROW_UPDATE_CODE("$(add_synapse, $(id_pre) + 1);\n");
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(AddSynapseUpdate, 0, 0, 0, 0, 3, 0, 0);
+
+    SET_VAR_REFS({{"g", "scalar"}, {"d", "unsigned int"}, {"a", "scalar"}});
+    SET_ROW_UPDATE_CODE(
+        "const scalar weight = ($(id_pre) * 64) + $(id_pre);\n"
+        "const unsigned int delay = ($(id_pre) * 64) + $(id_pre);\n"
+        "$(add_synapse, $(id_pre), weight, delay, weight);\n");
         
 };
 IMPLEMENT_MODEL(AddSynapseUpdate);
@@ -115,10 +118,17 @@ void modelDefinition(ModelSpec &model)
         {}, {},
         initConnectivity<Triangle>({}));
     
-    RemoveSynapseUpdate::VarValues removeSynapseInit(initVar<Weight>());
-    model.addCustomConnectivityUpdate<RemoveSynapseUpdate>(
+    RemoveSynapseUpdate::VarValues removeSynapseVarInit(initVar<Weight>());
+    auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseUpdate>(
         "RemoveSynapse", "RemoveSynapse", "Syn",
-        {}, removeSynapseInit, {}, {},
+        {}, removeSynapseVarInit, {}, {},
         {}, {}, {});
+    
+    AddSynapseUpdate::VarReferences addSynapseVarRefInit(createWUVarRef(sg, "g"), createWUVarRef(sg, "d"), createWUVarRef(ccu, "a"));
+    model.addCustomConnectivityUpdate<AddSynapseUpdate>(
+        "AddSynapse", "AddSynapse", "Syn",
+        {}, {}, {}, {},
+        addSynapseVarRefInit, {}, {});
+    
     model.setPrecision(GENN_FLOAT);
 }

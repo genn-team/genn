@@ -62,14 +62,21 @@ void checkConnectivity(R getRowLengthFn, B getCorrectRowWordFn)
 TEST_F(SimTest, CustomConnectivityUpdate)
 {
     // Check initial connectivity is correct
-    checkConnectivity([](unsigned int i){ return 63 - i; },
-                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
+    checkConnectivity([](unsigned int i){ return 64 - i; },
+                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
     
     // Launch custom update to remove first synapse from each row
     updateRemoveSynapse();
 
     // Check modified connectivity is correct
-    checkConnectivity([](unsigned int i){ return (i > 62) ? 0 : (62 - i); },
-                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFCULL << i; });
+    checkConnectivity([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
+                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
+
+    // Launch custom update to re-add synapse again
+    updateAddSynapse();
+
+    // Check connectivity is restored
+    checkConnectivity([](unsigned int i){ return 64 - i; },
+                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
                       
 }
