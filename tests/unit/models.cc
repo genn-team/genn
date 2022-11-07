@@ -86,7 +86,7 @@ TEST(Models, NeuronVarReference)
     // Add neuron group to model
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    const auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     auto neuronVoltage = createVarRef(ng, "V");
     ASSERT_EQ(neuronVoltage.getSize(), 10);

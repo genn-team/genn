@@ -336,9 +336,9 @@ TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
                                {}, sumVarValues, sumVarReferences3);
     model.finalize();
 
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(sg1)->areWUVarReferencedByCustomUpdate());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(sg2)->areWUVarReferencedByCustomUpdate());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(sg3)->areWUVarReferencedByCustomUpdate());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(sg1)->getCustomUpdateReferences().empty());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(sg2)->getCustomUpdateReferences().empty());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(sg3)->getCustomUpdateReferences().empty());
 }
 //--------------------------------------------------------------------------
 TEST(SynapseGroup, CompareWUDifferentModel)

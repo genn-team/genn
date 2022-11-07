@@ -27,7 +27,6 @@ public:
 };
 IMPLEMENT_MODEL(IzhikevichVariableShared);
 
-
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 2);
@@ -138,6 +137,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 };
 IMPLEMENT_MODEL(ReduceNeuronSharedVar);
 }
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
