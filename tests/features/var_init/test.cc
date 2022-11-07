@@ -84,6 +84,7 @@ TEST_F(SimTest, Vars)
     pullWUSparseCustomUpdateStateFromDevice();
     pullWUDenseCustomUpdateStateFromDevice();
     pullWUKernelCustomUpdateStateFromDevice();
+    pullCustomConnectivityUpdateStateFromDevice();
     
     // Test host-generated vars
     PROB_TEST(, Pop, 50000);
@@ -102,5 +103,8 @@ TEST_F(SimTest, Vars)
     PROB_TEST(, WUDenseCustomUpdate, 50000);
     PROB_TEST(, WUSparseCustomUpdate, 50000);
     PROB_TEST(, WUKernelCustomUpdate, 3 * 3 * 5 * 5);
+    PROB_TEST(, CustomConnectivityUpdate, 50000);
+    PROB_TEST(pre_, CustomConnectivityUpdate, 50000);
+    PROB_TEST(post_, CustomConnectivityUpdate, 50000);
 }
 
