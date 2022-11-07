@@ -396,17 +396,15 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                      "", "group->");
 
         // Loop through EGPs
-        //**TODO** template helpers and use for EGPs too
         const auto egps = cm->getExtraGlobalParams();
         for(size_t i = 0; i < egps.size(); i++) {
-            const auto loc = VarLocation::HOST_DEVICE;// **HACK** getArchetype().getExtraGlobalParamLocation(i);
-            // If EGP is a pointer and located on the host
-            if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
+            // If EGP is a pointer
+            if(Utils::isTypePointer(egps[i].type)) {
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
                 backend.genExtraGlobalParamPush(push, egps[i].type, egps[i].name,
-                                                loc, "$(0)", "group->");
+                                                VarLocation::HOST_DEVICE, "$(0)", "group->");
 
                 // Add substitution
                 subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
@@ -415,7 +413,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 std::stringstream pullStream;
                 CodeStream pull(pullStream);
                 backend.genExtraGlobalParamPull(pull, egps[i].type, egps[i].name,
-                                                loc, "$(0)", "group->");
+                                                VarLocation::HOST_DEVICE, "$(0)", "group->");
 
                 // Add substitution
                 subs.addFuncSubstitution("pull" + egps[i].name, 1, pullStream.str());
