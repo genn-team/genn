@@ -131,9 +131,9 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
     
-    // Loop through sorted update variables
+    // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(getSortedArchetypeDependentVars().at(i).getVar().type + "*", "_updateVar" + std::to_string(i), 
+        addField(getSortedArchetypeDependentVars().at(i).getVar().type + "*", "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const CustomConnectivityUpdateInternal&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -201,7 +201,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
 
     // Get variables which will need to be manipulated when adding and removing synapses
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-    const auto &updateVars = getSortedArchetypeDependentVars();
+    const auto &ccuVars = cm->getVars();
+    const auto &ccuVarRefs = cm->getVarRefs();
+    const auto &dependentVars = getSortedArchetypeDependentVars();
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
@@ -220,22 +222,27 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // This is also better as it means $(add_synapse) calls won't be broken by model changes
         
         // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
-        /*for (size_t i = 0; i < ccuVars.size(); i++) {
+        for (size_t i = 0; i < ccuVars.size(); i++) {
             addSynapse << "group->" << ccuVars[i].name << "[newIdx] = $(" << (1 + i) << ");" << std::endl;
         }
 
-        // Use subsequent parameters to initialise new synapse's weight update model variables
-        for (size_t i = 0; i < wumVars.size(); i++) {
-            addSynapse << "group->_" << wumVars[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
-        }*/
+        // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
+        for (size_t i = 0; i < ccuVarRefs.size(); i++) {
+            addSynapse << "group->" << ccuVarRefs[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+        }
+        
+        // Zero any other dependent variables
+        for (size_t i = 0; i < dependentVars.size(); i++) {
+            addSynapse << "group->_dependentVar" << i << "[newIdx] = 0;" << std::endl;
+        }
 
         // Increment row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
         addSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]++;" << std::endl;
     }
 
-    // Add function substitution
-    updateSubs.addFuncSubstitution("add_synapse", 1 /*+ ccuVars.size() + wumVars.size()*/, addSynapseStream.str());
+    // Add function substitution with parameters to initialise custom connectivity update variables and variable references
+    updateSubs.addFuncSubstitution("add_synapse", 1 + ccuVars.size() + ccuVarRefs.size(), addSynapseStream.str());
 
     // Generate code to remove a synapse from this row
     std::stringstream removeSynapseStream;
@@ -249,9 +256,19 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Copy postsynaptic target from end of row over synapse to be deleted
         removeSynapse << "group->ind[idx] = group->ind[lastIdx];" << std::endl;
 
-        // Copy update variables from end of row over synapse to be deleted
-        for (size_t i = 0; i < updateVars.size(); i++) {
-            removeSynapse << "group->_updateVar" << i << "[idx] = group->_updateVar" << i << "[lastIdx];" << std::endl;
+        // Copy custom connectivity update variables from end of row over synapse to be deleted
+        for (size_t i = 0; i < ccuVars.size(); i++) {
+            removeSynapse << "group->" << ccuVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
+        }
+        
+        // Copy custom connectivity update variable references from end of row over synapse to be deleted
+        for (size_t i = 0; i < ccuVarRefs.size(); i++) {
+            removeSynapse << "group->" << ccuVarRefs[i].name << "[idx] = group->" << ccuVarRefs[i].name << "[lastIdx];" << std::endl;
+        }
+        
+        // Copy other dependent variables from end of row over synapse to be deleted
+        for (size_t i = 0; i < dependentVars.size(); i++) {
+            removeSynapse << "group->_dependentVar" << i << "[idx] = group->_dependentVar" << i << "[lastIdx];" << std::endl;
         }
 
         // Decrement row length
