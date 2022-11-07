@@ -263,19 +263,29 @@ public:
 
     bool operator < (const WUVarReference &other) const
     {
-        if(other.m_TransposeVar.name < m_TransposeVar.name) {
-            return false;
-        }
-        else if(m_TransposeVar.name < other.m_TransposeVar.name) {
-            return true;
-        }
+        const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
+        const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
+        if (hasTranspose && otherHasTranspose) {
+            if (other.m_TransposeVar.name < m_TransposeVar.name) {
+                return false;
+            }
+            else if (m_TransposeVar.name < other.m_TransposeVar.name) {
+                return true;
+            }
 
-        auto transposeTargetName = m_GetTransposeTargetName();
-        auto otherTransposeTargetName = other.m_GetTransposeTargetName();
-        if(otherTransposeTargetName < transposeTargetName) {
+            auto transposeTargetName = m_GetTransposeTargetName();
+            auto otherTransposeTargetName = other.m_GetTransposeTargetName();
+            if (otherTransposeTargetName < transposeTargetName) {
+                return false;
+            }
+            else if (transposeTargetName < otherTransposeTargetName) {
+                return true;
+            }
+        }
+        else if (hasTranspose) {
             return false;
         }
-        else if(transposeTargetName < otherTransposeTargetName) {
+        else if (otherHasTranspose) {
             return true;
         }
         

@@ -246,15 +246,20 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
     // If variables are already referenced by this mechanism they shouldn't be included in dependent variables
     const std::set<Models::WUVarReference> manualReferences(getVarReferences().cbegin(), getVarReferences().cend());
 
-    // Loop through synapse group variables
+    // If our synapse group has individual or kernel weights
     std::vector<Models::WUVarReference> dependentVars;
-    for (const auto &v : getSynapseGroup()->getWUModel()->getVars()) {
-        // Create reference to variable
-        Models::WUVarReference ref(getSynapseGroup(), v.name);
+    if ((getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
+        || (getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL))
+    {
+        // Loop through synapse group variables
+        for (const auto &v : getSynapseGroup()->getWUModel()->getVars()) {
+            // Create reference to variable
+            Models::WUVarReference ref(getSynapseGroup(), v.name);
 
-        // Add to dependent variables if it isn't already 'manually' referenced
-        if (manualReferences.find(ref) == manualReferences.cend()) {
-            dependentVars.emplace_back(ref);
+            // Add to dependent variables if it isn't already 'manually' referenced
+            if (manualReferences.find(ref) == manualReferences.cend()) {
+                dependentVars.emplace_back(ref);
+            }
         }
     }
     
