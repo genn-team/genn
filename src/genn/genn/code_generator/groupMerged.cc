@@ -869,11 +869,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         const auto preEGPs = getArchetype().getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
         for(const auto &e : preEGPs) {
             if(code.find("$(" + e.name + "_pre)") != std::string::npos) {
-                const bool isPointer = Utils::isTypePointer(e.type);
-                const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
+                const std::string prefix = Utils::isTypePointer(e.type) ? backend.getDeviceVarPrefix() : "";
                 addField(e.type, e.name + "Pre",
                          [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getSrcNeuronGroup()->getName(); },
-                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                         FieldType::Dynamic);
             }
         }
 
@@ -881,11 +880,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         const auto postEGPs = getArchetype().getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
         for(const auto &e : postEGPs) {
             if(code.find("$(" + e.name + "_post)") != std::string::npos) {
-                const bool isPointer = Utils::isTypePointer(e.type);
-                const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
+                const std::string prefix = Utils::isTypePointer(e.type) ? backend.getDeviceVarPrefix() : "";
                 addField(e.type, e.name + "Post",
                          [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getTrgNeuronGroup()->getName(); },
-                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                         FieldType::Dynamic);
             }
         }
 
@@ -1062,8 +1060,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             if((proceduralWeights && updateRole) || varInitRequired) {
                 const auto egps = snippet->getExtraGlobalParams();
                 for(const auto &e : egps) {
-                    const bool isPointer = Utils::isTypePointer(e.type);
-                    const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
+                    const std::string prefix = Utils::isTypePointer(e.type) ? backend.getDeviceVarPrefix() : "";
                     addField(e.type, e.name + var.name,
                              [e, prefix, var](const SynapseGroupInternal &sg, size_t)
                              {
@@ -1074,7 +1071,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                                      return prefix + e.name + var.name + sg.getName();
                                  }
                              },
-                             isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                             FieldType::Dynamic);
                 }
             }
         }

@@ -62,14 +62,13 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
             for(const auto &egp : sgEGPs) {
                 // If EGP is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + egp.name + ")") != std::string::npos) {
-                    const bool isPointer = Utils::isTypePointer(egp.type);
-                    const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
+                    const std::string prefix = Utils::isTypePointer(egp.type) ? backend.getDeviceVarPrefix() : "";
                     addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
                              [eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
-                             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                             FieldType::Dynamic);
                 }
             }
 
@@ -97,7 +96,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                  { 
                      return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
                  },
-                 FieldType::PointerEGP);
+                 FieldType::Dynamic);
     }
 
     if(getArchetype().isSpikeEventRecordingEnabled()) {
@@ -108,7 +107,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                  {
                      return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
                  },
-                 FieldType::PointerEGP);
+                 FieldType::Dynamic);
     }
 
 }

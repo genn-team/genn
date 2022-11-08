@@ -41,8 +41,7 @@ public:
     {
         Standard,
         Host,
-        ScalarEGP,
-        PointerEGP,
+        Dynamic,
     };
 
     //------------------------------------------------------------------------
@@ -260,11 +259,10 @@ protected:
     void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string prefix = isPointer ? arrayPrefix : "";
+            const std::string prefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
             addField(e.type, e.name + varName,
                      [e, prefix, varName](const G &g, size_t) { return prefix + e.name + varName + g.getName(); },
-                     isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                     FieldType::Dynamic);
         }
     }
 
@@ -442,8 +440,8 @@ protected:
 
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
-            // If this field is for a pointer EGP, also declare function to push it
-            if(std::get<3>(f) == FieldType::PointerEGP) {
+            // If this field is a dynamic pointer
+            if(std::get<3>(f) == FieldType::Dynamic && Utils::isTypePointer(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
@@ -816,14 +814,13 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string varPrefix = isPointer ? arrayPrefix : "";
+            const std::string varPrefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
             addField(e.type, e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
                      },
-                     Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                     FieldType::Dynamic);
         }
     }
 

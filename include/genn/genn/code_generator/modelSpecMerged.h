@@ -326,8 +326,8 @@ private:
 
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
-                // If field is an EGP, add record to merged EGPS
-                if(std::get<3>(f) == MergedGroup::FieldType::PointerEGP || std::get<3>(f) == MergedGroup::FieldType::ScalarEGP) {
+                // If field is dynamic, add record to merged EGPS
+                if(std::get<3>(f) == MergedGroup::FieldType::Dynamic) {
                     // Loop through groups within newly-created merged group
                     for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
