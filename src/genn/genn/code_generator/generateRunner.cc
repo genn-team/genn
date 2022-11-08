@@ -287,14 +287,45 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             CodeStream::Scope a(extraGlobalParam);
             backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
 
-            // Get destinations in merged structures, this EGP 
-            // needs to be copied to and call push function
-            // **TODO** need merged destinations for both device and host variables (in backend agnostic way)
-            // **TODO** need to do manual group update if host data structure
-            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
+            // Loop through destinations in merged structures, the device EGP needs to be copied to
+            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + name);
             for(const auto &v : mergedDestinations) {
-                extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                extraGlobalParam << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << ");" << std::endl;
+                // If this is a host group, directly update merged group data structure
+                if(v.second.hostGroup) {
+                    extraGlobalParam << "merged" << v.first << "Group" << v.second.mergedGroupIndex << "[" << v.second.groupIndex << "]";
+                    extraGlobalParam << "." << v.second.fieldName << " = " << backend.getDeviceVarPrefix() << name << ";" << std::endl;
+                }
+                // Otherwise, call push function which 
+                else {
+                    extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                    extraGlobalParam << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << ");" << std::endl;
+                }
+            }
+            
+            // If backend has a device variable prefix (otherwise, previous loop will have exactly the same effect)
+            if(!backend.getDeviceVarPrefix().empty()) {
+                // Loop through destinations in merged structures, the host EGP needs to be copied to
+                const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name);
+                for(const auto &v : mergedDestinations) {
+                    // Assert that host variables are only being mapped to host groups
+                    assert(v.second.hostGroup);
+                    
+                    extraGlobalParam << "merged" << v.first << "Group" << v.second.mergedGroupIndex << "[" << v.second.groupIndex << "]";
+                    extraGlobalParam << "." << v.second.fieldName << " = " << name << ";" << std::endl;
+                }   
+            }
+            
+            // If backend has a host variable prefix
+            if(!backend.getHostVarPrefix().empty()) {
+                // Loop through destinations in merged structures, the host EGP needs to be copied to
+                const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getHostVarPrefix() + name);
+                for(const auto &v : mergedDestinations) {
+                    // Assert that host variables are only being mapped to host groups
+                    assert(v.second.hostGroup);
+                    
+                    extraGlobalParam << "merged" << v.first << "Group" << v.second.mergedGroupIndex << "[" << v.second.groupIndex << "]";
+                    extraGlobalParam << "." << v.second.fieldName << " = " << backend.getHostVarPrefix() <<name << ";" << std::endl;
+                }   
             }
         }
 
@@ -1578,7 +1609,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
-                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + "recordSpk" + n.first);
                     for(const auto &v : mergedDestinations) {
                         runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
                         runner << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpk" + n.first << ");" << std::endl;
@@ -1593,7 +1624,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
-                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpkEvent" + n.first, backend);
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + "recordSpkEvent" + n.first);
                     for(const auto &v : mergedDestinations) {
                         runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
                         runner << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpkEvent" + n.first << ");" << std::endl;
