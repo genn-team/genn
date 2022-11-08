@@ -31,25 +31,25 @@ template<typename R, typename B>
 void checkConnectivity(R getRowLengthFn, B getCorrectRowWordFn)
 {
     // Download state
-    pullgSynFromDevice();
-    pulldSynFromDevice();
-    pullSynConnectivityFromDevice();
+    pullgSyn1FromDevice();
+    pulldSyn1FromDevice();
+    pullSyn1ConnectivityFromDevice();
     pullaRemoveSynapseFromDevice();
     
     // Loop through rows
     for(unsigned int i = 0; i < 64; i++) {
         // Check correct triangle row length
-        ASSERT_EQ(rowLengthSyn[i], getRowLengthFn(i));
+        ASSERT_EQ(rowLengthSyn2[i], getRowLengthFn(i));
 
         // Loop through row
         std::bitset<64> row;
-        for(unsigned int s = 0; s < rowLengthSyn[i]; s++) {
-            const unsigned int idx = (i * maxRowLengthSyn) + s;
-            const unsigned int j = indSyn[idx];
+        for(unsigned int s = 0; s < rowLengthSyn1[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn1) + s;
+            const unsigned int j = indSyn1[idx];
 
             // Check that all variables are correct given the pre and postsynaptic index
-            ASSERT_EQ(dSyn[idx], (j * 64) + i);
-            ASSERT_FLOAT_EQ(gSyn[idx], (i * 64.0f) + j);
+            ASSERT_EQ(dSyn1[idx], (j * 64) + i);
+            ASSERT_FLOAT_EQ(gSyn1[idx], (i * 64.0f) + j);
             ASSERT_FLOAT_EQ(aRemoveSynapse[idx], (i * 64.0f) + j);
 
             // Set bit in row bitset

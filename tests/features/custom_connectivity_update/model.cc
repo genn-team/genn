@@ -99,7 +99,7 @@ public:
         "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
         "memset($(d), 0, wordsPerRow * $(num_pre) * sizeof(uint32_t));\n"
         "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
-        "   uint32_t *dRow = $(d)[wordsPerRow * i];\n"
+        "   uint32_t *dRow = &$(d)[wordsPerRow * i];\n"
         "   dRow[i / 32] |= (1 << (i % 32));\n"
         "}\n");
 };
