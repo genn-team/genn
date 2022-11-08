@@ -101,7 +101,8 @@ public:
         "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
         "   uint32_t *dRow = &$(d)[wordsPerRow * i];\n"
         "   dRow[i / 32] |= (1 << (i % 32));\n"
-        "}\n");
+        "}\n"
+        "$(pushdToDevice, wordsPerRow * $(num_pre));\n");
 };
 IMPLEMENT_MODEL(RemoveSynapseHostUpdate);
 

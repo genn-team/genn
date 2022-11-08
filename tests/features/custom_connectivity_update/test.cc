@@ -25,10 +25,14 @@ suite of minimal models with known analytic outcomes that are used for continuou
 //----------------------------------------------------------------------------
 class SimTest : public SimulationTest
 {
+    virtual void Init() final
+    {
+        allocatedRemoveSynapseHostUpdate(64 * 2);
+    }
 };
 
 template<typename R, typename B>
-void checkConnectivity(R getRowLengthFn, B getCorrectRowWordFn)
+void checkConnectivity1(R getRowLengthFn, B getCorrectRowWordFn)
 {
     // Download state
     pullgSyn1FromDevice();
@@ -39,7 +43,7 @@ void checkConnectivity(R getRowLengthFn, B getCorrectRowWordFn)
     // Loop through rows
     for(unsigned int i = 0; i < 64; i++) {
         // Check correct triangle row length
-        ASSERT_EQ(rowLengthSyn2[i], getRowLengthFn(i));
+        ASSERT_EQ(rowLengthSyn1[i], getRowLengthFn(i));
 
         // Loop through row
         std::bitset<64> row;
@@ -59,24 +63,58 @@ void checkConnectivity(R getRowLengthFn, B getCorrectRowWordFn)
     }
 }
 
+template<typename R, typename B>
+void checkConnectivity2(R getRowLengthFn, B getCorrectRowWordFn)
+{
+    // Download state
+    pullgSyn2FromDevice();
+    pulldSyn2FromDevice();
+    pullSyn2ConnectivityFromDevice();
+    
+    // Loop through rows
+    for(unsigned int i = 0; i < 64; i++) {
+        // Check correct triangle row length
+        ASSERT_EQ(rowLengthSyn2[i], getRowLengthFn(i));
+
+        // Loop through row
+        std::bitset<64> row;
+        for(unsigned int s = 0; s < rowLengthSyn2[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn2) + s;
+            const unsigned int j = indSyn2[idx];
+
+            // Check that all variables are correct given the pre and postsynaptic index
+            ASSERT_EQ(dSyn2[idx], (j * 64) + i);
+            ASSERT_FLOAT_EQ(gSyn2[idx], (i * 64.0f) + j);
+
+            // Set bit in row bitset
+            row.set(j);
+        }
+        ASSERT_EQ(row.to_ullong(), getCorrectRowWordFn(i));
+    }
+}
+
 TEST_F(SimTest, CustomConnectivityUpdate)
 {
     // Check initial connectivity is correct
-    checkConnectivity([](unsigned int i){ return 64 - i; },
-                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
+    checkConnectivity1([](unsigned int i){ return 64 - i; },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
+    checkConnectivity2([](unsigned int i){ return 64 - i; },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
     
     // Launch custom update to remove first synapse from each row
     updateRemoveSynapse();
 
     // Check modified connectivity is correct
-    checkConnectivity([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
-                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
+    checkConnectivity1([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
+    checkConnectivity2([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
 
     // Launch custom update to re-add synapse again
     updateAddSynapse();
 
     // Check connectivity is restored
-    checkConnectivity([](unsigned int i){ return 64 - i; },
-                      [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
+    checkConnectivity1([](unsigned int i){ return 64 - i; },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
                       
 }
