@@ -80,10 +80,10 @@ public:
 };
 IMPLEMENT_MODEL(RemoveSynapseUpdate);
 
-class RemoveSynapseHostUpdate : public CustomConnectivityUpdateModels::Base
+class RemoveSynapseHostEGPUpdate : public CustomConnectivityUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostUpdate, 0, 0, 0, 0, 0, 0, 0);
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostEGPUpdate, 0, 0, 0, 0, 0, 0, 0);
     
     SET_EXTRA_GLOBAL_PARAMS({{"d", "uint32_t*"}});
     SET_ROW_UPDATE_CODE(
@@ -104,7 +104,29 @@ public:
         "}\n"
         "$(pushdToDevice, wordsPerRow * $(num_pre));\n");
 };
-IMPLEMENT_MODEL(RemoveSynapseHostUpdate);
+IMPLEMENT_MODEL(RemoveSynapseHostEGPUpdate);
+
+class RemoveSynapseHostVarUpdate : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostVarUpdate, 0, 0, 1, 0, 0, 0, 0);
+    
+    SET_PRE_VARS({{"postInd", "unsigned int"}});
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if($(postInd) == $(id_post)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
+        "});\n");
+    SET_HOST_UPDATE_CODE(
+        "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
+        "   $(postInd)[i] = i;\n"
+        "}\n"
+        "$(pushpostIndToDevice);\n");
+};
+IMPLEMENT_MODEL(RemoveSynapseHostVarUpdate);
 
 class AddSynapseUpdate : public CustomConnectivityUpdateModels::Base
 {
@@ -150,6 +172,12 @@ void modelDefinition(ModelSpec &model)
         {}, {},
         initConnectivity<Triangle>({}));
     
+    model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Syn3", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "SpikeSource", "Neuron",
+        {}, testWUMInit,
+        {}, {},
+        initConnectivity<Triangle>({}));
+    
     RemoveSynapseUpdate::VarValues removeSynapseVarInit(initVar<Weight>());
     auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseUpdate>(
         "RemoveSynapse", "RemoveSynapse", "Syn1",
@@ -162,9 +190,14 @@ void modelDefinition(ModelSpec &model)
         {}, {}, {}, {},
         addSynapseVarRefInit, {}, {});
     
-    model.addCustomConnectivityUpdate<RemoveSynapseHostUpdate>(
-        "RemoveSynapseHostUpdate", "RemoveSynapse", "Syn2",
+    model.addCustomConnectivityUpdate<RemoveSynapseHostEGPUpdate>(
+        "RemoveSynapseHostEGPUpdate", "RemoveSynapse", "Syn2",
         {}, {}, {}, {},
+        {}, {}, {});
+    
+    model.addCustomConnectivityUpdate<RemoveSynapseHostVarUpdate>(
+        "RemoveSynapseHostVarUpdate", "RemoveSynapse", "Syn3",
+        {}, {}, {0}, {},
         {}, {}, {});
     
     model.setPrecision(GENN_FLOAT);

@@ -27,7 +27,7 @@ class SimTest : public SimulationTest
 {
     virtual void Init() final
     {
-        allocatedRemoveSynapseHostUpdate(64 * 2);
+        allocatedRemoveSynapseHostEGPUpdate(64 * 2);
     }
 };
 
@@ -93,6 +93,37 @@ void checkConnectivity2(R getRowLengthFn, B getCorrectRowWordFn)
     }
 }
 
+
+template<typename R, typename B>
+void checkConnectivity3(R getRowLengthFn, B getCorrectRowWordFn)
+{
+    // Download state
+    pullgSyn3FromDevice();
+    pulldSyn3FromDevice();
+    pullSyn3ConnectivityFromDevice();
+    
+    // Loop through rows
+    for(unsigned int i = 0; i < 64; i++) {
+        // Check correct triangle row length
+        ASSERT_EQ(rowLengthSyn3[i], getRowLengthFn(i));
+
+        // Loop through row
+        std::bitset<64> row;
+        for(unsigned int s = 0; s < rowLengthSyn3[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn3) + s;
+            const unsigned int j = indSyn3[idx];
+
+            // Check that all variables are correct given the pre and postsynaptic index
+            ASSERT_EQ(dSyn3[idx], (j * 64) + i);
+            ASSERT_FLOAT_EQ(gSyn3[idx], (i * 64.0f) + j);
+
+            // Set bit in row bitset
+            row.set(j);
+        }
+        ASSERT_EQ(row.to_ullong(), getCorrectRowWordFn(i));
+    }
+}
+
 TEST_F(SimTest, CustomConnectivityUpdate)
 {
     // Check initial connectivity is correct
@@ -100,7 +131,8 @@ TEST_F(SimTest, CustomConnectivityUpdate)
                        [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
     checkConnectivity2([](unsigned int i){ return 64 - i; },
                        [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
-    
+    checkConnectivity3([](unsigned int i){ return 64 - i; },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL << i; });
     // Launch custom update to remove first synapse from each row
     updateRemoveSynapse();
 
@@ -109,7 +141,8 @@ TEST_F(SimTest, CustomConnectivityUpdate)
                        [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
     checkConnectivity2([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
                        [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
-
+    checkConnectivity3([](unsigned int i){ return (i > 63) ? 0 : (63 - i); },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFEULL << i; });
     // Launch custom update to re-add synapse again
     updateAddSynapse();
 
