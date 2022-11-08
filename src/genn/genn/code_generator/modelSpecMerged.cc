@@ -149,7 +149,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            { 
                                return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
                            },
-                           &SynapseGroupInternal::getConnectivityHostInitHashDigest);
+                           &SynapseGroupInternal::getConnectivityHostInitHashDigest, true);
 
     LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
@@ -170,12 +170,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
         LOGD_CODE_GEN << "Merging custom weight update groups:";
         createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
                                [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
-                               &CustomUpdateInternal::getHashDigest);
+                               &CustomUpdateInternal::getHashDigest, true);
 
         LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
         createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
                                [](const CustomUpdateWUInternal &cg) { return cg.isBatchReduction(); },
-                               &CustomUpdateWUInternal::getHashDigest);
+                               &CustomUpdateWUInternal::getHashDigest, true);
     }
 
     LOGD_CODE_GEN << "Merging custom connectivity update groups:";
@@ -186,7 +186,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     LOGD_CODE_GEN << "Merging custom connectivity host update groups:";
     createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityHostUpdateGroups,
                            [](const CustomConnectivityUpdateInternal &cg) { return !cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty(); },
-                           &CustomConnectivityUpdateInternal::getHashDigest);
+                           &CustomConnectivityUpdateInternal::getHashDigest, true);
 
     // Get memory spaces available to this backend
     // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
