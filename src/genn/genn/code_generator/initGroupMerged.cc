@@ -765,21 +765,23 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
     for(const auto &e : egps) {
         addField(e.type + "*", e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
-                 GroupMergedFieldType::HOST);
+                 GroupMergedFieldType::HOST_DYNAMIC);
 
         if(!backend.getDeviceVarPrefix().empty()) {
             addField(e.type + "*", backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const SynapseGroupInternal &g, size_t)
                      {
                          return "&" + backend.getDeviceVarPrefix() + e.name + g.getName();
-                     });
+                     },
+                     GroupMergedFieldType::DYNAMIC);
         }
         if(!backend.getHostVarPrefix().empty()) {
             addField(e.type + "*", backend.getHostVarPrefix() + e.name,
                      [e, &backend](const SynapseGroupInternal &g, size_t)
                      {
                          return "&" + backend.getHostVarPrefix() + e.name + g.getName();
-                     });
+                     },
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
 }
