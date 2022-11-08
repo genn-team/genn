@@ -68,7 +68,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
-                             FieldType::DYNAMIC);
+                             GroupMergedFieldType::DYNAMIC);
                 }
             }
 
@@ -96,7 +96,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                  { 
                      return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
                  },
-                 FieldType::DYNAMIC);
+                 GroupMergedFieldType::DYNAMIC);
     }
 
     if(getArchetype().isSpikeEventRecordingEnabled()) {
@@ -107,7 +107,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                  {
                      return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
                  },
-                 FieldType::DYNAMIC);
+                 GroupMergedFieldType::DYNAMIC);
     }
 
 }

@@ -765,7 +765,7 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
     for(const auto &e : egps) {
         addField(e.type + "*", e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
-                 FieldType::HOST);
+                 GroupMergedFieldType::HOST);
 
         if(!backend.getDeviceVarPrefix().empty()) {
             addField(e.type + "*", backend.getDeviceVarPrefix() + e.name,

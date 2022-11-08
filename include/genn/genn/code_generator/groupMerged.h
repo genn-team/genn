@@ -24,32 +24,35 @@ namespace CodeGenerator
 class CodeStream;
 }
 
+//------------------------------------------------------------------------
+// GroupMergedFieldType
+//------------------------------------------------------------------------
+//! Enumeration of field types 
+/*! The only reason this is not a child of GroupMerged is to prevent the 
+    template nightmare that would otherwise ensue when declaring operators on it */
+namespace CodeGenerator
+{
+enum class GroupMergedFieldType
+{
+    STANDARD,
+    HOST,
+    DYNAMIC,
+};
+
 //----------------------------------------------------------------------------
 // CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
 //! Very thin wrapper around a number of groups which have been merged together
-namespace CodeGenerator
-{
 template<typename G>
 class GroupMerged
 {
 public:
     //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    enum class FieldType
-    {
-        STANDARD,
-        HOST,
-        DYNAMIC,
-    };
-
-    //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
-    typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
+    typedef std::tuple<std::string, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
 
     GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
@@ -101,7 +104,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 const std::string &type = std::get<0>(f);
-                if(::Utils::isTypePointer(type) && std::get<3>(f) != FieldType::HOST) {
+                if(::Utils::isTypePointer(type) && std::get<3>(f) != GroupMergedFieldType::HOST) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostType(type);
@@ -211,13 +214,13 @@ protected:
                            });
     }
 
-    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::STANDARD)
+    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
-    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::STANDARD)
+    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         addField("scalar", name,
                  [getFieldValue, this](const G &g, size_t i)
@@ -262,7 +265,7 @@ protected:
             const std::string prefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
             addField(e.type, e.name + varName,
                      [e, prefix, varName](const G &g, size_t) { return prefix + e.name + varName + g.getName(); },
-                     FieldType::DYNAMIC);
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
 
@@ -441,13 +444,13 @@ protected:
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
             // If this field is a dynamic pointer
-            if(std::get<3>(f) == FieldType::DYNAMIC && Utils::isTypePointer(std::get<0>(f))) {
+            if(std::get<3>(f) == GroupMergedFieldType::DYNAMIC && Utils::isTypePointer(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure
-            assert(std::get<3>(f) != FieldType::HOST || host);
+            assert(std::get<3>(f) != GroupMergedFieldType::HOST || host);
         }
 
         // If merged group is used on host
@@ -820,7 +823,7 @@ protected:
                      {
                          return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
                      },
-                     FieldType::DYNAMIC);
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
 

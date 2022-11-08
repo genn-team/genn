@@ -355,7 +355,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
     for(const auto &e : cm->getExtraGlobalParams()) {
         addField(e.type, e.name,
                  [e](const CustomConnectivityUpdateInternal &g, size_t) { return e.name + g.getName(); },
-                 FieldType::HOST);
+                 GroupMergedFieldType::HOST);
 
         if(!backend.getDeviceVarPrefix().empty()) {
             addField(e.type, backend.getDeviceVarPrefix() + e.name,
@@ -485,7 +485,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
         if ((getArchetype().*getVarLocationFn)(i) & VarLocation::HOST) {
             addField(var.type + "*", var.name,
                     [var](const CustomConnectivityUpdateInternal &g, size_t) { return var.name + g.getName(); },
-                    FieldType::HOST);
+                    GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty()) {
                 addField(var.type + "*", backend.getDeviceVarPrefix() + var.name,

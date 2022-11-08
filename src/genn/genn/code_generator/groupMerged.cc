@@ -872,7 +872,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                 const std::string prefix = Utils::isTypePointer(e.type) ? backend.getDeviceVarPrefix() : "";
                 addField(e.type, e.name + "Pre",
                          [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getSrcNeuronGroup()->getName(); },
-                         FieldType::DYNAMIC);
+                         GroupMergedFieldType::DYNAMIC);
             }
         }
 
@@ -883,7 +883,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                 const std::string prefix = Utils::isTypePointer(e.type) ? backend.getDeviceVarPrefix() : "";
                 addField(e.type, e.name + "Post",
                          [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getTrgNeuronGroup()->getName(); },
-                         FieldType::DYNAMIC);
+                         GroupMergedFieldType::DYNAMIC);
             }
         }
 
@@ -1071,7 +1071,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                                      return prefix + e.name + var.name + sg.getName();
                                  }
                              },
-                             FieldType::DYNAMIC);
+                             GroupMergedFieldType::DYNAMIC);
                 }
             }
         }
