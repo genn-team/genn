@@ -1417,7 +1417,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             genRunnerFusedVarPushPull<SynapseWUPostVarAdapter>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, synapseGroupStatePushPullFunctions,
                                                               [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                               { 
-                                                                  return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
+                                                                  return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
                                                               });
         }
         
