@@ -408,7 +408,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                                 VarLocation::HOST_DEVICE, "$(0)", "group->");
 
                 // Add substitution
-                subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
+                subs.addFuncSubstitution("push" + egps[i].name + "ToDevice", 1, pushStream.str());
 
                 // Generate code to pull this EGP with count specified by $(0)
                 std::stringstream pullStream;
@@ -417,7 +417,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                                 VarLocation::HOST_DEVICE, "$(0)", "group->");
 
                 // Add substitution
-                subs.addFuncSubstitution("pull" + egps[i].name, 1, pullStream.str());
+                subs.addFuncSubstitution("pull" + egps[i].name + "FromDevice", 1, pullStream.str());
             }
         }
 
