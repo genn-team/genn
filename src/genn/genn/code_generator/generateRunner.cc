@@ -289,6 +289,8 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
 
             // Get destinations in merged structures, this EGP 
             // needs to be copied to and call push function
+            // **TODO** need merged destinations for both device and host variables (in backend agnostic way)
+            // **TODO** need to do manual group update if host data structure
             const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
             for(const auto &v : mergedDestinations) {
                 extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";

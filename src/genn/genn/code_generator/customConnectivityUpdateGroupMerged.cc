@@ -355,14 +355,15 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
     for(const auto &e : cm->getExtraGlobalParams()) {
         addField(e.type, e.name,
                  [e](const CustomConnectivityUpdateInternal &g, size_t) { return e.name + g.getName(); },
-                 GroupMergedFieldType::HOST);
+                 GroupMergedFieldType::HOST_DYNAMIC);
 
         if(!backend.getDeviceVarPrefix().empty()) {
             addField(e.type, backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const CustomConnectivityUpdateInternal &g, size_t)
                      {
                          return backend.getDeviceVarPrefix() + e.name + g.getName();
-                     });
+                     },
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
              
