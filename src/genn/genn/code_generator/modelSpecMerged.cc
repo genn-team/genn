@@ -112,7 +112,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
 
     LOGD_CODE_GEN << "Merging custom connectivity update postsynaptic initialisation groups:";
     createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePostInitGroups,
-                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isPreVarInitRequired(); },
+                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isPostVarInitRequired(); },
                            &CustomConnectivityUpdateInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom connectivity update sparse initialisation groups:";

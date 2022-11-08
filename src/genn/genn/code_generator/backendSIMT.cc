@@ -1428,7 +1428,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isPreVarInitRequired()) {
+                if(cg.getArchetype().isPreVarInitRNGRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 
@@ -1452,7 +1452,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isPostVarInitRequired()) {
+                if(cg.getArchetype().isPostVarInitRNGRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 

@@ -457,21 +457,21 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genExtraGlobalParamPush(push, vars[i].type, vars[i].name,
+            backend.genExtraGlobalParamPush(push, vars[i].type + "*", vars[i].name,
                                             loc, count, "group->");
 
             // Add substitution
-            subs.addFuncSubstitution("push" + vars[i].name, 0, pushStream.str());
+            subs.addFuncSubstitution("push" + vars[i].name + "ToDevice", 0, pushStream.str());
 
             // Generate code to pull this variable
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genExtraGlobalParamPull(pull, vars[i].type, vars[i].name,
+            backend.genExtraGlobalParamPull(pull, vars[i].type + "*", vars[i].name,
                                             loc, count, "group->");
 
             // Add substitution
-            subs.addFuncSubstitution("pull" + vars[i].name, 0, pullStream.str());
+            subs.addFuncSubstitution("pull" + vars[i].name + "FromDevice", 0, pullStream.str());
         }
     }
 }
