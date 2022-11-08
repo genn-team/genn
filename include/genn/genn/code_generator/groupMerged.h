@@ -32,12 +32,22 @@ class CodeStream;
     template nightmare that would otherwise ensue when declaring operators on it */
 namespace CodeGenerator
 {
-enum class GroupMergedFieldType
+enum class GroupMergedFieldType : unsigned int
 {
-    STANDARD,
-    HOST,
-    DYNAMIC,
+    STANDARD        = 0,
+    HOST            = (1 << 0),
+    DYNAMIC         = (1 << 1),
+
+    HOST_DYNAMIC    = HOST | DYNAMIC,
 };
+
+//----------------------------------------------------------------------------
+// Operators
+//----------------------------------------------------------------------------
+inline bool operator & (GroupMergedFieldType typeA, GroupMergedFieldType typeB)
+{
+    return (static_cast<unsigned int>(typeA) & static_cast<unsigned int>(typeB)) != 0;
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::GroupMerged
@@ -104,7 +114,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 const std::string &type = std::get<0>(f);
-                if(::Utils::isTypePointer(type) && std::get<3>(f) != GroupMergedFieldType::HOST) {
+                if(::Utils::isTypePointer(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostType(type);
@@ -444,13 +454,13 @@ protected:
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
             // If this field is a dynamic pointer
-            if(std::get<3>(f) == GroupMergedFieldType::DYNAMIC && Utils::isTypePointer(std::get<0>(f))) {
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && Utils::isTypePointer(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure
-            assert(std::get<3>(f) != GroupMergedFieldType::HOST || host);
+            assert(!(std::get<3>(f) & GroupMergedFieldType::HOST) || host);
         }
 
         // If merged group is used on host
