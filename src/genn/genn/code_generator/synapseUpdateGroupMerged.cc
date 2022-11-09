@@ -32,13 +32,13 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
     // Substitute names of pre and postsynaptic weight update variables
     synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->", 
-                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       [&sg, &synapseSubs, batchSize](VarAccess a, size_t) 
                                        { 
                                            return "[" + sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_pre"]) + "]";
                                        });
 
     synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group->",
-                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       [&sg, &synapseSubs, batchSize](VarAccess a, size_t) 
                                        { 
                                            return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
                                        });
@@ -60,7 +60,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->",
-                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           [&sg, &synapseSubs, batchSize](VarAccess a, size_t) 
                                            { 
                                                return "[" + sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_syn"]) + "]";
                                            });
@@ -109,7 +109,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
         // Use kernel index to index into variables
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", 
-                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           [&sg, &synapseSubs, batchSize](VarAccess a, size_t) 
                                            { 
                                                return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_kernel"]) + "]";
                                            });

@@ -477,7 +477,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                 // Substitute presynaptic variables
                 const bool delayed = (spkEventCond.synapseGroup->getDelaySteps() != NO_DELAY);
                 spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getPreVars(), "", "group->",
-                                                        [&popSubs, batchSize, delayed, i, this](VarAccess a) 
+                                                        [&popSubs, batchSize, delayed, i, this](VarAccess a, size_t)
                                                         { 
                                                             return "EventThresh" + std::to_string(i) + "[" + getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), popSubs["id"]) + "]";
                                                         });

@@ -92,14 +92,23 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                   });
     }
     
-    // If some variables are delayed, add delay pointer
-    /*if (getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField("unsigned int*", "spkQuePtr", 
-                 [&backend](const CustomUpdateInternal &cg, size_t) 
+    // If some presynaptic variables are delayed, add delay pointer
+    if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        addField("unsigned int*", "preSpkQuePtr", 
+                 [&backend](const CustomConnectivityUpdateInternal &cg, size_t) 
                  { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
                  });
-    }*/
+    }
+
+    // If some postsynaptic variables are delayed, add delay pointer
+    if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        addField("unsigned int*", "postSpkQuePtr", 
+                 [&backend](const CustomConnectivityUpdateInternal &cg, size_t) 
+                 { 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
+                 });
+    }
 
     // Add heterogeneous custom update model parameters
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
@@ -283,16 +292,23 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
     
     // **TODO** presynaptic variables and variable references could be read into registers at start of row
-    // **TODO** delays
     updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs["id_syn"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPreVars(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
     
-    // **TODO** only add variable references that aren't duplicate
-    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs["id_syn"] + "]");
+    // Substitute in variable references, filtering out those which aren't shared
+    const auto &variableRefs = getArchetype().getVarReferences();
+    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", 
+                                      [&updateSubs](VarAccessMode, size_t) { return "[" + updateSubs["id_syn"] + "]"; },
+                                      [&variableRefs](VarAccessMode, size_t i) 
+                                      {
+                                          return (getVarAccessDuplication(variableRefs.at(i).getVar().access) == VarAccessDuplication::SHARED); 
+                                      });
 
+    // **TODO** delays
     updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->", "[" + updateSubs["id_post"] + "]");
+
     updateSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
                                          [this](size_t i) { return isParamHeterogeneous(i);  },
                                          "", "group->");
