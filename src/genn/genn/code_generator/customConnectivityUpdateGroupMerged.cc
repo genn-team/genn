@@ -262,11 +262,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         }
         
         // Copy custom connectivity update variable references from end of row over synapse to be deleted
+        // **TODO** loop over batches
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             removeSynapse << "group->" << ccuVarRefs[i].name << "[idx] = group->" << ccuVarRefs[i].name << "[lastIdx];" << std::endl;
         }
         
         // Copy other dependent variables from end of row over synapse to be deleted
+        // **TODO** loop over batches
         for (size_t i = 0; i < dependentVars.size(); i++) {
             removeSynapse << "group->_dependentVar" << i << "[idx] = group->_dependentVar" << i << "[lastIdx];" << std::endl;
         }
@@ -286,7 +288,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     updateSubs.addVarNameSubstitution(cm->getPreVars(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
     
+    // **TODO** only add variable references that aren't duplicate
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs["id_syn"] + "]");
+
     updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->", "[" + updateSubs["id_post"] + "]");
     updateSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),

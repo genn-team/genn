@@ -81,20 +81,9 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences)
 {
-    // If connectivity is bitmask, give error if any variables are referenced
-    if (getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        if (!getVarInitialisers().empty() || !getVarReferences().empty()) {
-            throw std::runtime_error("Custom connectivity updates attached to synapse groups with BITMASK connectivity cannot have any per-synapse variables or variable references");
-        }
-    }
-    // Otherwise, give error if synapse group has unsupported connectivity type
-    else if (!(getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
+    // Give error if synapse group has unsupported connectivity type
+    if (!(getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
         throw std::runtime_error("Custom connectivity updates can only be attached to synapse groups with BITMASK or SPARSE connectivity.");
-    }
-
-    // If synapse group doesn't have individual weights, give error if there are any per-synapse variable references
-    if (!(getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && !getVarReferences().empty()) {
-        throw std::runtime_error("Custom connectivity updates attached to synapse groups without INDIVIDUAL connectivity cannot have any per-synapse variable references");
     }
 
     // Check variable reference types
@@ -159,6 +148,10 @@ void CustomConnectivityUpdate::initDerivedParams(double dt)
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::finalize(unsigned int batchSize)
 {
+    // **THINK** batching
+    // pre and post var refs can only be SHARED otherwise what's the point - you can't read from them!
+    // wu var refs can be DUPLICATE but this means they won't be accessible only used for initialising new synapses
+    //
     // If model is batched we need to check all variable references 
     // are SHARED as, connectivity itself is always SHARED
     if (batchSize > 1) {
