@@ -131,7 +131,16 @@ protected:
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
+    const NeuronGroup *getPreDelayNeuronGroup() const { return m_PreDelayNeuronGroup; }
+    
+    const NeuronGroup *getPostDelayNeuronGroup() const { return m_PostDelayNeuronGroup; }
+
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    NeuronGroup *getVarRefDelayGroup(const std::vector<Models::VarReference> &varRefs, const std::string &errorContext) const;
+    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -157,4 +166,7 @@ private:
     const std::vector<Models::WUVarReference> m_VarReferences;
     const std::vector<Models::VarReference> m_PreVarReferences;
     const std::vector<Models::VarReference> m_PostVarReferences;
+    
+    const NeuronGroup *m_PreDelayNeuronGroup;
+    const NeuronGroup *m_PostDelayNeuronGroup;
 };

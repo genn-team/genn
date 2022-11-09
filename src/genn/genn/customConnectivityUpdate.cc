@@ -13,6 +13,30 @@
 #include "synapseGroupInternal.h"
 
 //------------------------------------------------------------------------
+// Anonymous namespace
+//------------------------------------------------------------------------
+namespace
+{
+void updateVarRefDelayHash(const NeuronGroup *delayGroup, const std::vector<Models::VarReference> &varRefs, 
+                           boost::uuids::detail::sha1 &hash)
+{
+    // Update hash with whether delay is required
+    const bool delayed = (delayGroup != nullptr);
+    Utils::updateHash(delayed, hash);
+
+    // If it is, also update hash with number of delay slots
+    if(delayed) {
+        Utils::updateHash(delayGroup->getNumDelaySlots(), hash);
+    }
+
+    // Update hash with whether presynaptic variable references require delay
+    for(const auto &v : varRefs) {
+        Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
+    }
+}
+}   // Anonymous namespace
+
+//------------------------------------------------------------------------
 // CustomConnectivityUpdate
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc)
@@ -79,7 +103,8 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
     m_VarLocation(varInitialisers.size(), defaultVarLocation), m_PreVarLocation(preVarInitialisers.size(), defaultVarLocation), m_PostVarLocation(postVarInitialisers.size(), defaultVarLocation), 
     m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences)
+    m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences),
+    m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
 {
     // Give error if synapse group has unsupported connectivity type
     if (!(getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
@@ -176,20 +201,10 @@ void CustomConnectivityUpdate::finalize(unsigned int batchSize)
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
         }
     }
-    // If any variable references have delays
-    /*auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                                 [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
-    if(delayRef != m_VarReferences.cend()) {
-        // Set the delay neuron group 
-        m_DelayNeuronGroup = delayRef->getDelayNeuronGroup();
-
-        // If any of the variable references are delayed with a different group, give an error
-        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [this](const Models::VarReference &v) { return (v.getDelayNeuronGroup() != nullptr) && (v.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
-        {
-            throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
-        }
-    }*/
+    
+    // Get neuron groups to use for pre and postsynaptic variable reference delays
+    m_PreDelayNeuronGroup = getVarRefDelayGroup(getPreVarReferences(), "presynaptic");
+    m_PostDelayNeuronGroup = getVarRefDelayGroup(getPostVarReferences(), "postsynaptic");
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isPreVarInitRNGRequired() const
@@ -256,7 +271,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         }
     }
     
-    // **TODO** skip variables already referenced by variable references
+    // **TODO** skip variables already referedelayednced by variable references
     // > Could point to any of these
     // Loop through custom updates which reference this synapse group
     for(auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
@@ -324,22 +339,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     // Concatenate the digests to the hash
     Utils::updateHash(varTypeDigests, hash);
     
-    
-    /*getCustomConnectivityUpdateReferences;
-    using SynapseGroup::getCustomUpdateReferences*/
-    /*// Update hash with whether delay is required
-    const bool delayed = (getDelayNeuronGroup() != nullptr);
-    Utils::updateHash(delayed, hash);
-
-    // If it is, also update hash with number of delay slots
-    if(delayed) {
-        Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
-    }
-
-    // Update hash with whether variable references require delay
-    for(const auto &v : getVarReferences()) {
-        Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
-    }*/
+    // Update hash with delay information for pre and postsynaptic variable references
+    updateVarRefDelayHash(getPreDelayNeuronGroup(), getPreVarReferences(), hash);
+    updateVarRefDelayHash(getPostDelayNeuronGroup(), getPostVarReferences(), hash);
 
     return hash.get_digest();
 }
@@ -376,4 +378,29 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getVarLocation
     Utils::updateHash(m_PostVarLocation, hash);
     Utils::updateHash(m_ExtraGlobalParamLocation, hash);
     return hash.get_digest();
+}
+//------------------------------------------------------------------------
+NeuronGroup *CustomConnectivityUpdate::getVarRefDelayGroup(const std::vector<Models::VarReference> &varRefs, const std::string &errorContext) const
+{
+    // If any variable references have delays
+    // **YUCK** copy and paste from CustomUpdate::finalize
+    auto delayRef = std::find_if(varRefs.cbegin(), varRefs.cend(),
+                                 [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
+    if(delayRef != varRefs.cend()) {
+        // If any of the variable references are delayed with a different group, give an error
+        if(std::any_of(varRefs.cbegin(), varRefs.cend(),
+                       [delayRef](const Models::VarReference &v) 
+                       {
+                           return (v.getDelayNeuronGroup() != nullptr) && (v.getDelayNeuronGroup() != delayRef->getDelayNeuronGroup()); 
+                        }))
+        {
+            throw std::runtime_error("Referenced " + errorContext + " variables with delays in custom connectivity update '" + getName() + "' must all refer to same neuron group.");
+        }
+        
+        // Return the delay neuron group 
+        return delayRef->getDelayNeuronGroup();
+    }
+    else {
+        return nullptr;
+    }
 }
