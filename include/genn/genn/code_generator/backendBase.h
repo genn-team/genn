@@ -29,23 +29,24 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
-    class ModelSpecMerged;
-    class NeuronUpdateGroupMerged;
-    class Substitutions;
-    class SynapseGroupMergedBase;
-    class PresynapticUpdateGroupMerged;
-    class PostsynapticUpdateGroupMerged;
-    class SynapseDynamicsGroupMerged;
-    class CustomUpdateGroupMerged;
-    class CustomUpdateWUGroupMerged;
-    class CustomUpdateTransposeWUGroupMerged;
-    class NeuronInitGroupMerged;
-    class CustomUpdateInitGroupMerged;
-    class CustomWUUpdateInitGroupMerged;
-    class CustomWUUpdateSparseInitGroupMerged;
-    class SynapseConnectivityInitGroupMerged;
-    class SynapseInitGroupMerged;
-    class SynapseSparseInitGroupMerged;
+class ModelSpecMerged;
+class NeuronUpdateGroupMerged;
+class Substitutions;
+class SynapseGroupMergedBase;
+class PresynapticUpdateGroupMerged;
+class PostsynapticUpdateGroupMerged;
+class SynapseDynamicsGroupMerged;
+class CustomConnectivityUpdateGroupMerged;
+class CustomUpdateGroupMerged;
+class CustomUpdateWUGroupMerged;
+class CustomUpdateTransposeWUGroupMerged;
+class NeuronInitGroupMerged;
+class CustomUpdateInitGroupMerged;
+class CustomWUUpdateInitGroupMerged;
+class CustomWUUpdateSparseInitGroupMerged;
+class SynapseConnectivityInitGroupMerged;
+class SynapseInitGroupMerged;
+class SynapseSparseInitGroupMerged;
     
 }
 
@@ -488,6 +489,8 @@ protected:
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
+    
+    void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.
     //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory

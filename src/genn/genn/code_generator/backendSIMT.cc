@@ -1305,6 +1305,8 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(CodeStream &os, const Substi
             {
                 CodeStream::Scope b(os);
 
+                genCustomConnectivityUpdateIndexCalculation(os, cg);
+
                 // Configure substitutions
                 popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                 

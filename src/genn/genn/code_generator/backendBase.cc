@@ -6,6 +6,7 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/customConnectivityUpdateGroupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 
@@ -126,7 +127,7 @@ void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGr
 //-----------------------------------------------------------------------
 void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
-     // If batching is enabled
+    // If batching is enabled
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
         os << "const unsigned int preBatchOffset = group->numSrcNeurons * batch;" << std::endl;
@@ -232,6 +233,19 @@ void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUp
             // Calculate current batch offset
             os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
+    }
+}
+//-----------------------------------------------------------------------
+void BackendBase::genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const
+{
+    // If there are delays on presynaptic variable references
+    if(cu.getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        os << "const unsigned int preDelayOffset = (*group->preSpkQuePtr * group->numSrcNeurons);" << std::endl;
+    }
+    
+    // If there are delays on postsynaptic variable references
+    if(cu.getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        os << "const unsigned int postDelayOffset = (*group->postSpkQuePtr * group->numTrgNeurons);" << std::endl;
     }
 }
 //-----------------------------------------------------------------------
