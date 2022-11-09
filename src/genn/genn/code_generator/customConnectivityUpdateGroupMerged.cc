@@ -290,12 +290,12 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         addSynapse << "j--;" << std::endl;
     }
     updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
-    
+
     // **TODO** presynaptic variables and variable references could be read into registers at start of row
     updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs["id_syn"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPreVars(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
-    
+
     // Substitute in variable references, filtering out those which aren't shared
     const auto &variableRefs = getArchetype().getVarReferences();
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", 
@@ -305,9 +305,31 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
                                           return (getVarAccessDuplication(variableRefs.at(i).getVar().access) == VarAccessDuplication::SHARED); 
                                       });
 
-    // **TODO** delays
-    updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", "[" + updateSubs["id_pre"] + "]");
-    updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->", "[" + updateSubs["id_post"] + "]");
+    // Substitute in (potentially delayed) presynaptic variable references
+    const auto &preVariableRefs = getArchetype().getPreVarReferences();
+    updateSubs.addVarNameSubstitution(cm->getPreVarRefs(), "", "group->", 
+                                      [&preVariableRefs, &updateSubs](VarAccessMode, size_t i)
+                                      { 
+                                          if(preVariableRefs.at(i).getDelayNeuronGroup() != nullptr) {
+                                              return "[preDelayOffset + " + updateSubs["id_pre"] + "]"; 
+                                          }
+                                          else {
+                                              return "[" + updateSubs["id_pre"] + "]"; 
+                                          }
+                                      });
+    
+    // Substitute in (potentially delayed) postsynaptic variable references
+    const auto &postVariableRefs = getArchetype().getPreVarReferences();
+    updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->",
+                                      [&postVariableRefs, &updateSubs](VarAccessMode, size_t i)
+                                      { 
+                                          if(postVariableRefs.at(i).getDelayNeuronGroup() != nullptr) {
+                                              return "[postDelayOffset + " + updateSubs["id_post"] + "]"; 
+                                          }
+                                          else {
+                                              return "[" + updateSubs["id_post"] + "]"; 
+                                          }
+                                      });
 
     updateSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
                                          [this](size_t i) { return isParamHeterogeneous(i);  },
