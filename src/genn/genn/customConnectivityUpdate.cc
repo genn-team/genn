@@ -173,20 +173,9 @@ void CustomConnectivityUpdate::initDerivedParams(double dt)
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::finalize(unsigned int batchSize)
 {
-    // **THINK** batching
-    // pre and post var refs can only be SHARED otherwise what's the point - you can't read from them!
-    // wu var refs can be DUPLICATE but this means they won't be accessible only used for initialising new synapses
-    //
     // If model is batched we need to check all variable references 
     // are SHARED as, connectivity itself is always SHARED
     if (batchSize > 1) {
-        // If any referenced synaptic variables aren't shared, give error
-        if (std::any_of(getVarReferences().cbegin(), getVarReferences().cend(),
-                        [](const Models::WUVarReference &v) { return (getVarAccessDuplication(v.getVar().access) != VarAccessDuplication::SHARED); }))
-        {
-            throw std::runtime_error("Synaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
-        }
-
         // If any referenced presynaptic variables aren't shared, give error
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
                         [](const Models::VarReference &v) { return (getVarAccessDuplication(v.getVar().access) != VarAccessDuplication::SHARED); }))
