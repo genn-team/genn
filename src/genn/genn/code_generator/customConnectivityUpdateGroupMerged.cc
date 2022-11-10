@@ -193,9 +193,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
 {
     Substitutions updateSubs(&popSubs);
 
-    // Calculate index of start of row
-    os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
-
     // Add substitutions for number of pre and postsynaptic neurons
     updateSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
     updateSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
@@ -214,6 +211,21 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     const auto &ccuVarRefs = cm->getVarRefs();
     const auto &dependentVars = getSortedArchetypeDependentVars();
 
+    // Determine if any
+    const bool anyBatched = ((modelMerged.getModel().getBatchSize() > 1) 
+                             && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
+                                             [](const Models::WUVarReference &v){ return (v.getVar().access & VarAccessDuplication::DUPLICATE); })
+                                 || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
+                                                [](const Models::WUVarReference &v){ return (v.getVar().access & VarAccessDuplication::DUPLICATE); })));
+
+    // Calculate index of start of row
+    os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
+
+    // If any variables are batched
+    if (anyBatched) {
+        os << "const unsigned int synStride = group->numSrcNeurons * group->rowStride;" << std::endl;
+    }
+
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
     CodeStream addSynapse(addSynapseStream);
@@ -226,10 +238,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Set postsynaptic target to parameter 0
         addSynapse << "group->ind[newIdx] = $(0);" << std::endl;
  
-        // **THINK** update vars shouldn't include our custom connectivity update variables OR  any referenced already by custom connectivity update
-        // THESE variables should be initialised via parameters, remainder should be zerod
-        // This is also better as it means $(add_synapse) calls won't be broken by model changes
-        
         // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
         for (size_t i = 0; i < ccuVars.size(); i++) {
             addSynapse << "group->" << ccuVars[i].name << "[newIdx] = $(" << (1 + i) << ");" << std::endl;
@@ -237,12 +245,41 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
 
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
-            addSynapse << "group->" << ccuVarRefs[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+            // If model is batched and this variable is duplicated
+            if ((modelMerged.getModel().getBatchSize() > 1) && 
+                getArchetype().getVarReferences().at(i).getVar().access & VarAccessDuplication::DUPLICATE) 
+            {
+                // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
+                addSynapse << "const " << ccuVarRefs[i].type << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                {
+                    CodeStream::Scope b(addSynapse);
+                    addSynapse << "group->" << ccuVarRefs[i].name << "[(b * synStride) + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
+                }
+            }
+            // Otherwise, write parameter straight into var reference
+            else {
+                addSynapse << "group->" << ccuVarRefs[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+            }
         }
         
-        // Zero any other dependent variables
+        // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
-            addSynapse << "group->_dependentVar" << i << "[newIdx] = 0;" << std::endl;
+            // If model is batched and this dependent variable is duplicated
+            if ((modelMerged.getModel().getBatchSize() > 1) &&
+                dependentVars.at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            {
+                // Loop through all batches and zero
+                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                {
+                    CodeStream::Scope b(addSynapse);
+                    addSynapse << "group->_dependentVar" << i << "[(b * synStride) + newIdx] = 0;" << std::endl;
+                }
+            }
+            // Otherwise, zero var reference
+            else {
+                addSynapse << "group->_dependentVar" << i << "[newIdx] = 0;" << std::endl;
+            }
         }
 
         // Increment row length
@@ -270,16 +307,42 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
             removeSynapse << "group->" << ccuVars[i].name << "[idx] = group->" << ccuVars[i].name << "[lastIdx];" << std::endl;
         }
         
-        // Copy custom connectivity update variable references from end of row over synapse to be deleted
-        // **TODO** loop over batches
+        // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
-            removeSynapse << "group->" << ccuVarRefs[i].name << "[idx] = group->" << ccuVarRefs[i].name << "[lastIdx];" << std::endl;
+            // If model is batched and this variable is duplicated
+            if ((modelMerged.getModel().getBatchSize() > 1) &&
+                getArchetype().getVarReferences().at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            {
+                // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
+                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                {
+                    CodeStream::Scope b(addSynapse);
+                    removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * synStride) + idx] = group->" << ccuVarRefs[i].name << "[(b * synStride) + lastIdx];" << std::endl;
+                }
+            }
+            // Otherwise, copy custom connectivity update variable references from end of row over synapse to be deleted
+            else {
+                removeSynapse << "group->" << ccuVarRefs[i].name << "[idx] = group->" << ccuVarRefs[i].name << "[lastIdx];" << std::endl;
+            }
         }
         
-        // Copy other dependent variables from end of row over synapse to be deleted
-        // **TODO** loop over batches
+        // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
-            removeSynapse << "group->_dependentVar" << i << "[idx] = group->_dependentVar" << i << "[lastIdx];" << std::endl;
+            // If model is batched and this dependent variable is duplicated
+            if ((modelMerged.getModel().getBatchSize() > 1) &&
+                dependentVars.at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            {
+                // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
+                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                {
+                    CodeStream::Scope b(removeSynapse);
+                    removeSynapse << "group->_dependentVar" << i << "[(b * synStride) + idx] = group->_dependentVar" << i << "[(b * synStride) + lastIdx];" << std::endl;
+                }
+            }
+            // Otherwise, copy dependent variable from end of row over synapse to be deleted
+            else {
+                removeSynapse << "group->_dependentVar" << i << "[idx] = group->_dependentVar" << i << "[lastIdx];" << std::endl;
+            }
         }
 
         // Decrement row length
