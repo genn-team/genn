@@ -783,26 +783,34 @@ TEST(CustomUpdates, CompareDifferentBatched)
     NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
-    // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
+    // Add one custom update which sums duplicated variables (v and u), another which sums shared variables (a and b) and another which sums one of each
     Sum::VarReferences sumVarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
     Sum::VarReferences sumVarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    Sum::VarReferences sumVarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                             {}, {0.0}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
                                             {}, {0.0}, sumVarReferences2);
-
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences3);
     model.finalize();
 
-    // Check that sum1 is batched and sum is not
+    // Check that sum1 and sum3 are batched and sum2 is not
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
     CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
     ASSERT_TRUE(sum1Internal->isBatched());
     ASSERT_FALSE(sum2Internal->isBatched());
+    ASSERT_TRUE(sum3Internal->isBatched());
 
-    // Check that this means they can't be merged
+    // Check that neither initialisation nor update of batched and unbatched can be merged
     ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
     ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
     
+    // Check that initialisation of batched and mixed can be merged but not update
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -812,7 +820,7 @@ TEST(CustomUpdates, CompareDifferentBatched)
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 2);
 }
 //--------------------------------------------------------------------------
