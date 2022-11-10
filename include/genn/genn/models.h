@@ -163,15 +163,18 @@ public:
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
     std::string getTargetName() const { return m_GetTargetName(); }
+    bool isBatched() const{ return m_IsBatched(); }
 
 protected:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     typedef std::function<std::string(void)> GetTargetNameFn;
+    typedef std::function<bool(void)> IsBatchedFn;
 
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetName)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex)), m_GetTargetName(getTargetName)
+    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec, 
+                     GetTargetNameFn getTargetName, IsBatchedFn isBatched)
+    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex)), m_GetTargetName(getTargetName), m_IsBatched(isBatched)
     {}
 
 private:
@@ -181,6 +184,7 @@ private:
     size_t m_VarIndex;
     Models::Base::Var m_Var;
     GetTargetNameFn m_GetTargetName;
+    IsBatchedFn m_IsBatched;
 };
 
 //----------------------------------------------------------------------------
@@ -215,7 +219,8 @@ private:
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
     VarReference(const CustomUpdate *cu, const std::string &varName);
     VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
-                 size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
+                 size_t varIndex, const Models::Base::VarVec &varVec, 
+                 GetTargetNameFn getTargetName, IsBatchedFn isBatched);
 
     //------------------------------------------------------------------------
     // Members
