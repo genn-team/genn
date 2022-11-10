@@ -707,7 +707,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get reference to group
                         os << "const auto *group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                         
-                        genCustomUpdateIndexCalculation(os, c);
+                        genCustomConnectivityUpdateIndexCalculation(os, c);
                         
                         // Loop through presynaptic neurons
                         os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
