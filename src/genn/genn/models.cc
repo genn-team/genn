@@ -54,7 +54,7 @@ VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *cu, const s
     auto getDelayNG = [sg]() { return (sg->getDelaySteps() > 0) ? sg->getSrcNeuronGroup() : nullptr; };
     return VarReference(sg->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
                         cum->getPreVarIndex(varName), cum->getPreVars(),
-                        [cuInternal]() { return cuInternal->getName(); });
+                        [cuInternal]() { return cuInternal->getName(); }, []() { return true; });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
@@ -65,7 +65,7 @@ VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *cu, const 
     auto getDelayNG = [sg]() { return (sg->getBackPropDelaySteps() > 0) ? sg->getTrgNeuronGroup() : nullptr; };
     return VarReference(sg->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
                         cum->getPostVarIndex(varName), cum->getPostVars(),
-                        [cuInternal]() { return cuInternal->getName(); });
+                        [cuInternal]() { return cuInternal->getName(); }, []() { return true; });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
@@ -79,7 +79,7 @@ VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
                         []() { return nullptr; },
                         psm->getVarIndex(varName), psm->getVars(),
-                        [sgInternal]() { return sgInternal->getFusedPSVarSuffix(); });
+                        [sgInternal]() { return sgInternal->getFusedPSVarSuffix(); }, []() { return true; });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
@@ -89,7 +89,7 @@ VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string
     auto getDelayNG = [sgInternal]() { return (sgInternal->getDelaySteps() > 0) ? sgInternal->getSrcNeuronGroup() : nullptr; };
     return VarReference(sgInternal->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
                         wum->getPreVarIndex(varName), wum->getPreVars(),
-                        [sgInternal]() { return sgInternal->getName(); });
+                        [sgInternal]() { return sgInternal->getName(); }, []() { return true; });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
@@ -99,32 +99,36 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
     auto getDelayNG = [sgInternal]() { return (sgInternal->getBackPropDelaySteps() > 0) ? sgInternal->getTrgNeuronGroup() : nullptr; };
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
                         wum->getPostVarIndex(varName), wum->getPostVars(),
-                        [sgInternal]() { return sgInternal->getName(); });
+                        [sgInternal]() { return sgInternal->getName(); }, []() { return true; });
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(NeuronGroupInternal *ng, const std::string &varName)
-:   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), [ng](){ return ng->getName(); }),
+:   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), 
+                     [ng]() { return ng->getName(); }, []() { return true; }),
     m_Size(ng->getNumNeurons()), m_GetDelayNeuronGroup([ng, varName]() { return (ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr; })
 {
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(CurrentSourceInternal *cs, const std::string &varName)
-:   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), [cs]() { return cs->getName(); }),
+:   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), 
+                     [cs]() { return cs->getName(); }, []() { return true; }),
     m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetDelayNeuronGroup([]() { return nullptr; })
 {
 
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(CustomUpdate *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), 
+                     [cu]() { return cu->getName(); }, [cu]() { return static_cast<CustomUpdateInternal*>(cu)->isBatched(); }),
     m_Size(cu->getSize()), m_GetDelayNeuronGroup([]() { return nullptr; })
 {
 
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
-                           size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn)
-:   VarReferenceBase(varIndex, varVec, getTargetNameFn), m_Size(size), m_GetDelayNeuronGroup(getDelayNeuronGroup)
+                           size_t varIndex, const Models::Base::VarVec &varVec, 
+                           GetTargetNameFn getTargetName, IsBatchedFn isBatched)
+:   VarReferenceBase(varIndex, varVec, getTargetName, isBatched), m_Size(size), m_GetDelayNeuronGroup(getDelayNeuronGroup)
 {}
 
 //----------------------------------------------------------------------------
@@ -132,7 +136,8 @@ VarReference::VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeur
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(SynapseGroup *sg, const std::string &varName,
                                SynapseGroup *transposeSG, const std::string &transposeVarName)
-:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), [sg]() { return sg->getName(); }),
+:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), 
+                     [sg]() { return sg->getName(); }, []() { return true; }),
     m_SG(static_cast<SynapseGroupInternal*>(sg)), m_TransposeSG(static_cast<SynapseGroupInternal*>(transposeSG)),
     m_TransposeVarIndex((transposeSG == nullptr) ? 0 : transposeSG->getWUModel()->getVarIndex(transposeVarName)),
     m_TransposeVar((transposeSG == nullptr) ? Models::Base::Var() : transposeSG->getWUModel()->getVars().at(m_TransposeVarIndex)),
@@ -178,7 +183,8 @@ WUVarReference::WUVarReference(SynapseGroup *sg, const std::string &varName,
 }
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(CustomUpdateWU *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), 
+                     [cu]() { return cu->getName(); }, [cu]() { return static_cast<CustomUpdateWUInternal*>(cu)->isBatched(); }),
     m_SG(static_cast<CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr),
     m_TransposeVarIndex(0)
 {
@@ -186,7 +192,8 @@ WUVarReference::WUVarReference(CustomUpdateWU *cu, const std::string &varName)
 }
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomConnectivityUpdateModel()->getVarIndex(varName), cu->getCustomConnectivityUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+:   VarReferenceBase(cu->getCustomConnectivityUpdateModel()->getVarIndex(varName), cu->getCustomConnectivityUpdateModel()->getVars(), 
+                     [cu]() { return cu->getName(); }, [cu]() { return false; }),
     m_SG(static_cast<CustomConnectivityUpdateInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr),
     m_TransposeVarIndex(0)
 {
