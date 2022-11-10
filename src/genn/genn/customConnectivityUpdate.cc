@@ -332,6 +332,11 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     updateVarRefDelayHash(getPreDelayNeuronGroup(), getPreVarReferences(), hash);
     updateVarRefDelayHash(getPostDelayNeuronGroup(), getPostVarReferences(), hash);
 
+    // Update hash with duplication mode of synaptic variable references
+    for(const auto &v : getVarReferences()) {
+        Utils::updateHash(getVarAccessDuplication(v.getVar().access), hash);
+    }
+
     return hash.get_digest();
 }
 //------------------------------------------------------------------------
