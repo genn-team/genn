@@ -416,22 +416,29 @@ TEST(CustomUpdates, BatchingVars)
     
 
     // Create updates where variable is shared and references vary
-    Sum2::VarValues sum2VarValues(1.0);
-    Sum2::VarReferences sum2VarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum2::VarReferences sum2VarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
-    Sum2::VarReferences sum2VarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    Sum::VarReferences sumVarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    Sum::VarReferences sumVarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
 
-    auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences1);
-    auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences2);
-    auto *sum3 = model.addCustomUpdate<Sum2>("Sum3", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences3);
+    auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences3);
+    
+    // Create one more update which references two variables in the non-batched sum2
+    Sum::VarReferences sumVarReferences4(createVarRef(sum2, "sum"), createVarRef(sum2, "sum"));
+    auto *sum4 = model.addCustomUpdate<Sum>("Sum4", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences4);
+    
     model.finalize();
 
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
+    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum4)->isBatched());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
