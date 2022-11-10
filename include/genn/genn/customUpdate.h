@@ -139,7 +139,7 @@ protected:
             const auto varRef = varRefs.at(i);
             const auto modelVarRef = modelVarRefs.at(i);
 
-             // If custom update is batched, check that any variable references to shared variables are read-only
+            // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
             if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
