@@ -1107,6 +1107,11 @@ CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroup
              { 
                  return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
              });
+    
+    // If this backend initialises population RNGs on device and this group requires one for simulation
+    if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired() && backend.isPopulationRNGInitialisedOnDevice()) {
+        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
+    }
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerged::getHashDigest() const

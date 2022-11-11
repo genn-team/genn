@@ -1732,10 +1732,12 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "buildCustomUpdateProgram();" << std::endl;
     os << std::endl;
 
-    // If any neuron groups require a simulation RNG
+    // If any neuron groups or custom connectivity updates require a simulation RNG
     const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); }))
+                   [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); })
+       || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                      [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return c.second.isRowSimRNGRequired(); }))
     {
         os << "// Seed LFSR113 RNG" << std::endl;
         os << "clrngLfsr113StreamCreator *lfsrStreamCreator = clrngLfsr113CopyStreamCreator(nullptr, nullptr);" << std::endl;

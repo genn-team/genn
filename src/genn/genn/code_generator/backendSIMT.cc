@@ -1310,7 +1310,17 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(CodeStream &os, const Substi
                 // Configure substitutions
                 popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                 
+                // Copy global RNG stream to local and use pointer to this for rng
+                if(cg.getArchetype().isRowSimRNGRequired()) {
+                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
+                }
+
                 cg.generateUpdate(*this, os, modelMerged, popSubs);
+                
+                // Copy local stream back to local
+                if(cg.getArchetype().isRowSimRNGRequired()) {
+                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["id"] + "]");
+                }
             }
         });
 }

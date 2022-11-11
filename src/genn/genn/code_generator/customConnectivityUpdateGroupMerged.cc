@@ -109,6 +109,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
                  });
     }
+    
+    // If this backend requires per-population RNGs and this group requires one
+    if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired()){
+        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
+    }
 
     // Add heterogeneous custom update model parameters
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();

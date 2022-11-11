@@ -717,7 +717,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             // Configure substitutions
                             Substitutions popSubs(&funcSubs);
                             popSubs.addVarSubstitution("id_pre", "i");
-                    
+                            
+                            // If this neuron group requires a simulation RNG, substitute in global RNG
+                            if(c.getArchetype().isRowSimRNGRequired()) {
+                                popSubs.addVarSubstitution("rng", "hostRNG");
+                            }
                             c.generateUpdate(*this, os, modelMerged, popSubs);
                         }
                     }
@@ -1613,6 +1617,18 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
         return true;
     }
 
+    // If any custom connectivity updates require an RNG fo initialisation or per-row, return true
+    if(std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                   [](const ModelSpec::CustomConnectivityUpdateValueType &c)
+                   {
+                       return (c.second.isVarInitRNGRequired()
+                               || c.second.isPreVarInitRNGRequired()
+                               || c.second.isPostVarInitRNGRequired()
+                               || c.second.isRowSimRNGRequired());
+                   }))
+    {
+        return true;
+    }
     return false;
 }
 //--------------------------------------------------------------------------

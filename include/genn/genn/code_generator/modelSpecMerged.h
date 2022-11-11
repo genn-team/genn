@@ -214,6 +214,12 @@ public:
     //! Does model have any EGPs?
     bool anyPointerEGPs() const;
 
+    //! Are there any destinations within the merged data structures for a particular extra global parameter?
+    bool anyMergedEGPDestinations(const std::string &name) const
+    {
+        return (m_MergedEGPs.find(name) != m_MergedEGPs.cend());
+    }
+    
     //! Get the map of destinations within the merged data structures for a particular extra global parameter
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name) const
     {

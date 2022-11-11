@@ -303,7 +303,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             }
             
             // If backend has a device variable prefix (otherwise, previous loop will have exactly the same effect)
-            if(!backend.getDeviceVarPrefix().empty()) {
+            if(!backend.getDeviceVarPrefix().empty() && modelMerged.anyMergedEGPDestinations(name)) {
                 // Loop through destinations in merged structures, the host EGP needs to be copied to
                 const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name);
                 for(const auto &v : mergedDestinations) {
@@ -316,7 +316,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             }
             
             // If backend has a host variable prefix
-            if(!backend.getHostVarPrefix().empty()) {
+            if(!backend.getHostVarPrefix().empty() && modelMerged.anyMergedEGPDestinations(backend.getHostVarPrefix() + name)) {
                 // Loop through destinations in merged structures, the host EGP needs to be copied to
                 const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getHostVarPrefix() + name);
                 for(const auto &v : mergedDestinations) {
@@ -1222,6 +1222,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         genRunnerEGPs<CustomConnectivityUpdateEGPAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                                           runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
 
+        // If custom connectivity update group needs per-row RNGs
+        if(c.second.isRowSimRNGRequired()) {
+            backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                     "rowRNG" + c.first, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), mem);
+        }
+
+        
         // Add helper function to push and pull entire group state
         if(!backend.getPreferences().automaticCopy) {
             genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
