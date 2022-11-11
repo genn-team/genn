@@ -40,6 +40,6 @@ public:
 
 TEST_F(SimTest, NeuronRngUniform)
 {
-    // Check total error is less than some tolerance
-    EXPECT_TRUE(Simulate());
+    // Check p value passes 95% confidence interval
+    EXPECT_GT(Simulate(), 0.05);
 }
