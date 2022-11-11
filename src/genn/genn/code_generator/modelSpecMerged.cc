@@ -183,7 +183,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
 
     LOGD_CODE_GEN << "Merging custom connectivity update groups:";
     createMergedGroupsHash(model, backend, model.getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
-                           [](const CustomConnectivityUpdateInternal &) { return true; },
+                           [](const CustomConnectivityUpdateInternal &cg) { return !cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty(); },
                            &CustomConnectivityUpdateInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging custom connectivity host update groups:";
