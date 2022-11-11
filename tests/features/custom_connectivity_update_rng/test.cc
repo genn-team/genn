@@ -37,13 +37,19 @@ TEST_F(SimTest, CustomConnectivityUpdate)
     
     pullOutputRNGTestFromDevice(1000 * 1000);
 
-    // Perform Kolmogorov-Smirnov test
+    // Perform Kolmogorov-Smirnov test on contents of extra global parameter populated on device
     double d;
     double prob;
-    std::vector<double> samples(&OutputRNGTest[0], &OutputRNGTest[1000 * 1000]);
-    std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samples, Stats::uniformCDF);
+    std::vector<double> samplesDevice(&OutputRNGTest[0], &OutputRNGTest[1000 * 1000]);
+    std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samplesDevice, Stats::uniformCDF);
 
     // Check p value passes 95% confidence interval
     EXPECT_GT(prob, 0.05);
     
+    // Perform Kolmogorov-Smirnov test on contents of presynaptic variable populated on host
+    std::vector<double> samplesHost(&OutputHostRNGTest[0], &OutputHostRNGTest[1000]);
+    std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samplesHost, Stats::uniformCDF);
+    
+    // Check p value passes 95% confidence interval
+    EXPECT_GT(prob, 0.05);
 }

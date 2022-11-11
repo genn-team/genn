@@ -32,6 +32,22 @@ public:
 };
 IMPLEMENT_MODEL(RNGTest);
 
+class HostRNGTest : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(HostRNGTest, 2, 0, 1, 0, 0, 0, 0);
+    
+    SET_PARAM_NAMES({"min", "max"});
+    SET_PRE_VARS({{"Output", "scalar"}});
+    SET_HOST_UPDATE_CODE(
+        "std::uniform_real_distribution<scalar> dist($(min), $(max));\n"
+        "for(int i = 0; i < $(num_pre); i++){\n"
+        "   $(Output)[i] = dist($(rng));\n"
+        "}\n"
+        "$(pushOutputToDevice);\n");
+};
+IMPLEMENT_MODEL(HostRNGTest);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -58,6 +74,10 @@ void modelDefinition(ModelSpec &model)
     model.addCustomConnectivityUpdate<RNGTest>(
         "RNGTest", "RNGTest", "Syn1",
         {}, {}, {}, {},
+        {}, {}, {});
+    model.addCustomConnectivityUpdate<HostRNGTest>(
+        "HostRNGTest", "RNGTest", "Syn1",
+        {0.0, 1.0}, {}, {0.0}, {},
         {}, {}, {});
     
     model.setPrecision(GENN_FLOAT);
