@@ -160,7 +160,8 @@ ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlCo
                Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **genn_extension_kwargs),
-               Extension('_CustomUpdateModels', ["pygenn/genn_wrapper/generated/CustomUpdateModels.i", "pygenn/genn_wrapper/generated/customUpdateModelsCustom.cc"], **genn_extension_kwargs)]
+               Extension('_CustomUpdateModels', ["pygenn/genn_wrapper/generated/CustomUpdateModels.i", "pygenn/genn_wrapper/generated/customUpdateModelsCustom.cc"], **genn_extension_kwargs),
+               Extension('_CustomConnectivityUpdateModels', ["pygenn/genn_wrapper/generated/CustomConnectivityUpdateModels.i", "pygenn/genn_wrapper/generated/customConnectivityUpdateModelsCustom.cc"], **genn_extension_kwargs)]
 
 # Loop through namespaces of supported backends
 for filename, namespace, kwargs in backends:

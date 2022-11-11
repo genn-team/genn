@@ -33,30 +33,32 @@ Example:
 
 Attrbutes:
 
-    NEURONMODELS -- common name of NeuronModels header and interface files without extention
-    POSTSYNMODELS -- common name of PostsynapticModels header and interface files without extention
-    WUPDATEMODELS -- common name of WeightUpdateModels header and interface files without extention
-    CURRSOURCEMODELS -- common name of CurrentSourceModels header and interface files without extention
-    INITVARSNIPPET -- common name of InitVarSnippet header and interface files without extention
-    SPARSEINITSNIPPET -- common name of InitSparseConnectivitySnippet header and interface files without extention
-    TOEPLITZINITSNIPPET -- common name of InitToeplitzConnectivitySnippet header and interface files without extention
+    NEURON_MODELS -- common name of NeuronModels header and interface files without extention
+    POSTSYN_MODELS -- common name of PostsynapticModels header and interface files without extention
+    WUPDATE_MODELS -- common name of WeightUpdateModels header and interface files without extention
+    CURRSOURCE_MODELS -- common name of CurrentSourceModels header and interface files without extention
+    INIT_VAR_SNIPPET -- common name of InitVarSnippet header and interface files without extention
+    SPARSE_INIT_SNIPPET -- common name of InitSparseConnectivitySnippet header and interface files without extention
+    TOEPLITZ_INIT_SNIPPET -- common name of InitToeplitzConnectivitySnippet header and interface files without extention
     MAIN_MODULE -- name of the main SWIG module
 """
 import os  # to work with paths nicely
+from contextlib import ExitStack
 from itertools import product
 from string import Template # for better text substitutions
 from argparse import ArgumentParser # to parse command line args
 from textwrap import dedent
 
 # module attributes
-NEURONMODELS = 'neuronModels'
-POSTSYNMODELS = 'postsynapticModels'
-WUPDATEMODELS = 'weightUpdateModels'
-CURRSOURCEMODELS = 'currentSourceModels'
-CUSTOMUPDATEMODELS = 'customUpdateModels'
-INITVARSNIPPET = 'initVarSnippet'
-SPARSEINITSNIPPET = 'initSparseConnectivitySnippet'
-TOEPLITZINITSNIPPET = 'initToeplitzConnectivitySnippet'
+NEURON_MODELS = 'neuronModels'
+POSTSYN_MODELS = 'postsynapticModels'
+WUPDATE_MODELS = 'weightUpdateModels'
+CURRSOURCE_MODELS = 'currentSourceModels'
+CUSTOM_UPDATE_MODELS = 'customUpdateModels'
+CUSTOM_CONNECTIVITY_UPDATE_MODELS = 'customConnectivityUpdateModels'
+INIT_VAR_SNIPPET = 'initVarSnippet'
+SPARSE_INIT_SNIPPET = 'initSparseConnectivitySnippet'
+TOEPLITZ_INIT_SNIPPET = 'initToeplitzConnectivitySnippet'
 MAIN_MODULE = 'genn_wrapper'
 
 # Scope classes should be used with 'with' statement. They write code in the
@@ -239,19 +241,19 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
             ', '.join( [('v' + str( i )) for i in range(numValues)] ) ) )
 
 
-def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateModel=False, customUpdateModel=False):
+def generateCustomClassDeclaration( nSpace, model):
     '''Generates nSpace::Custom class declaration string'''
 
     varValuesTypedef = ''
     varValuesMaker = ''
-    if not initVarSnippet:
+    if model != INIT_VAR_SNIPPET and model!=SPARSE_INIT_SNIPPET and model!=TOEPLITZ_INIT_SNIPPET:
         varValuesTypedef = 'typedef CustomValues::VarValues VarValues;'
         varValuesMaker = '''static CustomValues::VarValues *makeVarValues(const std::vector<Models::VarInit> &vals)
         {
             return new CustomValues::VarValues(vals);
         }'''
 
-    if weightUpdateModel:
+    if model==WUPDATE_MODELS or model==CUSTOM_CONNECTIVITY_UPDATE_MODELS:
         varValuesTypedef += '''
         typedef CustomValues::VarValues PreVarValues;
         typedef CustomValues::VarValues PostVarValues;'''
@@ -266,7 +268,7 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
             return new CustomValues::VarValues( vals );
         }'''
 
-    if customUpdateModel:
+    if model == CUSTOM_UPDATE_MODELS:
         varValuesTypedef += '''
         typedef CustomValues::VarReferences VarReferences;
         typedef CustomValues::WUVarReferences WUVarReferences;'''
@@ -280,7 +282,26 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
         {
             return new CustomValues::WUVarReferences(varRefs);
         }'''
+    if model == CUSTOM_CONNECTIVITY_UPDATE_MODELS:
+        varValuesTypedef += '''
+        typedef CustomValues::WUVarReferences VarReferences;
+        typedef CustomValues::VarReferences PreVarReferences;
+        typedef CustomValues::VarReferences PostVarReferences;'''
 
+        varValuesMaker += '''
+        static CustomValues::WUVarReferences *makeVarReferences(const std::vector<Models::WUVarReference> &varRefs)
+        {
+            return new CustomValues::WUVarReferences(varRefs);
+        }
+        static CustomValues::VarReferences *makePreVarReferences(const std::vector<Models::VarReference> &varRefs)
+        {
+            return new CustomValues::VarReferences(varRefs);
+        }
+        static CustomValues::VarReferences *makePostVarReferences(const std::vector<Models::VarReference> &varRefs)
+        {
+            return new CustomValues::VarReferences(varRefs);
+        }'''
+        
     return Template('''
 namespace ${NAMESPACE}
 {
@@ -424,8 +445,8 @@ def generateStlContainersInterface( swigPath ):
 
 def generateCustomModelDeclImpls(swigPath):
     '''Generates headers/sources with *::Custom classes'''
-    models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, CUSTOMUPDATEMODELS,
-              INITVARSNIPPET, SPARSEINITSNIPPET, TOEPLITZINITSNIPPET]
+    models = [NEURON_MODELS, POSTSYN_MODELS, WUPDATE_MODELS, CURRSOURCE_MODELS, CUSTOM_UPDATE_MODELS,
+              CUSTOM_CONNECTIVITY_UPDATE_MODELS, INIT_VAR_SNIPPET, SPARSE_INIT_SNIPPET, TOEPLITZ_INIT_SNIPPET]
     for model in models:
         nSpace = model[0].upper() + model[1:]
         with SwigModuleGenerator( 'decl',
@@ -434,15 +455,14 @@ def generateCustomModelDeclImpls(swigPath):
             mg.write( '#pragma once\n' )
             mg.addCppInclude( '"' + model + '.h"' )
             mg.addCppInclude( '"customParamValues.h"' )
-            if model != INITVARSNIPPET and model != SPARSEINITSNIPPET and model != TOEPLITZINITSNIPPET:
+            if model != INIT_VAR_SNIPPET and model != SPARSE_INIT_SNIPPET and model != TOEPLITZ_INIT_SNIPPET:
                 mg.addCppInclude( '"customVarValues.h"' )
             
-            if model == CUSTOMUPDATEMODELS:
+            if model == CUSTOM_UPDATE_MODELS or model == CUSTOM_CONNECTIVITY_UPDATE_MODELS:
                 mg.addCppInclude( '"customVarReferences.h"' )
                 mg.addCppInclude( '"customWUVarReferences.h"' )
             
-            mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET or model==SPARSEINITSNIPPET or model==TOEPLITZINITSNIPPET, 
-                                                    model==WUPDATEMODELS, model==CUSTOMUPDATEMODELS))
+            mg.write(generateCustomClassDeclaration(nSpace, model))
         with SwigModuleGenerator( 'impl',
                 os.path.join( swigPath, model + 'Custom.cc' ) ) as mg:
             mg.addAutoGenWarning()
@@ -524,28 +544,32 @@ def generateConfigs(gennPath, backends):
         generateBackend(swigPath, f, n)
 
     # open header files with models and instantiate SwigModuleGenerators
-    with open( os.path.join( includePath, NEURONMODELS + ".h" ), 'r' ) as neuronModels_h, \
-            open( os.path.join( includePath, POSTSYNMODELS + ".h" ), 'r' ) as postsynModels_h, \
-            open( os.path.join( includePath, WUPDATEMODELS + ".h" ), 'r' ) as wUpdateModels_h, \
-            open( os.path.join( includePath, CURRSOURCEMODELS + ".h" ), 'r' ) as currSrcModels_h, \
-            open( os.path.join( includePath, CUSTOMUPDATEMODELS + ".h" ), 'r' ) as customUpdateModels_h, \
-            open( os.path.join( includePath, INITVARSNIPPET + ".h" ), 'r' ) as initVarSnippet_h, \
-            open( os.path.join( includePath, SPARSEINITSNIPPET + ".h" ), 'r' ) as sparseInitSnippet_h, \
-            open( os.path.join( includePath, TOEPLITZINITSNIPPET + ".h" ), 'r' ) as toeplitzInitSnippet_h, \
-            SwigModuleGenerator( MAIN_MODULE, os.path.join( swigPath, MAIN_MODULE + '.i' ) ) as pygennSmg, \
-            SwigModuleGenerator( 'NeuronModels', os.path.join( swigPath, 'NeuronModels.i' ) ) as neuronSmg, \
-            SwigModuleGenerator( 'PostsynapticModels', os.path.join( swigPath, 'PostsynapticModels.i' ) ) as postsynSmg, \
-            SwigModuleGenerator( 'WeightUpdateModels', os.path.join( swigPath, 'WeightUpdateModels.i' ) ) as wUpdateSmg, \
-            SwigModuleGenerator( 'CurrentSourceModels', os.path.join( swigPath, 'CurrentSourceModels.i' ) ) as currSrcSmg, \
-            SwigModuleGenerator( 'CustomUpdateModels', os.path.join( swigPath, 'CustomUpdateModels.i' ) ) as customUpdateSrcSmg, \
-            SwigModuleGenerator( 'InitVarSnippet', os.path.join( swigPath, 'InitVarSnippet.i' ) ) as iniVarSmg, \
-            SwigModuleGenerator( 'InitSparseConnectivitySnippet', os.path.join( swigPath, 'InitSparseConnectivitySnippet.i' ) ) as iniSparseSmg, \
-            SwigModuleGenerator( 'InitToeplitzConnectivitySnippet', os.path.join( swigPath, 'InitToeplitzConnectivitySnippet.i' ) ) as iniToeplitzSmg:
-
+    with ExitStack() as stack:
+        neuronModels_h = stack.enter_context(open( os.path.join( includePath, NEURON_MODELS + ".h" ), 'r' ))
+        postsynModels_h = stack.enter_context(open( os.path.join( includePath, POSTSYN_MODELS + ".h" ), 'r' ))
+        wUpdateModels_h = stack.enter_context(open( os.path.join( includePath, WUPDATE_MODELS + ".h" ), 'r' ))
+        currSrcModels_h = stack.enter_context(open( os.path.join( includePath, CURRSOURCE_MODELS + ".h" ), 'r' ))
+        customUpdateModels_h = stack.enter_context(open( os.path.join( includePath, CUSTOM_UPDATE_MODELS + ".h" ), 'r' ))
+        customConnectivityUpdateModels_h = stack.enter_context(open( os.path.join( includePath, CUSTOM_CONNECTIVITY_UPDATE_MODELS + ".h" ), 'r' ))
+        initVarSnippet_h = stack.enter_context(open( os.path.join( includePath, INIT_VAR_SNIPPET + ".h" ), 'r' ))
+        sparseInitSnippet_h = stack.enter_context(open( os.path.join( includePath, SPARSE_INIT_SNIPPET + ".h" ), 'r' ))
+        toeplitzInitSnippet_h = stack.enter_context(open( os.path.join( includePath, TOEPLITZ_INIT_SNIPPET + ".h" ), 'r' ))
+        pygennSmg = stack.enter_context(SwigModuleGenerator( MAIN_MODULE, os.path.join( swigPath, MAIN_MODULE + '.i' ) ))
+        neuronSmg = stack.enter_context(SwigModuleGenerator( 'NeuronModels', os.path.join( swigPath, 'NeuronModels.i' ) ))
+        postsynSmg = stack.enter_context(SwigModuleGenerator( 'PostsynapticModels', os.path.join( swigPath, 'PostsynapticModels.i' ) ))
+        wUpdateSmg = stack.enter_context(SwigModuleGenerator( 'WeightUpdateModels', os.path.join( swigPath, 'WeightUpdateModels.i' ) ))
+        currSrcSmg = stack.enter_context(SwigModuleGenerator( 'CurrentSourceModels', os.path.join( swigPath, 'CurrentSourceModels.i' ) ))
+        customUpdateSrcSmg = stack.enter_context(SwigModuleGenerator( 'CustomUpdateModels', os.path.join( swigPath, 'CustomUpdateModels.i' ) ))
+        customConnectivityUpdateSrcSmg = stack.enter_context(SwigModuleGenerator( 'CustomConnectivityUpdateModels', os.path.join( swigPath, 'CustomConnectivityUpdateModels.i' ) ))
+        iniVarSmg = stack.enter_context(SwigModuleGenerator( 'InitVarSnippet', os.path.join( swigPath, 'InitVarSnippet.i' ) ))
+        iniSparseSmg = stack.enter_context(SwigModuleGenerator( 'InitSparseConnectivitySnippet', os.path.join( swigPath, 'InitSparseConnectivitySnippet.i' ) ))
+        iniToeplitzSmg = stack.enter_context(SwigModuleGenerator( 'InitToeplitzConnectivitySnippet', os.path.join( swigPath, 'InitToeplitzConnectivitySnippet.i' ) ))
+            
         # pygennSmg generates main SWIG interface file,
         # mgs generate SWIG interfaces for models and InitVarSnippet
 
-        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, customUpdateSrcSmg, iniVarSmg, iniSparseSmg, iniToeplitzSmg]
+        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, customUpdateSrcSmg, customConnectivityUpdateSrcSmg, 
+               iniVarSmg, iniSparseSmg, iniToeplitzSmg]
 
         pygennSmg.addAutoGenWarning()
         pygennSmg.addSwigModuleHeadline()
@@ -563,10 +587,11 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"synapseGroup.h"' )
             pygennSmg.addCppInclude( '"currentSource.h"' )
             pygennSmg.addCppInclude( '"customUpdate.h"' )
+            pygennSmg.addCppInclude( '"customConnectivityUpdate.h"' )
             pygennSmg.addCppInclude( '"modelSpec.h"' )
-            for header in (NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, 
-                           CURRSOURCEMODELS, CUSTOMUPDATEMODELS, 
-                           INITVARSNIPPET, SPARSEINITSNIPPET, TOEPLITZINITSNIPPET):
+            for header in (NEURON_MODELS, POSTSYN_MODELS, WUPDATE_MODELS, 
+                           CURRSOURCE_MODELS, CUSTOM_UPDATE_MODELS, CUSTOM_CONNECTIVITY_UPDATE_MODELS,
+                           INIT_VAR_SNIPPET, SPARSE_INIT_SNIPPET, TOEPLITZ_INIT_SNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
             pygennSmg.addCppInclude( '"code_generator/backendBase.h"' )
             pygennSmg.addCppInclude( '"code_generator/generateModules.h"' )
@@ -624,8 +649,8 @@ def generateConfigs(gennPath, backends):
         # generate SWIG interface files for models and InitVarSnippet
         for mg, header in zip(mgs, (neuronModels_h, postsynModels_h,
                                     wUpdateModels_h, currSrcModels_h,
-                                    customUpdateModels_h, initVarSnippet_h, 
-                                    sparseInitSnippet_h, toeplitzInitSnippet_h)):
+                                    customUpdateModels_h, customConnectivityUpdateModels_h, 
+                                    initVarSnippet_h, sparseInitSnippet_h, toeplitzInitSnippet_h)):
             _, headerFilename = os.path.split( header.name )
             is_snippet = (mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet'
                           or mg.name == 'InitToeplitzConnectivitySnippet')
@@ -642,7 +667,7 @@ def generateConfigs(gennPath, backends):
                 if not is_snippet:
                     mg.addCppInclude( '"initVarSnippetCustom.h"' )
                     mg.addCppInclude( '"customVarValues.h"' )
-                if mg.name == 'CustomUpdateModel':
+                if mg.name == 'CustomUpdateModel' or mg.name == 'CustomConnectivityUpdateModel':
                     mg.addCppInclude( '"customVarReferences.h"' )
                     mg.addCppInclude( '"customWUVarReferences.h"' )
 
@@ -668,12 +693,17 @@ def generateConfigs(gennPath, backends):
                 if line.startswith( 'DECLARE_' ) and line.endswith(';'):
                     is_new_wum_declaration = (mg.name == 'WeightUpdateModels' and line.startswith('DECLARE_WEIGHT_UPDATE_MODEL'))
                     is_new_custom_update_declaration = (mg.name == 'CustomUpdateModels' and line.startswith('DECLARE_CUSTOM_UPDATE_MODEL'))
+                    is_new_custom_connectivity_update_declaration = (mg.name == 'CustomConnectivityUpdateModels' and line.startswith('DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL'))
                     if is_snippet:
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_wum_declaration:
                         nspace_model_name, num_params, num_vars, num_pre_vars, num_post_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_custom_update_declaration:
                         nspace_model_name, num_params, num_vars, num_var_refs = line.split( '(' )[1].split( ')' )[0].split( ',' )
+                    elif is_new_custom_connectivity_update_declaration:
+                        (nspace_model_name, num_params, 
+                         num_vars, num_pre_vars, num_post_vars,
+                         num_var_refs, num_pre_var_refs, num_post_var_refs) = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     else:
                         nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
 
@@ -688,13 +718,18 @@ def generateConfigs(gennPath, backends):
                         if not is_snippet:
                             writeValueMakerFunc( model_name, 'VarValues', int(num_vars), mg )
 
-                        if is_new_wum_declaration:
+                        if is_new_wum_declaration or is_new_custom_connectivity_update_declaration:
                             writeValueMakerFunc( model_name, 'PreVarValues', int(num_pre_vars), mg )
                             writeValueMakerFunc( model_name, 'PostVarValues', int(num_post_vars), mg )
                         
                         if is_new_custom_update_declaration:
                             writeValueMakerFunc( model_name, 'VarReferences', int(num_var_refs), mg )
                             writeValueMakerFunc( model_name, 'WUVarReferences', int(num_var_refs), mg )
+                        
+                        if is_new_custom_connectivity_update_declaration:
+                            writeValueMakerFunc( model_name, 'VarReferences', int(num_var_refs), mg )
+                            writeValueMakerFunc( model_name, 'PreVarReferences', int(num_pre_var_refs), mg )
+                            writeValueMakerFunc( model_name, 'PostVarReferences', int(num_post_var_refs), mg )
 
         # Define wrapper around InitSparseConnectivitySnippet::Base::CalcMaxLengthFunc
         calcMaxRowWrapper='''
@@ -744,6 +779,7 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
         pygennSmg.addSwigInclude( '"currentSource.h"' )
+        pygennSmg.addSwigInclude( '"customConnectivityUpdate.h"' )
         pygennSmg.addSwigInclude( '"customUpdate.h"' )
 
         with SwigAsIsScope( pygennSmg ):
@@ -818,6 +854,13 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addSwigTemplate(
                 'ModelSpec::addCustomUpdate<CustomUpdateModels::{}>'.format(cu_model),
                 'add_custom_update_{}'.format(cu_model))
+        
+        for cu_model in mgs[5].models:
+            # Ignore the overload of the function which automatically gets instance from class name
+            pygennSmg.addSwigIgnore("ModelSpec::addCustomConnectivityUpdate<CustomConnectivityUpdateModels::{0}>(std::string const &,std::string const &,std::string const &,CustomConnectivityUpdateModels::{0}::ParamValues const &,CustomConnectivityUpdateModels::{0}::VarValues const &,CustomConnectivityUpdateModels::{0}::PreVarValues const &,CustomConnectivityUpdateModels::{0}::PostVarValues const &,CustomConnectivityUpdateModels::{0}::VarReferences const &)".format(cu_model))
+            pygennSmg.addSwigTemplate(
+                'ModelSpec::addCustomConnectivityUpdate<CustomConnectivityUpdateModels::{}>'.format(cu_model),
+                'add_custom_connectivity_update_{}'.format(cu_model))
                 
         pygennSmg.write( '\n// wrap variableMode.h.\n' )
         pygennSmg.addSwigIgnore( 'operator&' )
@@ -837,24 +880,28 @@ if __name__ == '__main__':
     includePath = os.path.join( gennPath, 'include', 'genn' )
 
     # check that all required files can be found
-    if not os.path.isfile( os.path.join( includePath, NEURONMODELS + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NEURONMODELS + '.h' ) ) )
+    if not os.path.isfile( os.path.join( includePath, NEURON_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NEURON_MODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join( includePath, POSTSYNMODELS + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, POSTSYNMODELS + '.h' ) ) )
+    if not os.path.isfile( os.path.join( includePath, POSTSYN_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, POSTSYN_MODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(includePath, WUPDATEMODELS + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, WUPDATEMODELS + '.h' ) ) )
+    if not os.path.isfile( os.path.join(includePath, WUPDATE_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, WUPDATE_MODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(includePath, CURRSOURCEMODELS + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CURRSOURCEMODELS + '.h' ) ) )
+    if not os.path.isfile( os.path.join(includePath, CURRSOURCE_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CURRSOURCE_MODELS + '.h' ) ) )
         exit(1)
     
-    if not os.path.isfile( os.path.join(includePath, CUSTOMUPDATEMODELS + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CUSTOMUPDATEMODELS + '.h' ) ) )
+    if not os.path.isfile( os.path.join(includePath, CUSTOM_UPDATE_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CUSTOM_UPDATE_MODELS + '.h' ) ) )
+        exit(1)
+    
+    if not os.path.isfile( os.path.join(includePath, CUSTOM_CONNECTIVITY_UPDATE_MODELS + '.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CUSTOM_CONNECTIVITY_UPDATE_MODELS + '.h' ) ) )
         exit(1)
         
     if not os.path.isfile( os.path.join(includePath, 'modelSpec.h' ) ):
