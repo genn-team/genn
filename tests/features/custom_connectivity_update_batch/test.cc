@@ -53,7 +53,9 @@ void checkConnectivity1(R getRowLengthFn, B getCorrectRowWordFn)
 
             // Check that all variables are correct given the pre and postsynaptic index
             ASSERT_EQ(dSyn1[idx], (j * 64) + i);
-            ASSERT_FLOAT_EQ(gSyn1[idx], (i * 64.0f) + j);
+            for(int b = 0; b < 5; b++) {
+                ASSERT_FLOAT_EQ(gSyn1[(b * 4096) + idx], (i * 64.0f) + j);
+            }
             ASSERT_FLOAT_EQ(aRemoveSynapse[idx], (i * 64.0f) + j);
 
             // Set bit in row bitset
@@ -84,7 +86,9 @@ void checkConnectivity2(R getRowLengthFn, B getCorrectRowWordFn)
 
             // Check that all variables are correct given the pre and postsynaptic index
             ASSERT_EQ(dSyn2[idx], (j * 64) + i);
-            ASSERT_FLOAT_EQ(gSyn2[idx], (i * 64.0f) + j);
+            for(int b = 0; b < 5; b++) {
+                ASSERT_FLOAT_EQ(gSyn2[(b * 4096) + idx], (i * 64.0f) + j);
+            }
 
             // Set bit in row bitset
             row.set(j);
@@ -115,7 +119,9 @@ void checkConnectivity3(R getRowLengthFn, B getCorrectRowWordFn)
 
             // Check that all variables are correct given the pre and postsynaptic index
             ASSERT_EQ(dSyn3[idx], (j * 64) + i);
-            ASSERT_FLOAT_EQ(gSyn3[idx], (i * 64.0f) + j);
+            for(int b = 0; b < 5; b++) {
+                ASSERT_FLOAT_EQ(gSyn3[(b * 4096) + idx], (i * 64.0f) + j);
+            }
 
             // Set bit in row bitset
             row.set(j);
