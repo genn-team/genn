@@ -127,10 +127,7 @@ protected:
         // If target of any variable references is duplicated, custom update should be batched
         if(batchSize > 1) {
             m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const V& v) 
-                                    {
-                                        return (v.isBatched() && (v.getVar().access & VarAccessDuplication::DUPLICATE)); 
-                                    });
+                                    [](const V& v) { return v.isDuplicated(); });
         }
         else {
             m_Batched = false;

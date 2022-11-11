@@ -164,7 +164,11 @@ public:
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
     std::string getTargetName() const { return m_GetTargetName(); }
-    bool isBatched() const{ return m_IsBatched(); }
+    
+    bool isDuplicated() const
+    {
+        return m_IsBatched() && (m_Var.access & VarAccessDuplication::DUPLICATE); 
+    }
 
     bool operator < (const VarReferenceBase &other) const
     {
