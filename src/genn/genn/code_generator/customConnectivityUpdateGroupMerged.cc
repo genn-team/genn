@@ -214,9 +214,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     // Determine if any
     const bool anyBatched = ((modelMerged.getModel().getBatchSize() > 1) 
                              && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
-                                             [](const Models::WUVarReference &v){ return (v.getVar().access & VarAccessDuplication::DUPLICATE); })
+                                             [](const Models::WUVarReference &v){ return v.isDuplicated(); })
                                  || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
-                                                [](const Models::WUVarReference &v){ return (v.getVar().access & VarAccessDuplication::DUPLICATE); })));
+                                                [](const Models::WUVarReference &v){ return v.isDuplicated(); })));
 
     // Calculate index of start of row
     os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
@@ -246,8 +246,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && 
-                getArchetype().getVarReferences().at(i).getVar().access & VarAccessDuplication::DUPLICATE) 
+            if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(i).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
@@ -266,8 +265,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) &&
-                dependentVars.at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated())
             {
                 // Loop through all batches and zero
                 addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
@@ -310,8 +308,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) &&
-                getArchetype().getVarReferences().at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(i).isDuplicated())
             {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
@@ -329,8 +326,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) &&
-                dependentVars.at(i).getVar().access & VarAccessDuplication::DUPLICATE)
+            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated())
             {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
@@ -359,13 +355,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     updateSubs.addVarNameSubstitution(cm->getPreVars(), "", "group->", "[" + updateSubs["id_pre"] + "]");
     updateSubs.addVarNameSubstitution(cm->getPostVars(), "", "group->", "[" + updateSubs["id_post"] + "]");
 
-    // Substitute in variable references, filtering out those which aren't shared
+    // Substitute in variable references, filtering out those which are duplicated
     const auto &variableRefs = getArchetype().getVarReferences();
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", 
                                       [&updateSubs](VarAccessMode, size_t) { return "[" + updateSubs["id_syn"] + "]"; },
                                       [&variableRefs](VarAccessMode, size_t i) 
                                       {
-                                          return (getVarAccessDuplication(variableRefs.at(i).getVar().access) == VarAccessDuplication::SHARED); 
+                                          return !variableRefs.at(i).isDuplicated(); 
                                       });
 
     // Substitute in (potentially delayed) presynaptic variable references
