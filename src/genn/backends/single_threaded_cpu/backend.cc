@@ -1624,7 +1624,8 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
                        return (c.second.isVarInitRNGRequired()
                                || c.second.isPreVarInitRNGRequired()
                                || c.second.isPostVarInitRNGRequired()
-                               || c.second.isRowSimRNGRequired());
+                               || c.second.isRowSimRNGRequired()
+                               || c.second.isHostRNGRequired());
                    }))
     {
         return true;

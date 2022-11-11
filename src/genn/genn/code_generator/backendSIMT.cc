@@ -106,13 +106,12 @@ void BackendSIMT::genKernelCustomUpdateVariableInit(CodeStream &os, const Custom
 //--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
 {
-    // Host RNG is required if any synapse groups require a host initialization RNG
+    // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
     const ModelSpecInternal &model = modelMerged.getModel();
-    return std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                       [](const ModelSpec::SynapseGroupValueType &s)
-                       {
-                           return (s.second.isHostInitRNGRequired());
-                       });
+    return (std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                        [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isHostInitRNGRequired()); })
+            || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                           [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return c.second.isHostRNGRequired(); }));
 }
 //--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const

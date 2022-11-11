@@ -82,6 +82,9 @@ public:
     //! Is a per-row RNG required for this custom connectivity update group
     bool isRowSimRNGRequired() const;
 
+    //! Is a host RNG required for this custom connectivity update group
+    bool isHostRNGRequired() const;
+    
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,

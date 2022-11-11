@@ -92,6 +92,11 @@ bool CustomConnectivityUpdate::isRowSimRNGRequired() const
     return Utils::isRNGRequired(getCustomConnectivityUpdateModel()->getRowUpdateCode());
 }
 //------------------------------------------------------------------------
+bool CustomConnectivityUpdate::isHostRNGRequired() const
+{
+    return (getCustomConnectivityUpdateModel()->getHostUpdateCode().find("$(rng)") != std::string::npos);
+}
+//------------------------------------------------------------------------
 CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                                                    const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
