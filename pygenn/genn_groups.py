@@ -24,7 +24,9 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
-from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
+from .genn_wrapper.Models import (VarAccessDuplication_SHARED, 
+                                  VarReferenceVector, WUVarReference,
+                                  WUVarReferenceVector)
 
 class Group(object):
 
@@ -1479,11 +1481,15 @@ class CustomUpdate(Group):
         var_ini = model_preprocessor.var_space_to_vals(self.custom_update_model,
                                                        self.vars)
         if self.custom_wu_update:
-            var_refs = model_preprocessor.var_ref_space_to_wu_var_refs(
-                self.custom_update_model, self.var_refs)
+            var_refs =  self.custom_update_model.make_wuvar_references(
+                WUVarReferenceVector(
+                    [self.var_refs[v.name][0]
+                     for v in self.custom_update_model.get_var_refs()]))
         else:
-            var_refs = model_preprocessor.var_ref_space_to_var_refs(
-                self.custom_update_model, self.var_refs)
+            var_refs =  self.custom_update_model.make_var_references(
+                VarReferenceVector(
+                    [self.var_refs[v.name][0]
+                     for v in self.custom_update_model.get_var_refs()]))
 
         self.pop = add_fct(self.name, group_name, self.custom_update_model, 
                            self.params, var_ini, var_refs)
@@ -1651,24 +1657,25 @@ class CustomConnectivityUpdate(Group):
         """
         add_fct = getattr(self._model._model, "add_custom_connectivity_update_" + self.type)
 
+        ccm = self.custom_connectivity_update_model
         var_ini = model_preprocessor.var_space_to_vals(
-            self.custom_connectivity_update_model, 
-            {vn: self.vars[vn] for vn in self.var_names})
+            ccm, {vn: self.vars[vn] for vn in self.var_names})
 
         pre_var_ini = model_preprocessor.pre_var_space_to_vals(
-            self.custom_connectivity_update_model, 
-            {vn: self.pre_vars[vn] for vn in self.pre_var_names})
+            ccm, {vn: self.pre_vars[vn] for vn in self.pre_var_names})
 
         post_var_ini = model_preprocessor.post_var_space_to_vals(
-            self.custom_connectivity_update_model, 
-            {vn: self.post_vars[vn] for vn in self.post_var_names})
-        
-        var_refs = model_preprocessor.var_ref_space_to_wu_var_refs(
-            self.custom_connectivity_update_model, self.var_refs)
-        pre_var_refs = model_preprocessor.pre_var_ref_space_to_var_refs(
-            self.custom_connectivity_update_model, self.pre_var_refs)
-        post_var_refs = model_preprocessor.post_var_ref_space_to_var_refs(
-            self.custom_connectivity_update_model, self.post_var_refs)
+            ccm, {vn: self.post_vars[vn] for vn in self.post_var_names})
+
+        var_refs = ccm.make_var_references(
+            WUVarReferenceVector([self.var_refs[v.name][0] 
+                                  for v in ccm.get_var_refs()]))
+        pre_var_refs = ccm.make_pre_var_references(
+            VarReferenceVector([self.pre_var_refs[v.name][0] 
+                                for v in ccm.get_pre_var_refs()]))
+        post_var_refs = ccm.make_post_var_references(
+            VarReferenceVector([self.post_var_refs[v.name][0] 
+                                for v in ccm.get_post_var_refs()]))
 
         self.pop = add_fct(self.name, group_name, self._synapse_group.name,
                            self.custom_connectivity_update_model, 

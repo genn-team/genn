@@ -9,8 +9,7 @@ import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
 from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector,
-                                  VarReferenceVector, WUVarReferenceVector)
+                                  VarInitVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
 def prepare_vars(model_vars, var_space, group,
@@ -182,61 +181,6 @@ def var_space_to_vals(model, var_space):
     return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
                                                 for vnt in model.get_vars()]))
 
-def var_ref_space_to_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to VarReferences
-
-    Args:
-    model           -- instance of the model
-    var_ref_space   -- dict with variable references
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name][0]
-                            for v in model.get_var_refs()]))
-
-def pre_var_ref_space_to_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to VarReferences
-
-    Args:
-    model           -- instance of the model
-    var_ref_space   -- dict with variable references
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name][0]
-                            for v in model.get_pre_var_refs()]))
-        
-def post_var_ref_space_to_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to VarReferences
-
-    Args:
-    model           -- instance of the model
-    var_ref_space   -- dict with variable references
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name][0]
-                            for v in model.get_post_var_refs()]))
-        
-def var_ref_space_to_wu_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to WUVarReferences
-
-    Args:
-    model       -- instance of the model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_wuvar_references(
-        WUVarReferenceVector([var_ref_space[v.name][0]
-                              for v in model.get_var_refs()]))
 
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
