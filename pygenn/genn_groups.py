@@ -801,13 +801,13 @@ class SynapseGroup(Group):
             
             self.wu_pre_var_names, self.pre_vars =\
                 model_preprocessor.prepare_vars(self.w_update.get_pre_vars(), 
-                                                pre_var_space, 
+                                                pre_var_space, self,
                                                 "WeightUpdateModels",
                                                 self.w_update.__class__.__name__)
             
             self.wu_post_var_names, self.post_vars =\
                 model_preprocessor.prepare_vars(self.w_update.get_post_vars(),
-                                                post_var_space,
+                                                post_var_space, self,
                                                 "WeightUpdateModels",
                                                 self.w_update.__class__.__name__)
 
@@ -1610,19 +1610,19 @@ class CustomConnectivityUpdate(Group):
         (self.custom_connectivity_update_model, self.type, self.param_names,
          self.params, self.var_names, self.vars, self.extra_global_params) =\
             model_preprocessor.prepare_model(
-                model, self, param_space, var_space, 
+                model, self, param_space, var_space,
                 genn_wrapper.CustomConnectivityUpdateModels)
 
         # Prepare pre and postsynaptic variables
-        self.pre_var_names, self.pre_vars =\ 
+        self.pre_var_names, self.pre_vars =\
             model_preprocessor.prepare_vars(
                 self.custom_connectivity_update_model.get_pre_vars(),
-                pre_var_space, "CustomConnectivityUpdateModels", 
+                pre_var_space, self, "CustomConnectivityUpdateModels",
                 self.w_update.__class__.__name__)
-        self.post_var_names, self.post_vars =\ 
+        self.post_var_names, self.post_vars =\
             model_preprocessor.prepare_vars(
                 self.custom_connectivity_update_model.get_post_vars(),
-                post_var_space, "CustomConnectivityUpdateModels",
+                post_var_space, self, "CustomConnectivityUpdateModels",
                 self.w_update.__class__.__name__)
 
         # Prepare variable references
@@ -1684,23 +1684,13 @@ class CustomConnectivityUpdate(Group):
             # If variable is located on host
             var_loc = self.pop.get_var_location(v.name) 
             if (var_loc & VarLocation_HOST) != 0:
-                # Determine how many copies of this variable are present
-                #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                #              else self._model.batch_size)
-                num_copies = 1
-
                 # Get view
-                size = self._synapse_group.weight_update_var_size * num_copies
+                size = self._synapse_group.weight_update_var_size
                 var_data.view = self._assign_ext_ptr_array(
                     v.name, size, var_data.type)
 
-                # If there is more than one copy, reshape view to 2D
-                if num_copies > 1:
-                    var_data.view = np.reshape(var_data.view, 
-                                                (num_copies, -1))
-
                 # Initialise variable if necessary
-                self._synapse_group._init_wum_var(var_data, num_copies)
+                self._synapse_group._init_wum_var(var_data, 1)
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)

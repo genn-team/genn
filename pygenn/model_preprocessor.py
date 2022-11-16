@@ -13,18 +13,7 @@ from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
                                   VarReferenceVector, WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
-def prepare_params(model_params, param_space, 
-                   model_family_name, model_class_name):
-    param_names = list(m_instance.get_param_names())
-    if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError(
-            "Invalid parameter values for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
-                model_family_name, model_class_name,
-                sorted(param_names), sorted(iterkeys(param_space))))
-    params = param_space_to_vals(m_instance, param_space)
-    return param_names, params
-
-def prepare_vars(model_vars, var_space,
+def prepare_vars(model_vars, var_space, group,
                  model_family_name, model_class_name):
     var_names = [vnt.name for vnt in model_vars]
     if set(iterkeys(var_space)) != set(var_names):
@@ -66,10 +55,18 @@ def prepare_model(model, group, param_space, var_space, model_family):
     """
     m_instance, m_type = is_model_valid(model, model_family)
 
-    # Prepare parameters and variables
-    param_names, params = prepare_params(m_instance.get_param_names(), param_space,
-                                         model_family.__name__, model.__class__.__name__)
-    var_names, vars = prepare_vars(m_instance.get_vars(), var_space,
+    # Prepare parameters
+    param_names = list(m_instance.get_param_names())
+    if set(iterkeys(param_space)) != set(param_names):
+        raise ValueError(
+            "Invalid parameter values for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                model_family.__name__, model.__class__.__name__,
+                sorted(param_names), sorted(iterkeys(param_space))))
+
+    params = param_space_to_vals(m_instance, param_space)
+    
+    # Prepare variables
+    var_names, vars = prepare_vars(m_instance.get_vars(), var_space, group,
                                    model_family.__name__, model.__class__.__name__)
 
     egps = {egp.name: ExtraGlobalParameter(egp.name, egp.type, group)
@@ -96,9 +93,15 @@ def prepare_snippet(snippet, param_space, snippet_family):
     s_instance, s_type = is_model_valid(snippet, snippet_family)
     
     # Prepare parameters
-    param_names, params = prepare_params(s_instance.get_param_names(), param_space,
-                                         snippet_family.__name__, snippet.__class__.__name__)
+    # Prepare parameters
+    param_names = list(s_instance.get_param_names())
+    if set(iterkeys(param_space)) != set(param_names):
+        raise ValueError(
+            "Invalid parameter values for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                snippet_family.__name__, snippet.__class__.__name__,
+                sorted(param_names), sorted(iterkeys(param_space))))
 
+    params = param_space_to_vals(s_instance, param_space)
     return (s_instance, s_type, param_names, params)
 
 
