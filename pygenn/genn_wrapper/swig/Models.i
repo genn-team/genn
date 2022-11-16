@@ -28,7 +28,7 @@
 %}
 
 %feature("flatnested", "1");
-%rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
+%rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="addCustomConnectivityUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
 
 %ignore LegacyWrapper;
 
