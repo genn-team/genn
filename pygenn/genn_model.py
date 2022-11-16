@@ -531,22 +531,23 @@ class GeNNModel(object):
     
     def add_custom_update(self, cu_name, group_name, custom_update_model,
                           param_space, var_space, var_ref_space):
-        """Add a current source to the GeNN model
+        """Add a custom update to the GeNN model
 
         Args:
-        cu_name                 -- name of the new current source
-        group_name              -- name of
-        custom_update_model     -- type of the CustomUpdateModel class as
-                                   string or instance of CustomUpdateModel
-                                   class derived from
-                                   ``pygenn.genn_wrapper.CustomUpdateModel.Custom`` (see also
-                                   pygenn.genn_model.create_custom_custom_update_class)
-        param_space             -- dict with param values for the
-                                   CustomUpdateModel class
-        var_space               -- dict with initial variable values for the
-                                   CustomUpdateModel class
-        var_ref_space           -- dict with variable references for the
-                                   CustomUpdateModel class
+        cu_name             -- name of the new custom update
+        group_name          -- name of group this custom update should be
+                                performed within
+        custom_update_model -- type of the CustomUpdateModel class as
+                               string or instance of CustomUpdateModel
+                               class derived from
+                               ``pygenn.genn_wrapper.CustomUpdateModel.Custom``(see also
+                               pygenn.genn_model.create_custom_custom_update_class)
+        param_space         -- dict with param values for the
+                               CustomUpdateModel class
+        var_space           -- dict with initial variable values for the
+                               CustomUpdateModel class
+        var_ref_space       -- dict with variable references for the
+                               CustomUpdateModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -564,68 +565,67 @@ class GeNNModel(object):
         self.custom_updates[cu_name] = c_update
 
         return c_update
-    
-    def add_custom_connectivity_update(self, cu_name, group_name, 
-                                       custom_update_model, param_space,
-                                       var_space, pre_var_space, 
+
+    def add_custom_connectivity_update(self, cu_name, group_name, syn_group,
+                                       custom_conn_update_model,
+                                       param_space, var_space, pre_var_space,
                                        post_var_space, var_ref_space,
                                        pre_var_ref_space, post_var_ref_space):
-        """Add a synapse population to the GeNN model
+        """Add a custom connectivity update to the GeNN model
 
         Args:
-        pop_name                    --  name of the new population
-        matrix_type                 --  type of the matrix as string
-        delay_steps                 --  delay in number of steps
-        source                      --  source neuron group (either name or NeuronGroup object)
-        target                      --  target neuron group (either name or NeuronGroup object)
-        w_update_model              --  type of the WeightUpdateModels class
-                                        as string or instance of weight update
-                                        model class derived from
-                                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also
-                                        pygenn.genn_model.create_custom_weight_update_class)
-        wu_param_space              --  dict with param values for the
-                                        WeightUpdateModels class
-        wu_var_space                --  dict with initial values for
-                                        WeightUpdateModels state variables
-        wu_pre_var_space            --  dict with initial values for
-                                        WeightUpdateModels presynaptic variables
-        wu_post_var_space           --  dict with initial values for
-                                        WeightUpdateModels postsynaptic variables
-        postsyn_model               --  type of the PostsynapticModels class
-                                        as string or instance of postsynaptic
-                                        model class derived from
-                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
-                                        pygenn.genn_model.create_custom_postsynaptic_class)
-        ps_param_space              --  dict with param values for the
-                                        PostsynapticModels class
-        ps_var_space                --  dict with initial variable values for
-                                        the PostsynapticModels class
-        connectivity_initialiser    --  InitSparseConnectivitySnippet::Init
-                                        for connectivity
+        cu_name                     -- name of the new custom connectivity update
+        group_name                  -- name of group this custom connectivity update
+                                       should be performed within
+        syn_group                   -- synapse group this custom connectivity
+                                       update should be attached to (either
+                                       name or SynapseGroup object)
+        custom_conn_update_model    -- type of the CustomConnetivityUpdateModel 
+                                       class as string or instance of 
+                                       CustomConnectivityUpdateModel class 
+                                       derived from 
+                                       ``pygenn.genn_wrapper.CustomConnectivityUpdateModel.Custom``
+                                       (see also pygenn.genn_model.create_custom_custom_connectivity_update_class)
+        param_space                 -- dict with param values for the
+                                       CustomConnectivityUpdateModel class
+        var_space                   -- dict with initial variable values for the
+                                       CustomConnectivityUpdateModel class
+        pre_var_space               -- dict with initial presynaptic variable
+                                       values for the 
+                                       CustomConnectivityUpdateModel class
+        post_var_space              -- dict with initial postsynaptic variable
+                                       values for the
+                                       CustomConnectivityUpdateModel class
+        var_ref_space               -- dict with variable references for the
+                                       CustomConnectivityUpdateModel class
+        pre_var_ref_space           -- dict with presynaptic variable
+                                       references for the 
+                                       CustomConnectivityUpdateModel class
+        post_var_ref_space          -- dict with postsynaptic variable
+                                       references for the
+                                       CustomConnectivityUpdateModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
 
-        if pop_name in self.synapse_populations:
-            raise ValueError("synapse population '{0}' "
-                             "already exists".format(pop_name))
+        if cu_name in self.custom_connectivity_updates:
+            raise ValueError("custom connectivity update '{0}' "
+                             "already exists".format(cu_name))
 
-        # Validate source and target groups
-        source = self._validate_neuron_group(source, "source")
-        target = self._validate_neuron_group(target, "target")
+        # Validate synapse group
+        syn_group = self._validate_synapse_group(syn_group, "synapse group")
 
-        s_group = SynapseGroup(pop_name, self)
-        s_group.matrix_type = matrix_type
-        s_group.set_connected_populations(source, target)
-        s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
-                                  wu_pre_var_space, wu_post_var_space)
-        s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
-        s_group.connectivity_initialiser = connectivity_initialiser
-        s_group.add_to(delay_steps)
+        cc_update = CustomConnectivityUpdateUpdate(cu_name, self)
+        cc_update.set_custom_connectivity_update_model(
+            custom_update_model, param_space, 
+            var_space, pre_var_space, post_var_space, 
+            var_ref_space, pre_var_ref_space, post_var_ref_space)
+        cc_update.add_to(group_name)
 
-        self.synapse_populations[pop_name] = s_group
+        self.custom_connectivity_updates[cu_name] = cc_update
 
-        return s_group
+        return cc_update
+
     def build(self, path_to_model="./", force_rebuild=False):
         """Finalize and build a GeNN model
 
@@ -718,6 +718,10 @@ class GeNNModel(object):
         for cu_data in itervalues(self.custom_updates):
             cu_data.load_init_egps()
 
+        # Loop through custom connectivity updates
+        for ccu_data in itervalues(self.custom_connectivity_updates):
+            ccu_data.load_init_egps()
+
         # Initialize model
         self._slm.initialize()
 
@@ -736,6 +740,10 @@ class GeNNModel(object):
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.load()
+        
+        # Loop through custom connectivity updates
+        for ccu_data in itervalues(self.custom_connectivity_updates):
+            ccu_data.load()
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
@@ -767,7 +775,11 @@ class GeNNModel(object):
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.reinitialise()
-            
+        
+        # Loop through custom connectivity updates
+        for ccu_data in itervalues(self.custom_connectivity_updates):
+            ccu_data.reinitialise()
+
         # Initialise any sparse variables
         self._slm.initialize_sparse()
 
@@ -1109,7 +1121,7 @@ def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
     
     # If we're referencing a WU variable in a custom update,
     # Use it's synapse group for the PyGeNN-level backreference
-    sg = g._synapse_group if isinstance(g, CustomUpdate) else g
+    sg = g if isinstance(g, SynapseGroup) else g._synapse_group
  
     if tp_sg is None:
         return (genn_wrapper.create_wuvar_ref(g.pop, var_name), sg)
@@ -1140,7 +1152,7 @@ def create_custom_neuron_class(class_name, param_names=None,
     Keyword args:
     param_names                 --  list of strings with param names
                                     of the model
-    var_name_types              --  list of pairs of strings with varible names
+    var_name_types              --  list of pairs of strings with variable names
                                     and types of the model
     derived_params              --  list of pairs, where the first member
                                     is string with name of the derived
@@ -1213,7 +1225,7 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of pairs of strings with varible names and
+    var_name_types      --  list of pairs of strings with variable names and
                             types of the model
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
@@ -1439,7 +1451,7 @@ def create_custom_current_source_class(class_name, param_names=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of pairs of strings with varible names and
+    var_name_types      --  list of pairs of strings with variable names and
                             types of the model
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
@@ -1486,12 +1498,12 @@ def create_custom_custom_update_class(class_name, param_names=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of tuples of strings with varible names and
+    var_name_types      --  list of tuples of strings with variable names and
                             types of the variable
     derived_params      --  list of tuples, where the first member is string
                             with name of the derived parameter and the second
                             should be a functor returned by create_dpf_class
-    var_refs            --  list of tuples of strings with varible names and
+    var_refs            --  list of tuples of strings with variable names and
                             types of variabled variable
     update_code         --  string with the current injection code
     extra_global_params --  list of pairs of strings with names and types of
@@ -1518,6 +1530,92 @@ def create_custom_custom_update_class(class_name, param_names=None,
         class_name, genn_wrapper.CustomUpdateModels.Custom, param_names,
         var_name_types, derived_params, extra_global_params, body)
 
+def create_custom_custom_connectivity_update_class(class_name, 
+                                                   param_names=None,
+                                                   var_name_types=None,
+                                                   pre_var_name_types=None,
+                                                   post_var_name_types=None,
+                                                   derived_params=None,
+                                                   var_refs=None,
+                                                   pre_var_refs=None,
+                                                   post_var_refs=None,
+                                                   row_update_code=None,
+                                                   host_update_code=None,
+                                                   extra_global_params=None,
+                                                   custom_body=None):
+    """This helper function creates a custom CustomConnectivityUpdate class.
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
+
+    Args:
+    class_name          --  name of the new class
+
+    Keyword args:
+    param_names         --  list of strings with param names of the model
+    var_name_types      --  list of tuples of strings with variable names and
+                            types of the variable
+    pre_var_name_types  --  list of tuples of strings with variable names and
+                            types of the variable
+    var_name_types      --  list of tuples of strings with variable names and
+                            types of the variable
+    derived_params      --  list of tuples, where the first member is string
+                            with name of the derived parameter and the second
+                            should be a functor returned by create_dpf_class
+    var_refs            --  list of tuples of strings with variable names and
+                            types of variabled variable
+    update_code         --  string with the current injection code
+    extra_global_params --  list of pairs of strings with names and types of
+                            additional parameters
+    custom_body         --  dictionary with additional attributes and methods
+                            of the new class
+    """
+    if not isinstance(custom_body, dict) and custom_body is not None:
+        raise ValueError("custom_body must be an instance of dict or None")
+
+    body = {}
+
+    if row_update_code is not None:
+        body["get_row_update_code"] = lambda self: dedent(row_update_code)
+
+    if host_update_code is not None:
+        body["get_host_update_code"] = lambda self: dedent(host_update_code)
+
+    if pre_var_name_types is not None:
+        body["get_pre_vars"] = \
+            lambda self: VarVector([Var(*vn)
+                                    for vn in pre_var_name_types])
+
+    if post_var_name_types is not None:
+        body["get_post_vars"] = \
+            lambda self: VarVector([Var(*vn)
+                                    for vn in post_var_name_types])
+
+    if var_refs is not None:
+        body["get_var_refs"] = \
+            lambda self: VarRefVector([VarRef(*v)
+                                       for v in var_refs])
+
+    if pre_var_refs is not None:
+        body["get_pre_var_refs"] = \
+            lambda self: VarRefVector([VarRef(*v)
+                                       for v in pre_var_refs])
+
+    if post_var_refs is not None:
+        body["get_post_var_refs"] = \
+            lambda self: VarRefVector([VarRef(*v)
+                                       for v in post_var_refs])
+
+    if custom_body is not None:
+        body.update(custom_body)
+
+    return create_custom_model_class(
+        class_name, genn_wrapper.CustomConnectivityUpdateModels.Custom,
+        param_names, var_name_types, derived_params, extra_global_params,
+        body)
 
 def create_custom_model_class(class_name, base, param_names, var_name_types,
                               derived_params, extra_global_params, custom_body):
@@ -1537,7 +1635,7 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     class_name      --  name of the new class
     base            --  base class
     param_names     --  list of strings with param names of the model
-    var_name_types  --  list of pairs of strings with varible names and
+    var_name_types  --  list of pairs of strings with variable names and
                         types of the model
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second should 
