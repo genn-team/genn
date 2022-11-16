@@ -25,6 +25,7 @@ def prepare_vars(model_vars, var_space, group,
             for vnt in model_vars}
     return var_names, vars
 
+    
 def prepare_var_refs(model_var_refs, var_ref_space,
                      model_family_name, model_class_name):
     var_ref_names = [vnt.name for vnt in model_var_refs]
@@ -36,6 +37,7 @@ def prepare_var_refs(model_var_refs, var_ref_space,
 
     return var_ref_names, var_ref_space
 
+    
 def prepare_model(model, group, param_space, var_space, model_family):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
@@ -75,6 +77,7 @@ def prepare_model(model, group, param_space, var_space, model_family):
     return (m_instance, m_type, param_names, params,
             var_names, vars, egps)
 
+
 def prepare_snippet(snippet, param_space, snippet_family):
     """Prepare a snippet by checking its validity and extracting
     information about parameters
@@ -91,8 +94,7 @@ def prepare_snippet(snippet, param_space, snippet_family):
                          snippet parameter names, snippet parameters)
     """
     s_instance, s_type = is_model_valid(snippet, snippet_family)
-    
-    # Prepare parameters
+
     # Prepare parameters
     param_names = list(s_instance.get_param_names())
     if set(iterkeys(param_space)) != set(param_names):
@@ -101,7 +103,7 @@ def prepare_snippet(snippet, param_space, snippet_family):
                 snippet_family.__name__, snippet.__class__.__name__,
                 sorted(param_names), sorted(iterkeys(param_space))))
 
-    params = param_space_to_vals(s_instance, param_space)
+    params = param_space_to_val_vec(s_instance, param_space)
     return (s_instance, s_type, param_names, params)
 
 
