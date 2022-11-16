@@ -67,8 +67,8 @@ from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf, make_cksf
 from .genn_wrapper.StlContainers import StringVector
 from .genn_wrapper import VarLocation_HOST_DEVICE
-from .genn_groups import (NeuronGroup, SynapseGroup, 
-                          CurrentSource, CustomUpdate)
+from .genn_groups import (NeuronGroup, SynapseGroup, CurrentSource,
+                          CustomUpdate, CustomConnectivityUpdate)
 from .model_preprocessor import prepare_snippet
 
 # Loop through backends in preferential order
@@ -175,6 +175,7 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.custom_updates = {}
+        self.custom_connectivity_updates = {}
         self.dT = 0.1
 
         # Build dictionary containing conversions between GeNN C++ types and numpy types
@@ -563,7 +564,68 @@ class GeNNModel(object):
         self.custom_updates[cu_name] = c_update
 
         return c_update
-        
+    
+    def add_custom_connectivity_update(self, cu_name, group_name, 
+                                       custom_update_model, param_space,
+                                       var_space, pre_var_space, 
+                                       post_var_space, var_ref_space,
+                                       pre_var_ref_space, post_var_ref_space):
+        """Add a synapse population to the GeNN model
+
+        Args:
+        pop_name                    --  name of the new population
+        matrix_type                 --  type of the matrix as string
+        delay_steps                 --  delay in number of steps
+        source                      --  source neuron group (either name or NeuronGroup object)
+        target                      --  target neuron group (either name or NeuronGroup object)
+        w_update_model              --  type of the WeightUpdateModels class
+                                        as string or instance of weight update
+                                        model class derived from
+                                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_weight_update_class)
+        wu_param_space              --  dict with param values for the
+                                        WeightUpdateModels class
+        wu_var_space                --  dict with initial values for
+                                        WeightUpdateModels state variables
+        wu_pre_var_space            --  dict with initial values for
+                                        WeightUpdateModels presynaptic variables
+        wu_post_var_space           --  dict with initial values for
+                                        WeightUpdateModels postsynaptic variables
+        postsyn_model               --  type of the PostsynapticModels class
+                                        as string or instance of postsynaptic
+                                        model class derived from
+                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_postsynaptic_class)
+        ps_param_space              --  dict with param values for the
+                                        PostsynapticModels class
+        ps_var_space                --  dict with initial variable values for
+                                        the PostsynapticModels class
+        connectivity_initialiser    --  InitSparseConnectivitySnippet::Init
+                                        for connectivity
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        if pop_name in self.synapse_populations:
+            raise ValueError("synapse population '{0}' "
+                             "already exists".format(pop_name))
+
+        # Validate source and target groups
+        source = self._validate_neuron_group(source, "source")
+        target = self._validate_neuron_group(target, "target")
+
+        s_group = SynapseGroup(pop_name, self)
+        s_group.matrix_type = matrix_type
+        s_group.set_connected_populations(source, target)
+        s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
+                                  wu_pre_var_space, wu_post_var_space)
+        s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
+        s_group.connectivity_initialiser = connectivity_initialiser
+        s_group.add_to(delay_steps)
+
+        self.synapse_populations[pop_name] = s_group
+
+        return s_group
     def build(self, path_to_model="./", force_rebuild=False):
         """Finalize and build a GeNN model
 

@@ -174,6 +174,34 @@ def var_ref_space_to_var_refs(model, var_ref_space):
         VarReferenceVector([var_ref_space[v.name][0]
                             for v in model.get_var_refs()]))
 
+def pre_var_ref_space_to_var_refs(model, var_ref_space):
+    """Convert a var_ref_space dict to VarReferences
+
+    Args:
+    model           -- instance of the model
+    var_ref_space   -- dict with variable references
+
+    Returns:
+    native model's VarValues
+    """
+    return model.make_var_references(
+        VarReferenceVector([var_ref_space[v.name][0]
+                            for v in model.get_pre_var_refs()]))
+        
+def post_var_ref_space_to_var_refs(model, var_ref_space):
+    """Convert a var_ref_space dict to VarReferences
+
+    Args:
+    model           -- instance of the model
+    var_ref_space   -- dict with variable references
+
+    Returns:
+    native model's VarValues
+    """
+    return model.make_var_references(
+        VarReferenceVector([var_ref_space[v.name][0]
+                            for v in model.get_post_var_refs()]))
+        
 def var_ref_space_to_wu_var_refs(model, var_ref_space):
     """Convert a var_ref_space dict to WUVarReferences
 
