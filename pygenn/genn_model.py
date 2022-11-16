@@ -615,7 +615,7 @@ class GeNNModel(object):
         # Validate synapse group
         syn_group = self._validate_synapse_group(syn_group, "synapse group")
 
-        cc_update = CustomConnectivityUpdateUpdate(cu_name, self)
+        cc_update = CustomConnectivityUpdate(cu_name, syn_group, self)
         cc_update.set_custom_connectivity_update_model(
             custom_update_model, param_space, 
             var_space, pre_var_space, post_var_space, 

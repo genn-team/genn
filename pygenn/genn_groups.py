@@ -798,22 +798,18 @@ class SynapseGroup(Group):
                 model_preprocessor.prepare_model(
                     model, self, param_space, var_space, 
                     genn_wrapper.WeightUpdateModels)
-
-            self.wu_pre_var_names = [vnt.name for vnt in self.w_update.get_pre_vars()]
-            if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(self.wu_pre_var_names):
-                raise ValueError("Invalid presynaptic variable initializers "
-                                 "for WeightUpdateModels")
-            self.pre_vars = {
-                vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], self)
-                for vnt in self.w_update.get_pre_vars()}
-
-            self.wu_post_var_names = [vnt.name for vnt in self.w_update.get_post_vars()]
-            if post_var_space is not None and set(iterkeys(post_var_space)) != set(self.wu_post_var_names):
-                raise ValueError("Invalid postsynaptic variable initializers "
-                                 "for WeightUpdateModels")
-            self.post_vars = {
-                vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], self)
-                for vnt in self.w_update.get_post_vars()}
+            
+            self.wu_pre_var_names, self.pre_vars =\
+                model_preprocessor.prepare_vars(self.w_update.get_pre_vars(), 
+                                                pre_var_space, 
+                                                "WeightUpdateModels",
+                                                self.w_update.__class__.__name__)
+            
+            self.wu_post_var_names, self.post_vars =\
+                model_preprocessor.prepare_vars(self.w_update.get_post_vars(),
+                                                post_var_space,
+                                                "WeightUpdateModels",
+                                                self.w_update.__class__.__name__)
 
     def set_post_syn(self, model, param_space, var_space):
         """Set postsynaptic model, its parameters and initial variables
@@ -1440,7 +1436,7 @@ class CustomUpdate(Group):
         model           --  type as string or instance of the model
         param_space     --  dict with model parameters
         var_space       --  dict with model variables
-        var_references  --  dict with model variables
+        var_ref_space   --  dict with model variables
         """
 
         # Prepare standard model
@@ -1451,10 +1447,11 @@ class CustomUpdate(Group):
                 genn_wrapper.CustomUpdateModels)
 
         # Check variable references
-        self.var_ref_names = [vnt.name for vnt in self.custom_update_model.get_var_refs()]
-        if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
-            raise ValueError("Invalid variable reference initializers "
-                             "for CustomUpdateModels")
+        self.var_ref_names, self.var_refs =\
+            model_preprocessor.prepare_var_refs(
+                self.custom_update_model.get_var_refs(), var_ref_space,
+                "CustomUpdateModels", 
+                self.custom_update_model.__class__.__name__)
 
         # Count wu var references in list
         num_wu_var_refs = sum(isinstance(v[0], WUVarReference)
@@ -1469,9 +1466,6 @@ class CustomUpdate(Group):
 
         # Set flag 
         self.custom_wu_update = (num_wu_var_refs != 0)
-
-        # Store variable references in class
-        self.var_refs = var_ref_space
 
     def add_to(self, group_name):
         """Attach this CurrentSource to NeuronGroup and
@@ -1581,14 +1575,15 @@ class CustomConnectivityUpdate(Group):
 
     """Class representing a custom connectivity update"""
 
-    def __init__(self, name, model):
+    def __init__(self, name, synapse_group, model):
         """Init CustomConnectivityUpdate
 
         Args:
-        name    -- string name of the custom update
+        name    -- string name of the custom connectivity update
         model   -- pygenn.genn_model.GeNNModel this custom update is part of
         """
-        super(CustomConnectivityUpdate, self).__init__(name, model)
+        super(CustomConnectivityUpdate, syn_group, self).__init__(name, model)
+        self._synapse_group = synapse_group
         self.custom_connectivity_update_model = None
         self.pre_vars = {}
         self.post_vars = {}
@@ -1606,37 +1601,46 @@ class CustomConnectivityUpdate(Group):
         model           --  type as string or instance of the model
         param_space     --  dict with model parameters
         var_space       --  dict with model variables
-        var_references  --  dict with model variables
+        pre_var_space   --  dict with model presynaptic variables
+        post_var_space  --  dict with model postsynaptic variables
+        var_ref_space  --  dict with model variables
         """
 
         # Prepare standard model
-        (self.custom_connectivity_update_model, self.type, self.param_names, self.params,
-         self.var_names, self.vars, self.extra_global_params) =\
+        (self.custom_connectivity_update_model, self.type, self.param_names,
+         self.params, self.var_names, self.vars, self.extra_global_params) =\
             model_preprocessor.prepare_model(
                 model, self, param_space, var_space, 
                 genn_wrapper.CustomConnectivityUpdateModels)
-        
-        self.pre_var_names = [
-            vnt.name
-            for vnt in self.custom_connectivity_update_model.get_pre_vars()]
-        if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(self.pre_var_names):
-            raise ValueError("Invalid presynaptic variable initializers "
-                             "for CustomConnectivityUpdate")
-        self.pre_vars = {
-            vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], self)
-            for vnt in self.custom_connectivity_update_model.get_pre_vars()}
-        
-        # Check variable references
-        self.var_ref_names = [vnt.name for vnt in self.custom_connectivity_update_model.get_var_refs()]
-        if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
-            raise ValueError("Invalid variable reference initializers "
-                             "for CustomUpdateModels")
-    
-        # Set flag 
-        self.custom_wu_update = (num_wu_var_refs != 0)
 
-        # Store variable references in class
-        self.var_refs = var_ref_space
+        # Prepare pre and postsynaptic variables
+        self.pre_var_names, self.pre_vars =\ 
+            model_preprocessor.prepare_vars(
+                self.custom_connectivity_update_model.get_pre_vars(),
+                pre_var_space, "CustomConnectivityUpdateModels", 
+                self.w_update.__class__.__name__)
+        self.post_var_names, self.post_vars =\ 
+            model_preprocessor.prepare_vars(
+                self.custom_connectivity_update_model.get_post_vars(),
+                post_var_space, "CustomConnectivityUpdateModels",
+                self.w_update.__class__.__name__)
+
+        # Prepare variable references
+        self.var_ref_names, self.var_refs =\
+            model_preprocessor.prepare_var_refs(
+                self.custom_connectivity_update_model.get_var_refs(),
+                var_ref_space, "CustomConnectivityUpdateModels", 
+                self.custom_update_model.__class__.__name__)
+        self.pre_var_ref_names, self.pre_var_refs =\
+            model_preprocessor.prepare_var_refs(
+                self.custom_connectivity_update_model.get_pre_var_refs(),
+                pre_var_ref_space, "CustomConnectivityUpdateModels",
+                self.custom_update_model.__class__.__name__)
+        self.var_ref_names, self.var_refs =\
+            model_preprocessor.prepare_var_refs(
+                self.custom_connectivity_update_model.get_post_var_refs(),
+                post_var_ref_space, "CustomConnectivityUpdateModels",
+                self.custom_update_model.__class__.__name__)
 
     def add_to(self, group_name):
         """Attach this CustomConnectivityUpdate group 
@@ -1666,12 +1670,14 @@ class CustomConnectivityUpdate(Group):
         post_var_refs = model_preprocessor.post_var_ref_space_to_var_refs(
             self.custom_connectivity_update_model, self.post_var_refs)
 
-        self.pop = add_fct(self.name, group_name, self.custom_update_model, 
-                           self.params, var_ini, var_refs)
+        self.pop = add_fct(self.name, group_name, self._synapse_group.name,
+                           self.custom_connectivity_update_model, 
+                           self.params, var_ini, pre_var_ini, post_var_ini,
+                           var_refs, pre_var_refs, post_var_refs)
 
     def load(self):
         # Loop through state variables
-        for v in self.custom_update_model.get_vars():
+        for v in self.custom_connectivity_update_model.get_vars():
             # Get corresponding data from dictionary
             var_data = self.vars[v.name]
 
@@ -1698,13 +1704,14 @@ class CustomConnectivityUpdate(Group):
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
-        # Otherwise, load variables 
-        else:
-        self._load_vars(self.custom_update_model.get_vars(),
-                            size=self.pop.get_size())
-        
-        self._load_vars(self.custom_connectivity_update_model.get_pre_vars(), self.src.size,
-                            self.pre_vars, self.pop.get_wupre_var_location)
+
+        # Load pre and postsynaptic variables
+        self._load_vars(self.custom_connectivity_update_model.get_pre_vars(),
+                        self._synapse_group.src.size, self.pre_vars, 
+                        self.pop.get_pre_var_location)
+        self._load_vars(self.custom_connectivity_update_model.get_post_vars(),
+                        self._synapse_group.trg.size, self.post_vars, 
+                        self.pop.get_post_var_location)
 
         # Load custom update extra global parameters
         self._load_egp()
@@ -1721,21 +1728,16 @@ class CustomConnectivityUpdate(Group):
             assert (self._synapse_group.has_individual_synapse_vars or
                     self._synapse_group.has_kernel_synapse_vars)
 
-            # Loop through custom update state variables
-            for v in self.custom_update_model.get_vars():
+            # Loop through custom connectivity update state variables
+            for v in self.custom_connectivity_update_model.get_vars():
                 # Get corresponding data from dictionary
                 var_data = self.vars[v.name]
 
                 # If variable is located on host
                 var_loc = self.pop.get_var_location(v.name) 
                 if (var_loc & VarLocation_HOST) != 0:
-                    # Determine how many copies of this variable are present
-                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                    #              else self._model.batch_size)
-                    num_copies = 1
-
                     # Initialise
-                    self._synapse_group._init_wum_var(var_data, num_copies)
+                    self._synapse_group._init_wum_var(var_data, 1)
         # Otherwise, reinitialise current source state variables
         else:
             self._reinitialise_vars(size=self.pop.get_size())
