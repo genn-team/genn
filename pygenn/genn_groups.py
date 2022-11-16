@@ -1582,7 +1582,7 @@ class CustomConnectivityUpdate(Group):
         name    -- string name of the custom connectivity update
         model   -- pygenn.genn_model.GeNNModel this custom update is part of
         """
-        super(CustomConnectivityUpdate, syn_group, self).__init__(name, model)
+        super(CustomConnectivityUpdate, self).__init__(name, model)
         self._synapse_group = synapse_group
         self.custom_connectivity_update_model = None
         self.pre_vars = {}
@@ -1618,29 +1618,29 @@ class CustomConnectivityUpdate(Group):
             model_preprocessor.prepare_vars(
                 self.custom_connectivity_update_model.get_pre_vars(),
                 pre_var_space, self, "CustomConnectivityUpdateModels",
-                self.w_update.__class__.__name__)
+                self.custom_connectivity_update_model.__class__.__name__)
         self.post_var_names, self.post_vars =\
             model_preprocessor.prepare_vars(
                 self.custom_connectivity_update_model.get_post_vars(),
                 post_var_space, self, "CustomConnectivityUpdateModels",
-                self.w_update.__class__.__name__)
+                self.custom_connectivity_update_model.__class__.__name__)
 
         # Prepare variable references
         self.var_ref_names, self.var_refs =\
             model_preprocessor.prepare_var_refs(
                 self.custom_connectivity_update_model.get_var_refs(),
                 var_ref_space, "CustomConnectivityUpdateModels", 
-                self.custom_update_model.__class__.__name__)
+                self.custom_connectivity_update_model.__class__.__name__)
         self.pre_var_ref_names, self.pre_var_refs =\
             model_preprocessor.prepare_var_refs(
                 self.custom_connectivity_update_model.get_pre_var_refs(),
                 pre_var_ref_space, "CustomConnectivityUpdateModels",
-                self.custom_update_model.__class__.__name__)
+                self.custom_connectivity_update_model.__class__.__name__)
         self.var_ref_names, self.var_refs =\
             model_preprocessor.prepare_var_refs(
                 self.custom_connectivity_update_model.get_post_var_refs(),
                 post_var_ref_space, "CustomConnectivityUpdateModels",
-                self.custom_update_model.__class__.__name__)
+                self.custom_connectivity_update_model.__class__.__name__)
 
     def add_to(self, group_name):
         """Attach this CustomConnectivityUpdate group 

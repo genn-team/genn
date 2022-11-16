@@ -613,11 +613,11 @@ class GeNNModel(object):
                              "already exists".format(cu_name))
 
         # Validate synapse group
-        syn_group = self._validate_synapse_group(syn_group, "synapse group")
+        syn_group = self._validate_synapse_group(syn_group, "syn_group")
 
         cc_update = CustomConnectivityUpdate(cu_name, syn_group, self)
         cc_update.set_custom_connectivity_update_model(
-            custom_update_model, param_space, 
+            custom_conn_update_model, param_space, 
             var_space, pre_var_space, post_var_space, 
             var_ref_space, pre_var_ref_space, post_var_ref_space)
         cc_update.add_to(group_name)
