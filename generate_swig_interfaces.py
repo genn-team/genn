@@ -175,7 +175,7 @@ class SwigModuleGenerator( object ):
         self.addSwigRename( '""', '"%s"', '// unignore all' )
 
     def addSwigEnableUnderCaseConvert( self ):
-        self.addSwigRename('""', '"%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*"', '// Enable conversion to under_case')
+        self.addSwigRename('""', '"%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="addCustomConnectivityUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*"', '// Enable conversion to under_case')
 
     def addSwigTemplate( self, tSpec, newName ):
         '''Adds a template specification tSpec and renames it as newName'''
@@ -857,7 +857,7 @@ def generateConfigs(gennPath, backends):
         
         for cu_model in mgs[5].models:
             # Ignore the overload of the function which automatically gets instance from class name
-            pygennSmg.addSwigIgnore("ModelSpec::addCustomConnectivityUpdate<CustomConnectivityUpdateModels::{0}>(std::string const &,std::string const &,std::string const &,CustomConnectivityUpdateModels::{0}::ParamValues const &,CustomConnectivityUpdateModels::{0}::VarValues const &,CustomConnectivityUpdateModels::{0}::PreVarValues const &,CustomConnectivityUpdateModels::{0}::PostVarValues const &,CustomConnectivityUpdateModels::{0}::VarReferences const &)".format(cu_model))
+            pygennSmg.addSwigIgnore("ModelSpec::addCustomConnectivityUpdate<CustomConnectivityUpdateModels::{0}>(std::string const &,std::string const &,std::string const &,CustomConnectivityUpdateModels::{0}::ParamValues const &,CustomConnectivityUpdateModels::{0}::VarValues const &,CustomConnectivityUpdateModels::{0}::PreVarValues const &,CustomConnectivityUpdateModels::{0}::PostVarValues const &,CustomConnectivityUpdateModels::{0}::VarReferences const &,CustomConnectivityUpdateModels::{0}::PreVarReferences const &,CustomConnectivityUpdateModels::{0}::PostVarReferences const &)".format(cu_model))
             pygennSmg.addSwigTemplate(
                 'ModelSpec::addCustomConnectivityUpdate<CustomConnectivityUpdateModels::{}>'.format(cu_model),
                 'add_custom_connectivity_update_{}'.format(cu_model))
