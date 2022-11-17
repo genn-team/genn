@@ -15,7 +15,7 @@
 using namespace CodeGenerator;
 
 // Test based on original issue found in https://github.com/brian-team/brian2genn/pull/60 to make sure that ensureFtype doesn't break functions it shouldn't
-TEST(EnsureMathFunctionFtype, ISinF) {
+TEST(CodeGenUtils, ISinF) {
     const std::string code =
         "const int _infinity_int  = 1073741823;  // maximum 32bit integer divided by 2\n"
         "if (std::isinf(t))\n"
@@ -26,7 +26,7 @@ TEST(EnsureMathFunctionFtype, ISinF) {
 }
 
 // Test based on comments by Marcel in https://github.com/brian-team/brian2genn/pull/60
-TEST(EnsureMathFunctionFtype, foo123) {
+TEST(CodeGenUtils, foo123) {
     const std::string code = "int foo123 = 6;";
 
     std::string substitutedCode = code;
@@ -35,7 +35,7 @@ TEST(EnsureMathFunctionFtype, foo123) {
 }
 
 // Test based on comments by Thomas in https://github.com/brian-team/brian2genn/pull/60
-TEST(EnsureMathFunctionFtype, not2well) {
+TEST(CodeGenUtils, not2well) {
     const std::string code = "int not2well = 6;";
 
     std::string substitutedCode = code;
@@ -44,7 +44,7 @@ TEST(EnsureMathFunctionFtype, not2well) {
 }
 
 // Check that generic maths functions DON'T get messed with
-TEST(EnsureMathFunctionFtype, rint) {
+TEST(CodeGenUtils, rint) {
     const std::string code = "$(value) = (uint8_t)rint(normal / DT);";
 
     const std::string substitutedCode = ensureFtype(code, "float");
@@ -52,7 +52,7 @@ TEST(EnsureMathFunctionFtype, rint) {
 }
 
 // Check that old-style single-precision maths functions get replaced with generic version
-TEST(EnsureMathFunctionFtype, rintf) {
+TEST(CodeGenUtils, rintf) {
     const std::string code = "$(value) = (uint8_t)rintf(normal / DT);";
 
     const std::string substitutedCode = ensureFtype(code, "float");
@@ -60,11 +60,25 @@ TEST(EnsureMathFunctionFtype, rintf) {
 }
 
 // Check that namespace substitution in support code works
-TEST(EnsureMathFunctionFtype, supportCodeFunc) {
+TEST(CodeGenUtils, supportCodeFunc) {
     const std::string supportCode = "SUPPORT_CODE_FUNC scalar supportCodeFunc(scalar x){ return x; }";
     const std::string code = "supportCodeFunc(x);";
     const std::string substitutedCode = disambiguateNamespaceFunction(supportCode, code, "TestNamespace");
     ASSERT_EQ(substitutedCode, "TestNamespace_supportCodeFunc(x);");
+}
+
+TEST(CodeGenUtils, FunctionSubstitute)
+{
+    std::string code = "$(print, $(id_pre), sin($(id_post)));";
+    functionSubstitute(code, "print", 2, "printf(\"%d,%d\n\", $(0), $(1))");
+    ASSERT_EQ(code, "printf(\"%d,%d\n\", $(id_pre), sin($(id_post)));");
+}
+TEST(CodeGenUtils, MissingFunctionClosedBracket) 
+{
+    const std::string code = "$(for_each_synapse, printf(\"%d,\", j)";
+    std::string mutableCode = code;
+    functionSubstitute(mutableCode, "for_each_synapse", 1, "for(int j = 0; j < 10; j++){ $(0) }");
+    ASSERT_EQ(code, mutableCode);
 }
 
 //--------------------------------------------------------------------------
@@ -115,7 +129,7 @@ TEST_P(SingleValueSubstitutionTest, CorrectGeneratedValue)
 //--------------------------------------------------------------------------
 // Instatiations
 //--------------------------------------------------------------------------
-INSTANTIATE_TEST_SUITE_P(DoubleValues,
+INSTANTIATE_TEST_SUITE_P(CodeGenUtils,
                          SingleValueSubstitutionTest,
                          ::testing::Values(std::numeric_limits<double>::min(),
                                            std::numeric_limits<double>::max(),

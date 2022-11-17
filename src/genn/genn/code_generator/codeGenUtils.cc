@@ -272,15 +272,16 @@ void functionSubstitute(std::string &code, const std::string &funcName,
         const std::string funcStart = "$(" + funcName + ",";
 
         // Find first occurance of start of function
-        size_t found = code.find(funcStart);
+        size_t idx = code.find(funcStart);
 
         // While functions are found
-        while (found != std::string::npos) {
-            // Loop through subsequent characerters of code
+        while (idx != std::string::npos) {
+            // Loop through characters following funcStart
             unsigned int bracketDepth = 0;
-            for(size_t i = found + funcStart.length(); i < code.size(); i++) {
+            const size_t startIdx = idx;
+            for(idx = idx + funcStart.length(); idx < code.size(); idx++) {
                 // If this character is a comma at function bracket depth
-                if(code[i] == ',' && bracketDepth == 0) {
+                if(code[idx] == ',' && bracketDepth == 0) {
                     assert(!currentParam.empty());
 
                     // Add parameter to array
@@ -290,11 +291,11 @@ void functionSubstitute(std::string &code, const std::string &funcName,
                 // Otherwise
                 else {
                     // If this is an open bracket, increase bracket depth
-                    if(code[i] == '(') {
+                    if(code[idx] == '(') {
                         bracketDepth++;
                     }
                     // Otherwise, it's a close bracket
-                    else if(code[i] == ')') {
+                    else if(code[idx] == ')') {
                         // If we are at a deeper bracket depth than function, decrease bracket depth
                         if(bracketDepth > 0) {
                             bracketDepth--;
@@ -321,21 +322,21 @@ void functionSubstitute(std::string &code, const std::string &funcName,
                             params.clear();
 
                             // Replace this into code
-                            code.replace(found, i - found + 1, replaceFunc);
+                            code.replace(startIdx, idx - startIdx + 1, replaceFunc);
                             break;
                         }
                     }
 
                     // If this isn't a space at function bracket depth,
                     // add to parameter string
-                    if(bracketDepth > 0 || !::isspace(code[i])) {
-                        currentParam += code[i];
+                    if(bracketDepth > 0 || !::isspace(code[idx])) {
+                        currentParam += code[idx];
                     }
                 }
             }
 
             // Find start of next function to replace
-            found = code.find(funcStart);
+            idx = code.find(funcStart, idx);
         }
     }
 }
