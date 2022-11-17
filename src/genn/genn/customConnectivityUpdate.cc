@@ -46,12 +46,12 @@ void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLoc
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setPreVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_VarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)] = loc;
+    m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setPostVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_VarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)] = loc;
+    m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getVarLocation(const std::string &varName) const
@@ -61,12 +61,12 @@ VarLocation CustomConnectivityUpdate::getVarLocation(const std::string &varName)
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getPreVarLocation(const std::string &varName) const
 {
-    return m_VarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)];
+    return m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getPostVarLocation(const std::string &varName) const
 {
-    return m_VarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)];
+    return m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isVarInitRequired() const
