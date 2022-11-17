@@ -1642,7 +1642,7 @@ class CustomConnectivityUpdate(Group):
                 self.custom_connectivity_update_model.get_pre_var_refs(),
                 pre_var_ref_space, "CustomConnectivityUpdateModels",
                 self.custom_connectivity_update_model.__class__.__name__)
-        self.var_ref_names, self.var_refs =\
+        self.post_var_ref_names, self.post_var_refs =\
             model_preprocessor.prepare_var_refs(
                 self.custom_connectivity_update_model.get_post_var_refs(),
                 post_var_ref_space, "CustomConnectivityUpdateModels",
