@@ -273,6 +273,20 @@ bool ModelSpec::zeroCopyInUse() const
         return true;
      }
 
+     // If any custom WU updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomWUUpdates), std::end(m_CustomWUUpdates),
+                   [](const CustomUpdateWUValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
+
+     // If any custom connectivity updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomConnectivityUpdates), std::end(m_CustomConnectivityUpdates),
+                   [](const CustomConnectivityUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
+
     return false;
 }
 
