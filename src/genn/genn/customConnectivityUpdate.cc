@@ -113,7 +113,7 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
 {
     // Give error if synapse group has unsupported connectivity type
     if (!(getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
-        throw std::runtime_error("Custom connectivity updates can only be attached to synapse groups with BITMASK or SPARSE connectivity.");
+        throw std::runtime_error("Custom connectivity updates can only be attached to synapse groups with SPARSE connectivity.");
     }
 
     // Check variable reference types

@@ -412,11 +412,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     code = ensureFtype(code, modelMerged.getModel().getPrecision());
     os << code;
 }
-//----------------------------------------------------------------------------
-std::string CustomConnectivityUpdateGroupMerged::getPrePostVarRefIndex(bool delay, const std::string &index) const
-{
-    return delay ? ("delayOffset + " + index) : index;
-}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityHostUpdateGroupMerged

@@ -18,15 +18,12 @@ public:
     CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
                                             const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
-
+protected:
     //----------------------------------------------------------------------------
-    // Public API
+    // Protected methods
     //----------------------------------------------------------------------------
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
-
-protected:
-
 };
 
 //----------------------------------------------------------------------------
@@ -52,8 +49,6 @@ public:
     }
 
     void generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-
-    std::string getPrePostVarRefIndex(bool delay, const std::string &index) const;
 
     //! Get sorted vector of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed, belonging to archetype group
