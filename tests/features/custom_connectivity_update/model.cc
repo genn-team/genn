@@ -88,10 +88,9 @@ public:
     SET_EXTRA_GLOBAL_PARAMS({{"d", "uint32_t*"}});
     SET_ROW_UPDATE_CODE(
         "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
-        "const uint32_t *dRow = &$(d)[wordsPerRow * $(id_pre)];\n"
         "$(for_each_synapse,\n"
         "{\n"
-        "   if(dRow[$(id_post) / 32] & (1 << ($(id_post) % 32))) {\n"
+        "   if($(d)[(wordsPerRow * $(id_pre)) + ($(id_post) / 32)] & (1 << ($(id_post) % 32))) {\n"
         "       $(remove_synapse);\n"
         "   }\n"
         "});\n");
