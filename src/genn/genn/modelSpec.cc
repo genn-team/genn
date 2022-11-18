@@ -182,6 +182,12 @@ void ModelSpec::finalize()
         c.second.initDerivedParams(m_DT);
     }
 
+    // Custom connectivity update groups
+    for (auto &c : m_CustomConnectivityUpdates) {
+        c.second.finalize(m_BatchSize);
+        c.second.initDerivedParams(m_DT);
+    }
+
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
         n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
