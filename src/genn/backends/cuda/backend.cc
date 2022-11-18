@@ -1894,6 +1894,11 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
     os << "return free;" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genAssert(CodeStream &os, const std::string &condition) const
+{
+    os << "assert(" << condition << ");" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);

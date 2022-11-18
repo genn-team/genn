@@ -216,6 +216,9 @@ public:
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
 
+     //! On backends which support it, generate a runtime assert
+    virtual void genAssert(CodeStream &os, const std::string &condition) const override {}
+
     virtual void genMakefilePreamble(std::ostream &os) const override;
     virtual void genMakefileLinkRule(std::ostream &os) const override;
     virtual void genMakefileCompileRule(std::ostream &os) const override;

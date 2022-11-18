@@ -194,7 +194,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     Substitutions updateSubs(&popSubs);
 
@@ -236,6 +236,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase&, Cod
     CodeStream addSynapse(addSynapseStream);
     {
         CodeStream::Scope b(addSynapse);
+
+        // Assert that there is space to add synapse
+        backend.genAssert(addSynapse, "group->rowLength[" + updateSubs["id_pre"] + "] < group->rowStride");
 
         // Calculate index to insert synapse
         addSynapse << "const unsigned newIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "];" << std::endl;

@@ -327,6 +327,9 @@ public:
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
 
+    //! On backends which support it, generate a runtime assert
+    virtual void genAssert(CodeStream &os, const std::string &condition) const = 0;
+
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
 

@@ -1497,6 +1497,11 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
     os << "return 0;" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genAssert(CodeStream &os, const std::string &condition) const
+{
+    os << "assert(" << condition << ");" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string linkFlags = "-shared ";
