@@ -8,11 +8,31 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomConnectivityUpdateGroupMerged
+// CodeGenerator::CustomConnectivityUpdateGroupMergedBase
 //----------------------------------------------------------------------------
 namespace CodeGenerator
 {
-class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>
+class GENN_EXPORT CustomConnectivityUpdateGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
+{
+public:
+    CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+                                            const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(size_t index) const;
+    bool isDerivedParamHeterogeneous(size_t index) const;
+
+protected:
+
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomConnectivityUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
 public:
     CustomConnectivityUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -21,9 +41,6 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(size_t index) const;
-    bool isDerivedParamHeterogeneous(size_t index) const;
-
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -59,7 +76,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityHostUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>
+class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
 public:
     CustomConnectivityHostUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -86,9 +103,6 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(size_t index) const;
-    bool isDerivedParamHeterogeneous(size_t index) const;
-
     void addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
                                 const Models::Base::VarVec &vars, const std::string &count,
                                 VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(size_t) const) const;
