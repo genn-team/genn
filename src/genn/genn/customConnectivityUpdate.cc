@@ -265,7 +265,6 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         }
     }
     
-    // **TODO** skip variables already referedelayednced by variable references
     // > Could point to any of these
     // Loop through custom updates which reference this synapse group
     for(auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
