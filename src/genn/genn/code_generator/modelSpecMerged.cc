@@ -390,6 +390,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
 
     for(const auto &g : getModel().getCustomConnectivityUpdates()) {
         Utils::updateHash(g.second.getName(), hash);
+        Utils::updateHash(g.second.getSynapseGroup()->getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
 

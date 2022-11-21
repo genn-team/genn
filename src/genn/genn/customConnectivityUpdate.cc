@@ -308,8 +308,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCustomConnectivityUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
-    
-    Utils::updateHash(getSynapseGroup()->getName(), hash);
+
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
     Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
