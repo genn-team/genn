@@ -108,9 +108,9 @@ TEST_F(SimTest, CustomConnectivityUpdateDelay)
                            return 0xFFFFFFFFFFFFFFFFULL & ~(1ULL << ((i + 4) % 64)); 
                        });
     checkConnectivity2([](unsigned int){ return 63; },
-                       [](unsigned int i)
+                       [](unsigned int)
                        { 
-                           return 0xFFFFFFFFFFFFFFFFULL & ~(1ULL << ((i + 4) % 64)); 
+                           return 0xFFFFFFFFFFFFFFFFULL & ~(1ULL << (64 - 4));
                        });
 
 }

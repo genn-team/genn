@@ -9,16 +9,27 @@ suite of minimal models with known analytic outcomes that are used for continuou
 
 #include "modelSpec.h"
 
-class TestNeuron : public NeuronModels::Base
+class TestNeuronPre : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(TestNeuron, 0, 1);
+    DECLARE_MODEL(TestNeuronPre, 0, 1);
 
     SET_SIM_CODE("$(removeIdx) = ($(id) + (int)round($(t) / DT)) % 64;\n");
         
     SET_VARS({{"removeIdx", "int"}});
 };
-IMPLEMENT_MODEL(TestNeuron);
+IMPLEMENT_MODEL(TestNeuronPre);
+
+class TestNeuronPost : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(TestNeuronPost, 0, 1);
+
+    SET_SIM_CODE("$(remove) = (($(id) + (int)round($(t) / DT)) % 64) == 0;\n");
+        
+    SET_VARS({{"remove", "bool"}});
+};
+IMPLEMENT_MODEL(TestNeuronPost);
 
 class TestWUMPre : public WeightUpdateModels::Base
 {
@@ -36,7 +47,7 @@ public:
     DECLARE_WEIGHT_UPDATE_MODEL(TestWUMPost, 0, 1, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
-    SET_SIM_CODE("$(addToInSyn, $(g) * (float)$(removeIdx_post));\n");
+    SET_SIM_CODE("$(addToInSyn, $(g) * (float)$(remove_post));\n");
 };
 IMPLEMENT_MODEL(TestWUMPost);
 
@@ -87,11 +98,11 @@ class RemoveSynapseUpdatePost : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseUpdatePost, 0, 0, 0, 0, 0, 0, 1);
     
-    SET_POST_VAR_REFS({{"removeIdx", "int"}});
+    SET_POST_VAR_REFS({{"remove", "bool"}});
     SET_ROW_UPDATE_CODE(
         "$(for_each_synapse,\n"
         "{\n"
-        "   if($(id_post) == $(removeIdx)) {\n"
+        "   if($(remove)) {\n"
         "       $(remove_synapse);\n"
         "       break;\n"
         "   }\n"
@@ -113,8 +124,8 @@ void modelDefinition(ModelSpec &model)
     model.setDT(1.0);
     model.setName("custom_connectivity_update_delay");
 
-    auto *pre = model.addNeuronPopulation<TestNeuron>("Pre", 64, {}, {0.0});
-    auto *post = model.addNeuronPopulation<TestNeuron>("Post", 64, {}, {0.0});
+    auto *pre = model.addNeuronPopulation<TestNeuronPre>("Pre", 64, {}, {0.0});
+    auto *post = model.addNeuronPopulation<TestNeuronPost>("Post", 64, {}, {0.0});
 
     TestWUMPre::VarValues testWUMPreInit(initVar<Weight>());
     model.addSynapsePopulation<TestWUMPre, PostsynapticModels::DeltaCurr>(
@@ -137,7 +148,7 @@ void modelDefinition(ModelSpec &model)
         {}, {}, {}, {},
         {}, removeSynapsePreVarRefInit, {});
     
-    RemoveSynapseUpdatePost::PostVarReferences removeSynapsePostVarRefInit(createVarRef(post, "removeIdx"));
+    RemoveSynapseUpdatePost::PostVarReferences removeSynapsePostVarRefInit(createVarRef(post, "remove"));
     model.addCustomConnectivityUpdate<RemoveSynapseUpdatePost>(
         "RemoveSynapsePost", "RemoveSynapse", "Syn2",
         {}, {}, {}, {},
