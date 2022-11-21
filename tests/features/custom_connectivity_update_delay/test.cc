@@ -87,11 +87,11 @@ TEST_F(SimTest, CustomConnectivityUpdateDelay)
 {
     // Check initial connectivity is correct
     checkConnectivity1([](unsigned int){ return 64; },
-                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL; });
+                       [](unsigned int){ return 0xFFFFFFFFFFFFFFFFULL; });
     
     // Check initial connectivity is correct
     checkConnectivity2([](unsigned int){ return 64; },
-                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL; });
+                       [](unsigned int){ return 0xFFFFFFFFFFFFFFFFULL; });
                        
     // Run for 5 timesteps
     while(iT < 5) {
