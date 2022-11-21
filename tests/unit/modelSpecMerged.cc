@@ -84,6 +84,18 @@ public:
 };
 IMPLEMENT_MODEL(STDPAdditive);
 
+class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelayReverse, 0, 2, 0, 0);
+
+    SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
+
+    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
+};
+IMPLEMENT_MODEL(StaticPulseDendriticDelayReverse);
+
+
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1, 1, 1);
@@ -109,6 +121,42 @@ public:
     SET_MAX_COL_LENGTH(1);
 };
 IMPLEMENT_MODEL(OneToOneOff);
+
+class RemoveSynapse : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapse, 0, 0, 0, 0, 0, 0, 0);
+    
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if($(id_post) == ($(id_pre) + 1)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
+        "});\n");
+};
+IMPLEMENT_MODEL(RemoveSynapse);
+
+class RemoveSynapsePrePost : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapsePrePost, 0, 1, 1, 1, 0, 0, 0);
+    
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preThresh", "scalar"}});
+    SET_POST_VARS({{"postThresh", "scalar"}});
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if($(g) < $(preThresh) || $(g) < $(postThresh)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
+        "});\n");
+};
+IMPLEMENT_MODEL(RemoveSynapsePrePost);
+
 
 template<typename T, typename M, size_t N>
 void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
@@ -149,7 +197,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
 
     // Loop through modified models
     for(size_t i = 1; i < N; i++) {
-        ASSERT_TRUE((moduleHash[i] == moduleHash[0]) == modelModifiers[i].second);
+        ASSERT_EQ(moduleHash[i] == moduleHash[0], modelModifiers[i].second);
     }
 }
 //--------------------------------------------------------------------------
@@ -213,6 +261,39 @@ void testSynapseVarLocation(S setVarLocationFn)
                  psmParams, psmVarValues,
                  initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
              setVarLocationFn(sg, varLocation);
+         });
+}
+//--------------------------------------------------------------------------
+template<typename S>
+void testCustomConnectivityUpdateVarLocation(S setVarLocationFn)
+{
+    // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
+    const std::pair<VarLocation, bool> modelModifiers[] = {
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::DEVICE,                   false},
+        {VarLocation::HOST_DEVICE_ZERO_COPY,    false}};
+
+    test(modelModifiers, 
+         [setVarLocationFn](const VarLocation &varLocation, ModelSpecInternal &model)
+         {
+            // Add two neuron group to model
+            NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+            NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+            // Create synapse group with global weights
+            model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                "Synapses1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+                "Pre", "Post",
+                {}, {1.0},
+                {}, {});
+
+            auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapsePrePost>("CustomConnectivityUpdate1", "Test2", "Synapses1",
+                                                                                {}, {1.0}, {1.0}, {1.0},
+                                                                                {}, {}, {});
+             setVarLocationFn(ccu, varLocation);
          });
 }
 }   // Anonymous namespace
@@ -1092,5 +1173,74 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
                  Sum::VarReferences varRefs(createVarRef(pre, customUpdateVarRefTargets[c]));
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setVarLocation("g", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePreVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPreVarLocation("preThresh", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePostVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPostVarLocation("postThresh", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateWUMModel)
+{
+    auto addModel1 = [](ModelSpecInternal &model)
+                     {
+                         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                            "Pre", "Post",
+                            {}, {1.0},
+                            {}, {});
+                     };
+    
+    auto addModel2 = [](ModelSpecInternal &model)
+                     {
+                         model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                            "Pre", "Post",
+                            {}, {1.0, 1.0},
+                            {}, {});
+                     };
+    
+    auto addModel3 = [](ModelSpecInternal &model)
+                     {
+                         model.addSynapsePopulation<StaticPulseDendriticDelayReverse, PostsynapticModels::DeltaCurr>(
+                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                            "Pre", "Post",
+                            {}, {1.0, 1.0},
+                            {}, {});
+                     };
+    
+    // Make array of functions to add synapse groups with and flags determining whether the hashes should match baseline
+    const std::pair<std::function<void(ModelSpecInternal &)>, bool> modelModifiers[] = {
+        {addModel2, true},
+        {addModel2, true},
+        {addModel3, true},
+        {addModel1, false}};
+
+    test(modelModifiers, 
+         [](std::function<void(ModelSpecInternal &)> addSynapsePopulationFn, ModelSpecInternal &model)
+         {
+            // Add two neuron group to model
+            NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+            NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+            // Create synapse group 
+            addSynapsePopulationFn(model);
+            
+            model.addCustomConnectivityUpdate<RemoveSynapsePrePost>("CustomConnectivityUpdate1", "Test2", "Synapses1",
+                                                                    {}, {1.0}, {1.0}, {1.0},
+                                                                    {}, {}, {});
          });
 }
