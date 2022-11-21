@@ -147,7 +147,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
                      [](const CustomConnectivityUpdateInternal &cg) { return cg.getVarReferences(); });
     addVarReferences(cm->getPreVarRefs(), backend.getDeviceVarPrefix(),
-                     [](const CustomConnectivityUpdateInternal &cg) { return cg.getPostVarReferences(); });
+                     [](const CustomConnectivityUpdateInternal &cg) { return cg.getPreVarReferences(); });
     addVarReferences(cm->getPostVarRefs(), backend.getDeviceVarPrefix(),
                      [](const CustomConnectivityUpdateInternal &cg) { return cg.getPostVarReferences(); });
 
