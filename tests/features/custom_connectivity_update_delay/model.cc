@@ -20,6 +20,15 @@ public:
 };
 IMPLEMENT_MODEL(TestNeuron);
 
+class TestWUMPre : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(TestWUMPre, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_SIM_CODE("$(addToInSyn, $(g) * (float)$(removeIdx_pre));\n");
+};
+IMPLEMENT_MODEL(TestWUMPre);
 
 class Weight : public InitVarSnippet::Base
 {
@@ -80,8 +89,8 @@ void modelDefinition(ModelSpec &model)
     auto *pre = model.addNeuronPopulation<TestNeuron>("Pre", 64, {}, {0.0});
     model.addNeuronPopulation<TestNeuron>("Post", 64, {}, {0.0});
 
-    WeightUpdateModels::StaticPulse::VarValues testWUMInit(initVar<Weight>());
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+    TestWUMPre::VarValues testWUMInit(initVar<Weight>());
+    model.addSynapsePopulation<TestWUMPre, PostsynapticModels::DeltaCurr>(
         "Syn1", SynapseMatrixType::SPARSE_INDIVIDUALG, 5, "Pre", "Post",
         {}, testWUMInit,
         {}, {},
