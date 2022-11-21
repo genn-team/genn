@@ -12,6 +12,18 @@
 
 namespace
 {
+class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelayReverse, 0, 2, 0, 0);
+
+    SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
+
+    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
+};
+IMPLEMENT_MODEL(StaticPulseDendriticDelayReverse);
+
+
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 1);
@@ -293,6 +305,69 @@ TEST(CustomConnectivityUpdate, DependentVariablesManualReferences)
     ASSERT_EQ(ccu32DependentVars.size(), 2);
     ASSERT_TRUE(hasVarRef(ccu32DependentVars, "Synapses2", "g"));
     ASSERT_TRUE(hasVarRef(ccu32DependentVars, "CustomUpdate2", "sum"));
+}
+//--------------------------------------------------------------------------
+TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
+{
+    ModelSpecInternal model;
+    
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+        "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0, 1.0},
+        {}, {});
+    
+    model.addSynapsePopulation<StaticPulseDendriticDelayReverse, PostsynapticModels::DeltaCurr>(
+        "Synapses2", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0, 1.0},
+        {}, {});
+    
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses3", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+    
+    auto *ccu1 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", "Synapses1",
+                                                                  {}, {1.0}, {}, {},
+                                                                  {}, {}, {});
+    auto *ccu2 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate2", "Test2", "Synapses2",
+                                                                  {}, {1.0}, {}, {},
+                                                                  {}, {}, {});
+    auto *ccu3 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate3", "Test2", "Synapses3",
+                                                                  {}, {1.0}, {}, {},
+                                                                  {}, {}, {});
+    model.finalize();
+    
+    auto *ccu1Internal = static_cast<CustomConnectivityUpdateInternal*>(ccu1);
+    auto *ccu2Internal = static_cast<CustomConnectivityUpdateInternal*>(ccu2);
+    auto *ccu3Internal = static_cast<CustomConnectivityUpdateInternal*>(ccu3);
+    
+    ASSERT_EQ(ccu1Internal->getHashDigest(), ccu2Internal->getHashDigest());
+    ASSERT_NE(ccu1Internal->getHashDigest(), ccu3Internal->getHashDigest());
+    
+    ASSERT_EQ(ccu1Internal->getInitHashDigest(), ccu2Internal->getInitHashDigest());
+    ASSERT_EQ(ccu1Internal->getInitHashDigest(), ccu3Internal->getInitHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check correct groups are merged
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdateGroups().size(), 2);
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdatePreInitGroups().size(), 0);
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdatePostInitGroups().size(), 0);
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdateSparseInitGroups().size(), 1);
 }
 //--------------------------------------------------------------------------
 TEST(CustomConnectivityUpdate, BitmaskConnectivity)

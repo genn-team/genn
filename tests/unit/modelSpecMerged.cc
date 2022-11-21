@@ -84,18 +84,6 @@ public:
 };
 IMPLEMENT_MODEL(STDPAdditive);
 
-class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
-{
-public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelayReverse, 0, 2, 0, 0);
-
-    SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
-
-    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
-};
-IMPLEMENT_MODEL(StaticPulseDendriticDelayReverse);
-
-
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1, 1, 1);
@@ -157,6 +145,24 @@ public:
 };
 IMPLEMENT_MODEL(RemoveSynapsePrePost);
 
+class RemoveSynapseParam : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseParam, 1, 0, 0, 0, 1, 0, 0);
+    
+    SET_VAR_REFS({{"g", "scalar"}});
+    SET_PARAM_NAMES({"thresh"});
+    
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if($(g) < $(thresh)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
+        "});\n");
+};
+IMPLEMENT_MODEL(RemoveSynapseParam);
 
 template<typename T, typename M, size_t N>
 void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
@@ -1191,44 +1197,16 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePostVarLocationChanges)
     testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPostVarLocation("postThresh", varLocation); });
 }
 //--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareCustomConnectivityUpdateWUMModel)
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateParamChanges)
 {
-    auto addModel1 = [](ModelSpecInternal &model)
-                     {
-                         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-                            "Pre", "Post",
-                            {}, {1.0},
-                            {}, {});
-                     };
+    // Make array of parameter tuples to build model with and flags determining whether the hashes should match baseline
+    const std::pair<double, bool> modelModifiers[] = {
+        {1.0,   true},
+        {1.0,   true},
+        {0.0,   false}};
     
-    auto addModel2 = [](ModelSpecInternal &model)
-                     {
-                         model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-                            "Pre", "Post",
-                            {}, {1.0, 1.0},
-                            {}, {});
-                     };
-    
-    auto addModel3 = [](ModelSpecInternal &model)
-                     {
-                         model.addSynapsePopulation<StaticPulseDendriticDelayReverse, PostsynapticModels::DeltaCurr>(
-                            "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-                            "Pre", "Post",
-                            {}, {1.0, 1.0},
-                            {}, {});
-                     };
-    
-    // Make array of functions to add synapse groups with and flags determining whether the hashes should match baseline
-    const std::pair<std::function<void(ModelSpecInternal &)>, bool> modelModifiers[] = {
-        {addModel2, true},
-        {addModel2, true},
-        {addModel3, true},
-        {addModel1, false}};
-
     test(modelModifiers, 
-         [](std::function<void(ModelSpecInternal &)> addSynapsePopulationFn, ModelSpecInternal &model)
+         [](double thresh, ModelSpecInternal &model)
          {
             // Add two neuron group to model
             NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
@@ -1236,11 +1214,53 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateWUMModel)
             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
-            // Create synapse group 
-            addSynapsePopulationFn(model);
-            
+            // Create synapse group with global weights
+            auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                "Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                "Pre", "Post",
+                {}, {1.0},
+                {}, {});
+
+            RemoveSynapseParam::VarReferences varRefs(createWUVarRef(syn, "g"));
+            model.addCustomConnectivityUpdate<RemoveSynapseParam>("CustomConnectivityUpdate1", "Test2", "Synapses1",
+                                                                  {thresh}, {}, {}, {},
+                                                                  varRefs, {}, {});
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
+{
+    const std::array<double, 3> initParams1{1.0, 1.0, 1.0};
+    const std::array<double, 3> initParams2{2.0, 1.0, 1.0};
+    const std::array<double, 3> initParams3{1.0, 2.0, 1.0};
+    const std::array<double, 3> initParams4{1.0, 1.0, 1.0};
+    
+    // Make array of parameter tuples to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::array<double, 3>, bool> modelModifiers[] = {
+        {initParams1,   true},
+        {initParams1,   true},
+        {initParams2,   true},
+        {initParams3,   true},
+        {initParams4,   true}};
+    
+    test(modelModifiers, 
+         [](const std::array<double, 3> &params, ModelSpecInternal &model)
+         {
+            // Add two neuron group to model
+            NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+            NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+            // Create synapse group with global weights
+            model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                "Synapses1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+                "Pre", "Post",
+                {}, {1.0},
+                {}, {});
+
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>("CustomConnectivityUpdate1", "Test2", "Synapses1",
-                                                                    {}, {1.0}, {1.0}, {1.0},
+                                                                    {}, {params[0]}, {params[1]}, {params[2]},
                                                                     {}, {}, {});
          });
 }
