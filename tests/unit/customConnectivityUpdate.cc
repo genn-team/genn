@@ -555,3 +555,57 @@ TEST(CustomConnectivityUpdate, MixedPostDelayGroups)
     catch(const std::runtime_error &) {
     }
 }
+//--------------------------------------------------------------------------
+TEST(CustomConnectivityUpdate, InvalidName)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    // Create synapse group with global weights
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+
+    try {
+        model.addCustomConnectivityUpdate<RemoveSynapse>("Custom-Connectivity-Update-1", "Test2", "Synapses1",
+                                                         {}, {1.0}, {}, {},
+                                                         {}, {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomConnectivityUpdate, InvalidUpdateGroupName)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    // Create synapse group with global weights
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+
+    try {
+        model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test-2", "Synapses1",
+                                                         {}, {1.0}, {}, {},
+                                                         {}, {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
