@@ -386,7 +386,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                       });
     
     // Substitute in (potentially delayed) postsynaptic variable references
-    const auto &postVariableRefs = getArchetype().getPreVarReferences();
+    const auto &postVariableRefs = getArchetype().getPostVarReferences();
     updateSubs.addVarNameSubstitution(cm->getPostVarRefs(), "", "group->",
                                       [&postVariableRefs, &updateSubs](VarAccessMode, size_t i)
                                       { 
