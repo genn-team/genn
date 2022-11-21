@@ -30,6 +30,16 @@ public:
 };
 IMPLEMENT_MODEL(TestWUMPre);
 
+class TestWUMPost : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(TestWUMPost, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_SIM_CODE("$(addToInSyn, $(g) * (float)$(removeIdx_post));\n");
+};
+IMPLEMENT_MODEL(TestWUMPost);
+
 class Weight : public InitVarSnippet::Base
 {
     DECLARE_SNIPPET(Weight, 0);
@@ -72,6 +82,23 @@ public:
 };
 IMPLEMENT_MODEL(RemoveSynapseUpdatePre);
 
+class RemoveSynapseUpdatePost : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseUpdatePost, 0, 0, 0, 0, 0, 0, 1);
+    
+    SET_POST_VAR_REFS({{"removeIdx", "int"}});
+    SET_ROW_UPDATE_CODE(
+        "$(for_each_synapse,\n"
+        "{\n"
+        "   if($(id_post) == $(removeIdx)) {\n"
+        "       $(remove_synapse);\n"
+        "       break;\n"
+        "   }\n"
+        "});\n");
+};
+IMPLEMENT_MODEL(RemoveSynapseUpdatePost);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -87,20 +114,34 @@ void modelDefinition(ModelSpec &model)
     model.setName("custom_connectivity_update_delay");
 
     auto *pre = model.addNeuronPopulation<TestNeuron>("Pre", 64, {}, {0.0});
-    model.addNeuronPopulation<TestNeuron>("Post", 64, {}, {0.0});
+    auto *post = model.addNeuronPopulation<TestNeuron>("Post", 64, {}, {0.0});
 
-    TestWUMPre::VarValues testWUMInit(initVar<Weight>());
+    TestWUMPre::VarValues testWUMPreInit(initVar<Weight>());
     model.addSynapsePopulation<TestWUMPre, PostsynapticModels::DeltaCurr>(
         "Syn1", SynapseMatrixType::SPARSE_INDIVIDUALG, 5, "Pre", "Post",
-        {}, testWUMInit,
+        {}, testWUMPreInit,
         {}, {},
-        initConnectivity<Dense>({}));
+        initConnectivity<Dense>());
+    
+    TestWUMPost::VarValues testWUMPostInit(initVar<Weight>());
+    auto *syn2 = model.addSynapsePopulation<TestWUMPost, PostsynapticModels::DeltaCurr>(
+        "Syn2", SynapseMatrixType::SPARSE_INDIVIDUALG, 0, "Pre", "Post",
+        {}, testWUMPostInit,
+        {}, {},
+        initConnectivity<Dense>());
+    syn2->setBackPropDelaySteps(5);
 
     RemoveSynapseUpdatePre::PreVarReferences removeSynapsePreVarRefInit(createVarRef(pre, "removeIdx"));
-    auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseUpdatePre>(
+    model.addCustomConnectivityUpdate<RemoveSynapseUpdatePre>(
         "RemoveSynapsePre", "RemoveSynapse", "Syn1",
         {}, {}, {}, {},
         {}, removeSynapsePreVarRefInit, {});
+    
+    RemoveSynapseUpdatePost::PostVarReferences removeSynapsePostVarRefInit(createVarRef(post, "removeIdx"));
+    model.addCustomConnectivityUpdate<RemoveSynapseUpdatePost>(
+        "RemoveSynapsePost", "RemoveSynapse", "Syn2",
+        {}, {}, {}, {},
+        {}, {}, removeSynapsePostVarRefInit);
 
     model.setPrecision(GENN_FLOAT);
 }

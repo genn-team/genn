@@ -55,12 +55,44 @@ void checkConnectivity1(R getRowLengthFn, B getCorrectRowWordFn)
     }
 }
 
+template<typename R, typename B>
+void checkConnectivity2(R getRowLengthFn, B getCorrectRowWordFn)
+{
+    // Download state
+    pullgSyn2FromDevice();
+    pullSyn2ConnectivityFromDevice();
+    
+    // Loop through rows
+    for(unsigned int i = 0; i < 64; i++) {
+        // Check correct triangle row length
+        ASSERT_EQ(rowLengthSyn2[i], getRowLengthFn(i));
+
+        // Loop through row
+        std::bitset<64> row;
+        for(unsigned int s = 0; s < rowLengthSyn2[i]; s++) {
+            const unsigned int idx = (i * maxRowLengthSyn2) + s;
+            const unsigned int j = indSyn2[idx];
+
+            // Check that all variables are correct given the pre and postsynaptic index
+            ASSERT_FLOAT_EQ(gSyn2[idx], (i * 64.0f) + j);
+
+            // Set bit in row bitset
+            row.set(j);
+        }
+        ASSERT_EQ(row.to_ullong(), getCorrectRowWordFn(i));
+    }
+}
+
 TEST_F(SimTest, CustomConnectivityUpdateDelay)
 {
     // Check initial connectivity is correct
     checkConnectivity1([](unsigned int){ return 64; },
                        [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL; });
-
+    
+    // Check initial connectivity is correct
+    checkConnectivity2([](unsigned int){ return 64; },
+                       [](unsigned int i){ return 0xFFFFFFFFFFFFFFFFULL; });
+                       
     // Run for 5 timesteps
     while(iT < 5) {
         stepTime();
@@ -71,6 +103,11 @@ TEST_F(SimTest, CustomConnectivityUpdateDelay)
 
     // Check modified connectivity is correct
     checkConnectivity1([](unsigned int){ return 63; },
+                       [](unsigned int i)
+                       { 
+                           return 0xFFFFFFFFFFFFFFFFULL & ~(1ULL << ((i + 4) % 64)); 
+                       });
+    checkConnectivity2([](unsigned int){ return 63; },
                        [](unsigned int i)
                        { 
                            return 0xFFFFFFFFFFFFFFFFULL & ~(1ULL << ((i + 4) % 64)); 
