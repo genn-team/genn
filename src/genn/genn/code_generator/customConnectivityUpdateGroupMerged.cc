@@ -8,7 +8,7 @@ using namespace CodeGenerator;
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityUpdateGroupMergedBase
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
 {
@@ -56,7 +56,7 @@ const std::string CustomConnectivityUpdateGroupMerged::name = "CustomConnectivit
 //----------------------------------------------------------------------------
 CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateGroupMergedBase(index, precision, backend, groups)
+:   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
 {
     // Reserve vector of vectors to hold variables to update for all custom connectivity update groups, in archetype order
     m_SortedDependentVars.reserve(getGroups().size());
@@ -420,14 +420,12 @@ const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnect
 //----------------------------------------------------------------------------
 CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateGroupMergedBase(index, precision, backend, groups)
+:   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
 {
     // Add pre and postsynaptic variables
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
     addVars(backend, cm->getPreVars(), &CustomConnectivityUpdateInternal::getPreVarLocation);
     addVars(backend, cm->getPostVars(), &CustomConnectivityUpdateInternal::getPostVarLocation);
-
-    // **TODO** add device and host pre and post vars; var refs and EGPsaddVars
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {

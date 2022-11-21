@@ -15,7 +15,7 @@ namespace CodeGenerator
 class GENN_EXPORT CustomConnectivityUpdateGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
 {
 public:
-    CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+    CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision,
                                             const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
 protected:
