@@ -249,10 +249,6 @@ private:
 // CodeGenerator::CustomUpdateInitGroupMergedBase
 //----------------------------------------------------------------------------
 //! Boilerplate base class for creating merged init groups for various types of CustomUpdate CustomConectivityUpdate
-/*! **YUCK** extra GF template parameter is required because, although implicit conversion from 
-    e.g. const std::vector<Models::VarInit> &(CustomUpdate::*)() const to
-    const std::vector<Models::VarInit> &(CustomUpdateInternal::*)() const is legal, 
-    the C++ standard forbids (!!) any conversion in this context (see https://stackoverflow.com/q/24404424) */
 template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
