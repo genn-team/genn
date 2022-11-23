@@ -1130,7 +1130,12 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
     os << "    cudaError_t error = call;\\" << std::endl;
     os << "    if (error != cudaSuccess) {\\" << std::endl;
-    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
+    if(getPreferences<Preferences>().generateSimpleErrorHandling) {
+        os << "        std::abort();\\" << std::endl;
+    }
+    else {
+        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
+    }
     os << "    }\\" << std::endl;
     os << "}" << std::endl;
     os << std::endl;
