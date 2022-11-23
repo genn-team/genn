@@ -156,9 +156,13 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
     }
 
-    // Update hash with whether variable references require delay
+    // Loop through variable references
     for(const auto &v : getVarReferences()) {
+        // Update hash with whether variable references require dela
         Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
+
+        // Update hash with duplication mode of target variable as this effects indexing code
+        Utils::updateHash(getVarAccessDuplication(v.getVar().access), hash);
     }
     return hash.get_digest();
 }
@@ -262,10 +266,15 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
     Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
-    // Update hash with whether variable references require transpose
+    // Loop through variable references
     for(const auto &v : getVarReferences()) {
+        // Update hash with whether variable references require transpose
         Utils::updateHash((v.getTransposeSynapseGroup() == nullptr), hash);
+
+        // Update hash with duplication mode of target variable as this effects indexing code
+        Utils::updateHash(getVarAccessDuplication(v.getVar().access), hash);
     }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
