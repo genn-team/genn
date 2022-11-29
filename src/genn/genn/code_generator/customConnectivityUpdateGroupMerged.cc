@@ -433,7 +433,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
                  [e](const CustomConnectivityUpdateInternal &g, size_t) { return e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
 
-        if(!backend.getDeviceVarPrefix().empty()) {
+        if(Utils::isTypePointer(e.type) && !backend.getDeviceVarPrefix().empty()) {
             addField(e.type, backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const CustomConnectivityUpdateInternal &g, size_t)
                      {
