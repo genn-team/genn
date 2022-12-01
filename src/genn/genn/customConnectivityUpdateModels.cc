@@ -26,7 +26,11 @@ void CustomConnectivityUpdateModels::Base::validate() const
 {
     // Superclass
     Models::Base::validate();
-
+    
+    if(getRowUpdateCode().empty() && getHostUpdateCode().empty()) {
+        throw std::runtime_error("Custom connectivity update models require row or host update code");
+    }
+    
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
     Utils::validateVecNames(getVarRefs(), "Synapse variable reference");
@@ -45,7 +49,7 @@ void CustomConnectivityUpdateModels::Base::validate() const
         || std::any_of(postVars.cbegin(), postVars.cend(),
                        [](const Models::Base::Var &v) { return (v.access & VarAccessModeAttribute::REDUCE); }))
     {
-        throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+        throw std::runtime_error("Custom connectivity update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
 
     // If any variables have shared neuron duplication mode, give an error
@@ -53,6 +57,6 @@ void CustomConnectivityUpdateModels::Base::validate() const
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::SHARED_NEURON); }))
     {
-        throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
+        throw std::runtime_error("Custom connectivity update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
     }
 }
