@@ -186,6 +186,22 @@ bool regexSubstitute(std::string &s, const std::regex &regex, const std::string 
         return true;
     }
 }
+
+std::string trimWhitespace(const std::string& str)
+{
+    const std::string whitespace = " \t\r\n";
+    
+    // If string is all whitespace, return empty
+    const auto strBegin = str.find_first_not_of(whitespace);
+    if (strBegin == std::string::npos) {
+        return ""; 
+    }
+
+    const auto strEnd = str.find_last_not_of(whitespace);
+    const auto strRange = strEnd - strBegin + 1;
+
+    return str.substr(strBegin, strRange);
+}
 }    // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -282,6 +298,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
             for(idx = idx + funcStart.length(); idx < code.size(); idx++) {
                 // If this character is a comma at function bracket depth
                 if(code[idx] == ',' && bracketDepth == 0) {
+                    currentParam = trimWhitespace(currentParam);
                     assert(!currentParam.empty());
 
                     // Add parameter to array
@@ -302,6 +319,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
                         }
                         // Otherwise
                         else {
+                            currentParam = trimWhitespace(currentParam);
                             assert(!currentParam.empty());
 
                             // Add parameter to array
@@ -327,11 +345,8 @@ void functionSubstitute(std::string &code, const std::string &funcName,
                         }
                     }
 
-                    // If this isn't a space at function bracket depth,
-                    // add to parameter string
-                    if(bracketDepth > 0 || !::isspace(code[idx])) {
-                        currentParam += code[idx];
-                    }
+                    // Add character to parameter string
+                    currentParam += code[idx];
                 }
             }
 
