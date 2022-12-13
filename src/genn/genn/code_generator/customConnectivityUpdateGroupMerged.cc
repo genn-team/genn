@@ -354,7 +354,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         removeSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]--;" << std::endl;
 
         // Decrement loop counter so synapse j will get processed
-        addSynapse << "j--;" << std::endl;
+        removeSynapse << "j--;" << std::endl;
     }
     updateSubs.addFuncSubstitution("remove_synapse", 0, removeSynapseStream.str());
 
