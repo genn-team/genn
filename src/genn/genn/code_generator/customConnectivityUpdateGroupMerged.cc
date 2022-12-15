@@ -217,11 +217,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     const auto &dependentVars = getSortedArchetypeDependentVars();
 
     // Determine if any
-    const bool anyBatched = ((modelMerged.getModel().getBatchSize() > 1) 
-                             && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
-                                             [](const Models::WUVarReference &v){ return v.isDuplicated(); })
-                                 || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
-                                                [](const Models::WUVarReference &v){ return v.isDuplicated(); })));
+    const bool modelBatched = (modelMerged.getModel().getBatchSize() > 1);
+    const bool anyBatched = (modelBatched && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
+                                                          [](const Models::WUVarReference &v){ return v.isDuplicated(); })
+                                              || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
+                                                             [](const Models::WUVarReference &v){ return v.isDuplicated(); })));
 
     // Calculate index of start of row
     os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
@@ -367,9 +367,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     const auto &variableRefs = getArchetype().getVarReferences();
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", 
                                       [&updateSubs](VarAccessMode, size_t) { return "[" + updateSubs["id_syn"] + "]"; },
-                                      [&variableRefs](VarAccessMode, size_t i) 
+                                      [modelBatched, &variableRefs](VarAccessMode, size_t i) 
                                       {
-                                          return !variableRefs.at(i).isDuplicated(); 
+                                          return !modelBatched || !variableRefs.at(i).isDuplicated(); 
                                       });
 
     // Substitute in (potentially delayed) presynaptic variable references
