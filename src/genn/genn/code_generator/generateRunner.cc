@@ -288,17 +288,19 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
 
             // Loop through destinations in merged structures, the device EGP needs to be copied to
-            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + name);
-            for(const auto &v : mergedDestinations) {
-                // If this is a host group, directly update merged group data structure
-                if(v.second.hostGroup) {
-                    extraGlobalParam << "merged" << v.first << "Group" << v.second.mergedGroupIndex << "[" << v.second.groupIndex << "]";
-                    extraGlobalParam << "." << v.second.fieldName << " = " << backend.getDeviceVarPrefix() << name << ";" << std::endl;
-                }
-                // Otherwise, call push function which 
-                else {
-                    extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                    extraGlobalParam << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << ");" << std::endl;
+            if(modelMerged.anyMergedEGPDestinations(backend.getDeviceVarPrefix() + name)) {
+                const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + name);
+                for (const auto &v : mergedDestinations) {
+                    // If this is a host group, directly update merged group data structure
+                    if (v.second.hostGroup) {
+                        extraGlobalParam << "merged" << v.first << "Group" << v.second.mergedGroupIndex << "[" << v.second.groupIndex << "]";
+                        extraGlobalParam << "." << v.second.fieldName << " = " << backend.getDeviceVarPrefix() << name << ";" << std::endl;
+                    }
+                    // Otherwise, call push function which 
+                    else {
+                        extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                        extraGlobalParam << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << ");" << std::endl;
+                    }
                 }
             }
             

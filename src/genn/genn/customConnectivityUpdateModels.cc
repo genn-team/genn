@@ -26,11 +26,7 @@ void CustomConnectivityUpdateModels::Base::validate() const
 {
     // Superclass
     Models::Base::validate();
-    
-    if(getRowUpdateCode().empty() && getHostUpdateCode().empty()) {
-        throw std::runtime_error("Custom connectivity update models require row or host update code");
-    }
-    
+
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
     Utils::validateVecNames(getVarRefs(), "Synapse variable reference");
