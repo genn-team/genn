@@ -287,23 +287,29 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
         {
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
+
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
         },
         // Initialise push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
             modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomWUUpdateInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomConnectivityUpdatePreInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomConnectivityUpdatePostInitGroupMerged>(os, backend);
+
+            modelMerged.genScalarEGPPush<CustomWUUpdateInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<SynapseInitGroupMerged>(os, backend);
+
             modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
         },
         // Initialise sparse push EGP handler
