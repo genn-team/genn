@@ -46,6 +46,9 @@ protected:
         valpost_vconstantDense =  7.0f;
         valvconstantDenseSynapseCustomUpdate = 7.0f;
         valvconstantSparseSynapseCustomUpdate = 7.0f;
+        valvconstantCustomConnectivityUpdate =  7.0f;
+        valpre_vconstantCustomConnectivityUpdate =  7.0f;
+        valpost_vconstantCustomConnectivityUpdate =  7.0f;
 
         // Configure EGP arrays containing repeating pattern
         CONFIGURE_REPEAT_EGP(valuesvrepeatPop);
@@ -61,8 +64,12 @@ protected:
         CONFIGURE_REPEAT_EGP(valuespost_vrepeatDense);
         CONFIGURE_REPEAT_EGP(valuesvrepeatDenseSynapseCustomUpdate);
         CONFIGURE_REPEAT_EGP(valuesvrepeatSparseSynapseCustomUpdate);
+        CONFIGURE_REPEAT_EGP(valuesvrepeatCustomConnectivityUpdate);
+        CONFIGURE_REPEAT_EGP(valuespre_vrepeatCustomConnectivityUpdate);
+        CONFIGURE_REPEAT_EGP(valuespost_vrepeatCustomConnectivityUpdate);
+
         initialize();
-        
+
         initializeSparse();
     }
 
@@ -82,7 +89,8 @@ TEST_F(SimTest, VarInitEGP)
     pullSparseStateFromDevice();
     pullDenseSynapseCustomUpdateStateFromDevice();
     pullSparseSynapseCustomUpdateStateFromDevice();
-    
+    pullCustomConnectivityUpdateStateFromDevice();
+
     for(size_t i = 0; i < 100; i++) {
         // Check values initialised using repeating values are correct
         const float correctRepeatVal = (float)(i % 10);
@@ -98,6 +106,9 @@ TEST_F(SimTest, VarInitEGP)
         EXPECT_EQ(post_vrepeatDense[i], correctRepeatVal);
         EXPECT_EQ(vrepeatDenseSynapseCustomUpdate[i], correctRepeatVal);
         EXPECT_EQ(vrepeatSparseSynapseCustomUpdate[i], correctRepeatVal);
+        EXPECT_EQ(vrepeatCustomConnectivityUpdate[i], correctRepeatVal);
+        EXPECT_EQ(pre_vrepeatCustomConnectivityUpdate[i], correctRepeatVal);
+        EXPECT_EQ(post_vrepeatCustomConnectivityUpdate[i], correctRepeatVal);
 
         // Check values initialised using constabt values are correct
         EXPECT_EQ(vconstantPop[i], 7.0f);
@@ -112,6 +123,9 @@ TEST_F(SimTest, VarInitEGP)
         EXPECT_EQ(post_vconstantDense[i], 7.0f);
         EXPECT_EQ(vconstantDenseSynapseCustomUpdate[i], 7.0f);
         EXPECT_EQ(vconstantSparseSynapseCustomUpdate[i], 7.0f);
+        EXPECT_EQ(vconstantCustomConnectivityUpdate[i], 7.0f);
+        EXPECT_EQ(pre_vconstantCustomConnectivityUpdate[i], 7.0f);
+        EXPECT_EQ(post_vconstantCustomConnectivityUpdate[i], 7.0f);
     }
     
 }

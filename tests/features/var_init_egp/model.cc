@@ -152,6 +152,9 @@ void modelDefinition(ModelSpec &model)
     WeightUpdateModel::PreVarValues weightUpdatePreInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     CustomUpdateModel::VarValues synapseCustomUpdateInit(initVar<ScalarEGP>(), initVar<PostRepeatVal>());
+    CustomConnectivityUpdateModel::VarValues customConnectivityUpdateInit(initVar<ScalarEGP>(), initVar<PostRepeatVal>());
+    CustomConnectivityUpdateModel::PreVarValues customConnectivityUpdatePreInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    CustomConnectivityUpdateModel::PostVarValues customConnectivityUpdatePostInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
@@ -189,5 +192,11 @@ void modelDefinition(ModelSpec &model)
     model.addCustomUpdate<CustomUpdateModel>("SparseSynapseCustomUpdate", "Test",
                                              {}, synapseCustomUpdateInit, sparseSynapseVarReferences);
     
+    // Custom connectivity updates
+    model.addCustomConnectivityUpdate<CustomConnectivityUpdateModel>(
+        "CustomConnectivityUpdate", "Test", "Sparse",
+        {}, customConnectivityUpdateInit, customConnectivityUpdatePreInit, customConnectivityUpdatePostInit,
+        {}, {}, {});
+        
     model.setPrecision(GENN_FLOAT);
 }
