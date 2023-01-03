@@ -101,6 +101,34 @@ public:
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
+//----------------------------------------------------------------------------
+// CustomUpdateModel
+//----------------------------------------------------------------------------
+class CustomUpdateModel : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(CustomUpdateModel, 0, 2, 1);
+
+    SET_VARS({{"vconstant", "scalar"}, {"vrepeat", "scalar"}});
+    SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
+};
+IMPLEMENT_MODEL(CustomUpdateModel);
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateModel
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdateModel : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(CustomConnectivityUpdateModel, 0, 2, 2, 2, 0, 0, 0);
+
+    SET_VARS({{"vconstant", "scalar"}, {"vrepeat", "scalar"}});
+    SET_PRE_VARS({{"pre_vconstant", "scalar"}, {"pre_vrepeat", "scalar"}});
+    SET_POST_VARS({{"post_vconstant", "scalar"}, {"post_vrepeat", "scalar"}});
+};
+IMPLEMENT_MODEL(CustomConnectivityUpdateModel);
+
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -118,31 +146,48 @@ void modelDefinition(ModelSpec &model)
     // Parameters
     Neuron::VarValues neuronInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     CurrentSrc::VarValues currentSourceInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    CustomUpdateModel::VarValues neuronCustomUpdateInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     PostsynapticModel::VarValues postsynapticInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     WeightUpdateModel::VarValues weightUpdateInit(initVar<ScalarEGP>(), initVar<PostRepeatVal>());
     WeightUpdateModel::PreVarValues weightUpdatePreInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    CustomUpdateModel::VarValues synapseCustomUpdateInit(initVar<ScalarEGP>(), initVar<PostRepeatVal>());
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 100, {}, {});
-    model.addNeuronPopulation<Neuron>("Pop", 100, {}, neuronInit);
+    auto *pop = model.addNeuronPopulation<Neuron>("Pop", 100, {}, neuronInit);
+    
+    // Current source
     model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 
     // Dense synapse populations
-    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+    auto *dense = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource1", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit);
 
     // Sparse synapse populations
-    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+    auto *sparse = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource2", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit,
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
-
+    
+    // Custom updates
+    CustomUpdateModel::VarReferences neuronVarReferences(createVarRef(pop, "vconstant")); // R
+    model.addCustomUpdate<CustomUpdateModel>("NeuronCustomUpdate", "Test",
+                                             {}, neuronCustomUpdateInit, neuronVarReferences);
+    
+    CustomUpdateModel::WUVarReferences denseSynapseVarReferences(createWUVarRef(dense, "vconstant")); // R
+    model.addCustomUpdate<CustomUpdateModel>("DenseSynapseCustomUpdate", "Test",
+                                             {}, synapseCustomUpdateInit, denseSynapseVarReferences);
+    
+    CustomUpdateModel::WUVarReferences sparseSynapseVarReferences(createWUVarRef(sparse, "vconstant")); // R
+    model.addCustomUpdate<CustomUpdateModel>("SparseSynapseCustomUpdate", "Test",
+                                             {}, synapseCustomUpdateInit, sparseSynapseVarReferences);
+    
     model.setPrecision(GENN_FLOAT);
 }
