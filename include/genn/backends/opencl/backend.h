@@ -365,7 +365,7 @@ private:
             const auto sortedFields = g.getSortedFields(*this);
             for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
                 const auto &f = sortedFields[fieldIndex];
-                if(::Utils::isTypePointer(std::get<0>(f))) {
+                if(GeNN::Utils::isTypePointer(std::get<0>(f))) {
                     os << "__global ";
                 }
                 os << std::get<0>(f) << " " << std::get<1>(f);
@@ -394,7 +394,7 @@ private:
                 
                 os << "__kernel void setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel(";
                 os << "__global struct Merged" << T::name << "Group" << f.mergedGroupIndex << " *group, unsigned int idx, ";
-                if(::Utils::isTypePointer(f.type)) {
+                if(GeNN::Utils::isTypePointer(f.type)) {
                     os << "__global ";
                 }
                 os << f.type << " " << f.fieldName << ")";

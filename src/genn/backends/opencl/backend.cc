@@ -1934,7 +1934,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1945,7 +1945,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
         os << type << " " << name << ";" << std::endl;
         os << "cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1954,8 +1954,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2008,8 +2008,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
     assert(!getPreferences().automaticCopy);
 
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2029,8 +2029,8 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     assert(!getPreferences().automaticCopy);
 
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2060,10 +2060,10 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
 std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
 {
     // If type is a pointer, on the host it is represented by an OpenCL buffer
-    if(::Utils::isTypePointerToPointer(type)) {
+    if(GeNN::Utils::isTypePointerToPointer(type)) {
         return "cl::Buffer*";
     }
-    if(::Utils::isTypePointer(type)) {
+    else if(GeNN::Utils::isTypePointer(type)) {
         return "cl::Buffer";
     }
     // Otherwise, type remains the same
@@ -2407,13 +2407,13 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     boost::uuids::detail::sha1 hash;
 
     // Update hash was name of backend
-    ::Utils::updateHash("OpenCL", hash);
+    GeNN::Utils::updateHash("OpenCL", hash);
     
     // Update hash with chosen device ID and kernel block sizes
-    ::Utils::updateHash(m_ChosenPlatformIndex, hash);
-    ::Utils::updateHash(m_ChosenDeviceIndex, hash);
-    ::Utils::updateHash(m_AllocationAlignementBytes, hash);
-    ::Utils::updateHash(getKernelBlockSize(), hash);
+    GeNN::Utils::updateHash(m_ChosenPlatformIndex, hash);
+    GeNN::Utils::updateHash(m_ChosenDeviceIndex, hash);
+    GeNN::Utils::updateHash(m_AllocationAlignementBytes, hash);
+    GeNN::Utils::updateHash(getKernelBlockSize(), hash);
 
     // Update hash with preferences
     getPreferences<Preferences>().updateHash(hash);

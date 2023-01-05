@@ -7,7 +7,11 @@
 #include "backend.h"
 
 // Forward declarations
+namespace GeNN
+{
 class ModelSpecInternal;
+}
+
 namespace plog
 {
 class IAppender;
