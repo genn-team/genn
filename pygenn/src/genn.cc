@@ -28,6 +28,7 @@
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
 
+using namespace GeNN;
 using namespace pybind11::literals;
 
 //----------------------------------------------------------------------------

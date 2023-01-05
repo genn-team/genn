@@ -5,7 +5,7 @@
 // GeNN includes
 #include "weightUpdateModels.h"
 
-using namespace WeightUpdateModels;
+using namespace GeNN::WeightUpdateModels;
 
 namespace
 {

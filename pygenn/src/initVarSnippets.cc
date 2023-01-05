@@ -5,7 +5,7 @@
 // GeNN includes
 #include "initVarSnippet.h"
 
-using namespace InitVarSnippet;
+using namespace GeNN::InitVarSnippet;
 
 namespace
 {

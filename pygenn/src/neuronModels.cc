@@ -5,7 +5,7 @@
 // GeNN includes
 #include "neuronModels.h"
 
-using namespace NeuronModels;
+using namespace GeNN::NeuronModels;
 
 namespace
 {
