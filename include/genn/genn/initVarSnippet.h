@@ -9,10 +9,10 @@
 #define SET_CODE(CODE) virtual std::string getCode() const override{ return CODE; }
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Base
+// GeNN::InitVarSnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all value initialisation snippets
-namespace InitVarSnippet
+namespace GeNN::InitVarSnippet
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -36,7 +36,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Uninitialised
+// GeNN::InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
 //! Used to mark variables as uninitialised - no initialisation code will be run
 class Uninitialised : public Base
@@ -46,7 +46,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Constant
+// GeNN::InitVarSnippet::Constant
 //----------------------------------------------------------------------------
 //! Initialises variable to a constant value
 /*! This snippet takes 1 parameter:
@@ -66,7 +66,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Kernel
+// GeNN::InitVarSnippet::Kernel
 //----------------------------------------------------------------------------
 //! Used to initialise synapse variables from a kernel
 class Kernel : public Base
@@ -79,7 +79,7 @@ class Kernel : public Base
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Uniform
+// GeNN::InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the uniform distribution
 /*! This snippet takes 2 parameters:
@@ -99,7 +99,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Normal
+// GeNN::InitVarSnippet::Normal
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution
 /*! This snippet takes 2 parameters:
@@ -117,14 +117,14 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::NormalClipped
+// GeNN::InitVarSnippet::NormalClipped
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution,
 //! Resamples value if out of range specified my min and max
 /*! This snippet takes 2 parameters:
  *
     - \c mean - The mean
-    - \c sd - The standard deviation
+    - \c sd - ThGeNN::e standard deviation
     - \c min - The minimum value
     - \c max - The maximum value*/
 class NormalClipped : public Base
@@ -144,7 +144,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::NormalClippedDelay
+// GeNN::InitVarSnippet::NormalClippedDelay
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution,
 //! Resamples value of out of range specified my min and max.
@@ -178,7 +178,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Exponential
+// GeNN::InitVarSnippet::Exponential
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the exponential distribution
 /*! This snippet takes 1 parameter:
@@ -195,7 +195,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Gamma
+// GeNN::InitVarSnippet::Gamma
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the gamma distribution
 /*! This snippet takes 2 parameters:
@@ -213,7 +213,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Binomial
+// GeNN::InitVarSnippet::Binomial
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the binomial distribution
 /*! This snippet takes 2 parameters:
@@ -229,4 +229,4 @@ public:
 
     SET_PARAM_NAMES({"n", "p"});
 };
-}   // namespace InitVarSnippet
+}   // namespace GeNN::InitVarSnippet

@@ -25,10 +25,10 @@
 #define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_ROW_LENGTH; }; }
 
 //----------------------------------------------------------------------------
-// InitToeplitzConnectivitySnippet::Base
+// GeNN:::InitToeplitzConnectivitySnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all toeplitz connectivity initialisation snippets
-namespace InitToeplitzConnectivitySnippet
+namespace GeNN::InitToeplitzConnectivitySnippet
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -61,7 +61,7 @@ public:
 using Init = Snippet::Init<InitToeplitzConnectivitySnippet::Base>;
 
 //----------------------------------------------------------------------------
-// InitToeplitzConnectivitySnippet::Uninitialised
+// GeNN::InitToeplitzConnectivitySnippet::Uninitialised
 //----------------------------------------------------------------------------
 //! Used to mark connectivity as uninitialised - no initialisation code will be run
 class Uninitialised : public Base
@@ -71,7 +71,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitToeplitzConnectivitySnippet::Conv2D
+// GeNN::InitToeplitzConnectivitySnippet::Conv2D
 //----------------------------------------------------------------------------
 //! Initialises convolutional connectivity
 //! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
@@ -123,7 +123,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitToeplitzConnectivitySnippet::AvgPoolConv2D
+// GeNN::InitToeplitzConnectivitySnippet::AvgPoolConv2D
 //----------------------------------------------------------------------------
 //! Initialises convolutional connectivity preceded by averaging pooling
 //! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
@@ -183,4 +183,4 @@ public:
                     (unsigned int)pars.at("pool_ic"), (unsigned int)pars.at("conv_oc")};
         });
 };
-}   // namespace InitToeplitzConnectivitySnippet
+}   // namespace GeNN::InitToeplitzConnectivitySnippet

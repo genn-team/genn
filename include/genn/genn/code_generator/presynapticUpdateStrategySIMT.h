@@ -4,6 +4,8 @@
 #include "code_generator/backendBase.h"
 
 // Forward declarations
+namespace GeNN
+{
 class SynapseGroupInternal;
 
 namespace CodeGenerator
@@ -11,13 +13,12 @@ namespace CodeGenerator
 class BackendSIMT;
 class ModelSpecMerged;
 }
+}
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::Base
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::Base
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace PresynapticUpdateStrategySIMT
+namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT
 {
 class Base
 {
@@ -49,7 +50,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism
 class PreSpan : public Base
@@ -82,7 +83,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism
 class PostSpan : public Base
@@ -125,7 +126,7 @@ private:
 //--------------------------------------------------------------------------
 // CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask
 //--------------------------------------------------------------------------
-//! Postsynaptic parallelism
+//! GeNN::Postsynaptic parallelism
 class PostSpanBitmask : public Base
 {
 public:
@@ -156,7 +157,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism with procedural connectivity
 class PreSpanProcedural : public Base
@@ -189,7 +190,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism for Toeplitz connectivity
 class PostSpanToeplitz : public Base
@@ -220,5 +221,4 @@ public:
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
-}   // namespace PresynapticUpdateStrategySIMT
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT

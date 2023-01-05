@@ -3,7 +3,8 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -180,7 +181,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronInitGroupMerged
+// GeNN::CodeGenerator::NeuronInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
@@ -540,7 +541,7 @@ void NeuronInitGroupMerged::genInitSpikeTime(CodeStream &os, const BackendBase &
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseInitGroupMerged
+// GeNN::CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseInitGroupMerged::name = "SynapseInit";
 //----------------------------------------------------------------------------
@@ -594,7 +595,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseSparseInitGroupMerged
+// GeNN::CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseSparseInitGroupMerged::name = "SynapseSparseInit";
 //----------------------------------------------------------------------------
@@ -612,7 +613,7 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
 }
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::SynapseConnectivityInitGroupMerged
+// GeNN::CodeGenerator::SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";
 //----------------------------------------------------------------------------
@@ -848,7 +849,7 @@ bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamRefere
 }
 
 // ----------------------------------------------------------------------------
-// CustomUpdateInitGroupMerged
+// GeNN::CodeGenerator::CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
@@ -883,7 +884,7 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeS
 }
 
 // ----------------------------------------------------------------------------
-// CustomWUUpdateInitGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
@@ -991,7 +992,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Cod
 }
 
 // ----------------------------------------------------------------------------
-// CustomWUUpdateSparseInitGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSparseInit";
 //----------------------------------------------------------------------------

@@ -17,7 +17,7 @@
 // OpenCL backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -148,13 +148,10 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Backend
+// GeNN::CodeGenerator::OpenCL::Backend
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator::OpenCL
 {
-namespace OpenCL
-{
-//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
@@ -2804,5 +2801,4 @@ bool Backend::shouldUseSubBufferAllocations() const
 {
     return isChosenDeviceAMD();
 }
-} // namespace OpenCL
-} // namespace CodeGenerator
+} // namespace GeNN::CodeGenerator::OpenCL

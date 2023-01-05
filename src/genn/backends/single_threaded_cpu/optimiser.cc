@@ -4,13 +4,9 @@
 #include "modelSpecInternal.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Optimiser
+// GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace SingleThreadedCPU
-{
-namespace Optimiser
+namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
@@ -27,6 +23,4 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
 
     return Backend(model.getPrecision(), preferences);
 }
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser

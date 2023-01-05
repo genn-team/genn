@@ -30,11 +30,9 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::DeviceSelectMethod
+// GeNN::CodeGenerator::CUDA::DeviceSelectMethod
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace CUDA
+namespace GeNN::CodeGenerator::CUDA
 {
 //! Methods for selecting CUDA device
 enum class DeviceSelect
@@ -354,5 +352,4 @@ private:
     cudaDeviceProp m_ChosenDevice;
     int m_RuntimeVersion;
 };
-}   // CUDA
-}   // CodeGenerator
+}   // GeNN::CUDA::CodeGenerator

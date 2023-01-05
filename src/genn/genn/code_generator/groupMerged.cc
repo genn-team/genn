@@ -11,10 +11,11 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
@@ -61,7 +62,7 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
 //----------------------------------------------------------------------------
@@ -95,7 +96,7 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronGroupMergedBase
+// GeNN::CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
 {
@@ -473,7 +474,7 @@ bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const
     const auto *varInitSnippet = getSortedArchetypeMergedInSyns().at(childIndex)->getPSVarInitialisers().at(varName).getSnippet();
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
-//----------------------------------------------------------------------------
+//---------------GeNN::-------------------------------------------------------------
 void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, const std::string &name, 
                                                        size_t archetypeIndex, const std::string &prefix)
 {
@@ -497,7 +498,7 @@ void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField(const std::stri
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseGroupMergedBase
+// GeNN::CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUParamHeterogeneous(const std::string &paramName) const
 {

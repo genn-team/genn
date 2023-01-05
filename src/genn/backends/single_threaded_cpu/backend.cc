@@ -9,7 +9,7 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
-using namespace CodeGenerator;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -117,11 +117,9 @@ void genKernelIteration(CodeStream &os, const G &g, size_t numKernelDims, const 
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Backend
+// GeNN::CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace SingleThreadedCPU
+namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
@@ -1342,8 +1340,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = Utils::getUnderlyingType(type);
+    const bool pointerToPointer = Utils::isTypePointerToPointer(type);
 
     const std::string pointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
 
@@ -1977,5 +1975,4 @@ void Backend::genWriteBackReductions(CodeStream &os, const CustomUpdateWUGroupMe
                                                         index);
                            });
 }
-}   // namespace SingleThreadedCPU
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::SingleThreadedCPU

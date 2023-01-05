@@ -19,11 +19,9 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Preferences
+// GeNN::CodeGenerator::SingleThreadedCPU::Preferences
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace SingleThreadedCPU
+namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
 struct Preferences : public PreferencesBase
 {
@@ -228,5 +226,4 @@ private:
         }
     }
 };
-}   // namespace SingleThreadedCPU
-}   // namespace CodeGenerator
+}   // namespace GeNN::SingleThreadedCPU::CodeGenerator

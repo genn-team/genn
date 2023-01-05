@@ -28,11 +28,9 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::DeviceSelectMethod
+// GeNN::CodeGenerator::OpenCL::DeviceSelectMethod
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace OpenCL
+namespace GeNN::CodeGenerator::OpenCL
 {
 //! Methods for selecting OpenCL platform
 enum class PlatformSelect
@@ -456,5 +454,4 @@ private:
     cl::Device m_ChosenDevice;
     cl::Platform m_ChosenPlatform;
 };
-}   // OpenCL
-}   // CodeGenerator
+}   // GeNN::CodeGenerator::OpenCL

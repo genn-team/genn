@@ -11,8 +11,10 @@
 #include "variableMode.h"
 
 //------------------------------------------------------------------------
-// CustomConnectivityUpdate
+// GeNN::CustomConnectivityUpdate
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CustomConnectivityUpdate
 {
 public:
@@ -165,3 +167,4 @@ private:
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;
 };
+}   // namespace GeNN

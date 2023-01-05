@@ -3,10 +3,11 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------

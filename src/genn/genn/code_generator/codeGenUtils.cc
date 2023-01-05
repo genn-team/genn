@@ -101,26 +101,15 @@ const char *mathsFuncs[][MathsFuncMax] = {
     {"fabs", "fabsf"},
     {"fma", "fmaf"}
 };
-
-//--------------------------------------------------------------------------
-/*! \brief This function removes explicit single precision function calls as
-           single-threaded CPU and CUDA kernels both support C++ i.e. overloads 
-           and, while OpenCL kernels aren't in C++, OpenCL doesn't provide explicit
-           single precision maths functions, instead having some weird special case
- */
 //--------------------------------------------------------------------------
 void ensureMathFunctionFtype(std::string &code)
 {
     // Replace any outstanding explicit single-precision maths functions  
     // with C++ versions where overloads should work the same
     for(const auto &m : mathsFuncs) {
-        CodeGenerator::regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncCPP]);
+        GeNN::CodeGenerator::regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncCPP]);
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
- */
 //--------------------------------------------------------------------------
 void doFinal(std::string &code, unsigned int i, const std::string &type, unsigned int &state)
 {
@@ -143,7 +132,7 @@ void doFinal(std::string &code, unsigned int i, const std::string &type, unsigne
         }
     }
 }
-
+//--------------------------------------------------------------------------
 bool regexSubstitute(std::string &s, const std::regex &regex, const std::string &format)
 {
     // **NOTE** the following code performs the same function as std::regex_replace
@@ -204,14 +193,11 @@ std::string trimWhitespace(const std::string& str)
 }
 }    // Anonymous namespace
 
-//--------------------------------------------------------------------------
-// CodeGenerator
-//--------------------------------------------------------------------------
-namespace CodeGenerator
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator
+//----------------------------------------------------------------------------
+namespace GeNN::CodeGenerator
 {
-//--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates
-//--------------------------------------------------------------------------
 void substitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     size_t found= s.find(trg);
@@ -220,10 +206,7 @@ void substitute(std::string &s, const std::string &trg, const std::string &rep)
         found= s.find(trg);
     }
 }
-
-//--------------------------------------------------------------------------
-//! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
-//--------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 bool regexVarSubstitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     // Build a regex to match variable name with at least one
@@ -238,9 +221,7 @@ bool regexVarSubstitute(std::string &s, const std::string &trg, const std::strin
     return regexSubstitute(s, regex, format);
 }
 
-//--------------------------------------------------------------------------
-//! \brief Tool for substituting function  names in the neuron code strings or other templates using regular expressions
-//--------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     // Build a regex to match function name with at least one
@@ -254,18 +235,7 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
 
     return regexSubstitute(s, regex, format);
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function substitutes function calls in the form:
- *
- *  $(functionName, parameter1, param2Function(0.12, "string"))
- *
- * with replacement templates in the form:
- *
- *  actualFunction(CONSTANT, $(0), $(1))
- *
- */
-//--------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 void functionSubstitute(std::string &code, const std::string &funcName,
                         unsigned int numParams, const std::string &replaceFuncTemplate)
 {
@@ -355,7 +325,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
         }
     }
 }
-
+//----------------------------------------------------------------------------
 void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     os << "#define " << prefix << "_MIN ";
@@ -379,12 +349,7 @@ void genTypeRange(CodeStream &os, const std::string &precision, const std::strin
     }
     os << std::endl;
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
- */
-//--------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------
 std::string ensureFtype(const std::string &oldcode, const std::string &type)
 {
 //    cerr << "entering ensure" << endl;
@@ -481,7 +446,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
     ensureMathFunctionFtype(code);
     return code;
 }
-
+//----------------------------------------------------------------------------
 std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode access, const std::string &type)
 {
     // If reduction is a sum, initialise to zero
@@ -497,7 +462,7 @@ std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode a
         return "";
     }
 }
-
+//----------------------------------------------------------------------------
 std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access, const std::string &type)
 {
     // If operation is sum, add output of custom update to sum
@@ -520,11 +485,7 @@ std::string getReductionOperation(const std::string &reduction, const std::strin
         return "";
     }
 }
-//--------------------------------------------------------------------------
-/*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
- */
-//--------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName)
 {
     std::regex rgx("\\$\\([\\w]+\\)");
@@ -540,11 +501,7 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
         throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
- */
- //--------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
     // Regex for function call - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments)
     std::regex funcCallRegex(R"(\w+(?=\(.*\)))");
@@ -569,4 +526,4 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
     }
     return newCode;
 }
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

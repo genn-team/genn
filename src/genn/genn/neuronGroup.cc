@@ -3,6 +3,7 @@
 // Standard includes
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 // GeNN includes
 #include "currentSourceInternal.h"
@@ -10,6 +11,8 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
+
+using namespace GeNN;
 
 // ------------------------------------------------------------------------
 // Anonymous namespace
@@ -45,7 +48,7 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
     // Loop through un-merged synapse groups
     for(unsigned int i = 0; !syn.empty(); i++) {
         // Remove last element from vector
-        SynapseGroupInternal *a = syn.back();
+        auto *a = syn.back();
         syn.pop_back();
 
         // Add A to vector of merged groups
@@ -99,8 +102,10 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
-// NeuronGroup
+// GeNN::NeuronGroup
 // ------------------------------------------------------------------------
+namespace GeNN
+{
 void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation.at(getNeuronModel()->getVarIndex(varName)) = loc;
@@ -589,4 +594,4 @@ void NeuronGroup::updateVarQueues(const std::string &code, const std::string &su
         }
     }
 }
-
+}   // namespace GeNN

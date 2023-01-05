@@ -3,6 +3,8 @@
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
+namespace GeNN
+{
 //! Flags defining differnet types of synaptic matrix connectivity
 enum class SynapseMatrixConnectivity : unsigned int
 {
@@ -68,3 +70,4 @@ inline SynapseMatrixWeight getSynapseMatrixWeight(SynapseMatrixType type)
 {
     return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) & ~0x1F);
 }
+}   // namespace GeNN

@@ -4,9 +4,9 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
@@ -97,4 +97,4 @@ private:
     std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
     std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

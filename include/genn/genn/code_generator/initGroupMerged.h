@@ -4,9 +4,9 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronInitGroupMerged
+// GeNN::CodeGenerator::NeuronInitGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
@@ -90,7 +90,7 @@ private:
 
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseInitGroupMerged
+// GeNN::CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
@@ -122,7 +122,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseSparseInitGroupMerged
+// GeNN::CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
@@ -154,7 +154,7 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::SynapseConnectivityInitGroupMerged
+// GeNN::CodeGenerator::SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
 {
@@ -196,7 +196,7 @@ private:
 
 
 // ----------------------------------------------------------------------------
-// SynapseConnectivityHostInitGroupMerged
+// GeNN::CodeGenerator::SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
@@ -237,7 +237,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateInitGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateInitGroupMergedBase
 //----------------------------------------------------------------------------
 //! Boilerplate base class for creating merged init groups for various types of CustomUpdate CustomConectivityUpdate
 template<typename G, typename A>
@@ -330,7 +330,7 @@ private:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateInitGroupMerged
+// GeNN::CodeGenerator::CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
 {
@@ -361,7 +361,7 @@ public:
 
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomWUUpdateInitGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
                                                                                          CustomUpdateVarAdapter>
@@ -419,7 +419,7 @@ private:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomWUUpdateSparseInitGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
                                                                                                CustomUpdateVarAdapter>
@@ -450,7 +450,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePreInitGroupMerged
+// GeNN::CodeGenerator::CustomConnectivityUpdatePreInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
                                                                                                       CustomConnectivityUpdatePreVarAdapter>
@@ -481,7 +481,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdatePostInitGroupMerged
+// GeNN::CodeGenerator::CustomConnectivityUpdatePostInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
                                                                                                        CustomConnectivityUpdatePostVarAdapter>
@@ -512,7 +512,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateSparseInitGroupMerged
+// GeNN::CodeGenerator::CustomConnectivityUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
                                                                                                          CustomConnectivityUpdateVarAdapter>
@@ -541,4 +541,4 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

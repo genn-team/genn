@@ -12,8 +12,10 @@
 #include "variableMode.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateBase
+// GeNN::CustomUpdateBase
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CustomUpdateBase
 {
 public:
@@ -308,3 +310,4 @@ private:
     const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     SynapseGroupInternal *m_SynapseGroup;
 };
+}   // namespace GeNN

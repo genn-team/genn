@@ -7,7 +7,7 @@
 #include "gennExport.h"
 
 // Forward declarations
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class ModelSpecMerged;
 }
@@ -19,9 +19,9 @@ class path;
 
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 GENN_EXPORT void generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
                                      const std::string &suffix = "");

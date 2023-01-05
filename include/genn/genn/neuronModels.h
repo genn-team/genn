@@ -24,9 +24,9 @@
 #define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const override{ return AUTO_REFRACTORY_REQUIRED; }
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// GeNN::NeuronModels::Base
 //----------------------------------------------------------------------------
-namespace NeuronModels
+namespace GeNN::NeuronModels
 {
 //! Base class for all neuron models
 class GENN_EXPORT Base : public Models::Base
@@ -58,7 +58,7 @@ public:
     virtual Models::Base::ParamValVec getAdditionalInputVars() const{ return {}; }
 
     //! Does this model require auto-refractory logic?
-    virtual bool isAutoRefractoryRequired() const{ return true; }
+    virtual bool isAutoRefractoryRequired() const{ return false; }
 
     //----------------------------------------------------------------------------
     // Public API
@@ -73,7 +73,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::RulkovMap
+// GeNN::NeuronModels::RulkovMap
 //----------------------------------------------------------------------------
 //! Rulkov Map neuron
 /*! The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
@@ -135,7 +135,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Izhikevich
+// GeNN::NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
 //! Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
 /*! It is usually described as
@@ -181,7 +181,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::IzhikevichVariable
+// GeNN::NeuronModels::IzhikevichVariable
 //----------------------------------------------------------------------------
 //! Izhikevich neuron with variable parameters \cite izhikevich2003simple.
 /*! This is the same model as NeuronModels::Izhikevich but parameters are defined as
@@ -209,7 +209,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::LIF
+// GeNN::NeuronModels::LIF
 //----------------------------------------------------------------------------
 class LIF : public Base
 {
@@ -251,7 +251,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::SpikeSource
+// GeNN::NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
 //! Empty neuron which allows setting spikes from external sources
 /*! This model does not contain any update code and can be used to implement
@@ -266,7 +266,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::SpikeSourceArray
+// GeNN::NeuronModels::SpikeSourceArray
 //----------------------------------------------------------------------------
 //! Spike source array
 /*! A neuron which reads spike times from a global spikes array.
@@ -295,7 +295,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Poisson
+// GeNN::NeuronModels::Poisson
 //----------------------------------------------------------------------------
 //! Poisson neurons
 /*! Poisson neurons have constant membrane potential (\c Vrest) unless they are
@@ -354,7 +354,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::PoissonNew
+// GeNN::NeuronModels::PoissonNew
 //----------------------------------------------------------------------------
 //! Poisson neurons
 /*! This neuron model emits spikes according to the Poisson distribution with a mean firing
@@ -391,7 +391,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMiles
+// GeNN::NeuronModels::TraubMiles
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
 /*! This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
@@ -487,7 +487,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesFast
+// GeNN::NeuronModels::TraubMilesFast
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
 /*! There are singularities in this model, which can be easily hit in float precision
@@ -520,7 +520,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesAlt
+// GeNN::NeuronModels::TraubMilesAlt
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm
 /*! Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
@@ -556,7 +556,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesNStep
+// GeNN::NeuronModels::TraubMilesNStep
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
 /*! Same as standard TraubMiles model but number of inner loops can be set using a parameter
@@ -606,4 +606,4 @@ public:
 
     SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
 };
-} // NeuronModels
+} // GeNN::NeuronModels

@@ -38,10 +38,10 @@ public:                                                 \
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// Snippet::Base
+// GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
-namespace Snippet
+namespace GeNN::Snippet
 {
 class GENN_EXPORT Base
 {
@@ -224,4 +224,4 @@ inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &
 {
     Utils::updateHash(d.name, hash);
 }
-}   // namespace Snippet
+}   // namespace GeNN::Snippet

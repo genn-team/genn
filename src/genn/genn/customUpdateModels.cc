@@ -1,12 +1,16 @@
 #include "customUpdateModels.h"
 
+using namespace GeNN;
+
+namespace GeNN::CustomUpdateModels
+{
 // Implement models
-IMPLEMENT_SNIPPET(CustomUpdateModels::Transpose);
+IMPLEMENT_SNIPPET(Transpose);
 
 //----------------------------------------------------------------------------
-// CustomUpdateModels::Base
+// GeNN::CustomUpdateModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CustomUpdateModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -15,4 +19,5 @@ boost::uuids::detail::sha1::digest_type CustomUpdateModels::Base::getHashDigest(
     Utils::updateHash(getUpdateCode(), hash);
     Utils::updateHash(getVarRefs(), hash);
     return hash.get_digest();
+}
 }

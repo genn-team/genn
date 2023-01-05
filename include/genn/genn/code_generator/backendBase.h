@@ -22,6 +22,8 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CustomUpdateInternal;
 class CustomUpdateWUInternal;
 class NeuronGroupInternal;
@@ -47,13 +49,13 @@ class CustomWUUpdateSparseInitGroupMerged;
 class SynapseConnectivityInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
-    
+}
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PreferencesBase
+// GeNN::CodeGenerator::PreferencesBase
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 //! Base class for backend preferences - can be accessed via a global in 'classic' C++ code generator
 struct PreferencesBase
@@ -99,7 +101,7 @@ struct PreferencesBase
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::MemAlloc
+// GeNN::CodeGenerator::MemAlloc
 //--------------------------------------------------------------------------
 class MemAlloc
 {
@@ -546,4 +548,4 @@ private:
     //! Preferences
     const PreferencesBase &m_Preferences;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

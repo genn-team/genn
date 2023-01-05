@@ -32,9 +32,9 @@
 #define SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME(PREV_PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::Base
+// GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
-namespace WeightUpdateModels
+namespace GeNN::WeightUpdateModels
 {
 //! Base class for all weight update models
 class GENN_EXPORT Base : public Models::Base
@@ -155,7 +155,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticPulse
+// GeNN::WeightUpdateModels::StaticPulse
 //----------------------------------------------------------------------------
 //! Pulse-coupled, static synapse.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
@@ -180,7 +180,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticPulseDendriticDelay
+// GeNN::WeightUpdateModels::StaticPulseDendriticDelay
 //----------------------------------------------------------------------------
 //! Pulse-coupled, static synapse with heterogenous dendritic delays
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
@@ -206,7 +206,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticGraded
+// GeNN::WeightUpdateModels::StaticGraded
 //----------------------------------------------------------------------------
 //! Graded-potential, static synapse
 /*! In a graded synapse, the conductance is updated gradually with the rule:
@@ -245,7 +245,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PiecewiseSTDP
+// GeNN::PiecewiseSTDP
 //----------------------------------------------------------------------------
 //! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
 /*! The STDP window is defined as a piecewise function:
@@ -348,4 +348,4 @@ public:
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
-} // WeightUpdateModels
+}   //namespace GeNN::WeightUpdateModels

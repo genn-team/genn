@@ -18,9 +18,9 @@
 #define SET_INJECTION_CODE(INJECTION_CODE) virtual std::string getInjectionCode() const override{ return INJECTION_CODE; }
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::Base
+// GeNN::CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-namespace CurrentSourceModels
+namespace GeNN::CurrentSourceModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -110,4 +110,4 @@ class PoissonExp : public Base
         {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
         {"ExpMinusLambda", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
 };
-} // CurrentSourceModels
+} // GeNN::CurrentSourceModels

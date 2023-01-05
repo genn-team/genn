@@ -16,9 +16,9 @@
 #define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
 
 //--------------------------------------------------------------------------
-// CodeGenerator::BackendBase
+// GeNN::CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
@@ -269,4 +269,4 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
                                                                 index);
                                    });
 }
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

@@ -37,13 +37,9 @@ unsigned int getDeviceWithMostGlobalMemory(unsigned int platformID)
 }
 }
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Optimiser
+// GeNN::CodeGenerator::OpenCL::Optimiser
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace OpenCL
-{
-namespace Optimiser
+namespace GeNN::CodeGenerator::OpenCL::Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
@@ -65,6 +61,4 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
 
     return Backend(preferences.manualWorkGroupSizes, preferences, model.getPrecision(), platformID, deviceID);
 }
-}   // namespace Optimiser
-}   // namespace OpenCL
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::OpenCL::Optimiser

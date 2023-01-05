@@ -3,7 +3,8 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -97,7 +98,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateGroupMerged
+// GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
 //----------------------------------------------------------------------------
@@ -218,7 +219,7 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplica
 }
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
 bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
 {
@@ -364,7 +365,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 }
 
 // ----------------------------------------------------------------------------
-// CustomUpdateWUGroupMerged
+// GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------

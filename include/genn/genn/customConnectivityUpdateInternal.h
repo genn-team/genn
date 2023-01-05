@@ -7,6 +7,8 @@
 //------------------------------------------------------------------------
 // CustomUpdateInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class CustomConnectivityUpdateInternal : public CustomConnectivityUpdate
 {
 public:
@@ -137,3 +139,4 @@ private:
     //----------------------------------------------------------------------------
     const CustomConnectivityUpdateInternal &m_CU;
 };
+}   // namespace GeNN

@@ -11,8 +11,10 @@
 #include "synapseGroupInternal.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateBase
+// GeNN::CustomUpdateBase
 //------------------------------------------------------------------------
+namespace GeNN
+{
 void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)] = loc;
@@ -173,7 +175,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 }
 
 //----------------------------------------------------------------------------
-// CustomUpdateWU
+// GeNN::CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
@@ -288,3 +290,4 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getInitHashDigest() cons
     Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
     return hash.get_digest();
 }
+}   // namespace GeNN

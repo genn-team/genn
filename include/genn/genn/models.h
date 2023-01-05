@@ -13,6 +13,8 @@
 #include "varAccess.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CustomConnectivityUpdate;
 class CustomUpdate;
 class CustomUpdateWU;
@@ -26,6 +28,7 @@ namespace CodeGenerator
 {
 class BackendBase;
 }
+}
 
 //----------------------------------------------------------------------------
 // Macros
@@ -34,10 +37,10 @@ class BackendBase;
 
 
 //----------------------------------------------------------------------------
-// Models::Base
+// GeNN::Models::Base
 //----------------------------------------------------------------------------
 //! Base class for all models - in addition to the parameters snippets have, models can have state variables
-namespace Models
+namespace GeNN::Models
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -119,7 +122,7 @@ protected:
 
 
 //----------------------------------------------------------------------------
-// Models::VarInit
+// GeNN::Models::VarInit
 //----------------------------------------------------------------------------
 //! Class used to bind together everything required to initialise a variable:
 //! 1. A pointer to a variable initialisation snippet
@@ -139,7 +142,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReferenceBase
+// GeNN::Models::VarReferenceBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReferenceBase
 {
@@ -187,7 +190,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReference
+// GeNN::Models::VarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReference : public VarReferenceBase
 {
@@ -231,7 +234,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// Models::WUVarReference
+// GeNN::Models::WUVarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
@@ -300,7 +303,6 @@ GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &h
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
 
-
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
 void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
@@ -323,4 +325,4 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
         }
     }
 }
-} // Models
+} // GeNN::Models

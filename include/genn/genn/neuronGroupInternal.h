@@ -4,8 +4,10 @@
 #include "neuronGroup.h"
 
 //------------------------------------------------------------------------
-// NeuronGroupInternal
+// GeNN::NeuronGroupInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class NeuronGroupInternal : public NeuronGroup
 {
 public:
@@ -45,7 +47,6 @@ public:
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
     using NeuronGroup::getVarLocationHashDigest;
 };
-
 
 //----------------------------------------------------------------------------
 // NeuronVarAdapter
@@ -94,3 +95,4 @@ private:
     //----------------------------------------------------------------------------
     const NeuronGroupInternal &m_NG;
 };
+}   // namespace GeNN

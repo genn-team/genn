@@ -18,9 +18,9 @@
 #define SET_HOST_UPDATE_CODE(HOST_UPDATE_CODE) virtual std::string getHostUpdateCode() const override{ return HOST_UPDATE_CODE; }
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateModels::Base
+// GeNN::CustomConnectivityUpdateModels::Base
 //----------------------------------------------------------------------------
-namespace CustomConnectivityUpdateModels
+namespace GeNN::CustomConnectivityUpdateModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -80,4 +80,4 @@ public:
                   const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
                   const std::string &description) const;
 };
-}   // CustomConnectivityUpdateModels
+}   // GeNN::CustomConnectivityUpdateModels

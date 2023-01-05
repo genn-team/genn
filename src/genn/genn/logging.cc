@@ -1,10 +1,10 @@
 #include "logging.h"
 
 //----------------------------------------------------------------------------
-// Logging
+// GeNN::Logging
 //----------------------------------------------------------------------------
-void Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel,
-                   plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender)
+void GeNN::Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel,
+                         plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<CHANNEL_GENN>() == nullptr) {

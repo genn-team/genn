@@ -1,16 +1,18 @@
 #include "snippet.h"
 
 //----------------------------------------------------------------------------
-// Snippet::Base
+// GeNN::Snippet::Base
 //----------------------------------------------------------------------------
-void Snippet::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+namespace GeNN::Snippet
+{
+void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getParamNames(), hash);
     Utils::updateHash(getDerivedParams(), hash);
     Utils::updateHash(getExtraGlobalParams(), hash);
 }
 //----------------------------------------------------------------------------
-void Snippet::Base::validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const
 {
     const auto paramNames = getParamNames();
     Utils::validateParamNames(paramNames);
@@ -30,3 +32,4 @@ void Snippet::Base::validate(const std::unordered_map<std::string, double> &para
         }
     }
 }
+}   // namespace GeNN::Snippet

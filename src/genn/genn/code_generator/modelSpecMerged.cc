@@ -7,7 +7,8 @@
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -25,7 +26,7 @@ void assignGroups(const BackendBase &backend, std::vector<T> &groups, BackendBas
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::ModelSpecMerged
+// GeNN::CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
 ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
 :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),

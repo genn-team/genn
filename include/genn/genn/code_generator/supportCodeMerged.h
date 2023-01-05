@@ -8,9 +8,9 @@
 #include "code_generator/codeStream.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SupportCodeMerged
+// GeNN::CodeGenerator::SupportCodeMerged
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class SupportCodeMerged
 {
@@ -78,4 +78,4 @@ private:
     // Prefix
     const std::string m_NamespacePrefix;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

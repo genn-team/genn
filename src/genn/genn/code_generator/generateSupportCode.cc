@@ -10,10 +10,10 @@
 #include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                        const std::string &suffix)
+void GeNN::CodeGenerator::generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                              const std::string &suffix)
 {
     std::ofstream supportCodeStream((outputPath / ("supportCode" + suffix + ".h")).str());
     CodeStream supportCode(supportCodeStream);

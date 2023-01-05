@@ -31,10 +31,10 @@
 #define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_COL_LENGTH; }; }
 
 //----------------------------------------------------------------------------
-// InitSparseConnectivitySnippet::Base
+// GeNN::InitSparseConnectivitySnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all sparse connectivity initialisation snippets
-namespace InitSparseConnectivitySnippet
+namespace GeNN::InitSparseConnectivitySnippet
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -440,4 +440,4 @@ public:
                     (unsigned int)pars.at("conv_ic"), (unsigned int)pars.at("conv_oc")};
         });
 };
-}   // namespace InitSparseConnectivitySnippet
+}   // namespace GeNN::InitSparseConnectivitySnippet

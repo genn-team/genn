@@ -5,8 +5,10 @@
 #include "synapseGroup.h"
 
 //------------------------------------------------------------------------
-// SynapseGroupInternal
+// GeNN::SynapseGroupInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class SynapseGroupInternal : public SynapseGroup
 {
 public:
@@ -204,3 +206,4 @@ private:
     //----------------------------------------------------------------------------
     const SynapseGroupInternal &m_SG;
 };
+}   // namespace GeNN

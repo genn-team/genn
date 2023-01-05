@@ -6,8 +6,6 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
-
 //-----------------------------------------------------------------------
 // Anonymous namespace
 //-----------------------------------------------------------------------
@@ -31,9 +29,9 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CodeGenerator::BackendSIMT
+// GeNN::CodeGenerator::BackendSIMT
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 const char *BackendSIMT::KernelNames[KernelMax] = {
     "updateNeuronsKernel",
@@ -1601,7 +1599,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                     // If this connectivity requires an RNG for initialisation,
                    // make copy of global phillox RNG and skip ahead by thread id
                    // **NOTE** not LOCAL id
-                    if(::Utils::isRNGRequired(snippet->getRowBuildCode())) {
+                    if(Utils::isRNGRequired(snippet->getRowBuildCode())) {
                         genGlobalRNGSkipAhead(os, popSubs, "id");
                     }
 
@@ -1613,7 +1611,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                     // If this connectivity requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(::Utils::isRNGRequired(snippet->getColBuildCode())) {
+                    if(Utils::isRNGRequired(snippet->getColBuildCode())) {
                         genGlobalRNGSkipAhead(os, popSubs, "id");
                     }
 
@@ -1715,7 +1713,7 @@ void BackendSIMT::addDeviceType(const std::string &type, size_t size, const std:
 bool BackendSIMT::isDeviceType(const std::string &type) const
 {
     // Get underlying type
-    const std::string underlyingType = ::Utils::isTypePointer(type) ? ::Utils::getUnderlyingType(type) : type;
+    const std::string underlyingType = Utils::isTypePointer(type) ? Utils::getUnderlyingType(type) : type;
 
     // Return true if it is in device types set
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
@@ -1787,4 +1785,4 @@ const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStra
     throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
     return nullptr;
 }
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

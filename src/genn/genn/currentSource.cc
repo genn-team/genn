@@ -8,8 +8,10 @@
 #include "gennUtils.h"
 
 //------------------------------------------------------------------------
-// CurrentSource
+// GeNN::CurrentSource
 //------------------------------------------------------------------------
+namespace GeNN
+{
 void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)] = loc;
@@ -114,3 +116,4 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getVarLocationHashDigest(
     Utils::updateHash(m_ExtraGlobalParamLocation, hash);
     return hash.get_digest();
 }
+}   // namespace GeNN

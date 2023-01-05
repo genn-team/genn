@@ -20,7 +20,8 @@
 #include "code_generator/backendBase.h"
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -509,10 +510,10 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                       const BackendBase &backend, const std::string &suffix)
+MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                             const BackendBase &backend, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());

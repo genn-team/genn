@@ -37,9 +37,9 @@ GenericFunction randomFuncs[] = {
 }
 
 //--------------------------------------------------------------------------
-// Utils
+// GeNN::Utils
 //--------------------------------------------------------------------------
-namespace Utils
+namespace GeNN::Utils
 {
 bool isRNGRequired(const std::string &code)
 {
@@ -145,4 +145,4 @@ void validateParamNames(const std::vector<std::string> &paramNames)
         validateVarName(p, "Parameter");
     }
 }
-}   // namespace utils
+}   // namespace GeNN::utils

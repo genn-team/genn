@@ -4,8 +4,10 @@
 #include "currentSource.h"
 
 //------------------------------------------------------------------------
-// CurrentSourceInternal
+// GeNN::CurrentSourceInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class CurrentSourceInternal : public CurrentSource
 {
 public:
@@ -76,3 +78,4 @@ private:
     //----------------------------------------------------------------------------
     const CurrentSourceInternal &m_CS;
 };
+}   // namespace GeNN

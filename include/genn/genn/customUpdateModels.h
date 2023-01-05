@@ -12,9 +12,9 @@
 
 
 //----------------------------------------------------------------------------
-// CustomUpdateModels::Base
+// GeNN::CustomUpdateModels::Base
 //----------------------------------------------------------------------------
-namespace CustomUpdateModels
+namespace GeNN::CustomUpdateModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -63,5 +63,5 @@ class Transpose : public Base
 
     SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_WRITE}});
 };
-}   // CustomUpdateModels
+}   // GeNN::CustomUpdateModels
 

@@ -13,11 +13,16 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class NeuronGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// CurrentSource
+// GeNN::CurrentSource
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CurrentSource
 {
 public:
@@ -115,3 +120,4 @@ private:
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
 };
+}   // namespace GeNN

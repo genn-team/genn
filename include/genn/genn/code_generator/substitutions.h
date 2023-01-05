@@ -14,9 +14,9 @@
 #include "logging.h"
 
 //--------------------------------------------------------------------------
-// Substitutions
+// GeNN::CodeGenerator::Substitutions
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT Substitutions
 {
@@ -197,4 +197,4 @@ private:
     std::map<std::string, std::pair<unsigned int, std::string>> m_FuncSubstitutions;
     const Substitutions *m_Parent;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

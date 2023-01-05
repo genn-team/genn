@@ -20,15 +20,15 @@
 #include "gennExport.h"
 
 // Forward declarations
-namespace Models
+namespace GeNN::Models
 {
 class VarInit;
 }
 
 //--------------------------------------------------------------------------
-// Utils
+// GeNN::Utils
 //--------------------------------------------------------------------------
-namespace Utils
+namespace GeNN::Utils
 {
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
@@ -209,4 +209,4 @@ struct SHA1Hash
         return hash;
     };
 };
-}   // namespace Utils
+}   // namespace GeNN::Utils

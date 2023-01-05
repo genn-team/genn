@@ -4,14 +4,10 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::
+// GeNN::CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
-
-//----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateGroupMerged
-//----------------------------------------------------------------------------
 class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
@@ -47,7 +43,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PostsynapticUpdateGroupMerged
+// GeNN::CodeGenerator::PostsynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
@@ -80,7 +76,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDynamicsGroupMerged
+// GeNN::CodeGenerator::SynapseDynamicsGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 {
@@ -113,7 +109,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
+// GeNN::CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
@@ -137,4 +133,4 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-}
+}   // namespace GeNN::CodeGenerator

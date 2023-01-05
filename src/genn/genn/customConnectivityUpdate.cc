@@ -12,6 +12,8 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
+using namespace GeNN;
+
 //------------------------------------------------------------------------
 // Anonymous namespace
 //------------------------------------------------------------------------

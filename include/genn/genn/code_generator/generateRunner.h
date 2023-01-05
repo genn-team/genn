@@ -10,7 +10,7 @@
 #include "code_generator/backendBase.h"
 
 // Forward declarations
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class ModelSpecMerged;
 }
@@ -21,9 +21,9 @@ class path;
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 GENN_EXPORT MemAlloc generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
                                     const BackendBase &backend, const std::string &suffix = "");

@@ -30,10 +30,11 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/substitutions.h"
 
-// ------------------------------------------------------------------------
-// ModelSpec
-// ------------------------------------------------------------------------
-// class ModelSpec for specifying a neuronal network model
+// ---------------------------------------------------------------------------
+// GeNN::ModelSpec
+// ---------------------------------------------------------------------------
+namespace GeNN
+{
 ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
@@ -42,11 +43,11 @@ ModelSpec::ModelSpec()
 {
     setPrecision(ScalarPrecision::FLOAT);
 }
-
+// ---------------------------------------------------------------------------
 ModelSpec::~ModelSpec() 
 {
 }
-
+// ---------------------------------------------------------------------------
 std::string ModelSpec::getTimePrecision() const
 {
     // If time precision is set to match model precision
@@ -61,7 +62,7 @@ std::string ModelSpec::getTimePrecision() const
         return "double";
     }
 }
-
+// ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const
 {
     // Return sum of local neuron group sizes
@@ -71,7 +72,7 @@ unsigned int ModelSpec::getNumNeurons() const
                                return total + n.second.getNumNeurons();
                            });
 }
-
+// ---------------------------------------------------------------------------
 NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
                                             const ParamValues &paramValues, const VarValues &varInitialisers)
 {
@@ -89,7 +90,7 @@ NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned in
         return &result.first->second;
     }
 }
-
+// ---------------------------------------------------------------------------
 SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 {
     // If a matching local synapse group is found, return it
@@ -102,10 +103,7 @@ SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
         throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function attempts to find an existing current source */
-//--------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it
@@ -118,7 +116,7 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
         throw std::runtime_error("current source " + name + " not found, aborting ...");
     }
 }
-
+// ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers)
 {
@@ -139,8 +137,7 @@ CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName,
         return &result.first->second;
     }
 }
-
-
+// ---------------------------------------------------------------------------
 CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
                                          const ParamValues &paramValues, const VarValues &varInitialisers,
                                          const VarReferences &varReferences)
@@ -159,7 +156,7 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
         return &result.first->second;
     }
 }
-
+// ---------------------------------------------------------------------------
 CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
                                                                  const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
                                                                  const ParamValues &paramValues, const VarValues &varInitialisers,
@@ -185,7 +182,7 @@ CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::stri
         return &result.first->second;
     }
 }
-
+// ---------------------------------------------------------------------------
 CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers,
                                            const WUVarReferences &varReferences)
@@ -204,11 +201,7 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
         return &result.first->second;
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function sets the numerical precision of floating type variables. By default, it is ScalarPrecision::FLOAT
- */
-//--------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 void ModelSpec::setPrecision(ScalarPrecision scalarPrecision)
 {
     switch (scalarPrecision) {
@@ -223,8 +216,7 @@ void ModelSpec::setPrecision(ScalarPrecision scalarPrecision)
         break;    
     }
 }
-
-
+// ---------------------------------------------------------------------------
 void ModelSpec::finalize()
 {
     // NEURON GROUPS
@@ -329,7 +321,7 @@ void ModelSpec::finalize()
         }
     }
 }
-
+// ---------------------------------------------------------------------------
 std::string ModelSpec::scalarExpr(double val) const
 {
     if (m_Precision == "float") {
@@ -342,8 +334,7 @@ std::string ModelSpec::scalarExpr(double val) const
         throw std::runtime_error("Unrecognised floating-point type.");
     }
 }
-
-
+// ---------------------------------------------------------------------------
 bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
@@ -390,13 +381,13 @@ bool ModelSpec::zeroCopyInUse() const
 
     return false;
 }
-
+// ---------------------------------------------------------------------------
 bool ModelSpec::isRecordingInUse() const
 {
     return std::any_of(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(),
                        [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
 }
-
+// ---------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -411,7 +402,7 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
 
     return hash.get_digest();
 }
-
+// ---------------------------------------------------------------------------
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
 {
     // If a matching local neuron group is found, return it
@@ -424,7 +415,7 @@ NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
         throw std::runtime_error("neuron group " + name + " not found, aborting ...");
     }
 }
-
+// ---------------------------------------------------------------------------
 SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name)
 {
     // If a matching local synapse group is found, return it
@@ -437,32 +428,33 @@ SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &nam
         throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
-
+// ---------------------------------------------------------------------------
 SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                               const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
                                               const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                               const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
 {
-        // Get source and target neuron groups
-        auto srcNeuronGrp = findNeuronGroupInternal(src);
-        auto trgNeuronGrp = findNeuronGroupInternal(trg);
+    // Get source and target neuron groups
+    auto srcNeuronGrp = findNeuronGroupInternal(src);
+    auto trgNeuronGrp = findNeuronGroupInternal(trg);
 
-        // Add synapse group to map
-        auto result = m_LocalSynapseGroups.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, mtype, delaySteps,
-                                  wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                  psm, postsynapticParamValues, postsynapticVarInitialisers,
-                                  srcNeuronGrp, trgNeuronGrp,
-                                  connectivityInitialiser, toeplitzConnectivityInitialiser, 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
-                                  m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
+    // Add synapse group to map
+    auto result = m_LocalSynapseGroups.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, mtype, delaySteps,
+                                wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+                                psm, postsynapticParamValues, postsynapticVarInitialisers,
+                                srcNeuronGrp, trgNeuronGrp,
+                                connectivityInitialiser, toeplitzConnectivityInitialiser, 
+                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
+                                m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
 
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
     }
+    else {
+        return &result.first->second;
+    }
+}
+}   // namespace GeNN

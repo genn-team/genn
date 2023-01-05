@@ -40,6 +40,8 @@ Part of the code generation and generated code sections.
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
+namespace GeNN
+{
 using ParamValues = std::unordered_map<std::string, double>;
 using VarValues = std::unordered_map<std::string, Models::VarInit>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
@@ -203,7 +205,7 @@ inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const
 }
 
 //----------------------------------------------------------------------------
-// ModelSpec
+// GeNN::ModelSpec
 //----------------------------------------------------------------------------
 //! Object used for specifying a neuronal network model
 class GENN_EXPORT ModelSpec
@@ -766,6 +768,4 @@ private:
     //! Batch size of this model - efficiently duplicates model
     unsigned int m_BatchSize;
 };
-
-// Typedefine NNmodel for backward compatibility
-typedef ModelSpec NNmodel;
+}   // namespace GeNN

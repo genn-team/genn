@@ -15,9 +15,9 @@
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::Base
+// GeNN::PostsynapticModels::Base
 //----------------------------------------------------------------------------
-namespace PostsynapticModels
+namespace GeNN::PostsynapticModels
 {
 //! Base class for all postsynaptic models
 class GENN_EXPORT Base : public Models::Base
@@ -43,7 +43,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::ExpCurr
+// GeNN::PostsynapticModels::ExpCurr
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
 /*! This model has no variables and a single parameter:
@@ -65,7 +65,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::ExpCond
+// GeNN::PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
 /*! This model has no variables and two parameters:
@@ -88,7 +88,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::DeltaCurr
+// GeNN::PostsynapticModels::DeltaCurr
 //----------------------------------------------------------------------------
 //! Simple delta current synapse.
 /*! Synaptic input provides a direct inject of instantaneous current*/
@@ -99,4 +99,4 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 };
-}
+}   // namespace GeNN::PostsynapticModels

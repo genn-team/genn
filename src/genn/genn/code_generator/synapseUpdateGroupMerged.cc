@@ -3,8 +3,8 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
-
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -173,7 +173,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateGroupMerged
+// GeNN::CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
@@ -284,7 +284,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PostsynapticUpdateGroupMerged
+// GeNN::CodeGenerator::PostsynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
@@ -300,7 +300,7 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDynamicsGroupMerged
+// GeNN::CodeGenerator::SynapseDynamicsGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------

@@ -16,7 +16,7 @@
 //----------------------------------------------------------------------------
 namespace
 {
-std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
+std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, GeNN::Models::VarInit> &varInitialisers)
 {
     // Reserve initial values to match initialisers
     std::unordered_map<std::string, double> initVals;
@@ -26,7 +26,7 @@ std::unordered_map<std::string, double> getConstInitVals(const std::unordered_ma
                    [](const auto &v)
                    {
                        // Check
-                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr) {
+                       if(dynamic_cast<const GeNN::InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr) {
                            throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
                        }
 
@@ -39,8 +39,10 @@ std::unordered_map<std::string, double> getConstInitVals(const std::unordered_ma
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
-// SynapseGroup
+// GeNN::SynapseGroup
 // ------------------------------------------------------------------------
+namespace GeNN
+{
 void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
 {
     m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
@@ -489,7 +491,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     }
     // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
     else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
-        if(::Utils::isRNGRequired(m_WUVarInitialisers)) {
+        if(Utils::isRNGRequired(m_WUVarInitialisers)) {
             throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
         }
     }
@@ -507,7 +509,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
 
         // Give an error if connectivity initialisation snippet uses RNG
-        if(::Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode())) {
+        if(Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode())) {
             throw std::runtime_error("TOEPLITZ connectivity cannot currently access RNG.");
         }
 
@@ -990,3 +992,4 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
     Utils::updateHash(m_PSExtraGlobalParamLocation, hash);
     return hash.get_digest();
 }
+}   // namespace GeNN

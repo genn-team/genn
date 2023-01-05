@@ -15,14 +15,19 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CustomConnectivityUpdateInternal;
 class CustomUpdateWUInternal;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// SynapseGroup
+// GeNN::SynapseGroup
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT SynapseGroup
 {
 public:
@@ -525,3 +530,4 @@ private:
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
 };
+}   // namespace GeNN

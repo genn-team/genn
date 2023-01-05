@@ -37,7 +37,8 @@
 // CUDA backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 using namespace CUDA;
 
 //--------------------------------------------------------------------------
@@ -731,13 +732,12 @@ int chooseDeviceWithMostGlobalMemory()
     LOGI_BACKEND << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
     return bestDevice;
 }
-}
+}   // anonymous namespace
+
+//--------------------------------------------------------------------------
 // CodeGenerator::Backends::Optimiser
-namespace CodeGenerator
-{
-namespace CUDA
-{
-namespace Optimiser
+//--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::CUDA::Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
@@ -791,6 +791,4 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
     }
 }
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace CodeGenerator::Backends::Optimiser

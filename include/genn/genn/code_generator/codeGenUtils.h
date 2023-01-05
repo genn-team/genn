@@ -21,9 +21,9 @@
 #include "teeStream.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -196,4 +196,4 @@ void genKernelIndex(const G *group, std::ostream &os, const CodeGenerator::Subst
         }
     }
 }
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

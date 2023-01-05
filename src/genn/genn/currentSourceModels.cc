@@ -1,14 +1,18 @@
 #include "currentSourceModels.h"
 
+using namespace GeNN;
+
+namespace GeNN::CurrentSourceModels
+{
 // Implement models
-IMPLEMENT_SNIPPET(CurrentSourceModels::DC);
-IMPLEMENT_SNIPPET(CurrentSourceModels::GaussianNoise);
-IMPLEMENT_SNIPPET(CurrentSourceModels::PoissonExp);
+IMPLEMENT_SNIPPET(DC);
+IMPLEMENT_SNIPPET(GaussianNoise);
+IMPLEMENT_SNIPPET(PoissonExp);
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::Base
+// GeNN::CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -18,9 +22,9 @@ boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CurrentSourceModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                                         const std::unordered_map<std::string, Models::VarInit> &varValues,
-                                         const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, Models::VarInit> &varValues,
+                    const std::string &description) const
 {
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
@@ -33,3 +37,4 @@ void CurrentSourceModels::Base::validate(const std::unordered_map<std::string, d
         throw std::runtime_error("Current source models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
 }
+}   // namespace GeNN::CurrentSourceModels

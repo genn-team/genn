@@ -5,8 +5,10 @@
 #include "synapseGroupInternal.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateInternal
+// GeNN::CustomUpdateInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class CustomUpdateInternal : public CustomUpdate
 {
 public:
@@ -65,3 +67,4 @@ public:
     using CustomUpdateWU::isBatchReduction;
     using CustomUpdateWU::isTransposeOperation;
 };
+}   // namespace GeNN

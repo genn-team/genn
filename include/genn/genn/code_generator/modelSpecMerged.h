@@ -19,15 +19,15 @@
 #include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class BackendBase;
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::ModelSpecMerged
+// GeNN::CodeGenerator::ModelSpecMerged
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT ModelSpecMerged
 {
@@ -470,4 +470,4 @@ private:
     MergedEGPMap m_MergedEGPs;
 
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

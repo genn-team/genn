@@ -24,7 +24,8 @@
 #include "optimiser.h"
 
 // Declare global GeNN preferences
-using namespace CodeGenerator::BACKEND_NAMESPACE;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator::BACKEND_NAMESPACE;
 Preferences GENN_PREFERENCES;
 
 // Include model

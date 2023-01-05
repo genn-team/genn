@@ -13,12 +13,17 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CurrentSourceInternal;
 class SynapseGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// NeuronGroup
+// GeNN::NeuronGroup
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT NeuronGroup
 {
 public:
@@ -320,3 +325,4 @@ private:
     //! Is spike event recording enabled?
     bool m_SpikeEventRecordingEnabled;
 };
+}   // namespace GeNN

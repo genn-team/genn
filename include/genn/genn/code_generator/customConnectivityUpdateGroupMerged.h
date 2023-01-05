@@ -8,9 +8,9 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomConnectivityUpdateGroupMergedBase
+// GeNN::CodeGenerator::CustomConnectivityUpdateGroupMergedBase
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT CustomConnectivityUpdateGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
 {
@@ -27,7 +27,7 @@ protected:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomConnectivityUpdateGroupMerged
+// GeNN::CodeGenerator::CustomConnectivityUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
@@ -69,7 +69,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomConnectivityHostUpdateGroupMerged
+// GeNN::CodeGenerator::CustomConnectivityHostUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
@@ -105,4 +105,4 @@ private:
     void addVars(const BackendBase &backend, const Models::Base::VarVec &vars,
                  VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(const std::string&) const);
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

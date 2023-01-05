@@ -5,8 +5,10 @@
 #include "modelSpec.h"
 
 //------------------------------------------------------------------------
-// ModelSpecInternal
+// GeNN::ModelSpecInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class ModelSpecInternal : public ModelSpec
 {
 public:
@@ -28,3 +30,4 @@ public:
     using ModelSpec::isRecordingInUse;
     using ModelSpec::getHashDigest;
 };
+}   // namespace GeNN

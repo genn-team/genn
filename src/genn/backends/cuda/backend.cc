@@ -17,7 +17,8 @@
 // CUDA backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -277,13 +278,10 @@ void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Backend
+// GeNN::CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator::CUDA
 {
-namespace CUDA
-{
-//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  const std::string &scalarType, int device)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenDeviceID(device)
@@ -2264,5 +2262,4 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::CUDA

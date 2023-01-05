@@ -1,14 +1,18 @@
 #include "weightUpdateModels.h"
 
-IMPLEMENT_SNIPPET(WeightUpdateModels::StaticPulse);
-IMPLEMENT_SNIPPET(WeightUpdateModels::StaticPulseDendriticDelay);
-IMPLEMENT_SNIPPET(WeightUpdateModels::StaticGraded);
-IMPLEMENT_SNIPPET(WeightUpdateModels::PiecewiseSTDP);
+using namespace GeNN;
+
+namespace GeNN::WeightUpdateModels
+{
+IMPLEMENT_SNIPPET(StaticPulse);
+IMPLEMENT_SNIPPET(StaticPulseDendriticDelay);
+IMPLEMENT_SNIPPET(StaticGraded);
+IMPLEMENT_SNIPPET(PiecewiseSTDP);
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::Base
+// GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type WeightUpdateModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -37,11 +41,11 @@ boost::uuids::detail::sha1::digest_type WeightUpdateModels::Base::getHashDigest(
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void WeightUpdateModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                                        const std::unordered_map<std::string, Models::VarInit> &varValues,
-                                        const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                                        const std::unordered_map<std::string, Models::VarInit> &postVarValues,
-                                        const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, Models::VarInit> &varValues,
+                    const std::unordered_map<std::string, Models::VarInit> &preVarValues,
+                    const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                    const std::string &description) const
 {
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
@@ -76,3 +80,4 @@ void WeightUpdateModels::Base::validate(const std::unordered_map<std::string, do
         throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
     }
 }
+}   // namespace WeightUpdateModels

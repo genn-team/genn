@@ -7,11 +7,11 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
-using namespace Models;
-
 //----------------------------------------------------------------------------
-// Models::Base
+// GeNN::Models::Base
 //----------------------------------------------------------------------------
+namespace GeNN::Models
+{
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
@@ -203,28 +203,31 @@ SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
 { 
     return m_TransposeSG; 
 }
+
 //----------------------------------------------------------------------------
-void Models::updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
+// Free functions
+//----------------------------------------------------------------------------
+void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Utils::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------
-void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
+void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Utils::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------
-void Models::updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
+void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.getTargetName(), hash);
     Utils::updateHash(v.getVarIndex(), hash);
 }
 //----------------------------------------------------------------------------
-void Models::updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
+void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.getTargetName(), hash);
     Utils::updateHash(v.getVarIndex(), hash);
@@ -234,3 +237,4 @@ void Models::updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &has
         Utils::updateHash(v.getTransposeVarIndex(), hash);
     }
 }
+}   // namespace GeNN::Models

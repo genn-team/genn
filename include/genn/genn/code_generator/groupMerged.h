@@ -19,18 +19,18 @@
 #include "code_generator/codeGenUtils.h"
 
 // Forward declarations
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class CodeStream;
 }
 
 //------------------------------------------------------------------------
-// GroupMergedFieldType
+// GeNN::CodeGenerator::GroupMergedFieldType
 //------------------------------------------------------------------------
 //! Enumeration of field types 
 /*! The only reason this is not a child of GroupMerged is to prevent the 
     template nightmare that would otherwise ensue when declaring operators on it */
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 enum class GroupMergedFieldType : unsigned int
 {
@@ -50,7 +50,7 @@ inline bool operator & (GroupMergedFieldType typeA, GroupMergedFieldType typeB)
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::GroupMerged
+// GeNN::CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
 //! Very thin wrapper around a number of groups which have been merged together
 template<typename G>
@@ -114,7 +114,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 const std::string &type = std::get<0>(f);
-                if(::Utils::isTypePointer(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
+                if(Utils::isTypePointer(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostType(type);
@@ -532,7 +532,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
@@ -560,7 +560,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
@@ -586,7 +586,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronGroupMergedBase
+// GeNN::CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
 {
@@ -932,7 +932,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseGroupMergedBase
+// GeNN::CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
 {
@@ -1108,4 +1108,4 @@ private:
     //------------------------------------------------------------------------
     const std::string m_ArchetypeCode;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

@@ -14,18 +14,16 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
-
-using namespace CodeGenerator;
-
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
 namespace
 {
-bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend)
+bool isSmallSharedMemoryPop(const GeNN::CodeGenerator::PresynapticUpdateGroupMerged &sg,
+                            const GeNN::CodeGenerator::BackendSIMT &backend)
 {
     // If shared memory atomics are slow
-    const size_t blockSize = backend.getKernelBlockSize(CodeGenerator::KernelPresynapticUpdate);
+    const size_t blockSize = backend.getKernelBlockSize(GeNN::CodeGenerator::KernelPresynapticUpdate);
     if(backend.areSharedMemAtomicsSlow()) {
         return false;
     }
@@ -36,7 +34,7 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const Backen
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if all neuron groups targetted
     // by synapse groups within merged group are small enough that input to then can be stored in a shared memory array
     else if(std::all_of(sg.getGroups().cbegin(), sg.getGroups().cend(),
-                        [blockSize](const SynapseGroupInternal &sg)
+                        [blockSize](const GeNN::SynapseGroupInternal &sg)
                         {
                             return (sg.getTrgNeuronGroup()->getNumNeurons() <= blockSize);
                         }))
@@ -50,11 +48,9 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const Backen
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
 //----------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace PresynapticUpdateStrategySIMT
+namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT
 {
 size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
@@ -200,7 +196,7 @@ void PreSpan::genPostamble(CodeStream&, const ModelSpecMerged&, const Presynapti
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
@@ -435,7 +431,7 @@ bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
 //--------------------------------------------------------------------------
 size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg) const
 {
@@ -532,8 +528,8 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 
         // If this connectivity requires an RNG for initialisation,
         // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
-        if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())
-           || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
+        if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())
+           || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
         {
             std::stringstream skipAhead;
             if(numThreadsPerSpike > 1) {
@@ -628,7 +624,7 @@ void PreSpanProcedural::genPostamble(CodeStream&, const ModelSpecMerged&, const 
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask
 //----------------------------------------------------------------------------
 size_t PostSpanBitmask::getNumThreads(const SynapseGroupInternal &sg) const
 {
@@ -807,7 +803,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
 //--------------------------------------------------------------------------
 size_t PostSpanToeplitz::getNumThreads(const SynapseGroupInternal &sg) const
 {
@@ -999,5 +995,4 @@ void PostSpanToeplitz::genPostamble(CodeStream &os, const ModelSpecMerged &model
         }
     }
 }
-}   // namespace PresynapticUpdateStrategySIMT
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT

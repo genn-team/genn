@@ -6,6 +6,8 @@
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
+namespace GeNN
+{
 //!< Flags defining which memory space variables should be allocated in
 enum class VarLocation : uint8_t
 {
@@ -24,3 +26,4 @@ inline bool operator & (VarLocation locA, VarLocation locB)
 {
     return (static_cast<uint8_t>(locA) & static_cast<uint8_t>(locB)) != 0;
 }
+}   // namespace GeNN

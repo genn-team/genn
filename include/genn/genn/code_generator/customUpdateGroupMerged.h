@@ -5,9 +5,9 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateGroupMerged
+// GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
@@ -43,7 +43,7 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
 {
@@ -89,7 +89,7 @@ private:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMerged
+// GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
@@ -120,7 +120,7 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateTransposeWUGroupMerged
+// GeNN::CodeGenerator::CustomUpdateTransposeWUGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
@@ -152,7 +152,7 @@ public:
 
 
 // ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateHostReductionGroupMergedBase
 //----------------------------------------------------------------------------
 template<typename G>
 class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
@@ -180,7 +180,7 @@ protected:
 };
 
 // ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMerged
+// GeNN::CodeGenerator::CustomUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
@@ -206,7 +206,7 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CustomWUUpdateHostReductionGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
@@ -230,4 +230,4 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator
