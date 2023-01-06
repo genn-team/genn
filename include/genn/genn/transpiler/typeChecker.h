@@ -20,10 +20,21 @@ class Base;
 }
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::Environment
+// GeNN::Transpiler::TypeChecker::TypeCheckError
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::TypeChecker
 {
+class TypeCheckError : public std::runtime_error
+{
+public:
+    TypeCheckError() : std::runtime_error("")
+    {
+    }
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::TypeChecker::Environment
+//---------------------------------------------------------------------------
 class Environment
 {
 public:

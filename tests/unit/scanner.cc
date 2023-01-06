@@ -7,7 +7,11 @@
 
 using namespace GeNN::Transpiler;
 
-
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
 class TestErrorHandler : public ErrorHandler
 {
 public:
@@ -40,6 +44,7 @@ private:
 
     bool m_Error;
 };
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // Tests
