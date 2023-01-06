@@ -28,6 +28,7 @@
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
+    <ClCompile Include="scanner.cc" />
     <ClCompile Include="synapseGroup.cc" />
     <ClCompile Include="models.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
