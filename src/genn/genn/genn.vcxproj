@@ -55,6 +55,13 @@
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
     <ClCompile Include="snippet.cc" />
+    <ClCompile Include="transpiler\expression.cc" />
+    <ClCompile Include="transpiler\parser.cc" />
+    <ClCompile Include="transpiler\prettyPrinter.cc" />
+    <ClCompile Include="transpiler\scanner.cc" />
+    <ClCompile Include="transpiler\statement.cc" />
+    <ClCompile Include="transpiler\type.cc" />
+    <ClCompile Include="transpiler\typeChecker.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
@@ -110,6 +117,16 @@
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\errorHandler.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\expression.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\parser.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\prettyPrinter.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\scanner.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\transpilerUtils.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\type.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\typeChecker.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
