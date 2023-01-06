@@ -601,7 +601,7 @@ Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
     // selection-statement ::=
     //      "if" "(" expression ")" statement
     //      "if" "(" expression ")" statement "else" statement
-    //      "switch" "(" expression ")" statement
+    //      "switch" "(" expression ")" compound-statement
     const auto keyword = parserState.previous();
     parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after '" + std::string{keyword.lexeme} + "'");
     auto condition = parseExpression(parserState);
@@ -621,8 +621,10 @@ Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
     }
     // Otherwise (switch statement)
     else {
-        return std::make_unique<Statement::Switch>(keyword, std::move(condition),
-                                                   parseStatement(parserState));
+        // **NOTE** this is a slight simplification of the C standard where any type of statement can be used as the body of the switch
+        parserState.consume(Token::Type::LEFT_BRACE, "Expect '{' after switch statement.");
+        auto body = parseCompoundStatement(parserState);
+        return std::make_unique<Statement::Switch>(keyword, std::move(condition), std::move(body));
     }
 }
 
