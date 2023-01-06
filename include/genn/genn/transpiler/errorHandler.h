@@ -3,13 +3,13 @@
 // Standard C++ includes
 #include <string_view>
 
-// Mini-parse includes
-#include "token.h"
+// Transpiler includes
+#include "transpiler/token.h"
 
 //---------------------------------------------------------------------------
-// MiniParse::ErrorHandler
+// GeNN::Transpiler::ErrorHandler
 //---------------------------------------------------------------------------
-namespace MiniParse
+namespace GeNN::Transpiler
 {
 class ErrorHandler
 {

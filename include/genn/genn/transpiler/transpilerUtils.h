@@ -2,9 +2,10 @@
 
 // Standard C++ includes
 #include <charconv>
+#include <string_view>
 #include <type_traits>
 
-namespace MiniParse::Utils
+namespace GeNN::Transpiler::Utils
 {
     template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
     template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in

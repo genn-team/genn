@@ -4,23 +4,23 @@
 #include <memory>
 #include <vector>
 
-// Mini-parse includes
-#include "expression.h"
+// Transpiler includes
+#include "transpiler/expression.h"
 
 // Forward declarations
-namespace MiniParse::Statement 
+namespace GeNN::Transpiler::Statement 
 {
 class Visitor;
 }
-namespace Type
+namespace GeNN::Type
 {
 class Base;
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Base
+// GeNN::Transpiler::Statement::Base
 //---------------------------------------------------------------------------
-namespace MiniParse::Statement
+namespace GeNN::Transpiler::Statement
 {
 class Base
 {
@@ -32,7 +32,7 @@ typedef std::unique_ptr<Base const> StatementPtr;
 typedef std::vector<StatementPtr> StatementList;
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Break
+// GeNN::Transpiler::Statement::Break
 //---------------------------------------------------------------------------
 class Break : public Base
 {
@@ -50,7 +50,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Compound
+// GeNN::Transpiler::Statement::Compound
 //---------------------------------------------------------------------------
 class Compound : public Base
 {
@@ -68,7 +68,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Continue
+// GeNN::Transpiler::Statement::Continue
 //---------------------------------------------------------------------------
 class Continue : public Base
 {
@@ -86,142 +86,148 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Do
+// GeNN::Transpiler::Statement::Do
 //---------------------------------------------------------------------------
 class Do : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Do(MiniParse::Expression::ExpressionPtr condition, StatementPtr body)
+    Do(ExpressionPtr condition, StatementPtr body)
     :  m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const MiniParse::Expression::Base *getCondition() const { return m_Condition.get(); }
+    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const MiniParse::Expression::ExpressionPtr m_Condition;
+    const ExpressionPtr m_Condition;
     const StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Expression
+// GeNN::Transpiler::Statement::Expression
 //---------------------------------------------------------------------------
 class Expression : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Expression(MiniParse::Expression::ExpressionPtr expression)
+    Expression(ExpressionPtr expression)
     :  m_Expression(std::move(expression))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const MiniParse::Expression::Base *getExpression() const { return m_Expression.get(); }
+    const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
 private:
-    const MiniParse::Expression::ExpressionPtr m_Expression;
+    const ExpressionPtr m_Expression;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::For
+// GeNN::Transpiler::Statement::For
 //---------------------------------------------------------------------------
 class For : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    For(StatementPtr initialiser, MiniParse::Expression::ExpressionPtr condition, MiniParse::Expression::ExpressionPtr increment, StatementPtr body)
+    For(StatementPtr initialiser, ExpressionPtr condition, ExpressionPtr increment, StatementPtr body)
     :  m_Initialiser(std::move(initialiser)), m_Condition(std::move(condition)), m_Increment(std::move(increment)), m_Body(std::move(body))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
     const Base *getInitialiser() const { return m_Initialiser.get(); }
-    const MiniParse::Expression::Base *getCondition() const { return m_Condition.get(); }
-    const MiniParse::Expression::Base *getIncrement() const { return m_Increment.get(); }
+    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
+    const ExpressionPtr::element_type *getIncrement() const { return m_Increment.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
     const StatementPtr m_Initialiser;
-    const MiniParse::Expression::ExpressionPtr m_Condition;
-    const MiniParse::Expression::ExpressionPtr m_Increment;
+    const ExpressionPtr m_Condition;
+    const ExpressionPtr m_Increment;
     const StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::If
+// GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
 class If : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    If(MiniParse::Expression::ExpressionPtr condition, StatementPtr thenBranch, StatementPtr elseBranch)
+    If(ExpressionPtr condition, StatementPtr thenBranch, StatementPtr elseBranch)
     :  m_Condition(std::move(condition)), m_ThenBranch(std::move(thenBranch)), m_ElseBranch(std::move(elseBranch))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const MiniParse::Expression::Base *getCondition() const { return m_Condition.get(); }
+    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getThenBranch() const { return m_ThenBranch.get(); }
     const Base *getElseBranch() const { return m_ElseBranch.get(); }
 
 private:
-    const MiniParse::Expression::ExpressionPtr m_Condition;
+    const ExpressionPtr m_Condition;
     const StatementPtr m_ThenBranch;
     const StatementPtr m_ElseBranch;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Labelled
+// GeNN::Transpiler::Statement::Labelled
 //---------------------------------------------------------------------------
 class Labelled : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Labelled(Token keyword, MiniParse::Expression::ExpressionPtr value, StatementPtr body)
+    Labelled(Token keyword, ExpressionPtr value, StatementPtr body)
     :  m_Keyword(keyword), m_Value(std::move(value)), m_Body(std::move(body))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
     const Token &getKeyword() const { return m_Keyword; }
-    const MiniParse::Expression::Base *getValue() const { return m_Value.get(); }
+    const ExpressionPtr::element_type *getValue() const { return m_Value.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
     const Token m_Keyword;
-    const MiniParse::Expression::ExpressionPtr m_Value;
+    const ExpressionPtr m_Value;
     const StatementPtr m_Body;
 };
 
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Switch
+// GeNN::Transpiler::Statement::Switch
 //---------------------------------------------------------------------------
 class Switch : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Switch(Token switchToken, MiniParse::Expression::ExpressionPtr condition, StatementPtr body)
+    Switch(Token switchToken, ExpressionPtr condition, StatementPtr body)
     :   m_Switch(switchToken), m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
     const Token &getSwitch() const { return m_Switch; }
-    const MiniParse::Expression::Base *getCondition() const { return m_Condition.get(); }
+    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
     
 private:
     const Token m_Switch;
-    const MiniParse::Expression::ExpressionPtr m_Condition;
+    const ExpressionPtr m_Condition;
     const StatementPtr m_Body;
 };
 
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::VarDeclaration
+// GeNN::Transpiler::Statement::VarDeclaration
 //---------------------------------------------------------------------------
 class VarDeclaration : public Base
 {
 public:
-    typedef std::vector<std::tuple<Token, MiniParse::Expression::ExpressionPtr>> InitDeclaratorList;
+    typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr>> InitDeclaratorList;
 
     VarDeclaration(const Type::Base *type, bool isConst, InitDeclaratorList initDeclaratorList)
     :   m_Type(type), m_Const(isConst), m_InitDeclaratorList(std::move(initDeclaratorList))
@@ -242,46 +248,48 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::If
+// GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
 class While : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    While(MiniParse::Expression::ExpressionPtr condition, StatementPtr body)
+    While(ExpressionPtr condition, StatementPtr body)
     :  m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const MiniParse::Expression::Base *getCondition() const { return m_Condition.get(); }
+    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const MiniParse::Expression::ExpressionPtr m_Condition;
+    const ExpressionPtr m_Condition;
     const StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Print
+// GeNN::Transpiler::Statement::Print
 //---------------------------------------------------------------------------
 // **HACK** temporary until function calling is working
 class Print : public Base
 {
+    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Print(MiniParse::Expression::ExpressionPtr expression)
+    Print(ExpressionPtr expression)
     :  m_Expression(std::move(expression))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const MiniParse::Expression::Base *getExpression() const { return m_Expression.get(); }
+    const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
 private:
-    const MiniParse::Expression::ExpressionPtr m_Expression;
+    const ExpressionPtr m_Expression;
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Statement::Visitor
+// GeNN::Transpiler::Statement::Visitor
 //---------------------------------------------------------------------------
 class Visitor
 {
@@ -299,4 +307,4 @@ public:
     virtual void visit(const While &whileStatement) = 0;
     virtual void visit(const Print &print) = 0;
 };
-}   // namespace MiniParse::Statement
+}   // namespace GeNN::Transpiler::Statement

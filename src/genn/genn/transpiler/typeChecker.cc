@@ -1,4 +1,4 @@
-#include "type_checker.h"
+#include "transpiler/typeChecker.h"
 
 // Standard C++ includes
 #include <string>
@@ -9,13 +9,14 @@
 // GeNN includes
 #include "type.h"
 
-// Mini-parse includes
-#include "error_handler.h"
-#include "expression.h"
-#include "utils.h"
+// Transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/expression.h"
+#include "transpiler/transpilerUtils.h"
 
-using namespace MiniParse;
-using namespace MiniParse::TypeChecker;
+using namespace GeNN::Transpiler;
+using namespace GeNN::Transpiler::TypeChecker;
+namespace Type = GeNN::Type;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace
@@ -252,7 +253,7 @@ public:
     virtual void visit(const Expression::Literal &literal) final
     {
         m_Type = std::visit(
-            MiniParse::Utils::Overload{
+            Utils::Overload{
                 [](auto v)->const Type::NumericBase *{ return Type::TypeTraits<decltype(v)>::NumericType::getInstance(); },
                 [](std::monostate)->const Type::NumericBase *{ return nullptr; }},
                 literal.getValue());
@@ -665,8 +666,8 @@ std::tuple<const Type::Base *, bool> Environment::getType(const Token &name, Err
     }
 }
 //---------------------------------------------------------------------------
-void MiniParse::TypeChecker::typeCheck(const Statement::StatementList &statements, Environment &environment, 
-                                       ErrorHandler &errorHandler)
+void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, Environment &environment, 
+                                              ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
     visitor.typeCheck(statements, environment);

@@ -8,9 +8,9 @@
 #include <cstdint>
 
 //---------------------------------------------------------------------------
-// MiniParse::Token
+// GeNN::Transpiler::Token
 //---------------------------------------------------------------------------
-namespace MiniParse
+namespace GeNN::Transpiler
 {
 struct Token
 {
@@ -58,5 +58,4 @@ struct Token
     const size_t line;
     const LiteralValue literalValue;
 };
-
-}
+}   // namespace GeNN::Transpiler

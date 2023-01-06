@@ -1,4 +1,4 @@
-#include "scanner.h"
+#include "transpiler/scanner.h"
 
 // Standard C++ includes
 #include <charconv>
@@ -10,12 +10,12 @@
 // Standard C includes
 #include <cctype>
 
-// Mini-parse includes
-#include "error_handler.h"
-#include "utils.h"
+// Transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/transpilerUtils.h"
 
-using namespace MiniParse;
-using namespace MiniParse::Scanner;
+using namespace GeNN::Transpiler;
+using namespace GeNN::Transpiler::Scanner;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace
@@ -300,8 +300,6 @@ void scanIdentifier(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 {
-    using namespace MiniParse;
-
     char c = scanState.advance();
     switch(c) {
         // Single character tokens
@@ -464,9 +462,9 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::Scanner
+// GeNN::Transpiler::Scanner
 //---------------------------------------------------------------------------
-namespace MiniParse::Scanner
+namespace GeNN::Transpiler::Scanner
 {
 std::vector<Token> scanSource(const std::string_view &source, ErrorHandler &errorHandler)
 {

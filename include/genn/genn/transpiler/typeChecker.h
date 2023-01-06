@@ -5,24 +5,24 @@
 #include <string_view>
 #include <unordered_map>
 
-// Mini-parse includes
-#include "statement.h"
+// Transpiler includes
+#include "transpiler/statement.h"
 
 // Forward declarations
-namespace MiniParse
+namespace GeNN::Transpiler
 {
 class ErrorHandler;
 struct Token;
 }
-namespace Type
+namespace GeNN::Type
 {
 class Base;
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::TypeChecker::Environment
+// GeNN::Transpiler::TypeChecker::Environment
 //---------------------------------------------------------------------------
-namespace MiniParse::TypeChecker
+namespace GeNN::Transpiler::TypeChecker
 {
 class Environment
 {
@@ -61,4 +61,4 @@ private:
 //---------------------------------------------------------------------------
 void typeCheck(const Statement::StatementList &statements, Environment &environment, 
                ErrorHandler &errorHandler);
-}   // namespace MiniParse::TypeChecker
+}   // namespace MiniParse::GeNN::Transpiler

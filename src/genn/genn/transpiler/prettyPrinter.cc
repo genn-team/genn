@@ -1,17 +1,18 @@
-#include "pretty_printer.h"
+#include "transpiler/prettyPrinter.h"
 
 // Standard C++ includes
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-// Mini-parse includes
+// GeNN includes
 #include "type.h"
-#include "utils.h"
 
+// Transpiler includes
+#include "transpiler/transpilerUtils.h"
 
-using namespace MiniParse;
-using namespace MiniParse::PrettyPrinter;
+using namespace GeNN::Transpiler;
+using namespace GeNN::Transpiler::PrettyPrinter;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace
@@ -265,7 +266,10 @@ private:
 };
 }   // Anonymous namespace
 
-std::string MiniParse::PrettyPrinter::print(const Statement::StatementList &statements)
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::PrettyPrinter
+//---------------------------------------------------------------------------
+std::string GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements)
 {
     Visitor visitor;
     return visitor.print(statements);

@@ -4,23 +4,23 @@
 #include <memory>
 #include <vector>
 
-// Mini-parse includes
-#include "token.h"
+// Transpiler includes
+#include "transpiler/token.h"
 
 // Forward declarations
-namespace MiniParse::Expression 
+namespace GeNN::Transpiler::Expression 
 {
 class Visitor;
 }
-namespace Type
+namespace GeNN::Type
 {
 class Base;
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Base
+// GeNN::Transpiler::Expression::Base
 //---------------------------------------------------------------------------
-namespace MiniParse::Expression
+namespace GeNN::Transpiler::Expression
 {
 class Base
 {
@@ -32,7 +32,7 @@ typedef std::unique_ptr<Base const> ExpressionPtr;
 typedef std::vector<ExpressionPtr> ExpressionList;
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::ArraySubscript
+// GeNN::Transpiler::Expression::ArraySubscript
 //---------------------------------------------------------------------------
 class ArraySubscript : public Base
 {
@@ -52,7 +52,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Assignment
+// GeNN::Transpiler::Expression::Assignment
 //---------------------------------------------------------------------------
 class Assignment : public Base
 {
@@ -74,7 +74,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Binary
+// GeNN::Transpiler::Expression::Binary
 //---------------------------------------------------------------------------
 class Binary : public Base
 {
@@ -96,7 +96,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Call
+// GeNN::Transpiler::Expression::Call
 //---------------------------------------------------------------------------
 class Call : public Base
 {
@@ -118,7 +118,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Cast
+// GeNN::Transpiler::Expression::Cast
 //---------------------------------------------------------------------------
 class Cast : public Base
 {
@@ -141,7 +141,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Conditional
+// GeNN::Transpiler::Expression::Conditional
 //---------------------------------------------------------------------------
 class Conditional : public Base
 {
@@ -165,7 +165,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Grouping
+// GeNN::Transpiler::Expression::Grouping
 //---------------------------------------------------------------------------
 class Grouping : public Base
 {
@@ -183,7 +183,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Literal
+// GeNN::Transpiler::Expression::Literal
 //---------------------------------------------------------------------------
 class Literal : public Base
 {
@@ -201,7 +201,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Logical
+// GeNN::Transpiler::Expression::Logical
 //---------------------------------------------------------------------------
 class Logical : public Base
 {
@@ -223,7 +223,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::PostfixIncDec
+// GeNN::Transpiler::Expression::PostfixIncDec
 //---------------------------------------------------------------------------
 class PostfixIncDec : public Base
 {
@@ -243,7 +243,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::PrefixIncDec
+// GeNN::Transpiler::Expression::PrefixIncDec
 //---------------------------------------------------------------------------
 class PrefixIncDec : public Base
 {
@@ -263,7 +263,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Variable
+// GeNN::Transpiler::Expression::Variable
 //---------------------------------------------------------------------------
 class Variable : public Base
 {
@@ -281,7 +281,7 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Unary
+// GeNN::Transpiler::Expression::Unary
 //---------------------------------------------------------------------------
 class Unary : public Base
 {
@@ -302,7 +302,7 @@ private:
 
 
 //---------------------------------------------------------------------------
-// MiniParse::Expression::Visitor
+// GeNN::Transpiler::Expression::Visitor
 //---------------------------------------------------------------------------
 class Visitor
 {
@@ -321,4 +321,4 @@ public:
     virtual void visit(const Variable &variable) = 0;
     virtual void visit(const Unary &unary) = 0;
 };
-}   // namespace MiniParse::Expression
+}   // namespace GeNN::Transpiler::Expression

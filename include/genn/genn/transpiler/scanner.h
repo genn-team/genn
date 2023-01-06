@@ -7,19 +7,19 @@
 #include <variant>
 #include <vector>
 
-// Mini-parse includes
-#include "token.h"
+// Transpiler includes
+#include "transpiler/token.h"
 
 // Forward declarations
-namespace MiniParse
+namespace GeNN::Transpiler
 {
 class ErrorHandler;
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::Scanner::Error
+// GeNN::Transpiler::Scanner::Error
 //---------------------------------------------------------------------------
-namespace MiniParse::Scanner
+namespace GeNN::Transpiler::Scanner
 {
 std::vector<Token> scanSource(const std::string_view &source, ErrorHandler &errorHandler);
 

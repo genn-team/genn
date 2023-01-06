@@ -4,6 +4,8 @@
 #include <map>
 #include <unordered_map>
 
+using namespace GeNN;
+
 // Anonymous namespace
 namespace
 {
@@ -40,9 +42,9 @@ const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> uns
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// Type
+// GeNN::Type
 //----------------------------------------------------------------------------
-namespace Type
+namespace GeNN::Type
 {
 // Implement numeric types
 IMPLEMENT_NUMERIC_TYPE(Bool);
@@ -136,4 +138,4 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
         }
     }
 }
-}
+}   // namespace GeNN::Type

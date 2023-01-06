@@ -4,21 +4,21 @@
 #include <memory>
 #include <vector>
 
-// Mini-parse includes
-#include "expression.h"
-#include "statement.h"
-#include "token.h"
+// Transpiler includes
+#include "transpiler/expression.h"
+#include "transpiler/statement.h"
+#include "transpiler/token.h"
 
 // Forward declarations
-namespace MiniParse
+namespace GeNN::Transpiler
 {
 class ErrorHandler;
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::Scanner::Parser
+// GeNN::Transpiler::Parser
 //---------------------------------------------------------------------------
-namespace MiniParse::Parser
+namespace GeNN::Transpiler::Parser
 {
 Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandler &errorHandler);
 

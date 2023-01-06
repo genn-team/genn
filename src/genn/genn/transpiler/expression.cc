@@ -1,9 +1,9 @@
-#include "expression.h"
+#include "transpiler/expression.h"
 
-#define IMPLEMENT_ACCEPT(CLASS_NAME)                                        \
-    void MiniParse::Expression::CLASS_NAME::accept(Visitor &visitor) const  \
-    {                                                                       \
-        visitor.visit(*this);                                               \
+#define IMPLEMENT_ACCEPT(CLASS_NAME)                                                \
+    void GeNN::Transpiler::Expression::CLASS_NAME::accept(Visitor &visitor) const    \
+    {                                                                               \
+        visitor.visit(*this);                                                       \
     }
 
 

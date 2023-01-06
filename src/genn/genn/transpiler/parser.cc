@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "transpiler/parser.h"
 
 // Standard C++ includes
 #include <map>
@@ -13,10 +13,10 @@
 // GeNN includes
 #include "type.h"
 
-// Mini-parse includes
-#include "error_handler.h"
+// Transpiler includes
+#include "transpiler/errorHandler.h"
 
-using namespace MiniParse;
+using namespace GeNN::Transpiler;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace
@@ -182,7 +182,7 @@ Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, s
     return expression;
 }
 
-std::tuple<const Type::Base*, bool> parseDeclarationSpecifiers(ParserState &parserState)
+std::tuple<const GeNN::Type::Base*, bool> parseDeclarationSpecifiers(ParserState &parserState)
 {
     // Loop through type qualifier and specifier tokens
     std::set<std::string_view> typeQualifiers{};
@@ -202,9 +202,9 @@ std::tuple<const Type::Base*, bool> parseDeclarationSpecifiers(ParserState &pars
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER}));
     
     // Lookup type
-    const Type::Base *type = (parserState.match({Token::Type::STAR}) 
-                              ? static_cast<const Type::Base*>(Type::getNumericPtrType(typeSpecifiers))
-                              : static_cast<const Type::Base*>(Type::getNumericType(typeSpecifiers)));
+    const GeNN::Type::Base *type = (parserState.match({Token::Type::STAR}) 
+                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
+                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
     if(!type) {
         parserState.error("Unknown type specifier");
     }
@@ -828,9 +828,9 @@ std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
 
 
 //---------------------------------------------------------------------------
-// MiniParse::Parser
+// GeNN::Transpiler::Parser
 //---------------------------------------------------------------------------
-namespace MiniParse::Parser
+namespace GeNN::Transpiler::Parser
 {
 Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandler &errorHandler)
 {

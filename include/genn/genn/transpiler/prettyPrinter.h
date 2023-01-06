@@ -3,13 +3,13 @@
 // Standard C++ includes
 #include <string>
 
-// Mini-parse includes
-#include "statement.h"
+// Transpiler includes
+#include "transpiler/statement.h"
 
 //---------------------------------------------------------------------------
-// MiniParse::PrettyPrinter
+// GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-namespace MiniParse::PrettyPrinter
+namespace GeNN::Transpiler::PrettyPrinter
 {
 std::string print(const Statement::StatementList &statements);
 }

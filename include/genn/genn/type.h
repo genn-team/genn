@@ -59,9 +59,9 @@
 #define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE); IMPLEMENT_TYPE(TYPE##Ptr)
 
 //----------------------------------------------------------------------------
-// Type::TypeTraits
+// GeNN::Type::TypeTraits
 //----------------------------------------------------------------------------
-namespace Type
+namespace GeNN::Type
 {
 //! Empty type trait structure
 template<typename T>
@@ -70,7 +70,7 @@ struct TypeTraits
 };
 
 //----------------------------------------------------------------------------
-// Type::Base
+// GeNN::Type::Base
 //----------------------------------------------------------------------------
 //! Base class for all types
 class Base
@@ -84,7 +84,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Type::NumericBase
+// GeNN::Type::NumericBase
 //----------------------------------------------------------------------------
 class NumericBase : public Base
 {
@@ -103,7 +103,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NumericPtrBase
+// GeNN::NumericPtrBase
 //----------------------------------------------------------------------------
 class NumericPtrBase : public Base
 {
@@ -115,7 +115,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Type::Numeric
+// GeNN::Type::Numeric
 //----------------------------------------------------------------------------
 template<typename T, int Rank>
 class Numeric : public NumericBase
@@ -148,7 +148,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NumericPtr
+// GeNN::NumericPtr
 //----------------------------------------------------------------------------
 template<typename T>
 class NumericPtr : public NumericPtrBase
@@ -167,7 +167,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Type::ForeignFunctionBase
+// GeNN::Type::ForeignFunctionBase
 //----------------------------------------------------------------------------
 class ForeignFunctionBase : public Base
 {
@@ -186,7 +186,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Type::ForeignFunction
+// GeNN::Type::ForeignFunction
 //----------------------------------------------------------------------------
 template<typename ReturnType, typename ...ArgTypes>
 class ForeignFunction : public ForeignFunctionBase
@@ -297,4 +297,4 @@ const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifie
 const NumericPtrBase *getNumericPtrType(const std::set<std::string_view> &typeSpecifiers);
 const NumericBase *getPromotedType(const NumericBase *type);
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b);
-}   // namespace Type
+}   // namespace GeNN::Type

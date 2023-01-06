@@ -60,8 +60,8 @@
     <ClCompile Include="transpiler\prettyPrinter.cc" />
     <ClCompile Include="transpiler\scanner.cc" />
     <ClCompile Include="transpiler\statement.cc" />
-    <ClCompile Include="transpiler\type.cc" />
     <ClCompile Include="transpiler\typeChecker.cc" />
+    <ClCompile Include="type.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
@@ -125,8 +125,8 @@
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\transpilerUtils.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\transpiler\type.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\typeChecker.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\type.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />

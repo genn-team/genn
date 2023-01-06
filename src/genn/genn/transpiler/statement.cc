@@ -1,9 +1,9 @@
-#include "statement.h"
+#include "transpiler/statement.h"
 
-#define IMPLEMENT_ACCEPT(CLASS_NAME)                                        \
-    void MiniParse::Statement::CLASS_NAME::accept(Visitor &visitor) const   \
-    {                                                                       \
-        visitor.visit(*this);                                               \
+#define IMPLEMENT_ACCEPT(CLASS_NAME)                                                \
+    void GeNN::Transpiler::Statement::CLASS_NAME::accept(Visitor &visitor) const    \
+    {                                                                               \
+        visitor.visit(*this);                                                       \
     }
 
 // Implement accept methods
