@@ -12,6 +12,8 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // Anonyous namespace
 //--------------------------------------------------------------------------

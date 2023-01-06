@@ -5,6 +5,8 @@
 #include "modelSpec.h"
 #include "weightUpdateModels.h"
 
+using namespace GeNN;
+
 namespace
 {
 //--------------------------------------------------------------------------

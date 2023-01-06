@@ -12,7 +12,8 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/substitutions.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 // Test based on original issue found in https://github.com/brian-team/brian2genn/pull/60 to make sure that ensureFtype doesn't break functions it shouldn't
 TEST(CodeGenUtils, ISinF) {
