@@ -80,14 +80,11 @@ TEST(TypeChecker, ArraySubscript)
         typeCheckCode("int x = intArray[4];", typeEnvironment);
     }
     
-    try {
+    EXPECT_THROW({
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
-        typeCheckCode("int x = intArray[4.0f];", typeEnvironment);
-        FAIL();
-    }
-    catch(const TypeChecker::TypeCheckError&) {
-    }
+        typeCheckCode("int x = intArray[4.0f];", typeEnvironment);}, 
+        TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Assignment)
