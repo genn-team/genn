@@ -4,6 +4,9 @@
 #include <memory>
 #include <vector>
 
+// GeNN includes
+#include "type.h"
+
 // Transpiler includes
 #include "transpiler/token.h"
 
@@ -11,10 +14,6 @@
 namespace GeNN::Transpiler::Expression 
 {
 class Visitor;
-}
-namespace GeNN::Type
-{
-class Base;
 }
 
 //---------------------------------------------------------------------------
@@ -123,20 +122,17 @@ private:
 class Cast : public Base
 {
 public:
-    Cast(const Type::Base *type, bool isConst, ExpressionPtr expression)
-    :  m_Type(type), m_Const(isConst), m_Expression(std::move(expression))
+    Cast(const Type::QualifiedType &qualifiedType, ExpressionPtr expression)
+    :  m_QualifiedType(qualifiedType), m_Expression(std::move(expression))
     {}
 
     virtual void accept(Visitor &visitor) const final;
 
     const Base *getExpression() const { return m_Expression.get(); }
-    
-    const Type::Base *getType() const { return m_Type; }
-    bool isConst() const { return m_Const; }
+    const Type::QualifiedType &getQualifiedType() const{ return m_QualifiedType; }
 
 private:
-    const Type::Base *m_Type;
-    bool m_Const;
+    const Type::QualifiedType m_QualifiedType;
     const ExpressionPtr m_Expression;
 };
 

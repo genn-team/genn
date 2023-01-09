@@ -4,6 +4,9 @@
 #include <memory>
 #include <vector>
 
+// GeNN includes
+#include "type.h"
+
 // Transpiler includes
 #include "transpiler/expression.h"
 
@@ -11,10 +14,6 @@
 namespace GeNN::Transpiler::Statement 
 {
 class Visitor;
-}
-namespace GeNN::Type
-{
-class Base;
 }
 
 //---------------------------------------------------------------------------
@@ -229,20 +228,17 @@ class VarDeclaration : public Base
 public:
     typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr>> InitDeclaratorList;
 
-    VarDeclaration(const Type::Base *type, bool isConst, InitDeclaratorList initDeclaratorList)
-    :   m_Type(type), m_Const(isConst), m_InitDeclaratorList(std::move(initDeclaratorList))
+    VarDeclaration(const Type::QualifiedType &qualifiedType, InitDeclaratorList initDeclaratorList)
+    :   m_QualifiedType(qualifiedType), m_InitDeclaratorList(std::move(initDeclaratorList))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const Type::Base *getType() const { return m_Type; }
-    bool isConst() const { return m_Const; }
-    
-    const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }
-    
+    const Type::QualifiedType &getQualifiedType() const{ return m_QualifiedType; }
+    const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }    
+
 private:
-    const Type::Base *m_Type;
-    const bool m_Const;
+    const Type::QualifiedType m_QualifiedType;
     const std::vector<Token> m_DeclarationSpecifiers;
     const InitDeclaratorList m_InitDeclaratorList;
 };

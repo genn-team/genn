@@ -84,6 +84,22 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// GeNN::Type::QualifiedType
+//----------------------------------------------------------------------------
+//! A type with qualifiers attached
+struct QualifiedType
+{
+    QualifiedType(const Base *t, bool v, bool p)
+    :   type(t), constValue(v), constPointer(p)
+    {
+    }
+
+    const Base *type;
+    bool constValue;
+    bool constPointer;
+};
+
+//----------------------------------------------------------------------------
 // GeNN::Type::NumericBase
 //----------------------------------------------------------------------------
 class NumericBase : public Base

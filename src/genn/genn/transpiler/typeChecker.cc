@@ -30,8 +30,8 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
     Visitor(ErrorHandler &errorHandler)
-        : m_Environment(nullptr), m_Type(nullptr), m_Const(false),
-        m_ErrorHandler(errorHandler), m_InLoop(false), m_InSwitch(false)
+    :   m_Environment(nullptr), m_QualifiedType{nullptr, false, false}, m_ErrorHandler(errorHandler), 
+        m_InLoop(false), m_InSwitch(false)
     {
     }
 
@@ -49,7 +49,7 @@ public:
         m_Environment = previous;
     }
 
-    std::tuple<const Type::Base *, bool> typeCheck(const Expression::Base *expression, Environment &environment)
+    const Type::QualifiedType typeCheck(const Expression::Base *expression, Environment &environment)
     {
         Environment *previous = m_Environment;
         m_Environment = &environment;
@@ -66,23 +66,22 @@ public:
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
         // Get pointer type
-        auto pointerType = dynamic_cast<const Type::NumericPtrBase *>(
-            std::get<0>(m_Environment->getType(arraySubscript.getPointerName(), m_ErrorHandler)));
+        auto arrayType = m_Environment->getType(arraySubscript.getPointerName(), m_ErrorHandler);
+        auto pointerType = dynamic_cast<const Type::NumericPtrBase *>(arrayType.type);
 
         // If pointer is indeed a pointer
         if (pointerType) {
             // Evaluate pointer type
-            auto indexType = std::get<0>(evaluateType(arraySubscript.getIndex().get()));
-            auto indexNumericType = dynamic_cast<const Type::NumericBase *>(indexType);
+            auto indexType = evaluateType(arraySubscript.getIndex().get());
+            auto indexNumericType = dynamic_cast<const Type::NumericBase *>(indexType.type);
             if (!indexNumericType || !indexNumericType->isIntegral()) {
                 m_ErrorHandler.error(arraySubscript.getPointerName(),
-                                     "Invalid subscript index type '" + indexType->getTypeName() + "'");
+                                     "Invalid subscript index type '" + indexType.type->getTypeName() + "'");
                 throw TypeCheckError();
             }
 
             // Use value type of array
-            m_Type = pointerType->getValueType();
-            m_Const = false;
+            m_QualifiedType = Type::QualifiedType{pointerType->getValueType(), arrayType.constValue, false};
         }
         // Otherwise
         else {
@@ -93,63 +92,58 @@ public:
 
     virtual void visit(const Expression::Assignment &assignment) final
     {
-        const auto [rhsType, rhsConst] = evaluateType(assignment.getValue());
-        m_Type = m_Environment->assign(assignment.getVarName(), rhsType, rhsConst,
-                                       assignment.getOperator().type, m_ErrorHandler);
-        m_Const = false;
+        const auto rhsType = evaluateType(assignment.getValue());
+        m_QualifiedType = m_Environment->assign(assignment.getVarName(), rhsType,
+                                                assignment.getOperator().type, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Binary &binary) final
     {
         const auto opType = binary.getOperator().type;
-        const auto [rightType, rightConst] = evaluateType(binary.getRight());
+        const auto rightType = evaluateType(binary.getRight());
         if (opType == Token::Type::COMMA) {
-            m_Type = rightType;
-            m_Const = rightConst;
+            m_QualifiedType = rightType;
         }
         else {
             // If we're subtracting two pointers
-            const auto [leftType, leftConst] = evaluateType(binary.getLeft());
-            auto leftNumericType = dynamic_cast<const Type::NumericBase *>(leftType);
-            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
-            auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(leftType);
-            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType);
+            const auto leftType = evaluateType(binary.getLeft());
+            auto leftNumericType = dynamic_cast<const Type::NumericBase *>(leftType.type);
+            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType.type);
+            auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(leftType.type);
+            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
             if (leftNumericPtrType && rightNumericPtrType && opType == Token::Type::MINUS) {
                 // Check pointers are compatible
                 if (leftNumericPtrType->getTypeHash() != rightNumericPtrType->getTypeHash()) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getTypeName() + "' and '" + rightType->getTypeName());
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                     throw TypeCheckError();
                 }
 
                 // **TODO** should be std::ptrdiff/Int64
-                m_Type = Type::Int32::getInstance();
-                m_Const = false;
+                m_QualifiedType = Type::QualifiedType{Type::Int32::getInstance(), false, false};
             }
             // Otherwise, if we're adding to or subtracting from pointers
             else if (leftNumericPtrType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS))       // P + n or P - n
             {
                 // Check that numeric operand is integer
                 if (!rightNumericType->isIntegral()) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getTypeName() + "' and '" + rightType->getTypeName());
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                     throw TypeCheckError();
                 }
 
-                // Use pointer type
-                m_Type = leftNumericPtrType;
-                m_Const = leftConst;
+                // Use left type
+                m_QualifiedType = leftType;
             }
             // Otherwise, if we're adding a number to a pointer
             else if (leftNumericType && rightNumericPtrType && opType == Token::Type::PLUS)  // n + P
             {
                 // Check that numeric operand is integer
                 if (!leftNumericType->isIntegral()) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getTypeName() + "' and '" + rightType->getTypeName());
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                     throw TypeCheckError();
                 }
 
-                // Use pointer type
-                m_Type = rightNumericPtrType;
-                m_Const = rightConst;
+                // Use right type
+                m_QualifiedType = leftType;
             }
             // Otherwise, if both operands are numeric
             else if (leftNumericType && rightNumericType) {
@@ -160,29 +154,27 @@ public:
                 {
                     // Check that operands are integers
                     if (!leftNumericType->isIntegral() || !rightNumericType->isIntegral()) {
-                        m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getTypeName() + "' and '" + rightType->getTypeName());
+                        m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                         throw TypeCheckError();
                     }
 
                     // If operator is a shift, promote left type
                     if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
-                        m_Type = Type::getPromotedType(leftNumericType);
-                        m_Const = false;
+                        
+                        m_QualifiedType = Type::QualifiedType{Type::getPromotedType(leftNumericType), false, false};
                     }
                     // Otherwise, take common type
                     else {
-                        m_Type = Type::getCommonType(leftNumericType, rightNumericType);
-                        m_Const = false;
+                        m_QualifiedType = Type::QualifiedType{Type::getCommonType(leftNumericType, rightNumericType), false, false};
                     }
                 }
                 // Otherwise, any numeric type will do, take common type
                 else {
-                    m_Type = Type::getCommonType(leftNumericType, rightNumericType);
-                    m_Const = false;
+                    m_QualifiedType = Type::QualifiedType{Type::getCommonType(leftNumericType, rightNumericType), false, false};
                 }
             }
             else {
-                m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getTypeName() + "' and '" + rightType->getTypeName());
+                m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                 throw TypeCheckError();
             }
         }
@@ -191,8 +183,8 @@ public:
     virtual void visit(const Expression::Call &call) final
     {
         // Evaluate callee type
-        auto calleeType = std::get<0>(evaluateType(call.getCallee()));
-        auto calleeFunctionType = dynamic_cast<const Type::ForeignFunctionBase *>(calleeType);
+        auto calleeType = evaluateType(call.getCallee());
+        auto calleeFunctionType = dynamic_cast<const Type::ForeignFunctionBase *>(calleeType.type);
 
         // If callee's a function
         if (calleeFunctionType) {
@@ -214,8 +206,7 @@ public:
                     auto callArgType = evaluateType(call.getArguments().at(i).get());
                 }*/
                 // Type is return type of function
-                m_Type = calleeFunctionType->getReturnType();
-                m_Const = false;
+                m_QualifiedType = Type::QualifiedType{calleeFunctionType->getReturnType(), false, false};
             }
         }
         // Otherwise
@@ -229,124 +220,120 @@ public:
     {
         // **TODO** any numeric can be cast to any numeric and any pointer to pointer but no intermixing
         // **TODO** const cannot be removed like this
-        m_Type = cast.getType();
-        m_Const = cast.isConst();
+        m_QualifiedType = cast.getQualifiedType();
     }
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
-        const auto [trueType, trueConst] = evaluateType(conditional.getTrue());
-        const auto [falseType, falseConst] = evaluateType(conditional.getFalse());
-        auto trueNumericType = dynamic_cast<const Type::NumericBase *>(trueType);
-        auto falseNumericType = dynamic_cast<const Type::NumericBase *>(falseType);
+        const auto trueType = evaluateType(conditional.getTrue());
+        const auto falseType = evaluateType(conditional.getFalse());
+        auto trueNumericType = dynamic_cast<const Type::NumericBase *>(trueType.type);
+        auto falseNumericType = dynamic_cast<const Type::NumericBase *>(falseType.type);
         if (trueNumericType && falseNumericType) {
-            m_Type = Type::getCommonType(trueNumericType, falseNumericType);
-            m_Const = trueConst || falseConst;
+            // **TODO** check behaviour
+            m_QualifiedType = Type::QualifiedType{Type::getCommonType(trueNumericType, falseNumericType),
+                                                  trueType.constValue || falseType.constValue,
+                                                  trueType.constPointer || falseType.constPointer};
         }
         else {
             m_ErrorHandler.error(conditional.getQuestion(),
-                                 "Invalid operand types '" + trueType->getTypeName() + "' and '" + std::string{falseType->getTypeName()} + "' to conditional");
+                                 "Invalid operand types '" + trueType.type->getTypeName() + "' and '" + falseType.type->getTypeName() + "' to conditional");
             throw TypeCheckError();
         }
     }
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        std::tie(m_Type, m_Const) = evaluateType(grouping.getExpression());
+        m_QualifiedType = evaluateType(grouping.getExpression());
     }
 
     virtual void visit(const Expression::Literal &literal) final
     {
-        m_Type = std::visit(
-            Utils::Overload{
-                [](auto v)->const Type::NumericBase *{ return Type::TypeTraits<decltype(v)>::NumericType::getInstance(); },
-                [](std::monostate)->const Type::NumericBase *{ return nullptr; }},
-                literal.getValue());
-        m_Const = true;
+        m_QualifiedType = Type::QualifiedType{
+            std::visit(Utils::Overload{
+                           [](auto v)->const Type::NumericBase *{ return Type::TypeTraits<decltype(v)>::NumericType::getInstance(); },
+                           [](std::monostate)->const Type::NumericBase *{ return nullptr; }},
+                           literal.getValue()),
+            true,
+            false};
     }
 
     virtual void visit(const Expression::Logical &logical) final
     {
         logical.getLeft()->accept(*this);
         logical.getRight()->accept(*this);
-        m_Type = Type::Int32::getInstance();
-        m_Const = false;
+        m_QualifiedType = Type::QualifiedType{Type::Int32::getInstance(), false, false};
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_Type = m_Environment->incDec(postfixIncDec.getVarName(),
-                                       postfixIncDec.getOperator(), m_ErrorHandler);
-        m_Const = false;
+        m_QualifiedType = m_Environment->incDec(postfixIncDec.getVarName(),
+                                                postfixIncDec.getOperator(), m_ErrorHandler);
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_Type = m_Environment->incDec(prefixIncDec.getVarName(),
-                                       prefixIncDec.getOperator(), m_ErrorHandler);
-        m_Const = false;
+        m_QualifiedType = m_Environment->incDec(prefixIncDec.getVarName(),
+                                                prefixIncDec.getOperator(), m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Variable &variable)
     {
-        std::tie(m_Type, m_Const) = m_Environment->getType(variable.getName(), m_ErrorHandler);
+        m_QualifiedType = m_Environment->getType(variable.getName(), m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Unary &unary) final
     {
-        const auto [rightType, rightConst] = evaluateType(unary.getRight());
+        const auto rightType = evaluateType(unary.getRight());
 
         // If operator is pointer de-reference
         if (unary.getOperator().type == Token::Type::STAR) {
-            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType);
+            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
             if (!rightNumericPtrType) {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getTypeName() + "'");
+                                     "Invalid operand type '" + rightType.type->getTypeName() + "'");
                 throw TypeCheckError();
             }
 
             // Return value type
-            m_Type = rightNumericPtrType->getValueType();
-
-            // **THINK**
-            m_Const = false;
+            m_QualifiedType = Type::QualifiedType{rightNumericPtrType->getValueType(), rightType.constValue, false};
         }
         // Otherwise
         else {
-            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
+            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType.type);
             if (rightNumericType) {
                 // If operator is arithmetic, return promoted type
                 if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
-                    m_Type = Type::getPromotedType(rightNumericType);
-                    m_Const = false;
+                    m_QualifiedType = Type::QualifiedType{Type::getPromotedType(rightNumericType),
+                                                          rightType.constValue, false};
                 }
                 // Otherwise, if operator is bitwise
                 else if (unary.getOperator().type == Token::Type::TILDA) {
                     // If type is integer, return promoted type
                     if (rightNumericType->isIntegral()) {
-                        m_Type = Type::getPromotedType(rightNumericType);
-                        m_Const = false;
+                        m_QualifiedType = Type::QualifiedType{Type::getPromotedType(rightNumericType),
+                                                              rightType.constValue, false};
                     }
                     else {
                         m_ErrorHandler.error(unary.getOperator(),
-                                             "Invalid operand type '" + rightType->getTypeName() + "'");
+                                             "Invalid operand type '" + rightType.type->getTypeName() + "'");
                         throw TypeCheckError();
                     }
                 }
                 // Otherwise, if operator is logical
                 else if (unary.getOperator().type == Token::Type::NOT) {
-                    m_Type = Type::Int32::getInstance();
-                    m_Const = false;
+                    m_QualifiedType = Type::QualifiedType{Type::Int32::getInstance(),
+                                                          rightType.constValue, false};
                 }
                 // Otherwise, if operator is address of, return pointer type
                 else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_Type = rightNumericType->getPointerType();
-                    m_Const = rightConst;
+                    m_QualifiedType = Type::QualifiedType{rightNumericType->getPointerType(),
+                                                          rightType.constValue, false};
                 }
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getTypeName() + "'");
+                                     "Invalid operand type '" + rightType.type->getTypeName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -432,11 +419,11 @@ public:
         }
 
         if (labelled.getValue()) {
-            auto valType = std::get<0>(evaluateType(labelled.getValue()));
-            auto valNumericType = dynamic_cast<const Type::NumericBase *>(valType);
+            auto valType = evaluateType(labelled.getValue());
+            auto valNumericType = dynamic_cast<const Type::NumericBase *>(valType.type);
             if (!valNumericType || !valNumericType->isIntegral()) {
                 m_ErrorHandler.error(labelled.getKeyword(),
-                                     "Invalid case value '" + valType->getTypeName() + "'");
+                                     "Invalid case value '" + valType.type->getTypeName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -446,11 +433,11 @@ public:
 
     virtual void visit(const Statement::Switch &switchStatement) final
     {
-        auto condType = std::get<0>(evaluateType(switchStatement.getCondition()));
-        auto condNumericType = dynamic_cast<const Type::NumericBase *>(condType);
+        auto condType = evaluateType(switchStatement.getCondition());
+        auto condNumericType = dynamic_cast<const Type::NumericBase *>(condType.type);
         if (!condNumericType || !condNumericType->isIntegral()) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
-                                 "Invalid condition '" + condType->getTypeName() + "'");
+                                 "Invalid condition '" + condType.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
@@ -462,16 +449,16 @@ public:
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_Environment->define(std::get<0>(var), varDeclaration.getType(),
-                                  varDeclaration.isConst(), m_ErrorHandler);
+            m_Environment->define(std::get<0>(var), varDeclaration.getQualifiedType(), m_ErrorHandler);
 
             // If variable has an initialiser expression
             if (std::get<1>(var)) {
                 // Evaluate type
-                const auto [initialiserType, initialiserConst] = evaluateType(std::get<1>(var).get());
+                const auto initialiserType = evaluateType(std::get<1>(var).get());
 
                 // Assign initialiser expression to variable
-                m_Environment->assign(std::get<0>(var), initialiserType, initialiserConst, Token::Type::EQUAL, m_ErrorHandler);
+                // **TODO** flag to signify this is an initialiser
+                m_Environment->assign(std::get<0>(var), initialiserType, Token::Type::EQUAL, m_ErrorHandler);
             }
         }
     }
@@ -493,18 +480,17 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    std::tuple<const Type::Base *, bool> evaluateType(const Expression::Base *expression)
+    const Type::QualifiedType &evaluateType(const Expression::Base *expression)
     {
         expression->accept(*this);
-        return std::make_tuple(m_Type, m_Const);
+        return m_QualifiedType;
     }
 
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
     Environment *m_Environment;
-    const Type::Base *m_Type;
-    bool m_Const;
+    Type::QualifiedType m_QualifiedType;
 
     ErrorHandler &m_ErrorHandler;
     bool m_InLoop;
@@ -515,42 +501,43 @@ private:
 //---------------------------------------------------------------------------
 // MiniParse::TypeChecker::Environment
 //---------------------------------------------------------------------------
-void Environment::define(const Token &name, const Type::Base *type, bool isConst, ErrorHandler &errorHandler)
+void Environment::define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler)
 {
-    if(!m_Types.try_emplace(name.lexeme, type, isConst).second) {
+    if(!m_Types.try_emplace(name.lexeme, qualifiedType).second) {
         errorHandler.error(name, "Redeclaration of variable");
         throw TypeCheckError();
     }
 }
 //---------------------------------------------------------------------------
-const Type::Base *Environment::assign(const Token &name, const Type::Base *assignedType, bool assignedConst, 
-                                      Token::Type op, ErrorHandler &errorHandler)
+const Type::QualifiedType &Environment::assign(const Token &name, const Type::QualifiedType &assignedType, 
+                                               Token::Type op, ErrorHandler &errorHandler)
 {
     // If type isn't found
     auto existingType = m_Types.find(name.lexeme);
     if(existingType == m_Types.end()) {
         if(m_Enclosing) {
-            return m_Enclosing->assign(name, assignedType, 
-                                       assignedConst, op, errorHandler);
+            return m_Enclosing->assign(name, assignedType,
+                                       op, errorHandler);
         }
         else {
             errorHandler.error(name, "Undefined variable");
             throw TypeCheckError();
         }
     }
-    // Otherwise, if type is found and it's const, give error
-    else if(std::get<1>(existingType->second)) {
+
+    // If existing type is a constant numeric value or if it's a constant pointer give errors
+    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType->second.type);
+    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType->second.type);
+    if((numericExistingType && existingType->second.constValue) 
+        || (numericPtrExistingType && existingType->second.constPointer)) 
+    {
         errorHandler.error(name, "Assignment of read-only variable");
         throw TypeCheckError();
     }
-
-    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(std::get<0>(existingType->second));
-    auto numericAssignedType = dynamic_cast<const Type::NumericBase *>(assignedType);
-
-    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(std::get<0>(existingType->second));
-    auto numericPtrAssignedType = dynamic_cast<const Type::NumericPtrBase *>(assignedType);
-
+    
     // If assignment operation is plain equals, any type is fine so return
+    auto numericAssignedType = dynamic_cast<const Type::NumericBase *>(assignedType.type);
+    auto numericPtrAssignedType = dynamic_cast<const Type::NumericPtrBase *>(assignedType.type);
     // **TODO** pointer type check
     if(op == Token::Type::EQUAL) {
         // If we're initialising a pointer with another pointer
@@ -570,7 +557,7 @@ const Type::Base *Environment::assign(const Token &name, const Type::Base *assig
         }
         // Otherwise, if we're trying to initialise a pointer with a non-pointer or vice-versa
         else if (numericPtrAssignedType || numericPtrExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + std::get<0>(existingType->second)->getTypeName() + "' and '" + assignedType->getTypeName());
+            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "' and '" + assignedType.type->getTypeName());
             throw TypeCheckError();
         }
     }
@@ -579,7 +566,7 @@ const Type::Base *Environment::assign(const Token &name, const Type::Base *assig
         // If the operand being added isn't numeric or the type being added to is neither numeric or a pointer
         if (!numericAssignedType || (!numericPtrExistingType && !numericExistingType))
         {
-            errorHandler.error(name, "Invalid operand types '" + std::get<0>(existingType->second)->getTypeName() + "' and '" + assignedType->getTypeName() + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "' and '" + assignedType.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
@@ -597,7 +584,7 @@ const Type::Base *Environment::assign(const Token &name, const Type::Base *assig
             throw TypeCheckError();
         }
         if(!numericExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + std::get<0>(existingType->second)->getTypeName() + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
@@ -615,10 +602,11 @@ const Type::Base *Environment::assign(const Token &name, const Type::Base *assig
     }
    
      // Return existing type
-    return std::get<0>(existingType->second);
+     // **THINK**
+    return existingType->second;
 }
 //---------------------------------------------------------------------------
-const Type::Base *Environment::incDec(const Token &name, const Token &op, ErrorHandler &errorHandler)
+const Type::QualifiedType &Environment::incDec(const Token &name, const Token &op, ErrorHandler &errorHandler)
 {
     auto existingType = m_Types.find(name.lexeme);
     if(existingType == m_Types.end()) {
@@ -630,26 +618,23 @@ const Type::Base *Environment::incDec(const Token &name, const Token &op, ErrorH
             throw TypeCheckError();
         }
     }
-    // Otherwise, if type is found and it's const, give error
-    else if(std::get<1>(existingType->second)) {
+    
+    // If existing type is a constant numeric value or if it's a constant pointer give errors
+    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType->second.type);
+    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType->second.type);
+    if((numericExistingType && existingType->second.constValue) 
+        || (numericPtrExistingType && existingType->second.constPointer)) 
+    {
         errorHandler.error(name, "Increment/decrement of read-only variable");
         throw TypeCheckError();
     }
     // Otherwise, return type
-    // **TODO** pointer
     else {
-        auto numericExistingType = dynamic_cast<const Type::NumericBase *>(std::get<0>(existingType->second));
-        if(numericExistingType == nullptr) {
-            errorHandler.error(op, "Invalid operand types '" + std::get<0>(existingType->second)->getTypeName() + "'");
-            throw TypeCheckError();
-        }
-        else {
-            return std::get<0>(existingType->second);
-        }
+        return existingType->second;
     }
 }
 //---------------------------------------------------------------------------
-std::tuple<const Type::Base *, bool> Environment::getType(const Token &name, ErrorHandler &errorHandler) const
+const Type::QualifiedType &Environment::getType(const Token &name, ErrorHandler &errorHandler) const
 {
     auto type = m_Types.find(std::string{name.lexeme});
     if(type == m_Types.end()) {
@@ -673,9 +658,9 @@ void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &st
     visitor.typeCheck(statements, environment);
 }
 //---------------------------------------------------------------------------
-std::tuple<const Type::Base *, bool> GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, 
-                                                                              Environment &environment,
-                                                                              ErrorHandler &errorHandler)
+Type::QualifiedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, 
+                                                             Environment &environment,
+                                                             ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
     return visitor.typeCheck(expression, environment);

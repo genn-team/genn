@@ -1,6 +1,7 @@
 #include "transpiler/parser.h"
 
 // Standard C++ includes
+#include <algorithm>
 #include <map>
 #include <optional>
 #include <set>
@@ -182,36 +183,44 @@ Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, s
     return expression;
 }
 
-std::tuple<const GeNN::Type::Base*, bool> parseDeclarationSpecifiers(ParserState &parserState)
+GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
 {
-    // Loop through type qualifier and specifier tokens
-    std::set<std::string_view> typeQualifiers{};
-    std::set<std::string_view> typeSpecifiers{};
+    bool pointerFound = false;
+    std::set<std::string_view> typeSpecifiers;
+    std::set<std::string_view> valueTypeQualifiers;
+    std::set<std::string_view> pointerTypeQualifiers;
     do {
-        // Add token lexeme to appropriate set, giving error if duplicate 
-        if(parserState.previous().type == Token::Type::TYPE_QUALIFIER) {
+        // If token is a star, set pointer found flag
+        if(parserState.previous().type == Token::Type::STAR) {
+            pointerFound = true;
+        }
+        // Otherwise, if type is a qualifier
+        else if(parserState.previous().type == Token::Type::TYPE_QUALIFIER) {
+            // Add qualifier lexeme to correct list
+            auto &typeQualifiers = pointerFound ? pointerTypeQualifiers : valueTypeQualifiers;
             if(!typeQualifiers.insert(parserState.previous().lexeme).second) {
                 parserState.error(parserState.previous(), "duplicate type qualifier");
             }
         }
-        else {
-            if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
+        else if(parserState.previous().type == Token::Type::TYPE_SPECIFIER) {
+            if(pointerFound) {
+                parserState.error(parserState.previous(), "invalid type specifier");
+            }
+            else if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
                 parserState.error(parserState.previous(), "duplicate type specifier");
             }
         }
-    } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER}));
+    } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
     
-    // Lookup type
-    const GeNN::Type::Base *type = (parserState.match({Token::Type::STAR}) 
-                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
-                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
-    if(!type) {
-        parserState.error("Unknown type specifier");
-    }
-
-    // Determine constness
-    // **NOTE** this only works as const is the ONLY supported qualifier
-    return std::make_tuple(type, !typeQualifiers.empty());
+    // Lookup type based on whether token was found
+    const GeNN::Type::Base *type = (pointerFound
+                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers))
+                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers)));
+    
+    // Return qualified type
+    // **THINK** this relies of const being only qualifier
+    // **TODO** warn of duplicate type qualifiers
+    return GeNN::Type::QualifiedType{type, !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
 }
 
 Expression::ExpressionPtr parsePrimary(ParserState &parserState)
@@ -362,11 +371,11 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
         // If this is followed by some part of a type declarator
         if(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER})) {
             // Parse declaration specifiers
-            const auto [type, isConst] = parseDeclarationSpecifiers(parserState);
+            const auto qualifiedType = parseDeclarationSpecifiers(parserState);
 
             parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
 
-            return std::make_unique<Expression::Cast>(type, isConst, parseCast(parserState));
+            return std::make_unique<Expression::Cast>(qualifiedType, parseCast(parserState));
         }
         // Otherwise, rewind parser state so left parenthesis can be parsed again
         // **YUCK**
@@ -781,7 +790,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     //      "const"
 
     // Parse declaration specifiers
-    const auto [type, isConst] = parseDeclarationSpecifiers(parserState);
+    const auto qualifiedType = parseDeclarationSpecifiers(parserState);
 
     // Read init declarator list
     std::vector<std::tuple<Token, Expression::ExpressionPtr>> initDeclaratorList;
@@ -805,7 +814,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     } while(!parserState.isAtEnd() && parserState.match(Token::Type::COMMA));
 
     parserState.consume(Token::Type::SEMICOLON, "Expect ';' after variable declaration");
-    return std::make_unique<Statement::VarDeclaration>(type, isConst, std::move(initDeclaratorList));
+    return std::make_unique<Statement::VarDeclaration>(qualifiedType, std::move(initDeclaratorList));
 }
 
 std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)

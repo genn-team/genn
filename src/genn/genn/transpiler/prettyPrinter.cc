@@ -77,7 +77,9 @@ public:
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        m_StringStream << "(" << cast.getType()->getTypeName() << ")";
+        m_StringStream << "(";
+        printQualifiedType(cast.getQualifiedType());
+        m_StringStream << ")";
         cast.getExpression()->accept(*this);
     }
 
@@ -227,10 +229,7 @@ public:
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
-        if(varDeclaration.isConst()) {
-            m_StringStream << "const ";
-        }
-        m_StringStream << varDeclaration.getType()->getTypeName() << " ";
+        printQualifiedType(varDeclaration.getQualifiedType());
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
             m_StringStream << std::get<0>(var).lexeme;
@@ -259,6 +258,17 @@ public:
     }
 
 private:
+    void printQualifiedType(const GeNN::Type::QualifiedType &qualifiedType)
+    {
+        if(qualifiedType.constValue) {
+            m_StringStream << "const ";
+        }
+        m_StringStream << qualifiedType.type->getTypeName() << " ";
+        
+        if(qualifiedType.constPointer) {
+            m_StringStream << "const ";
+        }
+    }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------

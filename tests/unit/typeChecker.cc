@@ -67,7 +67,7 @@ void typeCheckStatements(std::string_view code, TypeChecker::Environment &typeEn
     ASSERT_FALSE(errorHandler.hasError());
 }
 
-std::tuple<const Type::Base *, bool> typeCheckExpression(std::string_view code, TypeChecker::Environment &typeEnvironment)
+Type::QualifiedType typeCheckExpression(std::string_view code, TypeChecker::Environment &typeEnvironment)
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -174,8 +174,9 @@ TEST(TypeChecker, Cast)
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("(float)intArray", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Float::getInstance()->getTypeHash());
-        EXPECT_FALSE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Float::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 
    // Pointer cast can't reinterpret
@@ -196,45 +197,79 @@ TEST(TypeChecker, Literal)
     {
         TypeChecker::Environment typeEnvironment;
         const auto type = typeCheckExpression("1.0f", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Float::getInstance()->getTypeHash());
-        EXPECT_TRUE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Float::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 
     // Double
     {
         TypeChecker::Environment typeEnvironment;
         const auto type = typeCheckExpression("1.0", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Double::getInstance()->getTypeHash());
-        EXPECT_TRUE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Double::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 
     // Integer
     {
         TypeChecker::Environment typeEnvironment;
         const auto type = typeCheckExpression("100", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
-        EXPECT_TRUE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 
     // Unsigned integer
     {
         TypeChecker::Environment typeEnvironment;
         const auto type = typeCheckExpression("100U", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Uint32::getInstance()->getTypeHash());
-        EXPECT_TRUE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Uint32::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Unary)
 {
     // Dereference pointer
-    // **TODO** const
     {
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
-        EXPECT_FALSE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+    
+    // Dereference pointer to const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", true);
+        const auto type = typeCheckExpression("*intArray", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+    
+    // Dereference const pointer
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", false, true);
+        const auto type = typeCheckExpression("*intArray", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_TRUE(type.constPointer);
+    }
+    
+    // Dereference const pointer to const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", true, true);
+        const auto type = typeCheckExpression("*intArray", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_TRUE(type.constPointer);
     }
 
     // Dereference numeric
@@ -250,7 +285,8 @@ TEST(TypeChecker, Unary)
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("&intVal", typeEnvironment);
-        EXPECT_EQ(std::get<0>(type)->getTypeHash(), Type::Int32Ptr::getInstance()->getTypeHash());
-        EXPECT_FALSE(std::get<1>(type));
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
 }
