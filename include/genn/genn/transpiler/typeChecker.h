@@ -72,4 +72,7 @@ private:
 //---------------------------------------------------------------------------
 void typeCheck(const Statement::StatementList &statements, Environment &environment, 
                ErrorHandler &errorHandler);
+
+std::tuple<const Type::Base *, bool> typeCheck(const Expression::Base *expression, Environment &environment, 
+                                               ErrorHandler &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler

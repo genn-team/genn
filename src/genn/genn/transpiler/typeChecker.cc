@@ -38,6 +38,7 @@ public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
+    // **THINK** make constructors?
     void typeCheck(const Statement::StatementList &statements, Environment &environment)
     {
         Environment *previous = m_Environment;
@@ -46,6 +47,17 @@ public:
             s.get()->accept(*this);
         }
         m_Environment = previous;
+    }
+
+    std::tuple<const Type::Base *, bool> typeCheck(const Expression::Base *expression, Environment &environment)
+    {
+        Environment *previous = m_Environment;
+        m_Environment = &environment;
+
+        const auto type = evaluateType(expression);
+        
+        m_Environment = previous;
+        return type;
     }
 
     //---------------------------------------------------------------------------
@@ -60,7 +72,7 @@ public:
         // If pointer is indeed a pointer
         if (pointerType) {
             // Evaluate pointer type
-            auto indexType = evaluateType(arraySubscript.getIndex().get());
+            auto indexType = std::get<0>(evaluateType(arraySubscript.getIndex().get()));
             auto indexNumericType = dynamic_cast<const Type::NumericBase *>(indexType);
             if (!indexNumericType || !indexNumericType->isIntegral()) {
                 m_ErrorHandler.error(arraySubscript.getPointerName(),
@@ -81,7 +93,7 @@ public:
 
     virtual void visit(const Expression::Assignment &assignment) final
     {
-        const auto [rhsType, rhsConst] = evaluateTypeConst(assignment.getValue());
+        const auto [rhsType, rhsConst] = evaluateType(assignment.getValue());
         m_Type = m_Environment->assign(assignment.getVarName(), rhsType, rhsConst,
                                        assignment.getOperator().type, m_ErrorHandler);
         m_Const = false;
@@ -90,14 +102,14 @@ public:
     virtual void visit(const Expression::Binary &binary) final
     {
         const auto opType = binary.getOperator().type;
-        const auto [rightType, rightConst] = evaluateTypeConst(binary.getRight());
+        const auto [rightType, rightConst] = evaluateType(binary.getRight());
         if (opType == Token::Type::COMMA) {
             m_Type = rightType;
             m_Const = rightConst;
         }
         else {
             // If we're subtracting two pointers
-            const auto [leftType, leftConst] = evaluateTypeConst(binary.getLeft());
+            const auto [leftType, leftConst] = evaluateType(binary.getLeft());
             auto leftNumericType = dynamic_cast<const Type::NumericBase *>(leftType);
             auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
             auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(leftType);
@@ -179,7 +191,7 @@ public:
     virtual void visit(const Expression::Call &call) final
     {
         // Evaluate callee type
-        auto calleeType = evaluateType(call.getCallee());
+        auto calleeType = std::get<0>(evaluateType(call.getCallee()));
         auto calleeFunctionType = dynamic_cast<const Type::ForeignFunctionBase *>(calleeType);
 
         // If callee's a function
@@ -223,8 +235,8 @@ public:
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
-        const auto [trueType, trueConst] = evaluateTypeConst(conditional.getTrue());
-        const auto [falseType, falseConst] = evaluateTypeConst(conditional.getFalse());
+        const auto [trueType, trueConst] = evaluateType(conditional.getTrue());
+        const auto [falseType, falseConst] = evaluateType(conditional.getFalse());
         auto trueNumericType = dynamic_cast<const Type::NumericBase *>(trueType);
         auto falseNumericType = dynamic_cast<const Type::NumericBase *>(falseType);
         if (trueNumericType && falseNumericType) {
@@ -240,7 +252,7 @@ public:
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        std::tie(m_Type, m_Const) = evaluateTypeConst(grouping.getExpression());
+        std::tie(m_Type, m_Const) = evaluateType(grouping.getExpression());
     }
 
     virtual void visit(const Expression::Literal &literal) final
@@ -250,7 +262,7 @@ public:
                 [](auto v)->const Type::NumericBase *{ return Type::TypeTraits<decltype(v)>::NumericType::getInstance(); },
                 [](std::monostate)->const Type::NumericBase *{ return nullptr; }},
                 literal.getValue());
-        m_Const = false;
+        m_Const = true;
     }
 
     virtual void visit(const Expression::Logical &logical) final
@@ -282,7 +294,7 @@ public:
 
     virtual void visit(const Expression::Unary &unary) final
     {
-        const auto [rightType, rightConst] = evaluateTypeConst(unary.getRight());
+        const auto [rightType, rightConst] = evaluateType(unary.getRight());
 
         // If operator is pointer de-reference
         if (unary.getOperator().type == Token::Type::STAR) {
@@ -420,7 +432,7 @@ public:
         }
 
         if (labelled.getValue()) {
-            auto valType = evaluateType(labelled.getValue());
+            auto valType = std::get<0>(evaluateType(labelled.getValue()));
             auto valNumericType = dynamic_cast<const Type::NumericBase *>(valType);
             if (!valNumericType || !valNumericType->isIntegral()) {
                 m_ErrorHandler.error(labelled.getKeyword(),
@@ -434,7 +446,7 @@ public:
 
     virtual void visit(const Statement::Switch &switchStatement) final
     {
-        auto condType = evaluateType(switchStatement.getCondition());
+        auto condType = std::get<0>(evaluateType(switchStatement.getCondition()));
         auto condNumericType = dynamic_cast<const Type::NumericBase *>(condType);
         if (!condNumericType || !condNumericType->isIntegral()) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
@@ -456,7 +468,7 @@ public:
             // If variable has an initialiser expression
             if (std::get<1>(var)) {
                 // Evaluate type
-                const auto [initialiserType, initialiserConst] = evaluateTypeConst(std::get<1>(var).get());
+                const auto [initialiserType, initialiserConst] = evaluateType(std::get<1>(var).get());
 
                 // Assign initialiser expression to variable
                 m_Environment->assign(std::get<0>(var), initialiserType, initialiserConst, Token::Type::EQUAL, m_ErrorHandler);
@@ -481,15 +493,10 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    std::tuple<const Type::Base *, bool> evaluateTypeConst(const Expression::Base *expression)
+    std::tuple<const Type::Base *, bool> evaluateType(const Expression::Base *expression)
     {
         expression->accept(*this);
         return std::make_tuple(m_Type, m_Const);
-    }
-
-    const Type::Base *evaluateType(const Expression::Base *expression)
-    {
-        return std::get<0>(evaluateTypeConst(expression));
     }
 
     //---------------------------------------------------------------------------
@@ -664,4 +671,12 @@ void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &st
 {
     Visitor visitor(errorHandler);
     visitor.typeCheck(statements, environment);
+}
+//---------------------------------------------------------------------------
+std::tuple<const Type::Base *, bool> GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, 
+                                                                              Environment &environment,
+                                                                              ErrorHandler &errorHandler)
+{
+    Visitor visitor(errorHandler);
+    return visitor.typeCheck(expression, environment);
 }
