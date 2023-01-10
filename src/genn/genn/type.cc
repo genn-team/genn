@@ -4,6 +4,14 @@
 #include <map>
 #include <unordered_map>
 
+// GeNN includes
+#include "logging.h"
+
+// Transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/parser.h"
+#include "transpiler/scanner.h"
+
 using namespace GeNN;
 
 // Anonymous namespace
@@ -39,6 +47,29 @@ const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> uns
     {Type::Int16::getInstance(), Type::Uint16::getInstance()},
     {Type::Int32::getInstance(), Type::Uint32::getInstance()}
 };
+
+//----------------------------------------------------------------------------
+// SimpleErrorHandler
+//----------------------------------------------------------------------------
+//! Simple error handler used for type parsing - just logs to transpiler log channel
+class SimpleErrorHandler : public Transpiler::ErrorHandler
+{
+public:
+    virtual void error(size_t line, std::string_view message) final
+    {
+        LOGE_TRANSPILER << "Error: " << message;
+    }
+
+    virtual void error(const Transpiler::Token &token, std::string_view message) final
+    {
+        if(token.type == Transpiler::Token::Type::END_OF_FILE) {
+            LOGE_TRANSPILER << "Error at end: " << message;
+        }
+        else {
+            LOGE_TRANSPILER << "Error at '" << token.lexeme << "': " << message;
+        }
+    }
+};
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -63,6 +94,22 @@ IMPLEMENT_TYPE(Sqrt);
 
 //----------------------------------------------------------------------------
 // Free functions
+//----------------------------------------------------------------------------
+const NumericBase *parseNumeric(std::string_view typeString)
+{
+    using namespace Transpiler;
+
+    // Scan type
+    SimpleErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource(typeString, errorHandler);
+
+    // Parse type, cast to numeric and return
+    const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, errorHandler));
+    if (!type) {
+        throw std::runtime_error("Unable to parse type");
+    }
+    return type;
+}
 //----------------------------------------------------------------------------
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
 {

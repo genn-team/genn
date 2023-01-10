@@ -308,9 +308,18 @@ DECLARE_NUMERIC_TYPE(Double, double, 60);
 DECLARE_FOREIGN_FUNCTION_TYPE(Exp, Double, Double);
 DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 
-//! Look up type based on set of type specifiers
+//! Parse a numeric type
+const NumericBase *parseNumeric(std::string_view typeString);
+
+//! Look up numeric type based on set of type specifiers
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
+
+//! Look up numeric pointer type based on set of type specifiers
 const NumericPtrBase *getNumericPtrType(const std::set<std::string_view> &typeSpecifiers);
+
+//! Apply C type promotion rules to numeric type
 const NumericBase *getPromotedType(const NumericBase *type);
+
+//! Apply C rules to get common type between numeric types a and b
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b);
 }   // namespace GeNN::Type

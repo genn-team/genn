@@ -32,6 +32,14 @@ class IAppender;
 #define LOGE_CODE_GEN LOGE_(Logging::CHANNEL_CODE_GEN)
 #define LOGF_CODE_GEN LOGF_(Logging::CHANNEL_CODE_GEN)
 
+// Shorthand macros for logging to 'transpiler' channel
+#define LOGV_TRANSPILER LOGV_(Logging::CHANNEL_TRANSPILER)
+#define LOGD_TRANSPILER LOGD_(Logging::CHANNEL_TRANSPILER)
+#define LOGI_TRANSPILER LOGI_(Logging::CHANNEL_TRANSPILER)
+#define LOGW_TRANSPILER LOGW_(Logging::CHANNEL_TRANSPILER)
+#define LOGE_TRANSPILER LOGE_(Logging::CHANNEL_TRANSPILER)
+#define LOGF_TRANSPILER LOGF_(Logging::CHANNEL_TRANSPILER)
+
 // Shorthand macros for logging to 'backend' channel
 #define LOGV_BACKEND LOGV_(Logging::CHANNEL_BACKEND)
 #define LOGD_BACKEND LOGD_(Logging::CHANNEL_BACKEND)
@@ -50,10 +58,11 @@ enum Channel
 {
     CHANNEL_GENN        = 0,
     CHANNEL_CODE_GEN    = 1,
-    CHANNEL_BACKEND     = 2,
+    CHANNEL_TRANSPILER  = 2,
+    CHANNEL_BACKEND     = 3,
     CHANNEL_MAX
 };
 
-GENN_EXPORT void init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, 
-                      plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender);
+GENN_EXPORT void init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, plog::Severity transpilerLevel, 
+                      plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender, plog::IAppender *transpilerAppender);
 }

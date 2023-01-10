@@ -13,6 +13,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
+#include "type.h"
 
 //----------------------------------------------------------------------------
 // Macros

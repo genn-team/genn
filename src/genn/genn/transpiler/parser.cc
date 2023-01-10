@@ -854,7 +854,7 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
         return nullptr;
     }
 }
-
+//---------------------------------------------------------------------------
 Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandler &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
@@ -864,5 +864,35 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
         statements.emplace_back(parseBlockItem(parserState));
     }
     return statements;
+}
+//---------------------------------------------------------------------------
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandler &errorHandler)
+{
+    ParserState parserState(tokens, errorHandler);
+    bool pointerFound = false;
+    std::set<std::string_view> typeSpecifiers;
+    do {
+        // If token is a star, set pointer found flag
+        if(parserState.previous().type == Token::Type::STAR) {
+            if (!allowPointers) {
+                parserState.error(parserState.previous(), "pointer type not valid in this context");
+            }
+            pointerFound = true;
+        }
+        // Otherwise, if token is type specifier
+        else if(parserState.previous().type == Token::Type::TYPE_SPECIFIER) {
+            if(pointerFound) {
+                parserState.error(parserState.previous(), "invalid type specifier");
+            }
+            else if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
+                parserState.error(parserState.previous(), "duplicate type specifier");
+            }
+        }
+    } while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
+    
+    // Lookup type based on whether token was found
+    return (pointerFound 
+            ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
+            : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
 }
 }

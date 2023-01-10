@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <memory>
+#include <set>
 #include <vector>
 
 // Transpiler includes
@@ -20,7 +21,14 @@ class ErrorHandler;
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
+//! Parse expression from tokens
 Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandler &errorHandler);
 
+//! Parse block item list from tokens
+/*! Block item lists are function body scope list of statements */
 Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandler &errorHandler);
+
+//! Parse type from tokens
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandler &errorHandler);
+
 }   // MiniParse::MiniParse
