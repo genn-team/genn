@@ -122,18 +122,20 @@ private:
 class Cast : public Base
 {
 public:
-    Cast(const Type::QualifiedType &qualifiedType, ExpressionPtr expression)
-    :  m_QualifiedType(qualifiedType), m_Expression(std::move(expression))
+    Cast(const Type::QualifiedType &qualifiedType, ExpressionPtr expression, Token closingParen)
+    :  m_QualifiedType(qualifiedType), m_Expression(std::move(expression)), m_ClosingParen(closingParen)
     {}
 
     virtual void accept(Visitor &visitor) const final;
 
-    const Base *getExpression() const { return m_Expression.get(); }
     const Type::QualifiedType &getQualifiedType() const{ return m_QualifiedType; }
-
+    const Base *getExpression() const { return m_Expression.get(); }
+    const Token &getClosingParen() const { return m_ClosingParen; }
+    
 private:
     const Type::QualifiedType m_QualifiedType;
     const ExpressionPtr m_Expression;
+    const Token m_ClosingParen;
 };
 
 //---------------------------------------------------------------------------

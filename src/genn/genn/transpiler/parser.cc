@@ -373,9 +373,9 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
             // Parse declaration specifiers
             const auto qualifiedType = parseDeclarationSpecifiers(parserState);
 
-            parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
+            const auto closingParen = parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
 
-            return std::make_unique<Expression::Cast>(qualifiedType, parseCast(parserState));
+            return std::make_unique<Expression::Cast>(qualifiedType, parseCast(parserState), closingParen);
         }
         // Otherwise, rewind parser state so left parenthesis can be parsed again
         // **YUCK**
