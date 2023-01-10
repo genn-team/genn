@@ -257,6 +257,53 @@ TEST(TypeChecker, Conditional)
 {
 }
 //--------------------------------------------------------------------------
+TEST(TypeChecker, IncDec)
+{
+    // Can increment numeric
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32>("intVal");
+        const auto type = typeCheckExpression("intVal++", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+
+    // Can increment pointer
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray");
+        const auto type = typeCheckExpression("intArray++", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32Ptr::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+
+    // Can increment pointer to const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", true);
+        const auto type = typeCheckExpression("intArray++", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32Ptr::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+
+   // Can't increment const number
+   EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32>("intVal", true);
+        typeCheckExpression("intVal++", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+   
+   // Can't increment const pointer
+   EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", false, true);
+        typeCheckExpression("intArray++", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+}
+//--------------------------------------------------------------------------
 TEST(TypeChecker, Literal)
 {
     // Float
