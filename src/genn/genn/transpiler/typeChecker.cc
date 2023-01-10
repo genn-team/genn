@@ -24,7 +24,92 @@ namespace Type = GeNN::Type;
 namespace
 {
 //---------------------------------------------------------------------------
-// Vistor
+// EnvironmentInternal
+//---------------------------------------------------------------------------
+class EnvironmentInternal : public EnvironmentBase
+{
+public:
+    EnvironmentInternal(EnvironmentBase *enclosing = nullptr)
+    :   m_Enclosing(enclosing)
+    {
+    }
+    
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) final
+    {
+        if(!m_Types.try_emplace(name.lexeme, qualifiedType).second) {
+            errorHandler.error(name, "Redeclaration of variable");
+            throw TypeCheckError();
+        }
+    }
+    
+    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                              ErrorHandler &errorHandler, bool initializer = false) final
+    {
+        // If type isn't found
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->assign(name, op, assignedType,
+                                           errorHandler, initializer);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+        
+        // Perform standard type-checking logic
+        return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
+    }
+    
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) final
+    {
+        // If type isn't found
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->incDec(name, op, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+        
+        // Perform standard type-checking logic
+        return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);    
+    }
+    
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) final
+    {
+        auto type = m_Types.find(std::string{name.lexeme});
+        if(type == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->getType(name, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+        else {
+            return type->second;
+        }
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    EnvironmentBase *m_Enclosing;
+    std::unordered_map<std::string_view, Type::QualifiedType> m_Types;
+};
+
+//---------------------------------------------------------------------------
+// Visitor
 //---------------------------------------------------------------------------
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
@@ -39,25 +124,19 @@ public:
     // Public API
     //---------------------------------------------------------------------------
     // **THINK** make constructors?
-    void typeCheck(const Statement::StatementList &statements, Environment &environment)
+    void typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment)
     {
-        Environment *previous = m_Environment;
         m_Environment = &environment;
         for (auto &s : statements) {
             s.get()->accept(*this);
         }
-        m_Environment = previous;
     }
 
-    const Type::QualifiedType typeCheck(const Expression::Base *expression, Environment &environment)
+    const Type::QualifiedType typeCheck(const Expression::Base *expression, EnvironmentInternal &environment)
     {
-        Environment *previous = m_Environment;
-        m_Environment = &environment;
-
-        const auto type = evaluateType(expression);
         
-        m_Environment = previous;
-        return type;
+        m_Environment = &environment;
+        return evaluateType(expression);
     }
 
     //---------------------------------------------------------------------------
@@ -93,8 +172,7 @@ public:
     virtual void visit(const Expression::Assignment &assignment) final
     {
         const auto rhsType = evaluateType(assignment.getValue());
-        m_QualifiedType = m_Environment->assign(assignment.getVarName(), rhsType,
-                                                assignment.getOperator().type, m_ErrorHandler);
+        m_QualifiedType = m_Environment->assign(assignment.getVarName(), assignment.getOperator().type, rhsType, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -297,13 +375,13 @@ public:
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
         m_QualifiedType = m_Environment->incDec(postfixIncDec.getVarName(),
-                                                postfixIncDec.getOperator(), m_ErrorHandler);
+                                                postfixIncDec.getOperator().type, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
         m_QualifiedType = m_Environment->incDec(prefixIncDec.getVarName(),
-                                                prefixIncDec.getOperator(), m_ErrorHandler);
+                                                prefixIncDec.getOperator().type, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Variable &variable)
@@ -380,7 +458,7 @@ public:
 
     virtual void visit(const Statement::Compound &compound) final
     {
-        Environment environment(m_Environment);
+        EnvironmentInternal environment(m_Environment);
         typeCheck(compound.getStatements(), environment);
     }
 
@@ -407,8 +485,8 @@ public:
     virtual void visit(const Statement::For &forStatement) final
     {
         // Create new environment for loop initialisation
-        Environment *previous = m_Environment;
-        Environment environment(m_Environment);
+        EnvironmentInternal *previous = m_Environment;
+        EnvironmentInternal environment(m_Environment);
         m_Environment = &environment;
 
         // Interpret initialiser if statement present
@@ -486,7 +564,7 @@ public:
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
 
                 // Assign initialiser expression to variable
-                m_Environment->assign(std::get<0>(var), initialiserType, Token::Type::EQUAL, m_ErrorHandler, true);
+                m_Environment->assign(std::get<0>(var), Token::Type::EQUAL, initialiserType, m_ErrorHandler, true);
             }
         }
     }
@@ -517,7 +595,7 @@ private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    Environment *m_Environment;
+    EnvironmentInternal *m_Environment;
     Type::QualifiedType m_QualifiedType;
 
     ErrorHandler &m_ErrorHandler;
@@ -527,37 +605,17 @@ private:
 }
 
 //---------------------------------------------------------------------------
-// MiniParse::TypeChecker::Environment
+// GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
-void Environment::define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler)
+const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Type op, 
+                                                   const Type::QualifiedType &existingType, const Type::QualifiedType &assignedType, 
+                                                   ErrorHandler &errorHandler, bool initializer) const
 {
-    if(!m_Types.try_emplace(name.lexeme, qualifiedType).second) {
-        errorHandler.error(name, "Redeclaration of variable");
-        throw TypeCheckError();
-    }
-}
-//---------------------------------------------------------------------------
-const Type::QualifiedType &Environment::assign(const Token &name, const Type::QualifiedType &assignedType, 
-                                               Token::Type op, ErrorHandler &errorHandler, bool initializer)
-{
-    // If type isn't found
-    auto existingType = m_Types.find(name.lexeme);
-    if(existingType == m_Types.end()) {
-        if(m_Enclosing) {
-            return m_Enclosing->assign(name, assignedType,
-                                       op, errorHandler, initializer);
-        }
-        else {
-            errorHandler.error(name, "Undefined variable");
-            throw TypeCheckError();
-        }
-    }
-
     // If existing type is a constant numeric value or if it's a constant pointer give errors
-    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType->second.type);
-    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType->second.type);
-    if(!initializer && ((numericExistingType && existingType->second.constValue) 
-                        || (numericPtrExistingType && existingType->second.constPointer))) 
+    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
+    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType.type);
+    if(!initializer && ((numericExistingType && existingType.constValue) 
+                        || (numericPtrExistingType && existingType.constPointer))) 
     {
         errorHandler.error(name, "Assignment of read-only variable");
         throw TypeCheckError();
@@ -570,7 +628,7 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
         // If we're initialising a pointer with another pointer
         if (numericPtrAssignedType && numericPtrExistingType) {
             // If we're trying to assign a pointer to a const value to a pointer
-            if (assignedType.constValue && !existingType->second.constValue) {
+            if (assignedType.constValue && !existingType.constValue) {
                 errorHandler.error(name, "Invalid operand types '" + numericPtrExistingType->getTypeName() + "' and '" + numericPtrAssignedType->getTypeName());
                 throw TypeCheckError();
             }
@@ -583,7 +641,7 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
         }
         // Otherwise, if we're trying to initialise a pointer with a non-pointer or vice-versa
         else if (numericPtrAssignedType || numericPtrExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "' and '" + assignedType.type->getTypeName());
+            errorHandler.error(name, "Invalid operand types '" + existingType.type->getTypeName() + "' and '" + assignedType.type->getTypeName());
             throw TypeCheckError();
         }
     }
@@ -592,7 +650,7 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
         // If the operand being added isn't numeric or the type being added to is neither numeric or a pointer
         if (!numericAssignedType || (!numericPtrExistingType && !numericExistingType))
         {
-            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "' and '" + assignedType.type->getTypeName() + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType.type->getTypeName() + "' and '" + assignedType.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
@@ -610,7 +668,7 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
             throw TypeCheckError();
         }
         if(!numericExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->second.type->getTypeName() + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
@@ -629,65 +687,91 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
    
      // Return existing type
      // **THINK**
-    return existingType->second;
+    return existingType;
 }
 //---------------------------------------------------------------------------
-const Type::QualifiedType &Environment::incDec(const Token &name, const Token &op, ErrorHandler &errorHandler)
+const Type::QualifiedType &EnvironmentBase::incDec(const Token &name, Token::Type, 
+                                                   const Type::QualifiedType &existingType, ErrorHandler &errorHandler) const
 {
-    auto existingType = m_Types.find(name.lexeme);
-    if(existingType == m_Types.end()) {
-        if(m_Enclosing) {
-            return m_Enclosing->incDec(name, op, errorHandler);
-        }
-        else {
-            errorHandler.error(name, "Undefined variable");
-            throw TypeCheckError();
-        }
-    }
-    
     // If existing type is a constant numeric value or if it's a constant pointer give errors
-    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType->second.type);
-    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType->second.type);
-    if((numericExistingType && existingType->second.constValue) 
-        || (numericPtrExistingType && existingType->second.constPointer)) 
+    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
+    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType.type);
+    if((numericExistingType && existingType.constValue) 
+        || (numericPtrExistingType && existingType.constPointer)) 
     {
         errorHandler.error(name, "Increment/decrement of read-only variable");
         throw TypeCheckError();
     }
     // Otherwise, return type
     else {
-        return existingType->second;
+        return existingType;
     }
 }
+
 //---------------------------------------------------------------------------
-const Type::QualifiedType &Environment::getType(const Token &name, ErrorHandler &errorHandler) const
+// GeNN::Transpiler::TypeChecker::EnvironmentExternal
+//---------------------------------------------------------------------------
+void EnvironmentExternal::define(const Token &name, const Type::QualifiedType &, ErrorHandler &errorHandler)
+{
+    errorHandler.error(name, "Cannot declare variable in external environment");
+    throw TypeCheckError();
+}
+//---------------------------------------------------------------------------
+const Type::QualifiedType &EnvironmentExternal::assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                                       ErrorHandler &errorHandler, bool initializer)
+{
+    // If type isn't found
+    auto existingType = m_Types.find(name.lexeme);
+    if(existingType == m_Types.end()) {
+        errorHandler.error(name, "Undefined variable");
+        throw TypeCheckError();
+    }
+    
+    // Perform standard type-checking logic
+    return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
+}
+//---------------------------------------------------------------------------
+const Type::QualifiedType &EnvironmentExternal::incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler)
+{
+    auto existingType = m_Types.find(name.lexeme);
+    if(existingType == m_Types.end()) {
+        errorHandler.error(name, "Undefined variable");
+        throw TypeCheckError();
+    }
+    
+    // Perform standard type-checking logic
+    return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);
+    
+}
+//---------------------------------------------------------------------------
+const Type::QualifiedType &EnvironmentExternal::getType(const Token &name, ErrorHandler &errorHandler)
 {
     auto type = m_Types.find(std::string{name.lexeme});
     if(type == m_Types.end()) {
-        if(m_Enclosing) {
-            return m_Enclosing->getType(name, errorHandler);
-        }
-        else {
-            errorHandler.error(name, "Undefined variable");
-            throw TypeCheckError();
-        }
+        errorHandler.error(name, "Undefined variable");
+        throw TypeCheckError();
     }
     else {
         return type->second;
     }
 }
+
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, Environment &environment, 
+// GeNN::Transpiler::TypeChecker
+//---------------------------------------------------------------------------
+void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentExternal &environment, 
                                               ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
-    visitor.typeCheck(statements, environment);
+    EnvironmentInternal internalEnvironment(&environment);
+    visitor.typeCheck(statements, internalEnvironment);
 }
 //---------------------------------------------------------------------------
 Type::QualifiedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, 
-                                                             Environment &environment,
+                                                             EnvironmentExternal &environment,
                                                              ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
-    return visitor.typeCheck(expression, environment);
+    EnvironmentInternal internalEnvironment(&environment);
+    return visitor.typeCheck(expression, internalEnvironment);
 }

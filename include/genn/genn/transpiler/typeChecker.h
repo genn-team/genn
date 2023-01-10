@@ -32,16 +32,37 @@ public:
 };
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::Environment
+// GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
-class Environment
+class EnvironmentBase
 {
 public:
-    Environment(Environment *enclosing = nullptr)
-    :   m_Enclosing(enclosing)
-    {
-    }
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) = 0;
+    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                      ErrorHandler &errorHandler, bool initializer = false) = 0;
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) = 0;
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) = 0;
 
+protected:
+    //---------------------------------------------------------------------------
+    // Protected API
+    //---------------------------------------------------------------------------
+    const Type::QualifiedType &assign(const Token &name, Token::Type op, 
+                                      const Type::QualifiedType &existingType, const Type::QualifiedType &assignedType, 
+                                      ErrorHandler &errorHandler, bool initializer = false) const;
+    const Type::QualifiedType &incDec(const Token &name, Token::Type op, 
+                                      const Type::QualifiedType &existingType, ErrorHandler &errorHandler) const;
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::TypeChecker::EnvironmentExternal
+//---------------------------------------------------------------------------
+class EnvironmentExternal : public EnvironmentBase
+{
+public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
@@ -52,26 +73,29 @@ public:
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
-    void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler);
-    const Type::QualifiedType &assign(const Token &name, const Type::QualifiedType &assignedType, 
-                                      Token::Type op, ErrorHandler &errorHandler, bool initializer = false);
-    const Type::QualifiedType &incDec(const Token &name, const Token &op, ErrorHandler &errorHandler);
-    const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) const;
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) final;
+    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                              ErrorHandler &errorHandler, bool initializer = false) final;
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) final;
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) final;
 
 private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    Environment *m_Enclosing;
     std::unordered_map<std::string_view, Type::QualifiedType> m_Types;
 };
 
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-void typeCheck(const Statement::StatementList &statements, Environment &environment, 
+void typeCheck(const Statement::StatementList &statements, EnvironmentExternal &environment, 
                ErrorHandler &errorHandler);
 
-Type::QualifiedType typeCheck(const Expression::Base *expression, Environment &environment, 
+Type::QualifiedType typeCheck(const Expression::Base *expression, EnvironmentExternal &environment, 
                               ErrorHandler &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler
