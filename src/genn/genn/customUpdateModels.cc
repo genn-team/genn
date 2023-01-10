@@ -20,4 +20,4 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getVarRefs(), hash);
     return hash.get_digest();
 }
-}
+}   // namespace GeNN::CustomUpdateModels
