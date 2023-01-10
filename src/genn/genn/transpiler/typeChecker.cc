@@ -29,7 +29,7 @@ namespace
 class EnvironmentInternal : public EnvironmentBase
 {
 public:
-    EnvironmentInternal(EnvironmentBase *enclosing = nullptr)
+    EnvironmentInternal(EnvironmentBase &enclosing)
     :   m_Enclosing(enclosing)
     {
     }
@@ -51,14 +51,8 @@ public:
         // If type isn't found
         auto existingType = m_Types.find(name.lexeme);
         if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->assign(name, op, assignedType,
-                                           errorHandler, initializer);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
-            }
+            return m_Enclosing.assign(name, op, assignedType,
+                                      errorHandler, initializer);
         }
         
         // Perform standard type-checking logic
@@ -70,13 +64,7 @@ public:
         // If type isn't found
         auto existingType = m_Types.find(name.lexeme);
         if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->incDec(name, op, errorHandler);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
-            }
+            return m_Enclosing.incDec(name, op, errorHandler);
         }
         
         // Perform standard type-checking logic
@@ -87,13 +75,7 @@ public:
     {
         auto type = m_Types.find(std::string{name.lexeme});
         if(type == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->getType(name, errorHandler);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
-            }
+            return m_Enclosing.getType(name, errorHandler);
         }
         else {
             return type->second;
@@ -104,7 +86,7 @@ private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    EnvironmentBase *m_Enclosing;
+    EnvironmentBase &m_Enclosing;
     std::unordered_map<std::string_view, Type::QualifiedType> m_Types;
 };
 
@@ -458,7 +440,7 @@ public:
 
     virtual void visit(const Statement::Compound &compound) final
     {
-        EnvironmentInternal environment(m_Environment);
+        EnvironmentInternal environment(*m_Environment);
         typeCheck(compound.getStatements(), environment);
     }
 
@@ -486,7 +468,7 @@ public:
     {
         // Create new environment for loop initialisation
         EnvironmentInternal *previous = m_Environment;
-        EnvironmentInternal environment(m_Environment);
+        EnvironmentInternal environment(*m_Environment);
         m_Environment = &environment;
 
         // Interpret initialiser if statement present
@@ -763,7 +745,7 @@ void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &st
                                               ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
-    EnvironmentInternal internalEnvironment(&environment);
+    EnvironmentInternal internalEnvironment(environment);
     visitor.typeCheck(statements, internalEnvironment);
 }
 //---------------------------------------------------------------------------
@@ -772,6 +754,6 @@ Type::QualifiedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::B
                                                              ErrorHandler &errorHandler)
 {
     Visitor visitor(errorHandler);
-    EnvironmentInternal internalEnvironment(&environment);
+    EnvironmentInternal internalEnvironment(environment);
     return visitor.typeCheck(expression, internalEnvironment);
 }
