@@ -94,14 +94,17 @@ TEST(TypeChecker, ArraySubscript)
     {
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
-        typeCheckStatements("int x = intArray[4];", typeEnvironment);
+        const auto type = typeCheckExpression("intArray[4]", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
     }
     
     // Float array indexing
     EXPECT_THROW({
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
-        typeCheckStatements("int x = intArray[4.0f];", typeEnvironment);}, 
+        const auto type = typeCheckExpression("intArray[4.0f]", typeEnvironment);}, 
         TypeChecker::TypeCheckError);
 
     // Pointer indexing
@@ -109,7 +112,7 @@ TEST(TypeChecker, ArraySubscript)
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
         typeEnvironment.define<Type::Int32Ptr>("indexArray");
-        typeCheckStatements("int x = intArray[indexArray];", typeEnvironment);}, 
+        const auto type = typeCheckExpression("intArray[indexArray]", typeEnvironment);}, 
         TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
@@ -157,6 +160,8 @@ TEST(TypeChecker, Assignment)
         typeEnvironment.define<Type::Int32Ptr>("intArray");
         typeCheckStatements("float *x = intArray;", typeEnvironment);},
         TypeChecker::TypeCheckError);
+
+    // **TODO** other assignements i.e. += -= %=
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Binary)
@@ -208,7 +213,6 @@ TEST(TypeChecker, Cast)
         EXPECT_FALSE(type.constValue);
         EXPECT_TRUE(type.constPointer);
     }
-
 
     // Can't remove value const from numeric
     EXPECT_THROW({
