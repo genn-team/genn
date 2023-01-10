@@ -457,8 +457,7 @@ public:
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
 
                 // Assign initialiser expression to variable
-                // **TODO** flag to signify this is an initialiser
-                m_Environment->assign(std::get<0>(var), initialiserType, Token::Type::EQUAL, m_ErrorHandler);
+                m_Environment->assign(std::get<0>(var), initialiserType, Token::Type::EQUAL, m_ErrorHandler, true);
             }
         }
     }
@@ -510,14 +509,14 @@ void Environment::define(const Token &name, const Type::QualifiedType &qualified
 }
 //---------------------------------------------------------------------------
 const Type::QualifiedType &Environment::assign(const Token &name, const Type::QualifiedType &assignedType, 
-                                               Token::Type op, ErrorHandler &errorHandler)
+                                               Token::Type op, ErrorHandler &errorHandler, bool initializer)
 {
     // If type isn't found
     auto existingType = m_Types.find(name.lexeme);
     if(existingType == m_Types.end()) {
         if(m_Enclosing) {
             return m_Enclosing->assign(name, assignedType,
-                                       op, errorHandler);
+                                       op, errorHandler, initializer);
         }
         else {
             errorHandler.error(name, "Undefined variable");
@@ -528,8 +527,8 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
     // If existing type is a constant numeric value or if it's a constant pointer give errors
     auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType->second.type);
     auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType->second.type);
-    if((numericExistingType && existingType->second.constValue) 
-        || (numericPtrExistingType && existingType->second.constPointer)) 
+    if(!initializer && ((numericExistingType && existingType->second.constValue) 
+                        || (numericPtrExistingType && existingType->second.constPointer))) 
     {
         errorHandler.error(name, "Assignment of read-only variable");
         throw TypeCheckError();
@@ -538,16 +537,14 @@ const Type::QualifiedType &Environment::assign(const Token &name, const Type::Qu
     // If assignment operation is plain equals, any type is fine so return
     auto numericAssignedType = dynamic_cast<const Type::NumericBase *>(assignedType.type);
     auto numericPtrAssignedType = dynamic_cast<const Type::NumericPtrBase *>(assignedType.type);
-    // **TODO** pointer type check
     if(op == Token::Type::EQUAL) {
         // If we're initialising a pointer with another pointer
         if (numericPtrAssignedType && numericPtrExistingType) {
-            // If variable is non-const but initialiser is const
-            /*if (!varDeclaration.isConst() && intialiserConst) {
-                m_ErrorHandler.error(std::get<0>(var),
-                                        "Invalid operand types '" + initialiserType->getTypeName() + "'");
+            // If we're trying to assign a pointer to a const value to a pointer
+            if (assignedType.constValue && !existingType->second.constValue) {
+                errorHandler.error(name, "Invalid operand types '" + numericPtrExistingType->getTypeName() + "' and '" + numericPtrAssignedType->getTypeName());
                 throw TypeCheckError();
-            }*/
+            }
 
             // If pointer types aren't compatible
             if (numericPtrExistingType->getTypeHash() != numericPtrAssignedType->getTypeHash()) {

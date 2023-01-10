@@ -54,7 +54,7 @@ public:
     }
     void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler);
     const Type::QualifiedType &assign(const Token &name, const Type::QualifiedType &assignedType, 
-                                      Token::Type op, ErrorHandler &errorHandler);
+                                      Token::Type op, ErrorHandler &errorHandler, bool initializer = false);
     const Type::QualifiedType &incDec(const Token &name, const Token &op, ErrorHandler &errorHandler);
     const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) const;
 
