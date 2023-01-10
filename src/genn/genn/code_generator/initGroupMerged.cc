@@ -62,37 +62,63 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
         const auto &varInit = varInitialisers.at(var.name);
 
         // If this variable has any initialisation code
-        if(!varInit.getSnippet()->getCode().empty()) {
+        if (!varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
-            // Generate target-specific code to initialise variable
-            backend.genVariableInit(os, count, "id", popSubs,
-                [&var, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
-                (CodeStream &os, Substitutions &varSubs)
-                {
-                    // Substitute in parameters and derived parameters for initialising variables
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [&var, isParamHeterogeneousFn](const std::string &p) { return isParamHeterogeneousFn(var.name, p); },
-                                                      "", "group->", var.name + fieldSuffix);
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                    [&var, isDerivedParamHeterogeneousFn](const std::string &p) { return isDerivedParamHeterogeneousFn(var.name, p); },
-                                                    "", "group->", var.name + fieldSuffix);
-                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group->", var.name + fieldSuffix);
+            Substitutions varSubs(&popSubs);
 
-                    // Generate initial value into temporary variable
-                    os << var.type << " initVal;" << std::endl;
-                    varSubs.addVarSubstitution("value", "initVal");
-                    std::string code = varInit.getSnippet()->getCode();
-                    varSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
-                    code = ensureFtype(code, ftype);
-                    os << code << std::endl;
-                    
-                    // Fill value across all delay slots and batches
-                    genVariableFill(os, var.name + fieldSuffix, "initVal", varSubs["id"], count, 
-                                    getVarAccessDuplication(var.access), batchSize, isVarQueueRequired(var.name), numDelaySlots);
-                });
+            // Substitute in parameters and derived parameters for initialising variables
+            varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                              [&var, isParamHeterogeneousFn](const std::string &p) { return isParamHeterogeneousFn(var.name, p); },
+                                              "", "group->", var.name + fieldSuffix);
+            varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                            [&var, isDerivedParamHeterogeneousFn](const std::string &p) { return isDerivedParamHeterogeneousFn(var.name, p); },
+                                            "", "group->", var.name + fieldSuffix);
+            varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                           "", "group->", var.name + fieldSuffix);
+
+            // If variable is shared between neurons
+            if (getVarAccessDuplication(var.access) == VarAccessDuplication::SHARED_NEURON) {
+                backend.genPopVariableInit(
+                    os, varSubs,
+                    [&var, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, numDelaySlots, isVarQueueRequired]
+                    (CodeStream &os, Substitutions &varInitSubs)
+                    {
+                        // Generate initial value into temporary variable
+                        os << var.type << " initVal;" << std::endl;
+                        varInitSubs.addVarSubstitution("value", "initVal");
+                        std::string code = varInit.getSnippet()->getCode();
+                        varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
+                        code = ensureFtype(code, ftype);
+                        os << code << std::endl;
+
+                        // Fill value across all delay slots and batches
+                        genScalarFill(os, var.name + fieldSuffix, "initVal", getVarAccessDuplication(var.access),
+                                      batchSize, isVarQueueRequired(var.name), numDelaySlots);
+                    });
+            }
+            // Otherwise
+            else {
+                backend.genVariableInit(
+                    os, count, "id", varSubs,
+                    [&var, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, count, numDelaySlots, isVarQueueRequired]
+                    (CodeStream &os, Substitutions &varInitSubs)
+                    {
+                        // Generate initial value into temporary variable
+                        os << var.type << " initVal;" << std::endl;
+                        varInitSubs.addVarSubstitution("value", "initVal");
+                        std::string code = varInit.getSnippet()->getCode();
+                        varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
+                        code = ensureFtype(code, ftype);
+                        os << code << std::endl;
+
+                        // Fill value across all delay slots and batches
+                        genVariableFill(os, var.name + fieldSuffix, "initVal", varInitSubs["id"], count,
+                                        getVarAccessDuplication(var.access), batchSize, isVarQueueRequired(var.name), numDelaySlots);
+                    });
+            }
         }
+            
     }
 }
 //------------------------------------------------------------------------
@@ -520,26 +546,56 @@ void NeuronInitGroupMerged::genInitSpikeTime(CodeStream &os, const BackendBase &
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDenseInitGroupMerged
+// CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
-const std::string SynapseDenseInitGroupMerged::name = "SynapseDenseInit";
+const std::string SynapseInitGroupMerged::name = "SynapseInit";
 //----------------------------------------------------------------------------
-void SynapseDenseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    // Loop through rows
-    os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
-    {
-        CodeStream::Scope b(os);
+    // If model is batched and has kernel weights
+    const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
+    if (kernel && modelMerged.getModel().getBatchSize() > 1) {
+        // Loop through kernel dimensions and multiply together to calculate batch stride
+        os << "const unsigned int batchStride = ";
+        const auto &kernelSize = getArchetype().getKernelSize();
+        for (size_t i = 0; i < kernelSize.size(); i++) {
+            os << getKernelSize(i);
+
+            if (i != (kernelSize.size() - 1)) {
+                os << " * ";
+            }
+        }
+        os << ";" << std::endl;;
+    }
+
+    
+    // If we're using non-kernel weights, generate loop over source neurons
+    if (!kernel) {
+        os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+        os << CodeStream::OB(1);    
         popSubs.addVarSubstitution("id_pre", "i");
-        genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                         getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                         modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
-                         [this](const std::string &v, const std::string &p) { return isWUVarInitParamHeterogeneous(v, p); },
-                         [this](const std::string &v, const std::string &p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
-                         [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                         {
-                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
-                         });
+    }
+
+    // Generate initialisation code
+    const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
+    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), stride, getIndex(),
+                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+                     [this](const std::string &v, const std::string &p) { return isWUVarInitParamHeterogeneous(v, p); },
+                     [this](const std::string &v, const std::string &p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend, kernel, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         if (kernel) {
+                             backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler);
+                         }
+                         else {
+                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler);
+                         }
+                     });
+
+    // If we're using non-kernel weights, close loop
+    if (!kernel) {
+        os << CodeStream::CB(1);
     }
 }
 
@@ -558,39 +614,6 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
                          backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
-                     });
-}
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseKernelInitGroupMerged
-//----------------------------------------------------------------------------
-const std::string SynapseKernelInitGroupMerged::name = "SynapseKernelInit";
-//----------------------------------------------------------------------------
-void SynapseKernelInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
-{
-    // If model is batched
-    if(modelMerged.getModel().getBatchSize() > 1) {
-        // Loop through kernel dimensions and multiply together to calculate batch stride
-        os << "const unsigned int batchStride = ";
-        const auto &kernelSize = getArchetype().getKernelSize();
-        for(size_t i = 0; i < kernelSize.size(); i++) {
-            os << getKernelSize(i);
-
-            if(i != (kernelSize.size() - 1)) {
-                os << " * ";
-            }
-        }
-        os << ";" << std::endl;;
-    }
-
-    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), "batchStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
-                     [this](const std::string &v, const std::string &p) { return isWUVarInitParamHeterogeneous(v, p); },
-                     [this](const std::string &v, const std::string &p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
-                     [&backend, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                     {
-                         backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler); 
                      });
 }
 
@@ -726,63 +749,110 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeS
 }
 
 // ----------------------------------------------------------------------------
-// CustomWUUpdateDenseInitGroupMerged
+// CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-const std::string CustomWUUpdateDenseInitGroupMerged::name = "CustomWUUpdateDenseInit";
+const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                             const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
-    addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-  
-    addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(d)) {
+                addField("unsigned int", "kernelSize" + std::to_string(d),
+                        [d](const CustomUpdateWUInternal &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+            }
+        }
+    }
+    else {
+        addField("unsigned int", "rowStride",
+                [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+        addField("unsigned int", "numSrcNeurons",
+                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+        addField("unsigned int", "numTrgNeurons",
+                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    }
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CustomWUUpdateDenseInitGroupMerged::getHashDigest() const
+boost::uuids::detail::sha1::digest_type CustomWUUpdateInitGroupMerged::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
-    // Update hash with sizes of pre and postsynaptic neuron groups
-    updateHash([](const CustomUpdateWUInternal &cg) 
-               {
-                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
-               }, hash);
+    // If underlying synapse group has kernel weights, update hash with kernel size
+    if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        updateHash([](const CustomUpdateWUInternal &g) { return g.getSynapseGroup()->getKernelSize(); }, hash);
+    }
+    // Otherwise, update hash with sizes of pre and postsynaptic neuron groups
+    else {
+        updateHash([](const CustomUpdateWUInternal &cg) 
+                   {
+                       return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
+                   }, hash);
 
-    updateHash([](const CustomUpdateWUInternal &cg) 
-               {
-                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
-               }, hash);
+        updateHash([](const CustomUpdateWUInternal &cg) 
+                   {
+                       return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
+                   }, hash);
 
 
-    // **TODO** rowstride
+        updateHash([](const CustomUpdateWUInternal &cg)
+                   {
+                       return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getMaxConnections(); 
+                   }, hash);
+    }
 
     return hash.get_digest();
 }
 // ----------------------------------------------------------------------------
-void CustomWUUpdateDenseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    // Loop through rows
-    os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
-    {
-        CodeStream::Scope b(os);
+    const bool kernel = (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL);
+    if(kernel && modelMerged.getModel().getBatchSize() > 1) {
+        // Loop through kernel dimensions and multiply together to calculate batch stride
+        os << "const unsigned int batchStride = ";
+        const auto &kernelSize = getArchetype().getSynapseGroup()->getKernelSize();
+        for (size_t i = 0; i < kernelSize.size(); i++) {
+            os << getKernelSize(i);
+
+            if (i != (kernelSize.size() - 1)) {
+                os << " * ";
+            }
+        }
+        os << ";" << std::endl;
+    }
+    
+    if(!kernel) {
+        os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+        os << CodeStream::OB(3);
         popSubs.addVarSubstitution("id_pre", "i");
-        genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
-                         getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                         modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
-                         [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
-                         [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); },
-                         [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                         {
-                             return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
-                         });
+    }
+ 
+    // Loop through rows
+    const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
+    genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
+                    getArchetype().getVarInitialisers(), stride, getIndex(),
+                    modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
+                    [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
+                    [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); },
+                    [&backend, kernel, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                    {
+                        if (kernel) {
+                            backend.genKernelCustomUpdateVariableInit(os, *this, kernelSubs, handler);
+                        }
+                        else {
+                            backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler);
+                        }
+    
+                    });
+        
+    if(!kernel) {
+        os << CodeStream::CB(3);
     }
 }
 
@@ -824,7 +894,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
-    // Update hash with sizes of pre and postsynaptic neuron groups
+    // Update hash with sizes of pre and postsynaptic neuron groups; and max row length
     updateHash([](const CustomUpdateWUInternal &cg) 
                {
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
@@ -835,8 +905,10 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
                }, hash);
 
-
-    // **TODO** rowstride
+    updateHash([](const CustomUpdateWUInternal& cg)
+               {
+                   return cg.getSynapseGroup()->getMaxConnections();
+               }, hash);
 
     return hash.get_digest();
 }

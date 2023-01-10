@@ -430,7 +430,7 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that global g var is heterogeneous
@@ -485,7 +485,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that connectivity parameter is heterogeneous
@@ -551,7 +551,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
     ASSERT_EQ(modelSpecMerged.getMergedPresynapticUpdateGroups().size(), 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_EQ(modelSpecMerged.getMergedSynapseInitGroups().size(), 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that connectivity parameter is heterogeneous
@@ -617,7 +617,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
@@ -671,7 +671,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 }
 
@@ -730,7 +730,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().size() == 1);
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that only synaptic weight initialistion parameters are heterogeneous

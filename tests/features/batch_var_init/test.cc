@@ -31,6 +31,10 @@ TEST_F(SimTest, BatchVarInit)
     
     scalar *kernel = gKernel;
     for(unsigned int b = 0; b < 10; b++) {
+        ASSERT_EQ(preKernel[b], 13);
+        ASSERT_EQ(postKernel[b], 31);
+        ASSERT_EQ(psmKernel[b], 33);
+
         for(unsigned int i = 0; i < 3; i++) {
             for(unsigned int j = 0; j < 3; j++) {
                 for(unsigned int k = 0; k < 4; k++) {

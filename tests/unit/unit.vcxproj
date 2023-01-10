@@ -68,6 +68,7 @@
       <AdditionalIncludeDirectories>..\..\include\genn\genn;..\..\include\genn\third_party;..\..\include\genn\backends\single_threaded_cpu;$(GTEST_DIR);$(GTEST_DIR)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -78,7 +78,12 @@ struct Preferences : public PreferencesBase
 
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
-
+    
+    //! By default, GeNN generates CUDA error-handling code that generates exceptions with line numbers etc.
+    //! This can make compilation of large models very slow and require a large amount of memory.
+    //! Turning on this option generates much simpler error-handling code that simply raises an abort signal.
+    bool generateSimpleErrorHandling = false;
+    
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
@@ -114,6 +119,7 @@ struct Preferences : public PreferencesBase
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
         Utils::updateHash(enableNCCLReductions, hash);
+        Utils::updateHash(generateSimpleErrorHandling, hash);
     }
 };
 

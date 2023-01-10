@@ -674,50 +674,6 @@ bool SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous(const std::str
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
-{
-    // Get size of this kernel dimension for archetype
-    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
-
-    // Return true if any of the other groups have a different value
-    return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                       [archetypeValue, dimensionIndex](const GroupInternal &g)
-                       {
-                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
-                       });
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getKernelSize(size_t dimensionIndex) const
-{
-    // If kernel size if heterogeneous in this dimension, return group structure entry
-    if(isKernelSizeHeterogeneous(dimensionIndex)) {
-        return "group->kernelSize" + std::to_string(dimensionIndex);
-    }
-    // Otherwise, return literal
-    else {
-        return std::to_string(getArchetype().getKernelSize().at(dimensionIndex));
-    }
-}
-//----------------------------------------------------------------------------
-void SynapseGroupMergedBase::genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
-{
-    // Loop through kernel dimensions to calculate array index
-    const auto &kernelSize = getArchetype().getKernelSize();
-    for(size_t i = 0; i < kernelSize.size(); i++) {
-        os << "(" << subs["id_kernel_" + std::to_string(i)];
-        // Loop through remainining dimensions of kernel and multiply
-        for(size_t j = i + 1; j < kernelSize.size(); j++) {
-            os << " * " << getKernelSize(j);
-        }
-        os << ")";
-
-        // If this isn't the last dimension, add +
-        if(i != (kernelSize.size() - 1)) {
-            os << " + ";
-        }
-    }
-}
-//----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
@@ -752,29 +708,17 @@ std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize,
     }
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
-    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    if(delay) {
-        return (singleBatch ? "preDelayOffset + " : "preBatchDelayOffset + ") + index;
-    }
-    else {
-        return (singleBatch ? "" : "preBatchOffset + ") + index;
-    }
+    return getVarIndex(delay, batchSize, varDuplication, index, "pre");
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
-    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    if(delay) {
-        return (singleBatch ? "postDelayOffset + " : "postBatchDelayOffset + ") + index;
-    }
-    else {
-        return (singleBatch ? "" : "postBatchOffset + ") + index;
-    }
+   return getVarIndex(delay, batchSize, varDuplication, index, "post");
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
@@ -786,7 +730,7 @@ std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigne
     }
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
@@ -798,13 +742,13 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
     }
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     return (singleBatch ? "" : "kernBatchOffset + ") + index;
@@ -819,7 +763,8 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
-    if(role != Role::KernelInit) {
+    // If role isn't an init role or weights aren't kernel
+    if(role != Role::Init || !(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)) {
         addField("unsigned int", "rowStride",
                  [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
         addField("unsigned int", "numSrcNeurons",
@@ -1069,7 +1014,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit || role == Role::KernelInit);
+        const bool varInitRole = (role == Role::Init || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
@@ -1144,6 +1089,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     if(updateRole) {
         Utils::updateHash(getArchetype().getWUHashDigest(), hash);
     }
+    else if (role == Role::ConnectivityInit) {
+        Utils::updateHash(getArchetype().getConnectivityInitHashDigest(), hash);
+    }
     else {
         Utils::updateHash(getArchetype().getWUInitHashDigest(), hash);
     }
@@ -1215,7 +1163,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
+        const bool varInitRole = (role == Role::Init || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
@@ -1265,6 +1213,33 @@ void SynapseGroupMergedBase::addTrgPointerField(const std::string &type, const s
 {
     assert(!Utils::isTypePointer(type));
     addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
+                                                const std::string &index, const std::string &prefix) const
+{
+    if (delay) {
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return prefix + ((batchSize == 1) ? "DelaySlot" : "BatchDelaySlot");
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return prefix + "DelayOffset + " + index;
+        }
+        else {
+            return prefix + "BatchDelayOffset + " + index;
+        }
+    }
+    else {
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return (batchSize == 1) ? "0" : "batch";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return index;
+        }
+        else {
+            return prefix + "BatchOffset + " + index;
+        }
+    }
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUParamReferenced(const std::string &paramName) const

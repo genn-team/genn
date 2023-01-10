@@ -27,18 +27,22 @@ enum class VarAccessMode : unsigned int
 //! Flags defining how variables should be duplicated across multiple batches
 enum class VarAccessDuplication : unsigned int
 {
-    DUPLICATE   = (1 << 5),     //! This variable should be duplicated in each batch
-    SHARED      = (1 << 6),     //! This variable should be shared between batches
+    DUPLICATE       = (1 << 5), //! This variable should be duplicated in each batch
+    SHARED          = (1 << 6), //! This variable should be shared between batches
+    SHARED_NEURON   = (1 << 7)  //! This variable should be shared between neurons
 };
 
 //! Supported combinations of VarAccessMode and VarAccessDuplication
 enum class VarAccess : unsigned int
 {
-    READ_WRITE          = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    READ_ONLY           = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    READ_ONLY_DUPLICATE = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    REDUCE_BATCH_SUM    = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    REDUCE_BATCH_MAX    = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
+    READ_WRITE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
+    READ_ONLY               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
+    READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
+    READ_ONLY_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
+    REDUCE_BATCH_SUM        = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
+    REDUCE_BATCH_MAX        = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
+    REDUCE_NEURON_SUM       = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
+    REDUCE_NEURON_MAX       = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
 };
 
 //----------------------------------------------------------------------------

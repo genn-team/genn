@@ -1036,13 +1036,22 @@ public:
     bool isTrgNeuronDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
+    {
+        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
+    }
     
     //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const;
+    std::string getKernelSize(size_t dimensionIndex) const
+    {
+        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
+    }
     
     //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const;
+    void genKernelIndex(std::ostream& os, const CodeGenerator::Substitutions& subs) const
+    {
+        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
+    }
 
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
@@ -1069,27 +1078,24 @@ public:
 
     std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
 
-    //------------------------------------------------------------------------
-    // Static API
-    //------------------------------------------------------------------------
-    static std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
 
-    static std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     
-    static std::string getPostISynIndex(unsigned int batchSize, const std::string &index)
+    std::string getPostISynIndex(unsigned int batchSize, const std::string &index) const
     {
         return ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
     }
 
-    static std::string getPreISynIndex(unsigned int batchSize, const std::string &index)
+    std::string getPreISynIndex(unsigned int batchSize, const std::string &index) const
     {
         return ((batchSize == 1) ? "" : "preBatchOffset + ") + index;
     }
 
-    static std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     
 protected:
     //----------------------------------------------------------------------------
@@ -1100,9 +1106,8 @@ protected:
         PresynapticUpdate,
         PostsynapticUpdate,
         SynapseDynamics,
-        DenseInit,
+        Init,
         SparseInit,
-        KernelInit,
         ConnectivityInit,
     };
 
@@ -1125,6 +1130,9 @@ private:
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
 
+    std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
+                            const std::string &index, const std::string &prefix) const;
+    
     //! Is the weight update model parameter referenced?
     bool isWUParamReferenced(const std::string &paramName) const;
 
@@ -1145,6 +1153,11 @@ private:
 
     //! Is postsynaptic neuron parameter referenced?
     bool isTrgNeuronParamReferenced(const std::string &paramName) const;
+
+    static const std::vector<unsigned int>& getGroupKernelSize(const SynapseGroupInternal& g)
+    {
+        return g.getKernelSize();
+    }
 
     //------------------------------------------------------------------------
     // Members

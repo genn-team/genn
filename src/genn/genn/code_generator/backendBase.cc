@@ -9,6 +9,7 @@
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 
+
 // Macro for simplifying defining type sizes
 #define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
 #define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
@@ -16,7 +17,9 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
+namespace CodeGenerator
+{
+BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
@@ -38,7 +41,7 @@ CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const Pre
     }
 }
 //--------------------------------------------------------------------------
-size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
+size_t BackendBase::getSize(const std::string &type) const
 {
      // If type is a pointer, any pointer should have the same type
     if(Utils::isTypePointer(type)) {
@@ -59,7 +62,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) const
+std::string BackendBase::getLowestValue(const std::string &type) const
 {
     assert(!Utils::isTypePointer(type));
 
@@ -75,7 +78,7 @@ std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) 
     }
 }
 //--------------------------------------------------------------------------
-bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
+bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
 {
     // Loop through merged groups and calculate maximum number of synapses
     size_t maxSynapses = 0;
@@ -88,7 +91,7 @@ bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const Syn
     return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
+void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
 {
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
@@ -98,13 +101,19 @@ void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const
     // If axonal delays are required
     if(ng.getArchetype().isDelayRequired()) {
         // We should READ from delay slot before spkQuePtr
-        os << "const unsigned int readDelayOffset = (((*group->spkQuePtr + " << (ng.getArchetype().getNumDelaySlots() - 1) << ") % " << ng.getArchetype().getNumDelaySlots() << ") * group->numNeurons);" << std::endl;
+        os << "const unsigned int readDelaySlot = (*group->spkQuePtr + " << (ng.getArchetype().getNumDelaySlots() - 1) << ") % " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
+        os << "const unsigned int readDelayOffset = readDelaySlot * group->numNeurons;" << std::endl;
 
         // And we should WRITE to delay slot pointed to be spkQuePtr
-        os << "const unsigned int writeDelayOffset = (*group->spkQuePtr * group->numNeurons);" << std::endl;
+        os << "const unsigned int writeDelaySlot = *group->spkQuePtr;" << std::endl;
+        os << "const unsigned int writeDelayOffset = writeDelaySlot * group->numNeurons;" << std::endl;
 
         // If batching is also enabled
         if(batchSize > 1) {
+            // Calculate batched delay slots
+            os << "const unsigned int readBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + readDelaySlot;" << std::endl;
+            os << "const unsigned int writeBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + writeDelaySlot;" << std::endl;
+
             // Calculate current batch offset
             os << "const unsigned int batchDelayOffset = batchOffset * " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
 
@@ -115,7 +124,7 @@ void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
      // If batching is enabled
     if(batchSize > 1) {
@@ -203,7 +212,7 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
+void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
 {
     // If batching is enabled, calculate batch offset
     if(cu.getArchetype().isBatched()) {
@@ -213,11 +222,37 @@ void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os,
     // If axonal delays are required
     if(cu.getArchetype().getDelayNeuronGroup() != nullptr) {
         // We should read from delay slot pointed to be spkQuePtr
-        os << "const unsigned int delayOffset = (*group->spkQuePtr * group->size);" << std::endl;
+        os << "const unsigned int delaySlot = *group->spkQuePtr;" << std::endl;
+        os << "const unsigned int delayOffset = (delaySlot * group->size);" << std::endl;
 
         // If batching is also enabled, calculate offset including delay and batch
         if(cu.getArchetype().isBatched()) {
+            os << "const unsigned int batchDelaySlot = (batch * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ") + delaySlot;" << std::endl;
+
+            // Calculate current batch offset
             os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
     }
 }
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
+{
+    return genInitReductionTargets(os, cg, idx,
+                                   [&cg](const Models::VarReference &varRef, const std::string &index)
+                                   {
+                                       return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                                                getVarAccessDuplication(varRef.getVar().access),
+                                                                index);
+                                   });
+}
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
+{
+    return genInitReductionTargets(os, cg, idx,
+                                   [&cg](const Models::WUVarReference &varRef, const std::string &index)
+                                   {
+                                       return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
+                                                                index);
+                                   });
+}
+}   // namespace CodeGenerator

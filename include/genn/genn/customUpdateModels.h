@@ -35,9 +35,6 @@ public:
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Is this custom update a reduction operation?
-    bool isReduction() const;
-
     //! Validate names of parameters etc
     template<typename R>
     void validate(const std::unordered_map<std::string, double> &paramValues,

@@ -27,9 +27,20 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-unsigned int getNumCopies(VarAccess varAccess, unsigned int batchSize)
+unsigned int getNumVarCopies(VarAccess varAccess, unsigned int batchSize, bool batched = true)
 {
-    return (varAccess & VarAccessDuplication::SHARED) ? 1 : batchSize;
+    return ((varAccess & VarAccessDuplication::SHARED) || !batched) ? 1 : batchSize;
+}
+//--------------------------------------------------------------------------
+unsigned int getNumVarElements(VarAccess varAccess, unsigned int numNeurons)
+{
+    return (varAccess & VarAccessDuplication::SHARED_NEURON) ? 1 : numNeurons;
+}
+//--------------------------------------------------------------------------
+unsigned int getVarSize(VarAccess varAccess, unsigned int numElements, unsigned int batchSize, 
+                        unsigned int delaySlots = 1, bool batched = true)
+{
+    return getNumVarCopies(varAccess, batchSize, batched) * getNumVarElements(varAccess, numElements) * delaySlots;
 }
 //--------------------------------------------------------------------------
 void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
@@ -432,11 +443,12 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
         std::vector<std::string> customUpdateStatePushPullFunctions;
         for(const auto &cuVar : cuModel->getVars()) {
             const auto *varInitSnippet = c.second.getVarInitialisers().at(cuVar.name).getSnippet();
-            const unsigned int numCopies = c.second.isBatched() ? getNumCopies(cuVar.access, modelMerged.getModel().getBatchSize()) : 1;
+            const unsigned int size = getVarSize(cuVar.access, getSizeFn(c.second), modelMerged.getModel().getBatchSize(),
+                                                 1, c.second.isBatched());
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, cuVar.type, cuVar.name + c.first, c.second.getVarLocation(cuVar.name),
-                        autoInitialized, numCopies * getSizeFn(c.second), mem, customUpdateStatePushPullFunctions);
+                        autoInitialized, size, mem, customUpdateStatePushPullFunctions);
 
             // Loop through EGPs required to initialize custom update variable
             for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
@@ -698,26 +710,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Generate merged custom update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Generate merged custom dense WU update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomWUUpdateDenseInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Loop through merged dense synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
-         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                          runnerVarDecl, runnerMergedStructAlloc);
-    }
-    
-    // Loop through merged kernel synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseKernelInitGroups()) {
+    // Loop through merged synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                           runnerVarDecl, runnerMergedStructAlloc);
     }
@@ -730,6 +724,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                          runnerVarDecl, runnerMergedStructAlloc);
     }
@@ -995,8 +1001,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         std::vector<std::string> neuronStatePushPullFunctions;
         for(const auto &var : neuronModel->getVars()) {
             const auto *varInitSnippet = n.second.getVarInitialisers().at(var.name).getSnippet();
-            const unsigned int numCopies = getNumCopies(var.access, batchSize);
-            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * n.second.getNumNeurons() * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
+            const unsigned int numCopies = getNumVarCopies(var.access, batchSize);
+            const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
+            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, var.type, var.name + n.first,
@@ -1066,7 +1073,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 const bool autoInitialized = !varInitSnippet->getCode().empty();
                 genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                             runnerPushFunc, runnerPullFunc, csVar.type, csVar.name + cs->getName(), cs->getVarLocation(csVar.name),
-                            autoInitialized, getNumCopies(csVar.access, batchSize) * n.second.getNumNeurons(), mem, currentSourceStatePushPullFunctions);
+                            autoInitialized, getVarSize(csVar.access, n.second.getNumNeurons(), batchSize), mem, currentSourceStatePushPullFunctions);
 
                 // Loop through EGPs required to initialize current source variable
                 for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
@@ -1110,7 +1117,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     mem, statePushPullFunctions, 
                     [&backend](const CustomUpdateWUInternal &c) 
                     { 
-                        return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*c.getSynapseGroup()); 
+                        const SynapseGroupInternal *sg = c.getSynapseGroup();
+                        if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                            return sg->getKernelSizeFlattened();
+                        }
+                        else {
+                            return sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg);
+                        }
                     });
     allVarStreams << std::endl;
 
@@ -1134,8 +1147,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             for(const auto &psmVar : sg->getPSModel()->getVars()) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    psmVar.type, psmVar.name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(psmVar.name),
-                                    sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize), mem);
+                                 psmVar.type, psmVar.name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(psmVar.name),
+                                 getVarSize(psmVar.access, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize), mem);
 
                 // Loop through EGPs required to initialize PSM variable
                 const auto extraGlobalParams = sg->getPSVarInitialisers().at(psmVar.name).getSnippet()->getExtraGlobalParams();
@@ -1157,14 +1170,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             // Loop through presynaptic W.U.M. variables
-            const size_t preSize = (sg->getDelaySteps() == NO_DELAY)
-                    ? sg->getSrcNeuronGroup()->getNumNeurons()
-                    : sg->getSrcNeuronGroup()->getNumNeurons() * sg->getSrcNeuronGroup()->getNumDelaySlots();
+            const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
             for(const auto &wuPreVar : sg->getWUModel()->getPreVars()) {
                 const auto *varInitSnippet = sg->getWUPreVarInitialisers().at(wuPreVar.name).getSnippet();
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 wuPreVar.type, wuPreVar.name + sg->getFusedWUPreVarSuffix(),
-                                 sg->getWUPreVarLocation(wuPreVar.name), preSize * getNumCopies(wuPreVar.access, batchSize), mem);
+                                 wuPreVar.type, wuPreVar.name + sg->getFusedWUPreVarSuffix(), sg->getWUPreVarLocation(wuPreVar.name), 
+                                 getVarSize(wuPreVar.access, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize), mem);
 
                 // Loop through EGPs required to initialize WUM variable
                 for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
@@ -1180,13 +1191,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             // Loop through postsynaptic W.U.M. variables
-            const size_t postSize = (sg->getBackPropDelaySteps() == NO_DELAY)
-                    ? sg->getTrgNeuronGroup()->getNumNeurons()
-                    : sg->getTrgNeuronGroup()->getNumNeurons() * sg->getTrgNeuronGroup()->getNumDelaySlots();
+            const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
             for(const auto &wuPostVar : sg->getWUModel()->getPostVars()) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  wuPostVar.type, wuPostVar.name + sg->getFusedWUPostVarSuffix(), sg->getWUPostVarLocation(wuPostVar.name),
-                                 postSize * getNumCopies(wuPostVar.access, batchSize), mem);
+                                 getVarSize(wuPostVar.access, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize), mem);
                 
                 // Loop through EGPs required to initialize WUM variable
                 const auto *varInitSnippet = sg->getWUPostVarInitialisers().at(wuPostVar.name).getSnippet();
@@ -1293,11 +1302,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, wuVar.type, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
-                                autoInitialized, size * getNumCopies(wuVar.access, batchSize), mem, synapseGroupStatePushPullFunctions);
+                                autoInitialized, size * getNumVarCopies(wuVar.access, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
                 else if(kernelWeights) {
                      // Calculate size of kernel
-                     const size_t size = s.second.getKernelSizeFlattened() * getNumCopies(wuVar.access, batchSize);
+                     const size_t size = s.second.getKernelSizeFlattened() * getNumVarCopies(wuVar.access, batchSize);
                      
                      // Generate variable
                      genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -1334,7 +1343,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                     [&]()
                                     {
                                         backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVar.type, psmVar.name + s.second.getName(), s.second.getPSVarLocation(psmVar.name),
-                                                                    autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize));
+                                                                    autoInitialized, getVarSize(psmVar.access, s.second.getTrgNeuronGroup()->getNumNeurons(), batchSize));
                                     });
             }
         }
@@ -1342,9 +1351,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // If this synapse group's presynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPreModelFused()) {
-            const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
-                ? s.second.getSrcNeuronGroup()->getNumNeurons()
-                : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
+            const unsigned int preDelaySlots = (s.second.getDelaySteps() == NO_DELAY) ? 1 : s.second.getSrcNeuronGroup()->getNumDelaySlots();
 
             for(const auto &wuPreVar : wu->getPreVars()) {
                 const bool autoInitialized = !s.second.getWUPreVarInitialisers().at(wuPreVar.name).getSnippet()->getCode().empty();
@@ -1353,7 +1360,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                     [&]()
                                     {
                                         backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPreVar.type, wuPreVar.name + s.second.getName(), s.second.getWUPreVarLocation(wuPreVar.name),
-                                                                    autoInitialized, preSize * getNumCopies(wuPreVar.access, batchSize));
+                                                                    autoInitialized, getVarSize(wuPreVar.access, s.second.getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots));
                                     });
             }
             
@@ -1362,9 +1369,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // If this synapse group's postsynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPostModelFused()) {
-            const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
-                    ? s.second.getTrgNeuronGroup()->getNumNeurons()
-                    : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
+            const unsigned int postDelaySlots = (s.second.getBackPropDelaySteps() == NO_DELAY) ? 1 : s.second.getTrgNeuronGroup()->getNumDelaySlots();
             for(const auto &wuPostVar : s.second.getWUModel()->getPostVars()) {
                 const bool autoInitialized = !s.second.getWUPostVarInitialisers().at(wuPostVar.name).getSnippet()->getCode().empty();
                 genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPostVarLocation(wuPostVar.name),
@@ -1372,7 +1377,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                     [&]()
                                     {
                                         backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPostVar.type, wuPostVar.name + s.second.getName(), s.second.getWUPostVarLocation(wuPostVar.name),
-                                                                    autoInitialized, postSize * getNumCopies(wuPostVar.access, batchSize));
+                                                                    autoInitialized, getVarSize(wuPostVar.access, s.second.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots));
                                     });
             }
             

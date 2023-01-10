@@ -300,7 +300,7 @@ For convenience, \add_cpp_python_text{the methods this class should implement ca
   referred to by \$(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
-  time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
+  time step size and \$(Isyn) for the total incoming synaptic current. It can also refer to a unique ID (within the population) using \$(id).
 - \add_cpp_python_text{SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE),`threshold_condition_code=THRESHOLD_CONDITION_CODE`} defines the condition for true spike detection.
 - \add_cpp_python_text{SET_RESET_CODE(RESET_CODE),`reset_code=RESET_CODE`} defines code to be run after a true spike is emitted.
 - \add_cpp_python_text{SET_PARAM_NAMES(),`param_names`} defines the names of the model parameters. 
@@ -494,7 +494,7 @@ SET_SIM_CODE(
 \add_toggle_code_python
 sim_code="$(addToInSynDelay, $(inc), $(delay));"
 \end_toggle_code
-where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
+where, once again, \$(inc) is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
 \note
 When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
 
@@ -703,6 +703,8 @@ event_threshold_condition_code="$(V_pre) > -0.02"
 Whenever this expression evaluates to true, the event code set using the \add_cpp_python_text{SET_EVENT_CODE() macro,`event_code` keyword argument} is executed. For an example, see WeightUpdateModels::StaticGraded.
 Weight update models can indicate whether they require the times of these spike-like-events using the \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_EVENT_TIME() and SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME() macros, ``is_pre_spike_event_time_required`` and ``is_prev_pre_spike_event_time_required`` keyword arguments}.
 These times can then be accessed through the \$(seT_pre) and \$(prev_seT_pre) variables.
+
+
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
 */
@@ -801,7 +803,9 @@ For convenience the methods this class should implement can be implemented using
 - \add_cpp_python_text{DECLARE_CUSTOM_UPDATE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS\, NUM_VAR_REFS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a custom update with variable references as well as variables and parameters,`class_name`: the name of the new model}.
 - \add_cpp_python_text{SET_VAR_REFS(),`var_refs`} defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
     of the variable references. The variables defined here as `NAME` can then be used in the syntax \$(NAME) in the update code string. Variable reference types must match those of the underlying variables.
-    supported access modes are \add_cpp_python_text{VarAccessMode::READ_WRITE, pygenn.genn_wrapper.Models.VarAccessMode_READ_WRITE} \add_cpp_python_text{VarAccessMode::READ_ONLY,pygenn.genn_wrapper.Models.VarAccessMode_READ_ONLY}, \add_cpp_python_text{VarAccessMode::REDUCE_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_SUM} and \add_cpp_python_text{VarAccessMode::REDUCE_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_MAX}.
+    supported access modes are \add_cpp_python_text{VarAccessMode::READ_WRITE, pygenn.genn_wrapper.Models.VarAccessMode_READ_WRITE} \add_cpp_python_text{VarAccessMode::READ_ONLY,pygenn.genn_wrapper.Models.VarAccessMode_READ_ONLY}, \add_cpp_python_text{VarAccessMode::REDUCE_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_SUM}, \add_cpp_python_text{VarAccessMode::REDUCE_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_MAX}, \
+    \add_cpp_python_text{VarAccessMode::REDUCE_NEURON_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_NEURON_SUM}
+    and add_cpp_python_text{VarAccessMode::REDUCE_NEURON_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_NEURON_MAX}.
 - \add_cpp_python_text{SET_UPDATE_CODE(UPDATE_CODE),``update_code=UPDATE_CODE``}: where UPDATE_CODE contains the code for to perform the custom update.
 
 For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
@@ -829,7 +833,7 @@ reset_model = genn_model.create_custom_custom_update_class(
 When used in a model with batch size > 1, whether custom updates of this sort are batched or not depends on the variables their references point to. If any referenced variables have \add_cpp_python_text{VarAccess::READ_ONLY_DUPLICATE, pygenn.genn_wrapper.Models.VarAccess_READ_ONLY_DUPLICATE} or \add_cpp_python_text{VarAccess::READ_WRITE, pygenn.genn_wrapper.Models.VarAccess_READ_WRITE} access modes, then the update will be batched and any variables associated with the custom update which also have \add_cpp_python_text{VarAccess::READ_ONLY_DUPLICATE, pygenn.genn_wrapper.Models.VarAccess_READ_ONLY_DUPLICATE} or \add_cpp_python_text{VarAccess::READ_WRITE, pygenn.genn_wrapper.Models.VarAccess_READ_WRITE} access modes will be duplicated across the batches.
 
 \subsection custom_update_reduction Batch reduction
-As well as the standard variable access modes described in \ref subsect11, custom updates support variables with several 'reduction' access modes:
+As well as the standard variable access modes described in \ref subsect11, custom updates support variables with several 'batch reduction' access modes:
 - \add_cpp_python_text{VarAccess::REDUCE_BATCH_SUM, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_BATCH_SUM``}
 - \add_cpp_python_text{VarAccess::REDUCE_BATCH_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_BATCH_MAX``}
 
@@ -837,10 +841,10 @@ These access modes allow values read from variables duplicated across batches to
 For example, in a gradient-based learning scenario, a model like this could be used to sum gradients from across all batches so they can be used as the input to a learning rule operating on shared synaptic weights:
 
 \add_toggle_code_cpp
-class Reset : public CustomUpdateModels::Base
+class GradientBatchReduce : public CustomUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_UPDATE_MODEL(Reset, 0, 1, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(GradientBatchReduce, 0, 1, 1);
 
     SET_UPDATE_CODE(
         "$(reducedGradient) = $(gradient);\n"
@@ -864,6 +868,39 @@ gradient_batch_reduce_model = genn_model.create_custom_custom_update_class(
 Custom updates can also perform the same sort of reduction operation _into_ variable references with the equivalent 'reduction' access modes:
 - \add_cpp_python_text{VarAccessMode::REDUCE_SUM, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_SUM``}
 - \add_cpp_python_text{VarAccessMode::REDUCE_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_MAX``}
+
+\subsection custom_update_neuron_reduction Neuron reductions
+Similarly to the batch reduction modes discussed previously, custom updates also support variables with several 'neuron reduction' access modes:
+- \add_cpp_python_text{VarAccess::REDUCE_NEURON_SUM, ``pygenn.genn_wrapper.Models.REDUCE_NEURON_SUM``}
+- \add_cpp_python_text{VarAccess::REDUCE_NEURON_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_NEURON_MAX``}
+
+These access modes allow values read from per-neuron variables to be reduced into variables that are shared across neurons.
+For example, a model like this could be used to calculate the maximum value of a state variable in a population of neurons:
+
+\add_toggle_code_cpp
+class Reduce : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 1, 1);
+
+    SET_UPDATE_CODE(
+        "$(reduction) = $(source);\n");
+
+    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_NEURON_SUM}});
+    SET_VAR_REFS({{"source", "scalar", VarAccessMode::READ_ONLY}, 
+};
+\end_toggle_code
+\add_toggle_code_python
+reduce_model = genn_model.create_custom_custom_update_class(
+    "reduce",
+    var_name_typessourcereduction", "scalar", REDUCE_NEURON_SUM)],
+    var_refs=[("gradient", "scalar", VarAccessMode_READ_ONLY)],
+    update_code="""
+    $(reduction) = $(source);
+    """)
+\end_toggle_code
+
+Again, like batch reductions, neuron reductions can also be performed into variable references with the \add_cpp_python_text{VarAccessMode::REDUCE_SUM, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_SUM``} or \add_cpp_python_text{VarAccessMode::REDUCE_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_MAX``} access modes.
 
 \note
 Reading from variables with a reduction access mode is undefined behaviour.

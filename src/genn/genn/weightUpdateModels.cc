@@ -68,4 +68,11 @@ void WeightUpdateModels::Base::validate(const std::unordered_map<std::string, do
 
     // Validate variable reference initialisers
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
+
+    // If any variables have shared neuron duplication mode, give an error
+    if (std::any_of(vars.cbegin(), vars.cend(),
+                    [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::SHARED_NEURON); }))
+    {
+        throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
+    }
 }

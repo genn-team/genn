@@ -146,7 +146,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
 
                             // If node has suitable CUDA, add -c option
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel || "cuda11" in nodeLabel) {
                                 runTestArguments += " -c";
                             }
 
@@ -231,6 +231,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
 
+                            pip install --upgrade pip
                             pip install wheel "numpy>=1.17" pybind11
 
                             python setup.py clean --all
@@ -277,6 +278,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             call activate
                             popd
 
+                            pip install --upgrade pip
                             pip install wheel "numpy>=1.17" pybind11
 
                             copy /Y lib\\genn*Release_DLL.* pygenn

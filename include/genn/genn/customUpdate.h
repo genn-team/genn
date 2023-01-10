@@ -80,9 +80,6 @@ protected:
     //! Is this custom update batched i.e. run in parallel across model batches
     bool isBatched() const { return m_Batched; }
 
-    //! Does this custom update perform a reduction i.e. reduce some variables from DUPLICATE to SHARED
-    bool isReduction() const { return getCustomUpdateModel()->isReduction(); }
-
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -92,6 +89,32 @@ protected:
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
+    template<typename V>
+    bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDuplication duplication) const
+    {
+        // Return true if any variables have REDUCE flag in their access mode and have correct duplication flag
+        const auto vars = getCustomUpdateModel()->getVars();
+        if(std::any_of(vars.cbegin(), vars.cend(),
+                       [duplication](const Models::Base::Var &v)
+                       { 
+                           return (v.access & VarAccessModeAttribute::REDUCE) && (v.access & duplication);
+                       }))
+        {
+            return true;
+        }
+
+        // Loop through all variable references
+        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+            const auto &varRef = varRefs.at(modelVarRef.name);
+            // If custom update model reduces into this variable reference and the variable it targets has correct duplication flag
+            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) & (varRef.getVar().access & duplication)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
@@ -111,7 +134,7 @@ protected:
             if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
                 && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
             {
-                throw std::runtime_error("Reduction target variable reference must be to SHARED variables.");
+                throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
             }
         }
     }
@@ -123,7 +146,7 @@ protected:
         // If target of any variable references is duplicated, custom update should be batched
         if(batchSize > 1) {
             m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const auto &v) { return (v.second.getVar().access & VarAccessDuplication::DUPLICATE); });
+                                    [](const auto &v) { return (v.second.isBatched() && (v.second.getVar().access & VarAccessDuplication::DUPLICATE)); });
         }
         else {
             m_Batched = false;
@@ -136,9 +159,9 @@ protected:
              // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
             if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
-               && (modelVarRef.access != VarAccessMode::READ_ONLY))
+               && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to SHARED variables in batched custom updates must be read-only.");
+                throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");
             }
         }
     }
@@ -191,6 +214,9 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
+
      //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -235,6 +261,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isTransposeOperation() const;
 
     const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }

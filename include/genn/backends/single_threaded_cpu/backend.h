@@ -94,7 +94,8 @@ public:
                                  const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
@@ -194,24 +195,32 @@ private:
         }
     }
 
-    //! Helper to generate code to copy reduced variables back to variables
+    //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
-    template<typename G>
-    void genWriteBackReductions(CodeStream &os, const G &cg, const std::string &idx) const
+    void genWriteBackReductions(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const;
+
+    //! Helper to generate code to copy reduced custom weight update group variables back to memory
+    /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
+    void genWriteBackReductions(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const;
+
+    template<typename G, typename R>
+    void genWriteBackReductions(CodeStream &os, const G &cg, const std::string &idx, R getVarRefIndexFn) const
     {
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                os << "group->" << v.name << "[" << idx << "] = l" << v.name << ";" << std::endl;
+                os << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(v.access), idx) << "] = l" << v.name << ";" << std::endl;
             }
         }
 
-        // Loop through variable references
-        for(const auto &v : cm->getVarRefs()) {
+        // Loop through all variable references
+        for(const auto &modelVarRef : cm->getVarRefs()) {
+            const auto &varRef = cg.getArchetype().getVarReferences().at(modelVarRef.name);
+
             // If variable reference is a reduction target, copy value from register straight back into global memory
-            if(v.access & VarAccessModeAttribute::REDUCE) {
-                os << "group->" << v.name << "[" << idx<< "] = l" << v.name << ";" << std::endl;
+            if(modelVarRef.access & VarAccessModeAttribute::REDUCE) {
+                os << "group->" << modelVarRef.name << "[" << getVarRefIndexFn(varRef, idx) << "] = l" << modelVarRef.name << ";" << std::endl;
             }
         }
     }

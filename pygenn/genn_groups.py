@@ -805,6 +805,9 @@ class CustomUpdateMixin(GroupMixin):
     def load(self):
         # If this is a custom weight update
         if self._custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert (self._synapse_group.has_individual_synapse_vars or
+                    self._synapse_group.has_kernel_synapse_vars)
             # Loop through state variables
             for v in self.custom_update_model.get_vars():
                 # Get corresponding data from dictionary
@@ -845,7 +848,7 @@ class CustomUpdateMixin(GroupMixin):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
-    
+
     @property
     def _custom_wu_update(self):
         return isinstance(self, CustomUpdateWU)

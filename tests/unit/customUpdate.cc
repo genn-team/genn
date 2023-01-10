@@ -15,6 +15,32 @@
 //--------------------------------------------------------------------------
 namespace
 {
+class IzhikevichVariableShared : public NeuronModels::Izhikevich
+{
+public:
+    DECLARE_MODEL(IzhikevichVariableShared, 0, 6);
+
+    SET_PARAM_NAMES({});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"},
+              {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
+              {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+};
+IMPLEMENT_MODEL(IzhikevichVariableShared);
+
+class StaticPulseDendriticDelaySplit : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelaySplit, 0, 4, 0, 0);
+
+    SET_VARS({{"gCommon", "scalar", VarAccess::READ_ONLY}, 
+              {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
+              {"dCommon", "scalar", VarAccess::READ_ONLY},
+              {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
+
+    SET_SIM_CODE("$(addToInSynDelay, $(gCommon) + $(g), $(dCommon) + $(d));\n");
+};
+IMPLEMENT_MODEL(StaticPulseDendriticDelaySplit);
+
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum);
@@ -38,6 +64,18 @@ class Sum2 : public CustomUpdateModels::Base
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(Sum2);
+
+class Sum3 : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum3, 0, 2, 2);
+
+    SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
+
+    SET_VARS({{"sum", "scalar"}, {"scale", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY},
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(Sum3);
 
 class Cont : public WeightUpdateModels::Base
 {
@@ -73,9 +111,136 @@ class Reduce : public CustomUpdateModels::Base
                   {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
 };
 IMPLEMENT_SNIPPET(Reduce);
+
+class ReduceDouble : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(ReduceDouble);
+
+    SET_UPDATE_CODE(
+        "$(reduction1) = $(var1);\n"
+        "$(reduction2) = $(var2);\n");
+
+    SET_VARS({{"reduction1", "scalar", VarAccess::REDUCE_BATCH_SUM},
+              {"reduction2", "scalar", VarAccess::REDUCE_NEURON_SUM}});
+
+    SET_VAR_REFS({{"var1", "scalar", VarAccessMode::READ_ONLY},
+                  {"var2", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(ReduceDouble);
+
+class ReduceSharedVar : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(ReduceSharedVar);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_BATCH_SUM}})
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(ReduceSharedVar);
+
+
+class ReduceNeuronSharedVar : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(ReduceNeuronSharedVar);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_NEURON_SUM}})
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(ReduceNeuronSharedVar);
 }
 //--------------------------------------------------------------------------
 // Tests
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ConstantVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, UninitialisedVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    Sum::VarValues sumVarValues(uninitialisedVar());
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, RandVarSum)
+{
+    ModelSpecInternal model;
+
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+
+    InitVarSnippet::Uniform::ParamValues dist(0.0, 1.0);
+    Sum::VarValues sumVarValues(initVar<InitVarSnippet::Uniform>(dist));
+    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+ 
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                                  {}, sumVarValues, sumVarReferences1);
+    model.finalize();
+
+    CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
+    ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
+    ASSERT_TRUE(cuInternal->isInitRNGRequired());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+}
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarReferenceTypeChecks)
 {
@@ -252,10 +417,10 @@ TEST(CustomUpdates, BatchingVars)
     
 
     // Create updates where variable is shared and references vary
-    VarValues sum2VarValues{{"mult", 1.0}};
-    VarReferences sum2VarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
-    VarReferences sum2VarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
-    VarReferences sum2VarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
+    VarValues sumVarValues{{"mult", 1.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
 
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                              {}, sum2VarValues, sum2VarReferences1);
@@ -263,11 +428,18 @@ TEST(CustomUpdates, BatchingVars)
                                              {}, sum2VarValues, sum2VarReferences2);
     auto *sum3 = model.addCustomUpdate<Sum2>("Sum3", "CustomUpdate",
                                              {}, sum2VarValues, sum2VarReferences3);
+
+    // Create one more update which references two variables in the non-batched sum2
+    VarReferences sumVarReferences4{{"a", createVarRef(sum2, "sum")}, {"b", createVarRef(sum2, "sum")}};
+    auto *sum4 = model.addCustomUpdate<Sum>("Sum4", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences4);
+    
     model.finalize();
 
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
+    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum4)->isBatched());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
@@ -309,6 +481,159 @@ TEST(CustomUpdates, ReduceDuplicate)
         FAIL();
     }
     catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (copy of izhikevich model where a, b, c and d are shared_neuron) to model
+    IzhikevichVariableShared::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
+                                             {}, {}, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5); 
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
+    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
+                                                            {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce a
+    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "a"));
+    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
+                                                            {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_FALSE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateBatch)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
+                                             {}, {}, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->isBatchReduction());
+    ASSERT_FALSE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
+    ReduceSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceSharedVar>("Reduction", "CustomUpdate",
+                                                      {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->isBatchReduction());
+    ASSERT_FALSE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+
+    Sum3::VarValues sumVarValues(0.0, 1.0);
+    Sum3::WUVarReferences sumVarReferences(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
+
+    try {
+        model.addCustomUpdate<Sum3>("SumWeight", "CustomUpdate",
+                                   {}, sumVarValues, sumVarReferences);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, NeuronBatchReduction)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceDouble::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    ReduceDouble::VarValues reduceVars(0.0, 0.0);
+    
+    try {
+        model.addCustomUpdate<ReduceDouble>("Reduction", "CustomUpdate",
+                                            {}, reduceVars, reduceVarReferences);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
     }
 }
 //--------------------------------------------------------------------------
@@ -482,23 +807,32 @@ TEST(CustomUpdates, CompareDifferentBatched)
     // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
     VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, {{"sum", 0.0}}, sumVarReferences3);
 
     model.finalize();
 
-    // Check that sum1 is batched and sum is not
+    // Check that sum1 and sum3 are batched and sum2 is not
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
     CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
     ASSERT_TRUE(sum1Internal->isBatched());
     ASSERT_FALSE(sum2Internal->isBatched());
+    ASSERT_TRUE(sum3Internal->isBatched());
 
-    // Check that this means they can't be merged
+    // Check that neither initialisation nor update of batched and unbatched can be merged
     ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
     ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
     
+    // Check that initialisation of batched and mixed can be merged but not update
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -508,7 +842,7 @@ TEST(CustomUpdates, CompareDifferentBatched)
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 2);
 }
 //--------------------------------------------------------------------------
@@ -559,7 +893,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     // **NOTE** transpose variables don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().empty());
 }
 //--------------------------------------------------------------------------
@@ -610,8 +944,68 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().size() == 1);
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, CompareDifferentWUBatched)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+
+    // Add synapse group 
+    StaticPulseDendriticDelaySplit::VarValues synVarInit(1.0, 1.0, 1.0, 1.0);
+    auto *sg1 = model.addSynapsePopulation<StaticPulseDendriticDelaySplit, PostsynapticModels::DeltaCurr>(
+        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, synVarInit,
+        {}, {});
+
+    // Add one custom update which sums duplicated variables (g and d), another which sums shared variables (gCommon and dCommon) and another which sums one of each
+    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
+    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "gCommon"), createWUVarRef(sg1, "dCommon"));
+    Sum::WUVarReferences sumVarReferences3(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "dCommon"));
+    auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences3);
+    model.finalize();
+
+    // Check that sum1 and sum3 are batched and sum2 is not
+    CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
+    CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
+    CustomUpdateWUInternal *sum3Internal = static_cast<CustomUpdateWUInternal*>(sum3);
+    ASSERT_TRUE(sum1Internal->isBatched());
+    ASSERT_FALSE(sum2Internal->isBatched());
+    ASSERT_TRUE(sum3Internal->isBatched());
+
+    // Check that neither initialisation nor update of batched and unbatched can be merged
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    
+    // Check that initialisation of batched and mixed can be merged but not update
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check correct groups are merged
+    // **NOTE** delay groups don't matter for initialization
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().size() == 3);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 2);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, InvalidName)

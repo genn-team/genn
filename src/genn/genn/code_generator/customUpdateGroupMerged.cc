@@ -172,7 +172,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, modelMerged, "id",
-                    [this, &modelMerged](const Models::VarReference &varRef, const std::string &index)
+                    [this](const Models::VarReference &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
                                               getVarAccessDuplication(varRef.getVar().access),
@@ -182,15 +182,35 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
-    // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+        return getArchetype().isBatched() ? "batch" : "0";
+    }
+    else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+        assert(!index.empty());
+        return index;
+    }
+    else {
+        assert(!index.empty());
+        return "batchOffset + " + index;
+    }
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return getArchetype().isBatched() ? "batchDelaySlot" : "delaySlot";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+            assert(!index.empty());
+            return "delayOffset + " + index;
+        }
+        else {
+            assert(!index.empty());
+            return "batchDelayOffset + " + index;
+        }
     }
     else {
         return getVarIndex(varDuplication, index);
@@ -252,40 +272,57 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
-    addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) 
-             { 
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-             });
-    
-    addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) 
-             {
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-             });
-
-    addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t)
-             { 
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-             });
-
-    // If synapse group has sparse connectivity
-    if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+    // If underlying synapse group has kernel weights
+    if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(d)) {
+                addField("unsigned int", "kernelSize" + std::to_string(d),
+                         [d](const CustomUpdateWUInternal &cu, size_t) 
+                         {
+                             return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
+                         });
+            }
+        }
+    }
+    // Otherwise
+    else {
+        addField("unsigned int", "rowStride",
                  [&backend](const CustomUpdateWUInternal &cg, size_t) 
                  { 
-                     return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+                 });
+    
+        addField("unsigned int", "numSrcNeurons",
+                 [](const CustomUpdateWUInternal &cg, size_t) 
+                 {
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
                  });
 
-        addField("unsigned int*", "rowLength",
-                [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                { 
-                    return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                });
+        addField("unsigned int", "numTrgNeurons",
+                 [](const CustomUpdateWUInternal &cg, size_t)
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+                 });
+
+        // If synapse group has sparse connectivity
+        if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                     });
+
+            addField("unsigned int*", "rowLength",
+                    [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                    { 
+                        return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                    });
+        }
     }
 
     // Add heterogeneous custom update model parameters
@@ -325,6 +362,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
+
 // ----------------------------------------------------------------------------
 // CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------

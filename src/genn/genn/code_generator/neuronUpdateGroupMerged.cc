@@ -649,26 +649,50 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase&, CodeStream
                         &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+    if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+        return (batchSize == 1) ? "0" : "batch";
+    }
+    else if(varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+        return index;
+    }
+    else {
+        return "batchOffset + " + index;
+    }
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     if(delay) {
-        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset + " : "readBatchDelayOffset + ") + index;
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return (batchSize == 1) ? "readDelaySlot" : "readBatchDelaySlot";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return "readDelayOffset + " + index;
+        }
+        else {
+            return "readBatchDelayOffset + " + index;
+        }
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
     }
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     if(delay) {
-        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return (batchSize == 1) ? "writeDelaySlot" : "writeBatchDelaySlot";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return "writeDelayOffset + " + index;
+        }
+        else {
+            return "writeBatchDelayOffset + " + index;
+        }
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);

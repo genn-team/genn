@@ -98,6 +98,7 @@ FOR %%S IN (%SOURCE_FILES%) DO (
 @ECHO       ^<IntrinsicFunctions Condition="'$(Configuration)'=='Release'"^>true^</IntrinsicFunctions^>>> %PROJECT_FILE%
 @ECHO       ^<SDLCheck^>true^</SDLCheck^>>> %PROJECT_FILE%
 @ECHO       ^<AdditionalIncludeDirectories^>%CODE_DIRECTORY%%INCLUDE_DIRS%^</AdditionalIncludeDirectories^>>> %PROJECT_FILE%
+@ECHO       ^<MultiProcessorCompilation^>true^</MultiProcessorCompilation^>>> %PROJECT_FILE%
 @ECHO     ^</ClCompile^>>> %PROJECT_FILE%
 @ECHO     ^<Link^>>> %PROJECT_FILE%
 @ECHO       ^<GenerateDebugInformation^>true^</GenerateDebugInformation^>>> %PROJECT_FILE%

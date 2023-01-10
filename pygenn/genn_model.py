@@ -41,10 +41,12 @@ run a simulation using GeNNModel::
 # python imports
 from collections import OrderedDict
 from deprecated import deprecated
+from distutils.spawn import find_executable
 from importlib import import_module
-from os import path
+from os import path, environ
 from platform import system
 from psutil import cpu_count
+from setuptools import msvc
 from subprocess import check_call  # to call make
 from textwrap import dedent
 from warnings import warn
@@ -92,12 +94,33 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
     else:
         backend_modules[b] = m
 
+
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
 CustomUpdate.__bases__ += (CustomUpdateMixin,)
 CustomUpdateWU.__bases__ += (CustomUpdateMixin,)
 NeuronGroup.__bases__ += (NeuronGroupMixin,)
 SynapseGroup.__bases__ += (SynapseGroupMixin,)
+
+# If we're on windows
+if system() == "Windows":
+    # Get environment and cache in class, convertings
+    # all keys to upper-case for consistency
+    _msvc_env = msvc.msvc14_get_vc_env("x86_amd64")
+    _msvc_env = {k.upper(): v for k, v in iteritems(_msvc_env)}
+    
+    # Update process's environment with this
+    # **NOTE** this handles both child processes (manually launching msbuild)
+    # and stuff within this process (running the code generator)
+    environ.update(_msvc_env)
+    
+    # Find MSBuild in path
+    # **NOTE** we need to do this because setting the path via 
+    # check_call's env kwarg does not effect finding the executable
+    # **NOTE** shutil.which would be nicer, but isn't in Python < 3.3
+    _msbuild = find_executable("msbuild",  _msvc_env["PATH"])
+
+GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
 
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
@@ -517,7 +540,7 @@ class GeNNModel(ModelSpecInternal):
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
+            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
@@ -785,11 +808,6 @@ def create_custom_neuron_class(class_name, param_names=None,
     if support_code is not None:
         body["get_support_code"] = lambda self: dedent(support_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1])
-                          for egp in extra_global_params]
-
     if additional_input_vars:
         body["get_additional_input_vars"] = \
             lambda self: [ParamVal(a[0], a[1], a[2])
@@ -801,13 +819,13 @@ def create_custom_neuron_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, NeuronModelBase, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_postsynaptic_class(class_name, param_names=None,
                                      var_name_types=None, derived_params=None,
                                      decay_code=None, apply_input_code=None,
-                                     support_code=None):
+                                     support_code=None, extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_custom_neuron_class
@@ -829,6 +847,8 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     support_code        --  string with the support code
+    extra_global_params --  list of pairs of strings with names and
+                            types of additional parameters
     """
     body = {}
 
@@ -843,7 +863,7 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, PostsynapticModelBase, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_weight_update_class(class_name, param_names=None,
@@ -971,11 +991,6 @@ def create_custom_weight_update_class(class_name, param_names=None,
         body["get_synapse_dynamics_suppport_code"] = \
             lambda self: dedent(synapse_dynamics_suppport_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1])
-                          for egp in extra_global_params]
-
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
             lambda self: [Var(*vn) for vn in pre_var_name_types]
@@ -1010,7 +1025,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, WeightUpdateModelBase, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_current_source_class(class_name, param_names=None,
@@ -1048,13 +1063,9 @@ def create_custom_current_source_class(class_name, param_names=None,
     if injection_code is not None:
         body["get_injection_code"] = lambda self: dedent(injection_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1]) for egp in extra_global_params]
-
     return create_custom_model_class(
         class_name, CurrentSourceModelBase, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, CurrentSourceModels, body)
 
 
 def create_custom_custom_update_class(class_name, param_names=None,
@@ -1092,20 +1103,16 @@ def create_custom_custom_update_class(class_name, param_names=None,
     if update_code is not None:
         body["get_update_code"] = lambda self: dedent(update_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1]) for egp in extra_global_params]
-    
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
 
     return create_custom_model_class(
         class_name, CustomUpdateModelBase, param_names,
-        var_name_types, derived_params, body)        
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_model_class(class_name, base, param_names, var_name_types,
-                              derived_params, custom_body):
+                              derived_params, extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
     This part is common for all model classes and is nearly useless on its own
@@ -1127,6 +1134,8 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
+    extra_global_params --  list of pairs of strings with names and types of
+                            additional parameters
     custom_body     --  dictionary with attributes and methods of the new class
     """
 
@@ -1148,7 +1157,12 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
         body["get_derived_params"] = \
             lambda self: [DerivedParam(dp[0], dp[1]) 
                           for dp in derived_params]
-    
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: [EGP(egp[0], egp[1])
+                          for egp in extra_global_params]
+
     if custom_body is not None:
         body.update(custom_body)
 
@@ -1168,30 +1182,26 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     create_custom_sparse_connect_init_snippet_class
 
     Args:
-    class_name      --  name of the new class
+    class_name          --  name of the new class
 
     Keyword args:
-    param_names     --  list of strings with param names of the model
-    derived_params  --  list of pairs, where the first member is string with
-                        name of the derived parameter and the second MUST be
-                        an instance of the pygenn.genn_wrapper.DerivedParamFunc class
-    var_init_code   --  string with the variable initialization code
-    extra_global_params     --  list of pairs of strings with names and
-                                types of additional parameters
+
+    param_names         --  list of strings with param names of the model
+    derived_params      --  list of pairs, where the first member is string with
+                            name of the derived parameter and the second MUST be
+                            an instance of the pygenn.genn_wrapper.DerivedParamFunc class
+    var_init_code       --  string with the variable initialization code
+    extra_global_params --  list of pairs of strings with names and
+                            types of additional parameters
     """
     body = {}
 
     if var_init_code is not None:
         body["get_code"] = lambda self: dedent(var_init_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     return create_custom_model_class(
         class_name, genn_wrapper.InitVarSnippet.Custom, param_names,
-        None, derived_params, body)
+        None, derived_params, extra_global_params, body)
 
 
 def create_custom_sparse_connect_init_snippet_class(class_name,
@@ -1272,14 +1282,9 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: make_cksf(calc_kernel_size_func)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     return create_custom_model_class(
         class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
-        None, derived_params, body)
+        None, derived_params, extra_global_params, body)
 
 @deprecated("this wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):

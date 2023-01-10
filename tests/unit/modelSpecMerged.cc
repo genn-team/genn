@@ -96,6 +96,20 @@ class Sum : public CustomUpdateModels::Base
 };
 IMPLEMENT_SNIPPET(Sum);
 
+class OneToOneOff : public InitSparseConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(OneToOneOff, 0);
+
+    SET_ROW_BUILD_CODE(
+        "$(addSynapse, $(id_pre) + 1);\n"
+        "$(endRow);\n");
+
+    SET_MAX_ROW_LENGTH(1);
+    SET_MAX_COL_LENGTH(1);
+};
+IMPLEMENT_MODEL(OneToOneOff);
+
 template<typename T, typename M, size_t N>
 void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
 {
@@ -860,6 +874,46 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
                      {}, varValues,
                      {}, {},
                      initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectivityParams[p]));
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareConnectivityModelChanges)
+{
+    // Connectivity models
+    const auto *model1 = InitSparseConnectivitySnippet::OneToOne::getInstance();
+    const auto *model2 = OneToOneOff::getInstance();
+    
+    // Make array of connectivity models to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<const InitSparseConnectivitySnippet::Base*>, bool> modelModifiers[] = {
+        {{model1, model2},  true},
+        {{model1, model2},  true},
+        {{model2, model1},  false},
+        {{model1, model1},  false},
+        {{},                false},
+        {{model1},          false}};
+
+    test(modelModifiers, 
+         [](const std::vector<const InitSparseConnectivitySnippet::Base*> &connectivityModels, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             // Add desired number of post populations
+             for(size_t p = 0; p < connectivityModels.size(); p++) {
+                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                     neuronParamVals, neuronVarVals);
+
+                 WeightUpdateModels::StaticPulse::VarValues varValues(1.0);
+                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+                     "Pre", "Post" + std::to_string(p),
+                     {}, varValues,
+                     {}, {},
+                     InitSparseConnectivitySnippet::Init(connectivityModels[p], {}));
              }
          });
 }
