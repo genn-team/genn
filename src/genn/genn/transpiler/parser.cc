@@ -214,8 +214,8 @@ GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
     
     // Lookup type based on whether token was found
     const GeNN::Type::Base *type = (pointerFound
-                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers))
-                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers)));
+                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
+                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
     
     // Return qualified type
     // **THINK** this relies of const being only qualifier
