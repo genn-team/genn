@@ -173,17 +173,83 @@ TEST(TypeChecker, Cast)
     {
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
-        const auto type = typeCheckExpression("(float)intArray", typeEnvironment);
+        const auto type = typeCheckExpression("(float)intVal", typeEnvironment);
         EXPECT_EQ(type.type->getTypeHash(), Type::Float::getInstance()->getTypeHash());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
+
+    // Numeric cast to const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32>("intVal");
+        const auto type = typeCheckExpression("(const int)intVal", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+
+    // Pointer cast to value const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray");
+        const auto type = typeCheckExpression("(const int*)intArray", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32Ptr::getInstance()->getTypeHash());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+
+    // Pointer cast to pointer const
+    {
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray");
+        const auto type = typeCheckExpression("(int * const)intArray", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeHash(), Type::Int32Ptr::getInstance()->getTypeHash());
+        EXPECT_FALSE(type.constValue);
+        EXPECT_TRUE(type.constPointer);
+    }
+
+
+    // Can't remove value const from numeric
+    EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32>("intVal", true);
+        typeCheckExpression("(int)intVal", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Can't remove value const from pointer
+    EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", true);
+        typeCheckExpression("(int*)intArray", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Can't remove pointer const from pointer
+    EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray", false, true);
+        typeCheckExpression("(int*)intArray", typeEnvironment);},
+        TypeChecker::TypeCheckError);
 
    // Pointer cast can't reinterpret
    EXPECT_THROW({
         TypeChecker::Environment typeEnvironment;
         typeEnvironment.define<Type::Int32Ptr>("intArray");
         typeCheckExpression("(float*)intArray", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+    
+   // Pointer can't be cast to numeric
+   EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32Ptr>("intArray");
+        typeCheckExpression("(int)intArray", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+    
+   // Numeric can't be cast to pointer
+   EXPECT_THROW({
+        TypeChecker::Environment typeEnvironment;
+        typeEnvironment.define<Type::Int32>("intVal");
+        typeCheckExpression("(int*)intVal", typeEnvironment);},
         TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
