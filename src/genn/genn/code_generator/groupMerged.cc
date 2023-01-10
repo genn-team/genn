@@ -474,7 +474,7 @@ bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const
     const auto *varInitSnippet = getSortedArchetypeMergedInSyns().at(childIndex)->getPSVarInitialisers().at(varName).getSnippet();
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
-//---------------GeNN::-------------------------------------------------------------
+//----------------------------------------------------------------------------
 void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, const std::string &name, 
                                                        size_t archetypeIndex, const std::string &prefix)
 {
