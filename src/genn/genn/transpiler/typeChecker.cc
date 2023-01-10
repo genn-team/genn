@@ -218,8 +218,37 @@ public:
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        // **TODO** any numeric can be cast to any numeric and any pointer to pointer but no intermixing
-        // **TODO** const cannot be removed like this
+        // Evaluate type of expression we're casting
+        const auto rightType = evaluateType(cast.getExpression());
+        
+        // If value const is being removed
+        if (rightType.constValue && !cast.getQualifiedType().constValue) {
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getQualifiedType().type->getTypeName() + "' and '" + rightType.type->getTypeName());
+            throw TypeCheckError();
+        }
+        // Otherwise, if pointer const is being removed
+        else if (rightType.constPointer && !cast.getQualifiedType().constPointer) {
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getQualifiedType().type->getTypeName() + "' and '" + rightType.type->getTypeName());
+            throw TypeCheckError();
+        }
+
+        // If we're trying to cast pointer to pointer
+        auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType.type);
+        auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
+        auto leftNumericType = dynamic_cast<const Type::NumericBase *>(cast.getQualifiedType().type);
+        auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(cast.getQualifiedType().type);
+        if (rightNumericPtrType && leftNumericPtrType) {
+            if (rightNumericPtrType->getTypeHash() != leftNumericPtrType->getTypeHash()) {
+                m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getQualifiedType().type->getTypeName() + "' and '" + rightType.type->getTypeName());
+                throw TypeCheckError();
+            }
+        }
+        // Otherwise, if either operand isn't numeric
+        else if(!leftNumericType | !rightNumericType) {
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getQualifiedType().type->getTypeName() + "' and '" + rightType.type->getTypeName());
+            throw TypeCheckError();
+        }
+
         m_QualifiedType = cast.getQualifiedType();
     }
 
