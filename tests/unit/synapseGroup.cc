@@ -171,48 +171,48 @@ IMPLEMENT_SNIPPET(Continuous);
 class ContinuousDenDelay : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(ContinuousDenDelay, 0, 1);
+    DECLARE_SNIPPET(ContinuousDenDelay);
 
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE("$(addToInSynDelay, $(g) * $(V_pre), 1);\n");
 };
-IMPLEMENT_MODEL(ContinuousDenDelay);
+IMPLEMENT_SNIPPET(ContinuousDenDelay);
 
 class GradedDenDelay : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(GradedDenDelay, 0, 1);
+    DECLARE_SNIPPET(GradedDenDelay);
 
     SET_VARS({{"g", "scalar"}});
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) >= 0.1");
     SET_EVENT_CODE("$(addToInSynDelay, $(g)*$(V_pre), 1);");
 };
-IMPLEMENT_MODEL(GradedDenDelay);
+IMPLEMENT_SNIPPET(GradedDenDelay);
 
 class StaticPulseDynamics : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDynamics, 0, 1, 0, 0);
+    DECLARE_SNIPPET(StaticPulseDynamics);
 
     SET_VARS({ {"g", "scalar", VarAccess::READ_ONLY} });
 
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
     SET_SYNAPSE_DYNAMICS_CODE("$(g) *= 0.99;\n");
 };
-IMPLEMENT_MODEL(StaticPulseDynamics);
+IMPLEMENT_SNIPPET(StaticPulseDynamics);
 
 class StaticPulsePostLearn : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulsePostLearn, 0, 1, 0, 0);
+    DECLARE_SNIPPET(StaticPulsePostLearn);
 
     SET_VARS({ {"g", "scalar", VarAccess::READ_ONLY} });
 
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
     SET_LEARN_POST_CODE("$(g) *= 0.99;\n");
 };
-IMPLEMENT_MODEL(StaticPulsePostLearn);
+IMPLEMENT_SNIPPET(StaticPulsePostLearn);
 
 class PostRepeatVal : public InitVarSnippet::Base
 {
@@ -885,13 +885,13 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
     ModelSpecInternal model;
 
     // Add two neuron groups to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumberPostParams(8);
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    ParamValues fixedNumberPostParams{{"rowLength", 8}};
+    VarValues staticPulseVarVals{{"g", 0.1}};
     auto* sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "Neurons0", "Neurons1",
         {}, staticPulseVarVals,
@@ -1003,16 +1003,16 @@ TEST(SynapseGroup, InvalidMatrixTypes)
 
 TEST(SynapseGroup, IsDendriticDelayRequired)
 {
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
 
     ModelSpec model;
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
-    WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticPulseDendriticVarVals(0.1, 1);
-    GradedDenDelay::VarValues gradedDenDelayVarVars(0.1);
-    ContinuousDenDelay::VarValues contDenDelayVarVars(0.1);
+    VarValues staticPulseDendriticVarVals{{"g", 0.1}, {"d", 1}};
+    VarValues gradedDenDelayVarVars{{"g", 0.1}};
+    VarValues contDenDelayVarVars{{"g", 0.1}};
 
     auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
             "Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,

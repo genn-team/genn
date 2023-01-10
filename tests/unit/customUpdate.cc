@@ -18,19 +18,19 @@ namespace
 class IzhikevichVariableShared : public NeuronModels::Izhikevich
 {
 public:
-    DECLARE_MODEL(IzhikevichVariableShared, 0, 6);
+    DECLARE_SNIPPET(IzhikevichVariableShared);
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
               {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
               {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
-IMPLEMENT_MODEL(IzhikevichVariableShared);
+IMPLEMENT_SNIPPET(IzhikevichVariableShared);
 
 class StaticPulseDendriticDelaySplit : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelaySplit, 0, 4, 0, 0);
+    DECLARE_SNIPPET(StaticPulseDendriticDelaySplit);
 
     SET_VARS({{"gCommon", "scalar", VarAccess::READ_ONLY}, 
               {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
@@ -39,7 +39,7 @@ public:
 
     SET_SIM_CODE("$(addToInSynDelay, $(gCommon) + $(g), $(dCommon) + $(d));\n");
 };
-IMPLEMENT_MODEL(StaticPulseDendriticDelaySplit);
+IMPLEMENT_SNIPPET(StaticPulseDendriticDelaySplit);
 
 class Sum : public CustomUpdateModels::Base
 {
@@ -67,7 +67,7 @@ IMPLEMENT_SNIPPET(Sum2);
 
 class Sum3 : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum3, 0, 2, 2);
+    DECLARE_SNIPPET(Sum3);
 
     SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
 
@@ -75,7 +75,7 @@ class Sum3 : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY},
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(Sum3);
+IMPLEMENT_SNIPPET(Sum3);
 
 class Cont : public WeightUpdateModels::Base
 {
@@ -158,12 +158,13 @@ TEST(CustomUpdates, ConstantVarSum)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng, "V")},
+                                    {"b", createVarRef(ng, "U")}};
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
@@ -187,12 +188,12 @@ TEST(CustomUpdates, UninitialisedVarSum)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    Sum::VarValues sumVarValues(uninitialisedVar());
-    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+    VarValues sumVarValues{{"sum", uninitialisedVar()}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng, "V")}, {"b", createVarRef(ng, "U")}};
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
@@ -216,13 +217,13 @@ TEST(CustomUpdates, RandVarSum)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    InitVarSnippet::Uniform::ParamValues dist(0.0, 1.0);
-    Sum::VarValues sumVarValues(initVar<InitVarSnippet::Uniform>(dist));
-    Sum::VarReferences sumVarReferences1(createVarRef(ng, "V"), createVarRef(ng, "U"));
+    ParamValues dist{{"min", 0.0}, {"max", 1.0}};
+    VarValues sumVarValues{{"sum", initVar<InitVarSnippet::Uniform>(dist)}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng, "V")}, {"b", createVarRef(ng, "U")}};
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
@@ -417,17 +418,17 @@ TEST(CustomUpdates, BatchingVars)
     
 
     // Create updates where variable is shared and references vary
-    VarValues sumVarValues{{"mult", 1.0}};
+    VarValues sumVarValues{{"sum", 1.0}};
     VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
     VarReferences sumVarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
 
-    auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences1);
-    auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences2);
-    auto *sum3 = model.addCustomUpdate<Sum2>("Sum3", "CustomUpdate",
-                                             {}, sum2VarValues, sum2VarReferences3);
+    auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences3);
 
     // Create one more update which references two variables in the non-batched sum2
     VarReferences sumVarReferences4{{"a", createVarRef(sum2, "sum")}, {"b", createVarRef(sum2, "sum")}};
@@ -490,11 +491,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
     model.setBatchSize(5);
 
     // Add neuron (copy of izhikevich model where a, b, c and d are shared_neuron) to model
-    IzhikevichVariableShared::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce V into A
-    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "a")}};
     auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
                                              {}, {}, reduceVarReferences);
     model.finalize();
@@ -510,12 +512,13 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
     model.setBatchSize(5); 
 
     // Add neuron (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce V into A
-    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
-    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}};
+    VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
                                                             {}, reduceVars, reduceVarReferences);
     model.finalize();
@@ -531,12 +534,13 @@ TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
     model.setBatchSize(5);
 
     // Add neuron (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce a
-    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "a"));
-    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "a")}};
+    VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
                                                             {}, reduceVars, reduceVarReferences);
     model.finalize();
@@ -552,11 +556,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatch)
     model.setBatchSize(5);
 
     // Add neuron (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce V into A
-    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "a")}};
     auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
                                              {}, {}, reduceVarReferences);
     model.finalize();
@@ -572,12 +577,13 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
     model.setBatchSize(5);
 
     // Add neuron (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce V into A
-    ReduceSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
-    ReduceSharedVar::VarValues reduceVars(0.0);
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}};
+    VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceSharedVar>("Reduction", "CustomUpdate",
                                                       {}, reduceVars, reduceVarReferences);
     model.finalize();
@@ -592,19 +598,19 @@ TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        {}, {1.0},
+        {}, {{"g", 1.0}},
         {}, {});
 
-    Sum3::VarValues sumVarValues(0.0, 1.0);
-    Sum3::WUVarReferences sumVarReferences(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
+    VarValues sumVarValues{{"sum", 0.0}, {"scale", 1.0}};
+    WUVarReferences sumVarReferences{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
 
     try {
         model.addCustomUpdate<Sum3>("SumWeight", "CustomUpdate",
@@ -621,12 +627,13 @@ TEST(CustomUpdates, NeuronBatchReduction)
     model.setBatchSize(5);
 
     // Add neuron (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Create custom update which tries to reduce V into A
-    ReduceDouble::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    ReduceDouble::VarValues reduceVars(0.0, 0.0);
+    VarReferences reduceVarReferences{{"var1", createVarRef(pop, "V")}, {"var2", createVarRef(pop, "U")}};
+    VarValues reduceVars{{"reduction1", 0.0}, {"reduction2", 0.0}};
     
     try {
         model.addCustomUpdate<ReduceDouble>("Reduction", "CustomUpdate",
@@ -954,13 +961,13 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
     model.setBatchSize(5);
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     // Add synapse group 
-    StaticPulseDendriticDelaySplit::VarValues synVarInit(1.0, 1.0, 1.0, 1.0);
+    VarValues synVarInit{{"gCommon", 1.0}, {"g", 1.0}, {"dCommon",1.0}, {"d", 1.0}};
     auto *sg1 = model.addSynapsePopulation<StaticPulseDendriticDelaySplit, PostsynapticModels::DeltaCurr>(
         "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
@@ -968,15 +975,15 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
         {}, {});
 
     // Add one custom update which sums duplicated variables (g and d), another which sums shared variables (gCommon and dCommon) and another which sums one of each
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "gCommon"), createWUVarRef(sg1, "dCommon"));
-    Sum::WUVarReferences sumVarReferences3(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "dCommon"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "d")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "gCommon")}, {"b", createWUVarRef(sg1, "dCommon")}};
+    WUVarReferences sumVarReferences3{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "dCommon")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences1);
+                                            {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences2);
+                                            {}, {{"sum", 0.0}}, sumVarReferences2);
     auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences3);
+                                            {}, {{"sum", 0.0}}, sumVarReferences3);
     model.finalize();
 
     // Check that sum1 and sum3 are batched and sum2 is not

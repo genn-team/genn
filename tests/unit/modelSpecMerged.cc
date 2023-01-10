@@ -108,7 +108,7 @@ public:
     SET_MAX_ROW_LENGTH(1);
     SET_MAX_COL_LENGTH(1);
 };
-IMPLEMENT_MODEL(OneToOneOff);
+IMPLEMENT_SNIPPET(OneToOneOff);
 
 template<typename T, typename M, size_t N>
 void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
@@ -285,8 +285,8 @@ TEST(ModelSpecMerged, CompareNeuronNameChanges)
          [](const std::string &name, ModelSpecInternal &model)
          {
              // Default neuron parameters
-             NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 4.0);
-             NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
 
              // Add population with specified name
              model.addNeuronPopulation<NeuronModels::Izhikevich>(name, 100, 
@@ -393,12 +393,12 @@ TEST(ModelSpecMerged, CompareCurrentSourceNameChanges)
          [](const std::string &name, ModelSpecInternal &model)
          {
              // Add population
-             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
-             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                  neuronParamVals, neuronVarVals);
 
-             CurrentSourceModels::DC::ParamValues paramVals(3.0);
+             ParamValues paramVals{{"amp", 3.0}};
              model.addCurrentSource<CurrentSourceModels::DC>(name, "Neurons",
                                                              paramVals, {});
          });
@@ -512,8 +512,8 @@ TEST(ModelSpecMerged, CompareSynapseNameChanges)
          [](const std::string &name, ModelSpecInternal &model)
          {
              // Add populations
-             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
-             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
@@ -522,7 +522,7 @@ TEST(ModelSpecMerged, CompareSynapseNameChanges)
              model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
                 name, SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
                 "Pre", "Post",
-                {}, {1.0},
+                {}, {{"g", 1.0}},
                 {}, {});
          });
 }
@@ -897,8 +897,8 @@ TEST(ModelSpecMerged, CompareConnectivityModelChanges)
          [](const std::vector<const InitSparseConnectivitySnippet::Base*> &connectivityModels, ModelSpecInternal &model)
          {
              // Add pre population
-             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
-             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
 
@@ -907,11 +907,10 @@ TEST(ModelSpecMerged, CompareConnectivityModelChanges)
                  model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                      neuronParamVals, neuronVarVals);
 
-                 WeightUpdateModels::StaticPulse::VarValues varValues(1.0);
                  model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
                      "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
                      "Pre", "Post" + std::to_string(p),
-                     {}, varValues,
+                     {}, {{"g", 1.0}},
                      {}, {},
                      InitSparseConnectivitySnippet::Init(connectivityModels[p], {}));
              }
@@ -948,14 +947,14 @@ TEST(ModelSpecMerged, CompareCustomUpdateNameChanges)
          [](const std::string &name, ModelSpecInternal &model)
          {
              // Add population
-             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
-             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              auto *neurons = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                                  neuronParamVals, neuronVarVals);
 
-             Sum::ParamValues paramVals(5.0);
-             Sum::VarValues vals(0.0);
-             Sum::VarReferences varRefs(createVarRef(neurons, "V"));
+             ParamValues paramVals{{"b", 5.0}};
+             VarValues vals{{"sum", 0.0}};
+             VarReferences varRefs{{"a", createVarRef(neurons, "V")}};
              model.addCustomUpdate<Sum>(name, "Group", paramVals, vals, varRefs);
          });
 }
