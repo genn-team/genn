@@ -162,18 +162,22 @@ protected:
                                    const std::vector<std::reference_wrapper<const G>> &groups)
     :   GroupMerged<G>(index, precision, groups)
     {
+        // Create type environment
+        // **TEMP** parse precision to get scalar type
+        //GroupMergedTypeEnvironment<CustomUpdateHostReductionGroupMergedBase> typeEnvironment(*this, Type::parseNumeric(precision));
+        
         // Loop through variables and add pointers if they are reduction targets
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
     }

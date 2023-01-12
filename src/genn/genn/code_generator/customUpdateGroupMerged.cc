@@ -4,9 +4,10 @@
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/parser.h"
 #include "transpiler/scanner.h"
 #include "transpiler/typeChecker.h"
-#include "transpiler/parser.h"
 
 
 using namespace GeNN;
@@ -34,7 +35,7 @@ public:
     virtual void define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
     {
         errorHandler.error(name, "Cannot declare variable in external environment");
-        throw TypeCheckError();
+        throw TypeChecker::TypeCheckError();
     }
 
     virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
@@ -48,7 +49,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
+                throw TypeChecker::TypeCheckError();
             }
         }
     
@@ -65,7 +66,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
+                throw TypeChecker::TypeCheckError();
             }
         }
     
@@ -83,7 +84,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
+                throw TypeChecker::TypeCheckError();
             }
         }
         else {
@@ -116,10 +117,10 @@ public:
             define(p + suffix, m_ScalarType, true);
 
             // If parameters is heterogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
+            if((static_cast<const T&>(m_GroupMerged).*isHeterogeneous)(p)) {
                 // Add field
-                m_GroupMerged->addScalarField(p + suffix,
-                                              [p, getParamValues](const G &g, size_t)
+                m_GroupMerged.addScalarField(p + suffix,
+                                              [p, getParamValues](const typename G::GroupInternal &g, size_t)
                                               {
                                                   const auto &values = getParamValues(g);
                                                   return Utils::writePreciseString(values.at(p));
@@ -135,18 +136,55 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             // If parameters isn't homogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(d.name)) {
+            if((static_cast<const T&>(m_GroupMerged).*isHeterogeneous)(d.name)) {
                 // Define constant
-                define(p + suffix, m_ScalarType, true);
+                define(d.name + suffix, m_ScalarType, true);
 
                 // Add field
-                addScalarField(d.name + suffix,
-                               [d, getDerivedParamValues](const G &g, size_t)
-                               {
-                                   const auto &values = getDerivedParamValues(g);
-                                   return Utils::writePreciseString(values.at(d.name));
-                               });
+                m_GroupMerged.addScalarField(d.name + suffix,
+                                             [d, getDerivedParamValues](const typename G::GroupInternal &g, size_t)
+                                             {
+                                                 const auto &values = getDerivedParamValues(g);
+                                                 return Utils::writePreciseString(values.at(d.name));
+                                             });
             }
+        }
+    }
+
+    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
+    {
+        // Loop through variables
+        for(const auto &v : vars) {
+            const auto *type = Type::parseNumeric(v.type);
+            define(v.name, type, (v.access & VarAccessModeAttribute::READ_ONLY));
+            m_GroupMerged.addPointerField(type, v.name, arrayPrefix + v.name);
+        }
+    }
+
+    template<typename V>
+    void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
+    {
+        // Loop through variables
+        for(const auto &v : varReferences) {
+            const auto *type = Type::parseNumeric(v.type);
+            define(v.name, type, (v.access & VarAccessModeAttribute::READ_ONLY));
+            m_GroupMerged.addField(type->getPointerType(), v.name, 
+                                   [getVarRefFn, arrayPrefix, v](const typename G::GroupInternal &g, size_t) 
+                                   { 
+                                       const auto varRef = getVarRefFn(g).at(v.name);
+                                       return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                                   });
+        }
+    }
+
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
+    {
+        for(const auto &e : egps) {
+            const auto *type = Type::parseNumericPtr(e.type);
+            define(e.name, type);
+            m_GroupMerged.addField(type, e.name + varName,
+                                   [e, arrayPrefix, varName](const typename G::GroupInternal &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
+                                   GroupMergedFieldType::DYNAMIC);
         }
     }
 
@@ -258,14 +296,14 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 {
     // Create type environment
     // **TEMP** parse precision to get scalar type
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(this, Type::parseNumeric(precision));
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, Type::parseNumeric(precision));
 
-    addField("unsigned int", "size",
+    addField(Type::Uint32::getInstance(), "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField("unsigned int*", "spkQuePtr", 
+        addField(Type::Uint32Ptr::getInstance(), "spkQuePtr", 
                  [&backend](const CustomUpdateInternal &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
@@ -286,14 +324,14 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    typeEnvironment.addVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
-    addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
+    typeEnvironment.addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
                     [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
 
     // Add EGPs to struct
-    this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+     typeEnvironment.addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -427,13 +465,17 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
+    // Create type environment
+    // **TEMP** parse precision to get scalar type
+    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, Type::parseNumeric(precision));
+
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(d)) {
-                addField("unsigned int", "kernelSize" + std::to_string(d),
+                addField(Type::Uint32::getInstance(), "kernelSize" + std::to_string(d),
                          [d](const CustomUpdateWUInternal &cu, size_t) 
                          {
                              return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
@@ -443,21 +485,21 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     }
     // Otherwise
     else {
-        addField("unsigned int", "rowStride",
+        addField(Type::Uint32::getInstance(), "rowStride",
                  [&backend](const CustomUpdateWUInternal &cg, size_t) 
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                      return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
                  });
     
-        addField("unsigned int", "numSrcNeurons",
+        addField(Type::Uint32::getInstance(), "numSrcNeurons",
                  [](const CustomUpdateWUInternal &cg, size_t) 
                  {
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                      return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
                  });
 
-        addField("unsigned int", "numTrgNeurons",
+        addField(Type::Uint32::getInstance(), "numTrgNeurons",
                  [](const CustomUpdateWUInternal &cg, size_t)
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
@@ -466,13 +508,13 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+            addField(Type::parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())->getPointerType(), "ind", 
                      [&backend](const CustomUpdateWUInternal &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                      });
 
-            addField("unsigned int*", "rowLength",
+            addField(Type::Uint32Ptr::getInstance(), "rowLength",
                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
                     { 
                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
@@ -482,31 +524,31 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    addHeterogeneousParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.addHeterogeneousParams<CustomUpdateWUGroupMerged>(
         cm->getParamNames(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getParams(); },
         &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
-    addHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.addHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
         cm->getDerivedParams(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); },
         &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    typeEnvironment.addVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
-    addVarReferences(varRefs, backend.getDeviceVarPrefix(),
-                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
+    typeEnvironment.addVarReferences(varRefs, backend.getDeviceVarPrefix(),
+                                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
      // Loop through variables
     for(const auto &v : varRefs) {
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(v.type + "*", v.name + "Transpose",
+            addField(Type::parseNumeric(v.type)->getPointerType(), v.name + "Transpose",
                      [&backend, v](const CustomUpdateWUInternal &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
@@ -515,7 +557,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
             }
     }
     // Add EGPs to struct
-    this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    typeEnvironment.addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
 
 // ----------------------------------------------------------------------------
@@ -557,13 +599,13 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
                                                                            const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
 :   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
 {
-    addField("unsigned int", "size",
+    addField(Type::Uint32::getInstance(), "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
 
     // If some variables are delayed, add delay pointer
     // **NOTE** this is HOST delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField("unsigned int*", "spkQuePtr", 
+        addField(Type::Uint32Ptr::getInstance(), "spkQuePtr", 
                  [&](const CustomUpdateInternal &cg, size_t) 
                  { 
                      return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
@@ -580,7 +622,7 @@ CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(s
                                                                                const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
-    addField("unsigned int", "size",
+    addField(Type::Uint32::getInstance(), "size",
              [&backend](const CustomUpdateWUInternal &cg, size_t) 
              {
                  return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
