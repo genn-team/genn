@@ -315,14 +315,16 @@ private:
     //! Is the var init parameter referenced?
     bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
     {
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varName).getSnippet();
+        A archetypeAdaptor(this->getArchetype());
+        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varName).getSnippet();
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 
     //! Is the var init derived parameter referenced?
     bool isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const
     {
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varName).getSnippet();
+        A archetypeAdaptor(this->getArchetype());
+        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varName).getSnippet();
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 };

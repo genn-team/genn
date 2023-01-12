@@ -184,7 +184,7 @@ TEST(CustomConnectivityUpdate, DependentVariables)
         {}, {});
 
     // Attach custom update model
-    WUVarReferences cu3VarRefs{{"var", createWUVarRef(sg3, "g")}};
+    WUVarReferences cu3VarRefs{{"a", createWUVarRef(sg3, "g")}};
     model.addCustomUpdate<Sum>("CustomUpdate3", "Test1", {}, {{"sum", 0.0}}, cu3VarRefs);
 
     // Attach custom connectivity update
@@ -256,7 +256,7 @@ TEST(CustomConnectivityUpdate, DependentVariablesManualReferences)
             {}, {});
 
         // Attach custom update model
-        WUVarReferences cu3VarRefs{{"var", createWUVarRef(synapseGroups[i], "g")}};
+        WUVarReferences cu3VarRefs{{"a", createWUVarRef(synapseGroups[i], "g")}};
         customUpdates[i] = model.addCustomUpdate<Sum>("CustomUpdate" + std::to_string(i), "Test1", {}, {{"sum", 0.0}}, cu3VarRefs);
 
         // Attach custom connectivity update
@@ -577,14 +577,14 @@ TEST(CustomConnectivityUpdate, MixedPreDelayGroups)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre1, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre1, "U")}}, {});
+                                                                      {"threshHigh", createVarRef(pre1, "V")}}, {});
     
     // Create custom update with both presynaptic var references to different (delay) groups
     model.addCustomConnectivityUpdate<RemoveSynapsePre>("CustomConnectivityUpdate2", "Test2", "Synapses1",
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre1, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre2, "U")}}, {});
+                                                                      {"threshHigh", createVarRef(pre2, "V")}}, {});
     try {
         model.finalize();
         FAIL();
@@ -626,14 +626,14 @@ TEST(CustomConnectivityUpdate, MixedPostDelayGroups)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         {}, VarReferences{{"threshLow", createVarRef(post1, "V")}, 
-                                                                          {"threshHigh", createVarRef(post2, "U")}});
+                                                                          {"threshHigh", createVarRef(post1, "V")}});
     
     // Create custom update with both postsynaptic var references to different (delay) groups
     model.addCustomConnectivityUpdate<RemoveSynapsePost>("CustomConnectivityUpdate2", "Test2", "Synapses1",
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         {}, VarReferences{{"threshLow", createVarRef(post1, "V")}, 
-                                                                          {"threshHigh", createVarRef(post2, "U")}});
+                                                                          {"threshHigh", createVarRef(post2, "V")}});
     try {
         model.finalize();
         FAIL();
