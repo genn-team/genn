@@ -311,6 +311,9 @@ DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 //! Parse a numeric type
 const NumericBase *parseNumeric(std::string_view typeString);
 
+//! Parse a numeric pointer type
+const NumericPtrBase *parseNumericPtr(std::string_view typeString);
+
 //! Look up numeric type based on set of type specifiers
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
 

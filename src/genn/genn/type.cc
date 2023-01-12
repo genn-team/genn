@@ -95,6 +95,29 @@ const NumericBase *parseNumeric(std::string_view typeString)
     return type;
 }
 //----------------------------------------------------------------------------
+const NumericPtrBase *parseNumericPtr(std::string_view typeString)
+{
+     using namespace Transpiler;
+
+    // Scan type
+    SingleLineErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource(typeString, errorHandler);
+
+    // Parse type and cast to numeric pointer
+    const auto *type = dynamic_cast<const NumericPtrBase*>(Parser::parseType(tokens, true, errorHandler));
+
+    // If an error was encountered while scanning or parsing, throw exception
+    if (errorHandler.hasError()) {
+        throw std::runtime_error("Error parsing type");
+    }
+
+    // If tokens did not contain a valid numeric type, throw exception
+    if (!type) {
+        throw std::runtime_error("Unable to parse type");
+    }
+    return type;
+}
+//----------------------------------------------------------------------------
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
 {
     const auto type = numericTypes.find(typeSpecifiers);
