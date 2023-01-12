@@ -11,12 +11,155 @@
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Transpiler;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
+template<typename G>
+class GroupMergedTypeEnvironment : public TypeChecker::EnvironmentBase
+{
+public:
+    GroupMergedTypeEnvironment(G &groupMerged, const Type::NumericBase *scalarType,
+                               TypeChecker::EnvironmentBase *enclosing = nullptr)
+    :   m_GroupMerged(groupMerged), m_ScalarType(scalarType), m_Enclosing(enclosing)
+    {
+    }
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual void define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
+    {
+        errorHandler.error(name, "Cannot declare variable in external environment");
+        throw TypeCheckError();
+    }
+
+    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                              ErrorHandlerBase &errorHandler, bool initializer) final
+    {
+        // If type isn't found
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->assign(name, op, assignedType, errorHandler, initializer);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+    
+        // Perform standard type-checking logic
+        return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);
+    }
+
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
+    {
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->incDec(name, op, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+    
+        // Perform standard type-checking logic
+        return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);
+    
+    }
+
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final
+    {
+        auto type = m_Types.find(std::string{name.lexeme});
+        if(type == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->getType(name, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeCheckError();
+            }
+        }
+        else {
+            return type->second;
+        }
+    }
+
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    void define(std::string_view name, const Type::Base *type, bool isConstValue = false, bool isConstPointer = false)
+    {
+        if(!m_Types.try_emplace(name, type, isConstValue, isConstPointer).second) {
+            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+        }
+    }
+    template<typename T>
+    void define(std::string_view name, bool isConstValue = false, bool isConstPointer = false)
+    {
+        define(name, T::getInstance(), isConstValue, isConstPointer);
+    }
+
+    template<typename T, typename P, typename H>
+    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
+                                P getParamValues, H isHeterogeneous)
+    {
+        // Loop through params
+        for(const auto &p : paramNames) {
+            // Define constant
+            define(p + suffix, m_ScalarType, true);
+
+            // If parameters is heterogeneous
+            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
+                // Add field
+                m_GroupMerged->addScalarField(p + suffix,
+                                              [p, getParamValues](const G &g, size_t)
+                                              {
+                                                  const auto &values = getParamValues(g);
+                                                  return Utils::writePreciseString(values.at(p));
+                                              });
+            }
+        }
+    }
+
+    template<typename T, typename D, typename H>
+    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
+                                       D getDerivedParamValues, H isHeterogeneous)
+    {
+        // Loop through derived params
+        for(const auto &d : derivedParams) {
+            // If parameters isn't homogeneous
+            if((static_cast<const T*>(this)->*isHeterogeneous)(d.name)) {
+                // Define constant
+                define(p + suffix, m_ScalarType, true);
+
+                // Add field
+                addScalarField(d.name + suffix,
+                               [d, getDerivedParamValues](const G &g, size_t)
+                               {
+                                   const auto &values = getDerivedParamValues(g);
+                                   return Utils::writePreciseString(values.at(d.name));
+                               });
+            }
+        }
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    G &m_GroupMerged;
+    const Type::NumericBase *m_ScalarType;
+    TypeChecker::EnvironmentBase *m_Enclosing;
+
+    std::unordered_map<std::string_view, Type::QualifiedType> m_Types;
+};
 
 template<typename C, typename R>
 void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
@@ -113,6 +256,10 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
                                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
 :   GroupMerged<CustomUpdateInternal>(index, precision, groups)
 {
+    // Create type environment
+    // **TEMP** parse precision to get scalar type
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(this, Type::parseNumeric(precision));
+
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
     
@@ -127,13 +274,13 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    addHeterogeneousParams<CustomUpdateGroupMerged>(
+    typeEnvironment.addHeterogeneousParams<CustomUpdateGroupMerged>(
         cm->getParamNames(), "",
         [](const CustomUpdateInternal &cg) { return cg.getParams(); },
         &CustomUpdateGroupMerged::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
-    addHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
+    typeEnvironment.addHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
         cm->getDerivedParams(), "",
         [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); },
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
