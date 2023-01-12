@@ -47,29 +47,6 @@ const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> uns
     {Type::Int16::getInstance(), Type::Uint16::getInstance()},
     {Type::Int32::getInstance(), Type::Uint32::getInstance()}
 };
-
-//----------------------------------------------------------------------------
-// SimpleErrorHandler
-//----------------------------------------------------------------------------
-//! Simple error handler used for type parsing - just logs to transpiler log channel
-class SimpleErrorHandler : public Transpiler::ErrorHandler
-{
-public:
-    virtual void error(size_t line, std::string_view message) final
-    {
-        LOGE_TRANSPILER << "Error: " << message;
-    }
-
-    virtual void error(const Transpiler::Token &token, std::string_view message) final
-    {
-        if(token.type == Transpiler::Token::Type::END_OF_FILE) {
-            LOGE_TRANSPILER << "Error at end: " << message;
-        }
-        else {
-            LOGE_TRANSPILER << "Error at '" << token.lexeme << "': " << message;
-        }
-    }
-};
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -100,11 +77,18 @@ const NumericBase *parseNumeric(std::string_view typeString)
     using namespace Transpiler;
 
     // Scan type
-    SimpleErrorHandler errorHandler;
+    SingleLineErrorHandler errorHandler;
     const auto tokens = Scanner::scanSource(typeString, errorHandler);
 
-    // Parse type, cast to numeric and return
+    // Parse type and cast to numeric
     const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, errorHandler));
+
+    // If an error was encountered while scanning or parsing, throw exception
+    if (errorHandler.hasError()) {
+        throw std::runtime_error("Error parsing type");
+    }
+
+    // If tokens did not contain a valid numeric type, throw exception
     if (!type) {
         throw std::runtime_error("Unable to parse type");
     }

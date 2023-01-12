@@ -3,6 +3,12 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
+// GeNN transpiler includes
+#include "transpiler/scanner.h"
+#include "transpiler/typeChecker.h"
+#include "transpiler/parser.h"
+
+
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
@@ -11,6 +17,7 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+
 template<typename C, typename R>
 void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
                      const ModelSpecMerged &modelMerged, const std::string &index,

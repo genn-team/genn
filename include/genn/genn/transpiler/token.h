@@ -7,6 +7,12 @@
 // Standard C includes
 #include <cstdint>
 
+// **YUCK** on Windows undefine TRUE and FALSE macros
+#ifdef _WIN32
+    #undef TRUE
+    #undef FALSE
+#endif
+
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Token
 //---------------------------------------------------------------------------

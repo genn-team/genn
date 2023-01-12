@@ -58,7 +58,7 @@ const std::map<std::set<char>, std::function<Token::LiteralValue(std::string_vie
 class ScanState
 {
 public:
-    ScanState(std::string_view source, ErrorHandler &errorHandler)
+    ScanState(std::string_view source, ErrorHandlerBase &errorHandler)
         : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_ErrorHandler(errorHandler)
     {}
 
@@ -131,7 +131,7 @@ private:
 
     const std::string_view m_Source;
 
-    ErrorHandler &m_ErrorHandler;
+    ErrorHandlerBase &m_ErrorHandler;
 };
 
 bool isodigit(char c)
@@ -466,7 +466,7 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, ErrorHandler &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 

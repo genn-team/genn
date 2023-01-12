@@ -12,7 +12,7 @@ using namespace GeNN::Transpiler;
 //--------------------------------------------------------------------------
 namespace
 {
-class TestErrorHandler : public ErrorHandler
+class TestErrorHandler : public ErrorHandlerBase
 {
 public:
     TestErrorHandler() : m_Error(false)

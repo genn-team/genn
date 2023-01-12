@@ -55,6 +55,7 @@
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
     <ClCompile Include="snippet.cc" />
+    <ClCompile Include="transpiler\errorHandler.cc" />
     <ClCompile Include="transpiler\expression.cc" />
     <ClCompile Include="transpiler\parser.cc" />
     <ClCompile Include="transpiler\prettyPrinter.cc" />

@@ -13,7 +13,7 @@
 // Forward declarations
 namespace GeNN::Transpiler
 {
-class ErrorHandler;
+class ErrorHandlerBase;
 }
 
 //---------------------------------------------------------------------------
@@ -22,13 +22,13 @@ class ErrorHandler;
 namespace GeNN::Transpiler::Parser
 {
 //! Parse expression from tokens
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandler &errorHandler);
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 //! Parse block item list from tokens
 /*! Block item lists are function body scope list of statements */
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandler &errorHandler);
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 //! Parse type from tokens
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandler &errorHandler);
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler);
 
 }   // MiniParse::MiniParse

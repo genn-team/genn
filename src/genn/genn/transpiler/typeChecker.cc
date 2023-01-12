@@ -37,7 +37,7 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) final
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandlerBase &errorHandler) final
     {
         if(!m_Types.try_emplace(name.lexeme, qualifiedType).second) {
             errorHandler.error(name, "Redeclaration of variable");
@@ -46,7 +46,7 @@ public:
     }
     
     virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                              ErrorHandler &errorHandler, bool initializer = false) final
+                                              ErrorHandlerBase &errorHandler, bool initializer = false) final
     {
         // If type isn't found
         auto existingType = m_Types.find(name.lexeme);
@@ -59,7 +59,7 @@ public:
         return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
     }
     
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) final
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
     {
         // If type isn't found
         auto existingType = m_Types.find(name.lexeme);
@@ -71,7 +71,7 @@ public:
         return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);    
     }
     
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) final
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(std::string{name.lexeme});
         if(type == m_Types.end()) {
@@ -96,7 +96,7 @@ private:
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(ErrorHandler &errorHandler)
+    Visitor(ErrorHandlerBase &errorHandler)
     :   m_Environment(nullptr), m_QualifiedType{nullptr, false, false}, m_ErrorHandler(errorHandler), 
         m_InLoop(false), m_InSwitch(false)
     {
@@ -580,7 +580,7 @@ private:
     EnvironmentInternal *m_Environment;
     Type::QualifiedType m_QualifiedType;
 
-    ErrorHandler &m_ErrorHandler;
+    ErrorHandlerBase &m_ErrorHandler;
     bool m_InLoop;
     bool m_InSwitch;
 };
@@ -591,7 +591,7 @@ private:
 //---------------------------------------------------------------------------
 const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Type op, 
                                                    const Type::QualifiedType &existingType, const Type::QualifiedType &assignedType, 
-                                                   ErrorHandler &errorHandler, bool initializer) const
+                                                   ErrorHandlerBase &errorHandler, bool initializer) const
 {
     // If existing type is a constant numeric value or if it's a constant pointer give errors
     auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
@@ -673,7 +673,7 @@ const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Typ
 }
 //---------------------------------------------------------------------------
 const Type::QualifiedType &EnvironmentBase::incDec(const Token &name, Token::Type, 
-                                                   const Type::QualifiedType &existingType, ErrorHandler &errorHandler) const
+                                                   const Type::QualifiedType &existingType, ErrorHandlerBase &errorHandler) const
 {
     // If existing type is a constant numeric value or if it's a constant pointer give errors
     auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
@@ -693,14 +693,14 @@ const Type::QualifiedType &EnvironmentBase::incDec(const Token &name, Token::Typ
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentExternal
 //---------------------------------------------------------------------------
-void EnvironmentExternal::define(const Token &name, const Type::QualifiedType &, ErrorHandler &errorHandler)
+void EnvironmentExternal::define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler)
 {
     errorHandler.error(name, "Cannot declare variable in external environment");
     throw TypeCheckError();
 }
 //---------------------------------------------------------------------------
 const Type::QualifiedType &EnvironmentExternal::assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                                       ErrorHandler &errorHandler, bool initializer)
+                                                       ErrorHandlerBase &errorHandler, bool initializer)
 {
     // If type isn't found
     auto existingType = m_Types.find(name.lexeme);
@@ -713,7 +713,7 @@ const Type::QualifiedType &EnvironmentExternal::assign(const Token &name, Token:
     return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
 }
 //---------------------------------------------------------------------------
-const Type::QualifiedType &EnvironmentExternal::incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler)
+const Type::QualifiedType &EnvironmentExternal::incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler)
 {
     auto existingType = m_Types.find(name.lexeme);
     if(existingType == m_Types.end()) {
@@ -726,7 +726,7 @@ const Type::QualifiedType &EnvironmentExternal::incDec(const Token &name, Token:
     
 }
 //---------------------------------------------------------------------------
-const Type::QualifiedType &EnvironmentExternal::getType(const Token &name, ErrorHandler &errorHandler)
+const Type::QualifiedType &EnvironmentExternal::getType(const Token &name, ErrorHandlerBase &errorHandler)
 {
     auto type = m_Types.find(std::string{name.lexeme});
     if(type == m_Types.end()) {
@@ -741,8 +741,8 @@ const Type::QualifiedType &EnvironmentExternal::getType(const Token &name, Error
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentExternal &environment, 
-                                              ErrorHandler &errorHandler)
+void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+                                              ErrorHandlerBase &errorHandler)
 {
     Visitor visitor(errorHandler);
     EnvironmentInternal internalEnvironment(environment);
@@ -750,8 +750,8 @@ void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &st
 }
 //---------------------------------------------------------------------------
 Type::QualifiedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, 
-                                                             EnvironmentExternal &environment,
-                                                             ErrorHandler &errorHandler)
+                                                             EnvironmentBase &environment,
+                                                             ErrorHandlerBase &errorHandler)
 {
     Visitor visitor(errorHandler);
     EnvironmentInternal internalEnvironment(environment);

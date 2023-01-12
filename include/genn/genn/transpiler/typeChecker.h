@@ -14,7 +14,7 @@
 // Forward declarations
 namespace GeNN::Transpiler
 {
-class ErrorHandler;
+class ErrorHandlerBase;
 struct Token;
 }
 
@@ -40,11 +40,11 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) = 0;
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandlerBase &errorHandler) = 0;
     virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                      ErrorHandler &errorHandler, bool initializer = false) = 0;
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) = 0;
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) = 0;
+                                      ErrorHandlerBase &errorHandler, bool initializer = false) = 0;
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) = 0;
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) = 0;
 
 protected:
     //---------------------------------------------------------------------------
@@ -52,9 +52,9 @@ protected:
     //---------------------------------------------------------------------------
     const Type::QualifiedType &assign(const Token &name, Token::Type op, 
                                       const Type::QualifiedType &existingType, const Type::QualifiedType &assignedType, 
-                                      ErrorHandler &errorHandler, bool initializer = false) const;
+                                      ErrorHandlerBase &errorHandler, bool initializer = false) const;
     const Type::QualifiedType &incDec(const Token &name, Token::Type op, 
-                                      const Type::QualifiedType &existingType, ErrorHandler &errorHandler) const;
+                                      const Type::QualifiedType &existingType, ErrorHandlerBase &errorHandler) const;
 };
 
 //---------------------------------------------------------------------------
@@ -107,11 +107,11 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandler &errorHandler) final;
+    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandlerBase &errorHandler) final;
     virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                              ErrorHandler &errorHandler, bool initializer = false) final;
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandler &errorHandler) final;
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandler &errorHandler) final;
+                                              ErrorHandlerBase &errorHandler, bool initializer = false) final;
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final;
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final;
 
 private:
     //---------------------------------------------------------------------------
@@ -127,9 +127,9 @@ private:
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-void typeCheck(const Statement::StatementList &statements, EnvironmentExternal &environment, 
-               ErrorHandler &errorHandler);
+void typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+               ErrorHandlerBase &errorHandler);
 
-Type::QualifiedType typeCheck(const Expression::Base *expression, EnvironmentExternal &environment, 
-                              ErrorHandler &errorHandler);
+Type::QualifiedType typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
+                              ErrorHandlerBase &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler

@@ -38,7 +38,7 @@ class ParseError
 class ParserState
 {
 public:
-    ParserState(const std::vector<Token> &tokens, ErrorHandler &errorHandler)
+    ParserState(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
         : m_Current(0), m_Tokens(tokens), m_ErrorHandler(errorHandler)
     {}
 
@@ -136,7 +136,7 @@ private:
 
     const std::vector<Token> &m_Tokens;
 
-    ErrorHandler &m_ErrorHandler;
+    ErrorHandlerBase &m_ErrorHandler;
 };
 
 
@@ -843,7 +843,7 @@ std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandler &errorHandler)
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
 
@@ -855,7 +855,7 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
     }
 }
 //---------------------------------------------------------------------------
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandler &errorHandler)
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
     std::vector<std::unique_ptr<const Statement::Base>> statements;
@@ -866,7 +866,7 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
     return statements;
 }
 //---------------------------------------------------------------------------
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandler &errorHandler)
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
     bool pointerFound = false;

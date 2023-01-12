@@ -13,7 +13,7 @@
 // Forward declarations
 namespace GeNN::Transpiler
 {
-class ErrorHandler;
+class ErrorHandlerBase;
 }
 
 //---------------------------------------------------------------------------
@@ -21,6 +21,6 @@ class ErrorHandler;
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, ErrorHandler &errorHandler);
+std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler);
 
 }   // namespace Scanner
