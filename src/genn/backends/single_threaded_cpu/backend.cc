@@ -1367,9 +1367,9 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
 {
-    return type;
+    return type->getTypeName();
 }
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupSimRNGType() const

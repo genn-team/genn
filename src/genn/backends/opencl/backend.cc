@@ -2057,18 +2057,18 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
 {
     // If type is a pointer, on the host it is represented by an OpenCL buffer
-    if(GeNN::Utils::isTypePointerToPointer(type)) {
+    /*if(GeNN::Utils::isTypePointerToPointer(type)) {
         return "cl::Buffer*";
     }
-    else if(GeNN::Utils::isTypePointer(type)) {
+    else */if(dynamic_cast<Type::NumericPtrBase*>(type)) {
         return "cl::Buffer";
     }
     // Otherwise, type remains the same
     else {
-        return type;
+        return type->getTypeName();
     }
 }
 //--------------------------------------------------------------------------
