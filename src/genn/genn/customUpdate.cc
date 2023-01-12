@@ -46,12 +46,8 @@ void CustomUpdateBase::initDerivedParams(double dt)
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isInitRNGRequired() const
 {
-    // If initialising the neuron variables require an RNG, return true
-    if(Utils::isRNGRequired(getVarInitialisers())) {
-        return true;
-    }
-
-    return false;
+    // Return whether initialising variables require an RNG
+    return Utils::isRNGRequired(getVarInitialisers());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isZeroCopyEnabled() const
@@ -106,7 +102,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 
     // Check variable reference types
-    checkVarReferences(m_VarReferences);
+    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
@@ -184,7 +180,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
                                const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
+    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     // Validate parameters, variables and variable references
     getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
@@ -194,7 +190,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // Check variable reference types
-    checkVarReferences(m_VarReferences);
+    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense

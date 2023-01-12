@@ -28,3 +28,51 @@ public:
     using CurrentSource::getInitHashDigest;
     using CurrentSource::getVarLocationHashDigest;
 };
+
+//----------------------------------------------------------------------------
+// CurrentSourceVarAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceVarAdapter
+{
+public:
+    CurrentSourceVarAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
+
+    Models::Base::VarVec getVars() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CS.getVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};
+
+//----------------------------------------------------------------------------
+// CurrentSourceEGPAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceEGPAdapter
+{
+public:
+    CurrentSourceEGPAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
+
+    Snippet::Base::EGPVec getEGPs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};

@@ -33,6 +33,7 @@ Part of the code generation and generated code sections.
 // GeNN includes
 #include "currentSourceInternal.h"
 #include "customUpdateInternal.h"
+#include "customConnectivityUpdateInternal.h"
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
@@ -135,50 +136,68 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity()
 }
 
 //! Creates a reference to a neuron group variable
-inline Models::VarReference createVarRef(const NeuronGroup *ng, const std::string &varName)
+inline Models::VarReference createVarRef(NeuronGroup *ng, const std::string &varName)
 {
     return Models::VarReference::createVarRef(ng, varName);
 }
 
 //! Creates a reference to a current source variable
-inline Models::VarReference createVarRef(const CurrentSource *cs, const std::string &varName)
+inline Models::VarReference createVarRef(CurrentSource *cs, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cs, varName);
 }
 
 //! Creates a reference to a custom update variable
-inline Models::VarReference createVarRef(const CustomUpdate *cu, const std::string &varName)
+inline Models::VarReference createVarRef(CustomUpdate *cu, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cu, varName);
 }
 
+//! Creates a reference to a presynaptic custom connectivity update variable
+inline Models::VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createPreVarRef(cu, varName);
+}
+
+//! Creates a reference to a postsynaptic custom connectivity update variable
+inline Models::VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createPostVarRef(cu, varName);
+}
+
 //! Creates a reference to a postsynaptic model variable
-inline Models::VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createPSMVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model presynaptic variable
-inline Models::VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPreVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model postsynapticvariable
-inline Models::VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName)
+inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPostVarRef(sg, varName);
 }
 
 //! Creates a reference to a weight update model variable
-inline Models::WUVarReference createWUVarRef(const SynapseGroup *sg, const std::string &varName,
-                                             const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
+inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
+                                             SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
     return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
 //! Creates a reference to a custom weight update variable
-inline Models::WUVarReference createWUVarRef(const CustomUpdateWU *cu, const std::string &varName)
+inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
+{
+    return Models::WUVarReference(cu, varName);
+}
+
+//! Creates a reference to a custom connectivity update update variable
+inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
     return Models::WUVarReference(cu, varName);
 }
@@ -197,8 +216,7 @@ public:
     typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
     typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
     typedef std::map<std::string, CustomUpdateWUInternal>::value_type CustomUpdateWUValueType;
-
-    //typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
+    typedef std::map<std::string, CustomConnectivityUpdateInternal>::value_type CustomConnectivityUpdateValueType;
 
     ModelSpec();
     ModelSpec(const ModelSpec&) = delete;
@@ -537,7 +555,6 @@ public:
     //! model using a custom update model managed by the user
     /*! \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
@@ -571,7 +588,6 @@ public:
     /*! \tparam CustomUpdateModel type of neuron model (derived from CustomUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varInitialisers variable references wrapped in WUVarReferences object.
@@ -583,6 +599,58 @@ public:
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
                                paramValues, varInitialisers, varReferences);
+    }
+
+    //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 
+    //! postsynaptic state variables and variable references using a custom connectivity update model managed by the user
+    /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
+        \param name string containing unique name of custom update
+        \param updateGroupName string containing name of group to add this custom update to
+        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
+        \param model custom update model to use for custom update.
+        \param paramValues parameters for model wrapped in ParamValues object.
+        \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param preVarInitialisers presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param postVarInitialisers postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param varReferences variable references wrapped in WUVarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
+        \return pointer to newly created CustomConnectivityUpdate */
+    CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
+                                                          const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                          const ParamValues &paramValues, const VarValues &varInitialisers,
+                                                          const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
+                                                          const WUVarReferences &varReferences, const VarReferences &preVarReferences,
+                                                          const VarReferences &postVarReferences);
+
+    //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 
+    //! postsynaptic state variables and variable references using a singleton custom connectivity update model created 
+    //! using standard DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
+        \param name string containing unique name of custom update
+        \param updateGroupName string containing name of group to add this custom update to
+        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
+        \param model custom update model to use for custom update.
+        \param paramValues parameters for model wrapped in ParamValues object.
+        \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param preVarInitialisers presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param postVarInitialisers postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param varReferences variable references wrapped in WUVarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
+        \return pointer to newly created CustomConnectivityUpdate */
+    template<typename CustomConnectivityUpdateModel>
+    CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
+                                                          const std::string &targetSynapseGroupName,
+                                                          const ParamValues &paramValues, const VarValues &varInitialisers,
+                                                          const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
+                                                          const WUVarReferences &varReferences, const VarReferences &preVarReferences,
+                                                          const VarReferences &postVarReferences)
+    {
+        return addCustomConnectivityUpdate(name, updateGroupName, targetSynapseGroupName, 
+                                           CustomConnectivityUpdateModel::getInstance(), paramValues,
+                                           varInitialisers, preVarInitialisers, postVarInitialisers, 
+                                           varReferences, preVarReferences, postVarReferences);
     }
 
 protected:
@@ -620,6 +688,9 @@ protected:
     const std::map<std::string, CustomUpdateInternal> &getCustomUpdates() const { return m_CustomUpdates; }
     const std::map<std::string, CustomUpdateWUInternal> &getCustomWUUpdates() const { return m_CustomWUUpdates; }
 
+    //! Get std::map containing named CustomConnectivity objects in model
+    const std::map<std::string, CustomConnectivityUpdateInternal> &getCustomConnectivityUpdates() const { return m_CustomConnectivityUpdates; }
+
 private:
     //--------------------------------------------------------------------------
     // Private methods
@@ -647,9 +718,12 @@ private:
     //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
-    //! Grouped named custom updates
+    //! Named custom updates
     std::map<std::string, CustomUpdateInternal> m_CustomUpdates;
     std::map<std::string, CustomUpdateWUInternal> m_CustomWUUpdates;
+
+    //! Named custom connectivity updates
+    std::map<std::string, CustomConnectivityUpdateInternal> m_CustomConnectivityUpdates;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

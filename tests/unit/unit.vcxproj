@@ -18,6 +18,7 @@
     <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customConnectivityUpdate.cc" />
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="gennUtils.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />

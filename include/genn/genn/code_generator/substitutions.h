@@ -68,14 +68,25 @@ public:
         }
     }
 
+    template<typename T, typename S, typename F>
+    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix,
+                                const std::string &destPrefix, S getDestSuffixFn, F filterFn)
+    {
+        for(const auto &v : variables) {
+            if (filterFn(v.access, v.name)) {
+                addVarSubstitution(v.name + sourceSuffix,
+                                   destPrefix + v.name + getDestSuffixFn(v.access, v.name));
+            }
+        }
+    }
+
     template<typename T, typename S>
     void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix,
                                 const std::string &destPrefix, S getDestSuffixFn)
     {
-        for(const auto &v : variables) {
-            addVarSubstitution(v.name + sourceSuffix,
-                               destPrefix + v.name + getDestSuffixFn(v.access));
-        }
+        typedef decltype(T::access) AccessType;
+        addVarNameSubstitution(variables, sourceSuffix, destPrefix, 
+                               getDestSuffixFn, [](AccessType, const std::string&) { return true; });
     }
 
     template<typename T>

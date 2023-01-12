@@ -13,6 +13,7 @@
 #include "varAccess.h"
 
 // Forward declarations
+class CustomConnectivityUpdate;
 class CustomUpdate;
 class CustomUpdateWU;
 class NeuronGroup;
@@ -57,7 +58,7 @@ public:
 
         bool operator == (const Var &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         const std::string name;
@@ -74,7 +75,7 @@ public:
 
         bool operator == (const VarRef &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         const std::string name;
@@ -149,7 +150,19 @@ public:
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
     std::string getTargetName() const { return m_GetTargetName(); }
-    bool isBatched() const{ return m_IsBatched(); }
+    
+    bool isDuplicated() const
+    {
+        return m_IsBatched() && (m_Var.access & VarAccessDuplication::DUPLICATE); 
+    }
+
+    bool operator < (const VarReferenceBase &other) const
+    {
+        // **NOTE** variable and target names are enough to guarantee uniqueness
+        const std::string targetName = m_GetTargetName();
+        const std::string otherTargetName = other.m_GetTargetName();
+        return (std::tie(m_Var.name, targetName) < std::tie(other.m_Var.name, otherTargetName));
+    }
 
 protected:
     //------------------------------------------------------------------------
@@ -183,27 +196,29 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    const NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
+    NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
 
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
-    static VarReference createVarRef(const NeuronGroup *ng, const std::string &varName);
-    static VarReference createVarRef(const CurrentSource *cs, const std::string &varName);
-    static VarReference createVarRef(const CustomUpdate *su, const std::string &varName);
-    static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
+    static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
+    static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
+    static VarReference createVarRef(CustomUpdate *cu, const std::string &varName);
+    static VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
+    static VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
+    static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
     
 private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<const NeuronGroup*(void)> GetDelayNeuronGroupFn;
+    typedef std::function<NeuronGroup*(void)> GetDelayNeuronGroupFn;
 
-    VarReference(const NeuronGroupInternal *ng, const std::string &varName);
-    VarReference(const CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(const CustomUpdate *cu, const std::string &varName);
+    VarReference(NeuronGroupInternal *ng, const std::string &varName);
+    VarReference(CurrentSourceInternal *cs, const std::string &varName);
+    VarReference(CustomUpdate *cu, const std::string &varName);
     VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, 
                  GetTargetNameFn getTargetName, IsBatchedFn isBatched);
@@ -221,26 +236,57 @@ private:
 class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
 public:
-    WUVarReference(const SynapseGroup *sg, const std::string &varName,
-                   const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
-    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
+    WUVarReference(SynapseGroup *sg, const std::string &varName,
+                   SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    WUVarReference(CustomUpdateWU *cu, const std::string &varName);
+    WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const SynapseGroup *getSynapseGroup() const;
+    SynapseGroup *getSynapseGroup() const;
 
-    const SynapseGroup *getTransposeSynapseGroup() const;
+    SynapseGroup *getTransposeSynapseGroup() const;
     const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
     size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
     std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
 
+    bool operator < (const WUVarReference &other) const
+    {
+        const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
+        const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
+        if (hasTranspose && otherHasTranspose) {
+            if (other.m_TransposeVar->name < m_TransposeVar->name) {
+                return false;
+            }
+            else if (m_TransposeVar->name < other.m_TransposeVar->name) {
+                return true;
+            }
+
+            auto transposeTargetName = m_GetTransposeTargetName();
+            auto otherTransposeTargetName = other.m_GetTransposeTargetName();
+            if (otherTransposeTargetName < transposeTargetName) {
+                return false;
+            }
+            else if (transposeTargetName < otherTransposeTargetName) {
+                return true;
+            }
+        }
+        else if (hasTranspose) {
+            return false;
+        }
+        else if (otherHasTranspose) {
+            return true;
+        }
+        
+        return (VarReferenceBase::operator < (other));
+    }
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
-    const SynapseGroupInternal *m_TransposeSG;
+    SynapseGroupInternal * const m_SG;
+    SynapseGroupInternal * const m_TransposeSG;
     const std::optional<size_t> m_TransposeVarIndex;
     const std::optional<Models::Base::Var> m_TransposeVar;
     const GetTargetNameFn m_GetTransposeTargetName;
@@ -253,4 +299,28 @@ GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
+
+
+//! Helper function to check if variable reference types match those specified in model
+template<typename V>
+void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+{
+    // Loop through all variable references
+    for(const auto &modelVarRef : modelVarRefs) {
+        const auto varRef = varRefs.at(modelVarRef.name);
+
+        // Check types of variable references against those specified in model
+        // **THINK** due to GeNN's current string-based type system this is rather conservative
+        if(varRef.getVar().type != modelVarRef.type) {
+            throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
+        }
+
+        // Check that no reduction targets reference duplicated variables
+        if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
+            && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
+        {
+            throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
+        }
+    }
+}
 } // Models

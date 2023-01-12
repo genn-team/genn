@@ -118,35 +118,12 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferences(const std::unordered_map<std::string, V> &varRefs)
-    {
-        // Loop through all variable references
-        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
-            const auto varRef = varRefs.at(modelVarRef.name);
-
-            // Check types of variable references against those specified in model
-            // **THINK** due to GeNN's current string-based type system this is rather conservative
-            if(varRef.getVar().type != modelVarRef.type) {
-                throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
-            }
-
-            // Check that no reduction targets reference duplicated variables
-            if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
-                && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
-            {
-                throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
-            }
-        }
-    }
-
-    //! Helper function to check if variable reference types match those specified in model
-    template<typename V>
     void checkVarReferenceBatching(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
     {
         // If target of any variable references is duplicated, custom update should be batched
         if(batchSize > 1) {
             m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const auto &v) { return (v.second.isBatched() && (v.second.getVar().access & VarAccessDuplication::DUPLICATE)); });
+                                    [](const auto &v) { return v.second.isDuplicated(); });
         }
         else {
             m_Batched = false;
@@ -156,7 +133,7 @@ protected:
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-             // If custom update is batched, check that any variable references to shared variables are read-only
+            // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
             if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
@@ -188,6 +165,56 @@ private:
     bool m_Batched;
 };
 
+//----------------------------------------------------------------------------
+// CustomUpdateVarAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarAdapter
+{
+public:
+    CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+
+    Models::Base::VarVec getVars() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateEGPAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateEGPAdapter
+{
+public:
+    CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+
+    VarLocation getEGPLocation(size_t) const{ return VarLocation::HOST_DEVICE; }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
+};
+
 //------------------------------------------------------------------------
 // CustomUpdate
 //------------------------------------------------------------------------
@@ -217,7 +244,7 @@ protected:
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
 
-     //! Updates hash with custom update
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -264,7 +291,7 @@ protected:
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isTransposeOperation() const;
 
-    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+    SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -279,5 +306,5 @@ private:
     // Members
     //------------------------------------------------------------------------
     const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
-    const SynapseGroupInternal *m_SynapseGroup;
+    SynapseGroupInternal *m_SynapseGroup;
 };

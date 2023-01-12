@@ -29,23 +29,24 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
-    class ModelSpecMerged;
-    class NeuronUpdateGroupMerged;
-    class Substitutions;
-    class SynapseGroupMergedBase;
-    class PresynapticUpdateGroupMerged;
-    class PostsynapticUpdateGroupMerged;
-    class SynapseDynamicsGroupMerged;
-    class CustomUpdateGroupMerged;
-    class CustomUpdateWUGroupMerged;
-    class CustomUpdateTransposeWUGroupMerged;
-    class NeuronInitGroupMerged;
-    class CustomUpdateInitGroupMerged;
-    class CustomWUUpdateInitGroupMerged;
-    class CustomWUUpdateSparseInitGroupMerged;
-    class SynapseConnectivityInitGroupMerged;
-    class SynapseInitGroupMerged;
-    class SynapseSparseInitGroupMerged;
+class ModelSpecMerged;
+class NeuronUpdateGroupMerged;
+class Substitutions;
+class SynapseGroupMergedBase;
+class PresynapticUpdateGroupMerged;
+class PostsynapticUpdateGroupMerged;
+class SynapseDynamicsGroupMerged;
+class CustomConnectivityUpdateGroupMerged;
+class CustomUpdateGroupMerged;
+class CustomUpdateWUGroupMerged;
+class CustomUpdateTransposeWUGroupMerged;
+class NeuronInitGroupMerged;
+class CustomUpdateInitGroupMerged;
+class CustomWUUpdateInitGroupMerged;
+class CustomWUUpdateSparseInitGroupMerged;
+class SynapseConnectivityInitGroupMerged;
+class SynapseInitGroupMerged;
+class SynapseSparseInitGroupMerged;
     
 }
 
@@ -322,6 +323,9 @@ public:
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
 
+    //! On backends which support it, generate a runtime assert
+    virtual void genAssert(CodeStream &os, const std::string &condition) const = 0;
+
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
 
@@ -484,6 +488,8 @@ protected:
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
+    
+    void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.
     //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory

@@ -9,6 +9,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "currentSourceInternal.h"
+#include "customConnectivityUpdateInternal.h"
 #include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
@@ -23,33 +24,45 @@ namespace CodeGenerator
 class CodeStream;
 }
 
+//------------------------------------------------------------------------
+// GroupMergedFieldType
+//------------------------------------------------------------------------
+//! Enumeration of field types 
+/*! The only reason this is not a child of GroupMerged is to prevent the 
+    template nightmare that would otherwise ensue when declaring operators on it */
+namespace CodeGenerator
+{
+enum class GroupMergedFieldType : unsigned int
+{
+    STANDARD        = 0,
+    HOST            = (1 << 0),
+    DYNAMIC         = (1 << 1),
+
+    HOST_DYNAMIC    = HOST | DYNAMIC,
+};
+
+//----------------------------------------------------------------------------
+// Operators
+//----------------------------------------------------------------------------
+inline bool operator & (GroupMergedFieldType typeA, GroupMergedFieldType typeB)
+{
+    return (static_cast<unsigned int>(typeA) & static_cast<unsigned int>(typeB)) != 0;
+}
+
 //----------------------------------------------------------------------------
 // CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
 //! Very thin wrapper around a number of groups which have been merged together
-namespace CodeGenerator
-{
 template<typename G>
 class GroupMerged
 {
 public:
     //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    enum class FieldType
-    {
-        Standard,
-        Host,
-        ScalarEGP,
-        PointerEGP,
-    };
-
-    //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
-    typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
+    typedef std::tuple<std::string, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
 
     GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
@@ -101,7 +114,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 const std::string &type = std::get<0>(f);
-                if(::Utils::isTypePointer(type) && std::get<3>(f) != FieldType::Host) {
+                if(::Utils::isTypePointer(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostType(type);
@@ -226,13 +239,13 @@ protected:
                            });
     }
 
-    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
-    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         addField("scalar", name,
                  [getFieldValue, this](const G &g, size_t i)
@@ -274,11 +287,10 @@ protected:
     void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string prefix = isPointer ? arrayPrefix : "";
+            const std::string prefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
             addField(e.type, e.name + varName,
                      [e, prefix, varName](const G &g, size_t) { return prefix + e.name + varName + g.getName(); },
-                     isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
 
@@ -320,40 +332,40 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitParams(V getVarInitialisers, H isHeterogeneous)
+    template<typename T, typename A, typename H>
+    void addHeterogeneousVarInitParams(H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(const auto &varInit : archetypeVarInitialisers) {
+        const A archetypeAdaptor(getArchetype());
+        for(const auto &v : archetypeAdaptor.getVars()) {
             // Loop through parameters
-            for(const auto &p : varInit.second.getSnippet()->getParamNames()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, p)) {
-                    addScalarField(p + varInit.first,
-                                   [p, varInit, getVarInitialisers](const G &g, size_t)
+            for(const auto &p : archetypeAdaptor.getVarInitialisers().at(v.name).getParams()) {
+                if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
+                    addScalarField(p.first + v.name,
+                                   [p, v](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getParams();
-                                       return Utils::writePreciseString(values.at(p));
+                                       const auto &values = A(g).getVarInitialisers().at(v.name).getParams();
+                                       return Utils::writePreciseString(values.at(p.first));
                                    });
                 }
             }
         }
     }
 
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitDerivedParams(V getVarInitialisers, H isHeterogeneous)
+    template<typename T, typename A, typename H>
+    void addHeterogeneousVarInitDerivedParams(H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(const auto &varInit : archetypeVarInitialisers) {
+        const A archetypeAdaptor(getArchetype());
+        for(const auto &v : archetypeAdaptor.getVars()) {
             // Loop through parameters
-            for(const auto &d : varInit.second.getSnippet()->getDerivedParams()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, d.name)) {
-                    addScalarField(d.name + varInit.first,
-                                   [d, varInit, getVarInitialisers](const G &g, size_t)
+            for(const auto &p : archetypeAdaptor.getVarInitialisers().at(v.name).getDerivedParams()) {
+                if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
+                    addScalarField(p.first + v.name,
+                                   [p, v](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getDerivedParams();
-                                       return Utils::writePreciseString(values.at(d.name));
+                                       const auto &values = A(g).getVarInitialisers().at(v.name).getDerivedParams();
+                                       return Utils::writePreciseString(values.at(p.first));
                                    });
                 }
             }
@@ -386,11 +398,11 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename R>
-    void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename T, typename A, typename R>
+    void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getParams()) {
@@ -398,7 +410,7 @@ protected:
                 if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getParams();
+                        const auto &values = A(g.get()).getVarInitialisers().at(varInit.first).getParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(p.first), hash);
@@ -408,19 +420,19 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename R>
-    void updateVarInitDerivedParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename T, typename A, typename R>
+    void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, d.first)) {
+                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getDerivedParams();
+                        const auto &values = A(g.get()).getVarInitialisers().at(varInit.first).getDerivedParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(d.first), hash);
@@ -448,14 +460,14 @@ protected:
 
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
-            // If this field is for a pointer EGP, also declare function to push it
-            if(std::get<3>(f) == FieldType::PointerEGP) {
+            // If this field is a dynamic pointer
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && Utils::isTypePointer(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure
-            assert(std::get<3>(f) != FieldType::Host || host);
+            assert(!(std::get<3>(f) & GroupMergedFieldType::HOST) || host);
         }
 
         // If merged group is used on host
@@ -801,14 +813,13 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string varPrefix = isPointer ? arrayPrefix : "";
+            const std::string varPrefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
             addField(e.type, e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
                      },
-                     Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                     GroupMergedFieldType::DYNAMIC);
         }
     }
 
@@ -856,13 +867,13 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
     void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                      size_t childIndex, const std::string &varName, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                      size_t childIndex, const std::string &varName, R isChildParamReferencedFn,
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
         const auto &archetypeParams = archetypeVarInit.at(varName).getParams();
         for(const auto &p : archetypeParams) {
             // If parameter is referenced
@@ -871,7 +882,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = A(*child).getVarInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getParams().at(p.first), hash);
@@ -880,13 +891,13 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
     void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                             size_t childIndex, const std::string &varName, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                             size_t childIndex, const std::string &varName, R isChildParamReferencedFn,
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
         const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
         for(const auto &d : archetypeDerivedParams) {
             // If parameter is referenced
@@ -895,7 +906,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = A(*child).getVarInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getDerivedParams().at(d.first), hash);
@@ -918,73 +929,6 @@ private:
     std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedInSyns;
     std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedPreOutputOutSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
-};
-
-
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
-// ----------------------------------------------------------------------------
-// SynapseConnectivityHostInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
-    }
-
-    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-     //! Is the connectivity initialization parameter referenced?
-    bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
 };
 
 //----------------------------------------------------------------------------
@@ -1163,85 +1107,5 @@ private:
     // Members
     //------------------------------------------------------------------------
     const std::string m_ArchetypeCode;
-};
-
-// ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMergedBase
-//----------------------------------------------------------------------------
-template<typename G>
-class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
-{
-protected:
-     CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
-                                   const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
-    {
-        // Loop through variables and add pointers if they are reduction targets
-        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
-        for(const auto &v : cm->getVars()) {
-            if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
-            }
-        }
-
-        // Loop through variable references and add pointers if they are reduction targets
-        for(const auto &v : cm->getVarRefs()) {
-            if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
-            }
-        }
-    }
-};
-
-// ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
-{
-public:
-    CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
-    }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
-// ----------------------------------------------------------------------------
-// CustomWUUpdateHostReductionGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
-{
-public:
-    CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
-    }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 }   // namespace CodeGenerator

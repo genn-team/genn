@@ -43,30 +43,14 @@ public:
         //! state variables from different synapse groups will not get combined together in neuron update
         bool operator < (const SpikeEventThreshold &other) const
         {
-            if(other.eventThresholdCode < eventThresholdCode) {
-                return false;
+            if (synapseStateInThresholdCode) {
+                return (std::tie(eventThresholdCode, supportCode, synapseGroup) 
+                        < std::tie(other.eventThresholdCode, other.supportCode, other.synapseGroup));
             }
-            else if(eventThresholdCode < other.eventThresholdCode) {
-                return true;
+            else {
+                return (std::tie(eventThresholdCode, supportCode) 
+                        < std::tie(other.eventThresholdCode, other.supportCode));
             }
-
-            if(other.supportCode < supportCode) {
-                return false;
-            }
-            else if(supportCode < other.supportCode) {
-                return true;
-            }
-
-            if(synapseStateInThresholdCode) {
-                if(other.synapseGroup < synapseGroup) {
-                    return false;
-                }
-                else if(synapseGroup < other.synapseGroup) {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         //! Equality operator (used for set::set equality used when testing neuron groups mergability),
@@ -237,8 +221,7 @@ protected:
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
-
-    const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }   
+    const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }

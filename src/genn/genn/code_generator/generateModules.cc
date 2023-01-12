@@ -158,13 +158,18 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateGroups().size() << " merged custom update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateWUGroups().size() << " merged custom weight update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateTransposeWUGroups().size() << " merged custom weight transpose update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdateGroups().size() << " merged custom connectivity update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityHostUpdateGroups().size() << " merged custom connectivity host update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateInitGroups().size() << " merged custom update init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateInitGroups().size() << " merged custom WU update init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdatePreInitGroups().size() << " merged custom connectivity update presynaptic init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdatePostInitGroups().size() << " merged custom connectivity update postsynaptic init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseInitGroups().size() << " merged synapse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() << " merged custom WU update sparse init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().size() << " merged custom connectivity update sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
@@ -222,6 +227,7 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
         },
         // Push EGP handler
         // **TODO** this needs to be per-update group
@@ -230,6 +236,7 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdateGroupMerged>(os, backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -280,18 +287,29 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
         {
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
+
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
+
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
         },
         // Initialise push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
             modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePreInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePostInitGroupMerged>(os, backend);
+
             modelMerged.genScalarEGPPush<CustomWUUpdateInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<SynapseInitGroupMerged>(os, backend);
+
             modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
         },
         // Initialise sparse push EGP handler
@@ -299,5 +317,6 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
         {
             modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomWUUpdateSparseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomConnectivityUpdateSparseInitGroupMerged>(os, backend);
         });
 }

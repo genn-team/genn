@@ -84,6 +84,20 @@ public:
 };
 IMPLEMENT_MODEL(NopCustomUpdateModel);
 
+//----------------------------------------------------------------------------
+// NopCustomConnectivityUpdateModel
+//----------------------------------------------------------------------------
+class NopCustomConnectivityUpdateModel : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(NopCustomConnectivityUpdateModel, 0, 6, 6, 6, 0, 0, 0);
+
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_PRE_VARS({{"pre_constant_val", "scalar"}, {"pre_uniform", "scalar"}, {"pre_normal", "scalar"}, {"pre_exponential", "scalar"}, {"pre_gamma", "scalar"}, {"pre_binomial", "unsigned int"}});
+    SET_POST_VARS({{"post_constant_val", "scalar"}, {"post_uniform", "scalar"}, {"post_normal", "scalar"}, {"post_exponential", "scalar"}, {"post_gamma", "scalar"}, {"post_binomial", "unsigned int"}});
+};
+IMPLEMENT_MODEL(NopCustomConnectivityUpdateModel);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -170,7 +184,31 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Gamma>(gammaParams),
         initVar<InitVarSnippet::Binomial>(binomialParams));
     
+    // Custom update model parameters
     NopCustomUpdateModel::VarValues customUpdateInit(
+        13.0,
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams),
+        initVar<InitVarSnippet::Binomial>(binomialParams));
+    
+    // Custom connectivity update model parameters
+    NopCustomConnectivityUpdateModel::VarValues customConnectivityUpdateInit(
+        13.0,
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams),
+        initVar<InitVarSnippet::Binomial>(binomialParams));
+    NopCustomConnectivityUpdateModel::PreVarValues customConnectivityUpdatePreInit(
+        13.0,
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams),
+        initVar<InitVarSnippet::Binomial>(binomialParams));
+    NopCustomConnectivityUpdateModel::PostVarValues customConnectivityUpdatePostInit(
         13.0,
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
@@ -243,6 +281,11 @@ void modelDefinition(ModelSpec &model)
     NopCustomUpdateModel::WUVarReferences wuKernelVarReferences(createWUVarRef(sgKernel, "constant_val")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("WUKernelCustomUpdate", "Test",
                                                {}, customUpdateInit, wuKernelVarReferences);
-
+    
+    model.addCustomConnectivityUpdate<NopCustomConnectivityUpdateModel>(
+        "CustomConnectivityUpdate", "Test", "Sparse",
+        {}, customConnectivityUpdateInit, customConnectivityUpdatePreInit, customConnectivityUpdatePostInit,
+        {}, {}, {});
+    
     model.setPrecision(GENN_FLOAT);
 }

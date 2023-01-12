@@ -32,13 +32,13 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
     // Substitute names of pre and postsynaptic weight update variables
     synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->", 
-                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       [&sg, &synapseSubs, batchSize](VarAccess a, const std::string&) 
                                        { 
                                            return "[" + sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_pre"]) + "]";
                                        });
 
     synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group->",
-                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       [&sg, &synapseSubs, batchSize](VarAccess a, const std::string&) 
                                        { 
                                            return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
                                        });
@@ -60,7 +60,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->",
-                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           [&sg, &synapseSubs, batchSize](VarAccess a, const std::string&) 
                                            { 
                                                return "[" + sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_syn"]) + "]";
                                            });
@@ -109,7 +109,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
         // Use kernel index to index into variables
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", 
-                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           [&sg, &synapseSubs, batchSize](VarAccess a, const std::string&) 
                                            { 
                                                return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_kernel"]) + "]";
                                            });
@@ -313,4 +313,21 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
 
     applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
                               *this, popSubs, modelMerged, backend.supportsNamespace());
+}
+
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
+//----------------------------------------------------------------------------
+SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+{
+    addField("unsigned int*", "denDelayPtr", 
+             [&backend](const SynapseGroupInternal &sg, size_t) 
+             {
+                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
+             });
 }

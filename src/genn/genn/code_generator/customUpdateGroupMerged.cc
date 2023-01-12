@@ -392,3 +392,42 @@ void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&
                                               index);
                     });
 }
+
+// ----------------------------------------------------------------------------
+// CustomUpdateHostReductionGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHostReduction";
+//----------------------------------------------------------------------------
+CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                           const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
+{
+    addField("unsigned int", "size",
+             [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+
+    // If some variables are delayed, add delay pointer
+    // **NOTE** this is HOST delay pointer
+    if(getArchetype().getDelayNeuronGroup() != nullptr) {
+        addField("unsigned int*", "spkQuePtr", 
+                 [&](const CustomUpdateInternal &cg, size_t) 
+                 { 
+                     return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                 });
+    }
+}
+
+// ----------------------------------------------------------------------------
+// CustomWUUpdateHostReductionGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdateHostReduction";
+//----------------------------------------------------------------------------
+CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                               const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+{
+    addField("unsigned int", "size",
+             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             {
+                 return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+             });
+}

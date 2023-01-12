@@ -160,6 +160,32 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
     }
 }
 
+CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
+                                                                 const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                                 const ParamValues &paramValues, const VarValues &varInitialisers,
+                                                                 const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
+                                                                 const WUVarReferences &varReferences, const VarReferences &preVarReferences,
+                                                                 const VarReferences &postVarReferences)
+{
+    // Find target synapse group
+    auto targetSynapseGroup = findSynapseGroupInternal(targetSynapseGroupName);
+
+    // Add neuron group to map
+    auto result = m_CustomConnectivityUpdates.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, updateGroupName, targetSynapseGroup, model,
+                              paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
+                              varReferences, preVarReferences, postVarReferences, 
+                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom connectivity update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+
 CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers,
                                            const WUVarReferences &varReferences)
@@ -237,10 +263,6 @@ void ModelSpec::finalize()
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
         }
-
-        // Set flag specifying whether any of this synapse groups variables are referenced by a custom update
-        s.second.setWUVarReferencedByCustomUpdate(std::any_of(getCustomWUUpdates().cbegin(), getCustomWUUpdates().cend(),
-                                                              [&s](const CustomUpdateWUValueType &cg) { return (cg.second.getSynapseGroup() == &s.second); }));
     }
 
     // CURRENT SOURCES
@@ -257,6 +279,12 @@ void ModelSpec::finalize()
 
     // Custom WUM update groups
     for(auto &c : m_CustomWUUpdates) {
+        c.second.finalize(m_BatchSize);
+        c.second.initDerivedParams(m_DT);
+    }
+
+    // Custom connectivity update groups
+    for (auto &c : m_CustomConnectivityUpdates) {
         c.second.finalize(m_BatchSize);
         c.second.initDerivedParams(m_DT);
     }
@@ -340,11 +368,25 @@ bool ModelSpec::zeroCopyInUse() const
     }
 
      // If any custom updates use zero copy return true
-     /*if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
+     if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
                    [](const CustomUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
-    {
+     {
         return true;
-    }*/
+     }
+
+     // If any custom WU updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomWUUpdates), std::end(m_CustomWUUpdates),
+                   [](const CustomUpdateWUValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
+
+     // If any custom connectivity updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomConnectivityUpdates), std::end(m_CustomConnectivityUpdates),
+                   [](const CustomConnectivityUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
 
     return false;
 }

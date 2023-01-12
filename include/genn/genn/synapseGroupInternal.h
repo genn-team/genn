@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "neuronGroupInternal.h"
 #include "synapseGroup.h"
 
 //------------------------------------------------------------------------
@@ -33,18 +34,20 @@ public:
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
-    using SynapseGroup::setWUVarReferencedByCustomUpdate;
     using SynapseGroup::setFusedPSVarSuffix;
     using SynapseGroup::setFusedPreOutputSuffix;
     using SynapseGroup::setFusedWUPreVarSuffix;
     using SynapseGroup::setFusedWUPostVarSuffix;
     using SynapseGroup::initDerivedParams;
+    using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::isEventThresholdReTestRequired;
-    using SynapseGroup::areWUVarReferencedByCustomUpdate;
     using SynapseGroup::getFusedPSVarSuffix;
     using SynapseGroup::getFusedPreOutputSuffix;
     using SynapseGroup::getFusedWUPreVarSuffix;
     using SynapseGroup::getFusedWUPostVarSuffix;
+    using SynapseGroup::getSparseIndType;
+    using SynapseGroup::getCustomConnectivityUpdateReferences;
+    using SynapseGroup::getCustomUpdateReferences;
     using SynapseGroup::canPSBeFused;
     using SynapseGroup::canWUMPreUpdateBeFused;
     using SynapseGroup::canWUMPostUpdateBeFused;
@@ -52,7 +55,6 @@ public:
     using SynapseGroup::isPSModelFused;
     using SynapseGroup::isWUPreModelFused;
     using SynapseGroup::isWUPostModelFused;
-    using SynapseGroup::getSparseIndType;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
@@ -70,4 +72,135 @@ public:
     using SynapseGroup::getConnectivityInitHashDigest;
     using SynapseGroup::getConnectivityHostInitHashDigest;
     using SynapseGroup::getVarLocationHashDigest;
+};
+
+
+//----------------------------------------------------------------------------
+// SynapsePSMVarAdapter
+//----------------------------------------------------------------------------
+class SynapsePSMVarAdapter
+{
+public:
+    SynapsePSMVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
+
+    Models::Base::VarVec getVars() const{ return m_SG.getPSModel()->getVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUVarAdapter
+{
+public:
+    SynapseWUVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
+    
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPreVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPreVarAdapter
+{
+public:
+    SynapseWUPreVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPreVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPostVarAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPostVarAdapter
+{
+public:
+    SynapseWUPostVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+
+    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPostVars(); }
+
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+
+    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+
+//----------------------------------------------------------------------------
+// SynapseWUEGPAdapter
+//----------------------------------------------------------------------------
+class SynapseWUEGPAdapter
+{
+public:
+    SynapseWUEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getEGPLocation(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
+    
+    Snippet::Base::EGPVec getEGPs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
 };

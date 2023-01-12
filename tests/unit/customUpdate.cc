@@ -151,6 +151,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 };
 IMPLEMENT_SNIPPET(ReduceNeuronSharedVar);
 }
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------

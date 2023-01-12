@@ -23,6 +23,7 @@
     <ClCompile Include="code_generator\backendSIMT.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
+    <ClCompile Include="code_generator\customConnectivityUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\customUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\generateModules.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
@@ -39,6 +40,8 @@
     <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customConnectivityUpdate.cc" />
+    <ClCompile Include="customConnectivityUpdateModels.cc" />
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
@@ -65,6 +68,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendSIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\customConnectivityUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\customUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateModules.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
@@ -83,6 +87,9 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customConnectivityUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customConnectivityUpdateInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customConnectivityUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />

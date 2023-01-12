@@ -15,6 +15,8 @@
 #include "variableMode.h"
 
 // Forward declarations
+class CustomConnectivityUpdateInternal;
+class CustomUpdateWUInternal;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 
@@ -242,15 +244,18 @@ protected:
 
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
-    //! Set if any of this synapse group's weight update model variables referenced by a custom update
-    void setWUVarReferencedByCustomUpdate(bool ref) { m_WUVarReferencedByCustomUpdate = ref;  }
-
     void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
     void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
     void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
     void initDerivedParams(double dt);
+
+    //! Add reference to custom connectivity update, referencing this synapse group
+    void addCustomUpdateReference(CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }
+
+    //! Add reference to custom update, referencing this synapse group
+    void addCustomUpdateReference(CustomUpdateWUInternal *cu){ m_CustomUpdateReferences.push_back(cu); }
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -272,9 +277,14 @@ protected:
     const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
     const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
 
-    //! Are any of this synapse group's weight update model variables referenced by a custom update
-    bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
+    //! Gets custom connectivity updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    const std::vector<CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
 
+    //! Gets custom updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    const std::vector<CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
+    
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
     bool canPSBeFused() const;
     
@@ -417,9 +427,6 @@ private:
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
-    //! Are any of this synapse group's weight update model variables referenced by a custom update
-    bool m_WUVarReferencedByCustomUpdate;
-
     //! Variable mode used for variables used to combine input from this synapse group
     VarLocation m_InSynLocation;
 
@@ -509,4 +516,12 @@ private:
     //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     std::string m_PreTargetVar;
+
+    //! Custom connectivity updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    std::vector<CustomConnectivityUpdateInternal*> m_CustomConnectivityUpdateReferences;
+
+    //! Custom updates which reference this synapse group
+    /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
+    std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
 };
