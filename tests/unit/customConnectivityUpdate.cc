@@ -10,6 +10,8 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+using namespace GeNN;
+
 namespace
 {
 class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
