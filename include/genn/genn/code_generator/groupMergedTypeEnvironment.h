@@ -7,6 +7,7 @@
 #include "code_generator/groupMerged.h"
 
 // GeNN transpiler includes
+#include "transpiler/errorHandler.h"
 #include "transpiler/typeChecker.h"
 
 //----------------------------------------------------------------------------
@@ -20,6 +21,7 @@ class GroupMergedTypeEnvironment : public Transpiler::TypeChecker::EnvironmentBa
     using Token = Transpiler::Token;
     using ErrorHandlerBase = Transpiler::ErrorHandlerBase;
     using EnvironmentBase = Transpiler::TypeChecker::EnvironmentBase;
+    using TypeCheckError = Transpiler::TypeChecker::TypeCheckError;
 
 public:
     GroupMergedTypeEnvironment(G &groupMerged, const Type::NumericBase *scalarType,
@@ -34,7 +36,7 @@ public:
     virtual void define(const Transpiler::Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
     {
         errorHandler.error(name, "Cannot declare variable in external environment");
-        throw TypeChecker::TypeCheckError();
+        throw TypeCheckError();
     }
 
     virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
@@ -48,7 +50,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
+                throw TypeCheckError();
             }
         }
 
@@ -68,7 +70,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
+                throw TypeCheckError();
             }
         }
     
@@ -88,7 +90,7 @@ public:
             }
             else {
                 errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
+                throw TypeCheckError();
             }
         }
         else {
