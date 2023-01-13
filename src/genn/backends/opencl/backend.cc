@@ -267,8 +267,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localStream");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -484,9 +483,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPS
-        pushEGPHandler(os);
-
         if (idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << ", t));" << std::endl;
@@ -517,8 +513,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -776,9 +771,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPs
-        pushEGPHandler(os);
-
         // Launch pre-synapse reset kernel if required
         if (idSynapseDendriticDelayUpdate > 0) {
             CodeStream::Scope b(os);
@@ -827,8 +819,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -991,9 +982,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
             }
 
-            // Push any required EGPs
-            pushEGPHandler(os);
-
             // If there are any custom update work-items
             if(g.second.first > 0) {
                 CodeStream::Scope b(os);
@@ -1099,8 +1087,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1353,9 +1340,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         }
         os << std::endl;
 
-        // Push any required EGPs
-        initPushEGPHandler(os);
-
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
@@ -1388,9 +1372,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;

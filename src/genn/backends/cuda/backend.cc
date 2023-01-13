@@ -399,8 +399,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -492,9 +491,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPS
-        pushEGPHandler(os);
-
         if(idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
@@ -523,8 +519,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate struct definitions
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
@@ -637,9 +632,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPs
-        pushEGPHandler(os);
-
         // Launch pre-synapse reset kernel if required
         if(idSynapseDendricDelayUpdate > 0) {
             CodeStream::Scope b(os);
@@ -680,8 +672,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -801,9 +792,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
             }
 
-            // Push any required EGPs
-            pushEGPHandler(os);
-
             // Launch custom update kernel if required
             if(idCustomUpdateStart > 0) {
                 CodeStream::Scope b(os);
@@ -868,8 +856,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -1029,9 +1016,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             }
         }
 
-        // Push any required EGPs
-        initPushEGPHandler(os);
-
         // If there are any initialisation threads
         if(idInitStart > 0) {
             CodeStream::Scope b(os);
@@ -1048,9 +1032,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
         if(!getPreferences().automaticCopy) {

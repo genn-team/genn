@@ -121,8 +121,7 @@ void genKernelIteration(CodeStream &os, const G &g, size_t numKernelDims, const 
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -153,9 +152,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
-
-        // Push any required EGPs
-        pushEGPHandler(os);
 
         Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
@@ -293,8 +289,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -324,9 +319,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
-
-        // Push any required EGPs
-        pushEGPHandler(os);
 
         // Synapse dynamics
         {
@@ -496,8 +488,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -544,9 +535,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     cg.generateUpdate(*this, os, modelMerged);
                 }
             }
-
-            // Push any required EGPs
-            pushEGPHandler(os);
 
             {
                 Timer t(os, "customUpdate" + g, model.isTimingEnabled());
@@ -782,8 +770,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -821,9 +808,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
-
-        // Push any required EGPs
-        initPushEGPHandler(os);
 
         Timer t(os, "init", model.isTimingEnabled());
 
@@ -1079,9 +1063,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
-
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
 
         Timer t(os, "initSparse", model.isTimingEnabled());
 
