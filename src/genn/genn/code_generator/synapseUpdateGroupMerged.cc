@@ -325,9 +325,9 @@ SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(s
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, groups)
 {
-    addField("unsigned int*", "denDelayPtr", 
-             [&backend](const SynapseGroupInternal &sg, size_t) 
-             {
-                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
-             });
+    addField<Type::Uint32Ptr>("denDelayPtr", 
+                              [&backend](const SynapseGroupInternal &sg, size_t) 
+                              {
+                                  return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
+                              });
 }

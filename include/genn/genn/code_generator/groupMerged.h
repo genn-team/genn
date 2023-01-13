@@ -248,6 +248,13 @@ public:
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
+    template<typename T>
+    void addField(const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
+    {
+        // Add field to data structure
+        m_Fields.emplace_back(T::getInstance(), name, getFieldValue, fieldType);
+    }
+
     void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         addField(m_ScalarType, name,
@@ -261,6 +268,12 @@ public:
     void addPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
     {
         addField(type->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+    }
+
+    template<typename T, typename std::enable_if_t<std::is_convertible_v<T*, Type::NumericBase*>>* = nullptr>
+    void addPointerField(const std::string &name, const std::string &prefix)
+    {
+        addField(T::getInstance()->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
 
@@ -303,6 +316,7 @@ public:
         // Loop through params
         for(const auto &p : paramNames) {
             // If parameters is heterogeneous
+            // **TODO** std::invoke
             if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
                 // Add field
                 addScalarField(p + suffix,
@@ -322,6 +336,7 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             // If parameters isn't homogeneous
+            // **TODO** std::invoke
             if((static_cast<const T*>(this)->*isHeterogeneous)(d.name)) {
                 // Add field
                 addScalarField(d.name + suffix,
@@ -816,11 +831,10 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            const std::string varPrefix = Utils::isTypePointer(e.type) ? arrayPrefix : "";
-            addField(e.type, e.name + prefix + std::to_string(childIndex),
-                     [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
+            addField(Type::parseNumericPtr(e.type), e.name + prefix + std::to_string(childIndex),
+                     [getEGPSuffixFn, childIndex, e, arrayPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
-                         return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
+                         return arrayPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
                      },
                      GroupMergedFieldType::DYNAMIC);
         }
@@ -918,11 +932,11 @@ protected:
         }
     }
 
-    void addMergedInSynPointerField(const std::string &type, const std::string &name,
+    void addMergedInSynPointerField(const Type::NumericBase *type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);
 
-    void addMergedPreOutputOutSynPointerField(const std::string &type, const std::string &name,
-                                    size_t archetypeIndex, const std::string &prefix);
+    void addMergedPreOutputOutSynPointerField(const Type::NumericBase *type, const std::string &name,
+                                              size_t archetypeIndex, const std::string &prefix);
 
 
 private:
@@ -1072,10 +1086,10 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addPSPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
+    void addPreOutputPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
+    void addSrcPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
+    void addTrgPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
 
     std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
                             const std::string &index, const std::string &prefix) const;

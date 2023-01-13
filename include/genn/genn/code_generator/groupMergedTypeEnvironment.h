@@ -230,8 +230,11 @@ private:
         // If this type has an associated field
         if (type.second) {
             // Call function to add field to underlying merge group
-            std::apply(&G::addField, std::tuple_cat(std::make_tuple(m_GroupMerged),
-                                                    *type.second));
+            // **THINK** std::apply should work here but doesn't seem to
+            /*std::apply(&G::addField, std::tuple_cat(std::make_tuple(m_GroupMerged),
+                                                    *type.second));*/
+            m_GroupMerged.addField(std::get<0>(*type.second), std::get<1>(*type.second),
+                                   std::get<2>(*type.second), std::get<3>(*type.second));
 
             // Reset optional field so it doesn't get added again
             type.second.reset();

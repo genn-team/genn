@@ -203,11 +203,6 @@ void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMer
             // Generate functions to push merged neuron group structures
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
-        },
-        // Push EGP handler
-        [&backend, &modelMerged](CodeStream &os)
-        {
-            modelMerged.genScalarEGPPush<NeuronUpdateGroupMerged>(os, backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -231,15 +226,6 @@ void generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMer
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
-        },
-        // Push EGP handler
-        // **TODO** this needs to be per-update group
-        [&backend, &modelMerged](CodeStream &os)
-        {
-            modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomConnectivityUpdateGroupMerged>(os, backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -265,13 +251,6 @@ void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMe
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
-        },
-        // Push EGP handler
-        [&backend, &modelMerged](CodeStream &os)
-        {
-            modelMerged.genScalarEGPPush<PresynapticUpdateGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<PostsynapticUpdateGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<SynapseDynamicsGroupMerged>(os, backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -301,26 +280,6 @@ void generateInit(const filesystem::path &outputPath, const ModelSpecMerged &mod
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
-        },
-        // Initialise push EGP handler
-        [&backend, &modelMerged](CodeStream &os)
-        {
-            modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePreInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomConnectivityUpdatePostInitGroupMerged>(os, backend);
-
-            modelMerged.genScalarEGPPush<CustomWUUpdateInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<SynapseInitGroupMerged>(os, backend);
-
-            modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
-        },
-        // Initialise sparse push EGP handler
-        [&backend, &modelMerged](CodeStream &os)
-        {
-            modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomWUUpdateSparseInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<CustomConnectivityUpdateSparseInitGroupMerged>(os, backend);
         });
 }
 }   // namespace GeNN::CodeGenerator

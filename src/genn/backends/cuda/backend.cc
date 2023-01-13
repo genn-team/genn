@@ -7,6 +7,7 @@
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
+#include "type.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"

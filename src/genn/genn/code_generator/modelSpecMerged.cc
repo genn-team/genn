@@ -568,10 +568,11 @@ bool ModelSpecMerged::anyPointerEGPs() const
     // Loop through grouped merged EGPs
     for(const auto &e : m_MergedEGPs) {
         // If there's any pointer EGPs, return true
+        // **TODO** without scalar EGPS, all EGPS are pointer EGPS!
         if(std::any_of(e.second.cbegin(), e.second.cend(),
                        [](const MergedEGPDestinations::value_type &g) 
                        {
-                           return Utils::isTypePointer(g.second.type); 
+                           return dynamic_cast<const Type::NumericPtrBase*>(g.second.type); 
                        }))
         {
             return true;
