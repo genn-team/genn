@@ -85,12 +85,12 @@ const NumericBase *parseNumeric(std::string_view typeString)
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
-        throw std::runtime_error("Error parsing type");
+        throw std::runtime_error("Error parsing type '" + std::string{typeString} + "'");
     }
 
     // If tokens did not contain a valid numeric type, throw exception
     if (!type) {
-        throw std::runtime_error("Unable to parse type");
+        throw std::runtime_error("Unable to parse type '" + std::string{typeString} + "'");
     }
     return type;
 }
@@ -108,12 +108,12 @@ const NumericPtrBase *parseNumericPtr(std::string_view typeString)
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
-        throw std::runtime_error("Error parsing type");
+        throw std::runtime_error("Error parsing type '" + std::string{typeString} + "'");
     }
 
     // If tokens did not contain a valid numeric type, throw exception
     if (!type) {
-        throw std::runtime_error("Unable to parse type");
+        throw std::runtime_error("Unable to parse type '" + std::string{typeString} + "'");
     }
     return type;
 }

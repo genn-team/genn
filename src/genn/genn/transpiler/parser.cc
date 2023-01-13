@@ -871,7 +871,7 @@ const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPo
     ParserState parserState(tokens, errorHandler);
     bool pointerFound = false;
     std::set<std::string_view> typeSpecifiers;
-    do {
+    while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR})) {
         // If token is a star, set pointer found flag
         if(parserState.previous().type == Token::Type::STAR) {
             if (!allowPointers) {
@@ -888,7 +888,7 @@ const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPo
                 parserState.error(parserState.previous(), "duplicate type specifier");
             }
         }
-    } while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
+    };
     
     // Lookup type based on whether token was found
     return (pointerFound 
