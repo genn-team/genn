@@ -1,0 +1,249 @@
+#pragma once
+
+// Standard C++ includes
+#include <unordered_map>
+
+// GeNN code generator includes
+#include "code_generator/groupMerged.h"
+
+// GeNN transpiler includes
+#include "transpiler/typeChecker.h"
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::GroupMergedTypeEnvironment
+//----------------------------------------------------------------------------
+namespace GeNN::CodeGenerator
+{
+template<typename G>
+class GroupMergedTypeEnvironment : public Transpiler::TypeChecker::EnvironmentBase
+{
+    using Token = Transpiler::Token;
+    using ErrorHandlerBase = Transpiler::ErrorHandlerBase;
+    using EnvironmentBase = Transpiler::TypeChecker::EnvironmentBase;
+
+public:
+    GroupMergedTypeEnvironment(G &groupMerged, const Type::NumericBase *scalarType,
+                               EnvironmentBase *enclosing = nullptr)
+    :   m_GroupMerged(groupMerged), m_ScalarType(scalarType), m_Enclosing(enclosing)
+    {
+    }
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual void define(const Transpiler::Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
+    {
+        errorHandler.error(name, "Cannot declare variable in external environment");
+        throw TypeChecker::TypeCheckError();
+    }
+
+    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+                                              ErrorHandlerBase &errorHandler, bool initializer) final
+    {
+        // If type isn't found
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->assign(name, op, assignedType, errorHandler, initializer);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeChecker::TypeCheckError();
+            }
+        }
+
+        // Add field to merged group if required
+        addField(existingType->second);
+    
+        // Perform standard type-checking logic
+        return EnvironmentBase::assign(name, op, existingType->second.first, assignedType, errorHandler, initializer);
+    }
+
+    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
+    {
+        auto existingType = m_Types.find(name.lexeme);
+        if(existingType == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->incDec(name, op, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeChecker::TypeCheckError();
+            }
+        }
+    
+        // Add field to merged group if required
+        addField(existingType->second);
+
+        // Perform standard type-checking logic
+        return EnvironmentBase::incDec(name, op, existingType->second.first, errorHandler);
+    }
+
+    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final
+    {
+        auto type = m_Types.find(std::string{name.lexeme});
+        if(type == m_Types.end()) {
+            if(m_Enclosing) {
+                return m_Enclosing->getType(name, errorHandler);
+            }
+            else {
+                errorHandler.error(name, "Undefined variable");
+                throw TypeChecker::TypeCheckError();
+            }
+        }
+        else {
+            // Add field to merged group if required
+            addField(type->second);
+
+            return type->second.first;
+        }
+    }
+
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    void defineField(const Type::Base *type, std::string_view name, bool isConstValue = false, bool isConstPointer = false)
+    {
+        if(!m_Types.try_emplace(name, std::piecewise_construct,
+                                std::forward_as_tuple(type, isConstValue, isConstPointer),
+                                std::forward_as_tuple(std::nullopt)).second) 
+        {
+            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+        }
+    }
+
+    template<typename T>
+    void defineField(std::string_view name, bool isConstValue = false, bool isConstPointer = false)
+    {
+        defineField(T::getInstance(), name, isConstPointer, isConstPointer);
+    }
+
+    void defineField(const Type::Base *type, std::string_view name, bool isConstValue, bool isConstPointer,
+                     const Type::Base *fieldType, std::string_view fieldName, typename G::GetFieldValueFunc getFieldValue, 
+                     GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
+    {
+        if(!m_Types.try_emplace(name, std::piecewise_construct,
+                                std::forward_as_tuple(type, isConstValue, isConstPointer),
+                                std::forward_as_tuple(std::in_place, fieldType, fieldName, getFieldValue, mergedFieldType)).second) 
+        {
+            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+        }
+    }
+
+    void defineField(const Type::Base *type, std::string_view name, bool isConstValue, bool isConstPointer,
+                     typename G::GetFieldValueFunc getFieldValue, GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
+    {
+        defineField(type, name, isConstValue, isConstPointer,
+                    type, name, getFieldValue, mergedFieldType);
+    }
+
+    void definePointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix, VarAccessMode access)
+    {
+        defineField(type, name, (access & VarAccessModeAttribute::READ_ONLY), false,
+                    type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
+    }
+
+    template<typename T, typename P, typename H>
+    void defineHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
+                                   P getParamValues, H isHeterogeneous)
+    {
+        // Loop through params
+        for(const auto &p : paramNames) {
+            if (std::invoke(isHeterogeneous, m_GroupMerged, p)) {
+                defineField(m_ScalarType, p + suffix, true, false,
+                            [p, getParamValues](const auto &g, size_t)
+                            {
+                                const auto &values = getParamValues(g);
+                                return Utils::writePreciseString(values.at(p));
+                            });
+            }
+            else {
+                defineField(m_ScalarType, p + suffix, true, false);
+            }
+        }
+    }
+
+    template<typename T, typename D, typename H>
+    void defineHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
+                                          D getDerivedParamValues, H isHeterogeneous)
+    {
+        // Loop through derived params
+        for(const auto &d : derivedParams) {
+            if (std::invoke(isHeterogeneous, m_GroupMerged, d.name)) {
+                defineField(m_ScalarType, d.name + suffix, true, false,
+                            [d, getDerivedParamValues](const auto &g, size_t)
+                            {
+                                const auto &values = getDerivedParamValues(g);
+                                return Utils::writePreciseString(values.at(d.name));
+                            });
+            }
+            else {
+                defineField(m_ScalarType, d.name + suffix, true, false);
+            }
+        }
+    }
+
+    void defineVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
+    {
+        // Loop through variables
+        for(const auto &v : vars) {
+            definePointerField(Type::parseNumeric(v.type), v.name, arrayPrefix, getVarAccessMode(v.access));
+        }
+    }
+
+    template<typename V>
+    void defineVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
+    {
+        // Loop through variables
+        for(const auto &v : varReferences) {
+            const auto *type = Type::parseNumeric(v.type);
+            defineField(type, v.name, (v.access & VarAccessModeAttribute::READ_ONLY), false,
+                        type->getPointerType(), v.name,
+                        [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
+                        { 
+                            const auto varRef = getVarRefFn(g).at(v.name);
+                            return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                        });
+        }
+    }
+
+    void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
+    {
+        for(const auto &e : egps) {
+            const auto *type = Type::parseNumericPtr(e.type);
+            defineField(type, e.name, false, false,
+                        type, e.name + varName,
+                        [arrayPrefix, e, varName](const auto &g, size_t) 
+                        {
+                            return arrayPrefix + e.name + varName + g.getName(); 
+                        },
+                        GroupMergedFieldType::DYNAMIC);
+        }
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Private methods
+    //---------------------------------------------------------------------------
+    void addField(std::pair<Type::QualifiedType, std::optional<typename G::Field>> &type)
+    {
+        // If this type has an associated field
+        if (type.second) {
+            // Call function to add field to underlying merge group
+            std::apply(&G::addField, std::tuple_cat(std::make_tuple(m_GroupMerged),
+                                                    *type.second));
+
+            // Reset optional field so it doesn't get added again
+            type.second.reset();
+        }
+    }
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    G &m_GroupMerged;
+    const Type::NumericBase *m_ScalarType;
+    EnvironmentBase *m_Enclosing;
+
+    std::unordered_map<std::string_view, std::pair<Type::QualifiedType, std::optional<typename G::Field>>> m_Types;
+};
+}	// namespace GeNN::CodeGenerator

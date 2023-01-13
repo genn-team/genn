@@ -1,6 +1,7 @@
 #include "code_generator/customUpdateGroupMerged.h"
 
 // GeNN code generator includes
+#include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN transpiler includes
@@ -19,186 +20,6 @@ using namespace GeNN::Transpiler;
 //--------------------------------------------------------------------------
 namespace
 {
-template<typename G>
-class GroupMergedTypeEnvironment : public TypeChecker::EnvironmentBase
-{
-public:
-    GroupMergedTypeEnvironment(G &groupMerged, const Type::NumericBase *scalarType,
-                               TypeChecker::EnvironmentBase *enclosing = nullptr)
-    :   m_GroupMerged(groupMerged), m_ScalarType(scalarType), m_Enclosing(enclosing)
-    {
-    }
-
-    //---------------------------------------------------------------------------
-    // EnvironmentBase virtuals
-    //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
-    {
-        errorHandler.error(name, "Cannot declare variable in external environment");
-        throw TypeChecker::TypeCheckError();
-    }
-
-    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                              ErrorHandlerBase &errorHandler, bool initializer) final
-    {
-        // If type isn't found
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->assign(name, op, assignedType, errorHandler, initializer);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
-            }
-        }
-    
-        // Perform standard type-checking logic
-        return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);
-    }
-
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
-    {
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->incDec(name, op, errorHandler);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
-            }
-        }
-    
-        // Perform standard type-checking logic
-        return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);
-    
-    }
-
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final
-    {
-        auto type = m_Types.find(std::string{name.lexeme});
-        if(type == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->getType(name, errorHandler);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeChecker::TypeCheckError();
-            }
-        }
-        else {
-            return type->second;
-        }
-    }
-
-    //---------------------------------------------------------------------------
-    // Public API
-    //---------------------------------------------------------------------------
-    void define(std::string_view name, const Type::Base *type, bool isConstValue = false, bool isConstPointer = false)
-    {
-        if(!m_Types.try_emplace(name, type, isConstValue, isConstPointer).second) {
-            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
-        }
-    }
-    template<typename T>
-    void define(std::string_view name, bool isConstValue = false, bool isConstPointer = false)
-    {
-        define(name, T::getInstance(), isConstValue, isConstPointer);
-    }
-
-    template<typename T, typename P, typename H>
-    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
-                                P getParamValues, H isHeterogeneous)
-    {
-        // Loop through params
-        for(const auto &p : paramNames) {
-            // Define constant
-            define(p + suffix, m_ScalarType, true);
-
-            // If parameters is heterogeneous
-            if((static_cast<const T&>(m_GroupMerged).*isHeterogeneous)(p)) {
-                // Add field
-                m_GroupMerged.addScalarField(p + suffix,
-                                              [p, getParamValues](const typename G::GroupInternal &g, size_t)
-                                              {
-                                                  const auto &values = getParamValues(g);
-                                                  return Utils::writePreciseString(values.at(p));
-                                              });
-            }
-        }
-    }
-
-    template<typename T, typename D, typename H>
-    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
-                                       D getDerivedParamValues, H isHeterogeneous)
-    {
-        // Loop through derived params
-        for(const auto &d : derivedParams) {
-            // If parameters isn't homogeneous
-            if((static_cast<const T&>(m_GroupMerged).*isHeterogeneous)(d.name)) {
-                // Define constant
-                define(d.name + suffix, m_ScalarType, true);
-
-                // Add field
-                m_GroupMerged.addScalarField(d.name + suffix,
-                                             [d, getDerivedParamValues](const typename G::GroupInternal &g, size_t)
-                                             {
-                                                 const auto &values = getDerivedParamValues(g);
-                                                 return Utils::writePreciseString(values.at(d.name));
-                                             });
-            }
-        }
-    }
-
-    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
-    {
-        // Loop through variables
-        for(const auto &v : vars) {
-            const auto *type = Type::parseNumeric(v.type);
-            define(v.name, type, (v.access & VarAccessModeAttribute::READ_ONLY));
-            m_GroupMerged.addPointerField(type, v.name, arrayPrefix + v.name);
-        }
-    }
-
-    template<typename V>
-    void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
-    {
-        // Loop through variables
-        for(const auto &v : varReferences) {
-            const auto *type = Type::parseNumeric(v.type);
-            define(v.name, type, (v.access & VarAccessModeAttribute::READ_ONLY));
-            m_GroupMerged.addField(type->getPointerType(), v.name, 
-                                   [getVarRefFn, arrayPrefix, v](const typename G::GroupInternal &g, size_t) 
-                                   { 
-                                       const auto varRef = getVarRefFn(g).at(v.name);
-                                       return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
-                                   });
-        }
-    }
-
-    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
-    {
-        for(const auto &e : egps) {
-            const auto *type = Type::parseNumericPtr(e.type);
-            define(e.name, type);
-            m_GroupMerged.addField(type, e.name + varName,
-                                   [e, arrayPrefix, varName](const typename G::GroupInternal &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
-                                   GroupMergedFieldType::DYNAMIC);
-        }
-    }
-
-private:
-    //---------------------------------------------------------------------------
-    // Members
-    //---------------------------------------------------------------------------
-    G &m_GroupMerged;
-    const Type::NumericBase *m_ScalarType;
-    TypeChecker::EnvironmentBase *m_Enclosing;
-
-    std::unordered_map<std::string_view, Type::QualifiedType> m_Types;
-};
-
 template<typename C, typename R>
 void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
                      const ModelSpecMerged &modelMerged, const std::string &index,
@@ -312,26 +133,33 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.addHeterogeneousParams<CustomUpdateGroupMerged>(
+    typeEnvironment.defineHeterogeneousParams<CustomUpdateGroupMerged>(
         cm->getParamNames(), "",
         [](const CustomUpdateInternal &cg) { return cg.getParams(); },
         &CustomUpdateGroupMerged::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
-    typeEnvironment.addHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
+    typeEnvironment.defineHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
         cm->getDerivedParams(), "",
         [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); },
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    typeEnvironment.addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    typeEnvironment.defineVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
-    typeEnvironment.addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
+    typeEnvironment.defineVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
                     [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
 
-    // Add EGPs to struct
-     typeEnvironment.addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+     // Add EGPs to struct
+     typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+
+     // Scan, parse and type-check update code
+     Transpiler::ErrorHandler errorHandler;
+     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), errorHandler);
+     const auto statements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
+     Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
+
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -524,24 +352,24 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.addHeterogeneousParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.defineHeterogeneousParams<CustomUpdateWUGroupMerged>(
         cm->getParamNames(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getParams(); },
         &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
-    typeEnvironment.addHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.defineHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
         cm->getDerivedParams(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); },
         &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    typeEnvironment.addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    typeEnvironment.defineVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
-    typeEnvironment.addVarReferences(varRefs, backend.getDeviceVarPrefix(),
-                                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
+    typeEnvironment.defineVarReferences(varRefs, backend.getDeviceVarPrefix(),
+                                        [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
      // Loop through variables
     for(const auto &v : varRefs) {
@@ -557,7 +385,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
             }
     }
     // Add EGPs to struct
-    typeEnvironment.addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
 
 // ----------------------------------------------------------------------------

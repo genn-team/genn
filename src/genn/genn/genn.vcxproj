@@ -67,6 +67,7 @@
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\include\genn\genn\code_generator\groupMergedTypeEnvironment.h" />
     <None Include="src\header.src" />
   </ItemGroup>
   <ItemGroup>
