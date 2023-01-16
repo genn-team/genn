@@ -299,15 +299,6 @@ DECLARE_NUMERIC_TYPE(Double, double, 60);
 DECLARE_FOREIGN_FUNCTION_TYPE(Exp, Double, Double);
 DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 
-//! Create a pointer type to the given value type
-const Pointer *createPointer(const Base *valueType);
-
-template<typename T>
-const Pointer *createPointer()
-{
-    return createPointer(T::getInstance());
-}
-
 //! Parse a numeric type
 const NumericBase *parseNumeric(std::string_view typeString, const NumericBase *scalarType);
 

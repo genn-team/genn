@@ -416,7 +416,7 @@ public:
                 }
                 // Otherwise, if operator is address of, return pointer type
                 else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_QualifiedType = Type::QualifiedType{Type::createPointer(rightType.type),
+                    m_QualifiedType = Type::QualifiedType{rightType.type->getPointerType(),
                                                           rightType.constValue, false};
                 }
             }

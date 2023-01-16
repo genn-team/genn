@@ -111,13 +111,13 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     
     assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind", 
+    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
              });
 
-    addField(createPointer<Uint32>(), "rowLength",
+    addField(Uint32::getInstance()->getPointerType(), "rowLength",
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
@@ -125,7 +125,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     // If some presynaptic variables are delayed, add delay pointer
     if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        addField(createPointer<Uint32>(), "preSpkQuePtr", 
+        addField(Uint32::getInstance()->getPointerType(), "preSpkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
@@ -134,7 +134,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     // If some postsynaptic variables are delayed, add delay pointer
     if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        addField(createPointer<Uint32>(), "postSpkQuePtr", 
+        addField(Uint32::getInstance()->getPointerType(), "postSpkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
@@ -167,7 +167,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(createPointer(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type, getScalarType())), "_dependentVar" + std::to_string(i), 
+        addField(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type, getScalarType())->getPointerType(), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -563,13 +563,13 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     for(const auto &v : vars) {
         // If var is located on the host
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name,
+            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(createPointer(parseNumeric(v.type, getScalarType())), backend.getDeviceVarPrefix() + v.name,
+                addField(parseNumeric(v.type, getScalarType())->getPointerType(), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

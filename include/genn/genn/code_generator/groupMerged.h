@@ -269,13 +269,13 @@ public:
 
     void addPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
     {
-        addField(createPointer(type), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        addField(type->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
     template<typename T, typename std::enable_if_t<std::is_convertible_v<T*, Type::NumericBase*>>* = nullptr>
     void addPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(createPointer(T::getInstance()), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        addField(T::getInstance()->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
 
@@ -292,7 +292,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(createPointer(Type::parseNumeric(v.type, getScalarType())), v.name, 
+            addField(Type::parseNumeric(v.type, getScalarType())->getPointerType(), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);

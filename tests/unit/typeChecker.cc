@@ -73,7 +73,7 @@ public:
     template<typename T>
     void definePointer(std::string_view name, bool isConstValue = false, bool isConstPointer = false)
     {
-        define(Type::createPointer(T::getInstance()), name, isConstValue, isConstPointer);
+        define(T::getInstance()->getPointerType(), name, isConstValue, isConstPointer);
     }
     
 
@@ -134,7 +134,7 @@ private:
 template<typename T>
 std::string getPointerTypeName()
 {
-    return createPointer(T::getInstance())->getName();
+    return T::getInstance()->getPointerType()->getName();
 }
 
 void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())

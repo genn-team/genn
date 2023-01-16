@@ -124,7 +124,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(createPointer<Uint32>(), "spkQuePtr", 
+        addField(Uint32::getInstance()->getPointerType(), "spkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
@@ -339,13 +339,13 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind", 
+            addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                      });
 
-            addField(createPointer<Uint32>(), "rowLength",
+            addField(Uint32::getInstance()->getPointerType(), "rowLength",
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
@@ -379,7 +379,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name + "Transpose",
+            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name + "Transpose",
                      [&backend, v](const auto &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
@@ -438,7 +438,7 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
     // If some variables are delayed, add delay pointer
     // **NOTE** this is HOST delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(createPointer<Uint32>(), "spkQuePtr", 
+        addField(Uint32::getInstance()->getPointerType(), "spkQuePtr", 
                  [](const auto &cg, size_t) 
                  { 
                      return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 

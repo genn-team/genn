@@ -221,7 +221,7 @@ GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
     // **THINK** this relies of const being only qualifier
     // **TODO** warn of duplicate type qualifiers
     if (pointerFound) {
-        return GeNN::Type::QualifiedType{GeNN::Type::createPointer(numericType), 
+        return GeNN::Type::QualifiedType{numericType->getPointerType(), 
                                          !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
     }
     // Otherwise, return numeric type directly
@@ -906,7 +906,7 @@ const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPo
 
     // If pointer, return pointer to numeric type
     if (pointerFound) {
-        return GeNN::Type::createPointer(numericType);
+        return numericType->getPointerType();
     }
     // Otherwise, return numeric type directly
     else {

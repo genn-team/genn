@@ -90,13 +90,6 @@ const Base *Base::getPointerType() const
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-const Pointer *createPointer(const Base *valueType)
-{
-    // **TODO** befriend constructor
-    // **TODO** don't just leak these!
-    return new Pointer(valueType);
-}
-//----------------------------------------------------------------------------
 const NumericBase *parseNumeric(std::string_view typeString, const NumericBase *scalarType)
 {
     using namespace Transpiler;

@@ -142,7 +142,7 @@ public:
     void definePointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix, VarAccessMode access)
     {
         defineField(type, name, (access & VarAccessModeAttribute::READ_ONLY), false,
-                    Type::createPointer(type), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
+                    type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
     }
 
     template<typename T, typename P, typename H>
@@ -200,7 +200,7 @@ public:
         for(const auto &v : varReferences) {
             const auto *type = Type::parseNumeric(v.type, m_ScalarType);
             defineField(type, v.name, (v.access & VarAccessModeAttribute::READ_ONLY), false,
-                        Type::createPointer(type), v.name,
+                        type->getPointerType(), v.name,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
                         { 
                             const auto varRef = getVarRefFn(g).at(v.name);

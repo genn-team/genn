@@ -443,7 +443,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(createPointer(parseNumeric(var.type, getScalarType())), var.name + fieldPrefixStem + std::to_string(i),
+                addField(parseNumeric(var.type, getScalarType())->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto&, size_t groupIndex)
                          {
                              const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -1016,13 +1016,13 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
     addField<Uint32>("numTrgNeurons",
                      [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField(createPointer<Uint32>(), "rowLength", 
+    addField(Uint32::getInstance()->getPointerType(), "rowLength", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind", 
+    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
@@ -1178,13 +1178,13 @@ CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseIni
     addField<Uint32>("numTrgNeurons",
                      [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField(createPointer<Uint32>(), "rowLength",
+    addField(Uint32::getInstance()->getPointerType(), "rowLength",
              [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind",
+    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind",
              [&backend](const auto &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();

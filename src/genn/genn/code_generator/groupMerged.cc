@@ -357,7 +357,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         for(const auto &var : cs->getCurrentSourceModel()->getVars()) {
             // Add pointers to state variable
             if(!init || !varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(Type::createPointer(parseNumeric(var.type, getScalarType())), var.name + "CS" + std::to_string(i),
+                addField(parseNumeric(var.type, getScalarType())->getPointerType(), var.name + "CS" + std::to_string(i),
                          [&backend, i, var, this](const auto&, size_t groupIndex)
                          {
                              return backend.getDeviceVarPrefix() + var.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
@@ -488,7 +488,7 @@ bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const
 void NeuronGroupMergedBase::addMergedInSynPointerField(const Type::NumericBase *type, const std::string &name, 
                                                        size_t archetypeIndex, const std::string &prefix)
 {
-    addField(Type::createPointer(type), name + std::to_string(archetypeIndex),
+    addField(type->getPointerType(), name + std::to_string(archetypeIndex),
              [prefix, archetypeIndex, this](const auto&, size_t groupIndex)
              {
                  return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getFusedPSVarSuffix();
@@ -498,7 +498,7 @@ void NeuronGroupMergedBase::addMergedInSynPointerField(const Type::NumericBase *
 void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField(const Type::NumericBase *type, const std::string &name, 
                                                                  size_t archetypeIndex, const std::string &prefix)
 {
-    addField(Type::createPointer(type), name + std::to_string(archetypeIndex),
+    addField(type->getPointerType(), name + std::to_string(archetypeIndex),
              [prefix, archetypeIndex, this](const auto&, size_t groupIndex)
              {
                  return prefix + m_SortedMergedPreOutputOutSyns.at(groupIndex).at(archetypeIndex)->getFusedPreOutputSuffix();
@@ -840,14 +840,14 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         // Add presynaptic variables to struct
         for(const auto &v : wum->getPreVars()) {
             const std::string prefix = backend.getDeviceVarPrefix() + v.name;
-            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name, 
+            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name, 
                      [prefix](const auto &g, size_t) { return prefix + g.getFusedWUPreVarSuffix(); });
         }
         
         // Add presynaptic variables to struct
         for(const auto &v : wum->getPostVars()) {
             const std::string prefix = backend.getDeviceVarPrefix() + v.name;
-            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name, 
+            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name, 
                      [prefix](const auto &g, size_t) { return prefix + g.getFusedWUPostVarSuffix(); });
         }
 
@@ -1107,22 +1107,22 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addPSPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
 {
-    addField(createPointer(type), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPSVarSuffix(); });
+    addField(type->getPointerType(), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPSVarSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addPreOutputPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
 {
-    addField(createPointer(type), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPreOutputSuffix(); });
+    addField(type->getPointerType(), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPreOutputSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addSrcPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
 {
-    addField(createPointer(type), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getSrcNeuronGroup()->getName(); });
+    addField(type->getPointerType(), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getSrcNeuronGroup()->getName(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addTrgPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
 {
-    addField(createPointer(type), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
+    addField(type->getPointerType(), name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
 }
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
