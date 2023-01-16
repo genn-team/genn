@@ -38,8 +38,8 @@ class ParseError
 class ParserState
 {
 public:
-    ParserState(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
-        : m_Current(0), m_Tokens(tokens), m_ErrorHandler(errorHandler)
+    ParserState(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
+        : m_Current(0), m_Tokens(tokens), m_ScalarType(scalarType), m_ErrorHandler(errorHandler)
     {}
 
     //---------------------------------------------------------------------------
@@ -127,6 +127,8 @@ public:
     }
 
     bool isAtEnd() const { return (peek().type == Token::Type::END_OF_FILE); }
+    
+    const GeNN::Type::NumericBase *getScalarType() const{ return m_ScalarType; }
 
 private:
     //---------------------------------------------------------------------------
@@ -135,7 +137,7 @@ private:
     size_t m_Current;
 
     const std::vector<Token> &m_Tokens;
-
+    const GeNN::Type::NumericBase *m_ScalarType;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -213,7 +215,7 @@ GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
     
     // Lookup numeric type
-    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers);
+    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers, parserState.getScalarType());
 
     // If pointer, return pointer to numeric type
     // **THINK** this relies of const being only qualifier
@@ -786,6 +788,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     //      "long"
     //      "float"
     //      "double"
+    //      "scalar"
     //      "signed"
     //      "unsigned"
     //      "bool"
@@ -848,9 +851,10 @@ std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType,
+                                          ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, scalarType, errorHandler);
 
     try {
         return parseExpression(parserState);
@@ -860,9 +864,10 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
     }
 }
 //---------------------------------------------------------------------------
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType,
+                                            ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, scalarType, errorHandler);
     std::vector<std::unique_ptr<const Statement::Base>> statements;
 
     while(!parserState.isAtEnd()) {
@@ -871,9 +876,10 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
     return statements;
 }
 //---------------------------------------------------------------------------
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler)
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, 
+                                  const GeNN::Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, scalarType, errorHandler);
     bool pointerFound = false;
     std::set<std::string_view> typeSpecifiers;
     while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR})) {
@@ -896,7 +902,7 @@ const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPo
     };
     
     // Lookup numeric type
-    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers);
+    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers, scalarType);
 
     // If pointer, return pointer to numeric type
     if (pointerFound) {

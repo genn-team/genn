@@ -294,13 +294,13 @@ const Pointer *createPointer()
 }
 
 //! Parse a numeric type
-const NumericBase *parseNumeric(std::string_view typeString);
+const NumericBase *parseNumeric(std::string_view typeString, const NumericBase *scalarType);
 
 //! Parse a numeric pointer type
-const Pointer *parseNumericPtr(std::string_view typeString);
+const Pointer *parseNumericPtr(std::string_view typeString, const NumericBase *scalarType);
 
 //! Look up numeric type based on set of type specifiers
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
+const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const NumericBase *scalarType);
 
 //! Apply C type promotion rules to numeric type
 const NumericBase *getPromotedType(const NumericBase *type);

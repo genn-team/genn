@@ -22,13 +22,16 @@ class ErrorHandlerBase;
 namespace GeNN::Transpiler::Parser
 {
 //! Parse expression from tokens
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType, 
+                                          ErrorHandlerBase &errorHandler);
 
 //! Parse block item list from tokens
 /*! Block item lists are function body scope list of statements */
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType, 
+                                            ErrorHandlerBase &errorHandler);
 
 //! Parse type from tokens
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler);
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, 
+                                  const GeNN::Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler);
 
 }   // MiniParse::MiniParse

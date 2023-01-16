@@ -254,7 +254,7 @@ protected:
             // If we're not initialising or if there is initialization code for this variable
             const auto &varInit = archetypeAdaptor.getVarInitialisers().at(var.name);
             if (!varInit.getSnippet()->getCode().empty()) {
-                this->addPointerField(Type::parseNumeric(var.type), var.name, backend.getDeviceVarPrefix() + var.name);
+                this->addPointerField(Type::parseNumeric(var.type, this->getScalarType()), var.name, backend.getDeviceVarPrefix() + var.name);
             }
 
             // Add any var init EGPs to structure

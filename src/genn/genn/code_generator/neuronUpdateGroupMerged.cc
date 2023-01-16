@@ -66,7 +66,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                 // If EGP is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + egp.name + ")") != std::string::npos) {
                     const std::string prefix = backend.getDeviceVarPrefix();
-                    addField(parseNumericPtr(egp.type), egp.name + "EventThresh" + std::to_string(i),
+                    addField(parseNumericPtr(egp.type, getScalarType()), egp.name + "EventThresh" + std::to_string(i),
                              [eventThresholdSGs, prefix, egp, i](const auto &, size_t groupIndex)
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -80,7 +80,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
             for(const auto &var : sgPreVars) {
                 // If variable is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + var.name + ")") != std::string::npos) {
-                    addField(createPointer(parseNumeric(var.type)), var.name + "EventThresh" + std::to_string(i),
+                    addField(createPointer(parseNumeric(var.type, getScalarType())), var.name + "EventThresh" + std::to_string(i),
                              [&backend, eventThresholdSGs, var, i](const auto&, size_t groupIndex)
                              {
                                  return backend.getDeviceVarPrefix() + var.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -716,7 +716,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars[v];
-            addField(Type::createPointer(Type::parseNumeric(var.type)), var.name + fieldPrefixStem + std::to_string(i),
+            addField(Type::createPointer(Type::parseNumeric(var.type, getScalarType())), var.name + fieldPrefixStem + std::to_string(i),
                      [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto &, size_t groupIndex)
                      {
                          const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();

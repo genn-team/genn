@@ -137,15 +137,15 @@ std::string getPointerTypeName()
     return createPointer(T::getInstance())->getTypeName();
 }
 
-void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment)
+void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
 {
     // Scan
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(code, Type::Float::getInstance(), errorHandler);
+    const auto tokens = Scanner::scanSource(code, scalarType, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
  
     // Parse
-    const auto statements = Parser::parseBlockItemList(tokens, errorHandler);
+    const auto statements = Parser::parseBlockItemList(tokens, scalarType, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
      
     // Typecheck
@@ -161,7 +161,7 @@ Type::QualifiedType typeCheckExpression(std::string_view code, TestEnvironment &
     EXPECT_FALSE(errorHandler.hasError());
  
     // Parse
-    const auto expression = Parser::parseExpression(tokens, errorHandler);
+    const auto expression = Parser::parseExpression(tokens, scalarType, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
      
     // Typecheck

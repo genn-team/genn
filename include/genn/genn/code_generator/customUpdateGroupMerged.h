@@ -170,14 +170,14 @@ protected:
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(Type::parseNumeric(v.type, this->getScalarType()), v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(Type::parseNumeric(v.type, this->getScalarType()), v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
     }

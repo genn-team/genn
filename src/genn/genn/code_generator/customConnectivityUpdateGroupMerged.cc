@@ -111,7 +111,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     
     assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind", 
+    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType(), getScalarType())), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
@@ -167,7 +167,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(createPointer(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type)), "_dependentVar" + std::to_string(i), 
+        addField(createPointer(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type, getScalarType())), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -441,7 +441,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {
-        const auto *pointerType = parseNumericPtr(e.type);
+        const auto *pointerType = parseNumericPtr(e.type, getScalarType());
         addField(pointerType, e.name,
                  [e](const auto &g, size_t) { return e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
@@ -563,13 +563,13 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     for(const auto &v : vars) {
         // If var is located on the host
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(createPointer(parseNumeric(v.type)), v.name,
+            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(createPointer(parseNumeric(v.type)), backend.getDeviceVarPrefix() + v.name,
+                addField(createPointer(parseNumeric(v.type, getScalarType())), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

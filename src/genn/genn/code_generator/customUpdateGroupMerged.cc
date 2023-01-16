@@ -118,9 +118,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     using namespace Type;
 
     // Create type environment
-    // **TEMP** parse precision to get scalar type
-    const auto *scalarType = Type::parseNumeric(precision);
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, scalarType);
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, getScalarType());
 
     addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
     
@@ -158,8 +156,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
      // Scan, parse and type-check update code
      Transpiler::ErrorHandler errorHandler;
-     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), scalarType, errorHandler);
-     const auto statements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
+     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), getScalarType(), errorHandler);
+     const auto statements = Transpiler::Parser::parseBlockItemList(tokens, getScalarType(), errorHandler);
      Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
 
 }
@@ -299,7 +297,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Create type environment
     // **TEMP** parse precision to get scalar type
-    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, Type::parseNumeric(precision));
+    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, getScalarType());
 
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
@@ -340,7 +338,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind", 
+            addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType(), getScalarType())), "ind", 
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
@@ -380,7 +378,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(createPointer(parseNumeric(v.type)), v.name + "Transpose",
+            addField(createPointer(parseNumeric(v.type, getScalarType())), v.name + "Transpose",
                      [&backend, v](const auto &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);

@@ -17,7 +17,7 @@ using namespace GeNN;
 // Anonymous namespace
 namespace
 {
-const std::map<std::set<std::string_view>, const Type::NumericBase*> numericTypes{
+const std::map<std::set<std::string_view>, const Type::NumericBase*> numericTypeSpecifiers{
     {{"char"}, Type::Int8::getInstance()},
     
     {{"unsigned", "char"}, Type::Uint8::getInstance()},
@@ -41,7 +41,9 @@ const std::map<std::set<std::string_view>, const Type::NumericBase*> numericType
     {{"double"}, Type::Double::getInstance()},
 };
 //----------------------------------------------------------------------------
-// Mapping of signed integer numericTypes to their unsigned equivalents
+const std::set<std::string_view> scalarTypeSpecifier{{"scalar"}};
+//----------------------------------------------------------------------------
+// Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
 const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> unsignedType{
     {Type::Int8::getInstance(), Type::Uint8::getInstance()},
     {Type::Int16::getInstance(), Type::Uint16::getInstance()},
@@ -79,16 +81,17 @@ const Pointer *createPointer(const Base *valueType)
     return new Pointer(valueType);
 }
 //----------------------------------------------------------------------------
-const NumericBase *parseNumeric(std::string_view typeString)
+const NumericBase *parseNumeric(std::string_view typeString, const NumericBase *scalarType)
 {
     using namespace Transpiler;
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, nullptr, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, scalarType, errorHandler);
 
     // Parse type and cast to numeric
-    const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, errorHandler));
+    const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, scalarType, 
+                                                                          errorHandler));
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
@@ -102,16 +105,16 @@ const NumericBase *parseNumeric(std::string_view typeString)
     return type;
 }
 //----------------------------------------------------------------------------
-const Pointer *parseNumericPtr(std::string_view typeString)
+const Pointer *parseNumericPtr(std::string_view typeString, const NumericBase *scalarType)
 {
      using namespace Transpiler;
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, nullptr, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, scalarType, errorHandler);
 
     // Parse type and cast to numeric pointer
-    const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, errorHandler));
+    const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, scalarType, errorHandler));
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
@@ -125,10 +128,20 @@ const Pointer *parseNumericPtr(std::string_view typeString)
     return type;
 }
 //----------------------------------------------------------------------------
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
+const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const NumericBase *scalarType)
 {
-    const auto type = numericTypes.find(typeSpecifiers);
-    return (type == numericTypes.cend()) ? nullptr : type->second;
+    if(typeSpecifiers == scalarTypeSpecifier) {
+        if(scalarType) {
+            return scalarType;
+        }
+        else {
+            throw std::runtime_error("'scalar' type is not available in this context");
+        }
+    }
+    else {
+        const auto type = numericTypeSpecifiers.find(typeSpecifiers);
+        return (type == numericTypeSpecifiers.cend()) ? nullptr : type->second;
+    }
 }
 //----------------------------------------------------------------------------
 const NumericBase *getPromotedType(const NumericBase *type)
@@ -158,7 +171,7 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
     }
     // Otherwise, must be an integer type
     else {
-        // Promote both numericTypes
+        // Promote both numeric types
         const auto *aPromoted = getPromotedType(a);
         const auto *bPromoted = getPromotedType(b);
 
@@ -166,7 +179,7 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
         if(aPromoted->getTypeName() == bPromoted->getTypeName()) {
             return aPromoted;
         }
-        // Otherwise, if both promoted operands have signed integer numericTypes or both have unsigned integer numericTypes, 
+        // Otherwise, if both promoted operands have signed integer numeric types or both have unsigned integer numeric types, 
         // the operand with the type of lesser integer conversion rank is converted to the type of the operand with greater rank.
         else if(aPromoted->isSigned() == bPromoted->isSigned()) {
             return (aPromoted->getRank() > bPromoted->getRank()) ? aPromoted : bPromoted;

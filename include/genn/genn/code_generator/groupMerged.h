@@ -67,7 +67,7 @@ public:
 
     // **HACK** type should come in as type not string
     GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(Type::parseNumeric(precision)), m_Groups(std::move(groups))
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(Type::parseNumeric(precision, nullptr)), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------
@@ -202,6 +202,8 @@ public:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
+    const Type::NumericBase *getScalarType() const{ return m_ScalarType; }
+
     //! Helper to test whether parameter is referenced in vector of codestrings
     bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
     {
@@ -281,7 +283,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : vars) {
-            addPointerField(Type::parseNumeric(v.type), v.name, arrayPrefix + v.name);
+            addPointerField(Type::parseNumeric(v.type, getScalarType()), v.name, arrayPrefix + v.name);
         }
     }
 
@@ -290,7 +292,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(createPointer(Type::parseNumeric(v.type)), v.name, 
+            addField(createPointer(Type::parseNumeric(v.type, getScalarType())), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
@@ -303,7 +305,7 @@ public:
     {
         for(const auto &e : egps) {
             assert(Utils::isTypePointer(e.type));
-            addField(Type::parseNumericPtr(e.type), e.name + varName,
+            addField(Type::parseNumericPtr(e.type, getScalarType()), e.name + varName,
                      [e, arrayPrefix, varName](const G &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
                      GroupMergedFieldType::DYNAMIC);
         }
@@ -543,7 +545,7 @@ private:
     //------------------------------------------------------------------------
     const size_t m_Index;
     const std::string m_LiteralSuffix;
-    const Type::Base *m_ScalarType;
+    const Type::NumericBase *m_ScalarType;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
@@ -831,7 +833,7 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            addField(Type::parseNumericPtr(e.type), e.name + prefix + std::to_string(childIndex),
+            addField(Type::parseNumericPtr(e.type, getScalarType()), e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, arrayPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return arrayPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
