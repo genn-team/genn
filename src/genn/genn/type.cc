@@ -19,23 +19,29 @@ namespace
 {
 const std::map<std::set<std::string_view>, const Type::NumericBase*> numericTypeSpecifiers{
     {{"char"}, Type::Int8::getInstance()},
+    {{"int8_t"}, Type::Int8::getInstance()},
     
     {{"unsigned", "char"}, Type::Uint8::getInstance()},
+    {{"uint8_t"}, Type::Uint8::getInstance()},
 
     {{"short"}, Type::Int16::getInstance()},
     {{"short", "int"}, Type::Int16::getInstance()},
     {{"signed", "short"}, Type::Int16::getInstance()},
     {{"signed", "short", "int"}, Type::Int16::getInstance()},
+    {{"int16_t"}, Type::Int16::getInstance()},
     
     {{"unsigned", "short"}, Type::Uint16::getInstance()},
     {{"unsigned", "short", "int"}, Type::Uint16::getInstance()},
+    {{"uint16_t"}, Type::Uint8::getInstance()},
 
     {{"int"}, Type::Int32::getInstance()},
     {{"signed"}, Type::Int32::getInstance()},
     {{"signed", "int"}, Type::Int32::getInstance()},
+    {{"int32_t"}, Type::Int32::getInstance()},
 
     {{"unsigned"}, Type::Uint32::getInstance()},
     {{"unsigned", "int"}, Type::Uint32::getInstance()},
+    {{"uint32_t"}, Type::Uint32::getInstance()},
 
     {{"float"}, Type::Float::getInstance()},
     {{"double"}, Type::Double::getInstance()},

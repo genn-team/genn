@@ -51,6 +51,12 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"scalar", Token::Type::TYPE_SPECIFIER},
     {"signed", Token::Type::TYPE_SPECIFIER},
     {"unsigned", Token::Type::TYPE_SPECIFIER},
+    {"uint8_t", Token::Type::TYPE_SPECIFIER},
+    {"int8_t", Token::Type::TYPE_SPECIFIER},
+    {"uint16_t", Token::Type::TYPE_SPECIFIER},
+    {"int16_t", Token::Type::TYPE_SPECIFIER},
+    {"uint32_t", Token::Type::TYPE_SPECIFIER},
+    {"int32_t", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER}};
 //---------------------------------------------------------------------------
 const std::map<std::set<char>, std::function<Token::LiteralValue(std::string_view, int)>> integerLiteralSuffixParsers{
