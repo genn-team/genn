@@ -1327,7 +1327,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
 
             // Target indices
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size, mem);
+                             s.second.getSparseIndType()->getTypeName(), "ind" + s.second.getName(), varLoc, size, mem);
 
             // **TODO** remap is not always required
             if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -1352,7 +1352,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                                     // Target indices
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  s.second.getSparseIndType(), "ind" + s.second.getName(), 
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  s.second.getSparseIndType()->getTypeName(), "ind" + s.second.getName(), 
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, size);
                                 });
         }

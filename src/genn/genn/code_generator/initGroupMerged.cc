@@ -1022,7 +1022,7 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType(), getScalarType())), "ind", 
+    addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
@@ -1184,7 +1184,7 @@ CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseIni
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType(), getScalarType())), "ind",
+    addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind",
              [&backend](const auto &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();

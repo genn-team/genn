@@ -713,23 +713,23 @@ bool SynapseGroup::canPreOutputBeFused() const
     return true;
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroup::getSparseIndType() const
+const Type::NumericBase *SynapseGroup::getSparseIndType() const
 {
     // If narrow sparse inds are enabled
     if(m_NarrowSparseIndEnabled) {
         // If number of target neurons can be represented using a uint8, use this type
         const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
-        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
-            return "uint8_t";
+        if(numTrgNeurons <= Type::Uint8::getInstance()->getMax()) {
+            return Type::Uint8::getInstance();;
         }
         // Otherwise, if they can be represented as a uint16, use this type
-        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
-            return "uint16_t";
+        else if(numTrgNeurons <= Type::Uint16::getInstance()->getMax()) {
+            return Type::Uint16::getInstance();
         }
     }
 
     // Otherwise, use 32-bit int
-    return "uint32_t";
+    return Type::Uint32::getInstance();
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
@@ -739,7 +739,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getSparseIndType()->getTypeName(), hash);
     Utils::updateHash(getNumThreadsPerSpike(), hash);
     Utils::updateHash(isEventThresholdReTestRequired(), hash);
     Utils::updateHash(getSpanType(), hash);
@@ -904,7 +904,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMatrixType(), hash);
-    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getSparseIndType()->getTypeName(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
     Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
@@ -969,7 +969,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDig
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     Utils::updateHash(getMatrixType(), hash);
-    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getSparseIndType()->getTypeName(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

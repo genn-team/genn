@@ -858,7 +858,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         addPointerField<Uint32>("rowLength", backend.getDeviceVarPrefix() + "rowLength");
-        addPointerField(parseNumeric(getArchetype().getSparseIndType(), getScalarType()), "ind", backend.getDeviceVarPrefix() + "ind");
+        addPointerField(getArchetype().getSparseIndType(), "ind", backend.getDeviceVarPrefix() + "ind");
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()

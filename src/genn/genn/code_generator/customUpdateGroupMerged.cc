@@ -339,7 +339,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType(), getScalarType())), "ind", 
+            addField(createPointer(getArchetype().getSynapseGroup()->getSparseIndType()), "ind", 
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 

@@ -314,7 +314,7 @@ protected:
     bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
 
     //! Get the type to use for sparse connectivity indices for synapse group
-    std::string getSparseIndType() const;
+    const Type::NumericBase *getSparseIndType() const;
 
     //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */

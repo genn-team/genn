@@ -311,7 +311,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     Utils::updateHash(getUpdateGroupName(), hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    Utils::updateHash(getSynapseGroup()->getSparseIndType()->getTypeName(), hash);
 
     // Because it adds and removes synapses, connectivity update has to update 
     // ALL variables associated with synapse group being modified as well as 
