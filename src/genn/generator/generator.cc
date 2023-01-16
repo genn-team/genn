@@ -52,7 +52,8 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, &consoleAppender, &consoleAppender);
+        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, 
+                      &consoleAppender, &consoleAppender, &consoleAppender);
 
         // Finalize model
         model.finalize();
