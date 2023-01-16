@@ -128,7 +128,7 @@ public:
     {
         // Get pointer type
         auto arrayType = m_Environment->getType(arraySubscript.getPointerName(), m_ErrorHandler);
-        auto pointerType = dynamic_cast<const Type::NumericPtrBase *>(arrayType.type);
+        auto pointerType = dynamic_cast<const Type::Pointer*>(arrayType.type);
 
         // If pointer is indeed a pointer
         if (pointerType) {
@@ -169,11 +169,11 @@ public:
             const auto leftType = evaluateType(binary.getLeft());
             auto leftNumericType = dynamic_cast<const Type::NumericBase *>(leftType.type);
             auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType.type);
-            auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(leftType.type);
-            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
-            if (leftNumericPtrType && rightNumericPtrType && opType == Token::Type::MINUS) {
+            auto leftPointerType = dynamic_cast<const Type::Pointer *>(leftType.type);
+            auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType.type);
+            if (leftPointerType && rightPointerType && opType == Token::Type::MINUS) {
                 // Check pointers are compatible
-                if (leftNumericPtrType->getTypeHash() != rightNumericPtrType->getTypeHash()) {
+                if (leftPointerType->getTypeName() != rightPointerType->getTypeName()) {
                     m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.type->getTypeName() + "' and '" + rightType.type->getTypeName());
                     throw TypeCheckError();
                 }
@@ -182,7 +182,7 @@ public:
                 m_QualifiedType = Type::QualifiedType{Type::Int32::getInstance(), false, false};
             }
             // Otherwise, if we're adding to or subtracting from pointers
-            else if (leftNumericPtrType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS))       // P + n or P - n
+            else if (leftPointerType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS))       // P + n or P - n
             {
                 // Check that numeric operand is integer
                 if (!rightNumericType->isIntegral()) {
@@ -194,7 +194,7 @@ public:
                 m_QualifiedType = leftType;
             }
             // Otherwise, if we're adding a number to a pointer
-            else if (leftNumericType && rightNumericPtrType && opType == Token::Type::PLUS)  // n + P
+            else if (leftNumericType && rightPointerType && opType == Token::Type::PLUS)  // n + P
             {
                 // Check that numeric operand is integer
                 if (!leftNumericType->isIntegral()) {
@@ -294,11 +294,11 @@ public:
 
         // If we're trying to cast pointer to pointer
         auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType.type);
-        auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
+        auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType.type);
         auto leftNumericType = dynamic_cast<const Type::NumericBase *>(cast.getQualifiedType().type);
-        auto leftNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(cast.getQualifiedType().type);
-        if (rightNumericPtrType && leftNumericPtrType) {
-            if (rightNumericPtrType->getTypeHash() != leftNumericPtrType->getTypeHash()) {
+        auto leftPointerType = dynamic_cast<const Type::Pointer *>(cast.getQualifiedType().type);
+        if (rightPointerType && leftPointerType) {
+            if (rightPointerType->getTypeName() != leftPointerType->getTypeName()) {
                 m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getQualifiedType().type->getTypeName() + "' and '" + rightType.type->getTypeName());
                 throw TypeCheckError();
             }
@@ -377,15 +377,15 @@ public:
 
         // If operator is pointer de-reference
         if (unary.getOperator().type == Token::Type::STAR) {
-            auto rightNumericPtrType = dynamic_cast<const Type::NumericPtrBase *>(rightType.type);
-            if (!rightNumericPtrType) {
+            auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType.type);
+            if (!rightPointerType) {
                 m_ErrorHandler.error(unary.getOperator(),
                                      "Invalid operand type '" + rightType.type->getTypeName() + "'");
                 throw TypeCheckError();
             }
 
             // Return value type
-            m_QualifiedType = Type::QualifiedType{rightNumericPtrType->getValueType(), rightType.constValue, false};
+            m_QualifiedType = Type::QualifiedType{rightPointerType->getValueType(), rightType.constValue, false};
         }
         // Otherwise
         else {
@@ -416,7 +416,7 @@ public:
                 }
                 // Otherwise, if operator is address of, return pointer type
                 else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_QualifiedType = Type::QualifiedType{rightNumericType->getPointerType(),
+                    m_QualifiedType = Type::QualifiedType{createPointer(rightType),
                                                           rightType.constValue, false};
                 }
             }
@@ -595,9 +595,9 @@ const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Typ
 {
     // If existing type is a constant numeric value or if it's a constant pointer give errors
     auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
-    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType.type);
+    auto pointerExistingType = dynamic_cast<const Type::Pointer *>(existingType.type);
     if(!initializer && ((numericExistingType && existingType.constValue) 
-                        || (numericPtrExistingType && existingType.constPointer))) 
+                        || (pointerExistingType && existingType.constPointer))) 
     {
         errorHandler.error(name, "Assignment of read-only variable");
         throw TypeCheckError();
@@ -605,24 +605,24 @@ const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Typ
     
     // If assignment operation is plain equals, any type is fine so return
     auto numericAssignedType = dynamic_cast<const Type::NumericBase *>(assignedType.type);
-    auto numericPtrAssignedType = dynamic_cast<const Type::NumericPtrBase *>(assignedType.type);
+    auto pointerAssignedType = dynamic_cast<const Type::Pointer *>(assignedType.type);
     if(op == Token::Type::EQUAL) {
         // If we're initialising a pointer with another pointer
-        if (numericPtrAssignedType && numericPtrExistingType) {
+        if (pointerAssignedType && pointerExistingType) {
             // If we're trying to assign a pointer to a const value to a pointer
             if (assignedType.constValue && !existingType.constValue) {
-                errorHandler.error(name, "Invalid operand types '" + numericPtrExistingType->getTypeName() + "' and '" + numericPtrAssignedType->getTypeName());
+                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getTypeName() + "' and '" + pointerAssignedType->getTypeName());
                 throw TypeCheckError();
             }
 
             // If pointer types aren't compatible
-            if (numericPtrExistingType->getTypeHash() != numericPtrAssignedType->getTypeHash()) {
-                errorHandler.error(name, "Invalid operand types '" + numericPtrExistingType->getTypeName() + "' and '" + numericPtrAssignedType->getTypeName());
+            if (pointerExistingType->getTypeName() != pointerAssignedType->getTypeName()) {
+                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getTypeName() + "' and '" + pointerAssignedType->getTypeName());
                 throw TypeCheckError();
             }
         }
         // Otherwise, if we're trying to initialise a pointer with a non-pointer or vice-versa
-        else if (numericPtrAssignedType || numericPtrExistingType) {
+        else if (pointerAssignedType || pointerExistingType) {
             errorHandler.error(name, "Invalid operand types '" + existingType.type->getTypeName() + "' and '" + assignedType.type->getTypeName());
             throw TypeCheckError();
         }
@@ -630,14 +630,14 @@ const Type::QualifiedType &EnvironmentBase::assign(const Token &name, Token::Typ
     // Otherwise, if operation is += or --
     else if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
         // If the operand being added isn't numeric or the type being added to is neither numeric or a pointer
-        if (!numericAssignedType || (!numericPtrExistingType && !numericExistingType))
+        if (!numericAssignedType || (!pointerExistingType && !numericExistingType))
         {
             errorHandler.error(name, "Invalid operand types '" + existingType.type->getTypeName() + "' and '" + assignedType.type->getTypeName() + "'");
             throw TypeCheckError();
         }
 
         // If we're adding a numeric type to a pointer, check it's an integer
-        if (numericPtrExistingType && numericAssignedType->isIntegral()) {
+        if (pointerExistingType && numericAssignedType->isIntegral()) {
             errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getTypeName() + "'");
             throw TypeCheckError();
         }
@@ -677,9 +677,9 @@ const Type::QualifiedType &EnvironmentBase::incDec(const Token &name, Token::Typ
 {
     // If existing type is a constant numeric value or if it's a constant pointer give errors
     auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType.type);
-    auto numericPtrExistingType = dynamic_cast<const Type::NumericPtrBase *>(existingType.type);
+    auto pointerExistingType = dynamic_cast<const Type::Pointer *>(existingType.type);
     if((numericExistingType && existingType.constValue) 
-        || (numericPtrExistingType && existingType.constPointer)) 
+        || (pointerExistingType && existingType.constPointer)) 
     {
         errorHandler.error(name, "Increment/decrement of read-only variable");
         throw TypeCheckError();

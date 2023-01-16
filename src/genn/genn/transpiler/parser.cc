@@ -212,15 +212,20 @@ GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
         }
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
     
-    // Lookup type based on whether token was found
-    const GeNN::Type::Base *type = (pointerFound
-                                    ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
-                                    : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
-    
-    // Return qualified type
+    // Lookup numeric type
+    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers);
+
+    // If pointer, return pointer to numeric type
     // **THINK** this relies of const being only qualifier
     // **TODO** warn of duplicate type qualifiers
-    return GeNN::Type::QualifiedType{type, !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
+    if (pointerFound) {
+        return GeNN::Type::QualifiedType{GeNN::Type::createPointer(numericType), 
+                                         !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
+    }
+    // Otherwise, return numeric type directly
+    else {
+        return GeNN::Type::QualifiedType{numericType, !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
+    }
 }
 
 Expression::ExpressionPtr parsePrimary(ParserState &parserState)
@@ -890,9 +895,16 @@ const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPo
         }
     };
     
-    // Lookup type based on whether token was found
-    return (pointerFound 
-            ? static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericPtrType(typeSpecifiers))
-            : static_cast<const GeNN::Type::Base*>(GeNN::Type::getNumericType(typeSpecifiers)));
+    // Lookup numeric type
+    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers);
+
+    // If pointer, return pointer to numeric type
+    if (pointerFound) {
+        return GeNN::Type::createPointer(numericType);
+    }
+    // Otherwise, return numeric type directly
+    else {
+        return numericType;
+    }
 }
 }

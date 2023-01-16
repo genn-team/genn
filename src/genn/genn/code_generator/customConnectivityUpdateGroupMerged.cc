@@ -167,7 +167,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type)->getPointerType(), "_dependentVar" + std::to_string(i), 
+        addField(createPointer(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type)), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];

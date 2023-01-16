@@ -12,12 +12,15 @@
 #include <type_traits>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_TYPE(TYPE)                          \
     private:                                        \
-        /*GENN_EXPORT*/ static TYPE *s_Instance;    \
+        GENN_EXPORT static TYPE *s_Instance;    \
     public:                                         \
         static const TYPE *getInstance()            \
         {                                           \
@@ -34,20 +37,11 @@
         DECLARE_TYPE(TYPE)                                                  \
         virtual std::string getTypeName() const{ return #UNDERLYING_TYPE; } \
     };                                                                      \
-    class TYPE##Ptr : public NumericPtr<TYPE>                               \
-    {                                                                       \
-        DECLARE_TYPE(TYPE##Ptr)                                             \
-    };                                                                      \
     template<>                                                              \
     struct TypeTraits<UNDERLYING_TYPE>                                      \
     {                                                                       \
         using NumericType = TYPE;                                           \
-    };                                                                      \
-    template<>                                                              \
-    struct TypeTraits<UNDERLYING_TYPE*>                                     \
-    {                                                                       \
-        using NumericPtrType = TYPE##Ptr;                                   \
-    }
+    }                                                                      
 
 #define DECLARE_FOREIGN_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)       \
     class TYPE : public ForeignFunction<RETURN_TYPE, __VA_ARGS__>   \
@@ -56,7 +50,7 @@
     }
 
 #define IMPLEMENT_TYPE(TYPE) TYPE *TYPE::s_Instance = NULL
-#define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE); IMPLEMENT_TYPE(TYPE##Ptr)
+#define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE)
 
 //----------------------------------------------------------------------------
 // GeNN::Type::TypeTraits
@@ -70,6 +64,19 @@ struct TypeTraits
 };
 
 //----------------------------------------------------------------------------
+// GeNN::Type::Qualifier
+//----------------------------------------------------------------------------
+enum class Qualifier : unsigned int
+{
+    CONSTT   = (1 << 0)
+};
+
+inline bool operator & (Qualifier a, Qualifier b)
+{
+    return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
+}
+
+//----------------------------------------------------------------------------
 // GeNN::Type::Base
 //----------------------------------------------------------------------------
 //! Base class for all types
@@ -80,7 +87,35 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     virtual std::string getTypeName() const = 0;
-    virtual size_t getTypeHash() const = 0;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::Type::Pointer
+//----------------------------------------------------------------------------
+//! Type representing a pointer
+class Pointer : Base
+{
+public:
+    Pointer(const Base *valueType)
+    :   m_ValueType(valueType)
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Base virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getTypeName() const{ return getValueType()->getTypeName() + "*";}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const Base *getValueType() const{ return m_ValueType; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const Base *m_ValueType;
 };
 
 //----------------------------------------------------------------------------
@@ -114,20 +149,6 @@ public:
     virtual double getLowest() const = 0;
     virtual bool isSigned() const = 0;
     virtual bool isIntegral() const = 0;
-
-    virtual const class NumericPtrBase *getPointerType() const = 0;
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NumericPtrBase
-//----------------------------------------------------------------------------
-class NumericPtrBase : public Base
-{
-public:
-    //------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    virtual const NumericBase *getValueType() const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -156,30 +177,6 @@ public:
     virtual double getLowest() const final { return std::numeric_limits<T>::lowest(); }
     virtual bool isSigned() const final { return std::is_signed<T>::value; }
     virtual bool isIntegral() const final { return std::is_integral<T>::value; }
-    
-    virtual const NumericPtrBase *getPointerType() const
-    { 
-        return TypeTraits<std::add_pointer_t<UnderlyingType>>::NumericPtrType::getInstance(); 
-    }
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NumericPtr
-//----------------------------------------------------------------------------
-template<typename T>
-class NumericPtr : public NumericPtrBase
-{
-public:
-    //------------------------------------------------------------------------
-    // Base virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getTypeName() const final { return T::getInstance()->getTypeName() + "*"; }
-    virtual size_t getTypeHash() const final { return typeid(std::add_pointer_t<typename T::UnderlyingType>).hash_code(); }
-
-    //------------------------------------------------------------------------
-    // NumericArrayBase virtuals
-    //------------------------------------------------------------------------
-    virtual const NumericBase *getValueType() const final { return T::getInstance(); }
 };
 
 //----------------------------------------------------------------------------
@@ -192,7 +189,6 @@ public:
     // Base virtuals
     //------------------------------------------------------------------------
     virtual std::string getTypeName() const = 0;
-    virtual size_t getTypeHash() const = 0;
 
     //------------------------------------------------------------------------
     // Declared virtuals
@@ -219,14 +215,6 @@ public:
         return typeName;
     }
 
-    virtual size_t getTypeHash() const final
-    {
-        // Start with seed of return type hash
-        size_t seed = getReturnType()->getTypeHash();
-        updateTypeHash<ArgTypes...>(seed);
-        return seed;
-    }
-
     //------------------------------------------------------------------------
     // ForeignFunctionBase virtuals
     //------------------------------------------------------------------------
@@ -247,18 +235,6 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    template <typename T, typename... Args>
-    static void updateTypeHash(size_t &seed)
-    {
-        // Combine hashes with argument type
-        // **NOTE** this is the boost::hash_combine algorithm
-        seed ^= T::getInstance()->getTypeHash() + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-        // If there are more arguments left in pack, recurse
-        if constexpr (sizeof...(Args)) {
-            updateTypeHash<Args...>(seed);
-        }
-    }
 
     template <typename T, typename... Args>
     static void updateTypeName(std::string &typeName)
@@ -308,17 +284,13 @@ DECLARE_NUMERIC_TYPE(Double, double, 60);
 DECLARE_FOREIGN_FUNCTION_TYPE(Exp, Double, Double);
 DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 
+const Pointer *createPointer(const Base *valueType);
+
 //! Parse a numeric type
 const NumericBase *parseNumeric(std::string_view typeString);
 
-//! Parse a numeric pointer type
-const NumericPtrBase *parseNumericPtr(std::string_view typeString);
-
 //! Look up numeric type based on set of type specifiers
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
-
-//! Look up numeric pointer type based on set of type specifiers
-const NumericPtrBase *getNumericPtrType(const std::set<std::string_view> &typeSpecifiers);
 
 //! Apply C type promotion rules to numeric type
 const NumericBase *getPromotedType(const NumericBase *type);
