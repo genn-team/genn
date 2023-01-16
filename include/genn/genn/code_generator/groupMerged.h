@@ -116,7 +116,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 const auto *type = std::get<0>(f);
-                if(dynamic_cast<const Type::NumericPtrBase*>(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
+                if(dynamic_cast<const Type::Pointer*>(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostTypeName(type);
@@ -267,13 +267,13 @@ public:
 
     void addPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
     {
-        addField(type->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        addField(createPointer(type), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
     template<typename T, typename std::enable_if_t<std::is_convertible_v<T*, Type::NumericBase*>>* = nullptr>
     void addPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(T::getInstance()->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        addField(createPointer(T::getInstance()), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
 
@@ -290,7 +290,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(Type::parseNumeric(v.type)->getPointerType(), v.name, 
+            addField(createPointer(Type::parseNumeric(v.type)), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
@@ -478,7 +478,7 @@ public:
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
             // If this field is a dynamic pointer
-            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && dynamic_cast<const Type::NumericPtrBase*>(std::get<0>(f))) {
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && dynamic_cast<const Type::Pointer*>(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }

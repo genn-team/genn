@@ -443,7 +443,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(parseNumeric(var.type)->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+                addField(createPointer(parseNumeric(var.type)), var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto&, size_t groupIndex)
                          {
                              const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -1016,13 +1016,13 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
     addField<Uint32>("numTrgNeurons",
                      [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField<Uint32Ptr>("rowLength", 
-                         [&backend](const auto &cg, size_t) 
-                         { 
-                             const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                             return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
-                         });
-    addField(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())->getPointerType(), "ind", 
+    addField(createPointer<Uint32>(), "rowLength", 
+             [&backend](const auto &cg, size_t) 
+             { 
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
+             });
+    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
@@ -1178,13 +1178,13 @@ CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseIni
     addField<Uint32>("numTrgNeurons",
                      [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField<Uint32Ptr>("rowLength",
-                        [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
-                        {
-                            const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                            return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
-                        });
-    addField(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())->getPointerType(), "ind",
+    addField(createPointer<Uint32>(), "rowLength",
+             [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
+             {
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
+             });
+    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind",
              [&backend](const auto &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();

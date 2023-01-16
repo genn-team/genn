@@ -111,34 +111,34 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     
     assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())->getPointerType(), "ind", 
+    addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
              });
 
-    addField<Uint32Ptr>("rowLength",
-                        [&backend](const auto &cg, size_t) 
-                        { 
-                            return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                        });
-    
+    addField(createPointer<Uint32>(), "rowLength",
+             [&backend](const auto &cg, size_t) 
+             { 
+                 return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+             });
+
     // If some presynaptic variables are delayed, add delay pointer
     if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        addField<Uint32Ptr>("preSpkQuePtr", 
-                            [&backend](const auto &cg, size_t) 
-                            { 
-                                return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
-                            });
+        addField(createPointer<Uint32>(), "preSpkQuePtr", 
+                 [&backend](const auto &cg, size_t) 
+                 { 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
+                 });
     }
 
     // If some postsynaptic variables are delayed, add delay pointer
     if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        addField<Uint32Ptr>("postSpkQuePtr", 
-                            [&backend](const auto &cg, size_t) 
-                            { 
-                                return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
-                            });
+        addField(createPointer<Uint32>(), "postSpkQuePtr", 
+                 [&backend](const auto &cg, size_t) 
+                 { 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
+                 });
     }
     
     // If this backend requires per-population RNGs and this group requires one
@@ -563,13 +563,13 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     for(const auto &v : vars) {
         // If var is located on the host
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(parseNumeric(v.type)->getPointerType(), v.name,
+            addField(createPointer(parseNumeric(v.type)), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(parseNumeric(v.type)->getPointerType(), backend.getDeviceVarPrefix() + v.name,
+                addField(createPointer(parseNumeric(v.type)), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

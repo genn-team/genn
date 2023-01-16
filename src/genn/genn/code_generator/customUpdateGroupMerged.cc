@@ -125,24 +125,24 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField<Uint32Ptr>("spkQuePtr", 
-                            [&backend](const auto &cg, size_t) 
-                            { 
-                                return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
-                            });
+        addField(createPointer<Uint32>(), "spkQuePtr", 
+                 [&backend](const auto &cg, size_t) 
+                 { 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                 });
     }
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     typeEnvironment.defineHeterogeneousParams<CustomUpdateGroupMerged>(
         cm->getParamNames(), "",
-        [](const CustomUpdateInternal &cg) { return cg.getParams(); },
+        [](const auto &cg) { return cg.getParams(); },
         &CustomUpdateGroupMerged::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
     typeEnvironment.defineHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
         cm->getDerivedParams(), "",
-        [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); },
+        [](const auto &cg) { return cg.getDerivedParams(); },
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
 
     // Add variables to struct
@@ -150,7 +150,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
     // Add variable references to struct
     typeEnvironment.defineVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
-                    [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
+                    [](const auto &cg) { return cg.getVarReferences(); });
 
      // Add EGPs to struct
      typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
@@ -165,12 +165,12 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getParams(); });
 }
 //----------------------------------------------------------------------------    
 bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest() const
@@ -181,12 +181,12 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
     // Update hash with each group's custom update size
-    updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
+    updateHash([](const auto &cg) { return cg.getSize(); }, hash);
 
     // Update hash with each group's parameters, derived parameters and variable references
-    updateHash([](const CustomUpdateInternal &cg) { return cg.getParams(); }, hash);
-    updateHash([](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); }, hash);
-    updateHash([](const CustomUpdateInternal &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const auto &cg) { return cg.getParams(); }, hash);
+    updateHash([](const auto &cg) { return cg.getDerivedParams(); }, hash);
+    updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -194,7 +194,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, modelMerged, "id",
-                    [this](const Models::VarReference &varRef, const std::string &index)
+                    [this](const auto &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
                                               getVarAccessDuplication(varRef.getVar().access),
@@ -260,20 +260,20 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
     // Update hash with sizes of pre and postsynaptic neuron groups
-    updateHash([](const CustomUpdateWUInternal &cg) 
+    updateHash([](const auto &cg) 
                {
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
                }, hash);
 
-    updateHash([](const CustomUpdateWUInternal &cg) 
+    updateHash([](const auto &cg) 
                {
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
                }, hash);
 
     // Update hash with each group's parameters, derived parameters and variable referneces
-    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getParams(); }, hash);
-    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); }, hash);
-    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const auto &cg) { return cg.getParams(); }, hash);
+    updateHash([](const auto &cg) { return cg.getDerivedParams(); }, hash);
+    updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -339,17 +339,17 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(Type::parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())->getPointerType(), "ind", 
+            addField(createPointer(parseNumeric(getArchetype().getSynapseGroup()->getSparseIndType())), "ind", 
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                      });
 
-            addField<Uint32Ptr>("rowLength",
-                                [&backend](const auto &cg, size_t) 
-                                { 
-                                    return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                                });
+            addField(createPointer<Uint32>(), "rowLength",
+                     [&backend](const auto &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                     });
         }
     }
 
@@ -379,7 +379,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(Type::parseNumeric(v.type)->getPointerType(), v.name + "Transpose",
+            addField(createPointer(parseNumeric(v.type)), v.name + "Transpose",
                      [&backend, v](const auto &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
@@ -438,11 +438,11 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
     // If some variables are delayed, add delay pointer
     // **NOTE** this is HOST delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField<Uint32Ptr>("spkQuePtr", 
-                            [&](const auto &cg, size_t) 
-                            { 
-                                return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
-                            });
+        addField(createPointer<Uint32>(), "spkQuePtr", 
+                 [](const auto &cg, size_t) 
+                 { 
+                     return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                 });
     }
 }
 

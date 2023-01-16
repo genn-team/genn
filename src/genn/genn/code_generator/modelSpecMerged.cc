@@ -572,7 +572,7 @@ bool ModelSpecMerged::anyPointerEGPs() const
         if(std::any_of(e.second.cbegin(), e.second.cend(),
                        [](const MergedEGPDestinations::value_type &g) 
                        {
-                           return dynamic_cast<const Type::NumericPtrBase*>(g.second.type); 
+                           return dynamic_cast<const Type::Pointer*>(g.second.type); 
                        }))
         {
             return true;

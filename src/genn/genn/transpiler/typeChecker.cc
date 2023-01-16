@@ -416,7 +416,7 @@ public:
                 }
                 // Otherwise, if operator is address of, return pointer type
                 else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_QualifiedType = Type::QualifiedType{createPointer(rightType),
+                    m_QualifiedType = Type::QualifiedType{Type::createPointer(rightType.type),
                                                           rightType.constValue, false};
                 }
             }
@@ -687,54 +687,6 @@ const Type::QualifiedType &EnvironmentBase::incDec(const Token &name, Token::Typ
     // Otherwise, return type
     else {
         return existingType;
-    }
-}
-
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::EnvironmentExternal
-//---------------------------------------------------------------------------
-void EnvironmentExternal::define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler)
-{
-    errorHandler.error(name, "Cannot declare variable in external environment");
-    throw TypeCheckError();
-}
-//---------------------------------------------------------------------------
-const Type::QualifiedType &EnvironmentExternal::assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                                       ErrorHandlerBase &errorHandler, bool initializer)
-{
-    // If type isn't found
-    auto existingType = m_Types.find(name.lexeme);
-    if(existingType == m_Types.end()) {
-        errorHandler.error(name, "Undefined variable");
-        throw TypeCheckError();
-    }
-    
-    // Perform standard type-checking logic
-    return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
-}
-//---------------------------------------------------------------------------
-const Type::QualifiedType &EnvironmentExternal::incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler)
-{
-    auto existingType = m_Types.find(name.lexeme);
-    if(existingType == m_Types.end()) {
-        errorHandler.error(name, "Undefined variable");
-        throw TypeCheckError();
-    }
-    
-    // Perform standard type-checking logic
-    return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);
-    
-}
-//---------------------------------------------------------------------------
-const Type::QualifiedType &EnvironmentExternal::getType(const Token &name, ErrorHandlerBase &errorHandler)
-{
-    auto type = m_Types.find(std::string{name.lexeme});
-    if(type == m_Types.end()) {
-        errorHandler.error(name, "Undefined variable");
-        throw TypeCheckError();
-    }
-    else {
-        return type->second;
     }
 }
 

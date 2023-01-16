@@ -102,6 +102,29 @@ const NumericBase *parseNumeric(std::string_view typeString)
     return type;
 }
 //----------------------------------------------------------------------------
+const Pointer *parseNumericPtr(std::string_view typeString)
+{
+     using namespace Transpiler;
+
+    // Scan type
+    SingleLineErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource(typeString, errorHandler);
+
+    // Parse type and cast to numeric pointer
+    const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, errorHandler));
+
+    // If an error was encountered while scanning or parsing, throw exception
+    if (errorHandler.hasError()) {
+        throw std::runtime_error("Error parsing type '" + std::string{typeString} + "'");
+    }
+
+    // If tokens did not contain a valid numeric type, throw exception
+    if (!type) {
+        throw std::runtime_error("Unable to parse type '" + std::string{typeString} + "'");
+    }
+    return type;
+}
+//----------------------------------------------------------------------------
 const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
 {
     const auto type = numericTypes.find(typeSpecifiers);
@@ -124,13 +147,13 @@ const NumericBase *getPromotedType(const NumericBase *type)
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
 {
     // If either type is double, common type is double
-    const auto aTypeHash = a->getTypeHash();
-    const auto bTypeHash = b->getTypeHash();
-    if(aTypeHash == Double::getInstance()->getTypeHash() || bTypeHash == Double::getInstance()->getTypeHash()) {
+    const auto &aTypeName = a->getTypeName();
+    const auto &bTypeName = b->getTypeName();
+    if(aTypeName == Double::getInstance()->getTypeName() || bTypeName == Double::getInstance()->getTypeName()) {
         return Double::getInstance();
     }
     // Otherwise, if either type is float, common type is float
-    if(aTypeHash == Float::getInstance()->getTypeHash() || bTypeHash == Float::getInstance()->getTypeHash()) {
+    if(aTypeName == Float::getInstance()->getTypeName() || bTypeName == Float::getInstance()->getTypeName()) {
         return Float::getInstance();
     }
     // Otherwise, must be an integer type
@@ -140,7 +163,7 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
         const auto *bPromoted = getPromotedType(b);
 
         // If both promoted operands have the same type, then no further conversion is needed.
-        if(aPromoted->getTypeHash() == bPromoted->getTypeHash()) {
+        if(aPromoted->getTypeName() == bPromoted->getTypeName()) {
             return aPromoted;
         }
         // Otherwise, if both promoted operands have signed integer numericTypes or both have unsigned integer numericTypes, 

@@ -52,8 +52,8 @@ public:
         //! lexicographically compares all three struct members
         bool operator < (const EGPField &other) const
         {
-            return (std::make_tuple(mergedGroupIndex, type->getTypeHash(), fieldName, hostGroup) 
-                    < std::make_tuple(other.mergedGroupIndex, other.type->getTypeHash(), other.fieldName, other.hostGroup));
+            return (std::make_tuple(mergedGroupIndex, type->getTypeName(), fieldName, hostGroup) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type->getTypeName(), other.fieldName, other.hostGroup));
         }
     };
     
@@ -263,7 +263,7 @@ public:
             for(auto f : mergedGroupFields) {
                 // If EGP is a pointer
                 // **NOTE** this is common to all references!
-                if(dynamic_cast<const Type::NumericPtrBase*>(f.type)) {
+                if(dynamic_cast<const Type::Pointer*>(f.type)) {
                     os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
                     {
                         CodeStream::Scope b(os);

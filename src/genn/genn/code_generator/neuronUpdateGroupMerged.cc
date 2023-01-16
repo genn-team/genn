@@ -80,7 +80,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
             for(const auto &var : sgPreVars) {
                 // If variable is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + var.name + ")") != std::string::npos) {
-                    addField(parseNumeric(var.type)->getPointerType(), var.name + "EventThresh" + std::to_string(i),
+                    addField(createPointer(parseNumeric(var.type)), var.name + "EventThresh" + std::to_string(i),
                              [&backend, eventThresholdSGs, var, i](const auto&, size_t groupIndex)
                              {
                                  return backend.getDeviceVarPrefix() + var.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -93,22 +93,22 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
 
     if(getArchetype().isSpikeRecordingEnabled()) {
         // Add field for spike recording
-        addField<Uint32Ptr>("recordSpk",
-                            [&backend](const auto &ng, size_t) 
-                            { 
-                                return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
-                            },
-                            GroupMergedFieldType::DYNAMIC);
+        addField(createPointer<Uint32>(), "recordSpk",
+                 [&backend](const auto &ng, size_t) 
+                 { 
+                     return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
+                 },
+                 GroupMergedFieldType::DYNAMIC);
     }
 
     if(getArchetype().isSpikeEventRecordingEnabled()) {
         // Add field for spike event recording
-        addField<Uint32Ptr>("recordSpkEvent",
-                            [&backend](const auto &ng, size_t)
-                            {
-                                return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
-                            },
-                            GroupMergedFieldType::DYNAMIC);
+        addField(createPointer<Uint32>(), "recordSpkEvent",
+                 [&backend](const auto &ng, size_t)
+                 {
+                     return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
+                 },
+                 GroupMergedFieldType::DYNAMIC);
     }
 
 }
@@ -716,7 +716,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars[v];
-            addField(Type::parseNumeric(var.type)->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+            addField(Type::createPointer(Type::parseNumeric(var.type)), var.name + fieldPrefixStem + std::to_string(i),
                      [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto &, size_t groupIndex)
                      {
                          const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
