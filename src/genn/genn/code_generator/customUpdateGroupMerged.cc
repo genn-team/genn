@@ -119,7 +119,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
     // Create type environment
     // **TEMP** parse precision to get scalar type
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, Type::parseNumeric(precision));
+    const auto *scalarType = Type::parseNumeric(precision);
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, scalarType);
 
     addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
     
@@ -157,7 +158,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
      // Scan, parse and type-check update code
      Transpiler::ErrorHandler errorHandler;
-     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), errorHandler);
+     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), scalarType, errorHandler);
      const auto statements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
      Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
 

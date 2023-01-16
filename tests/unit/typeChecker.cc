@@ -80,7 +80,7 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandlerBase &errorHandler) final
+    virtual void define(const Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
     {
         errorHandler.error(name, "Cannot declare variable in external environment");
         throw TypeChecker::TypeCheckError();
@@ -141,7 +141,7 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
 {
     // Scan
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(code, errorHandler);
+    const auto tokens = Scanner::scanSource(code, Type::Float::getInstance(), errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
  
     // Parse
@@ -153,11 +153,11 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
     ASSERT_FALSE(errorHandler.hasError());
 }
 
-Type::QualifiedType typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment)
+Type::QualifiedType typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
 {
     // Scan
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(code, errorHandler);
+    const auto tokens = Scanner::scanSource(code, scalarType, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
  
     // Parse
@@ -405,10 +405,28 @@ TEST(TypeChecker, Literal)
         EXPECT_FALSE(type.constPointer);
     }
 
-    // Double
+    // Scalar with single-precision
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0", typeEnvironment);
+        EXPECT_EQ(type.type->getTypeName(), Type::Float::getInstance()->getTypeName());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+    
+    // Scalar with double-precision
+    {
+        TestEnvironment typeEnvironment;
+        const auto type = typeCheckExpression("1.0", typeEnvironment, Type::Double::getInstance());
+        EXPECT_EQ(type.type->getTypeName(), Type::Double::getInstance()->getTypeName());
+        EXPECT_TRUE(type.constValue);
+        EXPECT_FALSE(type.constPointer);
+    }
+    
+    // Double
+    {
+        TestEnvironment typeEnvironment;
+        const auto type = typeCheckExpression("1.0d", typeEnvironment);
         EXPECT_EQ(type.type->getTypeName(), Type::Double::getInstance()->getTypeName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);

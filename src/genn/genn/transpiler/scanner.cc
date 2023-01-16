@@ -8,12 +8,17 @@
 #include <unordered_map>
 
 // Standard C includes
+#include <cassert>
 #include <cctype>
+
+// GeNN includes
+#include "type.h"
 
 // Transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/transpilerUtils.h"
 
+using namespace GeNN;
 using namespace GeNN::Transpiler;
 using namespace GeNN::Transpiler::Scanner;
 
@@ -43,6 +48,7 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"long", Token::Type::TYPE_SPECIFIER},
     {"float", Token::Type::TYPE_SPECIFIER},
     {"double", Token::Type::TYPE_SPECIFIER},
+    {"scalar", Token::Type::TYPE_SPECIFIER},
     {"signed", Token::Type::TYPE_SPECIFIER},
     {"unsigned", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER}};
@@ -58,8 +64,8 @@ const std::map<std::set<char>, std::function<Token::LiteralValue(std::string_vie
 class ScanState
 {
 public:
-    ScanState(std::string_view source, ErrorHandlerBase &errorHandler)
-        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_ErrorHandler(errorHandler)
+    ScanState(std::string_view source, const Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
+        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_ScalarType(scalarType), m_ErrorHandler(errorHandler)
     {}
 
     //---------------------------------------------------------------------------
@@ -121,6 +127,12 @@ public:
     {
         m_ErrorHandler.error(getLine(), message);
     }
+    
+    const Type::NumericBase *getScalarType() const
+    {
+        return m_ScalarType;
+    }
+    
 private:
     //---------------------------------------------------------------------------
     // Members
@@ -130,7 +142,7 @@ private:
     size_t m_Line;
 
     const std::string_view m_Source;
-
+    const Type::NumericBase *m_ScalarType;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -164,61 +176,21 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             scanState.advance();
         }
 
-        // Read decimal place
-        const bool isFloat = scanState.match('.');
+        // If a decimal point is found, give an error
+        if(scanState.match('.')) {
+            scanState.error("Hexadecimal floating pointer literals unsupported.");
+        }
 
         // Read hexadecimal digits
         while(std::isxdigit(scanState.peek())) {
             scanState.advance();
         }
 
-        // If number is float
-        if(isFloat) {
-            // Check there's an exponent as these are REQUIRED for floating point literals
-            if(scanState.peek() != 'p') {
-                scanState.error("Hexadecimal floating point literal missing exponent.");
-            }
-            else {
-                // Read p
-                scanState.advance();
-
-                // Read sign
-                if(scanState.peek() == '-' || scanState.peek() == '+') {
-                    scanState.advance();
-                }
-
-                // Read DECIMAL digits
-                while(std::isdigit(scanState.peek())) {
-                    scanState.advance();
-                }
-
-                // If literal has floating point suffix
-                if(std::tolower(scanState.peek()) == 'f') {
-                    // Add single-precision token
-                    // **NOTE** skip 0x prefix
-                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                                 Utils::toCharsThrow<float>(scanState.getLexeme().substr(2), 16));
-
-                    // Advance
-                    // **NOTE** we do this AFTER parsing float as std::to_chars doesn't deal with suffixes
-                    scanState.advance();
-                }
-                // Add double-precision token
-                // **NOTE** skip 0x prefix
-                else {
-                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                                 Utils::toCharsThrow<double>(scanState.getLexeme().substr(2), 16));
-                }
-            }
-        }
-        // Otherwise, number is hexadecimal integer
-        else {
-            // Add integer token
-            // **NOTE** skip 0x prefix
-            const auto suffix = scanIntegerSuffix(scanState);
-            emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                         integerLiteralSuffixParsers.at(suffix)(scanState.getLexeme().substr(2), 16));
-        }
+        // Add integer token
+        // **NOTE** skip 0x prefix
+        const auto suffix = scanIntegerSuffix(scanState);
+        emplaceToken(tokens, Token::Type::NUMBER, scanState,
+                     integerLiteralSuffixParsers.at(suffix)(scanState.getLexeme().substr(2), 16));
     }
     // Otherwise, if this is an octal integer
     else if(c == '0' && isodigit(scanState.peek())){
@@ -264,10 +236,28 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 // **NOTE** we do this AFTER parsing float as std::to_chars doesn't deal with suffixes
                 scanState.advance();
             }
-            // Otherwise, add double-precision token
-            else {
+            // Otherwise, if literal has double precision suffix
+            // **NOTE** this is a GeNN extension not standard C
+            else if(std::tolower(scanState.peek()) == 'd') {
                 emplaceToken(tokens, Token::Type::NUMBER, scanState,
                              Utils::toCharsThrow<double>(scanState.getLexeme()));
+            }
+            // Otherwise, this is a scalar literal
+            else {
+                // If the scalar type is float, add single-precision token
+                if(scanState.getScalarType()->getTypeName() == "float") {
+                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
+                                 Utils::toCharsThrow<float>(scanState.getLexeme()));
+
+                }
+                // Otherwise, add double-precision token
+                else if(scanState.getScalarType()->getTypeName() == "double") {
+                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
+                                 Utils::toCharsThrow<double>(scanState.getLexeme()));
+                }
+                else {
+                    assert(false);
+                }
             }
         }
         // Otherwise, number is integer
@@ -466,11 +456,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, const Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 
-    ScanState scanState(source, errorHandler);
+    ScanState scanState(source, scalarType, errorHandler);
 
     // Scan tokens
     while(!scanState.isAtEnd()) {
