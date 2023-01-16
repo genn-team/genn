@@ -31,22 +31,26 @@
             return s_Instance;                      \
         }
 
-#define DECLARE_NUMERIC_TYPE(TYPE, UNDERLYING_TYPE, RANK)                   \
-    class TYPE : public Numeric<UNDERLYING_TYPE, RANK>                      \
-    {                                                                       \
-        DECLARE_TYPE(TYPE)                                                  \
-        virtual std::string getName() const{ return #UNDERLYING_TYPE; }     \
-    };                                                                      \
-    template<>                                                              \
-    struct TypeTraits<UNDERLYING_TYPE>                                      \
-    {                                                                       \
-        using NumericType = TYPE;                                           \
+#define DECLARE_NUMERIC_TYPE(TYPE, UNDERLYING_TYPE, RANK)                                                   \
+    class TYPE : public Numeric<UNDERLYING_TYPE, RANK>                                                      \
+    {                                                                                                       \
+        DECLARE_TYPE(TYPE)                                                                                  \
+        TYPE(Qualifier qualifiers = Qualifier{0}) : Numeric<UNDERLYING_TYPE, RANK>(qualifiers){}            \
+        virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                               \
+        virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
+    };                                                                                                      \
+    template<>                                                                                              \
+    struct TypeTraits<UNDERLYING_TYPE>                                                                      \
+    {                                                                                                       \
+        using NumericType = TYPE;                                                                           \
     }                                                                      
 
-#define DECLARE_FOREIGN_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)       \
-    class TYPE : public ForeignFunction<RETURN_TYPE, __VA_ARGS__>   \
-    {                                                               \
-        DECLARE_TYPE(TYPE)                                          \
+#define DECLARE_FOREIGN_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)                                               \
+    class TYPE : public ForeignFunction<RETURN_TYPE, __VA_ARGS__>                                           \
+    {                                                                                                       \
+        DECLARE_TYPE(TYPE)                                                                                  \
+        TYPE(Qualifier qualifiers = Qualifier{0}) : ForeignFunction<RETURN_TYPE, __VA_ARGS__>(qualifiers){} \
+        virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
     }
 
 #define IMPLEMENT_TYPE(TYPE) TYPE *TYPE::s_Instance = NULL
@@ -93,15 +97,26 @@ inline Qualifier operator | (Qualifier a, Qualifier b)
 class Base
 {
 public:
+    Base(Qualifier qualifiers = Qualifier{0}) : m_Qualifiers(qualifiers){}
+
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
     virtual std::string getName() const = 0;
+    virtual Base *getQualifiedType(Qualifier qualifiers) const = 0;
     
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const Base *getPointerType() const;
+    const Base *getPointerType(Qualifier qualifiers = Qualifier{0}) const;
+    
+    bool hasQualifier(Qualifier qualifier) const{ return (m_Qualifiers & qualifier); };
+    
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const Qualifier m_Qualifiers;
 };
 
 //----------------------------------------------------------------------------
@@ -111,8 +126,8 @@ public:
 class Pointer : public Base
 {
 public:
-    Pointer(const Base *valueType)
-    :   m_ValueType(valueType)
+    Pointer(const Base *valueType, Qualifier qualifiers = Qualifier{0})
+    :   Base(qualifiers), m_ValueType(valueType)
     {
     }
 
@@ -120,6 +135,7 @@ public:
     // Base virtuals
     //------------------------------------------------------------------------
     virtual std::string getName() const{ return getValueType()->getName() + "*";}
+    virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new Pointer(m_ValueType, qualifiers); }
     
     //------------------------------------------------------------------------
     // Public API
@@ -134,27 +150,13 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::Type::QualifiedType
-//----------------------------------------------------------------------------
-//! A type with qualifiers attached
-struct QualifiedType
-{
-    QualifiedType(const Base *t, bool v, bool p)
-    :   type(t), constValue(v), constPointer(p)
-    {
-    }
-
-    const Base *type;
-    bool constValue;
-    bool constPointer;
-};
-
-//----------------------------------------------------------------------------
 // GeNN::Type::NumericBase
 //----------------------------------------------------------------------------
 class NumericBase : public Base
 {
 public:
+    NumericBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
@@ -173,6 +175,8 @@ template<typename T, int Rank>
 class Numeric : public NumericBase
 {
 public:
+    Numeric(Qualifier qualifiers = Qualifier{0}) : NumericBase(qualifiers){}
+    
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
@@ -200,6 +204,8 @@ public:
 class ForeignFunctionBase : public Base
 {
 public:
+    ForeignFunctionBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
@@ -219,6 +225,8 @@ template<typename ReturnType, typename ...ArgTypes>
 class ForeignFunction : public ForeignFunctionBase
 {
 public:
+    ForeignFunction(Qualifier qualifiers = Qualifier{0}) : ForeignFunctionBase(qualifiers){}
+    
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------

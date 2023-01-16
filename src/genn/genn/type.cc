@@ -80,11 +80,11 @@ IMPLEMENT_TYPE(Sqrt);
 //----------------------------------------------------------------------------
 // GeNN::Type::Base
 //----------------------------------------------------------------------------
-const Base *Base::getPointerType() const 
+const Base *Base::getPointerType(Qualifier qualifiers) const 
 { 
     // **TODO** befriend constructor
     // **TODO** don't just leak these!
-    return new Pointer(this); 
+    return new Pointer(this, qualifiers); 
 }
 
 //----------------------------------------------------------------------------

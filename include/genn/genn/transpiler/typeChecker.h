@@ -40,21 +40,21 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::QualifiedType &qualifiedType, ErrorHandlerBase &errorHandler) = 0;
-    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
+    virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) = 0;
+    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
                                       ErrorHandlerBase &errorHandler, bool initializer = false) = 0;
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) = 0;
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) = 0;
+    virtual const Type::Base *incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) = 0;
+    virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) = 0;
 
 protected:
     //---------------------------------------------------------------------------
     // Protected API
     //---------------------------------------------------------------------------
-    const Type::QualifiedType &assign(const Token &name, Token::Type op, 
-                                      const Type::QualifiedType &existingType, const Type::QualifiedType &assignedType, 
-                                      ErrorHandlerBase &errorHandler, bool initializer = false) const;
-    const Type::QualifiedType &incDec(const Token &name, Token::Type op, 
-                                      const Type::QualifiedType &existingType, ErrorHandlerBase &errorHandler) const;
+    const Type::Base *assign(const Token &name, Token::Type op, 
+                             const Type::Base *existingType, const Type::Base *assignedType, 
+                             ErrorHandlerBase &errorHandler, bool initializer = false) const;
+    const Type::Base *incDec(const Token &name, Token::Type op, 
+                             const Type::Base *existingType, ErrorHandlerBase &errorHandler) const;
 };
 
 //---------------------------------------------------------------------------
@@ -63,6 +63,6 @@ protected:
 void typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
                ErrorHandlerBase &errorHandler);
 
-Type::QualifiedType typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
-                              ErrorHandlerBase &errorHandler);
+const Type::Base *typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
+                            ErrorHandlerBase &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler

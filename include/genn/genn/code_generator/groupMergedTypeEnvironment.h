@@ -33,14 +33,14 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Transpiler::Token &name, const Type::QualifiedType &, ErrorHandlerBase &errorHandler) final
+    virtual void define(const Transpiler::Token &name, const Type::Base*, ErrorHandlerBase &errorHandler) final
     {
         errorHandler.error(name, "Cannot declare variable in external environment");
         throw TypeCheckError();
     }
 
-    virtual const Type::QualifiedType &assign(const Token &name, Token::Type op, const Type::QualifiedType &assignedType, 
-                                              ErrorHandlerBase &errorHandler, bool initializer) final
+    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
+                                     ErrorHandlerBase &errorHandler, bool initializer) final
     {
         // If type isn't found
         auto existingType = m_Types.find(std::string{name.lexeme});
@@ -61,7 +61,7 @@ public:
         return EnvironmentBase::assign(name, op, existingType->second.first, assignedType, errorHandler, initializer);
     }
 
-    virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
+    virtual const Type::Base *incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
     {
         auto existingType = m_Types.find(std::string{name.lexeme});
         if(existingType == m_Types.end()) {
@@ -81,7 +81,7 @@ public:
         return EnvironmentBase::incDec(name, op, existingType->second.first, errorHandler);
     }
 
-    virtual const Type::QualifiedType &getType(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(std::string{name.lexeme});
         if(type == m_Types.end()) {
@@ -104,47 +104,39 @@ public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    void defineField(const Type::Base *type, const std::string &name, bool isConstValue = false, bool isConstPointer = false)
+    void defineField(const Type::Base *type, const std::string &name)
     {
-        if(!m_Types.try_emplace(name, std::piecewise_construct,
-                                std::forward_as_tuple(type, isConstValue, isConstPointer),
-                                std::forward_as_tuple(std::nullopt)).second) 
+        if(!m_Types.try_emplace(name, type, std::nullopt).second) 
         {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
 
     template<typename T>
-    void defineField(const std::string &name, bool isConstValue = false, bool isConstPointer = false)
+    void defineField(const std::string &name)
     {
-        defineField(T::getInstance(), name, isConstPointer, isConstPointer);
+        defineField(T::getInstance(), name);
     }
 
-    void defineField(const Type::Base *type, const std::string &name, bool isConstValue, bool isConstPointer,
+    void defineField(const Type::Base *type, const std::string &name,
                      const Type::Base *fieldType, std::string_view fieldName, typename G::GetFieldValueFunc getFieldValue, 
                      GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
     {
         if(!m_Types.try_emplace(name, std::piecewise_construct,
-                                std::forward_as_tuple(type, isConstValue, isConstPointer),
+                                std::forward_as_tuple(type),
                                 std::forward_as_tuple(std::in_place, fieldType, fieldName, getFieldValue, mergedFieldType)).second) 
         {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
 
-    void defineField(const Type::Base *type, const std::string &name, bool isConstValue, bool isConstPointer,
-                     typename G::GetFieldValueFunc getFieldValue, GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
+    void definePointerField(const Type::NumericBase *type, const std::string &name,const std::string &prefix, VarAccessMode access)
     {
-        defineField(type, name, isConstValue, isConstPointer,
-                    type, name, getFieldValue, mergedFieldType);
-    }
-
-    void definePointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix, VarAccessMode access)
-    {
-        defineField(type, name, (access & VarAccessModeAttribute::READ_ONLY), false,
+        const auto *qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONST) : type;
+        defineField(qualifiedType, name,
                     type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
     }
-
+    
     template<typename T, typename P, typename H>
     void defineHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
                                    P getParamValues, H isHeterogeneous)
@@ -152,15 +144,17 @@ public:
         // Loop through params
         for(const auto &p : paramNames) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, p)) {
-                defineField(m_ScalarType, p + suffix, true, false,
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), p + suffix,
+                            m_ScalarType, p + suffix,
                             [p, getParamValues](const auto &g, size_t)
                             {
                                 const auto &values = getParamValues(g);
                                 return Utils::writePreciseString(values.at(p));
                             });
             }
+            // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                defineField(m_ScalarType, p + suffix, true, false);
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), p + suffix);
             }
         }
     }
@@ -172,7 +166,8 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, d.name)) {
-                defineField(m_ScalarType, d.name + suffix, true, false,
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), d.name + suffix,
+                            m_ScalarType, d.name + suffix,
                             [d, getDerivedParamValues](const auto &g, size_t)
                             {
                                 const auto &values = getDerivedParamValues(g);
@@ -180,7 +175,7 @@ public:
                             });
             }
             else {
-                defineField(m_ScalarType, d.name + suffix, true, false);
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), d.name + suffix);
             }
         }
     }
@@ -199,7 +194,10 @@ public:
         // Loop through variables
         for(const auto &v : varReferences) {
             const auto *type = Type::parseNumeric(v.type, m_ScalarType);
-            defineField(type, v.name, (v.access & VarAccessModeAttribute::READ_ONLY), false,
+            
+            // If variable access is read-only, qualify type with const
+            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONST) : type;
+            defineField(qualifiedType, v.name,
                         type->getPointerType(), v.name,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
                         { 
@@ -213,7 +211,7 @@ public:
     {
         for(const auto &e : egps) {
             const auto *type = Type::parseNumericPtr(e.type, m_ScalarType);
-            defineField(type, e.name, false, false,
+            defineField(type, e.name,
                         type, e.name + varName,
                         [arrayPrefix, e, varName](const auto &g, size_t) 
                         {
@@ -227,7 +225,7 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    void addField(std::pair<Type::QualifiedType, std::optional<typename G::Field>> &type)
+    void addField(std::pair<const Type::Base*, std::optional<typename G::Field>> &type)
     {
         // If this type has an associated field
         if (type.second) {
@@ -249,6 +247,6 @@ private:
     const Type::NumericBase *m_ScalarType;
     EnvironmentBase *m_Enclosing;
 
-    std::unordered_map<std::string, std::pair<Type::QualifiedType, std::optional<typename G::Field>>> m_Types;
+    std::unordered_map<std::string, std::pair<const Type::Base*, std::optional<typename G::Field>>> m_Types;
 };
 }	// namespace GeNN::CodeGenerator

@@ -228,17 +228,17 @@ class VarDeclaration : public Base
 public:
     typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr>> InitDeclaratorList;
 
-    VarDeclaration(const Type::QualifiedType &qualifiedType, InitDeclaratorList initDeclaratorList)
-    :   m_QualifiedType(qualifiedType), m_InitDeclaratorList(std::move(initDeclaratorList))
+    VarDeclaration(const Type::Base *type, InitDeclaratorList initDeclaratorList)
+    :   m_Type(type), m_InitDeclaratorList(std::move(initDeclaratorList))
     {}
 
     virtual void accept(Visitor &visitor) const override;
 
-    const Type::QualifiedType &getQualifiedType() const{ return m_QualifiedType; }
+    const Type::Base *getType() const{ return m_Type; }
     const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }    
 
 private:
-    const Type::QualifiedType m_QualifiedType;
+    const Type::Base *m_Type;
     const std::vector<Token> m_DeclarationSpecifiers;
     const InitDeclaratorList m_InitDeclaratorList;
 };

@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 
 // GeNN includes
@@ -78,7 +79,7 @@ public:
     virtual void visit(const Expression::Cast &cast) final
     {
         m_StringStream << "(";
-        printQualifiedType(cast.getQualifiedType());
+        printType(cast.getType());
         m_StringStream << ")";
         cast.getExpression()->accept(*this);
     }
@@ -229,7 +230,7 @@ public:
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
-        printQualifiedType(varDeclaration.getQualifiedType());
+        printType(varDeclaration.getType());
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
             m_StringStream << std::get<0>(var).lexeme;
@@ -258,16 +259,43 @@ public:
     }
 
 private:
-    void printQualifiedType(const GeNN::Type::QualifiedType &qualifiedType)
+    void printType(const GeNN::Type::Base *type)
     {
-        if(qualifiedType.constValue) {
-            m_StringStream << "const ";
-        }
-        m_StringStream << qualifiedType.type->getName() << " ";
+        // **THINK** this should be Type::getName!
         
-        if(qualifiedType.constPointer) {
-            m_StringStream << "const ";
+        // Loop, building reversed list of tokens
+        std::vector<std::string> tokens;
+        while(true) {
+            // If type is a pointer
+            const auto *pointerType = dynamic_cast<const GeNN::Type::Pointer*>(type);
+            if(pointerType) {
+                // If pointer has const qualifier, add const
+                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONST)) {
+                    tokens.push_back("const");
+                }
+                
+                // Add *
+                tokens.push_back("*");
+                
+                // Go to value type
+                type = pointerType->getValueType();
+            }
+            // Otherwise
+            else {
+                // Add type specifier
+                tokens.push_back(type->getName());
+                
+                
+                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONST)) {
+                    tokens.push_back("const");
+                }
+                break;
+            }
         }
+        
+        // Copy tokens backwards into string stream, seperating with spaces
+        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_StringStream, " "));
+        
     }
     //---------------------------------------------------------------------------
     // Members

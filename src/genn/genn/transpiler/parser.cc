@@ -185,27 +185,29 @@ Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, s
     return expression;
 }
 
-GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
+const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
 {
-    bool pointerFound = false;
+    using namespace GeNN::Type;
+    
     std::set<std::string_view> typeSpecifiers;
-    std::set<std::string_view> valueTypeQualifiers;
-    std::set<std::string_view> pointerTypeQualifiers;
+    std::set<std::string_view> typeQualifiers;
+    std::vector<std::set<std::string_view>> pointerTypeQualifiers;
+    
     do {
-        // If token is a star, set pointer found flag
+        // If token is a star, add new set of pointer type qualifiers
         if(parserState.previous().type == Token::Type::STAR) {
-            pointerFound = true;
+            pointerTypeQualifiers.emplace_back();
         }
         // Otherwise, if type is a qualifier
         else if(parserState.previous().type == Token::Type::TYPE_QUALIFIER) {
             // Add qualifier lexeme to correct list
-            auto &typeQualifiers = pointerFound ? pointerTypeQualifiers : valueTypeQualifiers;
+            std::set<std::string_view> &typeQualifiers = pointerTypeQualifiers.empty() ? typeQualifiers : pointerTypeQualifiers.back();
             if(!typeQualifiers.insert(parserState.previous().lexeme).second) {
                 parserState.error(parserState.previous(), "duplicate type qualifier");
             }
         }
         else if(parserState.previous().type == Token::Type::TYPE_SPECIFIER) {
-            if(pointerFound) {
+            if(!pointerTypeQualifiers.empty()) {
                 parserState.error(parserState.previous(), "invalid type specifier");
             }
             else if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
@@ -215,19 +217,20 @@ GeNN::Type::QualifiedType parseDeclarationSpecifiers(ParserState &parserState)
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
     
     // Lookup numeric type
-    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers, parserState.getScalarType());
-
-    // If pointer, return pointer to numeric type
+    const Base *type = getNumericType(typeSpecifiers, parserState.getScalarType());
+    
+    // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier
-    // **TODO** warn of duplicate type qualifiers
-    if (pointerFound) {
-        return GeNN::Type::QualifiedType{numericType->getPointerType(), 
-                                         !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
+    if(!typeQualifiers.empty()) {
+        type = type->getQualifiedType(Qualifier::CONST);
     }
-    // Otherwise, return numeric type directly
-    else {
-        return GeNN::Type::QualifiedType{numericType, !valueTypeQualifiers.empty(), !pointerTypeQualifiers.empty()};
+    
+    // Loop through levels of pointer indirection
+    // **THINK** this relies of const being only qualifier
+    for(const auto &p : pointerTypeQualifiers) {
+        type = type->getPointerType(p.empty() ? Qualifier{0} : Qualifier::CONST);
     }
+    return type;
 }
 
 Expression::ExpressionPtr parsePrimary(ParserState &parserState)
@@ -378,11 +381,11 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
         // If this is followed by some part of a type declarator
         if(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER})) {
             // Parse declaration specifiers
-            const auto qualifiedType = parseDeclarationSpecifiers(parserState);
+            const auto *type = parseDeclarationSpecifiers(parserState);
 
             const auto closingParen = parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
 
-            return std::make_unique<Expression::Cast>(qualifiedType, parseCast(parserState), closingParen);
+            return std::make_unique<Expression::Cast>(type, parseCast(parserState), closingParen);
         }
         // Otherwise, rewind parser state so left parenthesis can be parsed again
         // **YUCK**
@@ -798,7 +801,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     //      "const"
 
     // Parse declaration specifiers
-    const auto qualifiedType = parseDeclarationSpecifiers(parserState);
+    const auto *type = parseDeclarationSpecifiers(parserState);
 
     // Read init declarator list
     std::vector<std::tuple<Token, Expression::ExpressionPtr>> initDeclaratorList;
@@ -822,7 +825,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     } while(!parserState.isAtEnd() && parserState.match(Token::Type::COMMA));
 
     parserState.consume(Token::Type::SEMICOLON, "Expect ';' after variable declaration");
-    return std::make_unique<Statement::VarDeclaration>(qualifiedType, std::move(initDeclaratorList));
+    return std::make_unique<Statement::VarDeclaration>(type, std::move(initDeclaratorList));
 }
 
 std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
