@@ -156,7 +156,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
      // Scan, parse and type-check update code
      Transpiler::ErrorHandler errorHandler;
-     const auto tokens = Transpiler::Scanner::scanSource(cm->getUpdateCode(), getScalarType(), errorHandler);
+     const std::string code = upgradeCodeString(cm->getUpdateCode());
+     const auto tokens = Transpiler::Scanner::scanSource(code, getScalarType(), errorHandler);
      const auto statements = Transpiler::Parser::parseBlockItemList(tokens, getScalarType(), errorHandler);
      Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
 

@@ -96,6 +96,8 @@ GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::st
  //--------------------------------------------------------------------------
 GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
+GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
+
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.

@@ -526,4 +526,14 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
     }
     return newCode;
 }
+//----------------------------------------------------------------------------
+std::string upgradeCodeString(const std::string &codeString)
+{
+    // **TODO** snake-case -> camel case known built in variables e.g id_pre -> idPre
+    // **TODO** old style function call to standard C (these are ambiguous so need to be applied to existing genn functions)
+    std::regex variable(R"(\$\(([_a-zA-Z][a-zA-Z0-9]*)\))");
+ 
+    return std::regex_replace(codeString, variable, "$1");
+}
+
 }   // namespace GeNN::CodeGenerator
