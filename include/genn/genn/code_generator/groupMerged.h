@@ -123,7 +123,7 @@ public:
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type;
+                        os << backend.getPointerPrefix() << type->getTypeName();
                     }
                 }
                 // Otherwise, leave the type alone
