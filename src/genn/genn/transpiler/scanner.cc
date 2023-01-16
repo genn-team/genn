@@ -247,6 +247,10 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             else if(std::tolower(scanState.peek()) == 'd') {
                 emplaceToken(tokens, Token::Type::NUMBER, scanState,
                              Utils::toCharsThrow<double>(scanState.getLexeme()));
+
+                // Advance
+                // **NOTE** we do this AFTER parsing float as std::to_chars doesn't deal with suffixes
+                scanState.advance();
             }
             // Otherwise, this is a scalar literal
             else {
