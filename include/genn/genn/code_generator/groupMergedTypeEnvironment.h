@@ -43,7 +43,7 @@ public:
                                               ErrorHandlerBase &errorHandler, bool initializer) final
     {
         // If type isn't found
-        auto existingType = m_Types.find(name.lexeme);
+        auto existingType = m_Types.find(std::string{name.lexeme});
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
                 return m_Enclosing->assign(name, op, assignedType, errorHandler, initializer);
@@ -63,7 +63,7 @@ public:
 
     virtual const Type::QualifiedType &incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
     {
-        auto existingType = m_Types.find(name.lexeme);
+        auto existingType = m_Types.find(std::string{name.lexeme});
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
                 return m_Enclosing->incDec(name, op, errorHandler);
@@ -104,7 +104,7 @@ public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    void defineField(const Type::Base *type, std::string_view name, bool isConstValue = false, bool isConstPointer = false)
+    void defineField(const Type::Base *type, const std::string &name, bool isConstValue = false, bool isConstPointer = false)
     {
         if(!m_Types.try_emplace(name, std::piecewise_construct,
                                 std::forward_as_tuple(type, isConstValue, isConstPointer),
@@ -115,12 +115,12 @@ public:
     }
 
     template<typename T>
-    void defineField(std::string_view name, bool isConstValue = false, bool isConstPointer = false)
+    void defineField(const std::string &name, bool isConstValue = false, bool isConstPointer = false)
     {
         defineField(T::getInstance(), name, isConstPointer, isConstPointer);
     }
 
-    void defineField(const Type::Base *type, std::string_view name, bool isConstValue, bool isConstPointer,
+    void defineField(const Type::Base *type, const std::string &name, bool isConstValue, bool isConstPointer,
                      const Type::Base *fieldType, std::string_view fieldName, typename G::GetFieldValueFunc getFieldValue, 
                      GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
     {
@@ -132,7 +132,7 @@ public:
         }
     }
 
-    void defineField(const Type::Base *type, std::string_view name, bool isConstValue, bool isConstPointer,
+    void defineField(const Type::Base *type, const std::string &name, bool isConstValue, bool isConstPointer,
                      typename G::GetFieldValueFunc getFieldValue, GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
     {
         defineField(type, name, isConstValue, isConstPointer,
@@ -249,6 +249,6 @@ private:
     const Type::NumericBase *m_ScalarType;
     EnvironmentBase *m_Enclosing;
 
-    std::unordered_map<std::string_view, std::pair<Type::QualifiedType, std::optional<typename G::Field>>> m_Types;
+    std::unordered_map<std::string, std::pair<Type::QualifiedType, std::optional<typename G::Field>>> m_Types;
 };
 }	// namespace GeNN::CodeGenerator
