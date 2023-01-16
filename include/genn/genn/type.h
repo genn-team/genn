@@ -103,21 +103,29 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
+    //! Get the (unqualified) name of this type
     virtual std::string getName() const = 0;
+    
+    //! Return new version of this type with specified qualifiers
     virtual Base *getQualifiedType(Qualifier qualifiers) const = 0;
+    
+    //! Get size of this type in bytes
     virtual size_t getSizeBytes() const = 0;
     
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Return a pointer to this type, optionally, with specified qualifiers
     const Base *getPointerType(Qualifier qualifiers = Qualifier{0}) const;
     
+    //! Does this type have qualifier?
     bool hasQualifier(Qualifier qualifier) const{ return (m_Qualifiers & qualifier); };
     
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    //! Bitfield of qualifiers
     const Qualifier m_Qualifiers;
 };
 
@@ -188,7 +196,6 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual size_t getTypeHash() const final { return typeid(T).hash_code(); }
     virtual size_t getSizeBytes() const final{ return sizeof(T); }
 
     //------------------------------------------------------------------------
