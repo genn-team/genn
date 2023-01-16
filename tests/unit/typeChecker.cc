@@ -134,7 +134,7 @@ private:
 template<typename T>
 std::string getPointerTypeName()
 {
-    return createPointer(T::getInstance())->getTypeName();
+    return createPointer(T::getInstance())->getName();
 }
 
 void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
@@ -181,7 +181,7 @@ TEST(TypeChecker, ArraySubscript)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto type = typeCheckExpression("intArray[4]", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -265,7 +265,7 @@ TEST(TypeChecker, Cast)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("(float)intVal", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Float::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Float::getInstance()->getName());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -275,7 +275,7 @@ TEST(TypeChecker, Cast)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("(const int)intVal", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -285,7 +285,7 @@ TEST(TypeChecker, Cast)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto type = typeCheckExpression("(const int*)intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), getPointerTypeName<Type::Int32>());
+        EXPECT_EQ(type.type->getName(), getPointerTypeName<Type::Int32>());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -295,7 +295,7 @@ TEST(TypeChecker, Cast)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto type = typeCheckExpression("(int * const)intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), getPointerTypeName<Type::Int32>());
+        EXPECT_EQ(type.type->getName(), getPointerTypeName<Type::Int32>());
         EXPECT_FALSE(type.constValue);
         EXPECT_TRUE(type.constPointer);
     }
@@ -354,7 +354,7 @@ TEST(TypeChecker, IncDec)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("intVal++", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -364,7 +364,7 @@ TEST(TypeChecker, IncDec)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto type = typeCheckExpression("intArray++", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), getPointerTypeName<Type::Int32>());
+        EXPECT_EQ(type.type->getName(), getPointerTypeName<Type::Int32>());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -374,7 +374,7 @@ TEST(TypeChecker, IncDec)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray", true);
         const auto type = typeCheckExpression("intArray++", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), getPointerTypeName<Type::Int32>());
+        EXPECT_EQ(type.type->getName(), getPointerTypeName<Type::Int32>());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -400,7 +400,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0f", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Float::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Float::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -409,7 +409,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Float::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Float::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -418,7 +418,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0", typeEnvironment, Type::Double::getInstance());
-        EXPECT_EQ(type.type->getTypeName(), Type::Double::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Double::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -427,7 +427,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0d", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Double::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Double::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -436,7 +436,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("100", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -445,7 +445,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("100U", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Uint32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Uint32::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -458,7 +458,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -468,7 +468,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray", true);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -478,7 +478,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray", false, true);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -488,7 +488,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer<Type::Int32>("intArray", true, true);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), Type::Int32::getInstance()->getTypeName());
+        EXPECT_EQ(type.type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_TRUE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }
@@ -505,7 +505,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto type = typeCheckExpression("&intVal", typeEnvironment);
-        EXPECT_EQ(type.type->getTypeName(), getPointerTypeName<Type::Int32>());
+        EXPECT_EQ(type.type->getName(), getPointerTypeName<Type::Int32>());
         EXPECT_FALSE(type.constValue);
         EXPECT_FALSE(type.constPointer);
     }

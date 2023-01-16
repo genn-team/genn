@@ -2049,7 +2049,7 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) con
     }
     // Otherwise, type remains the same
     else {
-        return type->getTypeName();
+        return type->getName();
     }
 }
 //--------------------------------------------------------------------------

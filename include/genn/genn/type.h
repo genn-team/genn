@@ -35,7 +35,7 @@
     class TYPE : public Numeric<UNDERLYING_TYPE, RANK>                      \
     {                                                                       \
         DECLARE_TYPE(TYPE)                                                  \
-        virtual std::string getTypeName() const{ return #UNDERLYING_TYPE; } \
+        virtual std::string getName() const{ return #UNDERLYING_TYPE; }     \
     };                                                                      \
     template<>                                                              \
     struct TypeTraits<UNDERLYING_TYPE>                                      \
@@ -51,6 +51,11 @@
 
 #define IMPLEMENT_TYPE(TYPE) TYPE *TYPE::s_Instance = NULL
 #define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE)
+
+// **YUCK** on Windows undefine CONST macro (some part of wincrypt)
+#ifdef _WIN32
+    #undef CONST
+#endif
 
 //----------------------------------------------------------------------------
 // GeNN::Type::TypeTraits
@@ -68,12 +73,17 @@ struct TypeTraits
 //----------------------------------------------------------------------------
 enum class Qualifier : unsigned int
 {
-    CONSTT   = (1 << 0)
+    CONST   = (1 << 0)
 };
 
 inline bool operator & (Qualifier a, Qualifier b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
+}
+
+inline Qualifier operator | (Qualifier a, Qualifier b)
+{
+    return static_cast<Qualifier>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
 //----------------------------------------------------------------------------
@@ -86,7 +96,12 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual std::string getTypeName() const = 0;
+    virtual std::string getName() const = 0;
+    
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const Base *getPointerType() const;
 };
 
 //----------------------------------------------------------------------------
@@ -104,8 +119,8 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getTypeName() const{ return getValueType()->getTypeName() + "*";}
-
+    virtual std::string getName() const{ return getValueType()->getName() + "*";}
+    
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -188,7 +203,7 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getTypeName() const = 0;
+    virtual std::string getName() const = 0;
 
     //------------------------------------------------------------------------
     // Declared virtuals
@@ -207,9 +222,9 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getTypeName() const final
+    virtual std::string getName() const final
     {
-        std::string typeName = getReturnType()->getTypeName() + "(";
+        std::string typeName = getReturnType()->getName() + "(";
         updateTypeName<ArgTypes...>(typeName);
         typeName += ")";
         return typeName;
@@ -240,7 +255,7 @@ private:
     static void updateTypeName(std::string &typeName)
     {
         // Add argument typename to string
-        typeName += T::getInstance()->getTypeName();
+        typeName += T::getInstance()->getName();
 
         // If there are more arguments left in pack, add comma and recurse
         if constexpr (sizeof...(Args)) {

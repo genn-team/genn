@@ -52,8 +52,8 @@ public:
         //! lexicographically compares all three struct members
         bool operator < (const EGPField &other) const
         {
-            return (std::make_tuple(mergedGroupIndex, type->getTypeName(), fieldName, hostGroup) 
-                    < std::make_tuple(other.mergedGroupIndex, other.type->getTypeName(), other.fieldName, other.hostGroup));
+            return (std::make_tuple(mergedGroupIndex, type->getName(), fieldName, hostGroup) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type->getName(), other.fieldName, other.hostGroup));
         }
     };
     

@@ -1732,7 +1732,7 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
 {
-    return type->getTypeName();
+    return type->getName();
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const

@@ -255,13 +255,13 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             // Otherwise, this is a scalar literal
             else {
                 // If the scalar type is float, add single-precision token
-                if(scanState.getScalarType()->getTypeName() == "float") {
+                if(scanState.getScalarType()->getName() == "float") {
                     emplaceToken(tokens, Token::Type::NUMBER, scanState,
                                  Utils::toCharsThrow<float>(scanState.getLexeme()));
 
                 }
                 // Otherwise, add double-precision token
-                else if(scanState.getScalarType()->getTypeName() == "double") {
+                else if(scanState.getScalarType()->getName() == "double") {
                     emplaceToken(tokens, Token::Type::NUMBER, scanState,
                                  Utils::toCharsThrow<double>(scanState.getLexeme()));
                 }

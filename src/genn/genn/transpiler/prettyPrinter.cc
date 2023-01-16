@@ -263,7 +263,7 @@ private:
         if(qualifiedType.constValue) {
             m_StringStream << "const ";
         }
-        m_StringStream << qualifiedType.type->getTypeName() << " ";
+        m_StringStream << qualifiedType.type->getName() << " ";
         
         if(qualifiedType.constPointer) {
             m_StringStream << "const ";

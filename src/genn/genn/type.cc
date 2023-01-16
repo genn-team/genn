@@ -78,6 +78,16 @@ IMPLEMENT_TYPE(Exp);
 IMPLEMENT_TYPE(Sqrt);
 
 //----------------------------------------------------------------------------
+// GeNN::Type::Base
+//----------------------------------------------------------------------------
+const Base *Base::getPointerType() const 
+{ 
+    // **TODO** befriend constructor
+    // **TODO** don't just leak these!
+    return new Pointer(this); 
+}
+
+//----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
 const Pointer *createPointer(const Base *valueType)
@@ -166,13 +176,13 @@ const NumericBase *getPromotedType(const NumericBase *type)
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
 {
     // If either type is double, common type is double
-    const auto &aTypeName = a->getTypeName();
-    const auto &bTypeName = b->getTypeName();
-    if(aTypeName == Double::getInstance()->getTypeName() || bTypeName == Double::getInstance()->getTypeName()) {
+    const auto &aTypeName = a->getName();
+    const auto &bTypeName = b->getName();
+    if(aTypeName == Double::getInstance()->getName() || bTypeName == Double::getInstance()->getName()) {
         return Double::getInstance();
     }
     // Otherwise, if either type is float, common type is float
-    if(aTypeName == Float::getInstance()->getTypeName() || bTypeName == Float::getInstance()->getTypeName()) {
+    if(aTypeName == Float::getInstance()->getName() || bTypeName == Float::getInstance()->getName()) {
         return Float::getInstance();
     }
     // Otherwise, must be an integer type
@@ -182,7 +192,7 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b)
         const auto *bPromoted = getPromotedType(b);
 
         // If both promoted operands have the same type, then no further conversion is needed.
-        if(aPromoted->getTypeName() == bPromoted->getTypeName()) {
+        if(aPromoted->getName() == bPromoted->getName()) {
             return aPromoted;
         }
         // Otherwise, if both promoted operands have signed integer numeric types or both have unsigned integer numeric types, 

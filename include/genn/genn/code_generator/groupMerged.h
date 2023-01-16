@@ -97,7 +97,7 @@ public:
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [&backend](const Field &a, const Field &b)
                   {
-                      return (backend.getSize(std::get<0>(a)->getTypeName()) > backend.getSize(std::get<0>(b)->getTypeName()));
+                      return (backend.getSize(std::get<0>(a)->getName()) > backend.getSize(std::get<0>(b)->getName()));
                   });
         return sortedFields;
 
@@ -123,12 +123,12 @@ public:
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type->getTypeName();
+                        os << backend.getPointerPrefix() << type->getName();
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type->getTypeName();
+                    os << type->getName();
                 }
                 os << " " << std::get<1>(f) << ";" << std::endl;
             }
@@ -160,7 +160,7 @@ public:
         for(const auto &f : sortedFields) {
             // Add size of field to total
             // **TODO** size should be built into type system
-            const size_t fieldSize = backend.getSize(std::get<0>(f)->getTypeName());
+            const size_t fieldSize = backend.getSize(std::get<0>(f)->getName());
             structSize += fieldSize;
 
             // Update largest field size
