@@ -96,6 +96,10 @@ GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::st
  //--------------------------------------------------------------------------
 GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
+//--------------------------------------------------------------------------
+/*! \brief This function automatically replaces old style $(variable) variable references and $(function, arg1, arg2) syntax with new form.
+ */
+ //--------------------------------------------------------------------------
 GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
 
 //-------------------------------------------------------------------------

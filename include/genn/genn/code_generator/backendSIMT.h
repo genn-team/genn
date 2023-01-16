@@ -209,12 +209,6 @@ protected:
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                    size_t numInitializeThreads, size_t &idStart) const;
 
-    //! Adds a type - both to backend base's list of sized types but also to device types set
-    void addDeviceType(const std::string &type, size_t size, const std::string &maxValue = "");
-
-    //! Is type a a device only type?
-    bool isDeviceType(const std::string &type) const;
-    
     //! Helper wrapper around padSize to pad size to a kernel size
     size_t padKernelSize(size_t size, Kernel kernel) const;
 
@@ -474,9 +468,6 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const KernelBlockSize m_KernelBlockSizes;
-
-    //! Types that are only supported on device i.e. should never be exposed to user code
-    std::unordered_set<std::string> m_DeviceTypes;
 
     //--------------------------------------------------------------------------
     // Static members

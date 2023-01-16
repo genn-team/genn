@@ -10,73 +10,14 @@
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 
-
-// Macro for simplifying defining type sizes
-#define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
-#define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
-
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
 BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
-:   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
-    TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
-    TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
-    TYPE(signed long long int), TYPE(unsigned char), TYPE(unsigned short), TYPE(unsigned short int), TYPE(unsigned),
-    TYPE(unsigned int), TYPE(unsigned long), TYPE(unsigned long int), TYPE(unsigned long long),
-    TYPE(unsigned long long int), TYPE(bool), TYPE(intmax_t), TYPE(uintmax_t), TYPE(int8_t), TYPE(uint8_t), 
-    TYPE(int16_t), TYPE(uint16_t), TYPE(int32_t), TYPE(uint32_t), TYPE(int64_t), TYPE(uint64_t), 
-    TYPE(int_least8_t), TYPE(uint_least8_t), TYPE(int_least16_t), TYPE(uint_least16_t), TYPE(int_least32_t), 
-    TYPE(uint_least32_t), TYPE(int_least64_t), TYPE(uint_least64_t), TYPE(int_fast8_t), TYPE(uint_fast8_t), 
-    TYPE(int_fast16_t), TYPE(uint_fast16_t), TYPE(int_fast32_t), TYPE(uint_fast32_t), TYPE(int_fast64_t), 
-    TYPE(uint_fast64_t), FLOAT_TYPE(float), FLOAT_TYPE(double), FLOAT_TYPE(long double)}}, m_Preferences(preferences)
+:   m_Preferences(preferences)
 {
-    // Add scalar type
-    if(scalarType == "float") {
-        addType("scalar", sizeof(float), Utils::writePreciseString(std::numeric_limits<float>::lowest()));
-    }
-    else {
-        addType("scalar", sizeof(double), Utils::writePreciseString(std::numeric_limits<double>::lowest()));
-    }
-}
-//--------------------------------------------------------------------------
-size_t BackendBase::getSize(const std::string &type) const
-{
-     // If type is a pointer, any pointer should have the same type
-    if(Utils::isTypePointer(type)) {
-        return m_PointerBytes;
-    }
-    // Otherwise
-    else {
-        // If type isn't found in dictionary, give a warning and return 0
-        const auto typeSizeLowest = m_Types.find(type);
-        if(typeSizeLowest == m_Types.cend()) {
-            LOGW_CODE_GEN << "Unable to estimate size of type '" << type << "'";
-            return 0;
-        }
-        // Otherwise, return its size
-        else {
-            return typeSizeLowest->second.first;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-std::string BackendBase::getLowestValue(const std::string &type) const
-{
-    assert(!Utils::isTypePointer(type));
-
-    // If type's found in dictionary and it has a lowest value
-    const auto typeSizeLowest = m_Types.find(type);
-    if(typeSizeLowest != m_Types.cend() && !typeSizeLowest->second.second.empty()) {
-        return typeSizeLowest->second.second;
-    }
-    // Otherwise, give warning and return empty string
-    else {
-        LOGW_CODE_GEN << "Unable to get lowest value for type '" << type << "'";
-        return "";
-    }
 }
 //--------------------------------------------------------------------------
 bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const

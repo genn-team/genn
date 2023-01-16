@@ -43,6 +43,45 @@ const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions 
     {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))"},
     {"gennrand_binomial", 2, "binomialDistDouble($(rng), $(0), $(1))"} 
 };
+
+//--------------------------------------------------------------------------
+// CURandState
+//--------------------------------------------------------------------------
+class CURandState : public Type::Base
+{
+public:
+    DECLARE_TYPE(CURandState);
+    
+    CURandState(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "curandState"; }
+    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CURandState(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 44; }
+};
+IMPLEMENT_TYPE(CURandState);
+
+//--------------------------------------------------------------------------
+// CURandStatePhilox43210
+//--------------------------------------------------------------------------
+class CURandStatePhilox43210 : public Type::Base
+{
+public:
+    DECLARE_TYPE(CURandStatePhilox43210);
+    
+    CURandStatePhilox43210(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "curandStatePhilox4_32_10_t"; }
+    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CURandStatePhilox43210(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 64; }
+};
+IMPLEMENT_TYPE(CURandStatePhilox43210);
+
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -310,9 +349,8 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 #endif
 
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
-    addDeviceType("curandState", 44);
-    addDeviceType("curandStatePhilox4_32_10_t", 64);
-    addDeviceType("half", 2);
+    
+    //addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -1733,6 +1771,11 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
 {
     return type->getName();
+}
+//--------------------------------------------------------------------------
+const Type::Base *Backend::getMergedGroupSimRNGType() const
+{
+    return CLRRNGLFSR113Stream::getInstance();
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const

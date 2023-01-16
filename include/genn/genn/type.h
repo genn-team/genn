@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C includes
+#include <cassert>
 #include <cstdint>
 
 // Standard C++ includes
@@ -104,6 +105,7 @@ public:
     //------------------------------------------------------------------------
     virtual std::string getName() const = 0;
     virtual Base *getQualifiedType(Qualifier qualifiers) const = 0;
+    virtual size_t getSizeBytes() const = 0;
     
     //------------------------------------------------------------------------
     // Public API
@@ -136,7 +138,8 @@ public:
     //------------------------------------------------------------------------
     virtual std::string getName() const{ return getValueType()->getName() + "*";}
     virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new Pointer(m_ValueType, qualifiers); }
-    
+    virtual size_t getSizeBytes() const final{ return sizeof(char*); }
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -186,6 +189,7 @@ public:
     // Base virtuals
     //------------------------------------------------------------------------
     virtual size_t getTypeHash() const final { return typeid(T).hash_code(); }
+    virtual size_t getSizeBytes() const final{ return sizeof(T); }
 
     //------------------------------------------------------------------------
     // NumericBase virtuals
@@ -205,11 +209,6 @@ class ForeignFunctionBase : public Base
 {
 public:
     ForeignFunctionBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
-    
-    //------------------------------------------------------------------------
-    // Base virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getName() const = 0;
 
     //------------------------------------------------------------------------
     // Declared virtuals
@@ -236,6 +235,12 @@ public:
         updateTypeName<ArgTypes...>(typeName);
         typeName += ")";
         return typeName;
+    }
+    
+    virtual size_t getSizeBytes() const final
+    {
+        assert(false);
+        return 0;
     }
 
     //------------------------------------------------------------------------

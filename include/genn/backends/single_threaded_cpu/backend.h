@@ -81,7 +81,7 @@ public:
     virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const override;
 
     //! When generating merged structures what type to use for simulation RNGs
-    virtual std::string getMergedGroupSimRNGType() const override;
+    virtual const Type::Base *getMergedGroupSimRNGType() const override;
 
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,

@@ -1353,10 +1353,10 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) con
     return type->getName();
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupSimRNGType() const
+const Type::Base *Backend::getMergedGroupSimRNGType() const
 {
     assert(false);
-    return "";
+    return nullptr;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const

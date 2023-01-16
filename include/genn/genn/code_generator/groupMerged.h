@@ -90,14 +90,13 @@ public:
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
-        // **TODO** size should come from type system itself - numerics are easy pointer size is a little trickier
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [&backend](const Field &a, const Field &b)
                   {
-                      return (backend.getSize(std::get<0>(a)->getName()) > backend.getSize(std::get<0>(b)->getName()));
+                      return (std::get<0>(a)->getSizeBytes() > std::get<0>(b)->getSizeBytes());
                   });
         return sortedFields;
 
@@ -159,8 +158,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(const auto &f : sortedFields) {
             // Add size of field to total
-            // **TODO** size should be built into type system
-            const size_t fieldSize = backend.getSize(std::get<0>(f)->getName());
+            const size_t fieldSize = std::get<0>(f)->getSizeBytes();
             structSize += fieldSize;
 
             // Update largest field size
@@ -267,12 +265,12 @@ public:
                  fieldType);
     }
 
-    void addPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix)
+    void addPointerField(const Type::Base *type, const std::string &name, const std::string &prefix)
     {
         addField(type->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
-    template<typename T, typename std::enable_if_t<std::is_convertible_v<T*, Type::NumericBase*>>* = nullptr>
+    template<typename T>
     void addPointerField(const std::string &name, const std::string &prefix)
     {
         addField(T::getInstance()->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });

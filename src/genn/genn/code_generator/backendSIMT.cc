@@ -1704,21 +1704,6 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::addDeviceType(const std::string &type, size_t size, const std::string &maxValue)
-{
-    addType(type, size, maxValue);
-    m_DeviceTypes.emplace(type);
-}
-//--------------------------------------------------------------------------
-bool BackendSIMT::isDeviceType(const std::string &type) const
-{
-    // Get underlying type
-    const std::string underlyingType = Utils::isTypePointer(type) ? Utils::getUnderlyingType(type) : type;
-
-    // Return true if it is in device types set
-    return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
-}
-//--------------------------------------------------------------------------
 size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
 { 
     return padSize(size, getKernelBlockSize(kernel)); 

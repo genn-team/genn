@@ -143,8 +143,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // If this backend requires per-population RNGs and this group requires one
     if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired()){
-        assert(false);
-        //addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
+        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
     }
 
     // Add variables to struct

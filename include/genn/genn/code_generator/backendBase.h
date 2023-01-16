@@ -270,7 +270,7 @@ public:
     virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const = 0;
 
     //! When generating merged structures what type to use for simulation RNGs
-    virtual std::string getMergedGroupSimRNGType() const = 0;
+    virtual const Type::Base *getMergedGroupSimRNGType() const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -430,12 +430,6 @@ public:
         genVariableAllocation(allocations, type, name, loc, count, memAlloc);
     }
 
-    //! Get the size of the type
-    size_t getSize(const std::string &type) const;
-
-    //! Get the lowest value of a type
-    std::string getLowestValue(const std::string &type) const;
-
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
@@ -470,17 +464,6 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
-    void addType(const std::string &type, size_t size, const std::string &lowestValue = "")
-    {
-        m_Types.emplace(std::piecewise_construct, std::forward_as_tuple(type), 
-                        std::forward_as_tuple(size, lowestValue));
-    }
-
-    void setPointerBytes(size_t pointerBytes) 
-    {
-        m_PointerBytes = pointerBytes;
-    }
-
     void genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const;
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
@@ -534,13 +517,6 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
-    size_t m_PointerBytes;
-
-    //! Size of supported types in bytes and string containing their lowest value
-    //! used for estimating memory usage and for reduction operations
-    std::unordered_map<std::string, std::pair<size_t, std::string>> m_Types;
-
     //! Preferences
     const PreferencesBase &m_Preferences;
 };

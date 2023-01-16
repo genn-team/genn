@@ -41,7 +41,46 @@ const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
     {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"},
     {"gennrand_binomial", 2, "binomialDistPhilox432($(rng), $(0), $(1))"}
 };
+
 //--------------------------------------------------------------------------
+// CLRRNGLFSR113Stream
+//--------------------------------------------------------------------------
+class CLRRNGLFSR113Stream : public Type::Base
+{
+public:
+    DECLARE_TYPE(CLRRNGLFSR113Stream);
+    
+    CLRRNGLFSR113Stream(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngLfsr113Stream"; }
+    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 48; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+//--------------------------------------------------------------------------
+// CLRRNGPhilox432Stream
+//--------------------------------------------------------------------------
+class CLRRNGPhilox432Stream : public Type::Base
+{
+public:
+    DECLARE_TYPE(CLRRNGPhilox432Stream);
+    
+    CLRRNGPhilox432Stream(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngPhilox432Stream"; }
+    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 132; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+
 template<typename T>
 void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, bool includeFinalComma = false)
 {
@@ -193,10 +232,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Determine minimum alignement
     m_AllocationAlignementBytes = m_ChosenDevice.getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / 8;
     LOGI_BACKEND << "Device uses " << m_AllocationAlignementBytes << " byte alignement";
-
-    // Add OpenCL-specific types
-    addType("clrngLfsr113Stream", 48);
-    addType("clrngPhilox432Stream", 132);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -2051,6 +2086,11 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) con
     else {
         return type->getName();
     }
+}
+//--------------------------------------------------------------------------
+const Type::Base *Backend::getMergedGroupSimRNGType() const
+{
+    return CLRRNGLFSR113Stream::getInstance();
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
