@@ -182,11 +182,6 @@ class Numeric : public NumericBase
 {
 public:
     Numeric(Qualifier qualifiers = Qualifier{0}) : NumericBase(qualifiers){}
-    
-    //------------------------------------------------------------------------
-    // Typedefines
-    //------------------------------------------------------------------------
-    typedef T UnderlyingType;
 
     //------------------------------------------------------------------------
     // Base virtuals
