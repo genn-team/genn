@@ -184,7 +184,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : vars) {
-            definePointerField(Type::parseNumeric(v.type, m_ScalarType), v.name, arrayPrefix, getVarAccessMode(v.access));
+            definePointerField(Type::parseNumeric(v.type), v.name, arrayPrefix, getVarAccessMode(v.access));
         }
     }
 
@@ -193,7 +193,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            const auto *type = Type::parseNumeric(v.type, m_ScalarType);
+            const auto *type = Type::parseNumeric(v.type);
             
             // If variable access is read-only, qualify type with const
             const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONSTANT) : type;
@@ -210,7 +210,7 @@ public:
     void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            const auto *type = Type::parseNumericPtr(e.type, m_ScalarType);
+            const auto *type = Type::parseNumericPtr(e.type);
             defineField(type, e.name,
                         type, e.name + varName,
                         [arrayPrefix, e, varName](const auto &g, size_t) 

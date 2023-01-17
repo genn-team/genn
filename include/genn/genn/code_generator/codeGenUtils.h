@@ -12,6 +12,7 @@
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "neuronGroupInternal.h"
+#include "type.h"
 #include "variableMode.h"
 
 // GeNN code generator includes
@@ -77,12 +78,13 @@ GENN_EXPORT std::string ensureFtype(const std::string &oldcode, const std::strin
 //--------------------------------------------------------------------------
 //! \brief Get the initial value to start reduction operations from
 //--------------------------------------------------------------------------
-GENN_EXPORT std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode access, const std::string &type);
+GENN_EXPORT std::string getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context);
 
 //--------------------------------------------------------------------------
 //! \brief Generate a reduction operation to reduce value into reduction
 //--------------------------------------------------------------------------
-GENN_EXPORT std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access, const std::string &type);
+GENN_EXPORT std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
+                                              const Type::NumericBase *type, const Type::TypeContext &context);
 
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found

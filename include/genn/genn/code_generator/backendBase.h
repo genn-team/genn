@@ -18,6 +18,7 @@
 #include "codeStream.h"
 #include "gennExport.h"
 #include "gennUtils.h"
+#include "type.h"
 #include "varAccess.h"
 #include "variableMode.h"
 
@@ -49,11 +50,6 @@ class CustomWUUpdateSparseInitGroupMerged;
 class SynapseConnectivityInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
-}
-
-namespace Type
-{
-class Base;
 }
 }
 
@@ -267,7 +263,7 @@ public:
                                                const std::string &egpName) const = 0;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const = 0;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const = 0;
 
     //! When generating merged structures what type to use for simulation RNGs
     virtual const Type::Base *getMergedGroupSimRNGType() const = 0;

@@ -169,7 +169,7 @@ public:
                                                const std::string &egpName) const override;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const override;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const override;
 
     //! When generating merged structures what type to use for simulation RNGs
     virtual const Type::Base *getMergedGroupSimRNGType() const;

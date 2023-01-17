@@ -210,7 +210,7 @@ class NumericTypedef : public NumericBase
 {
 public:
     NumericTypedef(const std::string &name, Qualifier qualifiers = Qualifier{0}) 
-    :   m_Name(name), NumericBase(qualifiers){}
+    :   NumericBase(qualifiers), m_Name(name){}
 
     //------------------------------------------------------------------------
     // Base virtuals
@@ -353,13 +353,13 @@ DECLARE_FOREIGN_FUNCTION_TYPE(Exp, Double, Double);
 DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 
 //! Parse a numeric type
-const NumericBase *parseNumeric(std::string_view typeString, const std::unordered_set<std::string> &typedefNames);
+const NumericBase *parseNumeric(std::string_view typeString);
 
 //! Parse a numeric pointer type
-const Pointer *parseNumericPtr(std::string_view typeString, const std::unordered_set<std::string> &typedefNames);
+const Pointer *parseNumericPtr(std::string_view typeString);
 
 //! Look up numeric type based on set of type specifiers
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const std::unordered_set<std::string> &typedefNames);
+const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
 
 //! Apply C type promotion rules to numeric type
 const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &context);

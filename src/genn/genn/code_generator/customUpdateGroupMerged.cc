@@ -157,7 +157,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
      // Scan, parse and type-check update code
      Transpiler::ErrorHandler errorHandler;
      const std::string code = upgradeCodeString(cm->getUpdateCode());
-     const auto tokens = Transpiler::Scanner::scanSource(code, getScalarType(), errorHandler);
+     const auto tokens = Transpiler::Scanner::scanSource(code, errorHandler);
      const auto statements = Transpiler::Parser::parseBlockItemList(tokens, getScalarType(), errorHandler);
      Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
 
@@ -379,7 +379,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name + "Transpose",
+            addField(parseNumeric(v.type)->getPointerType(), v.name + "Transpose",
                      [&backend, v](const auto &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);

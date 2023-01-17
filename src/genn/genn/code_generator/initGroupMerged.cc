@@ -443,7 +443,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(parseNumeric(var.type, getScalarType())->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+                addField(parseNumeric(var.type)->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto&, size_t groupIndex)
                          {
                              const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();

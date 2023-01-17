@@ -40,12 +40,13 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                            runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     void generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -79,12 +80,13 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                            runnerVarDecl, runnerMergedStructAlloc, name, true);
+        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
     void generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const;

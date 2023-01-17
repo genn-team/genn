@@ -67,7 +67,7 @@ public:
 
     // **HACK** type should come in as type not string
     GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(Type::parseNumeric(precision, nullptr)), m_Groups(std::move(groups))
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(Type::parseNumeric(precision)), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------
@@ -88,29 +88,29 @@ public:
     const std::vector<Field> &getFields() const{ return m_Fields; }
 
     //! Get group fields, sorted into order they will appear in struct
-    std::vector<Field> getSortedFields(const BackendBase &backend) const
+    std::vector<Field> getSortedFields(const BackendBase &backend, const Type::TypeContext &context) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
         std::sort(sortedFields.begin(), sortedFields.end(),
-                  [&backend](const Field &a, const Field &b)
+                  [&backend, &context](const Field &a, const Field &b)
                   {
-                      return (std::get<0>(a)->getSizeBytes() > std::get<0>(b)->getSizeBytes());
+                      return (std::get<0>(a)->getSizeBytes(context) > std::get<0>(b)->getSizeBytes(context));
                   });
         return sortedFields;
 
     }
 
     //! Generate declaration of struct to hold this merged group
-    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name,
-                        bool host = false) const
+    void generateStruct(CodeStream &os, const BackendBase &backend, const Type::TypeContext &context, 
+                        const std::string &name, bool host = false) const
     {
         os << "struct Merged" << name << "Group" << getIndex() << std::endl;
         {
             // Loop through fields and write to structure
             CodeStream::Scope b(os);
-            const auto sortedFields = getSortedFields(backend);
+            const auto sortedFields = getSortedFields(backend, context);
             for(const auto &f : sortedFields) {
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
@@ -118,16 +118,16 @@ public:
                 if(dynamic_cast<const Type::Pointer*>(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
-                        os << backend.getMergedGroupFieldHostTypeName(type);
+                        os << backend.getMergedGroupFieldHostTypeName(type, context);
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type->getName();
+                        os << backend.getPointerPrefix() << type->getName(context);
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type->getName();
+                    os << type->getName(context);
                 }
                 os << " " << std::get<1>(f) << ";" << std::endl;
             }
@@ -137,28 +137,28 @@ public:
         os << ";" << std::endl;
     }
 
-    void generateStructFieldArgumentDefinitions(CodeStream &os, const BackendBase &backend) const
+    void generateStructFieldArgumentDefinitions(CodeStream &os, const BackendBase &backend, const Type::TypeContext &context) const
     {
         // Get sorted fields
-        const auto sortedFields = getSortedFields(backend);
+        const auto sortedFields = getSortedFields(backend, context);
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
-            os << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " " << std::get<1>(f);
+            os << backend.getMergedGroupFieldHostTypeName(std::get<0>(f), context) << " " << std::get<1>(f);
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
             }
         }
     }
 
-    size_t getStructArraySize(const BackendBase &backend) const
+    size_t getStructArraySize(const BackendBase &backend, const Type::TypeContext &context) const
     {
         // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
         size_t structSize = 0;
         size_t largestFieldSize = 0;
-        const auto sortedFields = getSortedFields(backend);
+        const auto sortedFields = getSortedFields(backend, context);
         for(const auto &f : sortedFields) {
             // Add size of field to total
-            const size_t fieldSize = std::get<0>(f)->getSizeBytes();
+            const size_t fieldSize = std::get<0>(f)->getSizeBytes(context);
             structSize += fieldSize;
 
             // Update largest field size
@@ -281,7 +281,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : vars) {
-            addPointerField(Type::parseNumeric(v.type, getScalarType()), v.name, arrayPrefix + v.name);
+            addPointerField(Type::parseNumeric(v.type), v.name, arrayPrefix + v.name);
         }
     }
 
@@ -290,7 +290,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(Type::parseNumeric(v.type, getScalarType())->getPointerType(), v.name, 
+            addField(Type::parseNumeric(v.type)->getPointerType(), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
@@ -303,7 +303,7 @@ public:
     {
         for(const auto &e : egps) {
             assert(Utils::isTypePointer(e.type));
-            addField(Type::parseNumericPtr(e.type, getScalarType()), e.name + varName,
+            addField(Type::parseNumericPtr(e.type), e.name + varName,
                      [e, arrayPrefix, varName](const G &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
                      GroupMergedFieldType::DYNAMIC);
         }
@@ -459,19 +459,19 @@ public:
         }
     }
 
-    void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
-                            CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                            CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                            const std::string &name, bool host = false) const
+    void generateRunnerBase(const BackendBase &backend, const Type::TypeContext &context, 
+                            CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                            CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                            CodeStream &runnerMergedStructAlloc, const std::string &name, bool host = false) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = getSortedFields(backend);
+        auto sortedFields = getSortedFields(backend, context);
 
         // If this isn't a host merged structure, generate definition for function to push group
         if(!host) {
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
-            generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
+            generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend, context);
             definitionsInternalFunc << ");" << std::endl;
         }
 
@@ -480,7 +480,7 @@ public:
             // If this field is a dynamic pointer
             if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && dynamic_cast<const Type::Pointer*>(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
-                definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
+                definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f), context) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure
@@ -491,7 +491,7 @@ public:
         if(host) {
             // Generate struct directly into internal definitions
             // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(definitionsInternal, backend, name, true);
+            generateStruct(definitionsInternal, backend, context, name, true);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
@@ -561,11 +561,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -589,11 +590,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -831,7 +833,7 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            addField(Type::parseNumericPtr(e.type, getScalarType()), e.name + prefix + std::to_string(childIndex),
+            addField(Type::parseNumericPtr(e.type), e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, arrayPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return arrayPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);

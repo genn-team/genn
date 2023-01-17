@@ -166,7 +166,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type, getScalarType())->getPointerType(), "_dependentVar" + std::to_string(i), 
+        addField(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type)->getPointerType(), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -440,7 +440,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {
-        const auto *pointerType = parseNumericPtr(e.type, getScalarType());
+        const auto *pointerType = parseNumericPtr(e.type);
         addField(pointerType, e.name,
                  [e](const auto &g, size_t) { return e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
@@ -562,13 +562,13 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     for(const auto &v : vars) {
         // If var is located on the host
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(parseNumeric(v.type, getScalarType())->getPointerType(), v.name,
+            addField(parseNumeric(v.type)->getPointerType(), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(parseNumeric(v.type, getScalarType())->getPointerType(), backend.getDeviceVarPrefix() + v.name,
+                addField(parseNumeric(v.type)->getPointerType(), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

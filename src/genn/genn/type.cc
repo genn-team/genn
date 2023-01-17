@@ -154,17 +154,16 @@ const Type::NumericBase *NumericTypedef::getNumeric(const TypeContext &context) 
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-const NumericBase *parseNumeric(std::string_view typeString, const std::unordered_set<std::string> &typedefNames)
+const NumericBase *parseNumeric(std::string_view typeString)
 {
     using namespace Transpiler;
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, typedefNames, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, {"scalar"}, errorHandler);
 
     // Parse type and cast to numeric
-    const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, typedefNames, 
-                                                                          errorHandler));
+    const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, errorHandler));
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
@@ -178,16 +177,16 @@ const NumericBase *parseNumeric(std::string_view typeString, const std::unordere
     return type;
 }
 //----------------------------------------------------------------------------
-const Pointer *parseNumericPtr(std::string_view typeString, const std::unordered_set<std::string> &typedefNames)
+const Pointer *parseNumericPtr(std::string_view typeString)
 {
-     using namespace Transpiler;
+    using namespace Transpiler;
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, typedefNames, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, {"scalar"}, errorHandler);
 
     // Parse type and cast to numeric pointer
-    const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, typedefNames, errorHandler));
+    const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, errorHandler));
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
@@ -201,16 +200,13 @@ const Pointer *parseNumericPtr(std::string_view typeString, const std::unordered
     return type;
 }
 //----------------------------------------------------------------------------
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const NumericBase *scalarType)
+const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
 {
+    // If type matches scalar type specifiers
     if(typeSpecifiers == scalarTypeSpecifier) {
-        if(scalarType) {
-            return scalarType;
-        }
-        else {
-            throw std::runtime_error("'scalar' type is not available in this context");
-        }
+        return new NumericTypedef("scalar");
     }
+    // Otherwise
     else {
         const auto type = numericTypeSpecifiers.find(typeSpecifiers);
         return (type == numericTypeSpecifiers.cend()) ? nullptr : type->second;

@@ -447,7 +447,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
     return code;
 }
 //----------------------------------------------------------------------------
-std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode access, const std::string &type)
+std::string getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context)
 {
     // If reduction is a sum, initialise to zero
     if(access & VarAccessModeAttribute::SUM) {
@@ -455,7 +455,7 @@ std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode a
     }
     // Otherwise, reduction is a maximum operation, return lowest value for type
     else if(access & VarAccessModeAttribute::MAX) {
-        return backend.getLowestValue(type);
+        return Utils::writePreciseString(type->getLowest(context));
     }
     else {
         assert(false);
@@ -463,7 +463,8 @@ std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode a
     }
 }
 //----------------------------------------------------------------------------
-std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access, const std::string &type)
+std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
+                                  const Type::NumericBase *type, const Type::TypeContext &context)
 {
     // If operation is sum, add output of custom update to sum
     if(access & VarAccessModeAttribute::SUM) {
@@ -471,13 +472,14 @@ std::string getReductionOperation(const std::string &reduction, const std::strin
     }
     // Otherwise, if it's max
     else if(access & VarAccessModeAttribute::MAX) {
-        // If type is floating point, generate fmax call
-        if(Utils::isTypeFloatingPoint(type)) {
-            return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
-        }
-        // Otherwise, generate max call
-        else {
+        // If type is integral, generate max call
+        if(type->isIntegral(context)) {
             return reduction + " = " + "max(" + reduction + ", " + value + ")";
+            
+        }
+        // Otherwise, generate gmax call
+        else {
+            return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
         }
     }
     else {

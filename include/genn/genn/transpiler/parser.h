@@ -3,7 +3,6 @@
 // Standard C++ includes
 #include <memory>
 #include <set>
-#include <unordered_set>
 #include <vector>
 
 // Transpiler includes
@@ -23,16 +22,13 @@ class ErrorHandlerBase;
 namespace GeNN::Transpiler::Parser
 {
 //! Parse expression from tokens
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const std::unordered_set<std::string> &typedefNames, 
-                                          ErrorHandlerBase &errorHandler);
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 //! Parse block item list from tokens
 /*! Block item lists are function body scope list of statements */
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const std::unordered_set<std::string> &typedefNames, 
-                                            ErrorHandlerBase &errorHandler);
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 //! Parse type from tokens
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, 
-                                  const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler);
+const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler);
 
 }   // MiniParse::MiniParse
