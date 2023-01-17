@@ -38,8 +38,8 @@ class ParseError
 class ParserState
 {
 public:
-    ParserState(const std::vector<Token> &tokens, const GeNN::Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
-        : m_Current(0), m_Tokens(tokens), m_ScalarType(scalarType), m_ErrorHandler(errorHandler)
+    ParserState(const std::vector<Token> &tokens, const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler)
+        : m_Current(0), m_Tokens(tokens), m_TypedefNames(typedefNames), m_ErrorHandler(errorHandler)
     {}
 
     //---------------------------------------------------------------------------
@@ -128,8 +128,7 @@ public:
 
     bool isAtEnd() const { return (peek().type == Token::Type::END_OF_FILE); }
     
-    const GeNN::Type::NumericBase *getScalarType() const{ return m_ScalarType; }
-
+    
 private:
     //---------------------------------------------------------------------------
     // Members
@@ -137,7 +136,7 @@ private:
     size_t m_Current;
 
     const std::vector<Token> &m_Tokens;
-    const GeNN::Type::NumericBase *m_ScalarType;
+    const std::unordered_set<std::string> m_TypedefNames;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -239,14 +238,8 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
     //      identifier
     //      constant
     //      "(" expression ")"
-    if(parserState.match(Token::Type::FALSE)) {
-        return std::make_unique<Expression::Literal>(false);
-    }
-    else if(parserState.match(Token::Type::TRUE)) {
-        return std::make_unique<Expression::Literal>(true);
-    }
-    else if(parserState.match(Token::Type::NUMBER)) {
-        return std::make_unique<Expression::Literal>(parserState.previous().literalValue);
+    if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::NUMBER})) {
+        return std::make_unique<Expression::Literal>(parserState.previous().lexeme);
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {
         return std::make_unique<Expression::Variable>(parserState.previous());

@@ -186,16 +186,16 @@ private:
 class Literal : public Base
 {
 public:
-    Literal(Token::LiteralValue value)
+    Literal(std::string_view value)
     :  m_Value(value)
     {}
 
     virtual void accept(Visitor &visitor) const final;
 
-    Token::LiteralValue getValue() const { return m_Value; }
+    std::string_view getValue() const { return m_Value; }
 
 private:
-    const Token::LiteralValue m_Value;
+    const std::string_view m_Value;
 };
 
 //---------------------------------------------------------------------------
