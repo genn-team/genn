@@ -11,9 +11,6 @@
 #include <cassert>
 #include <cctype>
 
-// GeNN includes
-#include "type.h"
-
 // Transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/transpilerUtils.h"
@@ -48,7 +45,6 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"long", Token::Type::TYPE_SPECIFIER},
     {"float", Token::Type::TYPE_SPECIFIER},
     {"double", Token::Type::TYPE_SPECIFIER},
-    {"scalar", Token::Type::TYPE_SPECIFIER},
     {"signed", Token::Type::TYPE_SPECIFIER},
     {"unsigned", Token::Type::TYPE_SPECIFIER},
     {"uint8_t", Token::Type::TYPE_SPECIFIER},
@@ -58,11 +54,7 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"uint32_t", Token::Type::TYPE_SPECIFIER},
     {"int32_t", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER}};
-//---------------------------------------------------------------------------
-const std::map<std::set<char>, std::function<Token::LiteralValue(std::string_view, int)>> integerLiteralSuffixParsers{
-    {{}, [](std::string_view input, int base) { return Utils::toCharsThrow<int32_t>(input, base); }},
-    {{'U'}, [](std::string_view input, int base) { return Utils::toCharsThrow<uint32_t>(input, base); }},
-};
+
 //---------------------------------------------------------------------------
 // ScanState
 //---------------------------------------------------------------------------
@@ -70,8 +62,8 @@ const std::map<std::set<char>, std::function<Token::LiteralValue(std::string_vie
 class ScanState
 {
 public:
-    ScanState(std::string_view source, const Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
-        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_ScalarType(scalarType), m_ErrorHandler(errorHandler)
+    ScanState(std::string_view source, const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler)
+        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_TypedefNames(typedefNames), m_ErrorHandler(errorHandler)
     {}
 
     //---------------------------------------------------------------------------
@@ -134,9 +126,8 @@ public:
         m_ErrorHandler.error(getLine(), message);
     }
     
-    const Type::NumericBase *getScalarType() const
-    {
-        return m_ScalarType;
+    bool isTypedefIdentifier(std::string_view lexeme) {
+        return (m_TypedefNames.find(std::string{lexeme}) != m_TypedefNames.cend());
     }
     
 private:
@@ -148,7 +139,7 @@ private:
     size_t m_Line;
 
     const std::string_view m_Source;
-    const Type::NumericBase *m_ScalarType;
+    const std::unordered_set<std::string> m_TypedefNames;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -158,19 +149,17 @@ bool isodigit(char c)
 }
 
 //---------------------------------------------------------------------------
-void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState &scanState, Token::LiteralValue literalValue = Token::LiteralValue())
+void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState &scanState)
 {
-    tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine(), literalValue);
+    tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine());
 }
 //---------------------------------------------------------------------------
-std::set<char> scanIntegerSuffix(ScanState &scanState)
+void scanIntegerSuffix(ScanState &scanState)
 {
     // Read suffix
-    std::set<char> suffix;
     while(std::toupper(scanState.peek()) == 'U' || std::toupper(scanState.peek()) == 'L') {
-        suffix.insert(std::toupper(scanState.advance()));
+        scanState.advance();
     }
-    return suffix;
 }
 //---------------------------------------------------------------------------
 void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens) 
@@ -193,10 +182,8 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
         }
 
         // Add integer token
-        // **NOTE** skip 0x prefix
-        const auto suffix = scanIntegerSuffix(scanState);
-        emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                     integerLiteralSuffixParsers.at(suffix)(scanState.getLexeme().substr(2), 16));
+        scanIntegerSuffix(scanState);
+        emplaceToken(tokens, Token::Type::NUMBER, scanState);
     }
     // Otherwise, if this is an octal integer
     else if(c == '0' && isodigit(scanState.peek())){
@@ -232,50 +219,20 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 }
             }
             
-            // If literal has floating point suffix
-            if(std::tolower(scanState.peek()) == 'f') {
-                // Add single-precision token
-                emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                             Utils::toCharsThrow<float>(scanState.getLexeme()));
-
-                // Advance
-                // **NOTE** we do this AFTER parsing float as std::to_chars doesn't deal with suffixes
+            // Read possible floating point suffix
+            // **NOTE** 'd' is a GeNN extension not standard C
+            if (std::tolower(scanState.peek()) == 'f' || std::tolower(scanState.peek()) == 'd') {
                 scanState.advance();
             }
-            // Otherwise, if literal has double precision suffix
-            // **NOTE** this is a GeNN extension not standard C
-            else if(std::tolower(scanState.peek()) == 'd') {
-                emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                             Utils::toCharsThrow<double>(scanState.getLexeme()));
 
-                // Advance
-                // **NOTE** we do this AFTER parsing float as std::to_chars doesn't deal with suffixes
-                scanState.advance();
-            }
-            // Otherwise, this is a scalar literal
-            else {
-                // If the scalar type is float, add single-precision token
-                if(scanState.getScalarType()->getName() == "float") {
-                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                                 Utils::toCharsThrow<float>(scanState.getLexeme()));
-
-                }
-                // Otherwise, add double-precision token
-                else if(scanState.getScalarType()->getName() == "double") {
-                    emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                                 Utils::toCharsThrow<double>(scanState.getLexeme()));
-                }
-                else {
-                    assert(false);
-                }
-            }
+            // Emplace token
+            emplaceToken(tokens, Token::Type::NUMBER, scanState);
         }
         // Otherwise, number is integer
         else {
             // Add integer token
-            const auto suffix = scanIntegerSuffix(scanState);
-            emplaceToken(tokens, Token::Type::NUMBER, scanState,
-                         integerLiteralSuffixParsers.at(suffix)(scanState.getLexeme(), 10));
+            scanIntegerSuffix(scanState);
+            emplaceToken(tokens, Token::Type::NUMBER, scanState);
         }
     }
 }
@@ -291,6 +248,10 @@ void scanIdentifier(ScanState &scanState, std::vector<Token> &tokens)
     const auto k = keywords.find(scanState.getLexeme());
     if(k != keywords.cend()) {
         emplaceToken(tokens, k->second, scanState);
+    }
+    // Otherwise, if identifier is typedef, add type specifier token
+    else if (scanState.isTypedefIdentifier(scanState.getLexeme())) {
+        emplaceToken(tokens, Token::Type::TYPE_SPECIFIER, scanState);
     }
     // Otherwise, add identifier token
     else {
@@ -466,11 +427,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, const Type::NumericBase *scalarType, ErrorHandlerBase &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 
-    ScanState scanState(source, scalarType, errorHandler);
+    ScanState scanState(source, typedefNames, errorHandler);
 
     // Scan tokens
     while(!scanState.isAtEnd()) {

@@ -20,8 +20,6 @@ namespace GeNN::Transpiler
 {
 struct Token
 {
-    typedef std::variant<std::monostate, bool, float, double, uint32_t, int32_t/*, uint64_t, int64_t*/> LiteralValue;
-
     enum class Type
     {
         // Single-character tokens
@@ -54,14 +52,13 @@ struct Token
         END_OF_FILE,
     };
 
-    Token(Type type, std::string_view lexeme, size_t line, LiteralValue literalValue = LiteralValue())
-        : type(type), lexeme(lexeme), line(line), literalValue(literalValue)
+    Token(Type type, std::string_view lexeme, size_t line)
+        : type(type), lexeme(lexeme), line(line)
     {
     }
 
     const Type type;
     const std::string_view lexeme;
     const size_t line;
-    const LiteralValue literalValue;
 };
 }   // namespace GeNN::Transpiler
