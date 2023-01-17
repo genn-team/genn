@@ -57,11 +57,6 @@
 #define IMPLEMENT_TYPE(TYPE) TYPE *TYPE::s_Instance = NULL
 #define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE)
 
-// **YUCK** on Windows undefine CONST macro (some part of wincrypt)
-#ifdef _WIN32
-    #undef CONST
-#endif
-
 //----------------------------------------------------------------------------
 // GeNN::Type::TypeTraits
 //----------------------------------------------------------------------------
@@ -78,7 +73,7 @@ struct TypeTraits
 //----------------------------------------------------------------------------
 enum class Qualifier : unsigned int
 {
-    CONST   = (1 << 0)
+    CONSTANT   = (1 << 0)
 };
 
 inline bool operator & (Qualifier a, Qualifier b)

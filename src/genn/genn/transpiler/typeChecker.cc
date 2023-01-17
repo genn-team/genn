@@ -282,7 +282,7 @@ public:
         const auto rightType = evaluateType(cast.getExpression());
         
         // If const is being removed
-        if (rightType->hasQualifier(Type::Qualifier::CONST) && !cast.getType()->hasQualifier(Type::Qualifier::CONST)) {
+        if (rightType->hasQualifier(Type::Qualifier::CONSTANT) && !cast.getType()->hasQualifier(Type::Qualifier::CONSTANT)) {
             m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
             throw TypeCheckError();
         }
@@ -316,8 +316,8 @@ public:
         if (trueNumericType && falseNumericType) {
             // **TODO** check behaviour
             m_Type = Type::getCommonType(trueNumericType, falseNumericType);
-            if(trueType->hasQualifier(Type::Qualifier::CONST) || falseType->hasQualifier(Type::Qualifier::CONST)) {
-                m_Type = m_Type->getQualifiedType(Type::Qualifier::CONST);
+            if(trueType->hasQualifier(Type::Qualifier::CONSTANT) || falseType->hasQualifier(Type::Qualifier::CONSTANT)) {
+                m_Type = m_Type->getQualifiedType(Type::Qualifier::CONSTANT);
             }
         }
         else {
@@ -585,7 +585,7 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
                                           ErrorHandlerBase &errorHandler, bool initializer) const
 {
     // If existing type is a const qualified and isn't being initialized, give error
-    if(!initializer && existingType->hasQualifier(Type::Qualifier::CONST)) {
+    if(!initializer && existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
         errorHandler.error(name, "Assignment of read-only variable");
         throw TypeCheckError();
     }
@@ -599,7 +599,7 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
         // If we're initialising a pointer with another pointer
         if (pointerAssignedType && pointerExistingType) {
             // If we're trying to assign a pointer to a const value to a pointer
-            if (assignedType->hasQualifier(Type::Qualifier::CONST) && !existingType->hasQualifier(Type::Qualifier::CONST)) {
+            if (assignedType->hasQualifier(Type::Qualifier::CONSTANT) && !existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
                 errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
                 throw TypeCheckError();
             }
@@ -665,7 +665,7 @@ const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type,
                                           const Type::Base *existingType, ErrorHandlerBase &errorHandler) const
 {
     // If existing type has a constant qualifier, give errors
-    if(existingType->hasQualifier(Type::Qualifier::CONST)) {
+    if(existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
         errorHandler.error(name, "Increment/decrement of read-only variable");
         throw TypeCheckError();
     }

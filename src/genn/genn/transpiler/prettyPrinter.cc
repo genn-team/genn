@@ -270,7 +270,7 @@ private:
             const auto *pointerType = dynamic_cast<const GeNN::Type::Pointer*>(type);
             if(pointerType) {
                 // If pointer has const qualifier, add const
-                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONST)) {
+                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
                     tokens.push_back("const");
                 }
                 
@@ -286,7 +286,7 @@ private:
                 tokens.push_back(type->getName());
                 
                 
-                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONST)) {
+                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
                     tokens.push_back("const");
                 }
                 break;

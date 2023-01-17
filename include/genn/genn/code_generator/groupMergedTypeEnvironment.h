@@ -132,7 +132,7 @@ public:
 
     void definePointerField(const Type::NumericBase *type, const std::string &name,const std::string &prefix, VarAccessMode access)
     {
-        const auto *qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONST) : type;
+        const auto *qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONSTANT) : type;
         defineField(qualifiedType, name,
                     type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
     }
@@ -144,7 +144,7 @@ public:
         // Loop through params
         for(const auto &p : paramNames) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, p)) {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), p + suffix,
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix,
                             m_ScalarType, p + suffix,
                             [p, getParamValues](const auto &g, size_t)
                             {
@@ -154,7 +154,7 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), p + suffix);
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix);
             }
         }
     }
@@ -166,7 +166,7 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, d.name)) {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), d.name + suffix,
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix,
                             m_ScalarType, d.name + suffix,
                             [d, getDerivedParamValues](const auto &g, size_t)
                             {
@@ -175,7 +175,7 @@ public:
                             });
             }
             else {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONST), d.name + suffix);
+                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix);
             }
         }
     }
@@ -196,7 +196,7 @@ public:
             const auto *type = Type::parseNumeric(v.type, m_ScalarType);
             
             // If variable access is read-only, qualify type with const
-            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONST) : type;
+            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONSTANT) : type;
             defineField(qualifiedType, v.name,
                         type->getPointerType(), v.name,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 

@@ -201,8 +201,8 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
         // Otherwise, if type is a qualifier
         else if(parserState.previous().type == Token::Type::TYPE_QUALIFIER) {
             // Add qualifier lexeme to correct list
-            std::set<std::string_view> &typeQualifiers = pointerTypeQualifiers.empty() ? typeQualifiers : pointerTypeQualifiers.back();
-            if(!typeQualifiers.insert(parserState.previous().lexeme).second) {
+            std::set<std::string_view> &qualifiers = pointerTypeQualifiers.empty() ? typeQualifiers : pointerTypeQualifiers.back();
+            if(!qualifiers.insert(parserState.previous().lexeme).second) {
                 parserState.error(parserState.previous(), "duplicate type qualifier");
             }
         }
@@ -222,13 +222,13 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
     // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier
     if(!typeQualifiers.empty()) {
-        type = type->getQualifiedType(Qualifier::CONST);
+        type = type->getQualifiedType(Qualifier::CONSTANT);
     }
     
     // Loop through levels of pointer indirection
     // **THINK** this relies of const being only qualifier
     for(const auto &p : pointerTypeQualifiers) {
-        type = type->getPointerType(p.empty() ? Qualifier{0} : Qualifier::CONST);
+        type = type->getPointerType(p.empty() ? Qualifier{0} : Qualifier::CONSTANT);
     }
     return type;
 }
