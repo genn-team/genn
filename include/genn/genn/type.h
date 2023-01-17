@@ -11,6 +11,8 @@
 #include <string_view>
 #include <typeinfo>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // GeNN includes
@@ -37,7 +39,7 @@
     {                                                                                                       \
         DECLARE_TYPE(TYPE)                                                                                  \
         TYPE(Qualifier qualifiers = Qualifier{0}) : Numeric<UNDERLYING_TYPE, RANK>(qualifiers){}            \
-        virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                               \
+        virtual std::string getName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }                               \
         virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
     };                                                                                                      \
     template<>                                                                                              \
@@ -67,6 +69,8 @@ template<typename T>
 struct TypeTraits
 {
 };
+
+typedef std::unordered_map<std::string, const class Base*> TypeContext;
 
 //----------------------------------------------------------------------------
 // GeNN::Type::Qualifier
@@ -99,13 +103,13 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     //! Get the (unqualified) name of this type
-    virtual std::string getName() const = 0;
-    
-    //! Return new version of this type with specified qualifiers
-    virtual Base *getQualifiedType(Qualifier qualifiers) const = 0;
+    virtual std::string getName(const TypeContext &context) const = 0;
     
     //! Get size of this type in bytes
-    virtual size_t getSizeBytes() const = 0;
+    virtual size_t getSizeBytes(const TypeContext &context) const = 0;
+
+    //! Return new version of this type with specified qualifiers
+    virtual Base *getQualifiedType(Qualifier qualifiers) const = 0;
     
     //------------------------------------------------------------------------
     // Public API
@@ -139,10 +143,10 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName() const{ return getValueType()->getName() + "*";}
+    virtual std::string getName(const TypeContext &context) const{ return getValueType()->getName(context) + "*";}
+    virtual size_t getSizeBytes(const TypeContext&) const final{ return sizeof(char*); }
     virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new Pointer(m_ValueType, qualifiers); }
-    virtual size_t getSizeBytes() const final{ return sizeof(char*); }
-
+    
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -166,12 +170,12 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual int getRank() const = 0;
-    virtual double getMin() const = 0;
-    virtual double getMax() const = 0;
-    virtual double getLowest() const = 0;
-    virtual bool isSigned() const = 0;
-    virtual bool isIntegral() const = 0;
+    virtual int getRank(const TypeContext&) const = 0;
+    virtual double getMin(const TypeContext&) const = 0;
+    virtual double getMax(const TypeContext&) const = 0;
+    virtual double getLowest(const TypeContext&) const = 0;
+    virtual bool isSigned(const TypeContext&) const = 0;
+    virtual bool isIntegral(const TypeContext&) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -186,17 +190,56 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual size_t getSizeBytes() const final{ return sizeof(T); }
+    virtual size_t getSizeBytes(const TypeContext&) const final{ return sizeof(T); }
 
     //------------------------------------------------------------------------
     // NumericBase virtuals
     //------------------------------------------------------------------------
-    virtual int getRank() const final { return Rank; }
-    virtual double getMin() const final { return std::numeric_limits<T>::min(); }
-    virtual double getMax() const final { return std::numeric_limits<T>::max(); }
-    virtual double getLowest() const final { return std::numeric_limits<T>::lowest(); }
-    virtual bool isSigned() const final { return std::is_signed<T>::value; }
-    virtual bool isIntegral() const final { return std::is_integral<T>::value; }
+    virtual int getRank(const TypeContext&) const final { return Rank; }
+    virtual double getMin(const TypeContext&) const final { return std::numeric_limits<T>::min(); }
+    virtual double getMax(const TypeContext&) const final { return std::numeric_limits<T>::max(); }
+    virtual double getLowest(const TypeContext&) const final { return std::numeric_limits<T>::lowest(); }
+    virtual bool isSigned(const TypeContext&) const final { return std::is_signed<T>::value; }
+    virtual bool isIntegral(const TypeContext&) const final { return std::is_integral<T>::value; }
+};
+
+//----------------------------------------------------------------------------
+// GeNN::Type::NumericTypedef
+//----------------------------------------------------------------------------
+class NumericTypedef : public NumericBase
+{
+public:
+    NumericTypedef(const std::string &name, Qualifier qualifiers = Qualifier{0}) 
+    :   m_Name(name), NumericBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const TypeContext &context) const final;
+    virtual size_t getSizeBytes(const TypeContext &context) const final;
+
+    virtual Base *getQualifiedType(Qualifier qualifiers) const final;
+
+    //------------------------------------------------------------------------
+    // NumericBase virtuals
+    //------------------------------------------------------------------------
+    virtual int getRank(const TypeContext &context) const final;
+    virtual double getMin(const TypeContext &context) const final;
+    virtual double getMax(const TypeContext &context) const final;
+    virtual double getLowest(const TypeContext &context) const final;
+    virtual bool isSigned(const TypeContext &context) const final;
+    virtual bool isIntegral(const TypeContext &context) const final;
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    const Type::NumericBase *getNumeric(const TypeContext &context) const;
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::string m_Name;
 };
 
 //----------------------------------------------------------------------------
@@ -226,15 +269,15 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName() const final
+    virtual std::string getName(const TypeContext &context) const final
     {
-        std::string typeName = getReturnType()->getName() + "(";
-        updateTypeName<ArgTypes...>(typeName);
+        std::string typeName = getReturnType()->getName(context) + "(";
+        updateTypeName<ArgTypes...>(context, typeName);
         typeName += ")";
         return typeName;
     }
     
-    virtual size_t getSizeBytes() const final
+    virtual size_t getSizeBytes(const TypeContext&) const final
     {
         assert(false);
         return 0;
@@ -262,15 +305,15 @@ private:
     //------------------------------------------------------------------------
 
     template <typename T, typename... Args>
-    static void updateTypeName(std::string &typeName)
+    static void updateTypeName(const TypeContext &context, std::string &typeName)
     {
         // Add argument typename to string
-        typeName += T::getInstance()->getName();
+        typeName += T::getInstance()->getName(context);
 
         // If there are more arguments left in pack, add comma and recurse
         if constexpr (sizeof...(Args)) {
             typeName += ", ";
-            updateTypeName<Args...>(typeName);
+            updateTypeName<Args...>(context, typeName);
         }
     }
 
@@ -310,17 +353,17 @@ DECLARE_FOREIGN_FUNCTION_TYPE(Exp, Double, Double);
 DECLARE_FOREIGN_FUNCTION_TYPE(Sqrt, Double, Double);
 
 //! Parse a numeric type
-const NumericBase *parseNumeric(std::string_view typeString, const NumericBase *scalarType);
+const NumericBase *parseNumeric(std::string_view typeString, const std::unordered_set<std::string> &typedefNames);
 
 //! Parse a numeric pointer type
-const Pointer *parseNumericPtr(std::string_view typeString, const NumericBase *scalarType);
+const Pointer *parseNumericPtr(std::string_view typeString, const std::unordered_set<std::string> &typedefNames);
 
 //! Look up numeric type based on set of type specifiers
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const NumericBase *scalarType);
+const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers, const std::unordered_set<std::string> &typedefNames);
 
 //! Apply C type promotion rules to numeric type
-const NumericBase *getPromotedType(const NumericBase *type);
+const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &context);
 
 //! Apply C rules to get common type between numeric types a and b
-const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b);
+const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b, const TypeContext &context);
 }   // namespace GeNN::Type
