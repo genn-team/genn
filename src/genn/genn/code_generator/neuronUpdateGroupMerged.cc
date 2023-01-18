@@ -11,7 +11,7 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------
-NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
                                                  const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, precision, timePrecision, backend, false, groups)
 {
@@ -80,7 +80,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
             for(const auto &var : sgPreVars) {
                 // If variable is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + var.name + ")") != std::string::npos) {
-                    addField(parseNumeric(var.type)->getPointerType(), var.name + "EventThresh" + std::to_string(i),
+                    addField(var.type->getPointerType(), var.name + "EventThresh" + std::to_string(i),
                              [&backend, eventThresholdSGs, var, i](const auto&, size_t groupIndex)
                              {
                                  return backend.getDeviceVarPrefix() + var.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -247,7 +247,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         // Apply substitutions to value
         std::string value = a.value;
         neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
-        value = ensureFtype(value, modelMerged.getModel().getPrecision());
+        //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }
@@ -304,12 +304,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         // Apply substitutions to current converter code
         std::string psCode = psm->getApplyInputCode();
         inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : merged " + std::to_string(i));
-        psCode = ensureFtype(psCode, model.getPrecision());
+        //psCode = ensureFtype(psCode, model.getPrecision());
 
         // Apply substitutions to decay code
         std::string pdCode = psm->getDecayCode();
         inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : merged " + std::to_string(i));
-        pdCode = ensureFtype(pdCode, model.getPrecision());
+        //pdCode = ensureFtype(pdCode, model.getPrecision());
 
         if (!psm->getSupportCode().empty() && backend.supportsNamespace()) {
             os << "using namespace " << modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()) <<  ";" << std::endl;
@@ -383,7 +383,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 
         std::string iCode = csm->getInjectionCode();
         currSourceSubs.applyCheckUnreplaced(iCode, "injectionCode : merged" + std::to_string(i));
-        iCode = ensureFtype(iCode, model.getPrecision());
+        //iCode = ensureFtype(iCode, model.getPrecision());
         os << iCode << std::endl;
 
         // Write read/write variables back to global memory
@@ -405,7 +405,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         os << "// test whether spike condition was fulfilled previously" << std::endl;
 
         neuronSubs.applyCheckUnreplaced(thCode, "thresholdConditionCode : merged" + std::to_string(getIndex()));
-        thCode= ensureFtype(thCode, model.getPrecision());
+        //thCode= ensureFtype(thCode, model.getPrecision());
 
         if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
             thCode = disambiguateNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
@@ -425,7 +425,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     os << "// calculate membrane potential" << std::endl;
     std::string sCode = nm->getSimCode();
     neuronSubs.applyCheckUnreplaced(sCode, "simCode : merged" + std::to_string(getIndex()));
-    sCode = ensureFtype(sCode, model.getPrecision());
+    //sCode = ensureFtype(sCode, model.getPrecision());
 
     if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
         sCode = disambiguateNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
@@ -434,7 +434,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     os << sCode << std::endl;
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
-    generateWUVarUpdate(os, popSubs, "WUPre", modelMerged.getModel().getPrecision(), "_pre", true, batchSize,
+    generateWUVarUpdate(os, popSubs, "WUPre", "_pre", true, batchSize,
                         getSortedArchetypeOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
                         &WeightUpdateModels::Base::getPreVars, &WeightUpdateModels::Base::getPreDynamicsCode,
                         &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
@@ -442,7 +442,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    generateWUVarUpdate(os, popSubs, "WUPost", modelMerged.getModel().getPrecision(), "_post", true, batchSize,
+    generateWUVarUpdate(os, popSubs, "WUPost", "_post", true, batchSize,
                         getSortedArchetypeInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
                         &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostDynamicsCode,
                         &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
@@ -477,7 +477,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 
             std::string eCode = spkEventCond.eventThresholdCode;
             spkEventCondSubs.applyCheckUnreplaced(eCode, "neuronSpkEvntCondition : merged" + std::to_string(getIndex()));
-            eCode = ensureFtype(eCode, model.getPrecision());
+            //eCode = ensureFtype(eCode, model.getPrecision());
 
             // Open scope for spike-like event test
             os << CodeStream::OB(31);
@@ -537,7 +537,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if (!nm->getResetCode().empty()) {
                 std::string rCode = nm->getResetCode();
                 neuronSubs.applyCheckUnreplaced(rCode, "resetCode : merged" + std::to_string(getIndex()));
-                rCode = ensureFtype(rCode, model.getPrecision());
+                //rCode = ensureFtype(rCode, model.getPrecision());
 
                 os << "// spike reset code" << std::endl;
                 os << rCode << std::endl;
@@ -634,7 +634,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase&, CodeStream
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-    generateWUVarUpdate(os, popSubs, "WUPre", modelMerged.getModel().getPrecision(), "_pre", false, batchSize,
+    generateWUVarUpdate(os, popSubs, "WUPre", "_pre", false, batchSize,
                         getSortedArchetypeOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
                         &WeightUpdateModels::Base::getPreVars, &WeightUpdateModels::Base::getPreSpikeCode,
                         &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous, 
@@ -642,7 +642,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase&, CodeStream
     
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    generateWUVarUpdate(os, popSubs, "WUPost", modelMerged.getModel().getPrecision(), "_post", false, batchSize,
+    generateWUVarUpdate(os, popSubs, "WUPost", "_post", false, batchSize,
                         getSortedArchetypeInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
                         &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostSpikeCode,
                         &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
@@ -716,7 +716,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars[v];
-            addField(Type::parseNumeric(var.type)->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+            addField(var.type->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
                      [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto &, size_t groupIndex)
                      {
                          const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -767,7 +767,7 @@ void NeuronUpdateGroupMerged::addNeuronModelSubstitutions(Substitutions &substit
 }
 //--------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
-                                                  const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
+                                                  const std::string &fieldPrefixStem, const std::string &sourceSuffix, 
                                                   bool useLocalNeuronVars, unsigned int batchSize, 
                                                   const std::vector<SynapseGroupInternal*> &archetypeSyn,
                                                   unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
@@ -821,7 +821,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
 
             // Perform standard substitutions
             subs.applyCheckUnreplaced(code, "spikeCode : merged" + std::to_string(i));
-            code = ensureFtype(code, precision);
+            //code = ensureFtype(code, precision);
             os << code;
 
             // Write back presynaptic variables into global memory

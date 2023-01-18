@@ -55,7 +55,7 @@ template<typename Q, typename P, typename D>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::unordered_map<std::string, Models::VarInit> &varInitialisers, 
                           const std::string &fieldSuffix, const std::string &countMember, 
-                          size_t numDelaySlots, const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
+                          size_t numDelaySlots, const size_t groupIndex, const Type::NumericBase *scalarType, unsigned int batchSize,
                           Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
     const std::string count = "group->" + countMember;
@@ -82,7 +82,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
             if (getVarAccessDuplication(var.access) == VarAccessDuplication::SHARED_NEURON) {
                 backend.genPopVariableInit(
                     os, varSubs,
-                    [&var, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, numDelaySlots, isVarQueueRequired]
+                    [&var, &varInit, &fieldSuffix, scalarType, batchSize, groupIndex, numDelaySlots, isVarQueueRequired]
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
@@ -90,7 +90,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
-                        code = ensureFtype(code, ftype);
+                        //code = ensureFtype(code, scalarType);
                         os << code << std::endl;
 
                         // Fill value across all delay slots and batches
@@ -127,9 +127,9 @@ template<typename P, typename D>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::unordered_map<std::string, Models::VarInit> &varInitialisers, 
                           const std::string &fieldSuffix, const std::string &countMember, const size_t groupIndex, 
-                          const std::string &ftype, unsigned int batchSize, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                          const Type::NumericBase *scalarType, unsigned int batchSize, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
-    genInitNeuronVarCode(os, backend, popSubs, vars, varInitialisers, fieldSuffix, countMember, 0, groupIndex, ftype, batchSize,
+    genInitNeuronVarCode(os, backend, popSubs, vars, varInitialisers, fieldSuffix, countMember, 0, groupIndex, scalarType, batchSize,
                          [](const std::string&){ return false; }, 
                          isParamHeterogeneousFn,
                          isDerivedParamHeterogeneousFn);
@@ -139,7 +139,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 template<typename P, typename D, typename G>
 void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs, 
                       const Models::Base::VarVec &vars, const std::unordered_map<std::string, Models::VarInit> &varInitialisers, 
-                      const std::string &stride, const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
+                      const std::string &stride, const size_t groupIndex, const Type::NumericBase *scalarType, unsigned int batchSize,
                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, G genSynapseVariableRowInitFn)
 {
     for (const auto &var : vars) {
@@ -151,7 +151,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(os, popSubs,
-                [&var, &varInit, &ftype, &stride, batchSize, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
+                [&var, &varInit, &stride, batchSize, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, scalarType]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
@@ -168,7 +168,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
                     varSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(groupIndex));
-                    code = ensureFtype(code, ftype);
+                    //code = ensureFtype(code, scalarType);
                     os << code << std::endl;
 
                     // Fill value across all batches
@@ -185,7 +185,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, precision, timePrecision, backend, true, groups)
 {
@@ -443,7 +443,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(parseNumeric(var.type)->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+                addField(var.type->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto&, size_t groupIndex)
                          {
                              const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -658,7 +658,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
             std::string code = varInit.getSnippet()->getCode();
             //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
             popSubs.apply(code);
-            code = ensureFtype(code, modelMerged.getModel().getPrecision());
+            //code = ensureFtype(code, modelMerged.getModel().getPrecision());
             os << code << std::endl;
 
             // Fill value across all batches
@@ -668,7 +668,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
     }
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Substitutions &popSubs, const std::string &ftype, bool rowNotColumns) const
+void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Substitutions &popSubs, const Type::NumericBase *scalarType, bool rowNotColumns) const
 {
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
     const auto *snippet = connectInit.getSnippet();
@@ -690,7 +690,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         // Apply substitutions to value
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(getIndex()));
-        value = ensureFtype(value, ftype);
+        //value = ensureFtype(value, ftype);
 
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }
@@ -702,7 +702,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         std::string code = rowNotColumns ? snippet->getRowBuildCode() : snippet->getColBuildCode();
         popSubs.addVarNameSubstitution(stateVars);
         popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + std::to_string(getIndex()));
-        code = ensureFtype(code, ftype);
+        //code = ensureFtype(code, ftype);
 
         // Write out code
         os << code << std::endl;
@@ -715,7 +715,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
 //----------------------------------------------------------------------------
 const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnectivityHostInit";
 //------------------------------------------------------------------------
-SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
+SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, groups)
 {
@@ -826,7 +826,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         }
         std::string code = connectInit.getSnippet()->getHostInitCode();
         subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(getIndex()));
-        code = ensureFtype(code, modelMerged.getModel().getPrecision());
+        //code = ensureFtype(code, modelMerged.getModel().getPrecision());
 
         // Write out code
         os << code << std::endl;
@@ -857,7 +857,7 @@ bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamRefere
 //----------------------------------------------------------------------------
 const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
-CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
@@ -892,7 +892,7 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeS
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
@@ -1002,7 +1002,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Cod
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSparseInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
 {
@@ -1074,7 +1074,7 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdatePreInitGroupMerged::name = "CustomConnectivityUpdatePreInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                        const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdapter>(index, precision, backend, groups)
 {
@@ -1122,7 +1122,7 @@ void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase 
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdatePostInitGroupMerged::name = "CustomConnectivityUpdatePostInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdapter>(index, precision, backend, groups)
 {
@@ -1163,7 +1163,7 @@ void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdateSparseInitGroupMerged::name = "CustomConnectivityUpdateSparseInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                              const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdateVarAdapter>(index, precision, backend, groups)
 {

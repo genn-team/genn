@@ -36,31 +36,15 @@
 namespace GeNN
 {
 ModelSpec::ModelSpec()
-:   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
+:   m_Precision(Type::Float::getInstance()), m_TimePrecision(nullptr), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
     m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
-    setPrecision(ScalarPrecision::FLOAT);
 }
 // ---------------------------------------------------------------------------
 ModelSpec::~ModelSpec() 
 {
-}
-// ---------------------------------------------------------------------------
-std::string ModelSpec::getTimePrecision() const
-{
-    // If time precision is set to match model precision
-    if(m_TimePrecision == TimePrecision::DEFAULT) {
-        return getPrecision();
-    }
-    // Otherwise return appropriate type
-    else if(m_TimePrecision == TimePrecision::FLOAT) {
-        return "float";
-    }
-    else {
-        return "double";
-    }
 }
 // ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const
@@ -202,21 +186,6 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
     }
 }
 // ---------------------------------------------------------------------------
-void ModelSpec::setPrecision(ScalarPrecision scalarPrecision)
-{
-    switch (scalarPrecision) {
-    case ScalarPrecision::FLOAT:
-        m_Precision = "float";
-        break;
-    case ScalarPrecision::DOUBLE:
-        m_Precision = "double"; // not supported by compute capability < 1.3
-        break;
-    case ScalarPrecision::LONG_DOUBLE:
-        m_Precision = "long double"; // not supported by CUDA at the moment.
-        break;    
-    }
-}
-// ---------------------------------------------------------------------------
 void ModelSpec::finalize()
 {
     // NEURON GROUPS
@@ -322,19 +291,6 @@ void ModelSpec::finalize()
     }
 }
 // ---------------------------------------------------------------------------
-std::string ModelSpec::scalarExpr(double val) const
-{
-    if (m_Precision == "float") {
-        return Utils::writePreciseString<float>(val) + "f";
-    }
-    else if (m_Precision == "double") {
-        return Utils::writePreciseString(val);
-    }
-    else {
-        throw std::runtime_error("Unrecognised floating-point type.");
-    }
-}
-// ---------------------------------------------------------------------------
 bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
@@ -393,8 +349,8 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
     boost::uuids::detail::sha1 hash;
 
     Utils::updateHash(getName(), hash);
-    Utils::updateHash(getPrecision(), hash);
-    Utils::updateHash(getTimePrecision(), hash);
+    Utils::updateHash(getPrecision()->getName(), hash);
+    Utils::updateHash(getTimePrecision()->getName(), hash);
     Utils::updateHash(getDT(), hash);
     Utils::updateHash(isTimingEnabled(), hash);
     Utils::updateHash(getBatchSize(), hash);

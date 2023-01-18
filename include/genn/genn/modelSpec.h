@@ -231,10 +231,10 @@ public:
     void setName(const std::string &name){ m_Name = name; }
 
     //! Set numerical precision for floating point
-    void setPrecision(ScalarPrecision scalarPrecision);
+    void setPrecision(const Type::NumericBase *precision){ m_Precision = precision; }
 
     //! Set numerical precision for time
-    void setTimePrecision(TimePrecision timePrecision){ m_TimePrecision = timePrecision; }
+    void setTimePrecision(const Type::NumericBase *timePrecision){ m_TimePrecision = timePrecision; }
 
     //! Set the integration step size of the model
     void setDT(double dt){ m_DT = dt; }
@@ -278,10 +278,10 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     //! Gets the floating point numerical precision
-    const std::string &getPrecision() const{ return m_Precision; }
+    const Type::NumericBase *getPrecision() const{ return m_Precision; }
 
     //! Gets the floating point numerical precision used to represent time
-    std::string getTimePrecision() const;
+    const Type::NumericBase *getTimePrecision() const{ return m_TimePrecision ? m_TimePrecision : m_Precision; }
 
     //! Gets the model integration step size
     double getDT() const { return m_DT; }
@@ -665,9 +665,6 @@ protected:
     //--------------------------------------------------------------------------
     // Protected const methods
     //--------------------------------------------------------------------------
-    //! Get the string literal that should be used to represent a value in the model's floating-point type
-    std::string scalarExpr(double) const;
-
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
@@ -731,10 +728,10 @@ private:
     std::string m_Name;
 
     //! Type of floating point variables (float, double, ...; default: float)
-    std::string m_Precision;
+    const Type::NumericBase *m_Precision;
 
     //! Type of floating point variables used to store time
-    TimePrecision m_TimePrecision;
+    const Type::NumericBase *m_TimePrecision;
 
     //! The integration time step of the model
     double m_DT;

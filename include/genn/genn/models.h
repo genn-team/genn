@@ -28,6 +28,10 @@ namespace CodeGenerator
 {
 class BackendBase;
 }
+namespace Type
+{
+class NumericBase;
+}
 }
 
 //----------------------------------------------------------------------------
@@ -54,35 +58,33 @@ public:
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct Var
     {
-        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
+        Var(const std::string &n, const Type::NumericBase *t, VarAccess a) : name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
+        Var(const std::string &n, const Type::NumericBase *t) : Var(n, t, VarAccess::READ_WRITE)
         {}
+        Var(const std::string &n, const std::string &t, VarAccess a);
+        Var(const std::string &n, const std::string &t);
 
-        bool operator == (const Var &other) const
-        {
-            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
-        }
+        bool operator == (const Var &other) const;
 
         const std::string name;
-        const std::string type;
+        const Type::NumericBase *type;
         const VarAccess access;
     };
 
     struct VarRef
     {
-        VarRef(const std::string &n, const std::string &t, VarAccessMode a) : name(n), type(t), access(a)
+        VarRef(const std::string &n, const Type::NumericBase *t, VarAccessMode a) : name(n), type(t), access(a)
         {}
-        VarRef(const std::string &n, const std::string &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
+        VarRef(const std::string &n, const Type::NumericBase *t) : VarRef(n, t, VarAccessMode::READ_WRITE)
         {}
+        VarRef(const std::string &n, const std::string &t, VarAccessMode a);
+        VarRef(const std::string &n, const std::string &t);
 
-        bool operator == (const VarRef &other) const
-        {
-            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
-        }
+        bool operator == (const VarRef &other) const;
 
         const std::string name;
-        const std::string type;
+        const Type::NumericBase *type;
         const VarAccessMode access;
     };
 

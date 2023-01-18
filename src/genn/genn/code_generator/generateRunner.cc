@@ -152,15 +152,15 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 //-------------------------------------------------------------------------
 void genVarGetterScope(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
                        VarLocation loc, const std::string &description, 
-                       const std::string &type, std::function<void()> handler)
+                       const std::string &typeName, std::function<void()> handler)
 {
     // If this variable has a location that allows pushing and pulling and hence getting a host pointer
     if(canPushPullVar(loc)) {
         // Export getter
-        definitionsFunc << "EXPORT_FUNC " << type << " get" << description << "(unsigned int batch = 0); " << std::endl;
+        definitionsFunc << "EXPORT_FUNC " << typeName << " get" << description << "(unsigned int batch = 0); " << std::endl;
 
         // Define getter
-        runnerGetterFunc << type << " get" << description << "(" << "unsigned int batch" << ")";
+        runnerGetterFunc << typeName << " get" << description << "(" << "unsigned int batch" << ")";
         {
             CodeStream::Scope a(runnerGetterFunc);
             handler();
@@ -251,10 +251,10 @@ void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, C
 }
 //-------------------------------------------------------------------------
 void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc,
-                     CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                     CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
-                     VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
-                     std::vector<std::string> &statePushPullFunction)
+                 CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                 CodeStream &push, CodeStream &pull, const Type::Base *type, const std::string &name,
+                 VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
+                 std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
     genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
@@ -1087,7 +1087,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             // Write getter to get access to correct pointer
             const bool delayRequired = (n.second.isVarQueueRequired(var.name) &&  n.second.isDelayRequired());
             genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(var.name),
-                              "Current" + var.name + n.first, var.type + "*",
+                              "Current" + var.name + n.first, var.type->getPointerType()->getResolvedName(modelMerged.getTypeContext()),
                               [&]()
                               {
                                   runnerGetterFunc << "return " << var.name << n.first;
@@ -1327,7 +1327,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
 
             // Target indices
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             s.second.getSparseIndType()->getName(modelMerged.getTypeContext()), "ind" + s.second.getName(), varLoc, size, mem);
+                             s.second.getSparseIndType()->getResolvedName(modelMerged.getTypeContext()), "ind" + s.second.getName(), varLoc, size, mem);
 
             // **TODO** remap is not always required
             if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {

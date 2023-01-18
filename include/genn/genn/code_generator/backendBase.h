@@ -243,9 +243,9 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
+    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const Type::Base *type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableImplementation(CodeStream &os, const Type::Base *type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableAllocation(CodeStream &os, const Type::Base *type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -277,17 +277,17 @@ public:
     virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePush(CodeStream &os, const Type::Base *type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
 
     //! Generate code for pulling a variable from the 'device'
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &os, const Type::Base *type, const std::string &name, VarLocation loc, size_t count) const = 0;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const Type::Base *type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const = 0;
 
     //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const Type::Base *type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const = 0;
 
     //! Generate code for pushing true spikes emitted by a neuron group in the current timestep to the 'device'
@@ -402,14 +402,14 @@ public:
     //--------------------------------------------------------------------------
     //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+                             const Type::Base *type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
         genVariablePush(push, type, name, loc, autoInitialized, count);
         genVariablePull(pull, type, name, loc, count);
     }
 
     //! Helper function to generate matching push and pull functions for the current state of a variable
-    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, const std::string &type, 
+    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, const Type::Base *type, 
                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
     {
         genCurrentVariablePush(push, ng, type, name, loc, batchSize);
@@ -418,10 +418,10 @@ public:
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
+                  const Type::Base *type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
     {
-        genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
-        genVariableImplementation(runner, type + "*", name, loc);
+        genVariableDefinition(definitions, definitionsInternal, type->getPointerType(), name, loc);
+        genVariableImplementation(runner, type->getPointerType(), name, loc);
         genVariableFree(free, name, loc);
         genVariableAllocation(allocations, type, name, loc, count, memAlloc);
     }

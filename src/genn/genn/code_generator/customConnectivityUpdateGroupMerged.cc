@@ -12,7 +12,7 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityUpdateGroupMergedBase
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const std::string &precision,
+CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::NumericBase *precision,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
 {
@@ -60,7 +60,7 @@ bool CustomConnectivityUpdateGroupMergedBase::isDerivedParamHeterogeneous(const 
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdateGroupMerged::name = "CustomConnectivityUpdate";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
 {
@@ -166,7 +166,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(parseNumeric(getSortedArchetypeDependentVars().at(i).getVar().type)->getPointerType(), "_dependentVar" + std::to_string(i), 
+        addField(getSortedArchetypeDependentVars().at(i).getVar().type->getPointerType(), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -418,7 +418,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Apply substitutons to row update code and write out
     std::string code = cm->getRowUpdateCode();
     updateSubs.applyCheckUnreplaced(code, "custom connectivity update : merged" + std::to_string(getIndex()));
-    code = ensureFtype(code, modelMerged.getModel().getPrecision());
+    //code = ensureFtype(code, Type::modelMerged.getModel().getPrecision());
     os << code;
 }
 
@@ -427,7 +427,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnectivityHostUpdate";
 //----------------------------------------------------------------------------
-CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
 {
@@ -516,7 +516,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Apply substitutons to row update code and write out
         std::string code = cm->getHostUpdateCode();
         subs.applyCheckUnreplaced(code, "custom connectivity host update : merged" + std::to_string(getIndex()));
-        code = ensureFtype(code, modelMerged.getModel().getPrecision());
+        //code = ensureFtype(code, modelMerged.getModel().getPrecision());
         os << code;
     }
 }
@@ -534,7 +534,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genExtraGlobalParamPush(push, v.type + "*", v.name,
+            backend.genExtraGlobalParamPush(push, v.type->getPointerType(), v.name,
                                             loc, count, "group->");
 
             // Add substitution
@@ -544,7 +544,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genExtraGlobalParamPull(pull, v.type + "*", v.name,
+            backend.genExtraGlobalParamPull(pull, v.->getPointerType(), v.name,
                                             loc, count, "group->");
 
             // Add substitution
@@ -562,13 +562,13 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     for(const auto &v : vars) {
         // If var is located on the host
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(parseNumeric(v.type)->getPointerType(), v.name,
+            addField(v.type->getPointerType(), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(parseNumeric(v.type)->getPointerType(), backend.getDeviceVarPrefix() + v.name,
+                addField(v.type->getPointerType(), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

@@ -11,7 +11,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ private:
 class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::Init, "", groups)
     {}
@@ -129,7 +129,7 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
     {}
@@ -162,7 +162,7 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
     {}
@@ -195,7 +195,7 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Generate either row or column connectivity init code
-    void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const std::string &ftype, bool rowNotColumns) const;
+    void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const Type::NumericBase *scalarType, bool rowNotColumns) const;
 };
 
 
@@ -205,7 +205,7 @@ private:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityHostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -249,7 +249,7 @@ template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 protected:
-    CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+    CustomUpdateInitGroupMergedBase(size_t index, const Type::NumericBase *precision, const BackendBase &backend,
                                     const std::vector<std::reference_wrapper<const G>> &groups)
     :   GroupMerged<G>(index, precision, groups)
     {
@@ -259,7 +259,7 @@ protected:
             // If we're not initialising or if there is initialization code for this variable
             const auto &varInit = archetypeAdaptor.getVarInitialisers().at(var.name);
             if (!varInit.getSnippet()->getCode().empty()) {
-                this->addPointerField(Type::parseNumeric(var.type), var.name, backend.getDeviceVarPrefix() + var.name);
+                this->addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
 
             // Add any var init EGPs to structure
@@ -340,7 +340,7 @@ private:
 class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
 {
 public:
-    CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -373,7 +373,7 @@ class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMe
                                                                                          CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -432,7 +432,7 @@ class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitG
                                                                                                CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                         const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -464,7 +464,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpda
                                                                                                       CustomConnectivityUpdatePreVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -496,7 +496,7 @@ class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpd
                                                                                                        CustomConnectivityUpdatePostVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                                 const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -528,7 +528,7 @@ class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomU
                                                                                                          CustomConnectivityUpdateVarAdapter>
 {
 public:
-    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                                   const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------

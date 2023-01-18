@@ -141,7 +141,7 @@ public:
             auto indexNumericType = dynamic_cast<const Type::NumericBase *>(indexType);
             if (!indexNumericType || !indexNumericType->isIntegral(m_Context)) {
                 m_ErrorHandler.error(arraySubscript.getPointerName(),
-                                     "Invalid subscript index type '" + indexType->getName(m_Context) + "'");
+                                     "Invalid subscript index type '" + indexType->getName() + "'");
                 throw TypeCheckError();
             }
 
@@ -178,8 +178,8 @@ public:
             auto rightPointerType = dynamic_cast<const Type::Pointer*>(rightType);
             if (leftPointerType && rightPointerType && opType == Token::Type::MINUS) {
                 // Check pointers are compatible
-                if (leftPointerType->getName(m_Context) != rightPointerType->getName(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+                if (leftPointerType->getResolvedName(m_Context) != rightPointerType->getResolvedName(m_Context)) {
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
                     throw TypeCheckError();
                 }
 
@@ -191,7 +191,7 @@ public:
             {
                 // Check that numeric operand is integer
                 if (!rightNumericType->isIntegral(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
                     throw TypeCheckError();
                 }
 
@@ -203,7 +203,7 @@ public:
             {
                 // Check that numeric operand is integer
                 if (!leftNumericType->isIntegral(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
                     throw TypeCheckError();
                 }
 
@@ -219,7 +219,7 @@ public:
                 {
                     // Check that operands are integers
                     if (!leftNumericType->isIntegral(m_Context) || !rightNumericType->isIntegral(m_Context)) {
-                        m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+                        m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
                         throw TypeCheckError();
                     }
 
@@ -239,7 +239,7 @@ public:
                 }
             }
             else {
-                m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+                m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
                 throw TypeCheckError();
             }
         }
@@ -288,7 +288,7 @@ public:
         
         // If const is being removed
         if (rightType->hasQualifier(Type::Qualifier::CONSTANT) && !cast.getType()->hasQualifier(Type::Qualifier::CONSTANT)) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
             throw TypeCheckError();
         }
 
@@ -298,14 +298,14 @@ public:
         auto leftNumericType = dynamic_cast<const Type::NumericBase *>(cast.getType());
         auto leftPointerType = dynamic_cast<const Type::Pointer *>(cast.getType());
         if (rightPointerType && leftPointerType) {
-            if (rightPointerType->getName(m_Context) != leftPointerType->getName(m_Context)) {
-                m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+            if (rightPointerType->getResolvedName(m_Context) != leftPointerType->getResolvedName(m_Context)) {
+                m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
                 throw TypeCheckError();
             }
         }
         // Otherwise, if either operand isn't numeric
         else if(!leftNumericType | !rightNumericType) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName(m_Context) + "' and '" + rightType->getName(m_Context));
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
             throw TypeCheckError();
         }
 
@@ -327,7 +327,7 @@ public:
         }
         else {
             m_ErrorHandler.error(conditional.getQuestion(),
-                                 "Invalid operand types '" + trueType->getName(m_Context) + "' and '" + falseType->getName(m_Context) + "' to conditional");
+                                 "Invalid operand types '" + trueType->getName() + "' and '" + falseType->getName() + "' to conditional");
             throw TypeCheckError();
         }
     }
@@ -395,7 +395,7 @@ public:
             auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
             if (!rightPointerType) {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName(m_Context) + "'");
+                                     "Invalid operand type '" + rightType->getName() + "'");
                 throw TypeCheckError();
             }
 
@@ -420,7 +420,7 @@ public:
                     }
                     else {
                         m_ErrorHandler.error(unary.getOperator(),
-                                             "Invalid operand type '" + rightType->getName(m_Context) + "'");
+                                             "Invalid operand type '" + rightType->getName() + "'");
                         throw TypeCheckError();
                     }
                 }
@@ -435,7 +435,7 @@ public:
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName(m_Context) + "'");
+                                     "Invalid operand type '" + rightType->getName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -525,7 +525,7 @@ public:
             auto valNumericType = dynamic_cast<const Type::NumericBase *>(valType);
             if (!valNumericType || !valNumericType->isIntegral(m_Context)) {
                 m_ErrorHandler.error(labelled.getKeyword(),
-                                     "Invalid case value '" + valType->getName(m_Context) + "'");
+                                     "Invalid case value '" + valType->getName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -539,7 +539,7 @@ public:
         auto condNumericType = dynamic_cast<const Type::NumericBase *>(condType);
         if (!condNumericType || !condNumericType->isIntegral(m_Context)) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
-                                 "Invalid condition '" + condType->getName(m_Context) + "'");
+                                 "Invalid condition '" + condType->getName() + "'");
             throw TypeCheckError();
         }
 
@@ -624,19 +624,19 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
         if (pointerAssignedType && pointerExistingType) {
             // If we're trying to assign a pointer to a const value to a pointer
             if (assignedType->hasQualifier(Type::Qualifier::CONSTANT) && !existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
-                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName(context) + "' and '" + pointerAssignedType->getName(context));
+                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
                 throw TypeCheckError();
             }
 
             // If pointer types aren't compatible
-            if (pointerExistingType->getName(context) != pointerAssignedType->getName(context)) {
-                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName(context) + "' and '" + pointerAssignedType->getName(context));
+            if (pointerExistingType->getResolvedName(context) != pointerAssignedType->getResolvedName(context)) {
+                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
                 throw TypeCheckError();
             }
         }
         // Otherwise, if we're trying to initialise a pointer with a non-pointer or vice-versa
         else if (pointerAssignedType || pointerExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName(context) + "' and '" + assignedType->getName(context));
+            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "' and '" + assignedType->getName());
             throw TypeCheckError();
         }
     }
@@ -645,13 +645,13 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
         // If the operand being added isn't numeric or the type being added to is neither numeric or a pointer
         if (!numericAssignedType || (!pointerExistingType && !numericExistingType))
         {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName(context) + "' and '" + assignedType->getName(context) + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "' and '" + assignedType->getName() + "'");
             throw TypeCheckError();
         }
 
         // If we're adding a numeric type to a pointer, check it's an integer
         if (pointerExistingType && numericAssignedType->isIntegral(context)) {
-            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName(context) + "'");
+            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
             throw TypeCheckError();
         }
     }
@@ -659,22 +659,22 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
     else {
         // If either type is non-numeric, give error
         if(!numericAssignedType) {
-            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName(context) + "'");
+            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
             throw TypeCheckError();
         }
         if(!numericExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName(context) + "'");
+            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "'");
             throw TypeCheckError();
         }
 
         // If operand isn't one that takes any numeric type, check both operands are integral
         if (op != Token::Type::STAR_EQUAL && op != Token::Type::SLASH_EQUAL) {
             if(!numericAssignedType->isIntegral(context)) {
-                errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName(context) + "'");
+                errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
                 throw TypeCheckError();
             }
             if(!numericExistingType->isIntegral(context)) {
-                errorHandler.error(name, "Invalid operand types '" + numericExistingType->getName(context) + "'");
+                errorHandler.error(name, "Invalid operand types '" + numericExistingType->getName() + "'");
                 throw TypeCheckError();
             }
         }

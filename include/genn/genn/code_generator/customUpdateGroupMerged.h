@@ -12,7 +12,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
 public:
-    CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ public:
     }
 
 protected:
-    CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateWUGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
 private:
@@ -95,7 +95,7 @@ private:
 class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    CustomUpdateWUGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                               const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
         : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
     {
@@ -127,7 +127,7 @@ public:
 class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateTransposeWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    CustomUpdateTransposeWUGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
         : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
     {
@@ -161,7 +161,7 @@ template<typename G>
 class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
 {
 protected:
-     CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+     CustomUpdateHostReductionGroupMergedBase(size_t index, const Type::NumericBase *precision, const BackendBase &backend,
                                    const std::vector<std::reference_wrapper<const G>> &groups)
     :   GroupMerged<G>(index, precision, groups)
     {
@@ -173,14 +173,14 @@ protected:
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(Type::parseNumeric(v.type), v.name, backend.getDeviceVarPrefix() + v.name);
+                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
             }
         }
     }
@@ -192,7 +192,7 @@ protected:
 class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
-    CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateHostReductionGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -219,7 +219,7 @@ public:
 class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateHostReductionGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //------------------------------------------------------------------------

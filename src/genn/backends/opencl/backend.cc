@@ -2084,7 +2084,7 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, con
     }
     // Otherwise, type remains the same
     else {
-        return type->getName(context);
+        return type->getResolvedName(context);
     }
 }
 //--------------------------------------------------------------------------

@@ -90,9 +90,9 @@ const Base *Base::getPointerType(Qualifier qualifiers) const
 //----------------------------------------------------------------------------
 // GeNN::Type::NumericTypedef
 //----------------------------------------------------------------------------
-std::string NumericTypedef::getName(const TypeContext &context) const
+std::string NumericTypedef::getResolvedName(const TypeContext &context) const
 {
-    return getNumeric(context)->getName(context);
+    return getNumeric(context)->getResolvedName(context);
 }
 //----------------------------------------------------------------------------
 size_t NumericTypedef::getSizeBytes(const TypeContext &context) const
@@ -147,7 +147,7 @@ const Type::NumericBase *NumericTypedef::getNumeric(const TypeContext &context) 
             return numericType;
         }
         else {
-            throw std::runtime_error("Numeric typedef '" + m_Name + "' resolved to non-numeric type '" + t->second->getName(context) + "'");
+            throw std::runtime_error("Numeric typedef '" + m_Name + "' resolved to non-numeric type '" + t->second->getName() + "'");
         }
     }
 }
@@ -229,13 +229,13 @@ const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &c
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b, const TypeContext &context)
 {
     // If either type is double, common type is double
-    const auto &aTypeName = a->getName(context);
-    const auto &bTypeName = b->getName(context);
-    if(aTypeName == Double::getInstance()->getName(context) || bTypeName == Double::getInstance()->getName(context)) {
+    const auto &aTypeName = a->getResolvedName(context);
+    const auto &bTypeName = b->getResolvedName(context);
+    if(aTypeName == Double::getInstance()->getName() || bTypeName == Double::getInstance()->getName()) {
         return Double::getInstance();
     }
     // Otherwise, if either type is float, common type is float
-    if(aTypeName == Float::getInstance()->getName(context) || bTypeName == Float::getInstance()->getName(context)) {
+    if(aTypeName == Float::getInstance()->getName() || bTypeName == Float::getInstance()->getName()) {
         return Float::getInstance();
     }
     // Otherwise, must be an integer type
@@ -245,7 +245,7 @@ const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b, con
         const auto *bPromoted = getPromotedType(b, context);
 
         // If both promoted operands have the same type, then no further conversion is needed.
-        if(aPromoted->getName(context) == bPromoted->getName(context)) {
+        if(aPromoted->getResolvedName(context) == bPromoted->getResolvedName(context)) {
             return aPromoted;
         }
         // Otherwise, if both promoted operands have signed integer numeric types or both have unsigned integer numeric types, 

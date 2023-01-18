@@ -39,7 +39,8 @@
     {                                                                                                       \
         DECLARE_TYPE(TYPE)                                                                                  \
         TYPE(Qualifier qualifiers = Qualifier{0}) : Numeric<UNDERLYING_TYPE, RANK>(qualifiers){}            \
-        virtual std::string getName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }                               \
+        virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                               \
+        virtual std::string getResolvedName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }     \
         virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
     };                                                                                                      \
     template<>                                                                                              \
@@ -103,7 +104,10 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     //! Get the (unqualified) name of this type
-    virtual std::string getName(const TypeContext &context) const = 0;
+    virtual std::string getName() const = 0;
+
+    //! Get fully-resolved (unqualified) name of this type
+    virtual std::string getResolvedName(const TypeContext &context) const = 0;
     
     //! Get size of this type in bytes
     virtual size_t getSizeBytes(const TypeContext &context) const = 0;
@@ -143,7 +147,8 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const TypeContext &context) const{ return getValueType()->getName(context) + "*";}
+    virtual std::string getName() const{ return getValueType()->getName() + "*";}
+    virtual std::string getResolvedName(const TypeContext &context) const{ return getValueType()->getResolvedName(context) + "*"; }
     virtual size_t getSizeBytes(const TypeContext&) const final{ return sizeof(char*); }
     virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new Pointer(m_ValueType, qualifiers); }
     
@@ -215,9 +220,9 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const TypeContext &context) const final;
+    virtual std::string getName() const final{ return m_Name; }
+    virtual std::string getResolvedName(const TypeContext &context) const;
     virtual size_t getSizeBytes(const TypeContext &context) const final;
-
     virtual Base *getQualifiedType(Qualifier qualifiers) const final;
 
     //------------------------------------------------------------------------
@@ -269,10 +274,18 @@ public:
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const TypeContext &context) const final
+    virtual std::string getName() const final
     {
-        std::string typeName = getReturnType()->getName(context) + "(";
-        updateTypeName<ArgTypes...>(context, typeName);
+        std::string typeName = getReturnType()->getName() + "(";
+        updateTypeName<ArgTypes...>(typeName);
+        typeName += ")";
+        return typeName;
+    }
+
+    virtual std::string getResolvedName(const TypeContext &context) const final
+    {
+        std::string typeName = getReturnType()->getResolvedName(context) + "(";
+        updateResolvedTypeName<ArgTypes...>(context, typeName);
         typeName += ")";
         return typeName;
     }
@@ -303,17 +316,29 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-
     template <typename T, typename... Args>
-    static void updateTypeName(const TypeContext &context, std::string &typeName)
+    static void updateTypeName(std::string &typeName)
     {
         // Add argument typename to string
-        typeName += T::getInstance()->getName(context);
+        typeName += T::getInstance()->getName();
 
         // If there are more arguments left in pack, add comma and recurse
         if constexpr (sizeof...(Args)) {
             typeName += ", ";
-            updateTypeName<Args...>(context, typeName);
+            updateTypeName<Args...>(typeName);
+        }
+    }
+
+    template <typename T, typename... Args>
+    static void updateResolvedTypeName(const TypeContext &context, std::string &typeName)
+    {
+        // Add argument typename to string
+        typeName += T::getInstance()->getResolvedName(context);
+
+        // If there are more arguments left in pack, add comma and recurse
+        if constexpr (sizeof...(Args)) {
+            typeName += ", ";
+            updateResolvedTypeName<Args...>(context, typeName);
         }
     }
 

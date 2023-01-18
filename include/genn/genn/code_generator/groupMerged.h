@@ -65,9 +65,8 @@ public:
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<const Type::Base*, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
-    // **HACK** type should come in as type not string
-    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(Type::parseNumeric(precision)), m_Groups(std::move(groups))
+    GroupMerged(size_t index, const Type::NumericBase *precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_ScalarType(precision), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------
@@ -122,12 +121,12 @@ public:
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type->getName(context);
+                        os << backend.getPointerPrefix() << type->getResolvedName(context);
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type->getName(context);
+                    os << type->getResolvedName(context);
                 }
                 os << " " << std::get<1>(f) << ";" << std::endl;
             }
@@ -281,7 +280,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : vars) {
-            addPointerField(Type::parseNumeric(v.type), v.name, arrayPrefix + v.name);
+            addPointerField(v.type, v.name, arrayPrefix + v.name);
         }
     }
 
@@ -290,7 +289,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(Type::parseNumeric(v.type)->getPointerType(), v.name, 
+            addField(v.type->getPointerType(), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
@@ -555,7 +554,7 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecison, const BackendBase &backend,
                                       const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -584,7 +583,7 @@ public:
 class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecison, const BackendBase &backend,
                                          const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -663,7 +662,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
@@ -1074,7 +1073,7 @@ protected:
         ConnectivityInit,
     };
 
-    SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                            Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------

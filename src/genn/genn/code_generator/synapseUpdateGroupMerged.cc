@@ -167,7 +167,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
-    code = ensureFtype(code, model.getPrecision());
+    //code = ensureFtype(code, model.getPrecision());
     os << code;
 }
 }   // Anonymous namespace
@@ -209,7 +209,7 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     // Get event threshold condition code
     std::string code = wum->getEventThresholdConditionCode();
     synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
-    code = ensureFtype(code, modelMerged.getModel().getPrecision());
+    //code = ensureFtype(code, modelMerged.getModel().getPrecision());
 
     if (!backend.supportsNamespace() && !wum->getSimSupportCode().empty()) {
         code = disambiguateNamespaceFunction(wum->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wum->getSimSupportCode()));
@@ -250,7 +250,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
         // Apply substitutions to value
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(getIndex()));
-        value = ensureFtype(value, modelMerged.getModel().getPrecision());
+        //value = ensureFtype(value, modelMerged.getModel().getPrecision());
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }
 
@@ -263,7 +263,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
         std::string pCode = connectInit.getSnippet()->getRowBuildCode();
         
         popSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(getIndex()));
-        pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
+        //pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
 
         // Write out code
         os << pCode << std::endl;
@@ -277,7 +277,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
     // Apply substitutions to diagonal building code
     std::string pCode = connectInit.getSnippet()->getDiagonalBuildCode();
     popSubs.applyCheckUnreplaced(pCode, "toeplitzSparseConnectivity : merged " + std::to_string(getIndex()));
-    pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
+    //pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
 
     // Write out code
     os << pCode << std::endl;
@@ -321,7 +321,7 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
 //----------------------------------------------------------------------------
 const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
 //----------------------------------------------------------------------------
-SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, groups)
 {

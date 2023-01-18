@@ -188,7 +188,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : vars) {
-            definePointerField(Type::parseNumeric(v.type), v.name, arrayPrefix, getVarAccessMode(v.access));
+            definePointerField(v.type, v.name, arrayPrefix, getVarAccessMode(v.access));
         }
     }
 
@@ -197,12 +197,10 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            const auto *type = Type::parseNumeric(v.type);
-            
             // If variable access is read-only, qualify type with const
-            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONSTANT) : type;
+            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? v.type->getQualifiedType(Type::Qualifier::CONSTANT) : v.type;
             defineField(qualifiedType, v.name,
-                        type->getPointerType(), v.name,
+                        v.type->getPointerType(), v.name,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
                         { 
                             const auto varRef = getVarRefFn(g).at(v.name);

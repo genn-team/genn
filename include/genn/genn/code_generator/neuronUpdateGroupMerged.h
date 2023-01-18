@@ -11,7 +11,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -83,7 +83,7 @@ private:
     void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
     
     void generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
-                             const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
+                             const std::string &fieldPrefixStem, const std::string &sourceSuffix, 
                              bool useLocalNeuronVars, unsigned int batchSize, 
                              const std::vector<SynapseGroupInternal*> &archetypeSyn,
                              unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,

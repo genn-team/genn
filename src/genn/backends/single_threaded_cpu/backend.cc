@@ -1350,7 +1350,7 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
-    return type->getName(context);
+    return type->getResolvedName(context);
 }
 //--------------------------------------------------------------------------
 const Type::Base *Backend::getMergedGroupSimRNGType() const
