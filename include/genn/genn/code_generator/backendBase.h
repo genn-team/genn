@@ -250,13 +250,13 @@ public:
     virtual void genVariableAllocation(CodeStream &os, const Type::Base *type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const Type::Base *type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamImplementation(CodeStream &os, const Type::Pointer *type,  const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const Type::Pointer *type,  const std::string &name, 
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPush(CodeStream &os, const Type::Pointer *type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPull(CodeStream &os, const Type::Pointer *type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
@@ -410,7 +410,7 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
-    //! Templated version of gelper function to generate matching push and pull functions for
+    //! Templated version of helper function to generate matching push and pull functions for
     //!  a variable when type is known at compile time
     template<typename T>
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
@@ -438,7 +438,7 @@ public:
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const Type::Base *type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
+                  const Type::NumericBase *type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type->getPointerType(), name, loc);
         genVariableImplementation(runner, type->getPointerType(), name, loc);

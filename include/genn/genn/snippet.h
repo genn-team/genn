@@ -13,7 +13,15 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
-#include "type.h"
+
+// Forward declarations
+namespace GeNN
+{
+namespace Type
+{
+class NumericBase;
+}
+}
 
 //----------------------------------------------------------------------------
 // Macros
@@ -57,13 +65,13 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
-        bool operator == (const EGP &other) const
-        {
-            return ((name == other.name) && (type == other.type));
-        }
+        EGP(const std::string &n, const Type::NumericBase *t);
+        EGP(const std::string &n, const std::string &t);
+        
+        bool operator == (const EGP &other) const;
 
         const std::string name;
-        const std::string type;
+        const Type::NumericBase *type;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
@@ -208,21 +216,7 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(e.name, hash);
-    Utils::updateHash(e.type, hash);
-}
-
-inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(p.name, hash);
-    Utils::updateHash(p.type, hash);
-    Utils::updateHash(p.value, hash);
-}
-
-inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(d.name, hash);
-}
+GENN_EXPORT void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash);
 }   // namespace GeNN::Snippet

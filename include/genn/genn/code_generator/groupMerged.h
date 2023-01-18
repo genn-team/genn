@@ -305,8 +305,7 @@ public:
     void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            assert(Utils::isTypePointer(e.type));
-            addField(Type::parseNumericPtr(e.type), e.name + varName,
+            addField(e.type->getPointerType(), e.name + varName,
                      [e, arrayPrefix, varName](const G &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
                      GroupMergedFieldType::DYNAMIC);
         }
@@ -812,6 +811,7 @@ protected:
         // Loop through parameters
         for(const auto &d : derivedParams) {
             // If parameter is heterogeneous
+            // **TODO** std::invoke
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varName, d.name)) {
                 addScalarField(d.name + varName + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
@@ -829,7 +829,7 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            addField(Type::parseNumericPtr(e.type), e.name + prefix + std::to_string(childIndex),
+            addField(e.type->getPointerType(), e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, arrayPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return arrayPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
@@ -847,6 +847,7 @@ protected:
         const auto &archetypeParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
         for(const auto &p : archetypeParams) {
             // If any of the code strings reference the parameter
+            // **TODO** std::invoke
             if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {

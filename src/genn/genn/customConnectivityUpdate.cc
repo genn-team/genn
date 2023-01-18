@@ -11,6 +11,7 @@
 #include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
+#include "type.h"
 
 using namespace GeNN;
 

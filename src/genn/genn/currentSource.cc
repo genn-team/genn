@@ -19,11 +19,7 @@ void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 //----------------------------------------------------------------------------
 void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = getCurrentSourceModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getCurrentSourceModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 VarLocation CurrentSource::getVarLocation(const std::string &varName) const

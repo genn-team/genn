@@ -744,13 +744,13 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
     // Add EGP pointers to struct for both host and device EGPs if they are seperate
     const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
     for(const auto &e : egps) {
-        assert(false);
-        /*addField(e.type + "*", e.name,
+        const auto *pointerToPointerToEGP = e.type->getPointerType()->getPointerType();
+        addField(pointerToPointerToEGP, e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
 
         if(!backend.getDeviceVarPrefix().empty()) {
-            addField(e.type + "*", backend.getDeviceVarPrefix() + e.name,
+            addField(pointerToPointerToEGP, backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const SynapseGroupInternal &g, size_t)
                      {
                          return "&" + backend.getDeviceVarPrefix() + e.name + g.getName();
@@ -758,13 +758,13 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
                      GroupMergedFieldType::DYNAMIC);
         }
         if(!backend.getHostVarPrefix().empty()) {
-            addField(e.type + "*", backend.getHostVarPrefix() + e.name,
+            addField(pointerToPointerToEGP, backend.getHostVarPrefix() + e.name,
                      [e, &backend](const SynapseGroupInternal &g, size_t)
                      {
                          return "&" + backend.getHostVarPrefix() + e.name + g.getName();
                      },
                      GroupMergedFieldType::DYNAMIC);
-        }*/
+        }
     }
 }
 //-------------------------------------------------------------------------
@@ -801,13 +801,14 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
 
         // Loop through EGPs
         for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
-            // If EGP is a pointer and located on the host
+            // If EGP is located on the host
             const auto loc = getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
-            if(Utils::isTypePointer(egp.type) && (loc & VarLocation::HOST)) {
+            if(loc & VarLocation::HOST) {
                 // Generate code to allocate this EGP with count specified by $(0)
                 std::stringstream allocStream;
+                const auto *pointerToPointerToEGP = egp.type->getPointerType()->getPointerType();
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genExtraGlobalParamAllocation(alloc, egp.type + "*", egp.name,
+                backend.genExtraGlobalParamAllocation(alloc, pointerToPointerToEGP, egp.name,
                                                       loc, "$(0)", "group->");
 
                 // Add substitution
@@ -816,7 +817,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, egp.type + "*", egp.name,
+                backend.genExtraGlobalParamPush(push, pointerToPointerToEGP, egp.name,
                                                 loc, "$(0)", "group->");
 
 

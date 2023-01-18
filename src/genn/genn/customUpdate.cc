@@ -9,6 +9,7 @@
 #include "currentSource.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
+#include "type.h"
 
 //------------------------------------------------------------------------
 // GeNN::CustomUpdateBase

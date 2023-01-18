@@ -24,10 +24,6 @@ class CurrentSource;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 class CurrentSourceInternal;
-namespace CodeGenerator
-{
-class BackendBase;
-}
 namespace Type
 {
 class NumericBase;

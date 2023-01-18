@@ -218,9 +218,8 @@ public:
     void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            const auto *type = Type::parseNumericPtr(e.type);
-            defineField(type, e.name,
-                        type, e.name + varName,
+            defineField(e.type->getPointerType(), e.name,
+                        e.type->getPointerType(), e.name + varName,
                         [arrayPrefix, e, varName](const auto &g, size_t) 
                         {
                             return arrayPrefix + e.name + varName + g.getName(); 

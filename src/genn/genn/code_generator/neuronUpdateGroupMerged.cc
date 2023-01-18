@@ -66,7 +66,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
                 // If EGP is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + egp.name + ")") != std::string::npos) {
                     const std::string prefix = backend.getDeviceVarPrefix();
-                    addField(parseNumericPtr(egp.type), egp.name + "EventThresh" + std::to_string(i),
+                    addField(egp.type->getPointerType(), egp.name + "EventThresh" + std::to_string(i),
                              [eventThresholdSGs, prefix, egp, i](const auto &, size_t groupIndex)
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();

@@ -10,6 +10,7 @@
 #include "gennUtils.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
+#include "type.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -60,11 +61,7 @@ void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation 
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = getWUModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getWUModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_WUExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
@@ -104,20 +101,12 @@ void SynapseGroup::setPreTargetVar(const std::string &varName)
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getPSModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_PSExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_PSExtraGlobalParamLocation[getPSModel()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setSparseConnectivityLocation(VarLocation loc)

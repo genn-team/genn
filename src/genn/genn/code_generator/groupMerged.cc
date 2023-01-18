@@ -781,7 +781,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::TypeCon
         for(const auto &e : preEGPs) {
             if(code.find("$(" + e.name + "_pre)") != std::string::npos) {
                 const std::string prefix = backend.getDeviceVarPrefix();
-                addField(parseNumericPtr(e.type), e.name + "Pre",
+                addField(e.type->getPointerType(), e.name + "Pre",
                          [e, prefix](const auto &sg, size_t) { return prefix + e.name + sg.getSrcNeuronGroup()->getName(); },
                          GroupMergedFieldType::DYNAMIC);
             }
@@ -792,7 +792,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::TypeCon
         for(const auto &e : postEGPs) {
             if(code.find("$(" + e.name + "_post)") != std::string::npos) {
                 const std::string prefix = backend.getDeviceVarPrefix();
-                addField(parseNumericPtr(e.type), e.name + "Post",
+                addField(e.type->getPointerType(), e.name + "Post",
                          [e, prefix](const auto &sg, size_t) { return prefix + e.name + sg.getTrgNeuronGroup()->getName(); },
                          GroupMergedFieldType::DYNAMIC);
             }
@@ -972,7 +972,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::TypeCon
                 const auto egps = snippet->getExtraGlobalParams();
                 for(const auto &e : egps) {
                     const std::string prefix = backend.getDeviceVarPrefix();
-                    addField(parseNumericPtr(e.type), e.name + var.name,
+                    addField(e.type->getPointerType(), e.name + var.name,
                              [e, prefix, var](const SynapseGroupInternal &sg, size_t)
                              {
                                  return prefix + e.name + var.name + sg.getName();

@@ -120,7 +120,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Return a pointer to this type, optionally, with specified qualifiers
-    const Base *getPointerType(Qualifier qualifiers = Qualifier{0}) const;
+    const class Pointer *getPointerType(Qualifier qualifiers = Qualifier{0}) const;
     
     //! Does this type have qualifier?
     bool hasQualifier(Qualifier qualifier) const{ return (m_Qualifiers & qualifier); };

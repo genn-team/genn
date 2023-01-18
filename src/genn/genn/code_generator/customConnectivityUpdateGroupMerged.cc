@@ -440,13 +440,12 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {
-        const auto *pointerType = parseNumericPtr(e.type);
-        addField(pointerType, e.name,
+        addField(e.type->getPointerType(), e.name,
                  [e](const auto &g, size_t) { return e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
 
         if(!backend.getDeviceVarPrefix().empty()) {
-            addField(pointerType, backend.getDeviceVarPrefix() + e.name,
+            addField(e.type->getPointerType(), backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const auto &g, size_t)
                      {
                          return backend.getDeviceVarPrefix() + e.name + g.getName();
@@ -486,26 +485,24 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
-            // If EGP is a pointer
-            if(Utils::isTypePointer(egp.type)) {
-                // Generate code to push this EGP with count specified by $(0)
-                std::stringstream pushStream;
-                CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, egp.type, egp.name,
-                                                VarLocation::HOST_DEVICE, "$(0)", "group->");
+            // Generate code to push this EGP with count specified by $(0)
+            std::stringstream pushStream;
+            const auto *pointerType = egp.type->getPointerType();
+            CodeStream push(pushStream);
+            backend.genExtraGlobalParamPush(push, pointerType, egp.name,
+                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
-                // Add substitution
-                subs.addFuncSubstitution("push" + egp.name + "ToDevice", 1, pushStream.str());
+            // Add substitution
+            subs.addFuncSubstitution("push" + egp.name + "ToDevice", 1, pushStream.str());
 
-                // Generate code to pull this EGP with count specified by $(0)
-                std::stringstream pullStream;
-                CodeStream pull(pullStream);
-                backend.genExtraGlobalParamPull(pull, egp.type, egp.name,
-                                                VarLocation::HOST_DEVICE, "$(0)", "group->");
+            // Generate code to pull this EGP with count specified by $(0)
+            std::stringstream pullStream;
+            CodeStream pull(pullStream);
+            backend.genExtraGlobalParamPull(pull, pointerType, egp.name,
+                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
-                // Add substitution
-                subs.addFuncSubstitution("pull" + egp.name + "FromDevice", 1, pullStream.str());
-            }
+            // Add substitution
+            subs.addFuncSubstitution("pull" + egp.name + "FromDevice", 1, pullStream.str());
         }
 
         addVarPushPullFuncSubs(backend, subs, cm->getPreVars(), "group->numSrcNeurons",

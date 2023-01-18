@@ -255,7 +255,7 @@ void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, C
 //-------------------------------------------------------------------------
 void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc,
                  CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                 CodeStream &push, CodeStream &pull, const Type::Base *type, const std::string &name,
+                 CodeStream &push, CodeStream &pull, const Type::NumericBase *type, const std::string &name,
                  VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
                  std::vector<std::string> &statePushPullFunction)
 {
@@ -273,14 +273,15 @@ void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStr
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar,
                          CodeStream &definitionsFunc, CodeStream &definitionsInternalVar, CodeStream &runner,
-                         CodeStream &extraGlobalParam, const std::string &type, const std::string &name, bool apiRequired, VarLocation loc)
+                         CodeStream &extraGlobalParam, const Type::NumericBase *type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
-    backend.genExtraGlobalParamDefinition(definitionsVar, definitionsInternalVar, type, name, loc);
-    backend.genExtraGlobalParamImplementation(runner, type, name, loc);
+    const auto *pointerType = type->getPointerType();
+    backend.genExtraGlobalParamDefinition(definitionsVar, definitionsInternalVar, pointerType, name, loc);
+    backend.genExtraGlobalParamImplementation(runner, pointerType, name, loc);
 
-    // If type is a pointer and API is required
-    if(Utils::isTypePointer(type) && apiRequired) {
+    // If API is required
+    if(apiRequired) {
         // Write definitions for functions to allocate and free extra global param
         definitionsFunc << "EXPORT_FUNC void allocate" << name << "(unsigned int count);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void free" << name << "();" << std::endl;
@@ -289,7 +290,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
         extraGlobalParam << "void allocate" << name << "(unsigned int count)";
         {
             CodeStream::Scope a(extraGlobalParam);
-            backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
+            backend.genExtraGlobalParamAllocation(extraGlobalParam, pointerType, name, loc);
 
             // Loop through destinations in merged structures, the device EGP needs to be copied to
             if(modelMerged.anyMergedEGPDestinations(backend.getDeviceVarPrefix() + name)) {
@@ -351,7 +352,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
                 CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
+                backend.genExtraGlobalParamPush(extraGlobalParam, pointerType, name, loc);
             }
 
             if(backend.getPreferences().generateExtraGlobalParamPull) {
@@ -362,7 +363,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                 extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
                 {
                     CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                    backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
+                    backend.genExtraGlobalParamPull(extraGlobalParam, pointerType, name, loc);
                 }
             }
         }
@@ -1592,7 +1593,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamAllocation(runner, Type::Uint32::getInstance()->getPointerType(), "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1607,7 +1608,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamAllocation(runner, Type::Uint32::getInstance()->getPointerType(), "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1646,13 +1647,13 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 // **YUCK** maybe this should be renamed pullDynamicArray
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamPull(runner, Type::Uint32::getInstance()->getPointerType(), "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
                 }
                 // AllocaPullte spike event array if required
                 // **YUCK** maybe this should be renamed pullDynamicArray
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamPull(runner, Type::Uint32::getInstance()->getPointerType(), "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
                 }
             }
         }
