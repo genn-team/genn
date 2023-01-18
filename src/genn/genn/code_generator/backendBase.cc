@@ -15,7 +15,7 @@
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
+BackendBase::BackendBase(const PreferencesBase &preferences)
 :   m_Preferences(preferences)
 {
 }

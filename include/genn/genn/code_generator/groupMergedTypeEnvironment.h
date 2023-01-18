@@ -24,9 +24,8 @@ class GroupMergedTypeEnvironment : public Transpiler::TypeChecker::EnvironmentBa
     using TypeCheckError = Transpiler::TypeChecker::TypeCheckError;
 
 public:
-    GroupMergedTypeEnvironment(G &groupMerged, const Type::NumericBase *scalarType,
-                               EnvironmentBase *enclosing = nullptr)
-    :   m_GroupMerged(groupMerged), m_ScalarType(scalarType), m_Enclosing(enclosing)
+    GroupMergedTypeEnvironment(G &groupMerged, EnvironmentBase *enclosing = nullptr)
+    :   m_GroupMerged(groupMerged), m_Enclosing(enclosing)
     {
     }
 
@@ -143,11 +142,12 @@ public:
 
     void defineScalarField(const std::string &name, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
-        defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), name,
-                    m_ScalarType, name,
+        defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), name,
+                    m_GroupMerged.getScalarType(), name,
                     [getFieldValue, this](const auto &g, size_t i)
                     {
-                        return Utils::writePreciseString(getFieldValue(g, i), m_ScalarType->getMaxDigits10(m_TypeContext)) + m_ScalarType->getLiteralSuffix(m_TypeContext);
+                        return (Utils::writePreciseString(getFieldValue(g, i), m_GroupMerged.getScalarType()->getMaxDigits10(m_GroupMerged.getTypeContext())) 
+                                + m_GroupMerged.getScalarType()->getLiteralSuffix(m_GroupMerged.getTypeContext()));
                     });
     }
     
@@ -166,7 +166,7 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix);
+                defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix);
             }
         }
     }
@@ -185,7 +185,7 @@ public:
                                   });
             }
             else {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix);
+                defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix);
             }
         }
     }
@@ -252,7 +252,6 @@ private:
     // Members
     //---------------------------------------------------------------------------
     G &m_GroupMerged;
-    const Type::NumericBase *m_ScalarType;
     EnvironmentBase *m_Enclosing;
 
     std::unordered_map<std::string, std::pair<const Type::Base*, std::optional<typename G::Field>>> m_Types;

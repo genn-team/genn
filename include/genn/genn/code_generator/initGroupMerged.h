@@ -195,7 +195,7 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Generate either row or column connectivity init code
-    void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const Type::NumericBase *scalarType, bool rowNotColumns) const;
+    void genInitConnectivity(CodeStream &os, Substitutions &popSubs, bool rowNotColumns) const;
 };
 
 

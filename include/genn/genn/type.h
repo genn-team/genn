@@ -42,7 +42,7 @@
         virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                                   \
         virtual std::string getResolvedName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }         \
         virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }        \
-        virtual std::string getLiteralSuffix(const  TypeContext &context) const final{ return LITERAL_SUFFIX; } \
+        virtual std::string getLiteralSuffix(const TypeContext&) const final{ return LITERAL_SUFFIX; } \
     };                                                                                                          \
     template<>                                                                                                  \
     struct TypeTraits<UNDERLYING_TYPE>                                                                          \

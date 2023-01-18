@@ -274,7 +274,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             os << "linSyn += *denDelayFront;" << std::endl;
 
             // Zero delay buffer slot
-            os << "*denDelayFront = " << model.scalarExpr(0.0) << ";" << std::endl;
+            os << "*denDelayFront = " << modelMerged.scalarExpr(0.0) << ";" << std::endl;
         }
 
         // Pull postsynaptic model variables in a coalesced access

@@ -51,9 +51,8 @@ using KernelBlockSize = std::array<size_t, KernelMax>;
 class GENN_EXPORT BackendSIMT : public BackendBase
 {
 public:
-    BackendSIMT(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences, 
-                const std::string &scalarType)
-    :   BackendBase(scalarType, preferences), m_KernelBlockSizes(kernelBlockSizes)
+    BackendSIMT(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences)
+    :   BackendBase(preferences), m_KernelBlockSizes(kernelBlockSizes)
     {}
 
     //------------------------------------------------------------------------

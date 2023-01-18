@@ -78,6 +78,9 @@ public:
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
 
+    //! Get type context used to resolve any types involved in this group
+    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
+    
     //! Get name of memory space assigned to group
     const std::string &getMemorySpace() const { return m_MemorySpace; }
 

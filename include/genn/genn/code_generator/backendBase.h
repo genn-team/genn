@@ -189,7 +189,7 @@ public:
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
 
-    BackendBase(const std::string &scalarType, const PreferencesBase &preferences);
+    BackendBase(const PreferencesBase &preferences);
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -516,7 +516,7 @@ private:
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
-                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type, cg.getTypeContext()) << ";" << std::endl;
                 reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access),
                                               cg.getVarIndex(getVarAccessDuplication(v.access), idx));
             }
@@ -528,7 +528,7 @@ private:
 
             // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
             if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
-                os << modelVarRef.type << " lr" << modelVarRef.name << " = " << getReductionInitialValue(*this, modelVarRef.access, modelVarRef.type) << ";" << std::endl;
+                os << modelVarRef.type << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type, cg.getTypeContext()) << ";" << std::endl;
                 reductionTargets.emplace_back(modelVarRef.name, modelVarRef.type, modelVarRef.access,
                                               getVarRefIndexFn(varRef, idx));
             }

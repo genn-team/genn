@@ -102,7 +102,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
             else {
                 backend.genVariableInit(
                     os, count, "id", varSubs,
-                    [&var, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, count, numDelaySlots, isVarQueueRequired]
+                    [&var, &varInit, &fieldSuffix, batchSize, groupIndex, count, numDelaySlots, isVarQueueRequired]
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
@@ -110,7 +110,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
-                        code = ensureFtype(code, ftype);
+                        //code = ensureFtype(code, ftype);
                         os << code << std::endl;
 
                         // Fill value across all delay slots and batches
@@ -316,7 +316,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
             [&model, i] (CodeStream &os, Substitutions &varSubs)
             {
-                genVariableFill(os, "inSynInSyn" + std::to_string(i), model.scalarExpr(0.0), 
+                genVariableFill(os, "inSynInSyn" + std::to_string(i), modelMerged.scalarExpr(0.0), 
                                 varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
 
             });
@@ -327,7 +327,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
             backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                 [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
-                    genVariableFill(os, "denDelayInSyn" + std::to_string(i), model.scalarExpr(0.0),
+                    genVariableFill(os, "denDelayInSyn" + std::to_string(i), modelMerged.scalarExpr(0.0),
                                     varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize(),
                                     true, sg->getMaxDendriticDelayTimesteps());
                 });
@@ -376,7 +376,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                                 [&model, i] (CodeStream &os, Substitutions &varSubs)
                                 {
-                                    genVariableFill(os, "revInSynOutSyn" + std::to_string(i), model.scalarExpr(0.0),
+                                    genVariableFill(os, "revInSynOutSyn" + std::to_string(i), modelMerged.scalarExpr(0.0),
                                                     varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
                                 });
     }
@@ -618,14 +618,14 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
 //----------------------------------------------------------------------------
 const std::string SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseRowInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseConnectivityInitGroupMerged::generateSparseRowInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &, Substitutions &popSubs) const
 {
-    genInitConnectivity(os, popSubs, modelMerged.getModel().getPrecision(), true);
+    genInitConnectivity(os, popSubs, true);
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &, Substitutions &popSubs) const
 {
-    genInitConnectivity(os, popSubs, modelMerged.getModel().getPrecision(), false);
+    genInitConnectivity(os, popSubs, false);
 }
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
@@ -668,7 +668,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
     }
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Substitutions &popSubs, const Type::NumericBase *scalarType, bool rowNotColumns) const
+void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Substitutions &popSubs, bool rowNotColumns) const
 {
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
     const auto *snippet = connectInit.getSnippet();

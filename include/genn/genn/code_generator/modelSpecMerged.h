@@ -214,6 +214,9 @@ public:
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
 
+    //! Get the string literal that should be used to represent a value in scalar type
+    std::string scalarExp(double value) const;
+    
     //! Does model have any EGPs?
     bool anyPointerEGPs() const;
 
@@ -295,7 +298,7 @@ private:
     }
 
     template<typename Group, typename MergedGroup, typename D>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+    void createMergedGroupsHash(const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
                                 std::vector<MergedGroup> &mergedGroups, D getHashDigest, bool host = false)
     {
@@ -340,7 +343,7 @@ private:
     }
 
     template<typename Group, typename MergedGroup, typename F, typename U>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+    void createMergedGroupsHash(const BackendBase &backend,
                                 const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
                                 F filter, U updateHash, bool host = false)
     {
@@ -353,7 +356,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash, host);
+        createMergedGroupsHash(backend, unmergedGroups, mergedGroups, updateHash, host);
     }
 
     //--------------------------------------------------------------------------

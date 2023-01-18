@@ -2625,7 +2625,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#include <clRNG/philox432.clh>" << std::endl;
 
     os << "typedef " << precision << " scalar;" << std::endl;
-    os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
+    os << "#define DT " << modelMerged.scalarExprr(model.getDT()) << std::endl;
     os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
@@ -2641,7 +2641,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01(rng);" << std::endl;
-                os << "if (u != " << model.scalarExpr(0.0) << ")";
+                os << "if (u != " << modelMerged.scalarExprr(0.0) << ")";
                 {
                     CodeStream::Scope b(os);
                     os << "return -log(u);" << std::endl;
@@ -2657,8 +2657,8 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
             os << "const " << precision << " u1 = clrng" << r << "RandomU01(rng);" << std::endl;
             os << "const " << precision << " u2 = clrng" << r << "RandomU01(rng);" << std::endl;
-            os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
-            os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
+            os << "const " << precision << " r = sqrt(" << modelMerged.scalarExprr(-2.0) << " * log(u1));" << std::endl;
+            os << "const " << precision << " theta = " << modelMerged.scalarExprr(2.0) << " * " << pi << " * u2;" << std::endl;
             os << "return r * sin(theta);" << std::endl;
         }
         os << std::endl;
@@ -2683,9 +2683,9 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                 {
                     CodeStream::Scope b(os);
                     os << "x = normalDist" << r << "(rng);" << std::endl;
-                    os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
+                    os << "v = " << modelMerged.scalarExprr(1.0) << " + c*x;" << std::endl;
                 }
-                os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
+                os << "while (v <= " << modelMerged.scalarExprr(0.0) << ");" << std::endl;
                 os << std::endl;
                 os << "v = v*v*v;" << std::endl;
                 os << "do";
@@ -2693,10 +2693,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                     CodeStream::Scope b(os);
                     os << "u = clrng" << r << "RandomU01(rng);" << std::endl;
                 }
-                os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
+                os << "while (u == " << modelMerged.scalarExprr(1.0) << ");" << std::endl;
                 os << std::endl;
-                os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
-                os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
+                os << "if (u < " << modelMerged.scalarExprr(1.0) << " - " << modelMerged.scalarExprr(0.0331) << "*x*x*x*x) break;" << std::endl;
+                os << "if (log(u) < " << modelMerged.scalarExprr(0.5) << "*x*x + d*(" << modelMerged.scalarExprr(1.0) << " - v + log(v))) break;" << std::endl;
             }
             os << std::endl;
             os << "return d*v;" << std::endl;
@@ -2710,15 +2710,15 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01 (rng);" << std::endl;
-                os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
-                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+                os << "const " << precision << " d = (" << modelMerged.scalarExprr(1.0) << " + a) - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << modelMerged.scalarExprr(1.0) << " / a);" << std::endl;
             }
             os << "else" << std::endl;
             {
                 CodeStream::Scope b(os);
-                os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "const " << precision << " d = a - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
                 os << "return gammaDistInternal" << r << "(rng, c, d);" << std::endl;
             }
         }
@@ -2728,10 +2728,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "Internal(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " q = " << model.scalarExpr(1.0) << " - p;" << std::endl;
+            os << "const " << precision << " q = " << modelMerged.scalarExprr(1.0) << " - p;" << std::endl;
             os << "const " << precision << " qn = exp(n * log(q));" << std::endl;
             os << "const " << precision << " np = n * p;" << std::endl;
-            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << model.scalarExpr(10.0) << " * sqrt((np * q) + " << model.scalarExpr(1.0) << "))));" << std::endl;
+            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << modelMerged.scalarExprr(10.0) << " * sqrt((np * q) + " << modelMerged.scalarExprr(1.0) << "))));" << std::endl;
 
             os << "unsigned int x = 0;" << std::endl;
             os << precision << " px = qn;" << std::endl;
@@ -2761,7 +2761,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "if(p <= " << model.scalarExpr(0.5) << ")";
+            os << "if(p <= " << modelMerged.scalarExprr(0.5) << ")";
             {
                 CodeStream::Scope b(os);
                 os << "return binomialDist" << r << "Internal(rng, n, p);" << std::endl;
@@ -2770,7 +2770,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             os << "else";
             {
                 CodeStream::Scope b(os);
-                os << "return (n - binomialDist" << r << "Internal(rng, n, " << model.scalarExpr(1.0) << " - p));" << std::endl;
+                os << "return (n - binomialDist" << r << "Internal(rng, n, " << modelMerged.scalarExprr(1.0) << " - p));" << std::endl;
             }
         }
         os << std::endl;
