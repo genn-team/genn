@@ -11,7 +11,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -38,12 +38,12 @@ public:
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     

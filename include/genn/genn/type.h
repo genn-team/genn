@@ -23,7 +23,7 @@
 //----------------------------------------------------------------------------
 #define DECLARE_TYPE(TYPE)                          \
     private:                                        \
-        GENN_EXPORT static TYPE *s_Instance;    \
+        GENN_EXPORT static TYPE *s_Instance;        \
     public:                                         \
         static const TYPE *getInstance()            \
         {                                           \
@@ -34,19 +34,20 @@
             return s_Instance;                      \
         }
 
-#define DECLARE_NUMERIC_TYPE(TYPE, UNDERLYING_TYPE, RANK)                                                   \
-    class TYPE : public Numeric<UNDERLYING_TYPE, RANK>                                                      \
-    {                                                                                                       \
-        DECLARE_TYPE(TYPE)                                                                                  \
-        TYPE(Qualifier qualifiers = Qualifier{0}) : Numeric<UNDERLYING_TYPE, RANK>(qualifiers){}            \
-        virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                               \
-        virtual std::string getResolvedName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }     \
-        virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
-    };                                                                                                      \
-    template<>                                                                                              \
-    struct TypeTraits<UNDERLYING_TYPE>                                                                      \
-    {                                                                                                       \
-        using NumericType = TYPE;                                                                           \
+#define DECLARE_NUMERIC_TYPE(TYPE, UNDERLYING_TYPE, RANK, LITERAL_SUFFIX)                                       \
+    class TYPE : public Numeric<UNDERLYING_TYPE, RANK>                                                          \
+    {                                                                                                           \
+        DECLARE_TYPE(TYPE)                                                                                      \
+        TYPE(Qualifier qualifiers = Qualifier{0}) : Numeric<UNDERLYING_TYPE, RANK>(qualifiers){}                \
+        virtual std::string getName() const final{ return #UNDERLYING_TYPE; }                                   \
+        virtual std::string getResolvedName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }         \
+        virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }        \
+        virtual std::string getLiteralSuffix(const  TypeContext &context) const final{ return LITERAL_SUFFIX; } \
+    };                                                                                                          \
+    template<>                                                                                                  \
+    struct TypeTraits<UNDERLYING_TYPE>                                                                          \
+    {                                                                                                           \
+        using NumericType = TYPE;                                                                               \
     }                                                                      
 
 #define DECLARE_FOREIGN_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)                                               \
@@ -179,8 +180,12 @@ public:
     virtual double getMin(const TypeContext&) const = 0;
     virtual double getMax(const TypeContext&) const = 0;
     virtual double getLowest(const TypeContext&) const = 0;
+    virtual int getMaxDigits10(const TypeContext&) const = 0;
+
     virtual bool isSigned(const TypeContext&) const = 0;
     virtual bool isIntegral(const TypeContext&) const = 0;
+
+    virtual std::string getLiteralSuffix(const TypeContext&) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -204,6 +209,8 @@ public:
     virtual double getMin(const TypeContext&) const final { return std::numeric_limits<T>::min(); }
     virtual double getMax(const TypeContext&) const final { return std::numeric_limits<T>::max(); }
     virtual double getLowest(const TypeContext&) const final { return std::numeric_limits<T>::lowest(); }
+    virtual int getMaxDigits10(const TypeContext&) const final{ return std::numeric_limits<T>::max_digits10; }
+
     virtual bool isSigned(const TypeContext&) const final { return std::is_signed<T>::value; }
     virtual bool isIntegral(const TypeContext&) const final { return std::is_integral<T>::value; }
 };
@@ -232,8 +239,12 @@ public:
     virtual double getMin(const TypeContext &context) const final;
     virtual double getMax(const TypeContext &context) const final;
     virtual double getLowest(const TypeContext &context) const final;
+    virtual int getMaxDigits10(const TypeContext &context) const final;
+    
     virtual bool isSigned(const TypeContext &context) const final;
     virtual bool isIntegral(const TypeContext &context) const final;
+
+    virtual std::string getLiteralSuffix(const TypeContext &context) const final;
 
 private:
     //------------------------------------------------------------------------
@@ -359,17 +370,17 @@ private:
 //----------------------------------------------------------------------------
 // Declare numeric types
 //----------------------------------------------------------------------------
-DECLARE_NUMERIC_TYPE(Bool, bool, 0);
-DECLARE_NUMERIC_TYPE(Int8, int8_t, 10);
-DECLARE_NUMERIC_TYPE(Int16, int16_t, 20);
-DECLARE_NUMERIC_TYPE(Int32, int32_t, 30);
+DECLARE_NUMERIC_TYPE(Bool, bool, 0, "");
+DECLARE_NUMERIC_TYPE(Int8, int8_t, 10, "");
+DECLARE_NUMERIC_TYPE(Int16, int16_t, 20, "");
+DECLARE_NUMERIC_TYPE(Int32, int32_t, 30, "");
 //DECLARE_NUMERIC_TYPE(Int64, int64_t, 40);
-DECLARE_NUMERIC_TYPE(Uint8, uint8_t, 10);
-DECLARE_NUMERIC_TYPE(Uint16, uint16_t, 20);
-DECLARE_NUMERIC_TYPE(Uint32, uint32_t, 30);
+DECLARE_NUMERIC_TYPE(Uint8, uint8_t, 10, "u");
+DECLARE_NUMERIC_TYPE(Uint16, uint16_t, 20, "u");
+DECLARE_NUMERIC_TYPE(Uint32, uint32_t, 30, "u");
 //DECLARE_NUMERIC_TYPE(Uint64, uint64_t, 40);
-DECLARE_NUMERIC_TYPE(Float, float, 50);
-DECLARE_NUMERIC_TYPE(Double, double, 60);
+DECLARE_NUMERIC_TYPE(Float, float, 50, "f");
+DECLARE_NUMERIC_TYPE(Double, double, 60, "");
 
 //----------------------------------------------------------------------------
 // Declare standard library foreign function types

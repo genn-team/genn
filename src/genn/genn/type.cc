@@ -125,6 +125,11 @@ double NumericTypedef::getLowest(const TypeContext &context) const
     return getNumeric(context)->getLowest(context);
 }
 //----------------------------------------------------------------------------
+int NumericTypedef::getMaxDigits10(const TypeContext &context) const
+{
+    return getNumeric(context)->getMaxDigits10(context);
+}
+//----------------------------------------------------------------------------
 bool NumericTypedef::isSigned(const TypeContext &context) const
 {
     return getNumeric(context)->getSizeBytes(context);
@@ -133,6 +138,11 @@ bool NumericTypedef::isSigned(const TypeContext &context) const
 bool NumericTypedef::isIntegral(const TypeContext &context) const
 {
     return getNumeric(context)->isIntegral(context);
+}
+//----------------------------------------------------------------------------
+std::string NumericTypedef::getLiteralSuffix(const TypeContext &context) const
+{
+    return getNumeric(context)->getLiteralSuffix(context);
 }
 //----------------------------------------------------------------------------
 const Type::NumericBase *NumericTypedef::getNumeric(const TypeContext &context) const

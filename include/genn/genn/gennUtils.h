@@ -111,7 +111,7 @@ void validateVecNames(const std::vector<T> &vec, const std::string &description)
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-void writePreciseString(std::ostream &os, T value)
+void writePreciseString(std::ostream &os, T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
 {
     // Cache previous precision
     const std::streamsize previousPrecision = os.precision();
@@ -119,8 +119,8 @@ void writePreciseString(std::ostream &os, T value)
     // Set scientific formatting
     os << std::scientific;
 
-    // Set precision to what is required to fully represent T
-    os << std::setprecision(std::numeric_limits<T>::max_digits10);
+    // Set precision
+    os << std::setprecision(maxDigits10);
 
     // Write value to stream
     os << value;
@@ -138,10 +138,10 @@ void writePreciseString(std::ostream &os, T value)
 //! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-inline std::string writePreciseString(T value)
+inline std::string writePreciseString(T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
 {
     std::stringstream s;
-    writePreciseString(s, value);
+    writePreciseString(s, value, maxDigits10);
     return s.str();
 }
 

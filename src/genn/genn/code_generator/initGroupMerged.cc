@@ -185,9 +185,9 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, precision, timePrecision, backend, true, groups)
+:   NeuronGroupMergedBase(index, typeContext, backend, true, groups)
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
@@ -715,9 +715,9 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
 //----------------------------------------------------------------------------
 const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnectivityHostInit";
 //------------------------------------------------------------------------
-SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -857,9 +857,9 @@ bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamRefere
 //----------------------------------------------------------------------------
 const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
-CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>(index, typeContext, backend, groups)
 {
     addField<Type::Uint32>("size",
                            [](const auto &c, size_t) { return std::to_string(c.getSize()); });
@@ -892,9 +892,9 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeS
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, typeContext, backend, groups)
 {
     using namespace Type;
 
@@ -1002,9 +1002,9 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Cod
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSparseInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateVarAdapter>(index, typeContext, backend, groups)
 {
     using namespace Type;
 
@@ -1074,9 +1074,9 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdatePreInitGroupMerged::name = "CustomConnectivityUpdatePreInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                        const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdapter>(index, typeContext, backend, groups)
 {
     using namespace Type;
 
@@ -1122,9 +1122,9 @@ void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase 
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdatePostInitGroupMerged::name = "CustomConnectivityUpdatePostInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdapter>(index, typeContext, backend, groups)
 {
     addField<Type::Uint32>("size",
                            [](const auto &c, size_t)
@@ -1163,9 +1163,9 @@ void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdateSparseInitGroupMerged::name = "CustomConnectivityUpdateSparseInit";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                              const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdateVarAdapter>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdateVarAdapter>(index, typeContext, backend, groups)
 {
     using namespace Type;
 

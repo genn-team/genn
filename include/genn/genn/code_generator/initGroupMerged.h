@@ -11,7 +11,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -20,12 +20,12 @@ public:
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -96,9 +96,9 @@ private:
 class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+    SynapseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::Init, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::Init, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -106,12 +106,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::Init);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -129,9 +129,9 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+    SynapseSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -139,12 +139,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SparseInit);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -162,9 +162,9 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    SynapseConnectivityInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -172,12 +172,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::ConnectivityInit);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -205,18 +205,18 @@ private:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    SynapseConnectivityHostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
@@ -249,9 +249,9 @@ template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 protected:
-    CustomUpdateInitGroupMergedBase(size_t index, const Type::NumericBase *precision, const BackendBase &backend,
+    CustomUpdateInitGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                     const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+    :   GroupMerged<G>(index, typeContext, groups)
     {
         // Loop through variables
         A archetypeAdaptor(this->getArchetype());
@@ -340,7 +340,7 @@ private:
 class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
 {
 public:
-    CustomUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -348,12 +348,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -373,7 +373,7 @@ class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMe
                                                                                          CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomWUUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -381,12 +381,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -432,7 +432,7 @@ class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitG
                                                                                                CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                         const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -440,12 +440,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -464,7 +464,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpda
                                                                                                       CustomConnectivityUpdatePreVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -472,12 +472,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -496,7 +496,7 @@ class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpd
                                                                                                        CustomConnectivityUpdatePostVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                 const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -504,12 +504,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -528,7 +528,7 @@ class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomU
                                                                                                          CustomConnectivityUpdateVarAdapter>
 {
 public:
-    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                   const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -536,12 +536,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 

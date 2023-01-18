@@ -321,9 +321,9 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
 //----------------------------------------------------------------------------
 const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
 //----------------------------------------------------------------------------
-SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     addField(Type::Uint32::getInstance()->getPointerType(), "denDelayPtr", 
              [&backend](const SynapseGroupInternal &sg, size_t) 

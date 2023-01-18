@@ -11,9 +11,9 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------
-NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                                  const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, precision, timePrecision, backend, false, groups)
+:   NeuronGroupMergedBase(index, typeContext, backend, false, groups)
 {
     using namespace Type;
 

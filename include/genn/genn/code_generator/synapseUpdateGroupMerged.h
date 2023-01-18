@@ -11,9 +11,9 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PresynapticUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+    PresynapticUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
                                groups.front().get().getWUModel()->getSimCode() + groups.front().get().getWUModel()->getEventCode() + groups.front().get().getWUModel()->getEventThresholdConditionCode(), groups)
     {}
 
@@ -22,12 +22,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -49,9 +49,9 @@ public:
 class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PostsynapticUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+    PostsynapticUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
                                groups.front().get().getWUModel()->getLearnPostCode(), groups)
     {}
 
@@ -60,12 +60,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -83,9 +83,9 @@ public:
 class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDynamicsGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+    SynapseDynamicsGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
+    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
                                groups.front().get().getWUModel()->getSynapseDynamicsCode(), groups)
     {}
 
@@ -94,12 +94,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SynapseDynamics);
     }
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -117,18 +117,18 @@ public:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 

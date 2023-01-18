@@ -311,7 +311,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     Utils::updateHash(getUpdateGroupName(), hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType()->getName({}), hash);
+    Utils::updateHash(getSynapseGroup()->getSparseIndType()->getName(), hash);
 
     // Because it adds and removes synapses, connectivity update has to update 
     // ALL variables associated with synapse group being modified as well as 
@@ -326,7 +326,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                    [](const Models::WUVarReference &v)
                    {
                        boost::uuids::detail::sha1 hash;  
-                       Utils::updateHash(v.getVar().type, hash);
+                       Utils::updateHash(v.getVar().type->getName(), hash);
                        Utils::updateHash(v.isDuplicated(), hash);
                        return hash.get_digest();
                    });

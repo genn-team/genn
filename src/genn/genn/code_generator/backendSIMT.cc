@@ -523,7 +523,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     os << "if (shSpkEvntCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
+                        os << "shPosSpkEvnt = " << getAtomic<Type::Uint32>() << "(&group->spkCntEvnt";
                         if(ng.getArchetype().isDelayRequired()) {
                             os << "[*group->spkQuePtr";
                             if(batchSize > 1) {
@@ -546,7 +546,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     os << "if (shSpkCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
+                        os << "shPosSpk = " << getAtomic<Type::Uint32>() << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
                             os << "[*group->spkQuePtr";
                             if(batchSize > 1) {
@@ -937,7 +937,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 
                         // Loop through reduction targets and generate reduction
                         for(const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
@@ -980,7 +980,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 
                         // Loop through reduction targets and generate reduction
                         for (const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
@@ -989,7 +989,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     for (unsigned int i = 16; i > 0; i /= 2) {
                         for (const auto &r : reductionTargets) {
                             os << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
-                                                        r.access, r.type) << ";" << std::endl;
+                                                        r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
@@ -1146,7 +1146,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 if(cg.getArchetype().isBatchReduction()) {
                     // Loop through reduction targets and generate reduction
                     for(const auto &r : reductionTargets) {
-                        os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                        os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                     }
 
                     // End for loop through batches
@@ -1564,7 +1564,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                         }
                         // Otherwise
                         else {
-                            kernelInit << "group->ind[(($(0)) * group->rowStride) + " << getAtomic("unsigned int") << +"(&group->rowLength[$(0)], 1)] = " << popSubs["id_post"] << ";";
+                            kernelInit << "group->ind[(($(0)) * group->rowStride) + " << getAtomic<Type::Uint32>() << +"(&group->rowLength[$(0)], 1)] = " << popSubs["id_post"] << ";";
                         }
                     }
                     // Otherwise, if it's bitmask
@@ -1575,12 +1575,12 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                         // If there is row-building code in this snippet
                         if(!snippet->getRowBuildCode().empty()) {
                             kernelInit << "const " << indexType << " rowStartGID = " << popSubs["id"] << " * (" << indexType << ")group->rowStride;" << std::endl;
-                            kernelInit << getAtomic("unsigned int", AtomicOperation::OR) << "(&group->gp[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
+                            kernelInit << getAtomic<Type::Uint32>(AtomicOperation::OR) << "(&group->gp[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
                         // Otherwise
                         else {
                             kernelInit << "const " << indexType << " colStartGID = " << popSubs["id"] << ";" << std::endl;
-                            kernelInit << getAtomic("unsigned int", AtomicOperation::OR) << "(&group->gp[(colStartGID + (($(0)) * group->rowStride)) / 32], 0x80000000 >> ((colStartGID + (($(0)) * group->rowStride)) & 31));" << std::endl;
+                            kernelInit << getAtomic<Type::Uint32>(AtomicOperation::OR) << "(&group->gp[(colStartGID + (($(0)) * group->rowStride)) / 32], 0x80000000 >> ((colStartGID + (($(0)) * group->rowStride)) & 31));" << std::endl;
                         }
                     }
                 }
@@ -1656,7 +1656,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
 
                         // Atomically increment length of column of connectivity associated with this target
                         // **NOTE** this returns previous length i.e. where to insert new entry
-                        os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
+                        os << "const unsigned int colLocation = " << getAtomic<Type::Uint32>() << "(&group->colLength[postIndex], 1);" << std::endl;
 
                         // From this calculate index into column-major matrix
                         os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
@@ -1711,16 +1711,16 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
 //--------------------------------------------------------------------------
 void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const
 {
-    os << "const unsigned int spk" << suffix << "Idx = " << getAtomic("unsigned int", AtomicOperation::ADD, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Count, 1);" << std::endl;
+    os << "const unsigned int spk" << suffix << "Idx = " << getAtomic<Type::Uint32>(AtomicOperation::ADD, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
     
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {
         if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-            os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record, 1 << " << getThreadID() << ");" << std::endl;
+            os << getAtomic<Type::Uint32>(AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record, 1 << " << getThreadID() << ");" << std::endl;
         }
         else {
-            os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+            os << getAtomic<Type::Uint32>(AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
         }
     }
 }

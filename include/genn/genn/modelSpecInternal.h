@@ -24,8 +24,6 @@ public:
 
     using ModelSpec::finalize;
 
-    using ModelSpec::scalarExpr;
-
     using ModelSpec::zeroCopyInUse;
     using ModelSpec::isRecordingInUse;
     using ModelSpec::getHashDigest;

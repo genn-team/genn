@@ -12,6 +12,7 @@
 // Transpiler includes
 #include "transpiler/transpilerUtils.h"
 
+using namespace GeNN;
 using namespace GeNN::Transpiler;
 using namespace GeNN::Transpiler::PrettyPrinter;
 
@@ -26,6 +27,8 @@ namespace
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
+    Visitor(const Type::TypeContext &context) : m_Context(context) {}
+
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
@@ -102,11 +105,20 @@ public:
 
     virtual void visit(const Expression::Literal &literal) final
     {
-        std::visit(
-            Utils::Overload{
-                [this](auto x) { m_StringStream << x; },
-                [this](std::monostate) { m_StringStream << "invalid"; }},
-            literal.getValue());
+        // If literal is a double, we want to remove the d suffix in generated code
+        std::string_view lexeme = literal.getValue().lexeme;
+        if (literal.getValue().type == Token::Type::DOUBLE_NUMBER){
+            m_StringStream << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
+        }
+        // Otherwise, if literal is a scalar, we want to add appropriate suffix for scalar type
+        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
+            const Type::NumericBase *scalar = dynamic_cast<const Type::NumericBase*>(m_Context.at("scalar"));
+            m_StringStream << lexeme << scalar->getLiteralSuffix(m_Context);
+        }
+        // Otherwise, just write out original lexeme directly
+        else {
+            m_StringStream << lexeme;
+        }
     }
 
     virtual void visit(const Expression::Logical &logical) final
@@ -301,14 +313,15 @@ private:
     // Members
     //---------------------------------------------------------------------------
     std::ostringstream m_StringStream;
+    const Type::TypeContext &m_Context;
 };
 }   // Anonymous namespace
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-std::string GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements)
+std::string GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, const Type::TypeContext &context)
 {
-    Visitor visitor;
+    Visitor visitor(context);
     return visitor.print(statements);
 }

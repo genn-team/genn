@@ -12,9 +12,9 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityUpdateGroupMergedBase
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::NumericBase *precision,
+CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::TypeContext &typeContext,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
+:   GroupMerged<CustomConnectivityUpdateInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -60,9 +60,9 @@ bool CustomConnectivityUpdateGroupMergedBase::isDerivedParamHeterogeneous(const 
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdateGroupMerged::name = "CustomConnectivityUpdate";
 //----------------------------------------------------------------------------
-CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
+:   CustomConnectivityUpdateGroupMergedBase(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -427,9 +427,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnectivityHostUpdate";
 //----------------------------------------------------------------------------
-CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateGroupMergedBase(index, precision, groups)
+:   CustomConnectivityUpdateGroupMergedBase(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -544,7 +544,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genExtraGlobalParamPull(pull, v.->getPointerType(), v.name,
+            backend.genExtraGlobalParamPull(pull, v.type->getPointerType(), v.name,
                                             loc, count, "group->");
 
             // Add substitution

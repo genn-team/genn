@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <string>
 
+// GeNN includes
+#include "type.h"
+
 // Transpiler includes
 #include "transpiler/statement.h"
 
@@ -11,5 +14,5 @@
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::PrettyPrinter
 {
-std::string print(const Statement::StatementList &statements);
+std::string print(const Statement::StatementList &statements, const Type::TypeContext &context);
 }

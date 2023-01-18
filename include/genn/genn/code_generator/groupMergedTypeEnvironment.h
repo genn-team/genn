@@ -140,6 +140,16 @@ public:
         defineField(qualifiedType, name,
                     type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
     }
+
+    void defineScalarField(const std::string &name, typename G::GetFieldDoubleValueFunc getFieldValue)
+    {
+        defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), name,
+                    m_ScalarType, name,
+                    [getFieldValue, this](const auto &g, size_t i)
+                    {
+                        return Utils::writePreciseString(getFieldValue(g, i), m_ScalarType->getMaxDigits10(m_TypeContext)) + m_ScalarType->getLiteralSuffix(m_TypeContext);
+                    });
+    }
     
     template<typename T, typename P, typename H>
     void defineHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
@@ -148,13 +158,11 @@ public:
         // Loop through params
         for(const auto &p : paramNames) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, p)) {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix,
-                            m_ScalarType, p + suffix,
-                            [p, getParamValues](const auto &g, size_t)
-                            {
-                                const auto &values = getParamValues(g);
-                                return Utils::writePreciseString(values.at(p));
-                            });
+                defineScalarField(p + suffix,
+                                  [p, getParamValues](const auto &g, size_t)
+                                  {
+                                      return getParamValues(g).at(p);
+                                  });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -170,13 +178,11 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, d.name)) {
-                defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix,
-                            m_ScalarType, d.name + suffix,
-                            [d, getDerivedParamValues](const auto &g, size_t)
-                            {
-                                const auto &values = getDerivedParamValues(g);
-                                return Utils::writePreciseString(values.at(d.name));
-                            });
+                defineScalarField(d.name + suffix,
+                                  [d, getDerivedParamValues](const auto &g, size_t)
+                                  {
+                                      return getDerivedParamValues(g).at(d.name);
+                                  });
             }
             else {
                 defineField(m_ScalarType->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix);

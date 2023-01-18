@@ -92,7 +92,7 @@ public:
     virtual std::string getCLZ() const = 0;
 
     //! Get name of atomic operation
-    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD, 
+    virtual std::string getAtomic(const Type::NumericBase *type, AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const = 0;
 
     //! Generate a shared memory barrier
@@ -159,6 +159,14 @@ public:
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     
+    //! Helper to get name of atomic operation
+    template<typename T>
+    std::string getAtomic(AtomicOperation op = AtomicOperation::ADD,
+                          AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const
+    {
+        return getAtomic(T::getInstance(), op, memSpace);
+    }
+
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------

@@ -81,7 +81,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 
     std::string code = cm->getUpdateCode();
     updateSubs.applyCheckUnreplaced(code, "custom update : merged" + std::to_string(cg.getIndex()));
-    code = ensureFtype(code, modelMerged.getModel().getPrecision());
+    //code = ensureFtype(code, modelMerged.getModel().getPrecision());
     os << code;
 
     // Write read/write variables back to global memory
@@ -111,9 +111,9 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //----------------------------------------------------------------------------
 const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
 //----------------------------------------------------------------------------
-CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   GroupMerged<CustomUpdateInternal>(index, precision, groups)
+:   GroupMerged<CustomUpdateInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -159,7 +159,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::Numer
      const std::string code = upgradeCodeString(cm->getUpdateCode());
      const auto tokens = Transpiler::Scanner::scanSource(code, errorHandler);
      const auto statements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
-     Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
+     Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
 
 }
 //----------------------------------------------------------------------------
@@ -290,15 +290,15 @@ std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication v
     return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
+:   GroupMerged<CustomUpdateWUInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
     // Create type environment
     // **TEMP** parse precision to get scalar type
-    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, precision);
+    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, getScalarType());
 
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
@@ -426,9 +426,9 @@ void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&
 //----------------------------------------------------------------------------
 const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHostReduction";
 //----------------------------------------------------------------------------
-CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                            const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, typeContext, backend, groups)
 {
     using namespace Type;
 
@@ -451,9 +451,9 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdateHostReduction";
 //----------------------------------------------------------------------------
-CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, typeContext, backend, groups)
 {
     using namespace Type;
 

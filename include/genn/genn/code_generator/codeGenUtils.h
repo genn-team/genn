@@ -67,7 +67,7 @@ inline size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 
-GENN_EXPORT void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
+GENN_EXPORT void genTypeRange(CodeStream &os, const Type::NumericBase *precision, const Type::TypeContext &typeContext, const std::string &prefix);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

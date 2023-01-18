@@ -408,12 +408,30 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
+    //! Templated version of gelper function to generate matching push and pull functions for
+    //!  a variable when type is known at compile time
+    template<typename T>
+    void genVariablePushPull(CodeStream &push, CodeStream &pull,
+                             const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+    {
+        genVariablePushPull(push, pull, T::getInstance(), name, loc, autoInitialized, count);
+    }
+
     //! Helper function to generate matching push and pull functions for the current state of a variable
     void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, const Type::Base *type, 
                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
     {
         genCurrentVariablePush(push, ng, type, name, loc, batchSize);
         genCurrentVariablePull(pull, ng, type, name, loc, batchSize);
+    }
+
+    //! Templated version of gelper function to generate matching push and pull functions 
+    //! for the current state of variable when type is known at compile time
+    template<typename T>
+    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, 
+                                    const std::string &name, VarLocation loc, unsigned int batchSize) const
+    {
+        genCurrentVariablePushPull(push, pull, ng, T::getInstance(), name, loc, batchSize);
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
@@ -426,6 +444,15 @@ public:
         genVariableAllocation(allocations, type, name, loc, count, memAlloc);
     }
 
+    //! Templated version of helper function to generate matching definition, declaration, 
+    //! allocation and free code for an array when type is known at compile-time
+    template<typename T>
+    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                  const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
+    {
+        genArray(definitions, definitionsInternal, runner, allocations, free, T::getInstance(), name, loc, count, memAlloc);
+        
+    }
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
@@ -446,13 +473,13 @@ protected:
     //! Simple struct to hold reduction targets
     struct ReductionTarget
     {
-        ReductionTarget(const std::string &n, const std::string &t, VarAccessMode a, const std::string &i)
+        ReductionTarget(const std::string &n, const Type::NumericBase *t, VarAccessMode a, const std::string &i)
             : name(n), type(t), access(a), index(i)
         {
         }
 
         const std::string name;
-        const std::string type;
+        const Type::NumericBase *type;
         const VarAccessMode access;
         const std::string index;
     };

@@ -19,9 +19,9 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase*, const BackendBase &backend,
+NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                      const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -68,9 +68,9 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream
 //----------------------------------------------------------------------------
 const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
 //----------------------------------------------------------------------------
-NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                                            const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -86,11 +86,11 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
 
     if(getArchetype().isPrevSpikeTimeRequired()) {
         addPointerField<Uint32>("spk", backend.getDeviceVarPrefix() + "glbSpk");
-        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+        addPointerField(getTimeType(), "prevST", backend.getDeviceVarPrefix() + "prevST");
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
         addPointerField<Uint32>("spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-        addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
+        addPointerField(getTimeType(), "prevSET", backend.getDeviceVarPrefix() + "prevSET");
     }
 
     if(getArchetype().isDelayRequired()) {
@@ -183,9 +183,9 @@ bool NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIn
                                           [varName](const SynapseGroupInternal *inSyn){ return inSyn->getPSVarInitialisers().at(varName).getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend, 
+NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                              bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
 {
     using namespace Type;
 
@@ -217,17 +217,17 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::NumericBa
     }
 
     if(getArchetype().isSpikeTimeRequired()) {
-        addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
+        addPointerField(getTimeType(), "sT", backend.getDeviceVarPrefix() + "sT");
     }
     if(getArchetype().isSpikeEventTimeRequired()) {
-        addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
+        addPointerField(getTimeType(), "seT", backend.getDeviceVarPrefix() + "seT");
     }
 
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+        addPointerField(getTimeType(), "prevST", backend.getDeviceVarPrefix() + "prevST");
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
+        addPointerField(getTimeType(), "prevSET", backend.getDeviceVarPrefix() + "prevSET");
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
@@ -661,9 +661,9 @@ std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, Va
     return (singleBatch ? "" : "kernBatchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                                Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups), m_ArchetypeCode(archetypeCode)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups), m_ArchetypeCode(archetypeCode)
 {
     using namespace Type;
 
@@ -800,22 +800,22 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::Numeric
 
         // Add spike times if required
         if(wum->isPreSpikeTimeRequired()) {
-            addSrcPointerField(timePrecision, "sTPre", backend.getDeviceVarPrefix() + "sT");
+            addSrcPointerField(getTimeType(), "sTPre", backend.getDeviceVarPrefix() + "sT");
         }
         if(wum->isPostSpikeTimeRequired()) {
-            addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
+            addTrgPointerField(getTimeType(), "sTPost", backend.getDeviceVarPrefix() + "sT");
         }
         if(wum->isPreSpikeEventTimeRequired()) {
-            addSrcPointerField(timePrecision, "seTPre", backend.getDeviceVarPrefix() + "seT");
+            addSrcPointerField(getTimeType(), "seTPre", backend.getDeviceVarPrefix() + "seT");
         }
         if(wum->isPrevPreSpikeTimeRequired()) {
-            addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
+            addSrcPointerField(getTimeType(), "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
         }
         if(wum->isPrevPostSpikeTimeRequired()) {
-            addTrgPointerField(timePrecision, "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
+            addTrgPointerField(getTimeType(), "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
         }
         if(wum->isPrevPreSpikeEventTimeRequired()) {
-            addSrcPointerField(timePrecision, "prevSETPre", backend.getDeviceVarPrefix() + "prevSET");
+            addSrcPointerField(getTimeType(), "prevSETPre", backend.getDeviceVarPrefix() + "prevSET");
         }
         // Add heterogeneous weight update model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
@@ -914,7 +914,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::Numeric
                     addScalarField(var.name,
                                    [var](const SynapseGroupInternal &sg, size_t)
                                    {
-                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(var.name));
+                                       return sg.getWUConstInitVals().at(var.name);
                                    });
                 }
             }

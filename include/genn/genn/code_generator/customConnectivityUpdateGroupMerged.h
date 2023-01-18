@@ -15,7 +15,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT CustomConnectivityUpdateGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
 {
 public:
-    CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::NumericBase *precision,
+    CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::TypeContext &typeContext,
                                             const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
 protected:
@@ -32,7 +32,7 @@ protected:
 class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
 public:
-    CustomConnectivityUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomConnectivityUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -40,12 +40,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
@@ -75,17 +75,17 @@ private:
 class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
 {
 public:
-    CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::NumericBase *precision, const Type::NumericBase *timePrecision, const BackendBase &backend,
+    CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                             const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, const Type::TypeContext &context, 
+    void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
                         CodeStream &runnerMergedStructAlloc) const
     {
-        generateRunnerBase(backend, context, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 

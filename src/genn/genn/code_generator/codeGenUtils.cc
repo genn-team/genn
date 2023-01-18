@@ -326,28 +326,16 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 //----------------------------------------------------------------------------
-void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
+void genTypeRange(CodeStream &os, const Type::NumericBase *precision, const Type::TypeContext &typeContext, const std::string &prefix)
 {
+
     os << "#define " << prefix << "_MIN ";
-    if(precision == "float") {
-        Utils::writePreciseString(os, std::numeric_limits<float>::min());
-        os << "f" << std::endl;
-    }
-    else {
-        Utils::writePreciseString(os, std::numeric_limits<double>::min());
-        os << std::endl;
-    }
+    Utils::writePreciseString(os, precision->getMin(typeContext), precision->getMaxDigits10(typeContext));
+    os << precision->getLiteralSuffix(typeContext) << std::endl << std::endl;
 
     os << "#define " << prefix << "_MAX ";
-    if(precision == "float") {
-        Utils::writePreciseString(os, std::numeric_limits<float>::max());
-        os << "f" << std::endl;
-    }
-    else {
-        Utils::writePreciseString(os, std::numeric_limits<double>::max());
-        os << std::endl;
-    }
-    os << std::endl;
+    Utils::writePreciseString(os, precision->getMax(typeContext), precision->getMaxDigits10(typeContext));
+    os << precision->getLiteralSuffix(typeContext) << std::endl;
 }
 //----------------------------------------------------------------------------
 std::string ensureFtype(const std::string &oldcode, const std::string &type)
