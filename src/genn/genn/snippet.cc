@@ -24,6 +24,18 @@ bool Base::EGP::operator == (const EGP &other) const
 }
 
 //----------------------------------------------------------------------------
+// GeNN::Snippet::Base::ParamVal
+//----------------------------------------------------------------------------
+Base::ParamVal::ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(Type::parseNumeric(t)), value(v)
+{
+}
+//----------------------------------------------------------------------------
+bool Base::ParamVal::operator == (const ParamVal &other) const
+{
+    return ((name == other.name) && (type->getName() == other.type->getName()) && (value == other.value));
+}
+
+//----------------------------------------------------------------------------
 // GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -66,7 +78,7 @@ void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
 void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(p.name, hash);
-    Utils::updateHash(p.type, hash);
+    Utils::updateHash(p.type->getName(), hash);
     Utils::updateHash(p.value, hash);
 }
 //----------------------------------------------------------------------------

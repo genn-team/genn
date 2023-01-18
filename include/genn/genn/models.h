@@ -59,7 +59,8 @@ public:
         Var(const std::string &n, const Type::NumericBase *t) : Var(n, t, VarAccess::READ_WRITE)
         {}
         Var(const std::string &n, const std::string &t, VarAccess a);
-        Var(const std::string &n, const std::string &t);
+        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
+        {}
 
         bool operator == (const Var &other) const;
 

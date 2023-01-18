@@ -692,7 +692,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, ftype);
 
-        os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type->getResolvedName(getTypeContext()) << " " << a.name << " = " << value << ";" << std::endl;
     }
     os << "while(true)";
     {

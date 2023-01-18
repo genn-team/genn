@@ -16,9 +16,6 @@ namespace GeNN::Models
 Base::Var::Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(Type::parseNumeric(t)), access(a)
 {}
 //----------------------------------------------------------------------------
-Base::Var::Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
-{}
-//----------------------------------------------------------------------------
 bool Base::Var::operator == (const Var &other) const
 {
     return (std::make_tuple(name, type->getName(), access) == std::make_tuple(other.name, other.type->getName(), other.access));

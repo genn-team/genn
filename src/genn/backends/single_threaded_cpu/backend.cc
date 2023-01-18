@@ -1675,7 +1675,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
                 value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-                os << d.type << " " << d.name << " = " << value << ";" << std::endl;
+                os << d.type->getResolvedName(sg.getTypeContext()) << " " << d.name << " = " << value << ";" << std::endl;
             }
 
              // Detect spike events or spikes and do the update

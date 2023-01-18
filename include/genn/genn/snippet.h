@@ -77,18 +77,18 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
-        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        ParamVal(const std::string &n, const Type::NumericBase *t, const std::string &v) : name(n), type(t), value(v)
         {}
+        ParamVal(const std::string &n, const Type::NumericBase *t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
+        {}
+        ParamVal(const std::string &n, const std::string &t, const std::string &v);
         ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
         {}
 
-        bool operator == (const ParamVal &other) const
-        {
-            return ((name == other.name) && (type == other.type) && (value == other.value));
-        }
+        bool operator == (const ParamVal &other) const;
 
         const std::string name;
-        const std::string type;
+        const Type::NumericBase *type;
         const std::string value;
     };
 

@@ -249,7 +249,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-        os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type->getResolvedName(getTypeContext()) << " " << a.name << " = " << value << ";" << std::endl;
     }
 
     // Loop through incoming synapse groups
