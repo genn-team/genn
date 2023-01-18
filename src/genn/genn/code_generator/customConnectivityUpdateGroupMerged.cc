@@ -80,11 +80,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         dependentVarsList.sort([](const auto &a, const auto &b)
                                {  
                                    boost::uuids::detail::sha1 hashA;  
-                                   Utils::updateHash(a.getVar().type, hashA);
+                                   Utils::updateHash(a.getVar().type->getName(), hashA);
                                    Utils::updateHash(getVarAccessDuplication(a.getVar().access), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
-                                   Utils::updateHash(b.getVar().type, hashB);
+                                   Utils::updateHash(b.getVar().type->getName(), hashB);
                                    Utils::updateHash(getVarAccessDuplication(b.getVar().access), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
@@ -528,7 +528,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
     // Loop through variables
     for(const auto &v : vars) {
         // If var is located on the host
-        const auto loc = (getArchetype().*getVarLocationFn)(v.name);
+        const auto loc = std::invoke(getVarLocationFn, getArchetype(), v.name);
         if (loc & VarLocation::HOST) {
             // Generate code to push this variable
             // **YUCK** these EGP functions should probably just be called dynamic or something

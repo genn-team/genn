@@ -314,7 +314,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
 
         // Zero InSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-            [&model, i] (CodeStream &os, Substitutions &varSubs)
+            [&model, &modelMerged, i] (CodeStream &os, Substitutions &varSubs)
             {
                 genVariableFill(os, "inSynInSyn" + std::to_string(i), modelMerged.scalarExpr(0.0), 
                                 varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
@@ -325,7 +325,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
         if(sg->isDendriticDelayRequired()) {
             // Zero dendritic delay buffer
             backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                [&model, sg, i](CodeStream &os, Substitutions &varSubs)
+                [&model, &modelMerged, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
                     genVariableFill(os, "denDelayInSyn" + std::to_string(i), modelMerged.scalarExpr(0.0),
                                     varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize(),
@@ -374,7 +374,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
     for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
         // Zero revInSynOutSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                                [&model, i] (CodeStream &os, Substitutions &varSubs)
+                                [&model, &modelMerged, i] (CodeStream &os, Substitutions &varSubs)
                                 {
                                     genVariableFill(os, "revInSynOutSyn" + std::to_string(i), modelMerged.scalarExpr(0.0),
                                                     varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());

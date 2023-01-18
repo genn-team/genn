@@ -189,6 +189,47 @@ void BackendBase::genCustomConnectivityUpdateIndexCalculation(CodeStream &os, co
         os << "const unsigned int postDelayOffset = (*group->postSpkQuePtr * group->numTrgNeurons);" << std::endl;
     }
 }
+//----------------------------------------------------------------------------
+std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context) const
+{
+    // If reduction is a sum, initialise to zero
+    if(access & VarAccessModeAttribute::SUM) {
+        return "0";
+    }
+    // Otherwise, reduction is a maximum operation, return lowest value for type
+    else if(access & VarAccessModeAttribute::MAX) {
+        return Utils::writePreciseString(type->getLowest(context));
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
+//----------------------------------------------------------------------------
+std::string BackendBase::getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
+                                               const Type::NumericBase *type, const Type::TypeContext &context) const
+{
+    // If operation is sum, add output of custom update to sum
+    if(access & VarAccessModeAttribute::SUM) {
+        return reduction + " += " + value;
+    }
+    // Otherwise, if it's max
+    else if(access & VarAccessModeAttribute::MAX) {
+        // If type is integral, generate max call
+        if(type->isIntegral(context)) {
+            return reduction + " = " + "max(" + reduction + ", " + value + ")";
+            
+        }
+        // Otherwise, generate gmax call
+        else {
+            return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
+        }
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
 //-----------------------------------------------------------------------
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
 {

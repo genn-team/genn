@@ -564,7 +564,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-std::string ModelSpecMerged::scalarExp(double value) const
+std::string ModelSpecMerged::scalarExpr(double value) const
 {
     const auto *scalarType = dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("scalar"));
     return Utils::writePreciseString(value, scalarType->getMaxDigits10(m_TypeContext)) + scalarType->getLiteralSuffix(m_TypeContext);

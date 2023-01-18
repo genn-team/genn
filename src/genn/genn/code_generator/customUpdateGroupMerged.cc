@@ -21,8 +21,7 @@ using namespace GeNN::Transpiler;
 namespace
 {
 template<typename C, typename R>
-void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
-                     const ModelSpecMerged &modelMerged, const std::string &index,
+void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const std::string &index,
                      R getVarRefIndex)
 {
     Substitutions updateSubs(&baseSubs);
@@ -118,7 +117,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
     using namespace Type;
 
     // Create type environment
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, getScalarType());
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this);
 
     addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
     
@@ -193,7 +192,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 //----------------------------------------------------------------------------
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    genCustomUpdate(os, popSubs, *this, modelMerged, "id",
+    genCustomUpdate(os, popSubs, *this, "id",
                     [this](const auto &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
@@ -297,8 +296,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     using namespace Type;
 
     // Create type environment
-    // **TEMP** parse precision to get scalar type
-    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, getScalarType());
+    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this);
 
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
@@ -398,7 +396,7 @@ const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------
 void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
+    genCustomUpdate(os, popSubs, *this, "id_syn",
                     [this, &modelMerged](const auto &varRef, const std::string &index) 
                     {  
                         return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
@@ -413,7 +411,7 @@ const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransp
 //----------------------------------------------------------------------------
 void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
+    genCustomUpdate(os, popSubs, *this, "id_syn",
                     [this, &modelMerged](const auto &varRef, const std::string &index) 
                     {
                         return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),

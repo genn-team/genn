@@ -15,12 +15,14 @@
 #include <plog/Severity.h>
 
 // GeNN includes
-#include "codeStream.h"
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "type.h"
 #include "varAccess.h"
 #include "variableMode.h"
+
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
 
 // Forward declarations
 namespace GeNN
@@ -494,6 +496,14 @@ protected:
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
     
     void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
+    
+    //! Get the initial value to start reduction operations from
+    std::string getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context) const;
+
+    //! Generate a reduction operation to reduce value into reduction
+    std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
+                                      const Type::NumericBase *type, const Type::TypeContext &context) const;
+
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.
     //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory
