@@ -237,8 +237,10 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
     //      identifier
     //      constant
     //      "(" expression ")"
-    if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::NUMBER})) {
-        return std::make_unique<Expression::Literal>(parserState.previous().lexeme);
+    if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::DOUBLE_NUMBER, 
+                          Token::Type::FLOAT_NUMBER, Token::Type::SCALAR_NUMBER,
+                          Token::Type::INT32_NUMBER, Token::Type::UINT32_NUMBER})) {
+        return std::make_unique<Expression::Literal>(parserState.previous());
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {
         return std::make_unique<Expression::Variable>(parserState.previous());
@@ -860,7 +862,7 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
 //---------------------------------------------------------------------------
 Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, scalarType, errorHandler);
+    ParserState parserState(tokens, errorHandler);
     std::vector<std::unique_ptr<const Statement::Base>> statements;
 
     while(!parserState.isAtEnd()) {
@@ -871,7 +873,7 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
 //---------------------------------------------------------------------------
 const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, scalarType, errorHandler);
+    ParserState parserState(tokens, errorHandler);
     bool pointerFound = false;
     std::set<std::string_view> typeSpecifiers;
     while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR})) {

@@ -40,13 +40,15 @@ public:
     }
 
     virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     ErrorHandlerBase &errorHandler, bool initializer) final
+                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+                                     bool initializer) final
     {
         // If type isn't found
         auto existingType = m_Types.find(std::string{name.lexeme});
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
-                return m_Enclosing->assign(name, op, assignedType, errorHandler, initializer);
+                return m_Enclosing->assign(name, op, assignedType, 
+                                           context, errorHandler, initializer);
             }
             else {
                 errorHandler.error(name, "Undefined variable");
@@ -58,15 +60,17 @@ public:
         addField(existingType->second);
     
         // Perform standard type-checking logicGroupMergedTypeEnvironment
-        return EnvironmentBase::assign(name, op, existingType->second.first, assignedType, errorHandler, initializer);
+        return EnvironmentBase::assign(name, op, existingType->second.first, assignedType, 
+                                       context, errorHandler, initializer);
     }
 
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
+    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
+                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final
     {
         auto existingType = m_Types.find(std::string{name.lexeme});
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
-                return m_Enclosing->incDec(name, op, errorHandler);
+                return m_Enclosing->incDec(name, op, context, errorHandler);
             }
             else {
                 errorHandler.error(name, "Undefined variable");

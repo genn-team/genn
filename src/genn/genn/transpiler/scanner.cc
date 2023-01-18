@@ -54,7 +54,11 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"uint32_t", Token::Type::TYPE_SPECIFIER},
     {"int32_t", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER}};
-
+//---------------------------------------------------------------------------
+const std::map<std::set<char>, Token::Type> integerLiteralTokenTypes{
+    {{}, Token::Type::INT32_NUMBER},
+    {{'U'}, Token::Type::UINT32_NUMBER}
+};
 //---------------------------------------------------------------------------
 // ScanState
 //---------------------------------------------------------------------------
@@ -154,12 +158,14 @@ void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState 
     tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine());
 }
 //---------------------------------------------------------------------------
-void scanIntegerSuffix(ScanState &scanState)
+Token::Type scanIntegerSuffix(ScanState &scanState)
 {
     // Read suffix
+    std::set<char> suffix;
     while(std::toupper(scanState.peek()) == 'U' || std::toupper(scanState.peek()) == 'L') {
-        scanState.advance();
+        suffix.insert(std::toupper(scanState.advance()));
     }
+    return integerLiteralTokenTypes.at(suffix);
 }
 //---------------------------------------------------------------------------
 void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens) 
@@ -182,8 +188,7 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
         }
 
         // Add integer token
-        scanIntegerSuffix(scanState);
-        emplaceToken(tokens, Token::Type::NUMBER, scanState);
+        emplaceToken(tokens, scanIntegerSuffix(scanState), scanState);
     }
     // Otherwise, if this is an octal integer
     else if(c == '0' && isodigit(scanState.peek())){
@@ -219,20 +224,25 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 }
             }
             
-            // Read possible floating point suffix
-            // **NOTE** 'd' is a GeNN extension not standard C
-            if (std::tolower(scanState.peek()) == 'f' || std::tolower(scanState.peek()) == 'd') {
+            // If number has an f suffix, emplace FLOAT_NUMBER token
+            if (std::tolower(scanState.peek()) == 'f') {
+                emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
                 scanState.advance();
             }
-
-            // Emplace token
-            emplaceToken(tokens, Token::Type::NUMBER, scanState);
+            // Otherwise, if it has a d suffix, emplace DOUBLE_NUMBER token
+            // **NOTE** 'd' is a GeNN extension not standard C
+            else if (std::tolower(scanState.peek()) == 'd') {
+                emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
+                scanState.advance();
+            }
+            // Otherwise, emplace SCALAR_NUMBER token
+            else {
+                emplaceToken(tokens, Token::Type::SCALAR_NUMBER, scanState);
+            }
         }
-        // Otherwise, number is integer
+        // Otherwise, emplace integer token 
         else {
-            // Add integer token
-            scanIntegerSuffix(scanState);
-            emplaceToken(tokens, Token::Type::NUMBER, scanState);
+            emplaceToken(tokens, scanIntegerSuffix(scanState), scanState);
         }
     }
 }
@@ -427,11 +437,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 
-    ScanState scanState(source, typedefNames, errorHandler);
+    ScanState scanState(source, {"scalar"}, errorHandler);
 
     // Scan tokens
     while(!scanState.isAtEnd()) {

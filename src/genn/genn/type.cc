@@ -160,7 +160,7 @@ const NumericBase *parseNumeric(std::string_view typeString)
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, {"scalar"}, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, errorHandler);
 
     // Parse type and cast to numeric
     const auto *type = dynamic_cast<const NumericBase*>(Parser::parseType(tokens, false, errorHandler));
@@ -183,7 +183,7 @@ const Pointer *parseNumericPtr(std::string_view typeString)
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, {"scalar"}, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, errorHandler);
 
     // Parse type and cast to numeric pointer
     const auto *type = dynamic_cast<const Pointer*>(Parser::parseType(tokens, true, errorHandler));

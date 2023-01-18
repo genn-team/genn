@@ -40,7 +40,7 @@ struct Token
         SHIFT_LEFT_EQUAL, SHIFT_RIGHT_EQUAL,
 
         // Literals   
-        IDENTIFIER, NUMBER,
+        IDENTIFIER, UINT32_NUMBER, INT32_NUMBER, FLOAT_NUMBER, DOUBLE_NUMBER, SCALAR_NUMBER,
 
         // Types
         TYPE_SPECIFIER,
