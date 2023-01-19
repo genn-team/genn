@@ -40,11 +40,11 @@ public:
     //! Immutable structure for tracking fields of merged group structure containing EGPs
     struct EGPField
     {
-        EGPField(size_t m, const Type::Base *t, const std::string &f, bool h)
+        EGPField(size_t m, const Type::Pointer *t, const std::string &f, bool h)
         :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
 
         const size_t mergedGroupIndex;
-        const Type::Base *type;
+        const Type::Pointer *type;
         const std::string fieldName;
         const bool hostGroup;
 
@@ -63,7 +63,7 @@ public:
     //! Immutable structure for tracking where an extra global variable ends up after merging
     struct MergedEGP : public EGPField
     {
-        MergedEGP(size_t m, size_t g, const Type::Base *t, const std::string &f, bool h)
+        MergedEGP(size_t m, size_t g, const Type::Pointer *t, const std::string &f, bool h)
         :   EGPField(m, t, f, h), groupIndex(g) {}
 
         const size_t groupIndex;
@@ -265,21 +265,14 @@ public:
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// merged extra global parameter functions" << std::endl;
             os << "// ------------------------------------------------------------------------" << std::endl;
-            // Loop through resultant fields and generate push function for pointer extra global parameters
+            // Loop through resultant fields and generate function to push updated pointers into group merged
             for(auto f : mergedGroupFields) {
-                // If EGP is a pointer
-                // **NOTE** this is common to all references!
-                if(dynamic_cast<const Type::Pointer*>(f.type)) {
-                    os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type, m_TypeContext) << " value)";
-                    {
-                        CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
-                    }
-                    os << std::endl;
+                os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type, m_TypeContext) << " value)";
+                {
+                    CodeStream::Scope b(os);
+                    backend.genMergedDynamicVariablePush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
                 }
-                else {
-                    assert(false);
-                }
+                os << std::endl;
             }
         }
     }
@@ -330,10 +323,12 @@ private:
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
 
                         // Add reference to this group's variable to data structure
+                        const auto *pointerType = dynamic_cast<const Type::Pointer*>(std::get<0>(f));
+                        assert(pointerType);
                         m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
                             std::piecewise_construct,
                             std::forward_as_tuple(MergedGroup::name),
-                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
+                            std::forward_as_tuple(i, groupIndex, pointerType, std::get<1>(f), host));
                     }
                 }
             }

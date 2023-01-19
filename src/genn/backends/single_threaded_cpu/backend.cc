@@ -149,7 +149,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
 
@@ -316,7 +316,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
 
@@ -525,7 +525,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         {
             CodeStream::Scope b(os);
 
-            Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
+            Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
             funcSubs.addVarSubstitution("t", "t");
             funcSubs.addVarSubstitution("batch", "0");
 
@@ -574,7 +574,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                                 // Loop through reduction targets and generate reduction
                                 for (const auto &r : reductionTargets) {
-                                    os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                                    os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                                 }
                             }
 
@@ -807,7 +807,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
 
         Timer t(os, "init", model.isTimingEnabled());
 
@@ -1062,7 +1062,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
 
         Timer t(os, "initSparse", model.isTimingEnabled());
 
@@ -1264,9 +1264,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
     if(isGlobalHostRNGRequired(modelMerged)) {
-        os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::uniform_real_distribution<" << model.getPrecision()->getName() << "> standardUniformDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision()->getName() << "> standardNormalDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision()->getName() << "> standardExponentialDistribution(" << modelMerged.scalarExpr(1.0) << ");" << std::endl;
         os << std::endl;
     }
     os << std::endl;
@@ -1284,76 +1284,99 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
+                                    const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                    VarLocation loc) const
 {
-    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+    definitions << "EXPORT_VAR " << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genVariableInstantiation(CodeStream &os, 
+                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       VarLocation loc) const
 {
-    os << type << " " << name << ";" << std::endl;
+    os << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count, MemAlloc &memAlloc) const
+void Backend::genVariableAllocation(CodeStream &os, 
+                                    const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                    VarLocation loc, size_t count, MemAlloc &memAlloc) const
 {
-    os << name << " = new " << type << "[" << count << "];" << std::endl;
+    os << name << " = new " << type->getResolvedName(typeContext) << "[" << count << "];" << std::endl;
 
-    memAlloc += MemAlloc::host(count * getSize(type));
+    memAlloc += MemAlloc::host(count * type->getSizeBytes(typeContext));
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
+void Backend::genVariableDynamicAllocation(CodeStream &os, 
+                                           const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                           VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+{
+    const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
+    if (pointerType) {
+        os << "*" << prefix << name <<  " = new " << pointerType->getValueType()->getResolvedName(typeContext) << "[" << countVarName << "];" << std::endl;
+    }
+    else {
+        os << prefix << name << " = new " << type->getResolvedName(typeContext) << "[" << countVarName << "];" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
-                                            const std::string &type, const std::string &name, VarLocation) const
-{
-    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    genVariableImplementation(os, type, name, loc);
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                            VarLocation, const std::string &countVarName, const std::string &prefix) const
-{
-    // Get underlying type
-    const std::string underlyingType = Utils::getUnderlyingType(type);
-    const bool pointerToPointer = Utils::isTypePointerToPointer(type);
-
-    const std::string pointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-
-    os << pointer << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, 
-                                      VarLocation, const std::string &, const std::string &) const
+void Backend::genVariablePush(CodeStream&, const Type::ValueBase*, const Type::TypeContext&, const std::string&, VarLocation, bool, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, 
-                                      VarLocation, const std::string &, const std::string &) const
+void Backend::genVariablePull(CodeStream&, const Type::ValueBase*, const Type::TypeContext&, const std::string&, VarLocation, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
-                                            const std::string &groupIdx, const std::string &fieldName, 
-                                            const std::string &egpName) const
+void Backend::genCurrentVariablePush(CodeStream&, const NeuronGroupInternal&, 
+                                     const Type::ValueBase*, const Type::TypeContext&, const std::string&, 
+                                     VarLocation, unsigned int) const
+{
+    assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genCurrentVariablePull(CodeStream&, const NeuronGroupInternal&, 
+                                     const Type::ValueBase*, const Type::TypeContext&, const std::string&, 
+                                     VarLocation, unsigned int) const
+{
+    assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genVariableDynamicPush(CodeStream&, 
+                                     const Type::Base*, const Type::TypeContext&, const std::string&,
+                                     VarLocation, const std::string&, const std::string&) const
+{
+     assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genVariableDynamicPull(CodeStream&, 
+                                     const Type::Base*, const Type::TypeContext&, const std::string&,
+                                      VarLocation, const std::string&, const std::string&) const
+{
+    assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                           const std::string &groupIdx, const std::string &fieldName,
+                                           const std::string &egpName) const
 {
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
+
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
     return type->getResolvedName(context);
 }
 //--------------------------------------------------------------------------
-const Type::Base *Backend::getMergedGroupSimRNGType() const
+const Type::ValueBase *Backend::getMergedGroupSimRNGType() const
 {
     assert(false);
     return nullptr;
@@ -1413,46 +1436,6 @@ void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGrou
 void Backend::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const
 {
     genKernelIteration(os, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), kernelSubs, handler);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
@@ -1673,7 +1656,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 // Apply substitutions to value
                 std::string value = d.value;
                 connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
-                value = ensureFtype(value, modelMerged.getModel().getPrecision());
+                //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
                 os << d.type->getResolvedName(sg.getTypeContext()) << " " << d.name << " = " << value << ";" << std::endl;
             }

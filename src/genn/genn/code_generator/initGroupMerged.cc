@@ -805,11 +805,13 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
             const auto loc = getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
             if(loc & VarLocation::HOST) {
                 // Generate code to allocate this EGP with count specified by $(0)
+                // **NOTE** we generate these with a pointer type as the fields are pointer to pointer
                 std::stringstream allocStream;
-                const auto *pointerToPointerToEGP = egp.type->getPointerType()->getPointerType();
+                const auto *pointerToEGP = egp.type->getPointerType();
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genExtraGlobalParamAllocation(alloc, pointerToPointerToEGP, egp.name,
-                                                      loc, "$(0)", "group->");
+                backend.genVariableDynamicAllocation(alloc, 
+                                                     pointerToEGP, getTypeContext(), egp.name,
+                                                     loc, "$(0)", "group->");
 
                 // Add substitution
                 subs.addFuncSubstitution("allocate" + egp.name, 1, allocStream.str());
@@ -817,8 +819,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, pointerToPointerToEGP, egp.name,
-                                                loc, "$(0)", "group->");
+                backend.genVariableDynamicPush(push, 
+                                               pointerToEGP, getTypeContext(), egp.name,
+                                               loc, "$(0)", "group->");
 
 
                 // Add substitution

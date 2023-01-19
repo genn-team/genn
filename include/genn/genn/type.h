@@ -166,12 +166,21 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::Type::NumericBase
+// GeNN::Type::ValueBase
 //----------------------------------------------------------------------------
-class NumericBase : public Base
+class ValueBase : public Base
 {
 public:
-    NumericBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    ValueBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+};
+
+//----------------------------------------------------------------------------
+// GeNN::Type::NumericBase
+//----------------------------------------------------------------------------
+class NumericBase : public ValueBase
+{
+public:
+    NumericBase(Qualifier qualifiers = Qualifier{0}) : ValueBase(qualifiers){}
     
     //------------------------------------------------------------------------
     // Declared virtuals

@@ -47,18 +47,18 @@ const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions 
 //--------------------------------------------------------------------------
 // CURandState
 //--------------------------------------------------------------------------
-class CURandState : public Type::Base
+class CURandState : public Type::ValueBase
 {
 public:
     DECLARE_TYPE(CURandState);
     
-    CURandState(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    CURandState(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
 
     //------------------------------------------------------------------------
     // Base overloads
     //------------------------------------------------------------------------
     virtual std::string getName() const final{ return "curandState"; }
-    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CURandState(qualifiers); }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CURandState(qualifiers); }
     virtual size_t getSizeBytes() const final{ return 44; }
 };
 IMPLEMENT_TYPE(CURandState);
@@ -66,18 +66,18 @@ IMPLEMENT_TYPE(CURandState);
 //--------------------------------------------------------------------------
 // CURandStatePhilox43210
 //--------------------------------------------------------------------------
-class CURandStatePhilox43210 : public Type::Base
+class CURandStatePhilox43210 : public Type::ValueBase
 {
 public:
     DECLARE_TYPE(CURandStatePhilox43210);
     
-    CURandStatePhilox43210(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    CURandStatePhilox43210(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBasese(qualifiers){}
 
     //------------------------------------------------------------------------
     // Base overloads
     //------------------------------------------------------------------------
     virtual std::string getName() const final{ return "curandStatePhilox4_32_10_t"; }
-    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CURandStatePhilox43210(qualifiers); }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CURandStatePhilox43210(qualifiers); }
     virtual size_t getSizeBytes() const final{ return 64; }
 };
 IMPLEMENT_TYPE(CURandStatePhilox43210);

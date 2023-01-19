@@ -487,10 +487,9 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         for(const auto &egp : cm->getExtraGlobalParams()) {
             // Generate code to push this EGP with count specified by $(0)
             std::stringstream pushStream;
-            const auto *pointerType = egp.type->getPointerType();
             CodeStream push(pushStream);
-            backend.genExtraGlobalParamPush(push, pointerType, egp.name,
-                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
+            backend.genVariableDynamicPush(push, egp.type, getTypeContext(), egp.name,
+                                           VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
             subs.addFuncSubstitution("push" + egp.name + "ToDevice", 1, pushStream.str());
@@ -498,8 +497,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
             // Generate code to pull this EGP with count specified by $(0)
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genExtraGlobalParamPull(pull, pointerType, egp.name,
-                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
+            backend.genVariableDynamicPull(pull, egp.type, getTypeContext(), egp.name,
+                                           VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
             subs.addFuncSubstitution("pull" + egp.name + "FromDevice", 1, pullStream.str());
@@ -528,11 +527,10 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
         const auto loc = std::invoke(getVarLocationFn, getArchetype(), v.name);
         if (loc & VarLocation::HOST) {
             // Generate code to push this variable
-            // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genExtraGlobalParamPush(push, v.type->getPointerType(), v.name,
-                                            loc, count, "group->");
+            backend.genVariableDynamicPush(push, v.type, getTypeContext(), v.name,
+                                           loc, count, "group->");
 
             // Add substitution
             subs.addFuncSubstitution("push" + v.name + "ToDevice", 0, pushStream.str());
@@ -541,8 +539,8 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genExtraGlobalParamPull(pull, v.type->getPointerType(), v.name,
-                                            loc, count, "group->");
+            backend.genVariableDynamicPull(pull, v.type, getTypeContext(), v.name,
+                                           loc, count, "group->");
 
             // Add substitution
             subs.addFuncSubstitution("pull" + v.name + "FromDevice", 0, pullStream.str());

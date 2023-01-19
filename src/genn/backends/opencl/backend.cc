@@ -17,6 +17,7 @@
 // OpenCL backend includes
 #include "utils.h"
 
+using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
@@ -45,18 +46,18 @@ const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
 //--------------------------------------------------------------------------
 // CLRRNGLFSR113Stream
 //--------------------------------------------------------------------------
-class CLRRNGLFSR113Stream : public Type::Base
+class CLRRNGLFSR113Stream : public Type::ValueBase
 {
 public:
     DECLARE_TYPE(CLRRNGLFSR113Stream);
     
-    CLRRNGLFSR113Stream(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    CLRRNGLFSR113Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
 
     //------------------------------------------------------------------------
     // Base overloads
     //------------------------------------------------------------------------
     virtual std::string getName() const final{ return "clrngLfsr113Stream"; }
-    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
     virtual size_t getSizeBytes() const final{ return 48; }
 };
 IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
@@ -64,18 +65,18 @@ IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
 //--------------------------------------------------------------------------
 // CLRRNGPhilox432Stream
 //--------------------------------------------------------------------------
-class CLRRNGPhilox432Stream : public Type::Base
+class CLRRNGPhilox432Stream : public Type::ValueBase
 {
 public:
     DECLARE_TYPE(CLRRNGPhilox432Stream);
     
-    CLRRNGPhilox432Stream(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
+    CLRRNGPhilox432Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
 
     //------------------------------------------------------------------------
     // Base overloads
     //------------------------------------------------------------------------
     virtual std::string getName() const final{ return "clrngPhilox432Stream"; }
-    virtual Base *getQualifiedType(Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
     virtual size_t getSizeBytes() const final{ return 132; }
 };
 IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
