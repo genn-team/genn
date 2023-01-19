@@ -5,7 +5,7 @@
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 {
-Backend createBackend(const filesystem::path&,
+Backend createBackend(const ModelSpecInternal&,const filesystem::path&,
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
                       const Preferences &preferences)
 {

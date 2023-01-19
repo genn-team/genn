@@ -127,8 +127,7 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
-    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-            const std::string &scalarType, int device);
+    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int device);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
@@ -149,7 +148,8 @@ public:
     virtual std::string getCLZ() const override { return "__clz"; }
 
     //! Get name of atomic operation
-    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD,
+    virtual std::string getAtomic(const Type::NumericBase *type, const Type::TypeContext &typeContext,
+                                  AtomicOperation op = AtomicOperation::ADD,
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;
 
     //! Generate a shared memory barrier
@@ -186,55 +186,69 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
+    //! Generate code to define a variable in the appropriate header file
+    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
+                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       VarLocation loc) const final;
+    
+    //! Generate code to instantiate a variable in the provided stream
+    virtual void genVariableInstantiation(CodeStream &os, 
+                                          const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                          VarLocation loc) const final;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    //! Generate code to allocate variable with a size known at compile-time
+    virtual void genVariableAllocation(CodeStream &os, 
+                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
+    
+    //! Generate code to allocate variable with a size known at runtime
+    virtual void genVariableDynamicAllocation(CodeStream &os, 
+                                              const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                              VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
-    //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
-    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
-                                               const std::string &groupIdx, const std::string &fieldName,
-                                               const std::string &egpName) const override;
+    //! Generate code to free a variable
+    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
+
+    //! Generate code for pushing a variable with a size known at compile-time to the 'device'
+    virtual void genVariablePush(CodeStream &os, 
+                                 const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                 VarLocation loc, bool autoInitialized, size_t count) const final;
+    
+    //! Generate code for pulling a variable with a size known at compile-time from the 'device'
+    virtual void genVariablePull(CodeStream &os, 
+                                 const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                 VarLocation loc, size_t count) const final;
+
+    //! Generate code for pushing a variable's value in the current timestep to the 'device'
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
+                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                        VarLocation loc, unsigned int batchSize) const final;
+
+    //! Generate code for pulling a variable's value in the current timestep from the 'device'
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
+                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name,
+                                        VarLocation loc, unsigned int batchSize) const final;
+
+    //! Generate code for pushing a variable with a size known at tuntime to the 'device'
+    virtual void genVariableDynamicPush(CodeStream &os, 
+                                        const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                        VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
+
+    //! Generate code for pulling a variable with a size known at runtime from the 'device'
+    virtual void genVariableDynamicPull(CodeStream &os, 
+                                        const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                        VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
+
+    //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
+    virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                              const std::string &groupIdx, const std::string &fieldName,
+                                              const std::string &egpName) const final;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
     virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const override;
 
     //! When generating merged structures what type to use for simulation RNGs
-    virtual const Type::Base *getMergedGroupSimRNGType() const override;
-
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
-
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, false);
-    }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, false);
-    }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, true);
-    }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, true);
-    }
+    virtual const Type::ValueBase *getMergedGroupSimRNGType() const override;
     
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
                                     CodeStream &runner, CodeStream &allocations, CodeStream &free, 
@@ -335,9 +349,6 @@ private:
     {
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
-
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 

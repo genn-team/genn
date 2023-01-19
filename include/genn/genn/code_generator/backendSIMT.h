@@ -91,7 +91,8 @@ public:
     virtual std::string getCLZ() const = 0;
 
     //! Get name of atomic operation
-    virtual std::string getAtomic(const Type::NumericBase *type, AtomicOperation op = AtomicOperation::ADD, 
+    virtual std::string getAtomic(const Type::NumericBase *type, const Type::TypeContext &typeContext,
+                                  AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const = 0;
 
     //! Generate a shared memory barrier

@@ -763,7 +763,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+        return Backend(cudaBlockSize, preferences, deviceID);
     }
     // Otherwise
     else {
@@ -782,11 +782,11 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
             optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+            return Backend(cudaBlockSize, preferences, deviceID);
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, deviceID);
         }
 
     }
