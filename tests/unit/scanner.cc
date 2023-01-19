@@ -56,91 +56,66 @@ private:
 TEST(Scanner, DecimalInt)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1234 4294967295U -2345 -2147483647", GeNN::Type::Float::getInstance(), errorHandler);
+    const auto tokens = Scanner::scanSource("1234 4294967295U -2345 -2147483647", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
-    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::INT32_NUMBER);
+    ASSERT_EQ(tokens[1].type, Token::Type::UINT32_NUMBER);
     ASSERT_EQ(tokens[2].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[3].type, Token::Type::INT32_NUMBER);
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].type, Token::Type::INT32_NUMBER);
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
-    ASSERT_EQ(std::get<int32_t>(tokens[0].literalValue), 1234);
-    ASSERT_EQ(std::get<uint32_t>(tokens[1].literalValue), 4294967295U);
-    ASSERT_EQ(std::get<int32_t>(tokens[3].literalValue), 2345);
-    ASSERT_EQ(std::get<int32_t>(tokens[5].literalValue), 2147483647);
+    ASSERT_EQ(tokens[0].lexeme, "1234");
+    ASSERT_EQ(tokens[1].lexeme, "4294967295U");
+    ASSERT_EQ(tokens[3].lexeme, "2345");
+    ASSERT_EQ(tokens[5].lexeme, "2147483647");
 }
 //--------------------------------------------------------------------------
 TEST(Scanner, HexInt)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("0x1234 0xFFFFFFFFU -0x1234 -0x7FFFFFFF", GeNN::Type::Float::getInstance(), errorHandler);
+    const auto tokens = Scanner::scanSource("0x1234 0xFFFFFFFFU -0x1234 -0x7FFFFFFF", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
-    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::INT32_NUMBER);
+    ASSERT_EQ(tokens[1].type, Token::Type::UINT32_NUMBER);
     ASSERT_EQ(tokens[2].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[3].type, Token::Type::INT32_NUMBER);
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].type, Token::Type::INT32_NUMBER);
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
-    ASSERT_EQ(std::get<int32_t>(tokens[0].literalValue), 0x1234);
-    ASSERT_EQ(std::get<uint32_t>(tokens[1].literalValue), 0xFFFFFFFFU);
-    ASSERT_EQ(std::get<int32_t>(tokens[3].literalValue), 0x1234);
-    ASSERT_EQ(std::get<int32_t>(tokens[5].literalValue), 0x7FFFFFFF);
+    ASSERT_EQ(tokens[0].lexeme, "0x1234");
+    ASSERT_EQ(tokens[1].lexeme, "0xFFFFFFFFU");
+    ASSERT_EQ(tokens[3].lexeme, "0x1234");
+    ASSERT_EQ(tokens[5].lexeme, "0x7FFFFFFF");
 }
 //--------------------------------------------------------------------------
-TEST(Scanner, DecimalFloatFloatScalar)
+TEST(Scanner, DecimalFloat)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", GeNN::Type::Float::getInstance(), errorHandler);
+    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 9);
-    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[2].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::SCALAR_NUMBER);
+    ASSERT_EQ(tokens[1].type, Token::Type::SCALAR_NUMBER);
+    ASSERT_EQ(tokens[2].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[3].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].type, Token::Type::DOUBLE_NUMBER);
     ASSERT_EQ(tokens[6].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[7].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[7].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[8].type, Token::Type::END_OF_FILE);
 
-    ASSERT_EQ(std::get<float>(tokens[0].literalValue), 1.0f);
-    ASSERT_EQ(std::get<float>(tokens[1].literalValue), 0.2f);
-    ASSERT_EQ(std::get<float>(tokens[2].literalValue), 100.0f);
-    ASSERT_EQ(std::get<float>(tokens[3].literalValue), 0.2f);
-    ASSERT_EQ(std::get<double>(tokens[5].literalValue), 12.0);
-    ASSERT_EQ(std::get<float>(tokens[7].literalValue), 0.0004f);
-}
-//--------------------------------------------------------------------------
-TEST(Scanner, DecimalFloatDoubleScalar)
-{
-    TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", GeNN::Type::Double::getInstance(), errorHandler);
-    ASSERT_FALSE(errorHandler.hasError());
-
-    ASSERT_EQ(tokens.size(), 9);
-    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[2].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[6].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[7].type, Token::Type::NUMBER);
-    ASSERT_EQ(tokens[8].type, Token::Type::END_OF_FILE);
-
-    ASSERT_EQ(std::get<double>(tokens[0].literalValue), 1.0);
-    ASSERT_EQ(std::get<double>(tokens[1].literalValue), 0.2);
-    ASSERT_EQ(std::get<float>(tokens[2].literalValue), 100.0f);
-    ASSERT_EQ(std::get<float>(tokens[3].literalValue), 0.2f);
-    ASSERT_EQ(std::get<double>(tokens[5].literalValue), 12.0);
-    ASSERT_EQ(std::get<float>(tokens[7].literalValue), 0.0004f);
+    ASSERT_EQ(tokens[0].lexeme, "1.0f");
+    ASSERT_EQ(tokens[1].lexeme, "0.2f");
+    ASSERT_EQ(tokens[2].lexeme, "100.0f");
+    ASSERT_EQ(tokens[3].lexeme, "0.2f");
+    ASSERT_EQ(tokens[5].lexeme, "12.0");
+    ASSERT_EQ(tokens[7].lexeme, "0.0004f");
 }

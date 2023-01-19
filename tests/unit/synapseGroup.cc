@@ -373,7 +373,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -423,7 +423,7 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -478,7 +478,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -544,7 +544,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -610,7 +610,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -664,7 +664,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -723,7 +723,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -864,7 +864,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -924,7 +924,7 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);

@@ -182,8 +182,8 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         model.setName("test");
         model.setDT(0.1);
         model.setTiming(false);
-        model.setPrecision(ScalarPrecision::FLOAT);
-        model.setTimePrecision(TimePrecision::DEFAULT);
+        model.setPrecision(Type::Float::getInstance());
+        model.setTimePrecision(nullptr);
         model.setBatchSize(1);
         model.setSeed(0);
 
@@ -194,7 +194,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         model.finalize();
 
         // Create suitable backend to build model
-        CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+        CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
          // Merge model
         CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -319,8 +319,8 @@ TEST(ModelSpecMerged, CompareModelChanges)
         {[](ModelSpecInternal &model) { model.setName("interesting_name"); }, false},
         {[](ModelSpecInternal &model) { model.setDT(1.0); }, false},
         {[](ModelSpecInternal &model) { model.setTiming(true); }, false},
-        {[](ModelSpecInternal &model) { model.setPrecision(ScalarPrecision::DOUBLE); }, false},
-        {[](ModelSpecInternal &model) { model.setTimePrecision(TimePrecision::DOUBLE); }, false},
+        {[](ModelSpecInternal &model) { model.setPrecision(Type::Double::getInstance()); }, false},
+        {[](ModelSpecInternal &model) { model.setTimePrecision(Type::Double::getInstance()); }, false},
         {[](ModelSpecInternal &model) { model.setBatchSize(10); }, false},
         {[](ModelSpecInternal &model) { model.setSeed(1234); }, false}};
     

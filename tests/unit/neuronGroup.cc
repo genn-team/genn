@@ -227,7 +227,7 @@ TEST(NeuronGroup, ConstantVarIzhikevich)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -251,7 +251,7 @@ TEST(NeuronGroup, UninitialisedVarIzhikevich)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -276,7 +276,7 @@ TEST(NeuronGroup, RandVarIzhikevich)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -300,7 +300,7 @@ TEST(NeuronGroup, Poisson)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -582,7 +582,7 @@ TEST(NeuronGroup, CompareNeuronModels)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -632,7 +632,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -731,7 +731,7 @@ TEST(NeuronGroup, CompareCurrentSources)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -849,7 +849,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -951,7 +951,7 @@ TEST(NeuronGroup, ComparePreOutput)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -1040,7 +1040,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -1141,7 +1141,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);

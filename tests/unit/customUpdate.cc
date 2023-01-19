@@ -179,7 +179,7 @@ TEST(CustomUpdates, ConstantVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -208,7 +208,7 @@ TEST(CustomUpdates, UninitialisedVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -238,7 +238,7 @@ TEST(CustomUpdates, RandVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -679,7 +679,7 @@ TEST(CustomUpdates, CompareDifferentModel)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -719,7 +719,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -794,7 +794,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -845,7 +845,7 @@ TEST(CustomUpdates, CompareDifferentBatched)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -894,7 +894,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -946,7 +946,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
@@ -1007,7 +1007,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);

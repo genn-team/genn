@@ -358,7 +358,7 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
