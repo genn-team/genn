@@ -161,10 +161,11 @@ public:
     
     //! Helper to get name of atomic operation
     template<typename T>
-    std::string getAtomic(AtomicOperation op = AtomicOperation::ADD,
+    std::string getAtomic(const Type::TypeContext &typeContext,
+                          AtomicOperation op = AtomicOperation::ADD,
                           AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const
     {
-        return getAtomic(T::getInstance(), op, memSpace);
+        return getAtomic(T::getInstance(), typeContext, op, memSpace);
     }
 
     //--------------------------------------------------------------------------
@@ -453,7 +454,7 @@ private:
         }
     }
 
-    void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
+    void genEmitSpike(const ModelSpecMerged &modelMerged, CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 
