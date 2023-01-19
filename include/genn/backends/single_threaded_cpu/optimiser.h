@@ -9,6 +9,12 @@
 // Single-threaded CPU backend includes
 #include "backend.h"
 
+// Forward declarations
+namespace GeNN
+{
+class ModelSpecInternal;
+}
+
 namespace plog
 {
 class IAppender;
