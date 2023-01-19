@@ -59,7 +59,6 @@
     <ClCompile Include="transpiler\parser.cc" />
     <ClCompile Include="transpiler\prettyPrinter.cc" />
     <ClCompile Include="transpiler\scanner.cc" />
-    <ClCompile Include="transpiler\statement.cc" />
     <ClCompile Include="transpiler\typeChecker.cc" />
     <ClCompile Include="type.cc" />
     <ClCompile Include="weightUpdateModels.cc" />

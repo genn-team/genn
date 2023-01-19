@@ -27,20 +27,32 @@ public:
     virtual void accept(Visitor &visitor) const = 0;
 };
 
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Statement::Acceptable
+//---------------------------------------------------------------------------
+template<class T>
+class Acceptable : public Base
+{
+public:
+    void accept(Visitor &visitor) const final
+    {
+        visitor.visit(static_cast<const T&>(*this));
+    }
+};
+
 typedef std::unique_ptr<Base const> StatementPtr;
 typedef std::vector<StatementPtr> StatementList;
+
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Break
 //---------------------------------------------------------------------------
-class Break : public Base
+class Break : public Acceptable<Break>
 {
 public:
     Break(Token token) 
     :   m_Token(token) 
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Token &getToken() const { return m_Token; }
 
@@ -51,14 +63,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Compound
 //---------------------------------------------------------------------------
-class Compound : public Base
+class Compound : public Acceptable<Compound>
 {
 public:
     Compound(StatementList statements)
     :  m_Statements(std::move(statements))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const StatementList &getStatements() const { return m_Statements; }
 
@@ -69,14 +79,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Continue
 //---------------------------------------------------------------------------
-class Continue : public Base
+class Continue : public Acceptable<Continue>
 {
 public:
     Continue(Token token) 
     :   m_Token(token) 
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Token &getToken() const { return m_Token; }
 
@@ -87,15 +95,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Do
 //---------------------------------------------------------------------------
-class Do : public Base
+class Do : public Acceptable<Do>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     Do(ExpressionPtr condition, StatementPtr body)
     :  m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
@@ -108,15 +114,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Expression
 //---------------------------------------------------------------------------
-class Expression : public Base
+class Expression : public Acceptable<Expression>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     Expression(ExpressionPtr expression)
     :  m_Expression(std::move(expression))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
@@ -127,15 +131,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::For
 //---------------------------------------------------------------------------
-class For : public Base
+class For : public Acceptable<For>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     For(StatementPtr initialiser, ExpressionPtr condition, ExpressionPtr increment, StatementPtr body)
     :  m_Initialiser(std::move(initialiser)), m_Condition(std::move(condition)), m_Increment(std::move(increment)), m_Body(std::move(body))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Base *getInitialiser() const { return m_Initialiser.get(); }
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
@@ -152,15 +154,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
-class If : public Base
+class If : public Acceptable<If>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     If(ExpressionPtr condition, StatementPtr thenBranch, StatementPtr elseBranch)
     :  m_Condition(std::move(condition)), m_ThenBranch(std::move(thenBranch)), m_ElseBranch(std::move(elseBranch))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getThenBranch() const { return m_ThenBranch.get(); }
@@ -175,15 +175,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Labelled
 //---------------------------------------------------------------------------
-class Labelled : public Base
+class Labelled : public Acceptable<Labelled>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     Labelled(Token keyword, ExpressionPtr value, StatementPtr body)
     :  m_Keyword(keyword), m_Value(std::move(value)), m_Body(std::move(body))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Token &getKeyword() const { return m_Keyword; }
     const ExpressionPtr::element_type *getValue() const { return m_Value.get(); }
@@ -199,15 +197,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Switch
 //---------------------------------------------------------------------------
-class Switch : public Base
+class Switch : public Acceptable<Switch>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     Switch(Token switchToken, ExpressionPtr condition, StatementPtr body)
     :   m_Switch(switchToken), m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Token &getSwitch() const { return m_Switch; }
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
@@ -223,7 +219,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::VarDeclaration
 //---------------------------------------------------------------------------
-class VarDeclaration : public Base
+class VarDeclaration : public Acceptable<VarDeclaration>
 {
 public:
     typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr>> InitDeclaratorList;
@@ -231,8 +227,6 @@ public:
     VarDeclaration(const Type::Base *type, InitDeclaratorList initDeclaratorList)
     :   m_Type(type), m_InitDeclaratorList(std::move(initDeclaratorList))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const Type::Base *getType() const{ return m_Type; }
     const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }    
@@ -246,15 +240,13 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
-class While : public Base
+class While : public Acceptable<While>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     While(ExpressionPtr condition, StatementPtr body)
     :  m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
@@ -268,15 +260,13 @@ private:
 // GeNN::Transpiler::Statement::Print
 //---------------------------------------------------------------------------
 // **HACK** temporary until function calling is working
-class Print : public Base
+class Print : public Acceptable<Print>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
     Print(ExpressionPtr expression)
     :  m_Expression(std::move(expression))
     {}
-
-    virtual void accept(Visitor &visitor) const override;
 
     const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
