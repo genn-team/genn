@@ -24,7 +24,7 @@ namespace Type = GeNN::Type;
 //---------------------------------------------------------------------------
 namespace
 {
- bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
+bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
 {
     // If both are pointers, recurse through value type
     auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
@@ -65,6 +65,45 @@ bool checkForConstRemoval(const Type::Base *rightType, const Type::Base *leftTyp
     }
 
 }
+
+//---------------------------------------------------------------------------
+// UnaryVisitor
+//---------------------------------------------------------------------------
+struct UnaryVisitor : public Type::UnaryVisitor
+{
+    //------------------------------------------------------------------------
+    // Type::UnaryVisitor virtuals
+    //------------------------------------------------------------------------
+    virtual const Type::Base *visit(const Type::ForeignFunctionBase*) override
+    {
+        throw TypeCheckError();
+    }
+    
+    virtual const Type::Base *visit(const Type::Pointer*) override
+    {
+        throw TypeCheckError();
+    }
+
+    virtual const Type::Base *visit(const Type::NumericBase *) override
+    {
+        throw TypeCheckError();
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const Type::Base *getType(const Type::Base *type, ErrorHandlerBase &errorHandler, 
+                              const Token &errorToken, std::string_view errorMessage)
+    {
+        try {
+            return type->accept(*this);
+        }
+        catch (const TypeCheckError&) {
+            errorHandler.error(errorToken, errorMessage);
+            throw TypeCheckError();
+        }
+    }
+};
 
 
 //---------------------------------------------------------------------------
@@ -432,56 +471,63 @@ public:
 
     virtual void visit(const Expression::Unary &unary) final
     {
-        const auto rightType = evaluateType(unary.getRight());
+        const auto type = evaluateType(unary.getRight());
 
         // If operator is pointer de-reference
         if (unary.getOperator().type == Token::Type::STAR) {
-            auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
-            if (!rightPointerType) {
-                m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName() + "'");
-                throw TypeCheckError();
-            }
+            struct Visitor : public UnaryVisitor
+            {
+                virtual const Type::Base *visit(const Type::Pointer *pointerType) final
+                {
+                    return pointerType->getValueType();
+                }
+            };
 
-            // Return value type
-            m_Type = rightPointerType->getValueType();
+            m_Type = Visitor().getType(type, m_ErrorHandler, unary.getOperator(), 
+                                       "Invalid operand type '" + type->getName() + "'");
         }
         // Otherwise
         else {
-            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
-            if (rightNumericType) {
-                // If operator is arithmetic, return promoted type
-                if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
-                    // **THINK** const through these?
-                    m_Type = Type::getPromotedType(rightNumericType, m_Context);
-                }
-                // Otherwise, if operator is bitwise
-                else if (unary.getOperator().type == Token::Type::TILDA) {
-                    // If type is integer, return promoted type
-                    if (rightNumericType->isIntegral(m_Context)) {
+            struct Visitor : public UnaryVisitor
+            {
+                Visitor(const Type::TypeContext &c, Token::Type t) : context(c), opType(t) {}
+
+                virtual const Type::Base *visit(const Type::NumericBase *numericType) final
+                {
+                    // If operator is arithmetic, return promoted type
+                    if (opType == Token::Type::PLUS || opType == Token::Type::MINUS) {
                         // **THINK** const through these?
-                        m_Type = Type::getPromotedType(rightNumericType, m_Context);
+                        return Type::getPromotedType(numericType, context);
                     }
-                    else {
-                        m_ErrorHandler.error(unary.getOperator(),
-                                             "Invalid operand type '" + rightType->getName() + "'");
-                        throw TypeCheckError();
+                    // Otherwise, if operator is bitwise
+                    else if (opType == Token::Type::TILDA) {
+                        // If type is integer, return promoted type
+                        if (numericType->isIntegral(context)) {
+                            // **THINK** const through these?
+                            return Type::getPromotedType(numericType, context);
+                        }
+                        else {
+                            throw TypeCheckError();
+                        }
+                    }
+                    // Otherwise, if operator is logical
+                    else if (opType == Token::Type::NOT) {
+                        return Type::Int32::getInstance();;
+                    }
+                    // Otherwise, if operator is address of, return pointer type
+                    else if (opType == Token::Type::AMPERSAND) {
+                        return numericType->getPointerType();
                     }
                 }
-                // Otherwise, if operator is logical
-                else if (unary.getOperator().type == Token::Type::NOT) {
-                    m_Type = Type::Int32::getInstance();;
-                }
-                // Otherwise, if operator is address of, return pointer type
-                else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_Type = rightType->getPointerType();
-                }
-            }
-            else {
-                m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName() + "'");
-                throw TypeCheckError();
-            }
+
+                const Token::Type opType;
+                const Type::TypeContext &context;
+            };
+
+            m_Type = Visitor(m_Context, unary.getOperator().type).getType(
+                type, m_ErrorHandler, unary.getOperator(), 
+                "Invalid operand type '" + type->getName() + "'");
+
         }
     }
 
