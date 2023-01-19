@@ -27,20 +27,31 @@ public:
     virtual void accept(Visitor &visitor) const = 0;
 };
 
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Expression::Acceptable
+//---------------------------------------------------------------------------
+template<class T>
+class Acceptable : public Base
+{
+public:
+    void accept(Visitor &visitor) const final
+    {
+        visitor.visit(static_cast<const T&>(*this));
+    }
+};
+
 typedef std::unique_ptr<Base const> ExpressionPtr;
 typedef std::vector<ExpressionPtr> ExpressionList;
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::ArraySubscript
 //---------------------------------------------------------------------------
-class ArraySubscript : public Base
+class ArraySubscript : public Acceptable<ArraySubscript>
 {
 public:
     ArraySubscript(Token pointerName, ExpressionPtr index)
     :  m_PointerName(pointerName), m_Index(std::move(index))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getPointerName() const { return m_PointerName; }
     const ExpressionPtr &getIndex() const { return m_Index; }
@@ -53,14 +64,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Assignment
 //---------------------------------------------------------------------------
-class Assignment : public Base
+class Assignment : public Acceptable<Assignment>
 {
 public:
     Assignment(Token varName, Token op, ExpressionPtr value)
     :  m_VarName(varName), m_Operator(op), m_Value(std::move(value))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getVarName() const { return m_VarName; }
     const Token &getOperator() const { return m_Operator; }
@@ -75,14 +84,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Binary
 //---------------------------------------------------------------------------
-class Binary : public Base
+class Binary : public Acceptable<Binary>
 {
 public:
     Binary(ExpressionPtr left, Token op, ExpressionPtr right)
     :  m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Base *getLeft() const { return m_Left.get(); }
     const Token &getOperator() const { return m_Operator; }
@@ -97,14 +104,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Call
 //---------------------------------------------------------------------------
-class Call : public Base
+class Call : public Acceptable<Call>
 {
 public:
     Call(ExpressionPtr callee, Token closingParen, ExpressionList arguments)
     :  m_Callee(std::move(callee)), m_ClosingParen(closingParen), m_Arguments(std::move(arguments))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Base *getCallee() const { return m_Callee.get(); }
     const Token &getClosingParen() const { return m_ClosingParen; }
@@ -119,14 +124,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Cast
 //---------------------------------------------------------------------------
-class Cast : public Base
+class Cast : public Acceptable<Cast>
 {
 public:
     Cast(const Type::Base *type, ExpressionPtr expression, Token closingParen)
     :  m_Type(type), m_Expression(std::move(expression)), m_ClosingParen(closingParen)
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Type::Base *getType() const{ return m_Type; }
     const Base *getExpression() const { return m_Expression.get(); }
@@ -141,14 +144,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Conditional
 //---------------------------------------------------------------------------
-class Conditional : public Base
+class Conditional : public Acceptable<Conditional>
 {
 public:
     Conditional(ExpressionPtr condition, Token question, ExpressionPtr trueExpression, ExpressionPtr falseExpression)
     :  m_Condition(std::move(condition)), m_Question(question), m_True(std::move(trueExpression)), m_False(std::move(falseExpression))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Base *getCondition() const { return m_Condition.get(); }
     const Token &getQuestion() const { return m_Question; }
@@ -165,14 +166,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Grouping
 //---------------------------------------------------------------------------
-class Grouping : public Base
+class Grouping : public Acceptable<Grouping>
 {
 public:
     Grouping(ExpressionPtr expression)
     :  m_Expression(std::move(expression))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Base *getExpression() const { return m_Expression.get(); }
 
@@ -183,14 +182,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Literal
 //---------------------------------------------------------------------------
-class Literal : public Base
+class Literal : public Acceptable<Literal>
 {
 public:
     Literal(Token value)
     :  m_Value(value)
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     Token getValue() const { return m_Value; }
 
@@ -201,14 +198,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Logical
 //---------------------------------------------------------------------------
-class Logical : public Base
+class Logical : public Acceptable<Logical>
 {
 public:
     Logical(ExpressionPtr left, Token op, ExpressionPtr right)
     :  m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Base *getLeft() const { return m_Left.get(); }
     const Token &getOperator() const { return m_Operator; }
@@ -223,14 +218,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PostfixIncDec
 //---------------------------------------------------------------------------
-class PostfixIncDec : public Base
+class PostfixIncDec : public Acceptable<PostfixIncDec>
 {
 public:
     PostfixIncDec(Token varName, Token op)
     :  m_VarName(varName), m_Operator(op)
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getVarName() const { return m_VarName; }
     const Token &getOperator() const { return m_Operator; }
@@ -243,14 +236,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PrefixIncDec
 //---------------------------------------------------------------------------
-class PrefixIncDec : public Base
+class PrefixIncDec : public Acceptable<PrefixIncDec>
 {
 public:
     PrefixIncDec(Token varName, Token op)
     :  m_VarName(varName), m_Operator(op)
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getVarName() const { return m_VarName; }
     const Token &getOperator() const { return m_Operator; }
@@ -263,14 +254,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Variable
 //---------------------------------------------------------------------------
-class Variable : public Base
+class Variable : public Acceptable<Variable>
 {
 public:
     Variable(Token name)
     :  m_Name(name)
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getName() const { return m_Name; }
 
@@ -281,14 +270,12 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Unary
 //---------------------------------------------------------------------------
-class Unary : public Base
+class Unary : public Acceptable<Unary>
 {
 public:
     Unary(Token op, ExpressionPtr right)
     :  m_Operator(op), m_Right(std::move(right))
     {}
-
-    virtual void accept(Visitor &visitor) const final;
 
     const Token &getOperator() const { return m_Operator; }
     const Base *getRight() const { return m_Right.get(); }
