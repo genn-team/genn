@@ -34,7 +34,7 @@ template<typename T>
 class Acceptable : public Base
 {
 public:
-    void accept(Visitor &visitor) const final
+    virtual void accept(Visitor &visitor) const final
     {
         visitor.visit(static_cast<const T&>(*this));
     }
