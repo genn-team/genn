@@ -871,40 +871,17 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
     return statements;
 }
 //---------------------------------------------------------------------------
-const GeNN::Type::Base *parseType(const std::vector<Token> &tokens, bool allowPointers, ErrorHandlerBase &errorHandler)
+const GeNN::Type::NumericBase *parseNumericType(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
-    bool pointerFound = false;
     std::set<std::string_view> typeSpecifiers;
-    while(parserState.match({Token::Type::TYPE_SPECIFIER, Token::Type::STAR})) {
-        // If token is a star, set pointer found flag
-        if(parserState.previous().type == Token::Type::STAR) {
-            if (!allowPointers) {
-                parserState.error(parserState.previous(), "pointer type not valid in this context");
-            }
-            pointerFound = true;
-        }
-        // Otherwise, if token is type specifier
-        else if(parserState.previous().type == Token::Type::TYPE_SPECIFIER) {
-            if(pointerFound) {
-                parserState.error(parserState.previous(), "invalid type specifier");
-            }
-            else if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
-                parserState.error(parserState.previous(), "duplicate type specifier");
-            }
+    while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
+        if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
+            parserState.error(parserState.previous(), "duplicate type specifier");
         }
     };
     
-    // Lookup numeric type
-    const auto *numericType = GeNN::Type::getNumericType(typeSpecifiers);
-
-    // If pointer, return pointer to numeric type
-    if (pointerFound) {
-        return numericType->getPointerType();
-    }
-    // Otherwise, return numeric type directly
-    else {
-        return numericType;
-    }
+    // Return numeric type
+    return GeNN::Type::getNumericType(typeSpecifiers);
 }
 }
