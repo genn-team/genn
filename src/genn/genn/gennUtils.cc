@@ -72,38 +72,6 @@ bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varIn
                        });
 }
 //--------------------------------------------------------------------------
-bool isTypePointer(const std::string &type)
-{
-    return (type.back() == '*');
-}
-//--------------------------------------------------------------------------
-bool isTypePointerToPointer(const std::string &type)
-{
-    const size_t len = type.length();
-    return (type[len - 1] == '*' && type[len - 2] == '*');
-}
-//--------------------------------------------------------------------------
-bool isTypeFloatingPoint(const std::string &type)
-{
-    assert(!isTypePointer(type));
-    return ((type == "float") || (type == "double") || (type == "half") || (type == "scalar"));
-}
-//--------------------------------------------------------------------------
-std::string getUnderlyingType(const std::string &type)
-{
-    // Check that type is a pointer type
-    assert(isTypePointer(type));
-
-    // if type is actually a pointer to a pointer, return string without last 2 characters
-    if(isTypePointerToPointer(type)) {
-        return type.substr(0, type.length() - 2);
-    }
-    // Otherwise, return string without last character
-    else {
-        return type.substr(0, type.length() - 1);
-    }
-}
-//--------------------------------------------------------------------------
 void validateVarName(const std::string &name, const std::string &description)
 {
     // Empty names aren't valid

@@ -8,8 +8,9 @@
 #include <vector>
 
 // GeNN includes
-#include "snippet.h"
 #include "initVarSnippet.h"
+#include "snippet.h"
+#include "type.h"
 #include "varAccess.h"
 
 // Forward declarations
@@ -24,10 +25,6 @@ class CurrentSource;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 class CurrentSourceInternal;
-namespace Type
-{
-class NumericBase;
-}
 }
 
 //----------------------------------------------------------------------------

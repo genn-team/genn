@@ -1286,21 +1286,21 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
                                     const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                    VarLocation loc) const
+                                    VarLocation) const
 {
     definitions << "EXPORT_VAR " << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInstantiation(CodeStream &os, 
                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                       VarLocation loc) const
+                                       VarLocation) const
 {
     os << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableAllocation(CodeStream &os, 
                                     const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                    VarLocation loc, size_t count, MemAlloc &memAlloc) const
+                                    VarLocation, size_t count, MemAlloc &memAlloc) const
 {
     os << name << " = new " << type->getResolvedName(typeContext) << "[" << count << "];" << std::endl;
 
@@ -1309,7 +1309,7 @@ void Backend::genVariableAllocation(CodeStream &os,
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicAllocation(CodeStream &os, 
                                            const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                           VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+                                           VarLocation, const std::string &countVarName, const std::string &prefix) const
 {
     const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
     if (pointerType) {
@@ -1320,7 +1320,7 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
+void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
 {
     os << "delete[] " << name << ";" << std::endl;
 }

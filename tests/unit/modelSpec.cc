@@ -156,7 +156,7 @@ TEST(ModelSpec, CustomConnectivityUpdateZeroCopy)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    SynapseGroup *sg = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
         "Synapse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "Neurons0", "Neurons1",
         {}, {{"g", 1.0}, {"d", 1}},
