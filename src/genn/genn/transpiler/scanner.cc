@@ -226,14 +226,14 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             
             // If number has an f suffix, emplace FLOAT_NUMBER token
             if (std::tolower(scanState.peek()) == 'f') {
-                emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
                 scanState.advance();
+                emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
             }
             // Otherwise, if it has a d suffix, emplace DOUBLE_NUMBER token
             // **NOTE** 'd' is a GeNN extension not standard C
             else if (std::tolower(scanState.peek()) == 'd') {
-                emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
                 scanState.advance();
+                emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
             }
             // Otherwise, emplace SCALAR_NUMBER token
             else {

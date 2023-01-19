@@ -112,10 +112,10 @@ TEST(Scanner, DecimalFloat)
     ASSERT_EQ(tokens[7].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[8].type, Token::Type::END_OF_FILE);
 
-    ASSERT_EQ(tokens[0].lexeme, "1.0f");
-    ASSERT_EQ(tokens[1].lexeme, "0.2f");
+    ASSERT_EQ(tokens[0].lexeme, "1.0");
+    ASSERT_EQ(tokens[1].lexeme, "0.2");
     ASSERT_EQ(tokens[2].lexeme, "100.0f");
     ASSERT_EQ(tokens[3].lexeme, "0.2f");
-    ASSERT_EQ(tokens[5].lexeme, "12.0");
+    ASSERT_EQ(tokens[5].lexeme, "12.0d");
     ASSERT_EQ(tokens[7].lexeme, "0.0004f");
 }

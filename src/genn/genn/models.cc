@@ -195,7 +195,7 @@ WUVarReference::WUVarReference(SynapseGroup *sg, const std::string &varName,
         }
 
         // Check types
-        if(getVar().type != getTransposeVar().type) {
+        if(getVar().type->getName() != getTransposeVar().type->getName()) {
             throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
         }
 

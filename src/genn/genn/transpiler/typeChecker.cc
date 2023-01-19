@@ -24,6 +24,49 @@ namespace Type = GeNN::Type;
 //---------------------------------------------------------------------------
 namespace
 {
+ bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
+{
+    // If both are pointers, recurse through value type
+    auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
+    auto leftPointerType = dynamic_cast<const Type::Pointer *>(leftType);
+    if (rightPointerType && leftPointerType) {
+        return checkPointerTypeAssignement(rightPointerType->getValueType(), leftPointerType->getValueType(), typeContext);
+    }
+    // Otherwise, if we've hit the value type at the end of the chain, check resolved names match
+    else if (!rightPointerType && !leftPointerType) {
+        return (rightType->getResolvedName(typeContext) == leftType->getResolvedName(typeContext));
+    }
+    // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
+    else {
+        return false;
+    }
+}
+
+bool checkForConstRemoval(const Type::Base *rightType, const Type::Base *leftType) 
+{
+    // If const is being removed
+    if (rightType->hasQualifier(Type::Qualifier::CONSTANT) && !leftType->hasQualifier(Type::Qualifier::CONSTANT)) {
+        return false;
+    }
+
+    // If both are pointers, recurse through value type
+    auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
+    auto leftPointerType = dynamic_cast<const Type::Pointer *>(leftType);
+    if (rightPointerType && leftPointerType) {
+        return checkForConstRemoval(rightPointerType->getValueType(), leftPointerType->getValueType());
+    }
+    // Otherwise, if both are non-pointers, return true as const removal has been succesfully checked
+    else if (!rightPointerType && !leftPointerType) {
+        return true;
+    }
+    // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
+    else {
+        return false;
+    }
+
+}
+
+
 //---------------------------------------------------------------------------
 // EnvironmentInternal
 //---------------------------------------------------------------------------
@@ -285,9 +328,9 @@ public:
     {
         // Evaluate type of expression we're casting
         const auto rightType = evaluateType(cast.getExpression());
-        
+
         // If const is being removed
-        if (rightType->hasQualifier(Type::Qualifier::CONSTANT) && !cast.getType()->hasQualifier(Type::Qualifier::CONSTANT)) {
+        if (!checkForConstRemoval(rightType, cast.getType())) {
             m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
             throw TypeCheckError();
         }
@@ -298,7 +341,8 @@ public:
         auto leftNumericType = dynamic_cast<const Type::NumericBase *>(cast.getType());
         auto leftPointerType = dynamic_cast<const Type::Pointer *>(cast.getType());
         if (rightPointerType && leftPointerType) {
-            if (rightPointerType->getResolvedName(m_Context) != leftPointerType->getResolvedName(m_Context)) {
+            // Check that value type at the end matches
+            if (!checkPointerTypeAssignement(rightPointerType->getValueType(), leftPointerType->getValueType(), m_Context)) {
                 m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
                 throw TypeCheckError();
             }
@@ -345,7 +389,7 @@ public:
             m_Type = Type::Double::getInstance();
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
-            m_Type = Type::Double::getInstance();
+            m_Type = Type::Float::getInstance();
         }
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
             // **TODO** cache
@@ -587,7 +631,7 @@ private:
         expression->accept(*this);
         return m_Type;
     }
-
+   
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
@@ -598,7 +642,7 @@ private:
     bool m_InLoop;
     bool m_InSwitch;
 };
-}
+}   // Anonymous namespace
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
@@ -622,14 +666,14 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
     if(op == Token::Type::EQUAL) {
         // If we're initialising a pointer with another pointer
         if (pointerAssignedType && pointerExistingType) {
-            // If we're trying to assign a pointer to a const value to a pointer
-            if (assignedType->hasQualifier(Type::Qualifier::CONSTANT) && !existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
+            // Check that value type at the end matches
+            if (!checkPointerTypeAssignement(pointerAssignedType->getValueType(), pointerExistingType->getValueType(), context)) {
                 errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
                 throw TypeCheckError();
             }
 
-            // If pointer types aren't compatible
-            if (pointerExistingType->getResolvedName(context) != pointerAssignedType->getResolvedName(context)) {
+            // If we're trying to make type less const
+            if (!checkForConstRemoval(pointerAssignedType, pointerExistingType)) {
                 errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
                 throw TypeCheckError();
             }

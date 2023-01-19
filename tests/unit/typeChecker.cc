@@ -140,7 +140,7 @@ std::string getPointerTypeName()
     return T::getInstance()->getPointerType()->getName();
 }
 
-void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
+void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext = {})
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -152,12 +152,11 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
     ASSERT_FALSE(errorHandler.hasError());
      
     // Typecheck
-    const Type::TypeContext typeContext{{"scalar", scalarType}};
     TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 }
 
-const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
+const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext = {})
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -169,7 +168,6 @@ const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &ty
     EXPECT_FALSE(errorHandler.hasError());
      
     // Typecheck
-    const Type::TypeContext typeContext{{"scalar", scalarType}};
     const auto *type = TypeChecker::typeCheck(expression.get(), typeEnvironment, typeContext, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
     return type;
@@ -417,8 +415,9 @@ TEST(TypeChecker, Literal)
     // Scalar with single-precision
     {
         TestEnvironment typeEnvironment;
+        const Type::TypeContext typeContext{{"scalar", Type::Float::getInstance()}};
         const auto *type = typeCheckExpression("1.0", typeEnvironment);
-        EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
+        EXPECT_EQ(type->getResolvedName(typeContext), Type::Float::getInstance()->getName());
         //EXPECT_TRUE(type.constValue);
         //EXPECT_FALSE(type.constPointer);
     }
@@ -426,8 +425,9 @@ TEST(TypeChecker, Literal)
     // Scalar with double-precision
     {
         TestEnvironment typeEnvironment;
-        const auto *type = typeCheckExpression("1.0", typeEnvironment, Type::Double::getInstance());
-        EXPECT_EQ(type->getName(), Type::Double::getInstance()->getName());
+        const Type::TypeContext typeContext{{"scalar", Type::Double::getInstance()}};
+        const auto *type = typeCheckExpression("1.0", typeEnvironment, typeContext);
+        EXPECT_EQ(type->getResolvedName(typeContext), Type::Double::getInstance()->getName());
         //EXPECT_TRUE(type.constValue);
         //EXPECT_FALSE(type.constPointer);
     }

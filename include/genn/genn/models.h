@@ -311,8 +311,8 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
         const auto varRef = varRefs.at(modelVarRef.name);
 
         // Check types of variable references against those specified in model
-        // **THINK** due to GeNN's current string-based type system this is rather conservative
-        if(varRef.getVar().type != modelVarRef.type) {
+        // **THINK** this is rather conservative but I think not allowing scalar and whatever happens to be scalar type is ok
+        if(varRef.getVar().type->getName() != modelVarRef.type->getName()) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
         }
 
