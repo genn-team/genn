@@ -88,7 +88,8 @@ public:
     }
     
     virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     ErrorHandlerBase &errorHandler, bool initializer = false) final
+                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+                                     bool initializer = false) final
     {
         // If type isn't found
         auto existingType = m_Types.find(name.lexeme);
@@ -98,10 +99,11 @@ public:
         }
         
         // Perform standard type-checking logic
-        return EnvironmentBase::assign(name, op, existingType->second, assignedType, errorHandler, initializer);    
+        return EnvironmentBase::assign(name, op, existingType->second, assignedType, context, errorHandler, initializer);    
     }
     
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, ErrorHandlerBase &errorHandler) final
+    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
+                                     const Type::TypeContext&, ErrorHandlerBase &errorHandler) final
     {
         auto existingType = m_Types.find(name.lexeme);
         if(existingType == m_Types.end()) {
@@ -138,7 +140,7 @@ std::string getPointerTypeName()
     return T::getInstance()->getPointerType()->getName();
 }
 
-void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext)
+void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -150,11 +152,12 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
     ASSERT_FALSE(errorHandler.hasError());
      
     // Typecheck
+    const Type::TypeContext typeContext{{"scalar", scalarType}};
     TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 }
 
-const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext)
+const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::NumericBase *scalarType = Type::Float::getInstance())
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -166,6 +169,7 @@ const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &ty
     EXPECT_FALSE(errorHandler.hasError());
      
     // Typecheck
+    const Type::TypeContext typeContext{{"scalar", scalarType}};
     const auto *type = TypeChecker::typeCheck(expression.get(), typeEnvironment, typeContext, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
     return type;
@@ -209,7 +213,7 @@ TEST(TypeChecker, Assignment)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         typeEnvironment.define<Type::Float>("floatVal");
-        typeEnvironment.define<Type::Int32>("intValConst", Type::Qualifier::CONST);
+        typeEnvironment.define<Type::Int32>("intValConst", Type::Qualifier::CONSTANT);
         typeCheckStatements(
             "int w = intVal;\n"
             "float x = floatVal;\n"
@@ -464,34 +468,34 @@ TEST(TypeChecker, Unary)
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto *type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
-        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONST));
+        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference pointer to const
     {
         TestEnvironment typeEnvironment;
-        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier::CONST);
+        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier::CONSTANT);
         const auto *type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
-        EXPECT_TRUE(type->hasQualifier(Type::Qualifier::CONST));
+        EXPECT_TRUE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference const pointer
     {
         TestEnvironment typeEnvironment;
-        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier{0}, Type::Qualifier::CONST);
+        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier{0}, Type::Qualifier::CONSTANT);
         const auto *type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
-        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONST));
+        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference const pointer to const
     {
         TestEnvironment typeEnvironment;
-        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier::CONST, Type::Qualifier::CONST);
+        typeEnvironment.definePointer<Type::Int32>("intArray", Type::Qualifier::CONSTANT, Type::Qualifier::CONSTANT);
         const auto *type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
-        EXPECT_TRUE(type->hasQualifier(Type::Qualifier::CONST));
+        EXPECT_TRUE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference numeric
@@ -506,12 +510,12 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.define<Type::Int32>("intVal");
         const auto *type = typeCheckExpression("&intVal", typeEnvironment);
-        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONST));
+        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
         
         const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
         EXPECT_TRUE(pointerType);
         EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());
-        EXPECT_FALSE(pointerType->getValueType()->hasQualifier(Type::Qualifier::CONST));        
+        EXPECT_FALSE(pointerType->getValueType()->hasQualifier(Type::Qualifier::CONSTANT));        
     }
 
     // Address of pointer
