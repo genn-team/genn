@@ -30,7 +30,7 @@ public:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Acceptable
 //---------------------------------------------------------------------------
-template<class T>
+template<typename T>
 class Acceptable : public Base
 {
 public:
