@@ -13,14 +13,47 @@
 // Forward declarations
 namespace GeNN::Transpiler::Expression 
 {
-class Visitor;
+class ArraySubscript;
+class Assignment;
+class Binary;
+class Call;
+class Cast;
+class Conditional;
+class Grouping;
+class Literal;
+class Logical;
+class PostfixIncDec;
+class PrefixIncDec;
+class Variable;
+class Unary;
 }
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Expression::Visitor
+//---------------------------------------------------------------------------
+namespace GeNN::Transpiler::Expression
+{
+class Visitor
+{
+public:
+    virtual void visit(const ArraySubscript &arraySubscript) = 0;
+    virtual void visit(const Assignment &assignement) = 0;
+    virtual void visit(const Binary &binary) = 0;
+    virtual void visit(const Call &call) = 0;
+    virtual void visit(const Cast &cast) = 0;
+    virtual void visit(const Conditional &conditional) = 0;
+    virtual void visit(const Grouping &grouping) = 0;
+    virtual void visit(const Literal &literal) = 0;
+    virtual void visit(const Logical &logical) = 0;
+    virtual void visit(const PostfixIncDec &postfixIncDec) = 0;
+    virtual void visit(const PrefixIncDec &postfixIncDec) = 0;
+    virtual void visit(const Variable &variable) = 0;
+    virtual void visit(const Unary &unary) = 0;
+};
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Base
 //---------------------------------------------------------------------------
-namespace GeNN::Transpiler::Expression
-{
 class Base
 {
 public:
@@ -283,27 +316,5 @@ public:
 private:
     const Token m_Operator;
     const ExpressionPtr m_Right;
-};
-
-
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::Expression::Visitor
-//---------------------------------------------------------------------------
-class Visitor
-{
-public:
-    virtual void visit(const ArraySubscript &arraySubscript) = 0;
-    virtual void visit(const Assignment &assignement) = 0;
-    virtual void visit(const Binary &binary) = 0;
-    virtual void visit(const Call &call) = 0;
-    virtual void visit(const Cast &cast) = 0;
-    virtual void visit(const Conditional &conditional) = 0;
-    virtual void visit(const Grouping &grouping) = 0;
-    virtual void visit(const Literal &literal) = 0;
-    virtual void visit(const Logical &logical) = 0;
-    virtual void visit(const PostfixIncDec &postfixIncDec) = 0;
-    virtual void visit(const PrefixIncDec &postfixIncDec) = 0;
-    virtual void visit(const Variable &variable) = 0;
-    virtual void visit(const Unary &unary) = 0;
 };
 }   // namespace GeNN::Transpiler::Expression

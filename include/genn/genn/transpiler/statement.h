@@ -13,14 +13,45 @@
 // Forward declarations
 namespace GeNN::Transpiler::Statement 
 {
-class Visitor;
+class Break;
+class Compound;
+class Continue;
+class Do;
+class Expression;
+class For;
+class If;
+class Labelled;
+class Switch;
+class VarDeclaration;
+class While;
+class Print;
 }
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Statement::Visitor
+//---------------------------------------------------------------------------
+namespace GeNN::Transpiler::Statement
+{
+class Visitor
+{
+public:
+    virtual void visit(const Break &breakStatement) = 0;
+    virtual void visit(const Compound &compound) = 0;
+    virtual void visit(const Continue &continueStatement) = 0;
+    virtual void visit(const Do &doStatement) = 0;
+    virtual void visit(const Expression &expression) = 0;
+    virtual void visit(const For &forStatement) = 0;
+    virtual void visit(const If &ifStatement) = 0;
+    virtual void visit(const Labelled &labelled) = 0;
+    virtual void visit(const Switch &switchStatement) = 0;
+    virtual void visit(const VarDeclaration &varDeclaration) = 0;
+    virtual void visit(const While &whileStatement) = 0;
+    virtual void visit(const Print &print) = 0;
+};
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Base
 //---------------------------------------------------------------------------
-namespace GeNN::Transpiler::Statement
-{
 class Base
 {
 public:
@@ -272,25 +303,5 @@ public:
 
 private:
     const ExpressionPtr m_Expression;
-};
-
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::Statement::Visitor
-//---------------------------------------------------------------------------
-class Visitor
-{
-public:
-    virtual void visit(const Break &breakStatement) = 0;
-    virtual void visit(const Compound &compound) = 0;
-    virtual void visit(const Continue &continueStatement) = 0;
-    virtual void visit(const Do &doStatement) = 0;
-    virtual void visit(const Expression &expression) = 0;
-    virtual void visit(const For &forStatement) = 0;
-    virtual void visit(const If &ifStatement) = 0;
-    virtual void visit(const Labelled &labelled) = 0;
-    virtual void visit(const Switch &switchStatement) = 0;
-    virtual void visit(const VarDeclaration &varDeclaration) = 0;
-    virtual void visit(const While &whileStatement) = 0;
-    virtual void visit(const Print &print) = 0;
 };
 }   // namespace GeNN::Transpiler::Statement

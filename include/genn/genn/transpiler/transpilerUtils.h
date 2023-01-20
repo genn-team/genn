@@ -1,7 +1,7 @@
 #pragma once
 
 // Standard C++ includes
-#include <charconv>
+//#include <charconv>
 #include <string_view>
 #include <type_traits>
 
@@ -10,7 +10,7 @@ namespace GeNN::Transpiler::Utils
 template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
 template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
 
-template<typename T>
+/*template<typename T>
 T toCharsThrow(std::string_view input, int base = 10)
 {
     T out;
@@ -30,5 +30,5 @@ T toCharsThrow(std::string_view input, int base = 10)
         throw std::out_of_range("Unable to convert chars '" + std::string{input} + "'");
     }
     return out;
-}
+}*/
 }   // namespace GeNN::Transpiler::Utils

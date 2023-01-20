@@ -1,7 +1,6 @@
 #include "transpiler/scanner.h"
 
 // Standard C++ includes
-#include <charconv>
 #include <functional>
 #include <map>
 #include <set>
