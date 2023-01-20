@@ -408,4 +408,7 @@ const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &c
 
 //! Apply C rules to get common type between numeric types a and b
 const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b, const TypeContext &context);
+
+// **YUCK** unimplemented stream operator so we get linker errors if you try and write types directly to an IO stream
+std::ostream& operator<<(std::ostream &stream, const Base* value);
 }   // namespace GeNN::Type
