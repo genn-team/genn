@@ -18,13 +18,6 @@
 // GeNN includes
 #include "gennExport.h"
 
-// Forward declarations
-namespace GeNN::Type
-{
-struct UnaryVisitor;
-struct BinaryVisitor;
-}
-
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
@@ -50,7 +43,12 @@ struct BinaryVisitor;
         virtual std::string getResolvedName(const TypeContext&) const final{ return #UNDERLYING_TYPE; }         \
         virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }        \
         virtual std::string getLiteralSuffix(const TypeContext&) const final{ return LITERAL_SUFFIX; } \
-    }
+    };                                                                                                          \
+    template<>                                                                                                  \
+    struct TypeTraits<UNDERLYING_TYPE>                                                                          \
+    {                                                                                                           \
+        using NumericType = TYPE;                                                                               \
+    }                                                                      
 
 #define DECLARE_FOREIGN_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)                                               \
     class TYPE : public ForeignFunction<RETURN_TYPE, __VA_ARGS__>                                           \
@@ -64,11 +62,16 @@ struct BinaryVisitor;
 #define IMPLEMENT_NUMERIC_TYPE(TYPE) IMPLEMENT_TYPE(TYPE)
 
 //----------------------------------------------------------------------------
-// GeNN::Type::TypeContext
+// GeNN::Type::TypeTraits
 //----------------------------------------------------------------------------
-//! Map of 'typedef' names to concrete classes
 namespace GeNN::Type
 {
+//! Empty type trait structure
+template<typename T>
+struct TypeTraits
+{
+};
+
 typedef std::unordered_map<std::string, const class Base*> TypeContext;
 
 //----------------------------------------------------------------------------
@@ -101,8 +104,6 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual const Type::Base *accept(UnaryVisitor &visitor) const = 0;
-
     //! Get the (unqualified) name of this type
     virtual std::string getName() const = 0;
 
@@ -132,32 +133,15 @@ private:
     const Qualifier m_Qualifiers;
 };
 
-//---------------------------------------------------------------------------
-// GeNN::Type::UnaryAcceptable
-//---------------------------------------------------------------------------
-template<typename T, typename B>
-class UnaryAcceptable : public B
-{
-public:
-    UnaryAcceptable(Qualifier qualifiers = Qualifier{0}) : B(qualifiers)
-    {
-    }
-
-    virtual const Type::Base *accept(UnaryVisitor &visitor) const final
-    {
-        return visitor.visit(static_cast<const T*>(this));
-    }
-};
-
 //----------------------------------------------------------------------------
 // GeNN::Type::Pointer
 //----------------------------------------------------------------------------
 //! Type representing a pointer
-class Pointer : public UnaryAcceptable<Pointer, Base>
+class Pointer : public Base
 {
 public:
     Pointer(const Base *valueType, Qualifier qualifiers = Qualifier{0})
-    :   UnaryAcceptable<Pointer, Base>(qualifiers), m_ValueType(valueType)
+    :   Base(qualifiers), m_ValueType(valueType)
     {
     }
 
@@ -193,10 +177,10 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::Type::NumericBase
 //----------------------------------------------------------------------------
-class NumericBase : public UnaryAcceptable<NumericBase, ValueBase>
+class NumericBase : public ValueBase
 {
 public:
-    NumericBase(Qualifier qualifiers = Qualifier{0}) : UnaryAcceptable<NumericBase, ValueBase>(qualifiers){}
+    NumericBase(Qualifier qualifiers = Qualifier{0}) : ValueBase(qualifiers){}
     
     //------------------------------------------------------------------------
     // Declared virtuals
@@ -286,10 +270,10 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::Type::ForeignFunctionBase
 //----------------------------------------------------------------------------
-class ForeignFunctionBase : public UnaryAcceptable<ForeignFunctionBase, Base>
+class ForeignFunctionBase : public Base
 {
 public:
-    ForeignFunctionBase(Qualifier qualifiers = Qualifier{0}) : UnaryAcceptable<ForeignFunctionBase, Base>(qualifiers){}
+    ForeignFunctionBase(Qualifier qualifiers = Qualifier{0}) : Base(qualifiers){}
 
     //------------------------------------------------------------------------
     // Declared virtuals
@@ -389,31 +373,7 @@ private:
             updateArgumentTypes<Args...>(args);
         }
     }
-};
 
-
-//----------------------------------------------------------------------------
-// GeNN::Type::UnaryVisitor
-//----------------------------------------------------------------------------
-//! Visitor class used for implementing logic on a single type
-struct UnaryVisitor
-{
-    virtual const Type::Base *visit(const ForeignFunctionBase *function) = 0;
-    virtual const Type::Base *visit(const Pointer *pointer) = 0;
-    virtual const Type::Base *visit(const NumericBase *numeric) = 0;
-};
-
-
-//----------------------------------------------------------------------------
-// GeNN::Type::BinaryTypeVisitor
-//----------------------------------------------------------------------------
-//! Visitor class used for implementing logic on pairs of types
-struct BinaryTypeVisitor
-{
-    virtual void visit(const Pointer *pointerLeft, const Pointer &pointerRight) = 0;
-    virtual void visit(const Pointer *pointerLeft, const NumericBase &numericRight) = 0;
-    virtual void visit(const NumericBase *numericLeft, const NumericBase &numericRight) = 0;
-    virtual void visit(const NumericBase *numericLeft, const Pointer &pointerRight) = 0;
 };
 
 //----------------------------------------------------------------------------
