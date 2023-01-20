@@ -187,26 +187,26 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type << " l" << v.name << " = group->" << v.name << "[";
+        os << v.type->getResolvedName(getTypeContext()) << " l" << v.name << " = group->" << v.name << "[";
         const bool delayed = (getArchetype().isVarQueueRequired(v.name) && getArchetype().isDelayRequired());
         os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
     }
 
     // Also read spike and spike-like-event times into local variables if required
     if(getArchetype().isSpikeTimeRequired()) {
-        os << "const " << model.getTimePrecision() << " lsT = group->sT[";
+        os << "const " << model.getTimePrecision()->getName() << " lsT = group->sT[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        os << "const " << model.getTimePrecision() << " lprevST = group->prevST[";
+        os << "const " << model.getTimePrecision()->getName() << " lprevST = group->prevST[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isSpikeEventTimeRequired()) {
-        os << "const " << model.getTimePrecision() << " lseT = group->seT[";
+        os << "const " << model.getTimePrecision()->getName() << " lseT = group->seT[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        os <<  "const " << model.getTimePrecision() << " lprevSET = group->prevSET[";
+        os <<  "const " << model.getTimePrecision()->getName() << " lprevSET = group->prevSET[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     os << std::endl;
@@ -221,7 +221,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                                 || sg->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
                     }))
     {
-        os << model.getPrecision() << " Isyn = 0;" << std::endl;
+        os << model.getPrecision()->getName() << " Isyn = 0;" << std::endl;
     }
 
     Substitutions neuronSubs(&popSubs);
@@ -260,13 +260,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         const auto *psm = sg->getPSModel();
 
         os << "// pull inSyn values in a coalesced access" << std::endl;
-        os << model.getPrecision() << " linSyn = group->inSynInSyn" << i << "[";
+        os << model.getPrecision()->getName() << " linSyn = group->inSynInSyn" << i << "[";
         os << getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
 
         // If dendritic delay is required
         if (sg->isDendriticDelayRequired()) {
             // Get reference to dendritic delay buffer input for this timestep
-            os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
+            os << backend.getPointerPrefix() << model.getPrecision()->getName() << " *denDelayFront = ";
             os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + ";
             os << getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
 
@@ -282,7 +282,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
+            os << v.type->getResolvedName(getTypeContext()) << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), neuronSubs["id"]) << "];" << std::endl;
         }
 
@@ -366,7 +366,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
+            os << v.type->getResolvedName(getTypeContext()) << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
         }
 
@@ -794,7 +794,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
                 if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
                 }
-                os << v.type << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
+                os << v.type->getResolvedName(getTypeContext()) << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
                 os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), subs["id"]) << "];" << std::endl;
             }
 

@@ -677,7 +677,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
 
     // If any shared memory is required, declare array
     if(maxSharedMemPerThread > 0) {
-        os << getSharedPrefix() << modelMerged.getModel().getPrecision() << " shLg[" << maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate) << "];" << std::endl;
+        os << getSharedPrefix() << modelMerged.getModel().getPrecision()->getName() << " shLg[" << maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate) << "];" << std::endl;
     }
 
     // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length

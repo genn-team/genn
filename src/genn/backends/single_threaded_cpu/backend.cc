@@ -141,7 +141,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate preamble
     preambleHandler(os);
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    os << "void updateNeurons(" << model.getTimePrecision()->getName() << " t";
     if(model.isRecordingInUse()) {
         os << ", unsigned int recordingTimestep";
     }
@@ -313,7 +313,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Generate preamble
     preambleHandler(os);
     
-    os << "void updateSynapses(" << model.getTimePrecision() << " t)";
+    os << "void updateSynapses(" << model.getTimePrecision()->getName() << " t)";
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
@@ -1216,9 +1216,9 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
     if(isGlobalHostRNGRequired(modelMerged)) {
-        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision()->getName() << "> standardUniformDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision()->getName() << "> standardNormalDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision()->getName() << "> standardExponentialDistribution;" << std::endl;
         os << std::endl;
     }
 }
