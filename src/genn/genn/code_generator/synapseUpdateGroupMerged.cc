@@ -90,7 +90,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                 varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
 
                 // Declare local variable
-                os << var.type << " " << "l" << var.name << ";" << std::endl;
+                os << var.type->getResolvedName(sg.getTypeContext()) << " " << "l" << var.name << ";" << std::endl;
 
                 // Insert code to initialize variable into scope
                 {

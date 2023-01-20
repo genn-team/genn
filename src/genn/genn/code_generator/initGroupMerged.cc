@@ -102,11 +102,11 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
             else {
                 backend.genVariableInit(
                     os, count, "id", varSubs,
-                    [&var, &varInit, &fieldSuffix, batchSize, groupIndex, count, numDelaySlots, isVarQueueRequired]
+                    [&var, &varInit, &modelMerged, &fieldSuffix, batchSize, groupIndex, count, numDelaySlots, isVarQueueRequired]
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
-                        os << var.type << " initVal;" << std::endl;
+                        os << var.type->getResolvedName(modelMerged.getTypeContext()) << " initVal;" << std::endl;
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
@@ -137,9 +137,9 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 template<typename P, typename D, typename G>
-void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs, 
+void genInitWUVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, const Substitutions &popSubs, 
                       const Models::Base::VarVec &vars, const std::unordered_map<std::string, Models::VarInit> &varInitialisers, 
-                      const std::string &stride, const size_t groupIndex, const Type::NumericBase *scalarType, unsigned int batchSize,
+                      const std::string &stride, const size_t groupIndex, unsigned int batchSize,
                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, G genSynapseVariableRowInitFn)
 {
     for (const auto &var : vars) {
@@ -151,7 +151,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(os, popSubs,
-                [&var, &varInit, &stride, batchSize, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, scalarType]
+                [&var, &varInit, &stride, &modelMerged, batchSize, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
@@ -164,7 +164,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
                                                    "", "group->", var.name);
 
                     // Generate initial value into temporary variable
-                    os << var.type << " initVal;" << std::endl;
+                    os << var.type->getResolvedName(modelMerged.getTypeContext()) << " initVal;" << std::endl;
                     varSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(groupIndex));
@@ -575,9 +575,8 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream
 
     // Generate initialisation code
     const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
-    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), stride, getIndex(),
-                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+    genInitWUVarCode(os, modelMerged, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), stride, getIndex(), modelMerged.getModel().getBatchSize(),
                      [this](const std::string &v, const std::string &p) { return isWUVarInitParamHeterogeneous(v, p); },
                      [this](const std::string &v, const std::string &p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend, kernel, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
@@ -603,9 +602,8 @@ const std::string SynapseSparseInitGroupMerged::name = "SynapseSparseInit";
 //----------------------------------------------------------------------------
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+    genInitWUVarCode(os, modelMerged, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(), modelMerged.getModel().getBatchSize(),
                      [this](const std::string &v, const std::string &p) { return isWUVarInitParamHeterogeneous(v, p); },
                      [this](const std::string &v, const std::string &p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
@@ -981,9 +979,9 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Cod
  
     // Loop through rows
     const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
-    genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
+    genInitWUVarCode(os, modelMerged, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
                     getArchetype().getVarInitialisers(), stride, getIndex(),
-                    modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
+                    getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
                     [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
                     [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); },
                     [&backend, kernel, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
@@ -1063,9 +1061,9 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 // ----------------------------------------------------------------------------
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
+    genInitWUVarCode(os, modelMerged, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
                      getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
+                     getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
                      [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
                      [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
@@ -1227,9 +1225,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
 void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     // Initialise custom connectivity update variables
-    genInitWUVarCode(os, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(),
-                     getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), 1,
+    genInitWUVarCode(os, modelMerged, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(),
+                     getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(), 1,
                      [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
                      [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
