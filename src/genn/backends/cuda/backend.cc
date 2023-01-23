@@ -296,7 +296,7 @@ std::string getNCCLType(const Type::NumericBase *type, const Type::TypeContext &
     else if (dynamic_cast<const Type::NumericTypedef *>(type)) {
     }
     else {
-        throw std::runtime_error("Data type '" + type->getResolvedName(context) + "' unsupported by NCCL");
+        throw std::runtime_error("Data type '" + type->getName() + "' unsupported by NCCL");
     }
 }
 //-----------------------------------------------------------------------
@@ -1577,23 +1577,22 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
 {
     const bool deviceType = dynamic_cast<const CUDADeviceType*>(type);
     CodeStream &d = deviceType ? definitionsInternal : definitions;
-    const std::string pointerTypeName = type->getPointerType()->getResolvedName(typeContext);
     if(getPreferences().automaticCopy) {
         // Export pointer, either in definitionsInternal if variable has a device type
         // or to definitions if it should be accessable on host
-        d << "EXPORT_VAR " << pointerTypeName << " " << name << ";" << std::endl;
+        d << "EXPORT_VAR " << type->getPointerType()->getName() << " " << name << ";" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
             if(deviceType) {
-                throw std::runtime_error("Variable '" + name + "' is of device-only type '" + pointerTypeName + "' but is located on the host");
+                throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type->getPointerType()->getName() + "' but is located on the host");
             }
 
-            definitions << "EXPORT_VAR " << pointerTypeName << " " << name << ";" << std::endl;
+            definitions << "EXPORT_VAR " << type->getPointerType()->getName() << " " << name << ";" << std::endl;
         }
         if(loc & VarLocation::DEVICE) {
             // Write host definition to internal definitions stream if type is device only
-            d << "EXPORT_VAR " << pointerTypeName << " d_" << name << ";" << std::endl;
+            d << "EXPORT_VAR " << type->getPointerType()->getName() << " d_" << name << ";" << std::endl;
         
         }
     }
@@ -1603,16 +1602,15 @@ void Backend::genVariableInstantiation(CodeStream &os,
                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
                                        VarLocation loc) const
 {
-    const std::string pointerTypeName = type->getPointerType()->getResolvedName(typeContext);
     if(getPreferences().automaticCopy) {
-        os << pointerTypeName << " " << name << ";" << std::endl;
+        os << type->getPointerType()->getName() << " " << name << ";" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
-            os << pointerTypeName << " " << name << ";" << std::endl;
+            os << type->getPointerType()->getName() << " " << name << ";" << std::endl;
         }
         if(loc & VarLocation::DEVICE) {
-            os << pointerTypeName << " d_" << name << ";" << std::endl; 
+            os << type->getPointerType()->getName() << " d_" << name << ";" << std::endl; 
         }
     }
 }
@@ -1621,15 +1619,14 @@ void Backend::genVariableAllocation(CodeStream &os,
                                     const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
                                     VarLocation loc, size_t count, MemAlloc &memAlloc) const
 {
-    const std::string typeName = type->getResolvedName(typeContext);
     if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << typeName << ")));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type->getName() << ")));" << std::endl;
         memAlloc += MemAlloc::device(count * type->getSizeBytes(typeContext));
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << typeName << "), " << flags << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type->getName() << "), " << flags << "));" << std::endl;
             memAlloc += MemAlloc::host(count * type->getSizeBytes(typeContext));
         }
 
@@ -1641,7 +1638,7 @@ void Backend::genVariableAllocation(CodeStream &os,
                 memAlloc += MemAlloc::zeroCopy(count * type->getSizeBytes(typeContext));
             }
             else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << typeName << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type->getName() << ")));" << std::endl;
                 memAlloc += MemAlloc::device(count * type->getSizeBytes(typeContext));
             }
         }
@@ -1654,17 +1651,16 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
 {
     const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
     const auto *underlyingType = pointerType ? pointerType->getValueType() : type;
-    const std::string underlyingTypeName = underlyingType->getResolvedName(typeContext);
     const std::string hostPointer = pointerType ? ("*" + prefix + name) : (prefix + name);
     const std::string hostPointerToPointer = pointerType ? (prefix + name) : ("&" + prefix + name);
     const std::string devicePointerToPointer = pointerType ? (prefix + "d_" + name) : ("&" + prefix + "d_" + name);
     if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingTypeName << ")));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType->getName() << ")));" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingTypeName << "), " << flags << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType->getName() << "), " << flags << "));" << std::endl;
         }
 
         // If variable is present on device at all
@@ -1673,7 +1669,7 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
                 os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
             }
             else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingTypeName << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType->getName() << ")));" << std::endl;
             }
         }
     }
@@ -1711,7 +1707,7 @@ void Backend::genVariablePush(CodeStream &os,
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
         os << ", " << name;
-        os << ", " << count << " * sizeof(" << type->getResolvedName(typeContext) << "), cudaMemcpyHostToDevice));" << std::endl;
+        os << ", " << count << " * sizeof(" << type->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
 
         if(autoInitialized) {
             os << CodeStream::CB(1101);
@@ -1728,7 +1724,7 @@ void Backend::genVariablePull(CodeStream &os,
     if(!(loc & VarLocation::ZERO_COPY)) {
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
         os << ", d_"  << name;
-        os << ", " << count << " * sizeof(" << type->getResolvedName(typeContext) << "), cudaMemcpyDeviceToHost));" << std::endl;
+        os << ", " << count << " * sizeof(" << type->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1741,19 +1737,18 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
-        const std::string typeName = type->getResolvedName(typeContext);
         if(batchSize == 1) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
             os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << typeName << "), cudaMemcpyHostToDevice));" << std::endl;
+            os << ", " << ng.getNumNeurons() << " * sizeof(" << type->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         // Otherwise, perform a 2D memcpy to copy current timestep's data from each batch
         else {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << typeName << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type->getName() << ")";
             os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << typeName << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << typeName << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type->getName() << ")";
+            os << ", " << ng.getNumNeurons() << " * sizeof(" << type->getName() << ")";
             os << ", " << batchSize << ", cudaMemcpyHostToDevice));" << std::endl;
         }
     }
@@ -1772,18 +1767,17 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
-        const std::string typeName = type->getResolvedName(typeContext);
         if(batchSize == 1) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
             os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << typeName << "), cudaMemcpyDeviceToHost));" << std::endl;
+            os << ", " << ng.getNumNeurons() << " * sizeof(" << type->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << typeName << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type->getName() << ")";
             os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << typeName << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << typeName << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type->getName() << ")";
+            os << ", " << ng.getNumNeurons() << " * sizeof(" << type->getName() << ")";
             os << ", " << batchSize << ", cudaMemcpyDeviceToHost));" << std::endl;
         }
     }
@@ -1804,13 +1798,13 @@ void Backend::genVariableDynamicPush(CodeStream &os,
         if (pointerType) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(*" <<  prefix << "d_" << name;
             os << ", *" << prefix << name;
-            os << ", " << countVarName << " * sizeof(" << pointerType->getValueType()->getResolvedName(typeContext) << "), cudaMemcpyHostToDevice));" << std::endl;
+            os << ", " << countVarName << " * sizeof(" << pointerType->getValueType()->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
-            os << prefix << name << " = new " << type->getResolvedName(typeContext) << "[" << countVarName << "];" << std::endl;
+            os << prefix << name << " = new " << type->getName() << "[" << countVarName << "];" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << "d_" << name;
             os << ", " << prefix << name;
-            os << ", " << countVarName << " * sizeof(" << type->getResolvedName(typeContext) << "), cudaMemcpyHostToDevice));" << std::endl;
+            os << ", " << countVarName << " * sizeof(" << type->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
     }
 }
@@ -1826,12 +1820,12 @@ void Backend::genVariableDynamicPull(CodeStream &os,
         if (pointerType) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(*" << prefix << name;
             os << ", *" <<  prefix << "d_" << name;
-            os << ", " << countVarName << " * sizeof(" << pointerType->getValueType()->getResolvedName(typeContext) << "), cudaMemcpyDeviceToHost));" << std::endl;
+            os << ", " << countVarName << " * sizeof(" << pointerType->getValueType()->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << name;
             os << ", " << prefix << "d_" << name;
-            os << ", " << countVarName << " * sizeof(" << type->getResolvedName(typeContext) << "), cudaMemcpyDeviceToHost));" << std::endl;
+            os << ", " << countVarName << " * sizeof(" << type->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         
     }
@@ -1849,7 +1843,7 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
-    return type->getResolvedName(context);
+    return type->getName();
 }
 //--------------------------------------------------------------------------
 const Type::ValueBase *Backend::getMergedGroupSimRNGType() const

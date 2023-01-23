@@ -90,7 +90,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                 varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
 
                 // Declare local variable
-                os << var.type->getResolvedName(sg.getTypeContext()) << " " << "l" << var.name << ";" << std::endl;
+                os << var.type->getName() << " " << "l" << var.name << ";" << std::endl;
 
                 // Insert code to initialize variable into scope
                 {
@@ -251,7 +251,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
-        os << a.type->getResolvedName(getTypeContext()) << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
 
     // Loop through synapses in row

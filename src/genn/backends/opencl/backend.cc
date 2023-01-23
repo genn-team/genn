@@ -2080,12 +2080,12 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, con
     /*if(GeNN::Utils::isTypePointerToPointer(type)) {
         return "cl::Buffer*";
     }
-    else */if(dynamic_cast<Type::NumericPtrBase*>(type)) {
+    else */if(dynamic_cast<Type::Pointer*>(type)) {
         return "cl::Buffer";
     }
     // Otherwise, type remains the same
     else {
-        return type->getResolvedName(context);
+        return type->getName();
     }
 }
 //--------------------------------------------------------------------------

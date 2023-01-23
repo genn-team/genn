@@ -124,12 +124,12 @@ public:
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type->getResolvedName(m_TypeContext);
+                        os << backend.getPointerPrefix() << type->getName();
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type->getResolvedName(m_TypeContext);
+                    os << type->getName();
                 }
                 os << " " << std::get<1>(f) << ";" << std::endl;
             }

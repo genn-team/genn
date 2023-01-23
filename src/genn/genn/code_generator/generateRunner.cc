@@ -559,8 +559,10 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     const ModelSpecInternal &model = modelMerged.getModel();
     definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << model.getTimePrecision()->getLiteralSuffix(modelMerged.getTypeContext()) << std::endl;
     
-    // Typedefine scalar type
-    definitions << "typedef " << model.getPrecision()->getName() << " scalar;" << std::endl;
+    // Typedefine types in type context
+    for (const auto &t : modelMerged.getTypeContext()) {
+        definitions << "typedef " << t.second->getName() << " " << t.first << ";" << std::endl;
+    }
 
     // Write ranges of scalar and time types
     genTypeRange(definitions, model.getPrecision(), modelMerged.getTypeContext(), "SCALAR");
@@ -1089,7 +1091,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             // Write getter to get access to correct pointer
             const bool delayRequired = (n.second.isVarQueueRequired(var.name) &&  n.second.isDelayRequired());
             genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(var.name),
-                              "Current" + var.name + n.first, var.type->getPointerType()->getResolvedName(modelMerged.getTypeContext()),
+                              "Current" + var.name + n.first, var.type->getPointerType()->getName(),
                               [&]()
                               {
                                   runnerGetterFunc << "return " << var.name << n.first;

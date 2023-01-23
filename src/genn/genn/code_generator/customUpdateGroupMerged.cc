@@ -34,7 +34,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type->getResolvedName(cg.getTypeContext()) << " l" << v.name;
+        os << v.type->getName() << " l" << v.name;
         
         // If this isn't a reduction, read value from memory
         // **NOTE** by not initialising these variables for reductions, 
@@ -54,7 +54,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const
             os << "const ";
         }
        
-        os << v.type->getResolvedName(cg.getTypeContext()) << " l" << v.name;
+        os << v.type->getName() << " l" << v.name;
         
         // If this isn't a reduction, read value from memory
         // **NOTE** by not initialising these variables for reductions, 

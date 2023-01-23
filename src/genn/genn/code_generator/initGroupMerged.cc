@@ -86,7 +86,7 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
-                        os << var.type->getResolvedName(modelMerged.getTypeContext()) << " initVal;" << std::endl;
+                        os << var.type->getName() << " initVal;" << std::endl;
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
@@ -106,7 +106,7 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
-                        os << var.type->getResolvedName(modelMerged.getTypeContext()) << " initVal;" << std::endl;
+                        os << var.type->getName() << " initVal;" << std::endl;
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
@@ -164,7 +164,7 @@ void genInitWUVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
                                                    "", "group->", var.name);
 
                     // Generate initial value into temporary variable
-                    os << var.type->getResolvedName(modelMerged.getTypeContext()) << " initVal;" << std::endl;
+                    os << var.type->getName() << " initVal;" << std::endl;
                     varSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(groupIndex));
@@ -652,7 +652,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
                                             "", "group->", var.name);
 
             // Generate initial value into temporary variable
-            os << var.type->getResolvedName(getTypeContext()) << " initVal;" << std::endl;
+            os << var.type->getName() << " initVal;" << std::endl;
             popSubs.addVarSubstitution("value", "initVal");
             std::string code = varInit.getSnippet()->getCode();
             //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
@@ -691,7 +691,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, ftype);
 
-        os << a.type->getResolvedName(getTypeContext()) << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
     os << "while(true)";
     {

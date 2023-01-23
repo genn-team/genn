@@ -187,7 +187,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type->getResolvedName(getTypeContext()) << " l" << v.name << " = group->" << v.name << "[";
+        os << v.type->getName() << " l" << v.name << " = group->" << v.name << "[";
         const bool delayed = (getArchetype().isVarQueueRequired(v.name) && getArchetype().isDelayRequired());
         os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
     }
@@ -249,7 +249,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-        os << a.type->getResolvedName(getTypeContext()) << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
 
     // Loop through incoming synapse groups
@@ -282,7 +282,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type->getResolvedName(getTypeContext()) << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
+            os << v.type->getName() << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), neuronSubs["id"]) << "];" << std::endl;
         }
 
@@ -366,7 +366,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type->getResolvedName(getTypeContext()) << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
+            os << v.type->getName() << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
         }
 
@@ -794,7 +794,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
                 if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
                 }
-                os << v.type->getResolvedName(getTypeContext()) << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
+                os << v.type->getName() << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
                 os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), subs["id"]) << "];" << std::endl;
             }
 

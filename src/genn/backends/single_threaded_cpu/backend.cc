@@ -1288,21 +1288,21 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &,
                                     const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
                                     VarLocation) const
 {
-    definitions << "EXPORT_VAR " << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
+    definitions << "EXPORT_VAR " << type->getPointerType()->getName() << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInstantiation(CodeStream &os, 
                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
                                        VarLocation) const
 {
-    os << type->getPointerType()->getResolvedName(typeContext) << " " << name << ";" << std::endl;
+    os << type->getPointerType()->getName() << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableAllocation(CodeStream &os, 
                                     const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
                                     VarLocation, size_t count, MemAlloc &memAlloc) const
 {
-    os << name << " = new " << type->getResolvedName(typeContext) << "[" << count << "];" << std::endl;
+    os << name << " = new " << type->getName() << "[" << count << "];" << std::endl;
 
     memAlloc += MemAlloc::host(count * type->getSizeBytes(typeContext));
 }
@@ -1313,10 +1313,10 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
 {
     const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
     if (pointerType) {
-        os << "*" << prefix << name <<  " = new " << pointerType->getValueType()->getResolvedName(typeContext) << "[" << countVarName << "];" << std::endl;
+        os << "*" << prefix << name <<  " = new " << pointerType->getValueType()->getName() << "[" << countVarName << "];" << std::endl;
     }
     else {
-        os << prefix << name << " = new " << type->getResolvedName(typeContext) << "[" << countVarName << "];" << std::endl;
+        os << prefix << name << " = new " << type->getName() << "[" << countVarName << "];" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1373,7 +1373,7 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
-    return type->getResolvedName(context);
+    return type->getName();
 }
 //--------------------------------------------------------------------------
 const Type::ValueBase *Backend::getMergedGroupSimRNGType() const
@@ -1658,7 +1658,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
                 //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-                os << d.type->getResolvedName(sg.getTypeContext()) << " " << d.name << " = " << value << ";" << std::endl;
+                os << d.type->getName() << " " << d.name << " = " << value << ";" << std::endl;
             }
 
              // Detect spike events or spikes and do the update

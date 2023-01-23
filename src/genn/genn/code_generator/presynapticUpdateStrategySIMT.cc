@@ -871,7 +871,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-        os << d.type->getResolvedName(sg.getTypeContext()) << " " << d.name << " = " << value << ";" << std::endl;
+        os << d.type->getName() << " " << d.name << " = " << value << ";" << std::endl;
     }
 
     os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;

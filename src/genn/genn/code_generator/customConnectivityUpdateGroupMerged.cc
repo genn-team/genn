@@ -266,7 +266,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
-                addSynapse << "const " << ccuVarRefs[i].type->getResolvedName(getTypeContext()) << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+                addSynapse << "const " << ccuVarRefs[i].type->getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
                 addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
