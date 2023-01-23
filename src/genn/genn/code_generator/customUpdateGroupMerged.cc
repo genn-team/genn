@@ -190,7 +190,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, "id",
                     [this](const auto &varRef, const std::string &index)
@@ -394,10 +394,10 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 //----------------------------------------------------------------------------
 const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, "id_syn",
-                    [this, &modelMerged](const auto &varRef, const std::string &index) 
+                    [this](const auto &varRef, const std::string &index) 
                     {  
                         return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
                                               index);
@@ -409,10 +409,10 @@ void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStr
 //----------------------------------------------------------------------------
 const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
 //----------------------------------------------------------------------------
-void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, "id_syn",
-                    [this, &modelMerged](const auto &varRef, const std::string &index) 
+                    [this](const auto &varRef, const std::string &index) 
                     {
                         return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
                                               index);

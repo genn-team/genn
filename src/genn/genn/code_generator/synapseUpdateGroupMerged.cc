@@ -230,7 +230,7 @@ void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backen
                               *this, popSubs, modelMerged, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
 
@@ -270,7 +270,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     }
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
     const auto &connectInit = getArchetype().getToeplitzConnectivityInitialiser();
     

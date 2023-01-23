@@ -232,7 +232,7 @@ void PostSpan::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, c
 {
     // If data structure is dense, we can accumulate output directly into register
     if(shouldAccumulateInRegister(sg)) {
-        os << modelMerged.getModel().getPrecision()->getName() << " linSyn = 0;" << std::endl;
+        os << "scalar linSyn = 0;" << std::endl;
     }
     else if(isSmallSharedMemoryPop(sg, backend)) {
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
@@ -603,7 +603,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
         // Generate procedural connectivity code
-        sg.generateProceduralConnectivity(backend, os, modelMerged, connSubs);
+        sg.generateProceduralConnectivity(backend, os, connSubs);
 
         if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
@@ -970,7 +970,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                 connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
                 // Generate toeplitz connectivity code
-                sg.generateToeplitzConnectivity(backend, os, modelMerged, connSubs);
+                sg.generateToeplitzConnectivity(backend, os, connSubs);
 
                 if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << CodeStream::CB(130); // end if (eCode)

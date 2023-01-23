@@ -34,8 +34,8 @@ public:
     void generateSpikeEventThreshold(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
     void generateSpikeEventUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
     void generateSpikeUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateProceduralConnectivity(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateToeplitzConnectivity(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateProceduralConnectivity(const BackendBase &backend, CodeStream &os, Substitutions &popSubs) const;
+    void generateToeplitzConnectivity(const BackendBase &backend, CodeStream &os, Substitutions &popSubs) const;
 
     //----------------------------------------------------------------------------
     // Static constants

@@ -49,7 +49,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateUpdate(const BackendBase &backend, CodeStream &os, unsigned int batchSize, Substitutions &popSubs) const;
 
     //! Get sorted vector of variable names, types and duplication modes which 
     //! need updating when synapses are added and removed, belonging to archetype group
@@ -89,7 +89,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
-    void generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const;
+    void generateUpdate(const BackendBase &backend, CodeStream &os) const;
 
     //----------------------------------------------------------------------------
     // Static constants

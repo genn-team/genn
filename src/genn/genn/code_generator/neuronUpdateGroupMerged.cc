@@ -194,19 +194,19 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 
     // Also read spike and spike-like-event times into local variables if required
     if(getArchetype().isSpikeTimeRequired()) {
-        os << "const " << model.getTimePrecision()->getName() << " lsT = group->sT[";
+        os << "const timepoint lsT = group->sT[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        os << "const " << model.getTimePrecision()->getName() << " lprevST = group->prevST[";
+        os << "const timepoint lprevST = group->prevST[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isSpikeEventTimeRequired()) {
-        os << "const " << model.getTimePrecision()->getName() << " lseT = group->seT[";
+        os << "const timepoint lseT = group->seT[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        os <<  "const " << model.getTimePrecision()->getName() << " lprevSET = group->prevSET[";
+        os <<  "const timepoint lprevSET = group->prevSET[";
         os << getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
     }
     os << std::endl;
@@ -221,7 +221,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                                 || sg->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
                     }))
     {
-        os << model.getPrecision()->getName() << " Isyn = 0;" << std::endl;
+        os << "scalar Isyn = 0;" << std::endl;
     }
 
     Substitutions neuronSubs(&popSubs);
@@ -260,13 +260,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         const auto *psm = sg->getPSModel();
 
         os << "// pull inSyn values in a coalesced access" << std::endl;
-        os << model.getPrecision()->getName() << " linSyn = group->inSynInSyn" << i << "[";
+        os << "scalar linSyn = group->inSynInSyn" << i << "[";
         os << getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
 
         // If dendritic delay is required
         if (sg->isDendriticDelayRequired()) {
             // Get reference to dendritic delay buffer input for this timestep
-            os << backend.getPointerPrefix() << model.getPrecision()->getName() << " *denDelayFront = ";
+            os << backend.getPointerPrefix() << "scalar *denDelayFront = ";
             os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + ";
             os << getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
 

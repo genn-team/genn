@@ -203,7 +203,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, unsigned int batchSize, Substitutions &popSubs) const
 {
     Substitutions updateSubs(&popSubs);
 
@@ -226,7 +226,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     const auto &dependentVars = getSortedArchetypeDependentVars();
 
     // Determine if any
-    const bool modelBatched = (modelMerged.getModel().getBatchSize() > 1);
+    const bool modelBatched = (batchSize > 1);
     const bool anyBatched = (modelBatched && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
                                                           [](const auto &v){ return v.second.isDuplicated(); })
                                               || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
@@ -263,11 +263,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
+            if ((batchSize > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type->getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
-                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "group->" << ccuVarRefs[i].name << "[(b * synStride) + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
@@ -282,10 +282,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated())
+            if ((batchSize > 1) && dependentVars.at(i).isDuplicated())
             {
                 // Loop through all batches and zero
-                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "group->_dependentVar" << i << "[(b * synStride) + newIdx] = 0;" << std::endl;
@@ -325,11 +325,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) 
+            if ((batchSize > 1) 
                 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated())
             {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
-                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * synStride) + idx] = group->" << ccuVarRefs[i].name << "[(b * synStride) + lastIdx];" << std::endl;
@@ -344,9 +344,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated()) {
+            if ((batchSize > 1) && dependentVars.at(i).isDuplicated()) {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
-                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(removeSynapse);
                     removeSynapse << "group->_dependentVar" << i << "[(b * synStride) + idx] = group->_dependentVar" << i << "[(b * synStride) + lastIdx];" << std::endl;
@@ -456,7 +456,7 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
              
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const
+void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, CodeStream &os) const
 {
     CodeStream::Scope b(os);
     os << "// merged custom connectivity host update group " << getIndex() << std::endl;

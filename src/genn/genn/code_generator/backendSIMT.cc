@@ -677,7 +677,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
 
     // If any shared memory is required, declare array
     if(maxSharedMemPerThread > 0) {
-        os << getSharedPrefix() << modelMerged.getModel().getPrecision()->getName() << " shLg[" << maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate) << "];" << std::endl;
+        os << getSharedPrefix() <<" scalar shLg[" << maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate) << "];" << std::endl;
     }
 
     // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
@@ -933,7 +933,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         genCustomUpdateIndexCalculation(os, cg);
                         
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
+                        cg.generateCustomUpdate(*this, os, cuSubs);
 
                         // Loop through reduction targets and generate reduction
                         for(const auto &r : reductionTargets) {
@@ -976,7 +976,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         reductionSubs.addVarSubstitution("id", "idx", true);
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, os, modelMerged, reductionSubs);
+                        cg.generateCustomUpdate(*this, os, reductionSubs);
 
                         // Loop through reduction targets and generate reduction
                         for (const auto &r : reductionTargets) {
@@ -1027,7 +1027,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     CodeStream::Scope b(os);
 
                     genCustomUpdateIndexCalculation(os, cg);
-                    cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
+                    cg.generateCustomUpdate(*this, os, cuSubs);
                 }
             }
 
@@ -1140,7 +1140,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                     os << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
 
-                cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
+                cg.generateCustomUpdate(*this, os, cuSubs);
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
@@ -1245,7 +1245,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                             synSubs.addVarSubstitution("id_pre", "y");
                             synSubs.addVarSubstitution("id_post", "x");
                             synSubs.addVarSubstitution("id_syn", "idx");
-                            cg.generateCustomUpdate(*this, os, modelMerged, synSubs);
+                            cg.generateCustomUpdate(*this, os, synSubs);
 
                             // Write forward weight to shared memory
                             os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
@@ -1312,7 +1312,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(CodeStream &os, const Substi
                     genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
                 }
 
-                cg.generateUpdate(*this, os, modelMerged, popSubs);
+                cg.generateUpdate(*this, os, modelMerged.getModel().getBatchSize(), popSubs);
                 
                 // Copy local stream back to local
                 if(cg.getArchetype().isRowSimRNGRequired()) {

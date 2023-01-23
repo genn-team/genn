@@ -32,7 +32,7 @@ void ErrorHandler::report(size_t line, std::string_view where, std::string_view 
 //----------------------------------------------------------------------------
 // GeNN::Transpiler::SingleLineErrorHandler
 //----------------------------------------------------------------------------
-void SingleLineErrorHandler::error(size_t line, std::string_view message)
+void SingleLineErrorHandler::error(size_t, std::string_view message)
 {
     report("", message);
 }

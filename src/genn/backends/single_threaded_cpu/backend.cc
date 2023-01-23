@@ -141,7 +141,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate preamble
     preambleHandler(os);
 
-    os << "void updateNeurons(" << model.getTimePrecision()->getName() << " t";
+    os << "void updateNeurons(timepoint t";
     if(model.isRecordingInUse()) {
         os << ", unsigned int recordingTimestep";
     }
@@ -313,7 +313,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Generate preamble
     preambleHandler(os);
     
-    os << "void updateSynapses(" << model.getTimePrecision()->getName() << " t)";
+    os << "void updateSynapses(timepoint t)";
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
@@ -532,7 +532,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             // Loop through host update groups and generate code for those in this custom update group
             for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
                 if (cg.getArchetype().getUpdateGroupName() == g) {
-                    cg.generateUpdate(*this, os, modelMerged);
+                    cg.generateUpdate(*this, os);
                 }
             }
 
@@ -570,7 +570,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 popSubs.addVarSubstitution("id", "i");
 
                                 // Generate custom update
-                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+                                c.generateCustomUpdate(*this, os, popSubs);
 
                                 // Loop through reduction targets and generate reduction
                                 for (const auto &r : reductionTargets) {
@@ -593,7 +593,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 popSubs.addVarSubstitution("id", "i");
 
                                 // Generate custom update
-                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+                                c.generateCustomUpdate(*this, os, popSubs);
 
                                 // Write back reductions
                                 genWriteBackReductions(os, c, popSubs["id"]);
@@ -625,7 +625,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                                (CodeStream &os, Substitutions &subs)
                                                {
                                                    // Call custom update handler
-                                                   c.generateCustomUpdate(*this, os, modelMerged, subs);
+                                                   c.generateCustomUpdate(*this, os, subs);
 
                                                    // Write back reductions
                                                    genWriteBackReductions(os, c, subs["id_syn"]);
@@ -667,7 +667,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                     synSubs.addVarSubstitution("id_post", "j");
 
                                     // Call custom update handler
-                                    c.generateCustomUpdate(*this, os, modelMerged, synSubs);
+                                    c.generateCustomUpdate(*this, os, synSubs);
 
                                     // Write back reductions
                                     genWriteBackReductions(os, c, synSubs["id_syn"]);
@@ -708,7 +708,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             if(c.getArchetype().isRowSimRNGRequired()) {
                                 popSubs.addVarSubstitution("rng", "hostRNG");
                             }
-                            c.generateUpdate(*this, os, modelMerged, popSubs);
+                            c.generateUpdate(*this, os, model.getBatchSize(), popSubs);
                         }
                     }
                 }
@@ -756,7 +756,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 synSubs.addVarSubstitution("id_post", "j");
 
                                 // Call custom update handler
-                                c.generateCustomUpdate(*this, os, modelMerged, synSubs);
+                                c.generateCustomUpdate(*this, os, synSubs);
 
                                 // Update transpose variable
                                 os << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;
@@ -1728,7 +1728,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
                 // Generate toeplitz connectivity code
-                sg.generateToeplitzConnectivity(*this, os, modelMerged, connSubs);
+                sg.generateToeplitzConnectivity(*this, os, connSubs);
 
                 if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << CodeStream::CB(130); // end if (eCode)
