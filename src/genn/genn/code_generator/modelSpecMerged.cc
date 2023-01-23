@@ -32,7 +32,7 @@ void assignGroups(const BackendBase &backend, std::vector<T> &groups, BackendBas
 ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
 :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
     m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
-    m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode"), m_TypeContext{{"scalar", model.getPrecision()}, {"time", model.getTimePrecision()}}
+    m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode"), m_TypeContext{{"scalar", model.getPrecision()}, {"timepoint", model.getTimePrecision()}}
 {
     LOGD_CODE_GEN << "Merging neuron update groups:";
     createMergedGroupsHash(backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,

@@ -203,7 +203,7 @@ public:
     // Protected methods
     //------------------------------------------------------------------------
     const Type::NumericBase *getScalarType() const{ return dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("scalar")); }
-    const Type::NumericBase *getTimeType() const{ return dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("time")); }
+    const Type::NumericBase *getTimeType() const{ return dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("timepoint")); }
 
     //! Helper to test whether parameter is referenced in vector of codestrings
     bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
