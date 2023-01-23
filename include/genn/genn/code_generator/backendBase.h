@@ -543,7 +543,7 @@ private:
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
-                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type, cg.getTypeContext()) << ";" << std::endl;
+                os << v.type->getResolvedName(cg.getTypeContext()) << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type, cg.getTypeContext()) << ";" << std::endl;
                 reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access),
                                               cg.getVarIndex(getVarAccessDuplication(v.access), idx));
             }
@@ -555,7 +555,7 @@ private:
 
             // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
             if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
-                os << modelVarRef.type << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type, cg.getTypeContext()) << ";" << std::endl;
+                os << modelVarRef.type->getResolvedName(cg.getTypeContext()) << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type, cg.getTypeContext()) << ";" << std::endl;
                 reductionTargets.emplace_back(modelVarRef.name, modelVarRef.type, modelVarRef.access,
                                               getVarRefIndexFn(varRef, idx));
             }
