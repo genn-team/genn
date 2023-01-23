@@ -1285,15 +1285,13 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
-                                    const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                    VarLocation) const
+                                    const Type::ValueBase *type, const std::string &name, VarLocation) const
 {
     definitions << "EXPORT_VAR " << type->getPointerType()->getName() << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInstantiation(CodeStream &os, 
-                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                       VarLocation) const
+                                       const Type::ValueBase *type, const std::string &name, VarLocation) const
 {
     os << type->getPointerType()->getName() << " " << name << ";" << std::endl;
 }
@@ -1308,8 +1306,8 @@ void Backend::genVariableAllocation(CodeStream &os,
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicAllocation(CodeStream &os, 
-                                           const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                           VarLocation, const std::string &countVarName, const std::string &prefix) const
+                                           const Type::Base *type, const std::string &name, VarLocation, 
+                                           const std::string &countVarName, const std::string &prefix) const
 {
     const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
     if (pointerType) {
@@ -1325,39 +1323,39 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const Type::ValueBase*, const Type::TypeContext&, const std::string&, VarLocation, bool, size_t) const
+void Backend::genVariablePush(CodeStream&, const Type::ValueBase*, const std::string&, VarLocation, bool, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const Type::ValueBase*, const Type::TypeContext&, const std::string&, VarLocation, size_t) const
+void Backend::genVariablePull(CodeStream&, const Type::ValueBase*, const std::string&, VarLocation, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ValueBase*, const Type::TypeContext&, const std::string&, 
+                                     const Type::ValueBase*, const std::string&, 
                                      VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ValueBase*, const Type::TypeContext&, const std::string&, 
+                                     const Type::ValueBase*, const std::string&, 
                                      VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicPush(CodeStream&, 
-                                     const Type::Base*, const Type::TypeContext&, const std::string&,
+                                     const Type::Base*, const std::string&,
                                      VarLocation, const std::string&, const std::string&) const
 {
      assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicPull(CodeStream&, 
-                                     const Type::Base*, const Type::TypeContext&, const std::string&,
+                                     const Type::Base*, const std::string&,
                                       VarLocation, const std::string&, const std::string&) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1371,7 +1369,7 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 }
 
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
 {
     return type->getName();
 }

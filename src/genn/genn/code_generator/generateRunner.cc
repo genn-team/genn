@@ -264,7 +264,7 @@ void genVariable(const ModelSpecMerged &modelMerged, const BackendBase &backend,
     genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
         [&]()
         {
-            backend.genVariablePushPull(push, pull, type, modelMerged.getTypeContext(), name, loc, autoInitialized, count);
+            backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
         });
 
     // Generate variables
@@ -277,8 +277,8 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                          CodeStream &extraGlobalParam, const Type::NumericBase *type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
-    backend.genVariableDefinition(definitionsVar, definitionsInternalVar, type, modelMerged.getTypeContext(), name, loc);
-    backend.genVariableInstantiation(runner, type, modelMerged.getTypeContext(), name, loc);
+    backend.genVariableDefinition(definitionsVar, definitionsInternalVar, type, name, loc);
+    backend.genVariableInstantiation(runner, type, name, loc);
 
     // If API is required
     if(apiRequired) {
@@ -290,7 +290,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
         extraGlobalParam << "void allocate" << name << "(unsigned int count)";
         {
             CodeStream::Scope a(extraGlobalParam);
-            backend.genVariableDynamicAllocation(extraGlobalParam, type, modelMerged.getTypeContext(), name, loc);
+            backend.genVariableDynamicAllocation(extraGlobalParam, type, name, loc);
 
             // Loop through destinations in merged structures, the device EGP needs to be copied to
             // **TODO** rename to dynamic
@@ -353,7 +353,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
                 CodeStream::Scope a(extraGlobalParam);
-                backend.genVariableDynamicPush(extraGlobalParam, type, modelMerged.getTypeContext(), name, loc);
+                backend.genVariableDynamicPush(extraGlobalParam, type, name, loc);
             }
 
             if(backend.getPreferences().generateExtraGlobalParamPull) {
@@ -364,7 +364,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                 extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
                 {
                     CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                    backend.genVariableDynamicPull(extraGlobalParam, type, modelMerged.getTypeContext(), name, loc);
+                    backend.genVariableDynamicPull(extraGlobalParam, type, name, loc);
                 }
             }
         }
@@ -466,7 +466,7 @@ void genRunnerFusedVarPushPull(const ModelSpecMerged &modelMerged, const Backend
                             [&]()
                             {
                                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                            var.type, modelMerged.getTypeContext(), var.name + group.getName(), 
+                                                            var.type, var.name + group.getName(), 
                                                             varAdaptor.getVarLocation(var.name), autoInitialized, getSizeFn(group, var));
                             });
     }
@@ -920,10 +920,10 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                             [&]()
                             {
                                 backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc,
-                                                                          modelMerged.getTypeContext(), "glbSpkCnt" + n.first, 
+                                                                          "glbSpkCnt" + n.first, 
                                                                           n.second.getSpikeLocation(), true, numSpikeCounts);
                                 backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc,
-                                                                          modelMerged.getTypeContext(), "glbSpk" + n.first, 
+                                                                          "glbSpk" + n.first, 
                                                                           n.second.getSpikeLocation(), true, numSpikes);
                             });
 
@@ -933,10 +933,10 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         // If spike recording is enabled, define and declare variables and add free
         if(n.second.isSpikeRecordingEnabled()) {
             backend.genVariableDefinition(definitionsVar, definitionsInternalVar, 
-                                          Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpk" + n.first, 
+                                          Type::Uint32::getInstance(), "recordSpk" + n.first, 
                                           VarLocation::HOST_DEVICE);
             backend.genVariableInstantiation(runnerVarDecl, 
-                                             Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpk" + n.first, 
+                                             Type::Uint32::getInstance(), "recordSpk" + n.first, 
                                              VarLocation::HOST_DEVICE);
             backend.genVariableFree(runnerVarFree, 
                                     "recordSpk" + n.first, VarLocation::HOST_DEVICE);
@@ -963,10 +963,10 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc,
-                                                                              modelMerged.getTypeContext(), "glbSpkCntEvnt" + n.first, 
+                                                                              "glbSpkCntEvnt" + n.first, 
                                                                               n.second.getSpikeLocation(), true, batchSize * n.second.getNumDelaySlots());
                                     backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc, 
-                                                                              modelMerged.getTypeContext(), "glbSpkEvnt" + n.first, 
+                                                                              "glbSpkEvnt" + n.first, 
                                                                               n.second.getSpikeLocation(), true, numNeuronDelaySlots);
                                 });
 
@@ -976,10 +976,10 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             // If spike recording is enabled, define and declare variables and add free
             if(n.second.isSpikeEventRecordingEnabled()) {
                 backend.genVariableDefinition(definitionsVar, definitionsInternalVar, 
-                                              Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpkEvent" + n.first, 
+                                              Type::Uint32::getInstance(), "recordSpkEvent" + n.first, 
                                               VarLocation::HOST_DEVICE);
                 backend.genVariableInstantiation(runnerVarDecl, 
-                                                 Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpkEvent" + n.first, 
+                                                 Type::Uint32::getInstance(), "recordSpkEvent" + n.first, 
                                                  VarLocation::HOST_DEVICE);
                 backend.genVariableFree(runnerVarFree, "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
             }
@@ -1003,7 +1003,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getTimePrecision(), modelMerged.getTypeContext(), "sT" + n.first, 
+                                                                model.getTimePrecision(), "sT" + n.first, 
                                                                 n.second.getSpikeTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
@@ -1020,7 +1020,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getTimePrecision(), modelMerged.getTypeContext(), "prevST" + n.first, 
+                                                                model.getTimePrecision(), "prevST" + n.first, 
                                                                 n.second.getPrevSpikeTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
@@ -1037,7 +1037,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getTimePrecision(), modelMerged.getTypeContext(), "seT" + n.first, 
+                                                                model.getTimePrecision(), "seT" + n.first, 
                                                                 n.second.getSpikeEventTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
@@ -1054,7 +1054,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getTimePrecision(), modelMerged.getTypeContext(), "prevSET" + n.first, 
+                                                                model.getTimePrecision(), "prevSET" + n.first, 
                                                                 n.second.getPrevSpikeEventTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
@@ -1084,7 +1084,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, 
-                                                                       var.type, modelMerged.getTypeContext(), var.name, 
+                                                                       var.type, var.name, 
                                                                        n.second.getVarLocation(var.name), numCopies);
                                 });
 
@@ -1313,9 +1313,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 backend.getPreferences().automaticCopy, s.second.getName() + "Connectivity", connectivityPushPullFunctions,
                                 [&]()
                                 {
-                                    // Row lengths
                                     backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc, 
-                                                                              modelMerged.getTypeContext(), "gp" + s.second.getName(),
+                                                                              "gp" + s.second.getName(),
                                                                               s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
                                 });
         }
@@ -1359,12 +1358,12 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 {
                                     // Row lengths
                                     backend.genVariablePushPull<Type::Uint32>(runnerPushFunc, runnerPullFunc, 
-                                                                              modelMerged.getTypeContext(), "rowLength" + s.second.getName(), 
+                                                                              "rowLength" + s.second.getName(), 
                                                                               s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                                     // Target indices
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  
-                                                                s.second.getSparseIndType(), modelMerged.getTypeContext(), "ind" + s.second.getName(), 
+                                                                s.second.getSparseIndType(), "ind" + s.second.getName(), 
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, size);
                                 });
         }
@@ -1422,7 +1421,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getPrecision(), modelMerged.getTypeContext(), "inSyn" + s.second.getName(), 
+                                                                model.getPrecision(), "inSyn" + s.second.getName(), 
                                                                 s.second.getInSynLocation(), true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
                                 });
 
@@ -1604,7 +1603,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genVariableDynamicAllocation(runner, 
-                                                         Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpk" + n.first, 
+                                                         Type::Uint32::getInstance(), "recordSpk" + n.first, 
                                                          VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
@@ -1620,7 +1619,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genVariableDynamicAllocation(runner, 
-                                                         Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpkEvent" + n.first, 
+                                                         Type::Uint32::getInstance(), "recordSpkEvent" + n.first, 
                                                          VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
@@ -1660,7 +1659,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genVariableDynamicPull(runner, 
-                                                   Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpk" + n.first, 
+                                                   Type::Uint32::getInstance(), "recordSpk" + n.first, 
                                                    VarLocation::HOST_DEVICE, "numWords");
                 }
                 // AllocaPullte spike event array if required
@@ -1668,7 +1667,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genVariableDynamicPull(runner, 
-                                                   Type::Uint32::getInstance(), modelMerged.getTypeContext(), "recordSpkEvent" + n.first, 
+                                                   Type::Uint32::getInstance(), "recordSpkEvent" + n.first, 
                                                    VarLocation::HOST_DEVICE, "numWords");
                 }
             }

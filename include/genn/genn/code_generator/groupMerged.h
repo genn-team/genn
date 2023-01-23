@@ -120,7 +120,7 @@ public:
                 if(dynamic_cast<const Type::Pointer*>(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
-                        os << backend.getMergedGroupFieldHostTypeName(type, m_TypeContext);
+                        os << backend.getMergedGroupFieldHostTypeName(type);
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
@@ -145,7 +145,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
-            os << backend.getMergedGroupFieldHostTypeName(std::get<0>(f), m_TypeContext) << " " << std::get<1>(f);
+            os << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " " << std::get<1>(f);
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
             }
@@ -478,7 +478,7 @@ public:
             // If this field is a dynamic pointer
             if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && dynamic_cast<const Type::Pointer*>(std::get<0>(f))) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
-                definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f), m_TypeContext) << " value);" << std::endl;
+                definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure

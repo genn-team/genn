@@ -488,7 +488,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
             // Generate code to push this EGP with count specified by $(0)
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, egp.type, getTypeContext(), egp.name,
+            backend.genVariableDynamicPush(push, egp.type, egp.name,
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
@@ -497,7 +497,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
             // Generate code to pull this EGP with count specified by $(0)
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, egp.type, getTypeContext(), egp.name,
+            backend.genVariableDynamicPull(pull, egp.type, egp.name,
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
@@ -529,7 +529,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // Generate code to push this variable
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, v.type, getTypeContext(), v.name,
+            backend.genVariableDynamicPush(push, v.type, v.name,
                                            loc, count, "group->");
 
             // Add substitution
@@ -539,7 +539,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, v.type, getTypeContext(), v.name,
+            backend.genVariableDynamicPull(pull, v.type, v.name,
                                            loc, count, "group->");
 
             // Add substitution

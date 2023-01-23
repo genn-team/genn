@@ -809,7 +809,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 const auto *pointerToEGP = egp.type->getPointerType();
                 CodeGenerator::CodeStream alloc(allocStream);
                 backend.genVariableDynamicAllocation(alloc, 
-                                                     pointerToEGP, getTypeContext(), egp.name,
+                                                     pointerToEGP, egp.name,
                                                      loc, "$(0)", "group->");
 
                 // Add substitution
@@ -819,7 +819,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
                 backend.genVariableDynamicPush(push, 
-                                               pointerToEGP, getTypeContext(), egp.name,
+                                               pointerToEGP, egp.name,
                                                loc, "$(0)", "group->");
 
 

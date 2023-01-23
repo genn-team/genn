@@ -267,7 +267,7 @@ public:
             os << "// ------------------------------------------------------------------------" << std::endl;
             // Loop through resultant fields and generate function to push updated pointers into group merged
             for(auto f : mergedGroupFields) {
-                os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type, m_TypeContext) << " value)";
+                os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
                 {
                     CodeStream::Scope b(os);
                     backend.genMergedDynamicVariablePush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");

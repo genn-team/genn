@@ -188,13 +188,11 @@ public:
 
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                       VarLocation loc) const final;
+                                       const Type::ValueBase *type, const std::string &name, VarLocation loc) const final;
     
     //! Generate code to instantiate a variable in the provided stream
     virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                          VarLocation loc) const final;
+                                          const Type::ValueBase *type, const std::string &name, VarLocation loc) const final;
 
     //! Generate code to allocate variable with a size known at compile-time
     virtual void genVariableAllocation(CodeStream &os, 
@@ -203,41 +201,41 @@ public:
     
     //! Generate code to allocate variable with a size known at runtime
     virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                              VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
+                                              const Type::Base *type, const std::string &name, VarLocation loc, 
+                                              const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code to free a variable
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
 
     //! Generate code for pushing a variable with a size known at compile-time to the 'device'
     virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                 const Type::ValueBase *type, const std::string &name, 
                                  VarLocation loc, bool autoInitialized, size_t count) const final;
     
     //! Generate code for pulling a variable with a size known at compile-time from the 'device'
     virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                 const Type::ValueBase *type, const std::string &name, 
                                  VarLocation loc, size_t count) const final;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                        const Type::ValueBase *type, const std::string &name, 
                                         VarLocation loc, unsigned int batchSize) const final;
 
     //! Generate code for pulling a variable's value in the current timestep from the 'device'
     virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name,
+                                        const Type::ValueBase *type, const std::string &name,
                                         VarLocation loc, unsigned int batchSize) const final;
 
     //! Generate code for pushing a variable with a size known at tuntime to the 'device'
     virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                        VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
+                                        const Type::Base *type, const std::string &name, VarLocation loc, 
+                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::Base *type, const Type::TypeContext &typeContext, const std::string &name, 
-                                        VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const final;
+                                        const Type::Base *type, const std::string &name, VarLocation loc, 
+                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
     virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -245,7 +243,7 @@ public:
                                               const std::string &egpName) const final;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const override;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const override;
 
     //! When generating merged structures what type to use for simulation RNGs
     virtual const Type::ValueBase *getMergedGroupSimRNGType() const override;
