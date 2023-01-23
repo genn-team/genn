@@ -131,10 +131,10 @@ public:
     virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
 
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
+                                    CodeStream &allocations, CodeStream &free, const Type::TypeContext &typeContext, MemAlloc &memAlloc) const final;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocations, CodeStream &free,
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
+                                  const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 

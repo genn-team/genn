@@ -262,41 +262,46 @@ std::string getNCCLReductionType(VarAccessMode mode)
     }
 }
 //-----------------------------------------------------------------------
-std::string getNCCLType(const std::string &type, const std::string &precision)
+std::string getNCCLType(const Type::NumericBase *type, const Type::TypeContext &context)
 {
-    // Convert GeNN types to NCCL types
-    // **YUCK** GeNN really needs a better type system
-    if(type == "scalar") {
-        return (precision == "float") ? "ncclFloat32" : "ncclFloat64";
+    // If type is a numeric typedef, resolve it
+    const auto numericTypedef = dynamic_cast<const Type::NumericTypedef *>(type);
+    if (numericTypedef) {
+        type = numericTypedef->getResolvedType(context);
     }
-    else if(type == "char" || type == "signed char" || type == "int8_t") {
+    
+    // Convert GeNN types to NCCL types
+    // **YUCK** Visitor pattern would really help here
+    if(dynamic_cast<const Type::Int8*>(type)) {
         return "ncclInt8";
     }
-    else if(type == "unsigned char" || type == "uint8_t") {
+    else if(dynamic_cast<const Type::Uint8*>(type)) {
         return "ncclUint8";
     }
-    else if(type == "int" || type == "signed int" || type == "signed" || type == "int32_t") {
+    else if(dynamic_cast<const Type::Int32*>(type)) {
         return "ncclInt32";
     }
-    else if(type == "unsigned" || type == "unsigned int" || type == "uint32_t") {
+    else if(dynamic_cast<const Type::Int32*>(type)){
         return "ncclUint32";
     }
-    else if(type == "half") {
+    /*else if(type == "half") {
         return "ncclFloat16";
-    }
-    else if(type == "float") {
+    }*/
+    else if(dynamic_cast<const Type::Float*>(type)){
         return "ncclFloat32";
     }
-    else if(type == "double") {
+    else if(dynamic_cast<const Type::Float*>(type)) {
         return "ncclFloat64";
     }
+    else if (dynamic_cast<const Type::NumericTypedef *>(type)) {
+    }
     else {
-        throw std::runtime_error("Data type '" + type + "' unsupported by NCCL");
+        throw std::runtime_error("Data type '" + type->getResolvedName(context) + "' unsupported by NCCL");
     }
 }
 //-----------------------------------------------------------------------
 template<typename G>
-void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
+void genNCCLReduction(CodeStream &os, const G &cg)
 {
     CodeStream::Scope b(os);
     os << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
@@ -312,7 +317,7 @@ void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
-                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(getVarAccessMode(v.access)) << ", ncclCommunicator, 0)); " << std::endl;
+                os << ", " << getNCCLType(v.type, cg.getTypeContext()) << ", " << getNCCLReductionType(getVarAccessMode(v.access)) << ", ncclCommunicator, 0)); " << std::endl;
             }
         }
 
@@ -320,7 +325,7 @@ void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
-                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+                os << ", " << getNCCLType(v.type, cg.getTypeContext()) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
             }
         } 
     }
@@ -481,7 +486,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
     if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << model.getTimePrecision() << " t)";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << model.getTimePrecision()->getName() << " t)";
         {
             CodeStream::Scope b(os);
 
@@ -510,7 +515,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << std::endl;
 
     size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision() << " t";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision()->getName() << " t";
     if(model.isRecordingInUse()) {
         os << ", unsigned int recordingTimestep";
     }
@@ -532,7 +537,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         genNeuronUpdateKernel(os, kernelSubs, modelMerged, idStart);
     }
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    os << "void updateNeurons(" << model.getTimePrecision()->getName() << " t";
     if(model.isRecordingInUse()) {
         os << ", unsigned int recordingTimestep";
     }
@@ -785,7 +790,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                                   [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
                                                   [g](const CustomConnectivityUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
 
-            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision()->getName() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
 
@@ -816,7 +821,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                                   [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
                                                   [g](const CustomUpdateTransposeWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
 
-            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision()->getName() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
 
@@ -866,7 +871,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // generate reductions for those in this custom update group
                 for(const auto &cg : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
                     if(cg.getArchetype().getUpdateGroupName() == g) {
-                        genNCCLReduction(os, cg, model.getPrecision());
+                        genNCCLReduction(os, cg);
                     }
                 }
 
@@ -874,7 +879,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // generate reductions for those in this custom update group
                 for(const auto &cg : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
                     if(cg.getArchetype().getUpdateGroupName() == g) {
-                        genNCCLReduction(os, cg, model.getPrecision());
+                        genNCCLReduction(os, cg);
                     }
                 }
             }
@@ -1607,7 +1612,7 @@ void Backend::genVariableInstantiation(CodeStream &os,
             os << pointerTypeName << " " << name << ";" << std::endl;
         }
         if(loc & VarLocation::DEVICE) {
-            os << pointerTypeName << " d_" << name < V< ";" << std::endl; 
+            os << pointerTypeName << " d_" << name << ";" << std::endl; 
         }
     }
 }
@@ -1852,7 +1857,8 @@ const Type::ValueBase *Backend::getMergedGroupSimRNGType() const
     return CURandState::getInstance();
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, MemAlloc &memAlloc) const
+void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, 
+                                 const Type::TypeContext &typeContext, MemAlloc &memAlloc) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
@@ -1861,14 +1867,14 @@ void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, 
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
-    memAlloc += MemAlloc::device(CURandStatePhilox43210->getSizeBytes());
+    memAlloc += MemAlloc::device(CURandStatePhilox43210::getInstance()->getSizeBytes(typeContext));
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                               const std::string &name, size_t count, MemAlloc &memAlloc) const
+                               const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     // Create an array or XORWOW RNGs
-    genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
+    genArray<CURandState>(definitions, definitionsInternal, runner, allocations, free, typeContext, name, VarLocation::DEVICE, count, memAlloc);
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

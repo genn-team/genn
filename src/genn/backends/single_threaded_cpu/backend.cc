@@ -1438,13 +1438,13 @@ void Backend::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUp
     genKernelIteration(os, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), kernelSubs, handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, const Type::TypeContext&, MemAlloc&) const
 {
     assert(false);
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
-                                   const std::string&, size_t, MemAlloc&) const
+                               const Type::TypeContext&, const std::string&, size_t, MemAlloc&) const
 {
 }
 //--------------------------------------------------------------------------

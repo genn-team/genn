@@ -92,12 +92,12 @@ const Pointer *Base::getPointerType(Qualifier qualifiers) const
 //----------------------------------------------------------------------------
 std::string NumericTypedef::getResolvedName(const TypeContext &context) const
 {
-    return getNumeric(context)->getResolvedName(context);
+    return getResolvedType(context)->getResolvedName(context);
 }
 //----------------------------------------------------------------------------
 size_t NumericTypedef::getSizeBytes(const TypeContext &context) const
 {
-    return getNumeric(context)->getSizeBytes(context);
+    return getResolvedType(context)->getSizeBytes(context);
 }
 //----------------------------------------------------------------------------
 Base *NumericTypedef::getQualifiedType(Qualifier qualifiers) const
@@ -107,45 +107,45 @@ Base *NumericTypedef::getQualifiedType(Qualifier qualifiers) const
 //----------------------------------------------------------------------------
 int NumericTypedef::getRank(const TypeContext &context) const
 {
-    return getNumeric(context)->getRank(context);
+    return getResolvedType(context)->getRank(context);
 }
 //----------------------------------------------------------------------------
 double NumericTypedef::getMin(const TypeContext &context) const
 {
-    return getNumeric(context)->getMin(context);
+    return getResolvedType(context)->getMin(context);
 }
 //----------------------------------------------------------------------------
 double NumericTypedef::getMax(const TypeContext &context) const
 {
-    return getNumeric(context)->getMax(context);
+    return getResolvedType(context)->getMax(context);
 }
 //----------------------------------------------------------------------------
 double NumericTypedef::getLowest(const TypeContext &context) const
 {
-    return getNumeric(context)->getLowest(context);
+    return getResolvedType(context)->getLowest(context);
 }
 //----------------------------------------------------------------------------
 int NumericTypedef::getMaxDigits10(const TypeContext &context) const
 {
-    return getNumeric(context)->getMaxDigits10(context);
+    return getResolvedType(context)->getMaxDigits10(context);
 }
 //----------------------------------------------------------------------------
 bool NumericTypedef::isSigned(const TypeContext &context) const
 {
-    return getNumeric(context)->getSizeBytes(context);
+    return getResolvedType(context)->getSizeBytes(context);
 }
 //----------------------------------------------------------------------------
 bool NumericTypedef::isIntegral(const TypeContext &context) const
 {
-    return getNumeric(context)->isIntegral(context);
+    return getResolvedType(context)->isIntegral(context);
 }
 //----------------------------------------------------------------------------
 std::string NumericTypedef::getLiteralSuffix(const TypeContext &context) const
 {
-    return getNumeric(context)->getLiteralSuffix(context);
+    return getResolvedType(context)->getLiteralSuffix(context);
 }
 //----------------------------------------------------------------------------
-const Type::NumericBase *NumericTypedef::getNumeric(const TypeContext &context) const
+const Type::NumericBase *NumericTypedef::getResolvedType(const TypeContext &context) const
 {
     const auto t = context.find(m_Name);
     if (t == context.cend()) {

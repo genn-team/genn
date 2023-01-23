@@ -452,7 +452,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
+        Backend backend(blockSize, preferences, deviceID);
 
         // Create merged model
         ModelSpecMerged modelMerged(model, backend);

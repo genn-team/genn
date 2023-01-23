@@ -232,7 +232,7 @@ void PostSpan::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, c
 {
     // If data structure is dense, we can accumulate output directly into register
     if(shouldAccumulateInRegister(sg)) {
-        os << modelMerged.getModel().getPrecision() << " linSyn = 0;" << std::endl;
+        os << modelMerged.getModel().getPrecision()->getName() << " linSyn = 0;" << std::endl;
     }
     else if(isSmallSharedMemoryPop(sg, backend)) {
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";

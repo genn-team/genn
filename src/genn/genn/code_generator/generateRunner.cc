@@ -627,7 +627,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     }
     // If backend requires a global device RNG to simulate (or initialize) this model
     if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
-        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, mem);
+        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, 
+                                   modelMerged.getTypeContext(), mem);
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
     if(backend.isGlobalHostRNGRequired(modelMerged)) {
@@ -1059,7 +1060,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     "rng" + n.first, batchSize * n.second.getNumNeurons(), mem);
+                                     modelMerged.getTypeContext(), "rng" + n.first, batchSize * n.second.getNumNeurons(), mem);
         }
 
         // Neuron state variables
@@ -1220,7 +1221,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         // If custom connectivity update group needs per-row RNGs
         if(c.second.isRowSimRNGRequired()) {
             backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     "rowRNG" + c.first, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), mem);
+                                     modelMerged.getTypeContext(), "rowRNG" + c.first, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), mem);
         }
 
         

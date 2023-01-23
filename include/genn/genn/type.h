@@ -255,12 +255,12 @@ public:
 
     virtual std::string getLiteralSuffix(const TypeContext &context) const final;
 
-private:
     //------------------------------------------------------------------------
-    // Private methods
+    // Public API
     //------------------------------------------------------------------------
-    const Type::NumericBase *getNumeric(const TypeContext &context) const;
+    const Type::NumericBase *getResolvedType(const TypeContext &context) const;
 
+private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

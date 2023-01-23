@@ -252,10 +252,10 @@ public:
     
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
                                     CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                    MemAlloc &memAlloc) const override;
+                                    const Type::TypeContext &typeContext, MemAlloc &memAlloc) const override;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
                                   CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const override;
+                                  const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
