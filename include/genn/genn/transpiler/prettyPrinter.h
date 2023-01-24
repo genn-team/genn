@@ -9,10 +9,16 @@
 // Transpiler includes
 #include "transpiler/statement.h"
 
+// Forward declarations
+namespace GeNN::CodeGenerator
+{
+class CodeStream;
+}
+
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::PrettyPrinter
 {
-std::string print(const Statement::StatementList &statements, const Type::TypeContext &context);
+void print(CodeGenerator::CodeStream &os, const Statement::StatementList &statements, const Type::TypeContext &context);
 }

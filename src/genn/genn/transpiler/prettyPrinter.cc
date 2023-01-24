@@ -6,8 +6,8 @@
 #include <iterator>
 #include <sstream>
 
-// GeNN includes
-#include "type.h"
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
 
 // Transpiler includes
 #include "transpiler/transpilerUtils.h"
@@ -27,23 +27,13 @@ namespace
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(const Type::TypeContext &context) : m_Context(context) {}
-
-    //---------------------------------------------------------------------------
-    // Public API
-    //---------------------------------------------------------------------------
-    std::string print(const Statement::StatementList &statements)
+    Visitor(CodeGenerator::CodeStream &codeStream, const Statement::StatementList &statements, const Type::TypeContext &context)
+    :   m_CodeStream(codeStream), m_Context(context) 
     {
-        // Clear string stream
-        m_StringStream.str("");
-
-        for(auto &s : statements) {
+         for(auto &s : statements) {
             s.get()->accept(*this);
-            m_StringStream << std::endl;
+            m_CodeStream << std::endl;
         }
-    
-        // Return string stream contents
-        return m_StringStream.str();
     }
 
     //---------------------------------------------------------------------------
@@ -51,56 +41,56 @@ public:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        m_StringStream << arraySubscript.getPointerName().lexeme << "[";
+        m_CodeStream << arraySubscript.getPointerName().lexeme << "[";
         arraySubscript.getIndex()->accept(*this);
-        m_StringStream << "]";
+        m_CodeStream << "]";
     }
 
     virtual void visit(const Expression::Assignment &assignement) final
     {
-        m_StringStream << assignement.getVarName().lexeme << " " << assignement.getOperator().lexeme << " ";
+        m_CodeStream << assignement.getVarName().lexeme << " " << assignement.getOperator().lexeme << " ";
         assignement.getValue()->accept(*this);
     }
 
     virtual void visit(const Expression::Binary &binary) final
     {
         binary.getLeft()->accept(*this);
-        m_StringStream << " " << binary.getOperator().lexeme << " ";
+        m_CodeStream << " " << binary.getOperator().lexeme << " ";
         binary.getRight()->accept(*this);
     }
 
     virtual void visit(const Expression::Call &call) final
     {
         call.getCallee()->accept(*this);
-        m_StringStream << "(";
+        m_CodeStream << "(";
         for(const auto &a : call.getArguments()) {
             a->accept(*this);
         }
-        m_StringStream << ")";
+        m_CodeStream << ")";
     }
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        m_StringStream << "(";
+        m_CodeStream << "(";
         printType(cast.getType());
-        m_StringStream << ")";
+        m_CodeStream << ")";
         cast.getExpression()->accept(*this);
     }
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
         conditional.getCondition()->accept(*this);
-        m_StringStream << " ? ";
+        m_CodeStream << " ? ";
         conditional.getTrue()->accept(*this);
-        m_StringStream << " : ";
+        m_CodeStream << " : ";
         conditional.getFalse()->accept(*this);
     }
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        m_StringStream << "(";
+        m_CodeStream << "(";
         grouping.getExpression()->accept(*this);
-        m_StringStream << ")";
+        m_CodeStream << ")";
     }
 
     virtual void visit(const Expression::Literal &literal) final
@@ -108,44 +98,44 @@ public:
         // If literal is a double, we want to remove the d suffix in generated code
         std::string_view lexeme = literal.getValue().lexeme;
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER){
-            m_StringStream << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
+            m_CodeStream << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
         }
         // Otherwise, if literal is a scalar, we want to add appropriate suffix for scalar type
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
             const Type::NumericBase *scalar = dynamic_cast<const Type::NumericBase*>(m_Context.at("scalar"));
-            m_StringStream << lexeme << scalar->getLiteralSuffix(m_Context);
+            m_CodeStream << lexeme << scalar->getLiteralSuffix(m_Context);
         }
         // Otherwise, just write out original lexeme directly
         else {
-            m_StringStream << lexeme;
+            m_CodeStream << lexeme;
         }
     }
 
     virtual void visit(const Expression::Logical &logical) final
     {
         logical.getLeft()->accept(*this);
-        m_StringStream << " " << logical.getOperator().lexeme << " ";
+        m_CodeStream << " " << logical.getOperator().lexeme << " ";
         logical.getRight()->accept(*this);
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_StringStream << postfixIncDec.getVarName().lexeme << postfixIncDec.getOperator().lexeme;
+        m_CodeStream << postfixIncDec.getVarName().lexeme << postfixIncDec.getOperator().lexeme;
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_StringStream << prefixIncDec.getOperator().lexeme << prefixIncDec.getVarName().lexeme;
+        m_CodeStream << prefixIncDec.getOperator().lexeme << prefixIncDec.getVarName().lexeme;
     }
 
     virtual void visit(const Expression::Variable &variable) final
     {
-        m_StringStream << variable.getName().lexeme;
+        m_CodeStream << variable.getName().lexeme;
     }
 
     virtual void visit(const Expression::Unary &unary) final
     {
-        m_StringStream << unary.getOperator().lexeme;
+        m_CodeStream << unary.getOperator().lexeme;
         unary.getRight()->accept(*this);
     }
     
@@ -154,89 +144,88 @@ public:
     //---------------------------------------------------------------------------
     virtual void visit(const Statement::Break&) final
     {
-        m_StringStream << "break;";
+        m_CodeStream << "break;";
     }
 
     virtual void visit(const Statement::Compound &compound) final
     {
-        m_StringStream << "{" << std::endl;
+        CodeGenerator::CodeStream::Scope b(m_CodeStream);
         for(auto &s : compound.getStatements()) {
             s->accept(*this);
-            m_StringStream << std::endl;
+            m_CodeStream << std::endl;
         }
-        m_StringStream << "}" << std::endl;
     }
 
     virtual void visit(const Statement::Continue&) final
     {
-        m_StringStream << "continue;";
+        m_CodeStream << "continue;";
     }
 
     virtual void visit(const Statement::Do &doStatement) final
     {
-        m_StringStream << "do";
+        m_CodeStream << "do";
         doStatement.getBody()->accept(*this);
-        m_StringStream << "while(";
+        m_CodeStream << "while(";
         doStatement.getCondition()->accept(*this);
-        m_StringStream << ");" << std::endl;
+        m_CodeStream << ");" << std::endl;
     }
 
     virtual void visit(const Statement::Expression &expression) final
     {
         expression.getExpression()->accept(*this);
-        m_StringStream << ";";
+        m_CodeStream << ";";
     }
 
     virtual void visit(const Statement::For &forStatement) final
     {
-        m_StringStream << "for(";
+        m_CodeStream << "for(";
         if(forStatement.getInitialiser()) {
             forStatement.getInitialiser()->accept(*this);
         }
         else {
-            m_StringStream << ";";
+            m_CodeStream << ";";
         }
-        m_StringStream << " ";
+        m_CodeStream << " ";
 
         if(forStatement.getCondition()) {
             forStatement.getCondition()->accept(*this);
         }
 
-        m_StringStream << "; ";
+        m_CodeStream << "; ";
         if(forStatement.getIncrement()) {
             forStatement.getIncrement()->accept(*this);
         }
-        m_StringStream << ")";
+        m_CodeStream << ")";
         forStatement.getBody()->accept(*this);
     }
 
     virtual void visit(const Statement::If &ifStatement) final
     {
-        m_StringStream << "if(";
+        m_CodeStream << "if(";
         ifStatement.getCondition()->accept(*this);
-        m_StringStream << ")" << std::endl;
+        m_CodeStream << ")" << std::endl;
         ifStatement.getThenBranch()->accept(*this);
         if(ifStatement.getElseBranch()) {
-            m_StringStream << "else" << std::endl;
+            m_CodeStream << "else" << std::endl;
             ifStatement.getElseBranch()->accept(*this);
         }
     }
 
     virtual void visit(const Statement::Labelled &labelled) final
     {
-        m_StringStream << labelled.getKeyword().lexeme << " ";
+        m_CodeStream << labelled.getKeyword().lexeme << " ";
         if(labelled.getValue()) {
             labelled.getValue()->accept(*this);
         }
-        m_StringStream << " : ";
+        m_CodeStream << " : ";
         labelled.getBody()->accept(*this);
     }
 
     virtual void visit(const Statement::Switch &switchStatement) final
     {
-        m_StringStream << "switch(";
+        m_CodeStream << "switch(";
         switchStatement.getCondition()->accept(*this);
-        m_StringStream << ")" << std::endl;
+        m_CodeStream << ")" << std::endl;
         switchStatement.getBody()->accept(*this);
     }
 
@@ -245,29 +234,29 @@ public:
         printType(varDeclaration.getType());
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_StringStream << std::get<0>(var).lexeme;
+            m_CodeStream << std::get<0>(var).lexeme;
             if(std::get<1>(var)) {
-                m_StringStream << " = ";
+                m_CodeStream << " = ";
                 std::get<1>(var)->accept(*this);
             }
-            m_StringStream << ", ";
+            m_CodeStream << ", ";
         }
-        m_StringStream << ";";
+        m_CodeStream << ";";
     }
 
     virtual void visit(const Statement::While &whileStatement) final
     {
-        m_StringStream << "while(";
+        m_CodeStream << "while(";
         whileStatement.getCondition()->accept(*this);
-        m_StringStream << ")" << std::endl;
+        m_CodeStream << ")" << std::endl;
         whileStatement.getBody()->accept(*this);
     }
 
     virtual void visit(const Statement::Print &print) final
     {
-        m_StringStream << "print ";
+        m_CodeStream << "print ";
         print.getExpression()->accept(*this);
-        m_StringStream << ";";
+        m_CodeStream << ";";
     }
 
 private:
@@ -306,13 +295,13 @@ private:
         }
         
         // Copy tokens backwards into string stream, seperating with spaces
-        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_StringStream, " "));
+        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_CodeStream, " "));
         
     }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    std::ostringstream m_StringStream;
+    CodeGenerator::CodeStream &m_CodeStream;
     const Type::TypeContext &m_Context;
 };
 }   // Anonymous namespace
@@ -320,8 +309,8 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-std::string GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, const Type::TypeContext &context)
+void GeNN::Transpiler::PrettyPrinter::print(CodeGenerator::CodeStream &os, const Statement::StatementList &statements, 
+                                            const Type::TypeContext &context)
 {
-    Visitor visitor(context);
-    return visitor.print(statements);
+    Visitor(os, statements, context);
 }

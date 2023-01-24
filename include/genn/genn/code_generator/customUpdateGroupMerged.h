@@ -4,6 +4,9 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/groupMerged.h"
 
+// GeNN transpiler includes
+#include "statement.h"
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
@@ -41,6 +44,13 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    //! List of statements parsed and type-checked in constructor; and used to generate code
+    StatementList m_UpdateStatements;
 };
 
 // ----------------------------------------------------------------------------

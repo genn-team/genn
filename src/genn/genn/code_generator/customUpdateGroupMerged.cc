@@ -157,9 +157,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
      Transpiler::ErrorHandler errorHandler;
      const std::string code = upgradeCodeString(cm->getUpdateCode());
      const auto tokens = Transpiler::Scanner::scanSource(code, errorHandler);
-     const auto statements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
-     Transpiler::TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
-
+     m_UpdateStatements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
+     Transpiler::TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
