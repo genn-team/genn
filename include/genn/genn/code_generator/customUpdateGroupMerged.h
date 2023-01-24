@@ -5,7 +5,7 @@
 #include "code_generator/groupMerged.h"
 
 // GeNN transpiler includes
-#include "statement.h"
+#include "transpiler/statement.h"
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
@@ -50,7 +50,7 @@ private:
     // Members
     //----------------------------------------------------------------------------
     //! List of statements parsed and type-checked in constructor; and used to generate code
-    StatementList m_UpdateStatements;
+    Transpiler::Statement::StatementList m_UpdateStatements;
 };
 
 // ----------------------------------------------------------------------------
