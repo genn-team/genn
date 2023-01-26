@@ -69,6 +69,12 @@ inline bool operator & (VarAccessMode mode, VarAccessModeAttribute modeAttribute
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
 
+inline bool operator & (VarAccessMode a, VarAccessMode b)
+{
+    return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
+}
+
+
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------

@@ -124,35 +124,49 @@ private:
 };
 
 //! Pretty printing environment which caches used variables in local variables
-template<typename V>
+template<typename A, typename G>
 class EnvironmentLocalVarCache : public EnvironmentExternal
 {
-    typedef std::function<std::string(decltype(V::access))> GetIndexFn;    
+    //! Type of a single definition
+    typedef typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type DefType;
+    
+    //! Type of a single initialiser
+    typedef typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type InitialiserType;
+    
+    //! Function used to provide index strings based on initialiser and access type
+    typedef std::function<std::string(InitialiserType, decltype(DefType::access))> GetIndexFn;    
+
 public:
-    EnvironmentLocalVarCache(const std::vector<V> &vars, PrettyPrinter::EnvironmentBase &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(enclosing), m_Vars(vars), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    EnvironmentLocalVarCache(const G &group, PrettyPrinter::EnvironmentBase &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(enclosing), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
-        // Add variables to map, initially with value set to value
-        std::transform(m_Vars.cbegin(), m_Vars.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+        // Add name of each definition to map, initially with value set to value
+        const auto defs = A(m_Group).getDefs();
+        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
                        [](const auto &v){ return std::make_pair(v.name, false); });
     }
     
-    EnvironmentLocalVarCache(const std::vector<V> &vars, CodeStream &os, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(os), m_Vars(vars), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    EnvironmentLocalVarCache(const G &group, CodeStream &os, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(os), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
-        // Add variables to map, initially with value set to value
-        std::transform(m_Vars.cbegin(), m_Vars.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+        // Add name of each definition to map, initially with value set to value
+        const auto defs = A(m_Group).getDefs();
+        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
                        [](const auto &v){ return std::make_pair(v.name, false); });
     }
     
     ~EnvironmentLocalVarCache()
     {
-        // Copy variables which have been referenced into new vector
-        std::vector<V> referencedVars;
-        std::copy_if(m_Vars.cbegin(), m_Vars.cend(), std::back_inserter(referencedVars),
+        A adapter(m_Group);
+        
+        // Copy definitions which have been referenced into new vector
+        const auto defs = adapter.getDefs();
+        std::remove_const_t<decltype(defs)> referencedVars;
+        std::copy_if(defs.cbegin(), defs.cend(), std::back_inserter(referencedVars),
                      [this](const auto &v){ return m_VariablesReferenced.at(v.name); });
         
         // Loop through referenced variables
+        const auto &initialisers = adapter.getInitialisers();
         for(const auto &v : referencedVars) {
             if(v.access & VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
@@ -163,7 +177,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << "[" << m_GetIndex(v.access) << "]";
+                getContextStream() << " = group->" << v.name << "[" << m_GetIndex(initialisers.at(v.name), v.access) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -175,7 +189,7 @@ public:
         for(const auto &v : referencedVars) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << "[" << m_GetIndex(v.access) << "]";
+                getContextStream() << "group->" << v.name << "[" << m_GetIndex(initialisers.at(v.name), v.access) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -210,7 +224,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<V> &m_Vars;
+    const G &m_Group;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
     const std::string m_LocalPrefix;
@@ -389,22 +403,23 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 //----------------------------------------------------------------------------
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    
     EnvironmentSubstitute subs(os);
     subs.addSubstitution("id", popSubs["id"]);
     
-    EnvironmentLocalVarCache varSubs(cm->getVars(), subs, 
-                                     [this](VarAccess a)
-                                     {
-                                         return getVarIndex(getVarAccessDuplication(a), "id");
-                                     });
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
+        getArchetype(), subs, 
+        [this](const Models::VarInit&, VarAccess a)
+        {
+            return getVarIndex(getVarAccessDuplication(a), "id");
+        });
     
-    /*EnvironmentLocalVarCache varRefSubs(cm->getVarRefs(), subs, 
-                                        [this](VarAccessMode a)
+    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(getArchetype(), subs, 
+                                        [this](const Models::VarReference &v, VarAccessMode)
                                         {
-                                            return getVarRefIndex(a, "id");
-                                        });*/
+                                            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
+                                                                  getVarAccessDuplication(v.getVar().access), 
+                                                                  "id");
+                                        });
     
     /*genCustomUpdate(os, popSubs, *this, "id",
                     [this](const auto &varRef, const std::string &index)
@@ -414,7 +429,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
                                               index);
                     });*/
     // Pretty print code
-    PrettyPrinter::print(m_UpdateStatements, varSubs, getTypeContext());
+    PrettyPrinter::print(m_UpdateStatements, varRefSubs, getTypeContext());
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
