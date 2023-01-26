@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <unordered_set>
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -13,6 +14,7 @@
 #include "transpiler/transpilerUtils.h"
 
 using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 using namespace GeNN::Transpiler::PrettyPrinter;
 
@@ -22,75 +24,123 @@ using namespace GeNN::Transpiler::PrettyPrinter;
 namespace
 {
 //---------------------------------------------------------------------------
+// EnvironmentInternal
+//---------------------------------------------------------------------------
+class EnvironmentInternal : public EnvironmentBase
+{
+public:
+    EnvironmentInternal(EnvironmentBase &enclosing)
+    :   m_Enclosing(enclosing)
+    {
+    }
+    
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual std::string define(const Token &name) final
+    {
+        if(!m_LocalVariables.emplace(name.lexeme).second) {
+            throw std::runtime_error("Redeclaration of variable");
+        }
+        
+        return "_" + std::string{name.lexeme};
+    }
+    
+    virtual std::string getName(const Token &name) final
+    {
+        if(m_LocalVariables.find(name.lexeme) == m_LocalVariables.end()) {
+            return m_Enclosing.getName(name);
+        }
+        else {
+            return "_" + std::string{name.lexeme};
+        }
+    }
+    
+    virtual CodeStream &getStream()
+    {
+        return m_Enclosing.getStream();
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    EnvironmentBase &m_Enclosing;
+    std::unordered_set<std::string_view> m_LocalVariables;
+};
+
+//---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(CodeGenerator::CodeStream &codeStream, const Statement::StatementList &statements, const Type::TypeContext &context)
-    :   m_CodeStream(codeStream), m_Context(context) 
+    Visitor(const Statement::StatementList &statements, 
+            EnvironmentInternal &environment, const Type::TypeContext &context)
+    :   m_Environment(environment), m_Context(context) 
     {
          for(auto &s : statements) {
             s.get()->accept(*this);
-            m_CodeStream << std::endl;
+            m_Environment.get().getStream() << std::endl;
         }
     }
 
+private:
     //---------------------------------------------------------------------------
     // Expression::Visitor virtuals
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        m_CodeStream << arraySubscript.getPointerName().lexeme << "[";
+        m_Environment.get().getStream() << m_Environment.get().getName(arraySubscript.getPointerName()) << "[";
         arraySubscript.getIndex()->accept(*this);
-        m_CodeStream << "]";
+        m_Environment.get().getStream() << "]";
     }
 
     virtual void visit(const Expression::Assignment &assignement) final
     {
-        m_CodeStream << assignement.getVarName().lexeme << " " << assignement.getOperator().lexeme << " ";
+        m_Environment.get().getStream() << m_Environment.get().getName(assignement.getVarName()) << " " << assignement.getOperator().lexeme << " ";
         assignement.getValue()->accept(*this);
     }
 
     virtual void visit(const Expression::Binary &binary) final
     {
         binary.getLeft()->accept(*this);
-        m_CodeStream << " " << binary.getOperator().lexeme << " ";
+        m_Environment.get().getStream() << " " << binary.getOperator().lexeme << " ";
         binary.getRight()->accept(*this);
     }
 
     virtual void visit(const Expression::Call &call) final
     {
         call.getCallee()->accept(*this);
-        m_CodeStream << "(";
+        m_Environment.get().getStream() << "(";
         for(const auto &a : call.getArguments()) {
             a->accept(*this);
         }
-        m_CodeStream << ")";
+        m_Environment.get().getStream() << ")";
     }
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        m_CodeStream << "(";
+        m_Environment.get().getStream() << "(";
         printType(cast.getType());
-        m_CodeStream << ")";
+        m_Environment.get().getStream() << ")";
         cast.getExpression()->accept(*this);
     }
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
         conditional.getCondition()->accept(*this);
-        m_CodeStream << " ? ";
+        m_Environment.get().getStream() << " ? ";
         conditional.getTrue()->accept(*this);
-        m_CodeStream << " : ";
+        m_Environment.get().getStream() << " : ";
         conditional.getFalse()->accept(*this);
     }
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        m_CodeStream << "(";
+        m_Environment.get().getStream() << "(";
         grouping.getExpression()->accept(*this);
-        m_CodeStream << ")";
+        m_Environment.get().getStream() << ")";
     }
 
     virtual void visit(const Expression::Literal &literal) final
@@ -98,44 +148,44 @@ public:
         // If literal is a double, we want to remove the d suffix in generated code
         std::string_view lexeme = literal.getValue().lexeme;
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER){
-            m_CodeStream << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
+            m_Environment.get().getStream() << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
         }
         // Otherwise, if literal is a scalar, we want to add appropriate suffix for scalar type
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
             const Type::NumericBase *scalar = dynamic_cast<const Type::NumericBase*>(m_Context.at("scalar"));
-            m_CodeStream << lexeme << scalar->getLiteralSuffix(m_Context);
+            m_Environment.get().getStream() << lexeme << scalar->getLiteralSuffix(m_Context);
         }
         // Otherwise, just write out original lexeme directly
         else {
-            m_CodeStream << lexeme;
+            m_Environment.get().getStream() << lexeme;
         }
     }
 
     virtual void visit(const Expression::Logical &logical) final
     {
         logical.getLeft()->accept(*this);
-        m_CodeStream << " " << logical.getOperator().lexeme << " ";
+        m_Environment.get().getStream() << " " << logical.getOperator().lexeme << " ";
         logical.getRight()->accept(*this);
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_CodeStream << postfixIncDec.getVarName().lexeme << postfixIncDec.getOperator().lexeme;
+        m_Environment.get().getStream() << m_Environment.get().getName(postfixIncDec.getVarName()) << postfixIncDec.getOperator().lexeme;
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_CodeStream << prefixIncDec.getOperator().lexeme << prefixIncDec.getVarName().lexeme;
+        m_Environment.get().getStream() << m_Environment.get().getName(prefixIncDec.getOperator()) << prefixIncDec.getVarName().lexeme;
     }
 
     virtual void visit(const Expression::Variable &variable) final
     {
-        m_CodeStream << variable.getName().lexeme;
+        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName());
     }
 
     virtual void visit(const Expression::Unary &unary) final
     {
-        m_CodeStream << unary.getOperator().lexeme;
+        m_Environment.get().getStream() << unary.getOperator().lexeme;
         unary.getRight()->accept(*this);
     }
     
@@ -144,88 +194,108 @@ public:
     //---------------------------------------------------------------------------
     virtual void visit(const Statement::Break&) final
     {
-        m_CodeStream << "break;";
+        m_Environment.get().getStream() << "break;";
     }
 
     virtual void visit(const Statement::Compound &compound) final
     {
-        CodeGenerator::CodeStream::Scope b(m_CodeStream);
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
+        
+        CodeGenerator::CodeStream::Scope b(m_Environment.get().getStream());
         for(auto &s : compound.getStatements()) {
             s->accept(*this);
-            m_CodeStream << std::endl;
+            m_Environment.get().getStream() << std::endl;
         }
+        
+        // Restore old environment
+        m_Environment = oldEnvironment;
     }
 
     virtual void visit(const Statement::Continue&) final
     {
-        m_CodeStream << "continue;";
+        m_Environment.get().getStream() << "continue;";
     }
 
     virtual void visit(const Statement::Do &doStatement) final
     {
-        m_CodeStream << "do";
+        m_Environment.get().getStream() << "do";
         doStatement.getBody()->accept(*this);
-        m_CodeStream << "while(";
+        m_Environment.get().getStream() << "while(";
         doStatement.getCondition()->accept(*this);
-        m_CodeStream << ");" << std::endl;
+        m_Environment.get().getStream() << ");" << std::endl;
     }
 
     virtual void visit(const Statement::Expression &expression) final
     {
         expression.getExpression()->accept(*this);
-        m_CodeStream << ";";
+        m_Environment.get().getStream() << ";";
     }
 
     virtual void visit(const Statement::For &forStatement) final
     {
-        m_CodeStream << "for(";
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
+        
+        m_Environment.get().getStream() << "for(";
         if(forStatement.getInitialiser()) {
             forStatement.getInitialiser()->accept(*this);
         }
         else {
-            m_CodeStream << ";";
+            m_Environment.get().getStream() << ";";
         }
-        m_CodeStream << " ";
+        m_Environment.get().getStream() << " ";
 
         if(forStatement.getCondition()) {
             forStatement.getCondition()->accept(*this);
         }
 
-        m_CodeStream << "; ";
+        m_Environment.get().getStream() << "; ";
         if(forStatement.getIncrement()) {
             forStatement.getIncrement()->accept(*this);
         }
-        m_CodeStream << ")";
+        m_Environment.get().getStream() << ")";
         forStatement.getBody()->accept(*this);
+        
+        // Restore old environment
+        m_Environment = oldEnvironment;
     }
 
     virtual void visit(const Statement::If &ifStatement) final
     {
-        m_CodeStream << "if(";
+        m_Environment.get().getStream() << "if(";
         ifStatement.getCondition()->accept(*this);
-        m_CodeStream << ")" << std::endl;
+        m_Environment.get().getStream() << ")" << std::endl;
         ifStatement.getThenBranch()->accept(*this);
         if(ifStatement.getElseBranch()) {
-            m_CodeStream << "else" << std::endl;
+            m_Environment.get().getStream() << "else" << std::endl;
             ifStatement.getElseBranch()->accept(*this);
         }
     }
 
     virtual void visit(const Statement::Labelled &labelled) final
     {
-        m_CodeStream << labelled.getKeyword().lexeme << " ";
+        m_Environment.get().getStream() << labelled.getKeyword().lexeme << " ";
         if(labelled.getValue()) {
             labelled.getValue()->accept(*this);
         }
-        m_CodeStream << " : ";
+        m_Environment.get().getStream() << " : ";
         labelled.getBody()->accept(*this);
     }
 
     virtual void visit(const Statement::Switch &switchStatement) final
     {
-        m_CodeStream << "switch(";
+        m_Environment.get().getStream() << "switch(";
         switchStatement.getCondition()->accept(*this);
-        m_CodeStream << ")" << std::endl;
+        m_Environment.get().getStream() << ")" << std::endl;
         switchStatement.getBody()->accept(*this);
     }
 
@@ -234,29 +304,29 @@ public:
         printType(varDeclaration.getType());
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_CodeStream << std::get<0>(var).lexeme;
+            m_Environment.get().getStream() << m_Environment.get().define(std::get<0>(var));
             if(std::get<1>(var)) {
-                m_CodeStream << " = ";
+                m_Environment.get().getStream() << " = ";
                 std::get<1>(var)->accept(*this);
             }
-            m_CodeStream << ", ";
+            m_Environment.get().getStream() << ", ";
         }
-        m_CodeStream << ";";
+        m_Environment.get().getStream() << ";";
     }
 
     virtual void visit(const Statement::While &whileStatement) final
     {
-        m_CodeStream << "while(";
+        m_Environment.get().getStream() << "while(";
         whileStatement.getCondition()->accept(*this);
-        m_CodeStream << ")" << std::endl;
+        m_Environment.get().getStream() << ")" << std::endl;
         whileStatement.getBody()->accept(*this);
     }
 
     virtual void visit(const Statement::Print &print) final
     {
-        m_CodeStream << "print ";
+        m_Environment.get().getStream() << "print ";
         print.getExpression()->accept(*this);
-        m_CodeStream << ";";
+        m_Environment.get().getStream() << ";";
     }
 
 private:
@@ -295,13 +365,13 @@ private:
         }
         
         // Copy tokens backwards into string stream, seperating with spaces
-        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_CodeStream, " "));
+        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_Environment.get().getStream(), " "));
         
     }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    CodeGenerator::CodeStream &m_CodeStream;
+    std::reference_wrapper<EnvironmentInternal> m_Environment;
     const Type::TypeContext &m_Context;
 };
 }   // Anonymous namespace
@@ -309,8 +379,9 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(CodeGenerator::CodeStream &os, const Statement::StatementList &statements, 
+void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentBase &environment, 
                                             const Type::TypeContext &context)
 {
-    Visitor(os, statements, context);
+    EnvironmentInternal internalEnvironment(environment);
+    Visitor(statements, internalEnvironment, context);
 }

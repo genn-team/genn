@@ -1,5 +1,8 @@
 #include "code_generator/customUpdateGroupMerged.h"
 
+// Standard C++ includes
+#include <sstream>
+
 // GeNN code generator includes
 #include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
@@ -7,19 +10,214 @@
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/parser.h"
+#include "transpiler/prettyPrinter.h"
 #include "transpiler/scanner.h"
 #include "transpiler/typeChecker.h"
+#include "transpiler/transpilerUtils.h"
 
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
+class EnvironmentExternal : public PrettyPrinter::EnvironmentBase
+{
+public:
+    EnvironmentExternal(PrettyPrinter::EnvironmentBase &enclosing)
+    :   m_Context(enclosing)
+    {
+    }
+    
+    EnvironmentExternal(CodeStream &os)
+    :   m_Context(os)
+    {
+    }
+    
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string define(const Token&)
+    {
+        throw std::runtime_error("Cannot declare variable in external environment");
+    }
+    
+protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    auto &getContext() const{ return m_Context; }
+    
+    CodeStream &getContextStream() const
+    {
+        return std::visit(
+            Transpiler::Utils::Overload{
+                [](std::reference_wrapper<PrettyPrinter::EnvironmentBase> enclosing)->CodeStream& { return enclosing.get().getStream(); },
+                [](std::reference_wrapper<CodeStream> os)->CodeStream& { return os.get(); }},
+            getContext());
+    }
+    
+    std::string getContextName(const Token &name) const
+    {
+        return std::visit(
+            Transpiler::Utils::Overload{
+                [&name](std::reference_wrapper<PrettyPrinter::EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name); },
+                [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + std::string{name.lexeme} + "' undefined"); }},
+            getContext());
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::variant<std::reference_wrapper<PrettyPrinter::EnvironmentBase>, std::reference_wrapper<CodeStream>> m_Context;
+};
+
+//! Standard pretty printing environment simply allowing substitutions to be implemented
+class EnvironmentSubstitute : public EnvironmentExternal
+{
+public:
+    EnvironmentSubstitute(PrettyPrinter::EnvironmentBase &enclosing) : EnvironmentExternal(enclosing){}
+    EnvironmentSubstitute(CodeStream &os) : EnvironmentExternal(os){}
+    
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const Token &name) final
+    {
+        // If there isn't a substitution for this name, try and get name from context
+        auto sub = m_VarSubstitutions.find(std::string{name.lexeme});
+        if(sub == m_VarSubstitutions.end()) {
+            return getContextName(name);
+        }
+        // Otherwise, return substitution
+        else {
+            return sub->second;
+        }
+    }
+    
+    virtual CodeStream &getStream() final
+    {
+        return getContextStream();
+    }
+    
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void addSubstitution(const std::string &source, const std::string &destination)
+    {
+        if(!m_VarSubstitutions.emplace(source, destination).second) {
+            throw std::runtime_error("Redeclaration of substitution '" + source + "'");
+        }
+    }
+    
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::unordered_map<std::string, std::string> m_VarSubstitutions;
+};
+
+//! Pretty printing environment which caches used variables in local variables
+template<typename V>
+class EnvironmentLocalVarCache : public EnvironmentExternal
+{
+    typedef std::function<std::string(decltype(V::access))> GetIndexFn;    
+public:
+    EnvironmentLocalVarCache(const std::vector<V> &vars, PrettyPrinter::EnvironmentBase &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(enclosing), m_Vars(vars), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    {
+        // Add variables to map, initially with value set to value
+        std::transform(m_Vars.cbegin(), m_Vars.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+                       [](const auto &v){ return std::make_pair(v.name, false); });
+    }
+    
+    EnvironmentLocalVarCache(const std::vector<V> &vars, CodeStream &os, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(os), m_Vars(vars), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    {
+        // Add variables to map, initially with value set to value
+        std::transform(m_Vars.cbegin(), m_Vars.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+                       [](const auto &v){ return std::make_pair(v.name, false); });
+    }
+    
+    ~EnvironmentLocalVarCache()
+    {
+        // Copy variables which have been referenced into new vector
+        std::vector<V> referencedVars;
+        std::copy_if(m_Vars.cbegin(), m_Vars.cend(), std::back_inserter(referencedVars),
+                     [this](const auto &v){ return m_VariablesReferenced.at(v.name); });
+        
+        // Loop through referenced variables
+        for(const auto &v : referencedVars) {
+            if(v.access & VarAccessMode::READ_ONLY) {
+                getContextStream() << "const ";
+            }
+            getContextStream() << v.type->getName() << " " << m_LocalPrefix << v.name;
+            
+            // If this isn't a reduction, read value from memory
+            // **NOTE** by not initialising these variables for reductions, 
+            // compilers SHOULD emit a warning if user code doesn't set it to something
+            if(!(v.access & VarAccessModeAttribute::REDUCE)) {
+                getContextStream() << " = group->" << v.name << "[" << m_GetIndex(v.access) << "]";
+            }
+            getContextStream() << ";" << std::endl;
+        }
+        
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
+        
+        // Loop through referenced variables again
+        for(const auto &v : referencedVars) {
+            // If variables are read-write
+            if(v.access & VarAccessMode::READ_WRITE) {
+                getContextStream() << "group->" << v.name << "[" << m_GetIndex(v.access) << "]";
+                getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const Token &name) final
+    {
+        // If variable with this name isn't found, try and get name from context
+        auto var = m_VariablesReferenced.find(std::string{name.lexeme});
+        if(var == m_VariablesReferenced.end()) {
+            return getContextName(name);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second = true;
+            
+            // Add local prefix to variable name
+            return m_LocalPrefix + std::string{name.lexeme};
+        }
+    }
+    
+    virtual CodeStream &getStream() final
+    {
+        return m_Contents;
+    }
+    
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::vector<V> &m_Vars;
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+    const std::string m_LocalPrefix;
+    const GetIndexFn m_GetIndex;
+    std::unordered_map<std::string, bool> m_VariablesReferenced;
+};
+
 template<typename C, typename R>
 void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const std::string &index,
                      R getVarRefIndex)
@@ -55,7 +253,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const
         }
        
         os << v.type->getName() << " l" << v.name;
-        
+
         // If this isn't a reduction, read value from memory
         // **NOTE** by not initialising these variables for reductions, 
         // compilers SHOULD emit a warning if user code doesn't set it to something
@@ -154,11 +352,11 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
      typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
      // Scan, parse and type-check update code
-     Transpiler::ErrorHandler errorHandler;
+     ErrorHandler errorHandler;
      const std::string code = upgradeCodeString(cm->getUpdateCode());
-     const auto tokens = Transpiler::Scanner::scanSource(code, errorHandler);
-     m_UpdateStatements = Transpiler::Parser::parseBlockItemList(tokens, errorHandler);
-     Transpiler::TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
+     const auto tokens = Scanner::scanSource(code, errorHandler);
+     m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
+     TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -191,13 +389,32 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 //----------------------------------------------------------------------------
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
-    genCustomUpdate(os, popSubs, *this, "id",
+    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    
+    EnvironmentSubstitute subs(os);
+    subs.addSubstitution("id", popSubs["id"]);
+    
+    EnvironmentLocalVarCache varSubs(cm->getVars(), subs, 
+                                     [this](VarAccess a)
+                                     {
+                                         return getVarIndex(getVarAccessDuplication(a), "id");
+                                     });
+    
+    /*EnvironmentLocalVarCache varRefSubs(cm->getVarRefs(), subs, 
+                                        [this](VarAccessMode a)
+                                        {
+                                            return getVarRefIndex(a, "id");
+                                        });*/
+    
+    /*genCustomUpdate(os, popSubs, *this, "id",
                     [this](const auto &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
                                               getVarAccessDuplication(varRef.getVar().access),
                                               index);
-                    });
+                    });*/
+    // Pretty print code
+    PrettyPrinter::print(m_UpdateStatements, varSubs, getTypeContext());
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const

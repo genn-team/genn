@@ -24,7 +24,7 @@ namespace Type = GeNN::Type;
 //---------------------------------------------------------------------------
 namespace
 {
- bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
+bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
 {
     // If both are pointers, recurse through value type
     auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
@@ -41,7 +41,7 @@ namespace
         return false;
     }
 }
-
+//---------------------------------------------------------------------------
 bool checkForConstRemoval(const Type::Base *rightType, const Type::Base *leftType) 
 {
     // If const is being removed
@@ -65,7 +65,6 @@ bool checkForConstRemoval(const Type::Base *rightType, const Type::Base *leftTyp
     }
 
 }
-
 
 //---------------------------------------------------------------------------
 // EnvironmentInternal
@@ -143,29 +142,32 @@ private:
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
-    :   m_Environment(nullptr), m_Type(nullptr), m_Context(context), m_ErrorHandler(errorHandler), 
-        m_InLoop(false), m_InSwitch(false)
+    Visitor(const Statement::StatementList &statements, const Type::TypeContext &context, 
+            EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
+    :   Visitor(context, environment, errorHandler)
     {
-    }
-
-    //---------------------------------------------------------------------------
-    // Public API
-    //---------------------------------------------------------------------------
-    // **THINK** make constructors?
-    void typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment)
-    {
-        m_Environment = &environment;
         for (auto &s : statements) {
             s.get()->accept(*this);
         }
     }
-
-    const Type::Base *typeCheck(const Expression::Base *expression, EnvironmentInternal &environment)
+    
+    Visitor(const Expression::Base *expression, const Type::TypeContext &context, 
+            EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
+    :   Visitor(context, environment, errorHandler)
     {
-        
-        m_Environment = &environment;
-        return evaluateType(expression);
+        expression->accept(*this);
+    }
+    
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    const Type::Base *getType() const{ return m_Type; }
+    
+private:
+    Visitor(const Type::TypeContext &context, EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
+    :   m_Environment(environment), m_Type(nullptr), m_Context(context), m_ErrorHandler(errorHandler), 
+        m_InLoop(false), m_InSwitch(false)
+    {
     }
 
     //---------------------------------------------------------------------------
@@ -174,7 +176,7 @@ public:
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
         // Get pointer type
-        auto arrayType = m_Environment->getType(arraySubscript.getPointerName(), m_ErrorHandler);
+        auto arrayType = m_Environment.get().getType(arraySubscript.getPointerName(), m_ErrorHandler);
         auto pointerType = dynamic_cast<const Type::Pointer*>(arrayType);
 
         // If pointer is indeed a pointer
@@ -201,8 +203,8 @@ public:
     virtual void visit(const Expression::Assignment &assignment) final
     {
         const auto rhsType = evaluateType(assignment.getValue());
-        m_Type = m_Environment->assign(assignment.getVarName(), assignment.getOperator().type, rhsType, 
-                                       m_Context, m_ErrorHandler);
+        m_Type = m_Environment.get().assign(assignment.getVarName(), assignment.getOperator().type, rhsType, 
+                                            m_Context, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -415,19 +417,19 @@ public:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_Type = m_Environment->incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
-                                       m_Context, m_ErrorHandler);
+        m_Type = m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
+                                            m_Context, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_Type = m_Environment->incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
-                                       m_Context, m_ErrorHandler);
+        m_Type = m_Environment.get().incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
+                                            m_Context, m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Variable &variable)
     {
-        m_Type = m_Environment->getType(variable.getName(), m_ErrorHandler);
+        m_Type = m_Environment.get().getType(variable.getName(), m_ErrorHandler);
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -497,8 +499,19 @@ public:
 
     virtual void visit(const Statement::Compound &compound) final
     {
-        EnvironmentInternal environment(*m_Environment);
-        typeCheck(compound.getStatements(), environment);
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
+        
+        for (auto &s : compound.getStatements()) {
+            s.get()->accept(*this);
+        }
+        
+        // Restore old environment
+        m_Environment = oldEnvironment;
     }
 
     virtual void visit(const Statement::Continue &continueStatement) final
@@ -523,10 +536,12 @@ public:
 
     virtual void visit(const Statement::For &forStatement) final
     {
-        // Create new environment for loop initialisation
-        EnvironmentInternal *previous = m_Environment;
-        EnvironmentInternal environment(*m_Environment);
-        m_Environment = &environment;
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
 
         // Interpret initialiser if statement present
         if (forStatement.getInitialiser()) {
@@ -545,8 +560,8 @@ public:
         forStatement.getBody()->accept(*this);
         m_InLoop = false;
 
-        // Restore environment
-        m_Environment = previous;
+        // Restore old environment
+        m_Environment = oldEnvironment;
     }
 
     virtual void visit(const Statement::If &ifStatement) final
@@ -595,7 +610,7 @@ public:
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_Environment->define(std::get<0>(var), varDeclaration.getType(), m_ErrorHandler);
+            m_Environment.get().define(std::get<0>(var), varDeclaration.getType(), m_ErrorHandler);
 
             // If variable has an initialiser expression
             if (std::get<1>(var)) {
@@ -603,8 +618,8 @@ public:
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
 
                 // Assign initialiser expression to variable
-                m_Environment->assign(std::get<0>(var), Token::Type::EQUAL, initialiserType, 
-                                      m_Context, m_ErrorHandler, true);
+                m_Environment.get().assign(std::get<0>(var), Token::Type::EQUAL, initialiserType, 
+                                           m_Context, m_ErrorHandler, true);
             }
         }
     }
@@ -635,7 +650,7 @@ private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    EnvironmentInternal *m_Environment;
+    std::reference_wrapper<EnvironmentInternal> m_Environment;
     const Type::Base *m_Type;
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
@@ -749,15 +764,14 @@ const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type,
 void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
                                               const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
-    Visitor visitor(context, errorHandler);
     EnvironmentInternal internalEnvironment(environment);
-    visitor.typeCheck(statements, internalEnvironment);
+    Visitor(statements, context, internalEnvironment, errorHandler);
 }
 //---------------------------------------------------------------------------
 const Type::Base *GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
                                                            const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
-    Visitor visitor(context, errorHandler);
     EnvironmentInternal internalEnvironment(environment);
-    return visitor.typeCheck(expression, internalEnvironment);
+    Visitor visitor(expression, context, internalEnvironment, errorHandler);
+    return visitor.getType();
 }
