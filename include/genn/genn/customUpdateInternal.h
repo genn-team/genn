@@ -36,6 +36,29 @@ public:
     using CustomUpdate::isNeuronReduction;
 };
 
+//----------------------------------------------------------------------------
+// CustomUpdateVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarRefAdapter
+{
+public:
+    CustomUpdateVarRefAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateInternal &m_CU;
+};
+
 //------------------------------------------------------------------------
 // CustomUpdateInternal
 //------------------------------------------------------------------------
@@ -66,5 +89,28 @@ public:
     using CustomUpdateWU::getSynapseGroup;
     using CustomUpdateWU::isBatchReduction;
     using CustomUpdateWU::isTransposeOperation;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateWUVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateWUVarRefAdapter
+{
+public:
+    CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVarRefs(); }
+
+    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateWUInternal &m_CU;
 };
 }   // namespace GeNN
