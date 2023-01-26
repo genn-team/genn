@@ -43,11 +43,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CS.getVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -68,9 +68,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

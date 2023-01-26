@@ -53,11 +53,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -78,11 +78,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -103,11 +103,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -129,9 +129,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

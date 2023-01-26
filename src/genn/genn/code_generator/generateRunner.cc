@@ -412,11 +412,11 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
-        const auto *varInitSnippet = varAdaptor.getVarInitialisers().at(var.name).getSnippet();
+    for(const auto &var : varAdaptor.getDefs()) {
+        const auto *varInitSnippet = varAdaptor.getInitialisers().at(var.name).getSnippet();
         const bool autoInitialized = !varInitSnippet->getCode().empty();
         genVariable(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                    runnerPushFunc, runnerPullFunc, var.type, var.name + group.getName(), varAdaptor.getVarLocation(var.name),
+                    runnerPushFunc, runnerPullFunc, var.type, var.name + group.getName(), varAdaptor.getLoc(var.name),
                     autoInitialized, getSizeFn(group, var), mem, statePushPullFunctions);
 
         // Loop through EGPs required to initialize variable
@@ -437,16 +437,16 @@ void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &b
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
+    for(const auto &var : varAdaptor.getDefs()) {
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                         var.type, modelMerged.getTypeContext(), var.name + varAdaptor.getFusedVarSuffix(), varAdaptor.getVarLocation(var.name),
+                         var.type, modelMerged.getTypeContext(), var.name + varAdaptor.getFusedSuffix(), varAdaptor.getLoc(var.name),
                          getSizeFn(group, var), mem);
 
         // Loop through EGPs required to initialize variable
-        for(const auto &egp : varAdaptor.getVarInitialisers().at(var.name).getSnippet()->getExtraGlobalParams()) {
+        for(const auto &egp : varAdaptor.getInitialisers().at(var.name).getSnippet()->getExtraGlobalParams()) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                egp.type, egp.name + var.name + varAdaptor.getFusedVarSuffix(),
+                                egp.type, egp.name + var.name + varAdaptor.getFusedSuffix(),
                                 true, VarLocation::HOST_DEVICE);
         }
     }
@@ -459,15 +459,15 @@ void genRunnerFusedVarPushPull(const BackendBase &backend, CodeStream &definitio
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
-        const bool autoInitialized = !varAdaptor.getVarInitialisers().at(var.name).getSnippet()->getCode().empty();
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getVarLocation(var.name),
+    for(const auto &var : varAdaptor.getDefs()) {
+        const bool autoInitialized = !varAdaptor.getInitialisers().at(var.name).getSnippet()->getCode().empty();
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getLoc(var.name),
                             backend.getPreferences().automaticCopy, var.name + group.getName(), groupStatePushPullFunctions,
                             [&]()
                             {
                                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
                                                             var.type, var.name + group.getName(), 
-                                                            varAdaptor.getVarLocation(var.name), autoInitialized, getSizeFn(group, var));
+                                                            varAdaptor.getLoc(var.name), autoInitialized, getSizeFn(group, var));
                             });
     }
 }
@@ -479,11 +479,11 @@ void genRunnerEGPs(const ModelSpecMerged &modelMerged, const BackendBase &backen
 {
     // Loop through EGPs
     const E egpAdaptor(group);
-    for(const auto &egp: egpAdaptor.getEGPs()) {
+    for(const auto &egp: egpAdaptor.getDefs()) {
         genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                             runnerVarDecl, runnerExtraGlobalParamFunc,
                             egp.type, egp.name + group.getName(),
-                            true, egpAdaptor.getEGPLocation(egp.name));
+                            true, egpAdaptor.getLoc(egp.name));
     }
 }
 //-------------------------------------------------------------------------

@@ -354,14 +354,14 @@ public:
     {
         // Loop through weight update model variables
         const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getVars()) {
+        for(const auto &v : archetypeAdaptor.getDefs()) {
             // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getVarInitialisers().at(v.name).getParams()) {
+            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
                     addScalarField(p.first + v.name,
                                    [p, v](const G &g, size_t)
                                    {
-                                       return  A(g).getVarInitialisers().at(v.name).getParams().at(p.first);
+                                       return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
                                    });
                 }
             }
@@ -373,14 +373,14 @@ public:
     {
         // Loop through weight update model variables
         const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getVars()) {
+        for(const auto &v : archetypeAdaptor.getDefs()) {
             // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getVarInitialisers().at(v.name).getDerivedParams()) {
+            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
                     addScalarField(p.first + v.name,
                                    [p, v](const G &g, size_t)
                                    {
-                                       return A(g).getVarInitialisers().at(v.name).getDerivedParams().at(p.first);
+                                       return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
                                    });
                 }
             }
@@ -417,7 +417,7 @@ public:
     void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getParams()) {
@@ -425,7 +425,7 @@ public:
                 if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getVarInitialisers().at(varInit.first).getParams();
+                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(p.first), hash);
@@ -439,7 +439,7 @@ public:
     void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = A(getArchetype()).getVarInitialisers();
+        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
@@ -447,7 +447,7 @@ public:
                 if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getVarInitialisers().at(varInit.first).getDerivedParams();
+                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(d.first), hash);
@@ -889,7 +889,7 @@ protected:
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getInitialisers();
         const auto &archetypeParams = archetypeVarInit.at(varName).getParams();
         for(const auto &p : archetypeParams) {
             // If parameter is referenced
@@ -898,7 +898,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = A(*child).getVarInitialisers();
+                    const auto &varInit = A(*child).getInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getParams().at(p.first), hash);
@@ -913,7 +913,7 @@ protected:
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getVarInitialisers();
+        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getInitialisers();
         const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
         for(const auto &d : archetypeDerivedParams) {
             // If parameter is referenced
@@ -922,7 +922,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = A(*child).getVarInitialisers();
+                    const auto &varInit = A(*child).getInitialisers();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getDerivedParams().at(d.first), hash);

@@ -60,11 +60,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
     
-    Models::Base::VarVec getVars() const{ return m_NG.getNeuronModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_NG.getNeuronModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_NG.getVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -85,9 +85,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_NG.getNeuronModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_NG.getNeuronModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

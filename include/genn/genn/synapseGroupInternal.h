@@ -89,13 +89,13 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getPSModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getPSModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+    const std::string &getFusedSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -116,11 +116,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
     
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -141,13 +141,13 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPreVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+    const std::string &getFusedSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -168,13 +168,13 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPostVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+    const std::string &getFusedSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -196,9 +196,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
     
-    Snippet::Base::EGPVec getEGPs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

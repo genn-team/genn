@@ -179,11 +179,11 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -204,11 +204,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
 
-    VarLocation getEGPLocation(size_t) const{ return VarLocation::HOST_DEVICE; }
-    
-    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

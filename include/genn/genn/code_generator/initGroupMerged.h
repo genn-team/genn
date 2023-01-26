@@ -255,9 +255,9 @@ protected:
     {
         // Loop through variables
         A archetypeAdaptor(this->getArchetype());
-        for (const auto &var : archetypeAdaptor.getVars()) {
+        for (const auto &var : archetypeAdaptor.getDefs()) {
             // If we're not initialising or if there is initialization code for this variable
-            const auto &varInit = archetypeAdaptor.getVarInitialisers().at(var.name);
+            const auto &varInit = archetypeAdaptor.getInitialisers().at(var.name);
             if (!varInit.getSnippet()->getCode().empty()) {
                 this->addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
@@ -284,7 +284,7 @@ protected:
                                                 [&varName](const G &cg)
                                                 { 
                                                     A archetypeAdaptor(cg);
-                                                    return archetypeAdaptor.getVarInitialisers().at(varName).getParams(); 
+                                                    return archetypeAdaptor.getInitialisers().at(varName).getParams(); 
                                                 }));
     }
 
@@ -296,7 +296,7 @@ protected:
                                                 [&varName](const G &cg) 
                                                 { 
                                                     A archetypeAdaptor(cg);
-                                                    return archetypeAdaptor.getVarInitialisers().at(varName).getDerivedParams();
+                                                    return archetypeAdaptor.getInitialisers().at(varName).getDerivedParams();
                                                 }));
     }
 
@@ -321,7 +321,7 @@ private:
     bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
     {
         A archetypeAdaptor(this->getArchetype());
-        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varName).getSnippet();
+        const auto *varInitSnippet = archetypeAdaptor.getInitialisers().at(varName).getSnippet();
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 
@@ -329,7 +329,7 @@ private:
     bool isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const
     {
         A archetypeAdaptor(this->getArchetype());
-        const auto *varInitSnippet = archetypeAdaptor.getVarInitialisers().at(varName).getSnippet();
+        const auto *varInitSnippet = archetypeAdaptor.getInitialisers().at(varName).getSnippet();
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 };
