@@ -244,7 +244,7 @@ private:
                 // Sum padded sizes of each group within merged group
                 const size_t paddedSize = std::accumulate(
                     gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+                    [getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
                     {
                         return (acc + getPaddedSizeFunc(g.get()));
                     });
