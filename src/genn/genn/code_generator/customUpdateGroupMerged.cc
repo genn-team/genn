@@ -403,9 +403,12 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 //----------------------------------------------------------------------------
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
 {
+    // Build initial environment with ID etc
+    // **TODO** this should happen in backend
     EnvironmentSubstitute subs(os);
     subs.addSubstitution("id", popSubs["id"]);
     
+    // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
         getArchetype(), subs, 
         [this](const Models::VarInit&, VarAccess a)
@@ -413,22 +416,17 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
             return getVarIndex(getVarAccessDuplication(a), "id");
         });
     
-    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(getArchetype(), subs, 
-                                        [this](const Models::VarReference &v, VarAccessMode)
-                                        {
-                                            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
-                                                                  getVarAccessDuplication(v.getVar().access), 
-                                                                  "id");
-                                        });
-    
-    /*genCustomUpdate(os, popSubs, *this, "id",
-                    [this](const auto &varRef, const std::string &index)
-                    {
-                        return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                              getVarAccessDuplication(varRef.getVar().access),
-                                              index);
-                    });*/
-    // Pretty print code
+    // Create an environment which caches variable references in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
+        getArchetype(), subs, 
+        [this](const Models::VarReference &v, VarAccessMode)
+        {
+            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
+                                    getVarAccessDuplication(v.getVar().access), 
+                                    "id");
+        });
+
+    // Pretty print previously parsed update statements
     PrettyPrinter::print(m_UpdateStatements, varRefSubs, getTypeContext());
 }
 //----------------------------------------------------------------------------
