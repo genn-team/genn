@@ -616,9 +616,9 @@ Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
     //      "if" "(" expression ")" statement "else" statement
     //      "switch" "(" expression ")" compound-statement
     const auto keyword = parserState.previous();
-    parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after '" + std::string{keyword.lexeme} + "'");
+    parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after '" + keyword.lexeme + "'");
     auto condition = parseExpression(parserState);
-    parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after '" + std::string{keyword.lexeme} + "'");
+    parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after '" + keyword.lexeme + "'");
 
     // If this is an if statement
     if(keyword.type == Token::Type::IF) {

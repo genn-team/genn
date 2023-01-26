@@ -67,7 +67,7 @@ protected:
         return std::visit(
             Transpiler::Utils::Overload{
                 [&name](std::reference_wrapper<PrettyPrinter::EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name); },
-                [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + std::string{name.lexeme} + "' undefined"); }},
+                [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name.lexeme + "' undefined"); }},
             getContext());
     }
 
@@ -91,7 +91,7 @@ public:
     virtual std::string getName(const Token &name) final
     {
         // If there isn't a substitution for this name, try and get name from context
-        auto sub = m_VarSubstitutions.find(std::string{name.lexeme});
+        auto sub = m_VarSubstitutions.find(name.lexeme);
         if(sub == m_VarSubstitutions.end()) {
             return getContextName(name);
         }
@@ -201,7 +201,7 @@ public:
     virtual std::string getName(const Token &name) final
     {
         // If variable with this name isn't found, try and get name from context
-        auto var = m_VariablesReferenced.find(std::string{name.lexeme});
+        auto var = m_VariablesReferenced.find(name.lexeme);
         if(var == m_VariablesReferenced.end()) {
             return getContextName(name);
         }
@@ -211,7 +211,7 @@ public:
             var->second = true;
             
             // Add local prefix to variable name
-            return m_LocalPrefix + std::string{name.lexeme};
+            return m_LocalPrefix + name.lexeme;
         }
     }
     

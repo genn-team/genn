@@ -43,7 +43,7 @@ public:
                                      bool initializer) final
     {
         // If type isn't found
-        auto existingType = m_Types.find(std::string{name.lexeme});
+        auto existingType = m_Types.find(name.lexeme);
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
                 return m_Enclosing->assign(name, op, assignedType, 
@@ -66,7 +66,7 @@ public:
     virtual const Type::Base *incDec(const Token &name, Token::Type op, 
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final
     {
-        auto existingType = m_Types.find(std::string{name.lexeme});
+        auto existingType = m_Types.find(name.lexeme);
         if(existingType == m_Types.end()) {
             if(m_Enclosing) {
                 return m_Enclosing->incDec(name, op, context, errorHandler);
@@ -86,7 +86,7 @@ public:
 
     virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) final
     {
-        auto type = m_Types.find(std::string{name.lexeme});
+        auto type = m_Types.find(name.lexeme);
         if(type == m_Types.end()) {
             if(m_Enclosing) {
                 return m_Enclosing->getType(name, errorHandler);

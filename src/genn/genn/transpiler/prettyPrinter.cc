@@ -43,7 +43,7 @@ public:
             throw std::runtime_error("Redeclaration of variable");
         }
         
-        return "_" + std::string{name.lexeme};
+        return "_" + name.lexeme;
     }
     
     virtual std::string getName(const Token &name) final
@@ -52,7 +52,7 @@ public:
             return m_Enclosing.getName(name);
         }
         else {
-            return "_" + std::string{name.lexeme};
+            return "_" + name.lexeme;
         }
     }
     
@@ -66,7 +66,7 @@ private:
     // Members
     //---------------------------------------------------------------------------
     EnvironmentBase &m_Enclosing;
-    std::unordered_set<std::string_view> m_LocalVariables;
+    std::unordered_set<std::string> m_LocalVariables;
 };
 
 //---------------------------------------------------------------------------

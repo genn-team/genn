@@ -19,7 +19,7 @@ void ErrorHandler::error(const Token &token, std::string_view message)
         report(token.line, " at end", message);
     }
     else {
-        report(token.line, " at '" + std::string{token.lexeme} + "'", message);
+        report(token.line, " at '" + token.lexeme + "'", message);
     }
 }
 //----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ void SingleLineErrorHandler::error(const Token &token, std::string_view message)
         report(" at end", message);
     }
     else {
-        report(" at '" + std::string{token.lexeme} + "'", message);
+        report(" at '" + token.lexeme + "'", message);
     }
 }
 //----------------------------------------------------------------------------

@@ -1,11 +1,8 @@
 #pragma once
 
 // Standard C++ includes
+#include <string>
 #include <string_view>
-#include <variant>
-
-// Standard C includes
-#include <cstdint>
 
 // **YUCK** on Windows undefine TRUE and FALSE macros
 #ifdef _WIN32
@@ -58,7 +55,7 @@ struct Token
     }
 
     const Type type;
-    const std::string_view lexeme;
+    const std::string lexeme;
     const size_t line;
 };
 }   // namespace GeNN::Transpiler

@@ -37,7 +37,7 @@ public:
             report(token.line, " at end", message);
         }
         else {
-            report(token.line, " at '" + std::string{token.lexeme} + "'", message);
+            report(token.line, " at '" + token.lexeme + "'", message);
         }
     }
 
@@ -131,7 +131,7 @@ private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    std::unordered_map<std::string_view, const Type::Base*> m_Types;
+    std::unordered_map<std::string, const Type::Base*> m_Types;
 };
 
 template<typename T>
