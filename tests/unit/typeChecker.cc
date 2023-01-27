@@ -254,6 +254,74 @@ TEST(TypeChecker, Assignment)
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Binary)
 {
+    // Pointer difference
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray1");
+        typeEnvironment.definePointer<Type::Int32>("intArray2");
+        const auto *type = typeCheckExpression("intArray1 - intArray2", typeEnvironment);
+        EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
+    }
+
+    // **TODO** different pointer types
+
+
+    // Pointer + integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray");
+        typeEnvironment.define<Type::Int32>("offset");
+        const auto *type = typeCheckExpression("intArray + offset", typeEnvironment);
+        const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
+        EXPECT_TRUE(pointerType);
+        EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());       
+    }
+
+    // **TODO** constness and 
+    
+    // Pointer + non-integer
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray");
+        typeEnvironment.define<Type::Float>("offset");
+        typeCheckExpression("intArray + offset", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Pointer + pointer
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray1");
+        typeEnvironment.definePointer<Type::Int32>("intArray2");
+        typeCheckExpression("intArray1 + intArray2", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+
+    // Pointer - integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray");
+        typeEnvironment.define<Type::Int32>("offset");
+        const auto *type = typeCheckExpression("intArray - offset", typeEnvironment);
+        const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
+        EXPECT_TRUE(pointerType);
+        EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());       
+    }
+
+    // Integer + pointer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray");
+        typeEnvironment.define<Type::Int32>("offset");
+        const auto *type = typeCheckExpression("offset + intArray", typeEnvironment);
+        const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
+        EXPECT_TRUE(pointerType);
+        EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());       
+    }
+
+    /*integer only (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
+                    || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
+                    || opType == Token::Type::AMPERSAND || opType == Token::Type::PIPE)*/
+
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Call)
@@ -408,8 +476,6 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto *type = typeCheckExpression("1.0f", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
 
     // Scalar with single-precision
@@ -418,8 +484,6 @@ TEST(TypeChecker, Literal)
         const Type::TypeContext typeContext{{"scalar", Type::Float::getInstance()}};
         const auto *type = typeCheckExpression("1.0", typeEnvironment);
         EXPECT_EQ(type->getResolvedName(typeContext), Type::Float::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
     
     // Scalar with double-precision
@@ -428,8 +492,6 @@ TEST(TypeChecker, Literal)
         const Type::TypeContext typeContext{{"scalar", Type::Double::getInstance()}};
         const auto *type = typeCheckExpression("1.0", typeEnvironment, typeContext);
         EXPECT_EQ(type->getResolvedName(typeContext), Type::Double::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
     
     // Double
@@ -437,8 +499,6 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto *type = typeCheckExpression("1.0d", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Double::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
 
     // Integer
@@ -446,8 +506,6 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto *type = typeCheckExpression("100", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
 
     // Unsigned integer
@@ -455,8 +513,6 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto *type = typeCheckExpression("100U", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Uint32::getInstance()->getName());
-        //EXPECT_TRUE(type.constValue);
-        //EXPECT_FALSE(type.constPointer);
     }
 }
 //--------------------------------------------------------------------------
