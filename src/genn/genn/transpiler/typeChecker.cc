@@ -229,8 +229,7 @@ private:
                 setExpressionType<Type::Int32>(&binary);
             }
             // Otherwise, if we're adding to or subtracting from pointers
-            else if (leftPointerType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS))       // P + n or P - n
-            {
+            else if (leftPointerType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS)) {    // P + n or P - n
                 // Check that numeric operand is integer
                 if (!rightNumericType->isIntegral(m_Context)) {
                     m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
@@ -241,8 +240,7 @@ private:
                 setExpressionType(&binary, leftType);
             }
             // Otherwise, if we're adding a number to a pointer
-            else if (leftNumericType && rightPointerType && opType == Token::Type::PLUS)  // n + P
-            {
+            else if (leftNumericType && rightPointerType && opType == Token::Type::PLUS) {  // n + P
                 // Check that numeric operand is integer
                 if (!leftNumericType->isIntegral(m_Context)) {
                     m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
