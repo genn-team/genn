@@ -294,7 +294,7 @@ private:
     {
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
-        auto calleeFunctionType = dynamic_cast<const Type::ForeignFunctionBase *>(calleeType);
+        auto calleeFunctionType = dynamic_cast<const Type::FunctionBase *>(calleeType);
 
         // If callee's a function
         if (calleeFunctionType) {
