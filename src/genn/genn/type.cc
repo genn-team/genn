@@ -17,7 +17,7 @@ using namespace GeNN;
 // Anonymous namespace
 namespace
 {
-const std::map<std::set<std::string_view>, const Type::NumericBase*> numericTypeSpecifiers{
+const std::map<std::set<std::string>, const Type::NumericBase*> numericTypeSpecifiers{
     {{"char"}, Type::Int8::getInstance()},
     {{"int8_t"}, Type::Int8::getInstance()},
     
@@ -47,7 +47,7 @@ const std::map<std::set<std::string_view>, const Type::NumericBase*> numericType
     {{"double"}, Type::Double::getInstance()},
 };
 //----------------------------------------------------------------------------
-const std::set<std::string_view> scalarTypeSpecifier{{"scalar"}};
+const std::set<std::string> scalarTypeSpecifier{{"scalar"}};
 //----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
 const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> unsignedType{
@@ -227,7 +227,7 @@ const Type::NumericBase *NumericTypedef::getResolvedType(const TypeContext &cont
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-const NumericBase *parseNumeric(std::string_view typeString)
+const NumericBase *parseNumeric(const std::string &typeString)
 {
     using namespace Transpiler;
 
@@ -250,7 +250,7 @@ const NumericBase *parseNumeric(std::string_view typeString)
     return type;
 }
 //----------------------------------------------------------------------------
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers)
+const NumericBase *getNumericType(const std::set<std::string> &typeSpecifiers)
 {
     // If type matches scalar type specifiers
     if(typeSpecifiers == scalarTypeSpecifier) {

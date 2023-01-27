@@ -57,7 +57,7 @@ public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    void define(std::string_view name, const Type::Base *type)
+    void define(const std::string &name, const Type::Base *type)
     {
         if(!m_Types.try_emplace(name, type).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
@@ -65,13 +65,13 @@ public:
     }
     
     template<typename T>
-    void define(std::string_view name, Type::Qualifier qualifiers = Type::Qualifier{0})
+    void define(const std::string &name, Type::Qualifier qualifiers = Type::Qualifier{0})
     {
         define(name, T::getInstance()->getQualifiedType(qualifiers));
     }
     
     template<typename T>
-    void definePointer(std::string_view name, Type::Qualifier valueQualifiers = Type::Qualifier{0}, 
+    void definePointer(const std::string &name, Type::Qualifier valueQualifiers = Type::Qualifier{0}, 
                        Type::Qualifier pointerQualifiers = Type::Qualifier{0})
     {
         define(name, T::getInstance()->getQualifiedType(valueQualifiers)->getPointerType(pointerQualifiers));

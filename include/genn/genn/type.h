@@ -489,10 +489,10 @@ DECLARE_THREE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FMA);
 {"remquo", "remquof"},  // pointer arguments
 */
 //! Parse a numeric type
-const NumericBase *parseNumeric(std::string_view typeString);
+const NumericBase *parseNumeric(const std::string &typeString);
 
 //! Look up numeric type based on set of type specifiers
-const NumericBase *getNumericType(const std::set<std::string_view> &typeSpecifiers);
+const NumericBase *getNumericType(const std::set<std::string> &typeSpecifiers);
 
 //! Apply C type promotion rules to numeric type
 const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &context);

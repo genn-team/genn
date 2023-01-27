@@ -187,9 +187,9 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
 {
     using namespace GeNN::Type;
     
-    std::set<std::string_view> typeSpecifiers;
-    std::set<std::string_view> typeQualifiers;
-    std::vector<std::set<std::string_view>> pointerTypeQualifiers;
+    std::set<std::string> typeSpecifiers;
+    std::set<std::string> typeQualifiers;
+    std::vector<std::set<std::string>> pointerTypeQualifiers;
     
     do {
         // If token is a star, add new set of pointer type qualifiers
@@ -199,7 +199,7 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
         // Otherwise, if type is a qualifier
         else if(parserState.previous().type == Token::Type::TYPE_QUALIFIER) {
             // Add qualifier lexeme to correct list
-            std::set<std::string_view> &qualifiers = pointerTypeQualifiers.empty() ? typeQualifiers : pointerTypeQualifiers.back();
+            std::set<std::string> &qualifiers = pointerTypeQualifiers.empty() ? typeQualifiers : pointerTypeQualifiers.back();
             if(!qualifiers.insert(parserState.previous().lexeme).second) {
                 parserState.error(parserState.previous(), "duplicate type qualifier");
             }
@@ -874,7 +874,7 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
 const GeNN::Type::NumericBase *parseNumericType(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, errorHandler);
-    std::set<std::string_view> typeSpecifiers;
+    std::set<std::string> typeSpecifiers;
     while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
         if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
             parserState.error(parserState.previous(), "duplicate type specifier");
