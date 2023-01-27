@@ -31,6 +31,8 @@ public:
     }
 };
 
+typedef std::unordered_map<const Expression::Base*, const Type::Base*> ResolvedTypeMap;
+
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------

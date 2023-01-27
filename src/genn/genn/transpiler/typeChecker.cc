@@ -143,8 +143,8 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
     Visitor(const Statement::StatementList &statements, const Type::TypeContext &context, 
-            EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
-    :   Visitor(context, environment, errorHandler)
+            EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
+    :   Visitor(context, environment, resolvedTypes, errorHandler)
     {
         for (auto &s : statements) {
             s.get()->accept(*this);
@@ -152,21 +152,17 @@ public:
     }
     
     Visitor(const Expression::Base *expression, const Type::TypeContext &context, 
-            EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
-    :   Visitor(context, environment, errorHandler)
+            EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
+    :   Visitor(context, environment, resolvedTypes, errorHandler)
     {
         expression->accept(*this);
     }
     
-    //---------------------------------------------------------------------------
-    // Public API
-    //---------------------------------------------------------------------------
-    const Type::Base *getType() const{ return m_Type; }
-    
 private:
-    Visitor(const Type::TypeContext &context, EnvironmentInternal &environment, ErrorHandlerBase &errorHandler)
-    :   m_Environment(environment), m_Type(nullptr), m_Context(context), m_ErrorHandler(errorHandler), 
-        m_InLoop(false), m_InSwitch(false)
+    Visitor(const Type::TypeContext &context, EnvironmentInternal &environment, 
+            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
+    :   m_Environment(environment), m_Context(context), m_ErrorHandler(errorHandler), 
+        m_ResolvedTypes(resolvedTypes), m_InLoop(false), m_InSwitch(false)
     {
     }
 
@@ -191,7 +187,7 @@ private:
             }
 
             // Use value type of array
-            m_Type = pointerType->getValueType();
+            setExpressionType(&arraySubscript, pointerType->getValueType());
         }
         // Otherwise
         else {
@@ -203,8 +199,9 @@ private:
     virtual void visit(const Expression::Assignment &assignment) final
     {
         const auto rhsType = evaluateType(assignment.getValue());
-        m_Type = m_Environment.get().assign(assignment.getVarName(), assignment.getOperator().type, rhsType, 
-                                            m_Context, m_ErrorHandler);
+        setExpressionType(&assignment,
+                          m_Environment.get().assign(assignment.getVarName(), assignment.getOperator().type, rhsType, 
+                                                     m_Context, m_ErrorHandler));
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -212,7 +209,7 @@ private:
         const auto opType = binary.getOperator().type;
         const auto rightType = evaluateType(binary.getRight());
         if (opType == Token::Type::COMMA) {
-            m_Type = rightType;
+            setExpressionType(&binary, rightType);
         }
         else {
             // If we're subtracting two pointers
@@ -229,7 +226,7 @@ private:
                 }
 
                 // **TODO** should be std::ptrdiff/Int64
-                m_Type = Type::Int32::getInstance();
+                setExpressionType<Type::Int32>(&binary);
             }
             // Otherwise, if we're adding to or subtracting from pointers
             else if (leftPointerType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS))       // P + n or P - n
@@ -241,7 +238,7 @@ private:
                 }
 
                 // Use left type
-                m_Type = leftType;
+                setExpressionType(&binary, leftType);
             }
             // Otherwise, if we're adding a number to a pointer
             else if (leftNumericType && rightPointerType && opType == Token::Type::PLUS)  // n + P
@@ -253,7 +250,7 @@ private:
                 }
 
                 // Use right type
-                m_Type = leftType;
+                setExpressionType(&binary, rightType);
             }
             // Otherwise, if both operands are numeric
             else if (leftNumericType && rightNumericType) {
@@ -271,16 +268,16 @@ private:
                     // If operator is a shift, promote left type
                     if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
                         
-                        m_Type = Type::getPromotedType(leftNumericType, m_Context);
+                        setExpressionType(&binary, Type::getPromotedType(leftNumericType, m_Context));
                     }
                     // Otherwise, take common type
                     else {
-                        m_Type = Type::getCommonType(leftNumericType, rightNumericType, m_Context);
+                        setExpressionType(&binary, Type::getCommonType(leftNumericType, rightNumericType, m_Context));
                     }
                 }
                 // Otherwise, any numeric type will do, take common type
                 else {
-                    m_Type = Type::getCommonType(leftNumericType, rightNumericType, m_Context);
+                    setExpressionType(&binary, Type::getCommonType(leftNumericType, rightNumericType, m_Context));
                 }
             }
             else {
@@ -316,7 +313,7 @@ private:
                     auto callArgType = evaluateType(call.getArguments().at(i).get());
                 }*/
                 // Type is return type of function
-                m_Type = calleeFunctionType->getReturnType();
+                setExpressionType(&call, calleeFunctionType->getReturnType());
             }
         }
         // Otherwise
@@ -355,7 +352,7 @@ private:
             throw TypeCheckError();
         }
 
-        m_Type = cast.getType();
+        setExpressionType(&cast, cast.getType());
     }
 
     virtual void visit(const Expression::Conditional &conditional) final
@@ -366,10 +363,11 @@ private:
         auto falseNumericType = dynamic_cast<const Type::NumericBase *>(falseType);
         if (trueNumericType && falseNumericType) {
             // **TODO** check behaviour
-            m_Type = Type::getCommonType(trueNumericType, falseNumericType, m_Context);
+            const Type::Base *type = Type::getCommonType(trueNumericType, falseNumericType, m_Context);
             if(trueType->hasQualifier(Type::Qualifier::CONSTANT) || falseType->hasQualifier(Type::Qualifier::CONSTANT)) {
-                m_Type = m_Type->getQualifiedType(Type::Qualifier::CONSTANT);
+                type = type->getQualifiedType(Type::Qualifier::CONSTANT);
             }
+            setExpressionType(&conditional, type);
         }
         else {
             m_ErrorHandler.error(conditional.getQuestion(),
@@ -380,7 +378,7 @@ private:
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        m_Type = evaluateType(grouping.getExpression());
+        setExpressionType(&grouping, evaluateType(grouping.getExpression()));
     }
 
     virtual void visit(const Expression::Literal &literal) final
@@ -388,20 +386,20 @@ private:
         // Convert number token type to type
         // **THINK** is it better to use typedef for scalar or resolve from m_Context
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
-            m_Type = Type::Double::getInstance();
+            setExpressionType<Type::Double>(&literal);
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
-            m_Type = Type::Float::getInstance();
+            setExpressionType<Type::Float>(&literal);
         }
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
             // **TODO** cache
-            m_Type = new Type::NumericTypedef("scalar");
+            setExpressionType(&literal, new Type::NumericTypedef("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
-            m_Type = Type::Int32::getInstance();
+            setExpressionType<Type::Int32>(&literal);
         }
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            m_Type = Type::Uint32::getInstance();
+            setExpressionType<Type::Uint32>(&literal);
         }
         else {
             assert(false);
@@ -412,24 +410,26 @@ private:
     {
         logical.getLeft()->accept(*this);
         logical.getRight()->accept(*this);
-        m_Type = Type::Int32::getInstance();
+        setExpressionType<Type::Int32>(&logical);
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_Type = m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
-                                            m_Context, m_ErrorHandler);
+        setExpressionType(&postfixIncDec, 
+                          m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
+                                                     m_Context, m_ErrorHandler));
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_Type = m_Environment.get().incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
-                                            m_Context, m_ErrorHandler);
+        setExpressionType(&prefixIncDec,
+                          m_Environment.get().incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
+                                                     m_Context, m_ErrorHandler));
     }
 
     virtual void visit(const Expression::Variable &variable)
     {
-        m_Type = m_Environment.get().getType(variable.getName(), m_ErrorHandler);
+        setExpressionType(&variable, m_Environment.get().getType(variable.getName(), m_ErrorHandler));
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -446,7 +446,7 @@ private:
             }
 
             // Return value type
-            m_Type = rightPointerType->getValueType();
+            setExpressionType(&unary, rightPointerType->getValueType());
         }
         // Otherwise
         else {
@@ -455,14 +455,14 @@ private:
                 // If operator is arithmetic, return promoted type
                 if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
                     // **THINK** const through these?
-                    m_Type = Type::getPromotedType(rightNumericType, m_Context);
+                    setExpressionType(&unary, Type::getPromotedType(rightNumericType, m_Context));
                 }
                 // Otherwise, if operator is bitwise
                 else if (unary.getOperator().type == Token::Type::TILDA) {
                     // If type is integer, return promoted type
                     if (rightNumericType->isIntegral(m_Context)) {
                         // **THINK** const through these?
-                        m_Type = Type::getPromotedType(rightNumericType, m_Context);
+                        setExpressionType(&unary, Type::getPromotedType(rightNumericType, m_Context));
                     }
                     else {
                         m_ErrorHandler.error(unary.getOperator(),
@@ -472,11 +472,11 @@ private:
                 }
                 // Otherwise, if operator is logical
                 else if (unary.getOperator().type == Token::Type::NOT) {
-                    m_Type = Type::Int32::getInstance();;
+                    setExpressionType<Type::Int32>(&unary);
                 }
                 // Otherwise, if operator is address of, return pointer type
                 else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    m_Type = rightType->getPointerType();
+                    setExpressionType(&unary, rightType->getPointerType());
                 }
             }
             else {
@@ -644,16 +644,30 @@ private:
     const Type::Base *evaluateType(const Expression::Base *expression)
     {
         expression->accept(*this);
-        return m_Type;
+        return m_ResolvedTypes.at(expression);
     }
    
+    void setExpressionType(const Expression::Base *expression, const Type::Base *type)
+    {
+        if (!m_ResolvedTypes.emplace(expression, type).second) {
+            throw std::runtime_error("Expression type resolved multiple times");
+        }
+    }
+
+    template<typename T>
+    void setExpressionType(const Expression::Base *expression)
+    {
+        if (!m_ResolvedTypes.emplace(expression, T::getInstance()).second) {
+            throw std::runtime_error("Expression type resolved multiple times");
+        }
+    }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentInternal> m_Environment;
-    const Type::Base *m_Type;
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
+    ResolvedTypeMap &m_ResolvedTypes;
     bool m_InLoop;
     bool m_InSwitch;
 };
@@ -764,14 +778,16 @@ const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type,
 void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
                                               const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
+    ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor(statements, context, internalEnvironment, errorHandler);
+    Visitor(statements, context, internalEnvironment, expressionTypes, errorHandler);
 }
 //---------------------------------------------------------------------------
 const Type::Base *GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
                                                            const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
+    ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, context, internalEnvironment, errorHandler);
-    return visitor.getType();
+    Visitor visitor(expression, context, internalEnvironment, expressionTypes, errorHandler);
+    return expressionTypes.at(expression);
 }
