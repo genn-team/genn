@@ -35,10 +35,12 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, Substitutions &popSubs) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
+
+    const Transpiler::Statement::StatementList &getUpdateStatements() const{ return m_UpdateStatements; }
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -123,7 +125,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, Substitutions &popSubs) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -155,7 +157,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, Substitutions &popSubs) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
 
     //----------------------------------------------------------------------------
     // Static constants

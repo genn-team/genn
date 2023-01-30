@@ -28,87 +28,33 @@ using namespace GeNN::Transpiler;
 namespace
 {
 template<typename C, typename R>
-void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, const std::string &index,
-                     R getVarRefIndex)
+void genCustomUpdate(Transpiler::PrettyPrinter::EnvironmentBase &envBase, const C &cg, 
+                     const std::string &index, R getVarRefIndex)
 {
-    Substitutions updateSubs(&baseSubs);
-
+    EnvironmentSubstitute envSubs(envBase);
     const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
-    const auto varRefs = cm->getVarRefs();
-
-    // Loop through variables
-    for(const auto &v : cm->getVars()) {
-        if(v.access & VarAccessMode::READ_ONLY) {
-            os << "const ";
-        }
-        os << v.type->getName() << " l" << v.name;
-        
-        // If this isn't a reduction, read value from memory
-        // **NOTE** by not initialising these variables for reductions, 
-        // compilers SHOULD emit a warning if user code doesn't set it to something
-        if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-            os << " = group->" << v.name << "[";
-            os << cg.getVarIndex(getVarAccessDuplication(v.access),
-                                 updateSubs[index]);
-            os << "]";
-        }
-        os << ";" << std::endl;
-    }
-
-    // Loop through variable references
-    for(const auto &v : varRefs) {
-        if(v.access == VarAccessMode::READ_ONLY) {
-            os << "const ";
-        }
-       
-        os << v.type->getName() << " l" << v.name;
-
-        // If this isn't a reduction, read value from memory
-        // **NOTE** by not initialising these variables for reductions, 
-        // compilers SHOULD emit a warning if user code doesn't set it to something
-        if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-            os << " = " << "group->" << v.name << "[";
-            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(v.name),
-                                 updateSubs[index]);
-            os << "]";
-        }
-        os << ";" << std::endl;
-    }
     
-    updateSubs.addVarNameSubstitution(cm->getVars(), "", "l");
-    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "l");
-    updateSubs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
-                                         [&cg](const std::string &p) { return cg.isParamHeterogeneous(p);  },
-                                         "", "group->");
-    updateSubs.addVarValueSubstitution(cm->getDerivedParams(), cg.getArchetype().getDerivedParams(),
-                                       [&cg](const std::string &p) { return cg.isDerivedParamHeterogeneous(p);  },
-                                       "", "group->");
-    updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
+    subs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
+                                   [&cg](const std::string &p) { return cg.isParamHeterogeneous(p); });
+    subs.addVarValueSubstitution(cm->getDerivedParams(), cg.getArchetype().getDerivedParams(),
+                                 [&cg](const std::string &p) { return cg.isDerivedParamHeterogeneous(p);  });
+    subs.addVarNameSubstitution(cm->getExtraGlobalParams());
 
-    std::string code = cm->getUpdateCode();
-    updateSubs.applyCheckUnreplaced(code, "custom update : merged" + std::to_string(cg.getIndex()));
-    //code = ensureFtype(code, modelMerged.getModel().getPrecision());
-    os << code;
 
-    // Write read/write variables back to global memory
-    for(const auto &v : cm->getVars()) {
-        if(v.access & VarAccessMode::READ_WRITE) {
-            os << "group->" << v.name << "[";
-            os << cg.getVarIndex(getVarAccessDuplication(v.access),
-                                 updateSubs[index]);
-            os << "] = l" << v.name << ";" << std::endl;
-        }
-    }
+    // Create an environment which caches variables in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
+        cg, envSubs, 
+        [index, &cg](const Models::VarInit&, VarAccess a)
+        {
+            return cg.getVarIndex(getVarAccessDuplication(a), index);
+        });
+    
+    // Create an environment which caches variable references in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
+        cg, envSubs, [](const Models::VarReference &v, VarAccessMode){ return getVarRefIndex(v); });
 
-    // Write read/write variable references back to global memory
-    for(const auto &v : varRefs) {
-        if(v.access == VarAccessMode::READ_WRITE) {
-            os << "group->" << v.name << "[";
-            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(v.name),
-                                 updateSubs[index]);
-            os << "] = l" << v.name << ";" << std::endl;
-        }
-    }
+    // Pretty print previously parsed update statements
+    PrettyPrinter::print(cg.getUpdateStatements(), varRefSubs, cg.getTypeContext());
 }
 }   // Anonymous namespace
 
@@ -200,29 +146,16 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
 {
     // Build initial environment with ID etc
     // **TODO** this should happen in backend
-    EnvironmentSubstitute subs(os);
-    subs.addSubstitution("id", popSubs["id"]);
+    EnvironmentSubstitute envBase(os);
+    envBase.addSubstitution("id", popSubs["id"]);
     
-    // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
-        getArchetype(), subs, 
-        [this](const Models::VarInit&, VarAccess a)
-        {
-            return getVarIndex(getVarAccessDuplication(a), "id");
-        });
-    
-    // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
-        getArchetype(), subs, 
-        [this](const Models::VarReference &v, VarAccessMode)
-        {
-            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
-                                    getVarAccessDuplication(v.getVar().access), 
-                                    "id");
-        });
-
-    // Pretty print previously parsed update statements
-    PrettyPrinter::print(m_UpdateStatements, varRefSubs, getTypeContext());
+    genCustomUpdate(envBase, *this, "id", 
+                    [this](const Models::VarReference &v)
+                    {
+                        return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
+                                              getVarAccessDuplication(v.getVar().access), 
+                                              "id");
+                    });
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const

@@ -60,10 +60,8 @@ private:
 //! Standard pretty printing environment simply allowing substitutions to be implemented
 class EnvironmentSubstitute : public EnvironmentExternal
 {
-    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
-    EnvironmentSubstitute(EnvironmentBase &enclosing) : EnvironmentExternal(enclosing){}
-    EnvironmentSubstitute(CodeStream &os) : EnvironmentExternal(os){}
+    using EnvironmentExternal::EnvironmentExternal;
     
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
@@ -80,11 +78,99 @@ public:
     //------------------------------------------------------------------------
     void addSubstitution(const std::string &source, const std::string &destination);
     
+    template<typename T>
+    void addVarNameSubstitution(const std::vector<T> &variables)
+    {
+        for(const auto &v : variables) {
+            addSubstitution(v.name, "group->" + v.name);
+        }
+    }
+
+    template<typename G>
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn)
+    {
+        if(paramNames.size() != values.size()) {
+            throw std::runtime_error("Number of parameters does not match number of values");
+        }
+
+        for(const auto &p : paramNames) {
+            if(isHeterogeneousFn(p)) {
+                addSubstitution(p, "group->" + p);
+            }
+            else {
+                // **TODO** scalar suffix
+                addSubstitution(p, Utils::writePreciseString(values.at(p)));
+            }
+        }
+    }
+
+    template<typename T, typename G>
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn)
+    {
+        if(variables.size() != values.size()) {
+            throw std::runtime_error("Number of variables does not match number of values");
+        }
+
+        for(const auto &v : variables) {
+            if(isHeterogeneousFn(v.name)) {
+                addVarSubstitution(v.name, "group->" + v.name);
+            }
+            else {
+                addVarSubstitution(v.name, Utils::writePreciseString(values.at(v.name)));
+            }
+        }
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::unordered_map<std::string, std::string> m_VarSubstitutions;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentSubstituteCondInit
+//----------------------------------------------------------------------------
+//! Pretty printing environment simply allowing substitutions to be implemented
+class EnvironmentSubstituteCondInit : public EnvironmentExternal
+{
+    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
+public:
+    EnvironmentSubstituteCondInit(EnvironmentBase &enclosing)
+    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
+    {
+    }
+    
+    EnvironmentSubstituteCondInit(CodeStream &os)
+    :   EnvironmentExternal(os), m_Contents(m_ContentsStream)
+    {
+    }
+    ~EnvironmentSubstituteCondInit();
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const Transpiler::Token &name) final;
+    
+    virtual CodeStream &getStream() final
+    {
+        return m_Contents;
+    }
+    
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void addSubstitution(const std::string &source, const std::string &destination, 
+                         const std::string &initialiser);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+    std::unordered_map<std::string, std::tuple<bool, std::string, std::string>> m_VarSubstitutions;
+    
 };
 
 //----------------------------------------------------------------------------

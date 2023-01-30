@@ -6,6 +6,7 @@
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/environment.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
@@ -566,11 +567,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             {
                                 CodeStream::Scope b(os);
 
-                                Substitutions popSubs(&funcSubs);
-                                popSubs.addVarSubstitution("id", "i");
-
                                 // Generate custom update
-                                c.generateCustomUpdate(*this, os, popSubs);
+                                EnvironmentSubstitute env(os);
+                                env.addSubstitution("id", "i");
+                                c.generateCustomUpdate(*this, env);
 
                                 // Loop through reduction targets and generate reduction
                                 for (const auto &r : reductionTargets) {
@@ -589,14 +589,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             {
                                 CodeStream::Scope b(os);
 
-                                Substitutions popSubs(&funcSubs);
-                                popSubs.addVarSubstitution("id", "i");
-
                                 // Generate custom update
-                                c.generateCustomUpdate(*this, os, popSubs);
+                                EnvironmentSubstitute env(os);
+                                env.addSubstitution("id", "i");
+                                c.generateCustomUpdate(*this, env);
 
                                 // Write back reductions
-                                genWriteBackReductions(os, c, popSubs["id"]);
+                                genWriteBackReductions(os, c, "i");
                             }
                         }
                     }
@@ -650,27 +649,29 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 {
                                     CodeStream::Scope b(os);
 
-                                    Substitutions synSubs(&funcSubs);
+                                    // Add pre and postsynaptic indices to substitutions
+                                    EnvironmentSubstitute synEnv(os);
+                                    synEnv.addSubstitution("id_pre", "i");
+                                    synEnv.addSubstitution("id_post", "j");
+
+                                    // **TODO** DEPENDENCIES!
+                                    EnvironmentSubstituteCondInit synEnvCond(synEnv);
                                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                         // Calculate index of synapse and use it to look up postsynaptic index
                                         os << "const unsigned int n = (i * group->rowStride) + s;" << std::endl;
                                         os << "const unsigned int j = group->ind[n];" << std::endl;
 
-                                        synSubs.addVarSubstitution("id_syn", "n");
+                                        synEnv.addSubstitution("id_syn", "n");
                                     }
                                     else {
-                                        synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
+                                        synEnv.addSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
                                     }
 
-                                    // Add pre and postsynaptic indices to substitutions
-                                    synSubs.addVarSubstitution("id_pre", "i");
-                                    synSubs.addVarSubstitution("id_post", "j");
-
-                                    // Call custom update handler
-                                    c.generateCustomUpdate(*this, os, synSubs);
+                                    // Generate custom update
+                                    c.generateCustomUpdate(*this, synEnvCond);
 
                                     // Write back reductions
-                                    genWriteBackReductions(os, c, synSubs["id_syn"]);
+                                    genWriteBackReductions(os, c, synEnv["id_syn"]);
                                 }
                             }
                         }
@@ -748,15 +749,18 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             {
                                 CodeStream::Scope b(os);
 
-                                Substitutions synSubs(&funcSubs);
-                                synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
-
-                                // Add pre and postsynaptic indices to substitutions
-                                synSubs.addVarSubstitution("id_pre", "i");
-                                synSubs.addVarSubstitution("id_post", "j");
-
-                                // Call custom update handler
-                                c.generateCustomUpdate(*this, os, synSubs);
+                                // Add pre and postsynaptic indices to environment
+                                EnvironmentSubstitute synEnv(os);
+                                synEnv.addSubstitution("id_pre", "i");
+                                synEnv.addSubstitution("id_post", "j");
+                                
+                                // Add conditional initialisation code to calculate synapse index
+                                EnvironmentSubstituteCondInit synCachedEnv(synEnv);
+                                synCachedEnv.addSubstitution("id_syn", "idSyn",
+                                                             "const unsigned int idSyn = (i * group->numTrgNeurons) + j;");
+                                
+                                // Generate custom update
+                                c.generateCustomUpdate(*this, synCachedEnv);
 
                                 // Update transpose variable
                                 os << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;

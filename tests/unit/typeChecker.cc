@@ -187,6 +187,8 @@ TEST(TypeChecker, ArraySubscript)
         EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
         EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
+
+    // Pointer to pointer, double indexing
     
     // Float array indexing
     EXPECT_THROW({

@@ -50,3 +50,46 @@ void EnvironmentSubstitute::addSubstitution(const std::string &source, const std
         throw std::runtime_error("Redeclaration of substitution '" + source + "'");
     }
 }
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentSubstituteCondInit
+//----------------------------------------------------------------------------
+EnvironmentSubstituteCondInit::~EnvironmentSubstituteCondInit()
+{
+    // Loop through substitututions
+    for(const auto &v : m_VarSubstitutions) {
+        // If variable has been referenced, write out initialiser
+        if (std::get<0>(v.second)) {
+            getContextStream() << std::get<2>(v.second) << std::endl;
+        }
+    }
+        
+    // Write contents to context stream
+    getContextStream() << m_ContentsStream.str();
+}
+//------------------------------------------------------------------------
+std::string EnvironmentSubstituteCondInit::getName(const Transpiler::Token &name)
+{
+    // If variable with this name isn't found, try and get name from context
+    auto var = m_VarSubstitutions.find(name.lexeme);
+    if(var == m_VarSubstitutions.end()) {
+        return getContextName(name);
+    }
+    // Otherwise
+    else {
+        // Set flag to indicate that variable has been referenced
+        std::get<0>(var->second) = true;
+            
+        // Add local prefix to variable name
+        return std::get<1>(var->second);
+    }
+}
+
+//------------------------------------------------------------------------
+void EnvironmentSubstituteCondInit::addSubstitution(const std::string &source, const std::string &destination,
+                                                    const std::string &initialiser)
+{
+    if(!m_VarSubstitutions.try_emplace(source, false, destination, initialiser).second) {
+        throw std::runtime_error("Redeclaration of substitution '" + source + "'");
+    }
+}
