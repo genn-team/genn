@@ -25,6 +25,7 @@
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\customConnectivityUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\customUpdateGroupMerged.cc" />
+    <ClCompile Include="code_generator\environment.cc" />
     <ClCompile Include="code_generator\generateModules.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
@@ -77,6 +78,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\customConnectivityUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\customUpdateGroupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\environment.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateModules.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
