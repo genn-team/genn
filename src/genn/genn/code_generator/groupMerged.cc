@@ -69,6 +69,9 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
                                                                            const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   GroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
+    addField("unsigned int", "numNeurons",
+             [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+
     if(getArchetype().isDelayRequired()) {
         addPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
     } 
@@ -86,11 +89,6 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
         addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
         addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
-    }
-
-    if(getArchetype().isDelayRequired()) {
-        addField("unsigned int", "numNeurons",
-                 [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
     }
 }
 
