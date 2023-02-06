@@ -1,5 +1,11 @@
 #include "code_generator/environment.h"
 
+// Standard C++ includes
+#include <algorithm>
+
+// Standard C includes
+#include <cassert>
+
 using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
@@ -31,65 +37,50 @@ std::string EnvironmentExternal::getContextName(const Transpiler::Token &name) c
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentSubstitute
 //----------------------------------------------------------------------------
-std::string EnvironmentSubstitute::getName(const Transpiler::Token &name)
+EnvironmentSubstitute::~EnvironmentSubstitute()
 {
-    // If there isn't a substitution for this name, try and get name from context
-    auto sub = m_VarSubstitutions.find(name.lexeme);
-    if(sub == m_VarSubstitutions.end()) {
-        return getContextName(name);
-    }
-    // Otherwise, return substitution
-    else {
-        return sub->second;
-    }
-}
-//------------------------------------------------------------------------
-void EnvironmentSubstitute::addSubstitution(const std::string &source, const std::string &destination)
-{
-    if(!m_VarSubstitutions.emplace(source, destination).second) {
-        throw std::runtime_error("Redeclaration of substitution '" + source + "'");
-    }
-}
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentSubstituteCondInit
-//----------------------------------------------------------------------------
-EnvironmentSubstituteCondInit::~EnvironmentSubstituteCondInit()
-{
-    // Loop through substitututions
-    for(const auto &v : m_VarSubstitutions) {
-        // If variable has been referenced, write out initialiser
-        if (std::get<0>(v.second)) {
-            getContextStream() << std::get<2>(v.second) << std::endl;
+    // Loop through initialiser
+    for(const auto &i : m_Initialisers) {
+        // If variable requiring initialiser has been referenced, write out initialiser
+        if (i.first) {
+            getContextStream() << i.second << std::endl;
         }
     }
         
     // Write contents to context stream
     getContextStream() << m_ContentsStream.str();
 }
-//------------------------------------------------------------------------
-std::string EnvironmentSubstituteCondInit::getName(const Transpiler::Token &name)
+//----------------------------------------------------------------------------
+std::string EnvironmentSubstitute::getName(const Transpiler::Token &name)
 {
-    // If variable with this name isn't found, try and get name from context
+    // If there isn't a substitution for this name, try and get name from context
     auto var = m_VarSubstitutions.find(name.lexeme);
     if(var == m_VarSubstitutions.end()) {
         return getContextName(name);
     }
-    // Otherwise
+    // Otherwise, return substitution
     else {
-        // Set flag to indicate that variable has been referenced
-        std::get<0>(var->second) = true;
-            
-        // Add local prefix to variable name
-        return std::get<1>(var->second);
+        // If this variable relies on any initialiser statements, mark these initialisers as required
+        for(const auto i : var->second.second) {
+            m_Initialisers.at(i).first = true;
+        }
+
+        return var->second.first;
     }
 }
-
 //------------------------------------------------------------------------
-void EnvironmentSubstituteCondInit::addSubstitution(const std::string &source, const std::string &destination,
-                                                    const std::string &initialiser)
+void EnvironmentSubstitute::addSubstitution(const std::string &source, const std::string &destination, 
+                                            std::vector<size_t> initialisers)
 {
-    if(!m_VarSubstitutions.try_emplace(source, false, destination, initialiser).second) {
+    assert(std::all_of(initialisers.cbegin(), initialisers.cend(), 
+                       [this](size_t i) { return i < m_Initialisers.size(); }));
+
+    if(!m_VarSubstitutions.try_emplace(source, destination, initialisers).second) {
         throw std::runtime_error("Redeclaration of substitution '" + source + "'");
     }
+}
+//------------------------------------------------------------------------
+size_t EnvironmentSubstitute::addInitialiser(const std::string &initialiser)
+{
+    m_Initialisers.emplace_back(false, initialiser);
 }

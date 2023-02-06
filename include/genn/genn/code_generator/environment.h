@@ -60,8 +60,18 @@ private:
 //! Standard pretty printing environment simply allowing substitutions to be implemented
 class EnvironmentSubstitute : public EnvironmentExternal
 {
+    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
-    using EnvironmentExternal::EnvironmentExternal;
+    EnvironmentSubstitute(EnvironmentBase &enclosing)
+    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
+    {
+    }
+    
+    EnvironmentSubstitute(CodeStream &os)
+    :   EnvironmentExternal(os), m_Contents(m_ContentsStream)
+    {
+    }
+    ~EnvironmentSubstitute();
     
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
@@ -70,14 +80,17 @@ public:
     
     virtual CodeStream &getStream() final
     {
-        return getContextStream();
+        return m_Contents;
     }
     
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addSubstitution(const std::string &source, const std::string &destination);
+    void addSubstitution(const std::string &source, const std::string &destination,
+                         std::vector<size_t> initialisers = {});
     
+    size_t addInitialiser(const std::string &initialiser);
+
     template<typename T>
     void addVarNameSubstitution(const std::vector<T> &variables)
     {
@@ -87,7 +100,8 @@ public:
     }
 
     template<typename G>
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn)
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, 
+                                   G isHeterogeneousFn)
     {
         if(paramNames.size() != values.size()) {
             throw std::runtime_error("Number of parameters does not match number of values");
@@ -105,7 +119,8 @@ public:
     }
 
     template<typename T, typename G>
-    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn)
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, 
+                                 G isHeterogeneousFn)
     {
         if(variables.size() != values.size()) {
             throw std::runtime_error("Number of variables does not match number of values");
@@ -125,52 +140,11 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::unordered_map<std::string, std::string> m_VarSubstitutions;
-};
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentSubstituteCondInit
-//----------------------------------------------------------------------------
-//! Pretty printing environment simply allowing substitutions to be implemented
-class EnvironmentSubstituteCondInit : public EnvironmentExternal
-{
-    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
-public:
-    EnvironmentSubstituteCondInit(EnvironmentBase &enclosing)
-    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
-    {
-    }
-    
-    EnvironmentSubstituteCondInit(CodeStream &os)
-    :   EnvironmentExternal(os), m_Contents(m_ContentsStream)
-    {
-    }
-    ~EnvironmentSubstituteCondInit();
-
-    //------------------------------------------------------------------------
-    // PrettyPrinter::EnvironmentBase virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getName(const Transpiler::Token &name) final;
-    
-    virtual CodeStream &getStream() final
-    {
-        return m_Contents;
-    }
-    
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void addSubstitution(const std::string &source, const std::string &destination, 
-                         const std::string &initialiser);
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
-    std::unordered_map<std::string, std::tuple<bool, std::string, std::string>> m_VarSubstitutions;
-    
+    std::unordered_map<std::string, std::pair<std::string, std::vector<size_t>>> m_VarSubstitutions;
+    std::vector<std::pair<bool, std::string>> m_Initialisers;
+
 };
 
 //----------------------------------------------------------------------------

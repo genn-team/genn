@@ -11,6 +11,7 @@
 #include "code_generator/substitutions.h"
 
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Transpiler;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -74,36 +75,35 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 }
 //-----------------------------------------------------------------------
 template<typename G>
-void genKernelIteration(CodeStream &os, const G &g, size_t numKernelDims, const Substitutions &kernelSubs, BackendBase::Handler handler)
+void genKernelIteration(PrettyPrinter::EnvironmentBase &env, const G &g, size_t numKernelDims, BackendBase::Handler handler)
 {
-    Substitutions varSubs(&kernelSubs);
+    EnvironmentSubstitute varEnv(env);
 
     // Define recursive function to generate nested kernel initialisation loops
     // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
     std::function<void(size_t)> generateRecursive =
-        [&handler, &os, &g, &varSubs, &generateRecursive, numKernelDims]
+        [&handler, &varEnv, &g, &generateRecursive, numKernelDims]
         (size_t depth)
         {
             // Loop through this kernel dimensions
             const std::string idxVar = "k" + std::to_string(depth);
-            os << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << g.getKernelSize(depth) << "; " << idxVar << "++)";
+            varEnv.getStream() << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << g.getKernelSize(depth) << "; " << idxVar << "++)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(varEnv.getStream());
+                EnvironmentSubstitute loopEnv(varEnv);
 
                 // Add substitution for this kernel index
-                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), idxVar);
+                loopEnv.addSubstitution("id_kernel_" + std::to_string(depth), idxVar);
 
                 // If we've recursed through all dimensions
                 if (depth == (numKernelDims - 1)) {
                     // Generate kernel index and use as "synapse" index
                     // **TODO** rename
-                    os << "const unsigned int kernelInd = ";
-                    g.genKernelIndex(os, varSubs);
-                    os << ";" << std::endl;
-                    varSubs.addVarSubstitution("id_syn", "kernelInd");
+                    const size_t kernelInit = loopEnv.addInitialiser("const unsigned int kernelInd = " + g.genKernelIndex(loopEnv) + ";");
+                    loopEnv.addVarSubstitution("id_syn", "kernelInd", kernelInit);
 
                     // Call handler
-                    handler(os, varSubs);
+                    handler(loopEnv);
                 }
                 // Otherwise, recurse
                 else {
@@ -526,9 +526,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         {
             CodeStream::Scope b(os);
 
-            Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
-            funcSubs.addVarSubstitution("t", "t");
-            funcSubs.addVarSubstitution("batch", "0");
+            EnvironmentSubstitute funcEnv(os);
+            funcEnv.addSubstitution("t", "t");
+            funcEnv.addSubstitution("batch", "0");
 
             // Loop through host update groups and generate code for those in this custom update group
             for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
@@ -568,7 +568,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 CodeStream::Scope b(os);
 
                                 // Generate custom update
-                                EnvironmentSubstitute env(os);
+                                EnvironmentSubstitute env(funcEnv);
                                 env.addSubstitution("id", "i");
                                 c.generateCustomUpdate(*this, env);
 
@@ -590,7 +590,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 CodeStream::Scope b(os);
 
                                 // Generate custom update
-                                EnvironmentSubstitute env(os);
+                                EnvironmentSubstitute env(funcEnv);
                                 env.addSubstitution("id", "i");
                                 c.generateCustomUpdate(*this, env);
 
@@ -618,16 +618,17 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         os << "const auto *group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
 
                         const SynapseGroupInternal *sg = c.getArchetype().getSynapseGroup();
+                        EnvironmentSubstitute synEnv(funcEnv);
                         if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                            genKernelIteration(os, c, c.getArchetype().getSynapseGroup()->getKernelSize().size(), funcSubs,
+                            genKernelIteration(c, c.getArchetype().getSynapseGroup()->getKernelSize().size(), synEnv,
                                                [&c, &modelMerged, this]
-                                               (CodeStream &os, Substitutions &subs)
+                                               (PrettyPrinter::EnvironmentBase &env)
                                                {
                                                    // Call custom update handler
-                                                   c.generateCustomUpdate(*this, os, subs);
+                                                   c.generateCustomUpdate(*this, env);
 
                                                    // Write back reductions
-                                                   genWriteBackReductions(os, c, subs["id_syn"]);
+                                                   genWriteBackReductions(env, c);
                                                });
                         }
                         else {
@@ -649,26 +650,28 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 {
                                     CodeStream::Scope b(os);
 
-                                    // Add pre and postsynaptic indices to substitutions
-                                    EnvironmentSubstitute synEnv(os);
+                                    // Add presynaptic index to substitutions
                                     synEnv.addSubstitution("id_pre", "i");
-                                    synEnv.addSubstitution("id_post", "j");
-
-                                    // **TODO** DEPENDENCIES!
-                                    EnvironmentSubstituteCondInit synEnvCond(synEnv);
+                                    
+                                    // If connectivity is sparse
                                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                        // Calculate index of synapse and use it to look up postsynaptic index
-                                        os << "const unsigned int n = (i * group->rowStride) + s;" << std::endl;
-                                        os << "const unsigned int j = group->ind[n];" << std::endl;
+                                        // Add initialisers to calculate synaptic index and thus lookup postsynaptic index
+                                        const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * group->rowStride) + s;");
+                                        const size_t jInit = synEnv.addInitialiser("const unsigned int j = group->ind[idSyn];");
 
-                                        synEnv.addSubstitution("id_syn", "n");
+                                        // Add substitutions
+                                        synEnv.addSubstitution("id_syn", "idSyn", {idSynInit});
+                                        synEnv.addSubstitution("id_post", "j", {jInit, idSynInit});
                                     }
                                     else {
-                                        synEnv.addSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
+                                        synEnv.addSubstitution("id_post", "j");
+
+                                        const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * group->numTrgNeurons) + j;");
+                                        synEnv.addSubstitution("id_syn", "idSyn", {idSynInit});
                                     }
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, synEnvCond);
+                                    c.generateCustomUpdate(*this, synEnv);
 
                                     // Write back reductions
                                     genWriteBackReductions(os, c, synEnv["id_syn"]);
@@ -702,13 +705,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             CodeStream::Scope b(os);
                             
                             // Configure substitutions
-                            Substitutions popSubs(&funcSubs);
-                            popSubs.addVarSubstitution("id_pre", "i");
-                            
-                            // If this neuron group requires a simulation RNG, substitute in global RNG
-                            if(c.getArchetype().isRowSimRNGRequired()) {
-                                popSubs.addVarSubstitution("rng", "hostRNG");
-                            }
+                            EnvironmentSubstitute cuEnv(funcEnv);
+                            cuEnv.addSubstitution("id_pre", "i");
+                            cuEnv.addSubstitution("rng", "hostRNG");
+        
                             c.generateUpdate(*this, os, model.getBatchSize(), popSubs);
                         }
                     }
@@ -750,17 +750,16 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 CodeStream::Scope b(os);
 
                                 // Add pre and postsynaptic indices to environment
-                                EnvironmentSubstitute synEnv(os);
+                                EnvironmentSubstitute synEnv(funcEnv);
                                 synEnv.addSubstitution("id_pre", "i");
                                 synEnv.addSubstitution("id_post", "j");
                                 
                                 // Add conditional initialisation code to calculate synapse index
-                                EnvironmentSubstituteCondInit synCachedEnv(synEnv);
-                                synCachedEnv.addSubstitution("id_syn", "idSyn",
-                                                             "const unsigned int idSyn = (i * group->numTrgNeurons) + j;");
+                                const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * group->numTrgNeurons) + j;");
+                                synEnv.addSubstitution("id_syn", "idSyn", {idSynInit});
                                 
                                 // Generate custom update
-                                c.generateCustomUpdate(*this, synCachedEnv);
+                                c.generateCustomUpdate(*this, synEnv);
 
                                 // Update transpose variable
                                 os << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;
