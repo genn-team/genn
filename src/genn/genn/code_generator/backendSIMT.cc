@@ -368,11 +368,14 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Subst
                     os << "if(" << popSubs["id"] << " < group->spkCnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                     {
                         CodeStream::Scope b(os);
-                        os << "group->prevST[group->spk[";
-                        if(batchSize > 1) {
-                            os << "batchOffset + ";
+                        os << "group->prevST[";
+                        if (batchSize == 1) {
+                            os << "group->spk[" << popSubs["id"] << "]";
                         }
-                        os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                        else {
+                            os << "batchOffset + group->spk[batchOffset + " << popSubs["id"] << "]";
+                        }
+                        os << "] = " << popSubs["t"] << " - DT;" << std::endl;
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -380,11 +383,14 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Subst
                     os << "if(" << popSubs["id"] << " < group->spkCntEvnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                     {
                         CodeStream::Scope b(os);
-                        os << "group->prevSET[group->spkEvnt[";
-                        if(batchSize > 1) {
-                            os << "batchOffset + ";
+                        os << "group->prevSET[";
+                        if (batchSize == 1) {
+                            os << "group->spkEvnt[" << popSubs["id"] << "]";
                         }
-                        os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                        else {
+                            os << "batchOffset + group->spkEvnt[batchOffset + " << popSubs["id"] << "]";
+                        }
+                        os << "] = " << popSubs["t"] << " - DT;" << std::endl;
                     }
                 }
             }
