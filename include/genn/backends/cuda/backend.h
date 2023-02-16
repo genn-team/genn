@@ -94,10 +94,10 @@ struct Preferences : public PreferencesBase
     KernelBlockSize manualBlockSizes;
 
     //! How much constant cache is already used and therefore can't be used by GeNN?
-    /*! Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, init and runner)
+    /*! Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, custom update, init and runner)
         Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
         additional constant cache, increase this */
-    size_t constantCacheOverhead = 72 * 4;
+    size_t constantCacheOverhead = 72 * 5;
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
