@@ -10,7 +10,6 @@
 
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
-#include "transpiler/token.h"
 #include "transpiler/transpilerUtils.h"
 
 //----------------------------------------------------------------------------
@@ -35,7 +34,7 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string define(const Transpiler::Token&);
+    virtual std::string define(const std::string &name);
     
 protected:
     //------------------------------------------------------------------------
@@ -45,7 +44,7 @@ protected:
     
     CodeStream &getContextStream() const;
     
-    std::string getContextName(const Transpiler::Token &name) const;
+    std::string getContextName(const std::string &name) const;
 
 private:
     //------------------------------------------------------------------------
@@ -62,7 +61,12 @@ class EnvironmentSubstitute : public EnvironmentExternal
 {
     using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
-    EnvironmentSubstitute(EnvironmentBase &enclosing)
+    EnvironmentSubstitute(EnvironmentSubstitute &enclosing)
+    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
+    {
+    }
+
+    EnvironmentSubstitute(EnvironmentExternal &enclosing)
     :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
     {
     }
@@ -76,7 +80,7 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const Transpiler::Token &name) final;
+    virtual std::string getName(const std::string &name) final;
     
     virtual CodeStream &getStream() final
     {
@@ -164,17 +168,8 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
     typedef std::function<std::string(InitialiserType, decltype(DefType::access))> GetIndexFn;    
 
 public:
-    EnvironmentLocalVarCache(const G &group, Transpiler::PrettyPrinter::EnvironmentBase &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    EnvironmentLocalVarCache(const G &group, EnvironmentSubstitute &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
     :   EnvironmentExternal(enclosing), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
-    {
-        // Add name of each definition to map, initially with value set to value
-        const auto defs = A(m_Group).getDefs();
-        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
-                       [](const auto &v){ return std::make_pair(v.name, false); });
-    }
-    
-    EnvironmentLocalVarCache(const G &group, CodeStream &os, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(os), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
@@ -225,10 +220,10 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const Transpiler::Token &name) final
+    virtual std::string getName(const std::string &name) final
     {
         // If variable with this name isn't found, try and get name from context
-        auto var = m_VariablesReferenced.find(name.lexeme);
+        auto var = m_VariablesReferenced.find(name);
         if(var == m_VariablesReferenced.end()) {
             return getContextName(name);
         }
@@ -238,7 +233,7 @@ public:
             var->second = true;
             
             // Add local prefix to variable name
-            return m_LocalPrefix + name.lexeme;
+            return m_LocalPrefix + name;
         }
     }
     

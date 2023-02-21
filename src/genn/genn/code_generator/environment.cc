@@ -11,7 +11,7 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternal
 //----------------------------------------------------------------------------
-std::string EnvironmentExternal::define(const Transpiler::Token&)
+std::string EnvironmentExternal::define(const std::string&)
 {
     throw std::runtime_error("Cannot declare variable in external environment");
 }
@@ -25,12 +25,12 @@ CodeStream &EnvironmentExternal::getContextStream() const
         getContext());
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentExternal::getContextName(const Transpiler::Token &name) const
+std::string EnvironmentExternal::getContextName(const std::string &name) const
 {
     return std::visit(
         Transpiler::Utils::Overload{
             [&name](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name); },
-            [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name.lexeme + "' undefined"); }},
+            [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name + "' undefined"); }},
         getContext());
 }
 
@@ -51,10 +51,10 @@ EnvironmentSubstitute::~EnvironmentSubstitute()
     getContextStream() << m_ContentsStream.str();
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentSubstitute::getName(const Transpiler::Token &name)
+std::string EnvironmentSubstitute::getName(const std::string &name)
 {
     // If there isn't a substitution for this name, try and get name from context
-    auto var = m_VarSubstitutions.find(name.lexeme);
+    auto var = m_VarSubstitutions.find(name);
     if(var == m_VarSubstitutions.end()) {
         return getContextName(name);
     }

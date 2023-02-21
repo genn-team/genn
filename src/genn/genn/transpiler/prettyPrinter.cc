@@ -37,22 +37,22 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual std::string define(const Token &name) final
+    virtual std::string define(const std::string &name) final
     {
-        if(!m_LocalVariables.emplace(name.lexeme).second) {
+        if(!m_LocalVariables.emplace(name).second) {
             throw std::runtime_error("Redeclaration of variable");
         }
         
-        return "_" + name.lexeme;
+        return "_" + name;
     }
     
-    virtual std::string getName(const Token &name) final
+    virtual std::string getName(const std::string &name) final
     {
-        if(m_LocalVariables.find(name.lexeme) == m_LocalVariables.end()) {
+        if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
             return m_Enclosing.getName(name);
         }
         else {
-            return "_" + name.lexeme;
+            return "_" + name;
         }
     }
     
@@ -91,14 +91,14 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(arraySubscript.getPointerName()) << "[";
+        m_Environment.get().getStream() << m_Environment.get().getName(arraySubscript.getPointerName().lexeme) << "[";
         arraySubscript.getIndex()->accept(*this);
         m_Environment.get().getStream() << "]";
     }
 
     virtual void visit(const Expression::Assignment &assignement) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(assignement.getVarName()) << " " << assignement.getOperator().lexeme << " ";
+        m_Environment.get().getStream() << m_Environment.get().getName(assignement.getVarName().lexeme) << " " << assignement.getOperator().lexeme << " ";
         assignement.getValue()->accept(*this);
     }
 
@@ -170,17 +170,17 @@ private:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(postfixIncDec.getVarName()) << postfixIncDec.getOperator().lexeme;
+        m_Environment.get().getStream() << m_Environment.get().getName(postfixIncDec.getVarName().lexeme) << postfixIncDec.getOperator().lexeme;
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(prefixIncDec.getOperator()) << prefixIncDec.getVarName().lexeme;
+        m_Environment.get().getStream() << prefixIncDec.getOperator().lexeme << m_Environment.get().getName(prefixIncDec.getVarName().lexeme);
     }
 
     virtual void visit(const Expression::Variable &variable) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName());
+        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme);
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -304,7 +304,7 @@ private:
         printType(varDeclaration.getType());
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_Environment.get().getStream() << m_Environment.get().define(std::get<0>(var));
+            m_Environment.get().getStream() << m_Environment.get().define(std::get<0>(var).lexeme);
             if(std::get<1>(var)) {
                 m_Environment.get().getStream() << " = ";
                 std::get<1>(var)->accept(*this);
