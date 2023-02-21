@@ -22,42 +22,6 @@ using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 
 
-//--------------------------------------------------------------------------
-// Anonymous namespace
-//--------------------------------------------------------------------------
-namespace
-{
-template<typename C, typename R>
-void genCustomUpdate(Transpiler::PrettyPrinter::EnvironmentBase &envBase, const C &cg, 
-                     const std::string &index, R getVarRefIndex)
-{
-    EnvironmentSubstitute envSubs(envBase);
-    const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
-    
-    subs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
-                                   [&cg](const std::string &p) { return cg.isParamHeterogeneous(p); });
-    subs.addVarValueSubstitution(cm->getDerivedParams(), cg.getArchetype().getDerivedParams(),
-                                 [&cg](const std::string &p) { return cg.isDerivedParamHeterogeneous(p);  });
-    subs.addVarNameSubstitution(cm->getExtraGlobalParams());
-
-
-    // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
-        cg, envSubs, 
-        [index, &cg](const Models::VarInit&, VarAccess a)
-        {
-            return cg.getVarIndex(getVarAccessDuplication(a), index);
-        });
-    
-    // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
-        cg, envSubs, [](const Models::VarReference &v, VarAccessMode){ return getVarRefIndex(v); });
-
-    // Pretty print previously parsed update statements
-    PrettyPrinter::print(cg.getUpdateStatements(), varRefSubs, cg.getTypeContext());
-}
-}   // Anonymous namespace
-
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
@@ -142,20 +106,37 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const
 {
-    // Build initial environment with ID etc
-    // **TODO** this should happen in backend
-    EnvironmentSubstitute envBase(os);
-    envBase.addSubstitution("id", popSubs["id"]);
+     // Add parameters, derived parameters and EGPs to environment
+    EnvironmentSubstitute envSubs(env);
+    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
+                                     [this](const std::string &p) { return isParamHeterogeneous(p); });
+    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
+                                    [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
+    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams());
+
+    // Create an environment which caches variables in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
+        getArchetype(), envSubs, 
+        [this](const Models::VarInit&, VarAccess a)
+        {
+            return getVarIndex(getVarAccessDuplication(a), "id");
+        });
     
-    genCustomUpdate(envBase, *this, "id", 
-                    [this](const Models::VarReference &v)
-                    {
-                        return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
-                                              getVarAccessDuplication(v.getVar().access), 
-                                              "id");
-                    });
+    // Create an environment which caches variable references in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
+        getArchetype(), varSubs, 
+        [this](const Models::VarReference &v, VarAccessMode)
+        { 
+            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
+                                  getVarAccessDuplication(v.getVar().access), 
+                                  "id");
+        });
+
+    // Pretty print previously parsed update statements
+    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext());
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -232,6 +213,38 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
 
     return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const
+{
+     // Add parameters, derived parameters and EGPs to environment
+    EnvironmentSubstitute envSubs(env);
+    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
+                                     [this](const std::string &p) { return isParamHeterogeneous(p); });
+    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
+                                    [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
+    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams());
+
+    // Create an environment which caches variables in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUInternal> varSubs(
+        getArchetype(), envSubs, 
+        [this](const Models::VarInit&, VarAccess a)
+        {
+            return getVarIndex(getVarAccessDuplication(a), "id_syn");
+        });
+    
+    // Create an environment which caches variable references in local variables if they are accessed
+    EnvironmentLocalVarCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUInternal> varRefSubs(
+        getArchetype(), varSubs, 
+        [this](const Models::WUVarReference &v, VarAccessMode)
+        { 
+            return getVarRefIndex(getVarAccessDuplication(v.getVar().access),
+                                  "id_syn");
+        });
+
+    // Pretty print previously parsed update statements
+    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext());
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -344,37 +357,24 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     }
     // Add EGPs to struct
     typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+
+    // Scan, parse and type-check update code
+    ErrorHandler errorHandler;
+    const std::string code = upgradeCodeString(cm->getUpdateCode());
+    const auto tokens = Scanner::scanSource(code, errorHandler);
+    m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
+    TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
 
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
-//----------------------------------------------------------------------------
-void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
-{
-    genCustomUpdate(os, popSubs, *this, "id_syn",
-                    [this](const auto &varRef, const std::string &index) 
-                    {  
-                        return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
-                                              index);
-                    });
-}
 
 //----------------------------------------------------------------------------
 // CustomUpdateTransposeWUGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
-//----------------------------------------------------------------------------
-void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
-{
-    genCustomUpdate(os, popSubs, *this, "id_syn",
-                    [this](const auto &varRef, const std::string &index) 
-                    {
-                        return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
-                                              index);
-                    });
-}
 
 // ----------------------------------------------------------------------------
 // CustomUpdateHostReductionGroupMerged

@@ -2,6 +2,7 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+#include "code_generator/environment.h"
 #include "code_generator/groupMerged.h"
 
 // GeNN transpiler includes
@@ -69,6 +70,8 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
+
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
@@ -90,6 +93,8 @@ public:
         return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
     }
 
+    const Transpiler::Statement::StatementList &getUpdateStatements() const{ return m_UpdateStatements; }
+
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
@@ -99,6 +104,12 @@ private:
     {
         return g.getSynapseGroup()->getKernelSize();
     }
+
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    //! List of statements parsed and type-checked in constructor; and used to generate code
+    Transpiler::Statement::StatementList m_UpdateStatements;
 };
 
 // ----------------------------------------------------------------------------
@@ -124,8 +135,6 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
-
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -156,8 +165,6 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
-
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
 
     //----------------------------------------------------------------------------
     // Static constants

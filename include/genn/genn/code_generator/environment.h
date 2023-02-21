@@ -128,10 +128,10 @@ public:
 
         for(const auto &v : variables) {
             if(isHeterogeneousFn(v.name)) {
-                addVarSubstitution(v.name, "group->" + v.name);
+                addSubstitution(v.name, "group->" + v.name);
             }
             else {
-                addVarSubstitution(v.name, Utils::writePreciseString(values.at(v.name)));
+                addSubstitution(v.name, Utils::writePreciseString(values.at(v.name)));
             }
         }
     }
