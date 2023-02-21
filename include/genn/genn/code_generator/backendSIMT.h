@@ -201,13 +201,13 @@ protected:
     void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genCustomUpdateKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                const std::string &updateGroup, size_t &idStart) const;
 
-    void genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genCustomUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                  const std::string &updateGroup, size_t &idStart) const;
     
-    void genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                           const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomConnectivityUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
@@ -318,6 +318,93 @@ private:
                           S getPaddedSizeFunc, GroupHandler<T> handler) const
     {
         genParallelGroup(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+                         [](const T &) { return true; }, handler);
+    }
+
+    template<typename T, typename S, typename F>
+    void genParallelGroup(EnvironmentExternal &env, const std::vector<T> &groups, size_t &idStart,
+                          S getPaddedSizeFunc, F filter, GroupHandlerEnv<T> handler) const
+    {
+        // Loop through groups
+        for(const auto &gMerge : groups) {
+            if(filter(gMerge)) {
+                // Sum padded sizes of each group within merged group
+                const size_t paddedSize = std::accumulate(
+                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+                    [getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+                    {
+                        return (acc + getPaddedSizeFunc(g.get()));
+                    });
+
+                env.getStream() << "// merged" << gMerge.getIndex() << std::endl;
+
+                // If this is the first  group
+                if(idStart == 0) {
+                    env.getStream() << "if(id < " << paddedSize << ")";
+                }
+                else {
+                    env.getStream() << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
+                }
+                {
+                    CodeStream::Scope b(env.getStream());
+                    EnvironmentSubstitute popEnv(env);
+
+                    if(gMerge.getGroups().size() == 1) {
+                        popEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        popEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                        popEnv.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                        // Use the starting thread ID of the whole merged group as group_start_id
+                        popEnv.addSubstitution("group_start_id", std::to_string(idStart));
+                    }
+                    else {
+                        // Perform bisect operation to get index of merged struct
+                        popEnv.getStream() << "unsigned int lo = 0;" << std::endl;
+                        popEnv.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                        popEnv.getStream() << "while(lo < hi)" << std::endl;
+                        {
+                            CodeStream::Scope b(popEnv.getStream());
+                            popEnv.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+
+                            popEnv.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                            {
+                                CodeStream::Scope b(popEnv.getStream());
+                                popEnv.getStream() << "hi = mid;" << std::endl;
+                            }
+                            popEnv.getStream() << "else";
+                            {
+                                CodeStream::Scope b(popEnv.getStream());
+                                popEnv.getStream() << "lo = mid + 1;" << std::endl;
+                            }
+                        }
+
+                        // Use this to get reference to merged group structure
+                        popEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        popEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
+                        // Get group start thread ID and use as group_start_id
+                        popEnv.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                        popEnv.addSubstitution("group_start_id", "groupStartID");
+
+                        // Use this to calculate local id within group
+                        popEnv.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
+                    }
+                    popEnv.addSubstitution("id", "lid");
+
+                    handler(popEnv, gMerge);
+
+                    idStart += paddedSize;
+                }
+            }
+        }
+    }
+
+    
+    template<typename T, typename S>
+    void genParallelGroup(EnvironmentExternal &env, const std::vector<T> &groups, size_t &idStart,
+                          S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
+    {
+        genParallelGroup(env, groups, idStart, getPaddedSizeFunc,
                          [](const T &) { return true; }, handler);
     }
     

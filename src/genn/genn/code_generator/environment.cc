@@ -83,4 +83,5 @@ void EnvironmentSubstitute::addSubstitution(const std::string &source, const std
 size_t EnvironmentSubstitute::addInitialiser(const std::string &initialiser)
 {
     m_Initialisers.emplace_back(false, initialiser);
+    return (m_Initialisers.size() - 1);
 }

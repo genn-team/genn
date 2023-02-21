@@ -896,91 +896,91 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, 
+void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged, 
                                         const std::string &updateGroup, size_t &idStart) const
 {
     genParallelGroup<CustomUpdateGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
+        env, modelMerged.getMergedCustomUpdateGroups(), idStart,
         [&modelMerged, this](const CustomUpdateInternal &cu) 
         {
             return getPaddedNumCustomUpdateThreads(cu, modelMerged.getModel().getBatchSize());
         },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [&modelMerged, this](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this](EnvironmentExternal &env, const CustomUpdateGroupMerged &cg)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // If update is a batch reduction
-            Substitutions cuSubs(&popSubs);
+            EnvironmentSubstitute cuEnv(env);
             if(cg.getArchetype().isBatchReduction()) {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << cuSubs["id"] << " < group->size)";
+                cuEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                cuEnv.getStream() << "if(" << cuEnv.getName("id") << " < group->size)";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(cuEnv.getStream());
 
                     // Initialise reduction targets
-                    const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id"]);
+                    const auto reductionTargets = genInitReductionTargets(cuEnv.getStream(), cg, cuEnv.getName("id"));
 
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
-                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
+                    cuEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
                     {
-                        CodeStream::Scope b(os);
-                        cuSubs.addVarSubstitution("batch", "batch");
+                        CodeStream::Scope b(cuEnv.getStream());
+                        cuEnv.addSubstitution("batch", "batch");
 
-                        genCustomUpdateIndexCalculation(os, cg);
+                        genCustomUpdateIndexCalculation(cuEnv.getStream(), cg);
                         
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, os, cuSubs);
+                        cg.generateCustomUpdate(*this, cuEnv);
 
                         // Loop through reduction targets and generate reduction
                         for(const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
+                            cuEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                        cuEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
             }
             // Otherwise, if this is a neuron reduction
             else if (cg.getArchetype().isNeuronReduction()) {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << cuSubs["id"] << " < " << (32 * modelMerged.getModel().getBatchSize()) << ")";
+                cuEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                cuEnv.getStream() << "if(" << cuEnv.getName("id") << " < " << (32 * modelMerged.getModel().getBatchSize()) << ")";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(cuEnv.getStream());
 
                     // Split ID into lane and batch
-                    os << "const unsigned int lane = " << cuSubs["id"] << " % 32;" << std::endl;
-                    os << "const unsigned int batch = " << cuSubs["id"] << " / 32;" << std::endl;
-                    cuSubs.addVarSubstitution("batch", "batch");
+                    cuEnv.getStream() << "const unsigned int lane = " << cuEnv.getName("id") << " % 32;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int batch = " << cuEnv.getName("id") << " / 32;" << std::endl;
+                    cuEnv.addSubstitution("batch", "batch");
 
-                    genCustomUpdateIndexCalculation(os, cg);
+                    genCustomUpdateIndexCalculation(cuEnv.getStream(), cg);
 
                     // Initialise reduction targets
-                    const auto reductionTargets = genInitReductionTargets(os, cg);
+                    const auto reductionTargets = genInitReductionTargets(cuEnv.getStream(), cg);
 
                     // Loop through warps of data
                     // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
                     // if this isn't the case (TF uses a threshold of 1024), we should do something smarter
-                    os << "for(unsigned int idx = lane; idx < group->size; idx += 32)";
+                    cuEnv.getStream() << "for(unsigned int idx = lane; idx < group->size; idx += 32)";
                     {
-                        CodeStream::Scope b(os);
+                        CodeStream::Scope b(cuEnv.getStream());
 
                         // Re-substitute id with loop index
-                        Substitutions reductionSubs(&cuSubs);
-                        reductionSubs.addVarSubstitution("id", "idx", true);
+                        EnvironmentSubstitute reductionEnv(cuEnv);
+                        reductionEnv.addSubstitution("id", "idx");
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, os, reductionSubs);
+                        cg.generateCustomUpdate(*this, reductionEnv);
 
                         // Loop through reduction targets and generate reduction
                         for (const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
+                            reductionEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
@@ -988,17 +988,17 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     // **YUCK** CUDA-specific
                     for (unsigned int i = 16; i > 0; i /= 2) {
                         for (const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
-                                                        r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
+                            cuEnv.getStream() << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
+                                                                       r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                         }
                     }
 
                     // In first lane, loop through reduction targets and write reduced value back to memory
-                    os << "if(lane == 0)";
+                    cuEnv.getStream() << "if(lane == 0)";
                     {
-                        CodeStream::Scope b(os);
+                        CodeStream::Scope b(cuEnv.getStream());
                         for (const auto &r : reductionTargets) {
-                            os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                            cuEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                         }
                     }
                 }
@@ -1008,26 +1008,26 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                 if(cg.getArchetype().isBatched()) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
-                    os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
-                    os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
-                    os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
+                    cuEnv.getStream() << "const unsigned int bid = " << cuEnv.getName("id") << " % paddedSize;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int batch = " << cuEnv.getName("id") << " / paddedSize;" << std::endl;
 
                     // Replace id in substitution with intra-batch ID and add batch
-                    cuSubs.addVarSubstitution("id", "bid", true);
-                    cuSubs.addVarSubstitution("batch", "batch");
+                    cuEnv.addSubstitution("id", "bid");
+                    cuEnv.addSubstitution("batch", "batch");
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
-                    cuSubs.addVarSubstitution("batch", "0");
+                    cuEnv.addSubstitution("batch", "0");
                 }
 
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << cuSubs["id"] << " < group->size)";
+                cuEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                cuEnv.getStream() << "if(" << cuEnv.getName("id") << " < group->size)";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(cuEnv.getStream());
 
-                    genCustomUpdateIndexCalculation(os, cg);
-                    cg.generateCustomUpdate(*this, os, cuSubs);
+                    genCustomUpdateIndexCalculation(cuEnv.getStream(), cg);
+                    cg.generateCustomUpdate(*this, cuEnv);
                 }
             }
 
@@ -1035,17 +1035,17 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                           const std::string &updateGroup, size_t &idStart) const
 {
     genParallelGroup<CustomUpdateWUGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
+        env, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
         [&modelMerged, this](const CustomUpdateWUInternal &cg) 
         {
             return getPaddedNumCustomUpdateWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [&modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this](EnvironmentExternal &env, const CustomUpdateWUGroupMerged &cg)
         {
             const SynapseGroupInternal *sg = cg.getArchetype().getSynapseGroup();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
@@ -1054,132 +1054,132 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             // Calculate size of each batch to update
             if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                 // Loop through kernel dimensions and multiply together
-                os << "const unsigned int size = ";
+                env.getStream() << "const unsigned int size = ";
                 for (size_t i = 0; i < sg->getKernelSize().size(); i++) {
-                    os << cg.getKernelSize(i);
+                    env.getStream() << cg.getKernelSize(i);
                     if (i != (sg->getKernelSize().size() - 1)) {
-                        os << " * ";
+                        env.getStream() << " * ";
                     }
                 }
-                os << ";" << std::endl;
+                env.getStream() << ";" << std::endl;
             }
             else {
-                os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+                env.getStream() << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
             }
 
             // If update isn't a batch reduction
-            Substitutions cuSubs(&popSubs);
+            EnvironmentSubstitute cuEnv(env);
             if(!cg.getArchetype().isBatchReduction()) {
                 // If it's batched
                 if(cg.getArchetype().isBatched()) {
-                    os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
+                    cuEnv.getStream() << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
 
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
-                    os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
-                    os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int bid = " << cuEnv.getName("id") << " % paddedSize;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int batch = " << cuEnv.getName("id") << " / paddedSize;" << std::endl;
 
                     // Replace id in substitution with intra-batch ID and add batch
-                    cuSubs.addVarSubstitution("id", "bid", true);
-                    cuSubs.addVarSubstitution("batch", "batch");
+                    cuEnv.addSubstitution("id", "bid");
+                    cuEnv.addSubstitution("batch", "batch");
 
                     // Calculate batch offset
-                    os << "const unsigned int batchOffset = size * batch;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
-                    cuSubs.addVarSubstitution("batch", "0");
+                    cuEnv.addSubstitution("batch", "0");
                 }
             }
 
             // if this isn't a padding thread
-            os << "if (" << cuSubs["id"] << " < size)";
+            cuEnv.getStream() << "if (" << cuEnv.getName("id") << " < size)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(cuEnv.getStream());
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                    cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
-                    cuSubs.addVarSubstitution("id_kernel", cuSubs["id"]);
+                    cuEnv.addSubstitution("id_syn", cuEnv.getName("id"));
+                    cuEnv.addSubstitution("id_kernel", cuEnv.getName("id"));
                 }
                 else {
                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                        os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
-                        os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
+                        cuEnv.getStream() << "const unsigned int row = " << cuEnv.getName("id") << " / group->rowStride;" << std::endl;
+                        cuEnv.getStream() << "const unsigned int col = " << cuEnv.getName("id") << " % group->rowStride;" << std::endl;
 
-                        cuSubs.addVarSubstitution("id_pre", "row");
-                        cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
-                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                        cuEnv.addSubstitution("id_pre", "row");
+                        cuEnv.addSubstitution("id_post", "group->ind[" + cuEnv.getName("id") + "]");
+                        cuEnv.addSubstitution("id_syn", cuEnv.getName("id"));
 
-                        os << "if(col < group->rowLength[row])";
-                        os << CodeStream::OB(2);
+                        cuEnv.getStream() << "if(col < group->rowLength[row])";
+                        cuEnv.getStream() << CodeStream::OB(2);
                     }
                     else {
                         // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                        cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
-                        cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
-                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                        cuEnv.addSubstitution("id_pre", "(" + cuEnv.getName("id") + " / group->rowStride)");
+                        cuEnv.addSubstitution("id_post", "(" +cuEnv.getName("id") + " % group->rowStride)");
+                        cuEnv.addSubstitution("id_syn", cuEnv.getName("id"));
                     }
                 }
 
                 // Initialise reduction targets
-                const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id_syn"]);
+                const auto reductionTargets = genInitReductionTargets(cuEnv.getStream(), cg, cuEnv.getName("id_syn"));
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
-                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
-                    os << CodeStream::OB(1);
-                    cuSubs.addVarSubstitution("batch", "batch");
+                    cuEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
+                    cuEnv.getStream() << CodeStream::OB(1);
+                    cuEnv.addSubstitution("batch", "batch");
                 }
 
                 // Calculate batch offset if required
                 if(cg.getArchetype().isBatched()) {
-                    os << "const unsigned int batchOffset = size * batch;" << std::endl;
+                    cuEnv.getStream() << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
 
-                cg.generateCustomUpdate(*this, os, cuSubs);
+                cg.generateCustomUpdate(*this, cuEnv);
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
                     // Loop through reduction targets and generate reduction
                     for(const auto &r : reductionTargets) {
-                        os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
+                        cuEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
                     }
 
                     // End for loop through batches
-                    os << CodeStream::CB(1);
+                    cuEnv.getStream() << CodeStream::CB(1);
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                        cuEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
 
                 if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << CodeStream::CB(2);
+                    cuEnv.getStream() << CodeStream::CB(2);
                 }
             }
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                                    const std::string &updateGroup, size_t &idStart) const
 {
     // Generate 2D array
     const size_t blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
-    os << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
+    env.getStream() << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
 
     genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomUpdateTransposeWUGroups(), idStart,
+        env, modelMerged.getMergedCustomUpdateTransposeWUGroups(), idStart,
         [&modelMerged, this](const CustomUpdateWUInternal &cg)
         {
             return getPaddedNumCustomUpdateTransposeWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateTransposeWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [&modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this, blockSize](EnvironmentExternal &env, const CustomUpdateTransposeWUGroupMerged &cg)
         {
             // Get index of variable being transposed
             const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
@@ -1188,95 +1188,95 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
-            os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
+            env.getStream() << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
 
             // Calculate what block this kernel starts at (because of kernel merging, it may not start at block 0)
-            os << "const unsigned int blockStart = " << popSubs["group_start_id"] << " / " << blockSize << ";" << std::endl;
+            env.getStream() << "const unsigned int blockStart = " << env.getName("group_start_id") << " / " << blockSize << ";" << std::endl;
 
-            Substitutions synSubs(&popSubs);
+            EnvironmentSubstitute synEnv(env);
             if(cg.getArchetype().isBatched()) {
                 // If there's multiple batches we also need to know how many Y blocks and hence total blocks there are
-                os << "const unsigned int numYBlocks = (group->numSrcNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
-                os << "const unsigned int numBlocks = numXBlocks * numYBlocks;" << std::endl;
+                synEnv.getStream() << "const unsigned int numYBlocks = (group->numSrcNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
+                synEnv.getStream() << "const unsigned int numBlocks = numXBlocks * numYBlocks;" << std::endl;
 
                 // Therefore determine block and batch
-                os << "const unsigned int batchBlock = " << getBlockID(0) << " - blockStart;" << std::endl;
-                os << "const unsigned int block = batchBlock % numBlocks;" << std::endl;
-                os << "const unsigned int batch = batchBlock / numBlocks;" << std::endl;
+                synEnv.getStream() << "const unsigned int batchBlock = " << getBlockID(0) << " - blockStart;" << std::endl;
+                synEnv.getStream() << "const unsigned int block = batchBlock % numBlocks;" << std::endl;
+                synEnv.getStream() << "const unsigned int batch = batchBlock / numBlocks;" << std::endl;
 
                 // Finally, calculate batch offset into arrays etc
-                os << "const unsigned int batchOffset = batch * group->numSrcNeurons * group->numTrgNeurons;" << std::endl;
+                synEnv.getStream() << "const unsigned int batchOffset = batch * group->numSrcNeurons * group->numTrgNeurons;" << std::endl;
 
                 // Add batch to substitutions
-                synSubs.addVarSubstitution("batch", "batch");
+                synEnv.addSubstitution("batch", "batch");
             }
             // Otherwise, just substitute "batch" for 0
             else {
-                os << "const unsigned int block = " << getBlockID(0) << " - blockStart;" << std::endl;
-                synSubs.addVarSubstitution("batch", "0");
+                synEnv.getStream() << "const unsigned int block = " << getBlockID(0) << " - blockStart;" << std::endl;
+                synEnv.addSubstitution("batch", "0");
             }
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here
-            os << "const unsigned int blockX = (block % numXBlocks);" << std::endl;
-            os << "const unsigned int blockY = (block / numXBlocks);" << std::endl;
+            synEnv.getStream() << "const unsigned int blockX = (block % numXBlocks);" << std::endl;
+            synEnv.getStream() << "const unsigned int blockY = (block / numXBlocks);" << std::endl;
 
             {
-                CodeStream::Scope b(os);
-                os << "// Calculate coordinate of thread in input matrix" << std::endl;
-                os << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
-                os << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
+                CodeStream::Scope b(synEnv.getStream());
+                synEnv.getStream() << "// Calculate coordinate of thread in input matrix" << std::endl;
+                synEnv.getStream() << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                synEnv.getStream() << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                os << "// If thread isn't off the 'right' edge of the input matrix" << std::endl;
-                os << "if(x < group->numTrgNeurons)";
+                synEnv.getStream() << "// If thread isn't off the 'right' edge of the input matrix" << std::endl;
+                synEnv.getStream() << "if(x < group->numTrgNeurons)";
                 {
-                    CodeStream::Scope b(os);
-                    os << "// Loop through input rows " << std::endl;
-                    os << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
+                    CodeStream::Scope b(synEnv.getStream());
+                    synEnv.getStream() << "// Loop through input rows " << std::endl;
+                    synEnv.getStream() << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
-                        CodeStream::Scope b(os);
-                        os << "// If thread isn't off the 'bottom' edge of the input matrix" << std::endl;
-                        os << "if((y + j) < group->numSrcNeurons)";
+                        CodeStream::Scope b(synEnv.getStream());
+                        synEnv.getStream() << "// If thread isn't off the 'bottom' edge of the input matrix" << std::endl;
+                        synEnv.getStream() << "if((y + j) < group->numSrcNeurons)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "// Read forward weight from global memory" << std::endl;
-                            os << "const unsigned int idx = ((y + j) * group->numTrgNeurons) + x;" << std::endl;
+                            CodeStream::Scope b(synEnv.getStream());
+                            synEnv.getStream() << "// Read forward weight from global memory" << std::endl;
+                            synEnv.getStream() << "const unsigned int idx = ((y + j) * group->numTrgNeurons) + x;" << std::endl;
 
-                            synSubs.addVarSubstitution("id_pre", "y");
-                            synSubs.addVarSubstitution("id_post", "x");
-                            synSubs.addVarSubstitution("id_syn", "idx");
-                            cg.generateCustomUpdate(*this, os, synSubs);
+                            synEnv.addSubstitution("id_pre", "y");
+                            synEnv.addSubstitution("id_post", "x");
+                            synEnv.addSubstitution("id_syn", "idx");
+                            cg.generateCustomUpdate(*this, env);
 
                             // Write forward weight to shared memory
-                            os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
+                            synEnv.getStream() << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
                         }
                     }
                 }
             }
-            genSharedMemBarrier(os);
+            genSharedMemBarrier(env.getStream());
             {
-                CodeStream::Scope b(os);
-                os << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
-                os << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
-                os << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
+                CodeStream::Scope b(synEnv.getStream());
+                synEnv.getStream() << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
+                synEnv.getStream() << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                synEnv.getStream() << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                os << "// If thread isn't off the 'right' edge of the output matrix" << std::endl;
-                os << "if(x < group->numSrcNeurons)";
+                synEnv.getStream() << "// If thread isn't off the 'right' edge of the output matrix" << std::endl;
+                synEnv.getStream() << "if(x < group->numSrcNeurons)";
                 {
-                    CodeStream::Scope b(os);
-                    os << "// Loop through output rows" << std::endl;
-                    os <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
+                    CodeStream::Scope b(synEnv.getStream());
+                    synEnv.getStream() << "// Loop through output rows" << std::endl;
+                    synEnv.getStream() <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
-                        CodeStream::Scope b(os);
-                        os << "// If thread isn't off the 'bottom' edge of the output matrix" << std::endl;
-                        os << "if((y + j) < group->numTrgNeurons)";
+                        CodeStream::Scope b(synEnv.getStream());
+                        synEnv.getStream() << "// If thread isn't off the 'bottom' edge of the output matrix" << std::endl;
+                        synEnv.getStream() << "if((y + j) < group->numTrgNeurons)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "group->" << transposeVarName << "Transpose[";
+                            CodeStream::Scope b(synEnv.getStream());
+                            synEnv.getStream() << "group->" << transposeVarName << "Transpose[";
                             if(cg.getArchetype().isBatched()) {
-                                os << "batchOffset + ";
+                                synEnv.getStream() << "batchOffset + ";
                             }
-                            os << "((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
+                            synEnv.getStream() << "((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
                         }
                     }
                 }

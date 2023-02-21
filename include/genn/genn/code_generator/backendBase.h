@@ -34,6 +34,7 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
+class EnvironmentExternal;
 class ModelSpecMerged;
 class NeuronUpdateGroupMerged;
 class Substitutions;
@@ -187,6 +188,9 @@ public:
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
+
+    template<typename T>
+    using GroupHandlerEnv = std::function <void(EnvironmentExternal&, const T &)> ;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;

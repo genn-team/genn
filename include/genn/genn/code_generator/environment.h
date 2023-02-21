@@ -168,7 +168,7 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
     typedef std::function<std::string(InitialiserType, decltype(DefType::access))> GetIndexFn;    
 
 public:
-    EnvironmentLocalVarCache(const G &group, EnvironmentSubstitute &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    EnvironmentLocalVarCache(const G &group, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
     :   EnvironmentExternal(enclosing), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
