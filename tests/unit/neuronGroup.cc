@@ -488,6 +488,13 @@ TEST(NeuronGroup, FusePSM)
     auto synTargetInternal = static_cast<SynapseGroupInternal*>(synTarget);
     auto synDelayInternal = static_cast<SynapseGroupInternal*>(synDelay);
  
+    // Check all groups can be fused
+    ASSERT_TRUE(synInternal->canPSBeFused());
+    ASSERT_TRUE(syn2Internal->canPSBeFused());
+    ASSERT_TRUE(synParamInternal->canPSBeFused());
+    ASSERT_TRUE(synTargetInternal->canPSBeFused());
+    ASSERT_TRUE(synDelayInternal->canPSBeFused());
+
     // Check that identically configured PSMs can be merged
     ASSERT_EQ(synInternal->getFusedPSVarSuffix(), syn2Internal->getFusedPSVarSuffix());
     
@@ -501,6 +508,77 @@ TEST(NeuronGroup, FusePSM)
     ASSERT_NE(synInternal->getFusedPSVarSuffix(), synDelayInternal->getFusedPSVarSuffix());
 }
 
+TEST(NeuronGroup, FuseVarPSM)
+{
+    ModelSpecInternal model;
+    model.setMergePostsynapticModels(true);
+    
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    AlphaCurr::ParamValues psmParamVals(5.0);
+    AlphaCurr::VarValues psmVarValsConst1(0.0);
+    AlphaCurr::VarValues psmVarValsConst2(1.0);
+    AlphaCurr::VarValues psmVarValsRand(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
+    WeightUpdateModels::StaticPulseDendriticDelay::VarValues wumVarVals(0.1, 10);
+    
+    // Add two neuron groups to model
+    auto *pre = model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+
+    // Create baseline synapse group
+    auto *syn1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
+        "Syn1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, psmVarValsConst1);
+    
+    // Create second synapse group with same model and constant initialisers
+    auto *syn2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
+        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, psmVarValsConst1);
+
+   // Create third synapse group with same model and different constant initialisers
+    auto *syn3 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
+        "Syn3", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, psmVarValsConst2);
+    
+     // Create fourth synapse group with same model and random variable initialisers
+    auto *syn4 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
+        "Syn4", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, psmVarValsRand);
+    
+    
+    // **TODO** third safe group with different variable initialisers
+    model.finalize();
+    
+    // Cast neuron groups to internal types
+    auto preInternal = static_cast<NeuronGroupInternal*>(pre);
+    auto postInternal = static_cast<NeuronGroupInternal*>(post);
+
+    // Cast synapse groups to internal types
+    auto syn1Internal = static_cast<SynapseGroupInternal*>(syn1);
+    auto syn2Internal = static_cast<SynapseGroupInternal*>(syn2);
+    auto syn3Internal = static_cast<SynapseGroupInternal*>(syn3);
+    auto syn4Internal = static_cast<SynapseGroupInternal*>(syn4);
+    
+    // Check only groups with 'safe' model can be fused
+    ASSERT_TRUE(syn1Internal->canPSBeFused());
+    ASSERT_TRUE(syn2Internal->canPSBeFused());
+    ASSERT_TRUE(syn3Internal->canPSBeFused());
+    ASSERT_FALSE(syn4Internal->canPSBeFused());
+    
+    // Check that identically configured PSMs can be merged
+    ASSERT_EQ(syn1Internal->getFusedPSVarSuffix(), syn2Internal->getFusedPSVarSuffix());
+
+    ASSERT_TRUE(preInternal->getFusedPSMInSyn().empty());
+    ASSERT_EQ(postInternal->getFusedPSMInSyn().size(), 3);
+}
 TEST(NeuronGroup, FusePreOutput)
 {
     ModelSpecInternal model;

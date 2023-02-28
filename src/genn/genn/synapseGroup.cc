@@ -741,11 +741,34 @@ void SynapseGroup::initDerivedParams(double dt)
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeFused() const
 {
-    // Return true if there are no variables or extra global parameters
-    // **NOTE** many models with variables would work fine, but  
-    // nothing stops initialisers being used to configure PS models 
-    // to behave totally different, similarly with EGPs
-    return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
+    // If any postsynaptic model variables aren't initialised to constant values, this synapse group's postsynaptic model can't be merged
+    // **NOTE** hash check will compare these constant values
+    if(std::any_of(getPSVarInitialisers().cbegin(), getPSVarInitialisers().cend(), 
+                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+    {
+        return false;
+    }
+    
+    // Loop through EGPs
+    // **NOTE** this is kind of silly as, if it's not referenced in either of 
+    // these code strings, there wouldn't be a lot of point in a PSM EGP existing!
+    const auto psmEGPs = getPSModel()->getExtraGlobalParams();
+    const std::string decayCode = getPSModel()->getDecayCode();
+    const std::string applyInputCode = getPSModel()->getApplyInputCode();
+    for(const auto &egp : psmEGPs) {
+        // If this EGP is referenced in decay code, return false
+        const std::string egpName = "$(" + egp.name + ")";
+        if(decayCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+        
+        // If this EGP is referenced in apply input code, return false
+        if(applyInputCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canWUMPreUpdateBeFused() const
@@ -882,6 +905,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
+    
+    // Loop through PSM variable initialisers and hash first parameter.
+    // Due to SynapseGroup::canPSBeFused, all initialiser snippets
+    // will be constant and have a single parameter containing the value
+    for(const auto &w : getPSVarInitialisers()) {
+        assert(w.getParams().size() == 1);
+        Utils::updateHash(w.getParams().at(0), hash);
+    }
+    
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
