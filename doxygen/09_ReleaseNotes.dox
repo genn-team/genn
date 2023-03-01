@@ -12,7 +12,7 @@ Bug fixes
 
 Optimisations
 -------------
-1. When building models with large numbers of populations using the CUDA backend, compile times could be very large. This was at least in part due to over-verbose error handling code being generated. CodeGenerator::PreferencesBase::generateSimpleErrorHandling enables the generation of much more minimal error-handling code and can speed up compilation by up to 10x.
+1. When building models with large numbers of populations using the CUDA backend, compile times could be very large. This was at least in part due to over-verbose error handling code being generated. CodeGenerator::CUDA::Preferences::generateSimpleErrorHandling enables the generation of much more minimal error-handling code and can speed up compilation by up to 10x.
 2. Turned on multi-processor compilation option in Visual Studio solutions which speeds up compilation of GeNN by a significant amount.
 3. Fusing postsynaptic models was previously overly-conservative meaning large, highly-connected models using a postsynaptic model with additional state variables would perform poorly. These checks have been relaxed and brough into line with those used for fusing pre and postsynaptic updates coming from weight update models.
 
