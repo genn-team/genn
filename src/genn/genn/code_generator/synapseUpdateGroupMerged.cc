@@ -20,6 +20,9 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     const auto *wu = sg.getArchetype().getWUModel();
 
     Substitutions synapseSubs(&baseSubs);
+    synapseSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+    synapseSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+    synapseSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams(),

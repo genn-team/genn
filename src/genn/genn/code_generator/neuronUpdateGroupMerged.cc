@@ -225,6 +225,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     }
 
     Substitutions neuronSubs(&popSubs);
+    neuronSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+    neuronSubs.addVarSubstitution("num", "group->numNeurons");
+    
     neuronSubs.addVarSubstitution("Isyn", "Isyn");
 
     if(getArchetype().isSpikeTimeRequired()) {
