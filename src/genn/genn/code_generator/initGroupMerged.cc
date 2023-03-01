@@ -66,6 +66,8 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
             CodeStream::Scope b(os);
 
             Substitutions varSubs(&popSubs);
+            varSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+            varSubs.addVarSubstitution("num", count);
 
             // Substitute in parameters and derived parameters for initialising variables
             varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
@@ -147,31 +149,36 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
         // If this variable has any initialisation code and doesn't require a kernel
         if(!varInit.getSnippet()->getCode().empty() && !varInit.getSnippet()->requiresKernel()) {
             CodeStream::Scope b(os);
+            
+            Substitutions varSubs(&popSubs);
+            varSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+            varSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+            varSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
             // Generate target-specific code to initialise variable
-            genSynapseVariableRowInitFn(os, popSubs,
+            genSynapseVariableRowInitFn(os, varSubs,
                 [&vars, &varInit, &ftype, &stride, batchSize, k, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
-                (CodeStream &os, Substitutions &varSubs)
+                (CodeStream &os, Substitutions &varInitSubs)
                 {
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name);
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                      [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name);
-                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group->", vars[k].name);
+                    varInitSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                                          [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
+                                                          "", "group->", vars[k].name);
+                    varInitSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                                        [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
+                                                        "", "group->", vars[k].name);
+                    varInitSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                       "", "group->", vars[k].name);
 
                     // Generate initial value into temporary variable
                     os << vars[k].type << " initVal;" << std::endl;
-                    varSubs.addVarSubstitution("value", "initVal");
+                    varInitSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
-                    varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(groupIndex));
+                    varInitSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(groupIndex));
                     code = ensureFtype(code, ftype);
                     os << code << std::endl;
 
                     // Fill value across all batches
-                    genVariableFill(os,  vars[k].name, "initVal", varSubs["id_syn"], stride,
+                    genVariableFill(os,  vars[k].name, "initVal", varInitSubs["id_syn"], stride,
                                     getVarAccessDuplication(vars[k].access), batchSize);
                 });
         }
@@ -333,7 +340,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                 os << "*group->spkQuePtr = 0;" << std::endl;
             });
     }
-
+    
     // Initialise neuron variables
     genInitNeuronVarCode(os, backend, popSubs, getArchetype().getNeuronModel()->getVars(), getArchetype().getVarInitialisers(), 
                          "", "numNeurons", getArchetype().getNumDelaySlots(), getIndex(), model.getPrecision(), model.getBatchSize(),
