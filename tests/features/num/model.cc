@@ -82,6 +82,39 @@ public:
 };
 IMPLEMENT_MODEL(WUM);
 
+//----------------------------------------------------------------------------
+// CU
+//----------------------------------------------------------------------------
+class CU : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(CU, 0, 2, 1);
+    
+    SET_VARS({{"num_test", "unsigned int"}, {"num_batch_test", "unsigned int"}});
+    SET_VAR_REFS({{"ref", "unsigned int", VarAccessMode::READ_ONLY}});
+    
+    SET_UPDATE_CODE(
+        "$(num_test)= $(num);\n"
+        "$(num_batch_test) = $(num_batch);\n");
+};
+IMPLEMENT_MODEL(CU);
+
+//----------------------------------------------------------------------------
+// CUWUM
+//----------------------------------------------------------------------------
+class CUWUM : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(CUWUM, 0, 3, 1);
+    
+    SET_VARS({{"num_pre_test", "unsigned int"}, {"num_post_test", "unsigned int"}, {"num_batch_test", "unsigned int"}});
+    SET_VAR_REFS({{"ref", "unsigned int", VarAccessMode::READ_ONLY}});
+    
+    SET_UPDATE_CODE(
+        "$(num_pre_test)= $(num_pre);\n"
+        "$(num_post_test)= $(num_post);\n"
+        "$(num_batch_test) = $(num_batch);\n");
+};
+IMPLEMENT_MODEL(CUWUM);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -97,12 +130,19 @@ void modelDefinition(ModelSpec &model)
     model.setName("num");
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 2, {}, {});
-    model.addNeuronPopulation<Neuron>("Post", 4, {}, {0, 0});
+    auto *post = model.addNeuronPopulation<Neuron>("Post", 4, {}, {0, 0});
     model.addCurrentSource<CS>("CurrSource", "Post", {}, {0, 0});
     auto *syn = model.addSynapsePopulation<WUM, PSM>(
         "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, {0, 0, 0}, {0, 0}, {0, 0},
         {}, {0, 0});
-
+    
+    CU::VarReferences varReferences(createVarRef(post, "num_test")); // ref
+    model.addCustomUpdate<CU>("CU", "Test", {}, {0, 0}, varReferences);
+    
+    CUWUM::WUVarReferences wuVarReferences(createWUVarRef(syn, "num_pre_wum_syn_test")); // R
+    model.addCustomUpdate<CUWUM>("CUWM", "Test", {}, {0, 0, 0}, wuVarReferences);
+    
+    
     model.setPrecision(GENN_FLOAT);
 }
