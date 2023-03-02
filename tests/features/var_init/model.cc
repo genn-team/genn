@@ -15,9 +15,9 @@ suite of minimal models with known analytic outcomes that are used for continuou
 class Neuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(Neuron, 0, 6);
+    DECLARE_MODEL(Neuron, 0, 7);
 
-    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_VARS({{"num", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
 };
 IMPLEMENT_MODEL(Neuron);
 
@@ -27,9 +27,9 @@ IMPLEMENT_MODEL(Neuron);
 class CurrentSrc : public CurrentSourceModels::Base
 {
 public:
-    DECLARE_MODEL(CurrentSrc, 0, 6);
+    DECLARE_MODEL(CurrentSrc, 0, 7);
 
-    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_VARS({{"num", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
 };
 IMPLEMENT_MODEL(CurrentSrc);
 
@@ -39,9 +39,9 @@ IMPLEMENT_MODEL(CurrentSrc);
 class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(PostsynapticModel, 0, 6);
+    DECLARE_MODEL(PostsynapticModel, 0, 7);
 
-    SET_VARS({{"pconstant_val", "scalar"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}, {"pgamma", "scalar"}, {"pbinomial", "unsigned int"}});
+    SET_VARS({{"pnum", "unsigned int"}, {"pnum_batch", "unsigned int"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}, {"pgamma", "scalar"}, {"pbinomial", "unsigned int"}});
 };
 IMPLEMENT_MODEL(PostsynapticModel);
 
@@ -51,11 +51,11 @@ IMPLEMENT_MODEL(PostsynapticModel);
 class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 6, 6, 6);
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 8, 7, 7);
 
-    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
-    SET_PRE_VARS({{"pre_constant_val", "scalar"}, {"pre_uniform", "scalar"}, {"pre_normal", "scalar"}, {"pre_exponential", "scalar"}, {"pre_gamma", "scalar"}, {"pre_binomial", "unsigned int"}});
-    SET_POST_VARS({{"post_constant_val", "scalar"}, {"post_uniform", "scalar"}, {"post_normal", "scalar"}, {"post_exponential", "scalar"}, {"post_gamma", "scalar"}, {"post_binomial", "unsigned int"}});
+    SET_VARS({{"num_pre", "unsigned int"}, {"num_post", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_PRE_VARS({{"pre_num", "unsigned int"}, {"pre_num_batch", "unsigned int"}, {"pre_uniform", "scalar"}, {"pre_normal", "scalar"}, {"pre_exponential", "scalar"}, {"pre_gamma", "scalar"}, {"pre_binomial", "unsigned int"}});
+    SET_POST_VARS({{"post_num", "unsigned int"}, {"post_num_batch", "unsigned int"}, {"post_uniform", "scalar"}, {"post_normal", "scalar"}, {"post_exponential", "scalar"}, {"post_gamma", "scalar"}, {"post_binomial", "unsigned int"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
@@ -65,9 +65,9 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 class WeightUpdateModelNoPrePost : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModelNoPrePost, 0, 6, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModelNoPrePost, 0, 8, 0, 0);
 
-    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_VARS({{"num_pre", "unsigned int"}, {"num_post", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModelNoPrePost);
 
@@ -77,12 +77,73 @@ IMPLEMENT_MODEL(WeightUpdateModelNoPrePost);
 class NopCustomUpdateModel : public CustomUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_UPDATE_MODEL(NopCustomUpdateModel, 0, 6, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(NopCustomUpdateModel, 0, 7, 1);
 
-    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
-    SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
+    SET_VARS({{"num", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_VAR_REFS({{"R", "unsigned int", VarAccessMode::READ_WRITE}})
 };
 IMPLEMENT_MODEL(NopCustomUpdateModel);
+
+//----------------------------------------------------------------------------
+// NopCustomUpdateModelWU
+//----------------------------------------------------------------------------
+class NopCustomUpdateModelWU : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(NopCustomUpdateModelWU, 0, 8, 1);
+
+    SET_VARS({{"num_pre", "unsigned int"}, {"num_post", "unsigned int"}, {"num_batch", "unsigned int"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}, {"binomial", "unsigned int"}});
+    SET_VAR_REFS({{"R", "unsigned int", VarAccessMode::READ_WRITE}})
+};
+IMPLEMENT_MODEL(NopCustomUpdateModelWU);
+
+//----------------------------------------------------------------------------
+// NumBatch
+//----------------------------------------------------------------------------
+class NumBatch : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(NumBatch, 0);
+    
+     SET_CODE("$(value) = $(num_batch);");
+};
+IMPLEMENT_SNIPPET(NumBatch);
+
+//----------------------------------------------------------------------------
+// Num
+//----------------------------------------------------------------------------
+class Num : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(Num, 0);
+    
+     SET_CODE("$(value) = $(num);");
+};
+IMPLEMENT_SNIPPET(Num);
+
+//----------------------------------------------------------------------------
+// NumPre
+//----------------------------------------------------------------------------
+class NumPre : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(NumPre, 0);
+    
+     SET_CODE("$(value) = $(num_pre);");
+};
+IMPLEMENT_SNIPPET(NumPre);
+
+//----------------------------------------------------------------------------
+// NumPost
+//----------------------------------------------------------------------------
+class NumPost : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(NumPost, 0);
+    
+     SET_CODE("$(value) = $(num_post);");
+};
+IMPLEMENT_SNIPPET(NumPost);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -122,7 +183,8 @@ void modelDefinition(ModelSpec &model)
 
     // Neuron parameters
     Neuron::VarValues neuronInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
@@ -131,7 +193,8 @@ void modelDefinition(ModelSpec &model)
 
     // Current source parameters
     CurrentSrc::VarValues currentSourceInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
@@ -140,7 +203,8 @@ void modelDefinition(ModelSpec &model)
 
     // PostsynapticModel parameters
     PostsynapticModel::VarValues postsynapticInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
@@ -149,29 +213,44 @@ void modelDefinition(ModelSpec &model)
 
     // WeightUpdateModel parameters
     WeightUpdateModel::VarValues weightUpdateInit(
-        13.0,
+        initVar<NumPre>(),
+        initVar<NumPost>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
         initVar<InitVarSnippet::Gamma>(gammaParams),
         initVar<InitVarSnippet::Binomial>(binomialParams));
     WeightUpdateModel::PreVarValues weightUpdatePreInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
         initVar<InitVarSnippet::Gamma>(gammaParams),
         initVar<InitVarSnippet::Binomial>(binomialParams));
     WeightUpdateModel::PostVarValues weightUpdatePostInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
         initVar<InitVarSnippet::Gamma>(gammaParams),
         initVar<InitVarSnippet::Binomial>(binomialParams));
-    
+
+    // CustomUpdateModel parameters
     NopCustomUpdateModel::VarValues customUpdateInit(
-        13.0,
+        initVar<Num>(),
+        initVar<NumBatch>(),
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams),
+        initVar<InitVarSnippet::Binomial>(binomialParams));
+    NopCustomUpdateModelWU::VarValues customUpdateWUInit(
+        initVar<NumPre>(),
+        initVar<NumPost>(),
+        initVar<NumBatch>(),
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams),
@@ -212,37 +291,37 @@ void modelDefinition(ModelSpec &model)
         initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParams));
         
     // Custom updates
-    NopCustomUpdateModel::VarReferences neuronVarReferences(createVarRef(ng, "constant_val")); // R
+    NopCustomUpdateModel::VarReferences neuronVarReferences(createVarRef(ng, "num")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("NeuronCustomUpdate", "Test",
                                                {}, customUpdateInit, neuronVarReferences);
     
-    NopCustomUpdateModel::VarReferences currentSourceVarReferences(createVarRef(cs, "constant_val")); // R
+    NopCustomUpdateModel::VarReferences currentSourceVarReferences(createVarRef(cs, "num")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("CurrentSourceCustomUpdate", "Test",
                                                {}, customUpdateInit, currentSourceVarReferences);
                                                
-    NopCustomUpdateModel::VarReferences psmVarReferences(createPSMVarRef(sgDense, "pconstant_val")); // R
+    NopCustomUpdateModel::VarReferences psmVarReferences(createPSMVarRef(sgDense, "pnum")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("PSMCustomUpdate", "Test",
                                                {}, customUpdateInit, neuronVarReferences);
                                     
-    NopCustomUpdateModel::VarReferences wuPreVarReferences(createWUPreVarRef(sgSparse, "pre_constant_val")); // R
+    NopCustomUpdateModel::VarReferences wuPreVarReferences(createWUPreVarRef(sgSparse, "pre_num")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("WUPreCustomUpdate", "Test",
                                                {}, customUpdateInit, wuPreVarReferences);
                                                
-    NopCustomUpdateModel::VarReferences wuPostVarReferences(createWUPostVarRef(sgDense, "post_constant_val")); // R
+    NopCustomUpdateModel::VarReferences wuPostVarReferences(createWUPostVarRef(sgDense, "post_num")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("WUPostCustomUpdate", "Test",
-                                               {}, customUpdateInit, wuPostVarReferences);
+                                                {}, customUpdateInit, wuPostVarReferences);
     
-    NopCustomUpdateModel::WUVarReferences wuSparseVarReferences(createWUVarRef(sgSparse, "constant_val")); // R
-    model.addCustomUpdate<NopCustomUpdateModel>("WUSparseCustomUpdate", "Test",
-                                               {}, customUpdateInit, wuSparseVarReferences);
+    NopCustomUpdateModelWU::WUVarReferences wuSparseVarReferences(createWUVarRef(sgSparse, "num_pre")); // R
+    model.addCustomUpdate<NopCustomUpdateModelWU>("WUSparseCustomUpdate", "Test",
+                                                  {}, customUpdateWUInit, wuSparseVarReferences);
     
-    NopCustomUpdateModel::WUVarReferences wuDenseVarReferences(createWUVarRef(sgDense, "constant_val")); // R
-    model.addCustomUpdate<NopCustomUpdateModel>("WUDenseCustomUpdate", "Test",
-                                               {}, customUpdateInit, wuDenseVarReferences);
+    NopCustomUpdateModelWU::WUVarReferences wuDenseVarReferences(createWUVarRef(sgDense, "num_pre")); // R
+    model.addCustomUpdate<NopCustomUpdateModelWU>("WUDenseCustomUpdate", "Test",
+                                                  {}, customUpdateWUInit, wuDenseVarReferences);
     
-    NopCustomUpdateModel::WUVarReferences wuKernelVarReferences(createWUVarRef(sgKernel, "constant_val")); // R
-    model.addCustomUpdate<NopCustomUpdateModel>("WUKernelCustomUpdate", "Test",
-                                               {}, customUpdateInit, wuKernelVarReferences);
+    NopCustomUpdateModelWU::WUVarReferences wuKernelVarReferences(createWUVarRef(sgKernel, "num_pre")); // R
+    model.addCustomUpdate<NopCustomUpdateModelWU>("WUKernelCustomUpdate", "Test",
+                                                  {}, customUpdateWUInit, wuKernelVarReferences);
 
     model.setPrecision(GENN_FLOAT);
 }
