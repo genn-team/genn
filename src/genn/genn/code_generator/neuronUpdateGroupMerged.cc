@@ -182,6 +182,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     const unsigned int batchSize = model.getBatchSize();
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
 
+    popSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+    popSubs.addVarSubstitution("num", "group->numNeurons");
+
     // Generate code to copy neuron state into local variable
     for(const auto &v : nm->getVars()) {
         if(v.access & VarAccessMode::READ_ONLY) {
@@ -225,9 +228,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     }
 
     Substitutions neuronSubs(&popSubs);
-    neuronSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
-    neuronSubs.addVarSubstitution("num", "group->numNeurons");
-    
     neuronSubs.addVarSubstitution("Isyn", "Isyn");
 
     if(getArchetype().isSpikeTimeRequired()) {
