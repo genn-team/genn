@@ -26,9 +26,11 @@ class SimTest : public SimulationTest
 
 TEST_F(SimTest, Num)
 {
-    // Simulate timestep
+    // Simulate timestep and trigger custom update
     StepGeNN();
-    
+    updateTest();
+
+    // Copy all state from device
     copyStateFromDevice();
 
     // Neuron
@@ -67,5 +69,19 @@ TEST_F(SimTest, Num)
     EXPECT_TRUE(std::all_of(&num_post_wum_syn_testSyn[0], &num_post_wum_syn_testSyn[8], 
                             [](unsigned int n){ return (n == 4); }));
     EXPECT_TRUE(std::all_of(&num_batch_wum_syn_testSyn[0], &num_batch_wum_syn_testSyn[8], 
+                            [](unsigned int n){ return (n == 1); }));
+    
+    // CU
+    EXPECT_TRUE(std::all_of(&num_testCU[0], &num_testCU[4], 
+                            [](unsigned int n){ return (n == 4); }));
+    EXPECT_TRUE(std::all_of(&num_batch_testCU[0], &num_batch_testCU[4], 
+                            [](unsigned int n){ return (n == 1); }));
+    
+    // CU WUM
+    EXPECT_TRUE(std::all_of(&num_pre_testCUWM[0], &num_pre_testCUWM[8], 
+                            [](unsigned int n){ return (n == 2); }));
+    EXPECT_TRUE(std::all_of(&num_post_testCUWM[0], &num_post_testCUWM[8], 
+                            [](unsigned int n){ return (n == 4); }));
+    EXPECT_TRUE(std::all_of(&num_batch_testCUWM[0], &num_batch_testCUWM[8], 
                             [](unsigned int n){ return (n == 1); }));
 }
