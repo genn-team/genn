@@ -14,6 +14,7 @@
 **/*.suo
 **/*.sdf
 **/*.vcxproj.user
+**/*.vcxproj.filters
 **/*.opensdf
 **/x64
 **/.vs
@@ -21,6 +22,7 @@
 **/*.iobj
 **/*.testdurations
 
+/dist
 /lib
 /documentation/
 /build/
