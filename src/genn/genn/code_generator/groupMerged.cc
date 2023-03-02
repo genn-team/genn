@@ -862,14 +862,15 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
+    addField("unsigned int", "numSrcNeurons",
+             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+            [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+
     // If role isn't an init role or weights aren't kernel
-    if(role != Role::Init || !(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)) {
+    if (role != Role::Init || !(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)) {
         addField("unsigned int", "rowStride",
                  [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
-        addField("unsigned int", "numSrcNeurons",
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-        addField("unsigned int", "numTrgNeurons",
-                [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
     }
     
     if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {

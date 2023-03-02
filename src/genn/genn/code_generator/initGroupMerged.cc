@@ -787,6 +787,11 @@ CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
+    addField("unsigned int", "numSrcNeurons",
+                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+            [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
@@ -800,10 +805,6 @@ CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const
     else {
         addField("unsigned int", "rowStride",
                 [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-        addField("unsigned int", "numSrcNeurons",
-                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-        addField("unsigned int", "numTrgNeurons",
-                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
     }
 }
 //----------------------------------------------------------------------------
