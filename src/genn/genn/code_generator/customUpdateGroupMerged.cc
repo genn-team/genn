@@ -171,6 +171,9 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 //----------------------------------------------------------------------------
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
+    popSubs.addVarSubstitution("num_batch", std::to_string(getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1));
+    popSubs.addVarSubstitution("num", "group->size");
+    
     genCustomUpdate(os, popSubs, *this, modelMerged, "id",
                     [this](const Models::VarReference &varRef, const std::string &index)
                     {
@@ -272,6 +275,20 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
+    addField("unsigned int", "numSrcNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t) 
+             {
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
+             });
+
+    addField("unsigned int", "numTrgNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t)
+             { 
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+             });
+    
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
@@ -293,20 +310,6 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                      return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-                 });
-    
-        addField("unsigned int", "numSrcNeurons",
-                 [](const CustomUpdateWUInternal &cg, size_t) 
-                 {
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-                 });
-
-        addField("unsigned int", "numTrgNeurons",
-                 [](const CustomUpdateWUInternal &cg, size_t)
-                 { 
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
                  });
 
         // If synapse group has sparse connectivity
@@ -370,6 +373,10 @@ const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------
 void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
+    popSubs.addVarSubstitution("num_batch", std::to_string(getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1));
+    popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+    
     genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
                     [this, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
                     {  
@@ -385,6 +392,10 @@ const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransp
 //----------------------------------------------------------------------------
 void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
+    popSubs.addVarSubstitution("num_batch", std::to_string(getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1));
+    popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+
     genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
                     [this, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
                     {

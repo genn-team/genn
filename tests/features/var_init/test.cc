@@ -26,7 +26,6 @@ double gammaCDF4(double x)
 // Macro to generate full set of tests for a particular model
 #define PROB_TEST(PREFIX, SUFFIX, N) \
     { \
-        EXPECT_TRUE(std::all_of(&PREFIX##constant_val##SUFFIX[0], &PREFIX##constant_val##SUFFIX[N], [](scalar x){ return (x == 13.0); })); \
         const double PREFIX##uniform##SUFFIX##Prob = getProb(PREFIX##uniform##SUFFIX, N, Stats::uniformCDF); \
         EXPECT_GT(PREFIX##uniform##SUFFIX##Prob, p); \
         const double PREFIX##normal##SUFFIX##Prob = getProb(PREFIX##normal##SUFFIX, N, Stats::normalCDF); \
@@ -35,8 +34,22 @@ double gammaCDF4(double x)
         EXPECT_GT(PREFIX##exponential##SUFFIX##Prob, p); \
         const double PREFIX##gamma##SUFFIX##Prob = getProb(PREFIX##gamma##SUFFIX, N, gammaCDF4); \
         EXPECT_GT(PREFIX##gamma##SUFFIX##Prob, p); \
-    } \
+    }
 
+#define PROB_TEST_NEURON(PREFIX, SUFFIX, NUM) \
+    { \
+        EXPECT_TRUE(std::all_of(&PREFIX##num##SUFFIX[0], &PREFIX##num##SUFFIX[NUM], [](unsigned int x){ return (x == NUM); })); \
+        EXPECT_TRUE(std::all_of(&PREFIX##num_batch##SUFFIX[0], &PREFIX##num_batch##SUFFIX[NUM], [](unsigned int x){ return (x == 1); })); \
+        PROB_TEST(PREFIX, SUFFIX, NUM) \
+    }
+
+#define PROB_TEST_SYNAPSE(PREFIX, SUFFIX, NUM, NUM_PRE, NUM_POST) \
+    { \
+        EXPECT_TRUE(std::all_of(&PREFIX##num_pre##SUFFIX[0], &PREFIX##num_pre##SUFFIX[NUM], [](unsigned int x){ return (x == NUM_PRE); })); \
+        EXPECT_TRUE(std::all_of(&PREFIX##num_post##SUFFIX[0], &PREFIX##num_post##SUFFIX[NUM], [](unsigned int x){ return (x == NUM_POST); })); \
+        EXPECT_TRUE(std::all_of(&PREFIX##num_batch##SUFFIX[0], &PREFIX##num_batch##SUFFIX[NUM], [](unsigned int x){ return (x == 1); })); \
+        PROB_TEST(PREFIX, SUFFIX, NUM) \
+    }
 //----------------------------------------------------------------------------
 // SimTest
 //----------------------------------------------------------------------------
@@ -86,21 +99,21 @@ TEST_F(SimTest, Vars)
     pullWUKernelCustomUpdateStateFromDevice();
     
     // Test host-generated vars
-    PROB_TEST(, Pop, 50000);
-    PROB_TEST(, CurrSource, 50000);
-    PROB_TEST(p, Dense, 50000);
-    PROB_TEST(, Dense, 50000);
-    PROB_TEST(, Sparse, 50000);
-    PROB_TEST(pre_, Sparse, 50000);
-    PROB_TEST(post_, Sparse, 50000);
-    PROB_TEST(, Kernel, 3 * 3 * 5 * 5);
-    PROB_TEST(, NeuronCustomUpdate, 50000);
-    PROB_TEST(, CurrentSourceCustomUpdate, 50000);
-    PROB_TEST(, PSMCustomUpdate, 50000);
-    PROB_TEST(, WUPreCustomUpdate, 50000);
-    PROB_TEST(, WUPostCustomUpdate, 50000);
-    PROB_TEST(, WUDenseCustomUpdate, 50000);
-    PROB_TEST(, WUSparseCustomUpdate, 50000);
-    PROB_TEST(, WUKernelCustomUpdate, 3 * 3 * 5 * 5);
+    PROB_TEST_NEURON(, Pop, 50000);
+    PROB_TEST_NEURON(, CurrSource, 50000);
+    PROB_TEST_NEURON(p, Dense, 50000);
+    PROB_TEST_SYNAPSE(, Dense, 50000, 1, 50000);
+    PROB_TEST_SYNAPSE(, Sparse, 50000, 50000, 50000);
+    PROB_TEST_NEURON(pre_, Sparse, 50000);
+    PROB_TEST_NEURON(post_, Sparse, 50000);
+    PROB_TEST_SYNAPSE(, Kernel, 3 * 3 * 5 * 5, 50000, 50000);
+    PROB_TEST_NEURON(, NeuronCustomUpdate, 50000);
+    PROB_TEST_NEURON(, CurrentSourceCustomUpdate, 50000);
+    PROB_TEST_NEURON(, PSMCustomUpdate, 50000);
+    PROB_TEST_NEURON(, WUPreCustomUpdate, 50000);
+    PROB_TEST_NEURON(, WUPostCustomUpdate, 50000);
+    PROB_TEST_SYNAPSE(, WUDenseCustomUpdate, 50000, 1, 50000);
+    PROB_TEST_SYNAPSE(, WUSparseCustomUpdate, 50000, 50000, 50000);
+    PROB_TEST_SYNAPSE(, WUKernelCustomUpdate, 3 * 3 * 5 * 5, 50000, 50000);
 }
 

@@ -66,6 +66,8 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
             CodeStream::Scope b(os);
 
             Substitutions varSubs(&popSubs);
+            varSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+            varSubs.addVarSubstitution("num", count);
 
             // Substitute in parameters and derived parameters for initialising variables
             varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
@@ -147,31 +149,36 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
         // If this variable has any initialisation code and doesn't require a kernel
         if(!varInit.getSnippet()->getCode().empty() && !varInit.getSnippet()->requiresKernel()) {
             CodeStream::Scope b(os);
+            
+            Substitutions varSubs(&popSubs);
+            varSubs.addVarSubstitution("num_batch", std::to_string(batchSize));
+            varSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+            varSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
             // Generate target-specific code to initialise variable
-            genSynapseVariableRowInitFn(os, popSubs,
+            genSynapseVariableRowInitFn(os, varSubs,
                 [&vars, &varInit, &ftype, &stride, batchSize, k, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
-                (CodeStream &os, Substitutions &varSubs)
+                (CodeStream &os, Substitutions &varInitSubs)
                 {
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name);
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                      [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name);
-                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group->", vars[k].name);
+                    varInitSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                                          [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
+                                                          "", "group->", vars[k].name);
+                    varInitSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                                        [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
+                                                        "", "group->", vars[k].name);
+                    varInitSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                       "", "group->", vars[k].name);
 
                     // Generate initial value into temporary variable
                     os << vars[k].type << " initVal;" << std::endl;
-                    varSubs.addVarSubstitution("value", "initVal");
+                    varInitSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
-                    varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(groupIndex));
+                    varInitSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(groupIndex));
                     code = ensureFtype(code, ftype);
                     os << code << std::endl;
 
                     // Fill value across all batches
-                    genVariableFill(os,  vars[k].name, "initVal", varSubs["id_syn"], stride,
+                    genVariableFill(os,  vars[k].name, "initVal", varInitSubs["id_syn"], stride,
                                     getVarAccessDuplication(vars[k].access), batchSize);
                 });
         }
@@ -333,7 +340,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                 os << "*group->spkQuePtr = 0;" << std::endl;
             });
     }
-
+    
     // Initialise neuron variables
     genInitNeuronVarCode(os, backend, popSubs, getArchetype().getNeuronModel()->getVars(), getArchetype().getVarInitialisers(), 
                          "", "numNeurons", getArchetype().getNumDelaySlots(), getIndex(), model.getPrecision(), model.getBatchSize(),
@@ -780,6 +787,11 @@ CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
+    addField("unsigned int", "numSrcNeurons",
+                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+            [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
@@ -793,10 +805,6 @@ CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const
     else {
         addField("unsigned int", "rowStride",
                 [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-        addField("unsigned int", "numSrcNeurons",
-                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-        addField("unsigned int", "numTrgNeurons",
-                [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
     }
 }
 //----------------------------------------------------------------------------
