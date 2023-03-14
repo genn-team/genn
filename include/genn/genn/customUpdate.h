@@ -149,12 +149,12 @@ protected:
     template<typename V>
     void checkVarReferenceBatching(const std::vector<V>& varRefs, unsigned int batchSize)
     {
-        // If target of any variable references is duplicated, custom update should be batched
+        // If target of any variable references is not shared across batches, custom update should be batched
         if(batchSize > 1) {
             m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
                                     [](const V& v) 
                                     {
-                                        return (v.isBatched() && (v.getVar().access & VarAccessDuplication::DUPLICATE)); 
+                                        return (v.isBatched() && !(v.getVar().access & VarAccessDuplication::SHARED)); 
                                     });
         }
         else {
