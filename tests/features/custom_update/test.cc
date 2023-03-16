@@ -39,16 +39,24 @@ TEST_F(SimTest, CustomUpdate)
             // Pull variables
             pullVNeuronSetTimeFromDevice();
             pullVNeuronFromDevice();
+            pullVSharedNeuronFromDevice();
+
             pullVCurrentSourceSetTimeFromDevice();
             pullCCurrentSourceFromDevice();
+            pullCSharedCurrentSourceFromDevice();
+
             pullVCustomUpdateSetTimeFromDevice();
             pullCCustomUpdateFromDevice();
+
             pullVPSMSetTimeFromDevice();
             pullPDenseFromDevice();
+            pullPSharedDenseFromDevice();
             pullVWUPreSetTimeFromDevice();
             pullPreDenseFromDevice();
+            pullPreSharedDenseFromDevice();
             pullVWUPostSetTimeFromDevice();
             pullPostSparseFromDevice();
+            pullPostSharedSparseFromDevice();
             pullVWUDenseSetTimeFromDevice();
             pullgDenseFromDevice();
             pullVWUSparseSetTimeFromDevice();
@@ -64,12 +72,14 @@ TEST_F(SimTest, CustomUpdate)
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&VNeuronSetTime[0], &VNeuronSetTime[100],
                         [](scalar v) { return v == t; }));
+            EXPECT_EQ(VSharedNeuron[0], t);
 
             EXPECT_TRUE(std::all_of(&VCurrentSourceSetTime[0], &VCurrentSourceSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&CCurrentSource[0], &CCurrentSource[100],
                         [](scalar v) { return v == t; }));
-            
+            EXPECT_EQ(CSharedCurrentSource[0], t);
+
             EXPECT_TRUE(std::all_of(&VCustomUpdateSetTime[0], &VCustomUpdateSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&CCustomUpdate[0], &CCustomUpdate[100],
@@ -79,21 +89,19 @@ TEST_F(SimTest, CustomUpdate)
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PDense[0], &PDense[100],
                         [](scalar v) { return v == t; }));
+            EXPECT_EQ(PSharedDense[0], t);
 
             EXPECT_TRUE(std::all_of(&VWUPreSetTime[0], &VWUPreSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PreDense[0], &PreDense[100],
                         [](scalar v) { return v == t; }));
+            EXPECT_EQ(PreSharedDense[0], t);
 
             EXPECT_TRUE(std::all_of(&VWUPostSetTime[0], &VWUPostSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PostSparse[0], &PostSparse[100],
                         [](scalar v) { return v == t; }));
-
-            EXPECT_TRUE(std::all_of(&VPSMSetTime[0], &VPSMSetTime[100],
-                        [](scalar v) { return v == t; }));
-            EXPECT_TRUE(std::all_of(&PDense[0], &PDense[100],
-                        [](scalar v) { return v == t; }));
+            EXPECT_EQ(PostSharedSparse[0], t);
 
             EXPECT_TRUE(std::all_of(&VWUDenseSetTime[0], &VWUDenseSetTime[100 * 100],
                         [](scalar v) { return v == t; }));
