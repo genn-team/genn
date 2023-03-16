@@ -1016,8 +1016,9 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             // Otherwise, if this update isn't per-neuron
             else if (!cg.getArchetype().isPerNeuron()) {
                 if(cg.getArchetype().isBatched()) {
+                    os << "const unsigned int batch = " << cuSubs["id"] << ";" << std::endl;
                     cuSubs.addVarSubstitution("id", "0", true);
-                    cuSubs.addVarSubstitution("batch", cuSubs["id"]);
+                    cuSubs.addVarSubstitution("batch", "batch");
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
