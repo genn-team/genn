@@ -12,9 +12,10 @@ suite of minimal models with known analytic outcomes that are used for continuou
 class TestNeuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(TestNeuron, 0, 2);
+    DECLARE_MODEL(TestNeuron, 0, 3);
 
-    SET_VARS({{"V","scalar"}, {"U", "scalar", VarAccess::READ_ONLY}});
+    SET_VARS({{"V","scalar"}, {"U", "scalar", VarAccess::READ_ONLY},
+              {"S", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_MODEL(TestNeuron);
 
@@ -40,6 +41,18 @@ public:
     SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
 };
 IMPLEMENT_MODEL(SetTimeBatch);
+
+class SetTimeShared : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(SetTimeShared, 0, 0, 1);
+
+    SET_UPDATE_CODE(
+        "$(R) = ($(batch) * 1000.0) + $(t);\n");
+
+    SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
+};
+IMPLEMENT_MODEL(SetTimeShared);
 
 class SetTime : public CustomUpdateModels::Base
 {
@@ -99,7 +112,7 @@ void modelDefinition(ModelSpec &model)
     model.setBatchSize(5);
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 50, {}, {});
-    auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 50, {}, {0.0, 0.0});
+    auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 50, {}, {0.0, 0.0, 0.0});
     auto *denseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
@@ -124,7 +137,11 @@ void modelDefinition(ModelSpec &model)
     SetTimeBatch::VarReferences neuronDuplicateVarReferences(createVarRef(ng, "V")); // R
     model.addCustomUpdate<SetTimeBatch>("NeuronDuplicateSetTime", "Test",
                                         {}, {0.0}, neuronDuplicateVarReferences);
-    
+
+    SetTimeShared::VarReferences neuronSharedNeuronVarReferences(createVarRef(ng, "S")); // R
+    model.addCustomUpdate<SetTimeShared>("NeuronSharedNeuronSetTime", "Test",
+                                         {}, {}, neuronSharedNeuronVarReferences);
+
     SetTime::VarReferences neuronSharedVarReferences(createVarRef(ng, "U")); // R
     model.addCustomUpdate<SetTime>("NeuronSharedSetTime", "Test",
                                    {}, {0.0}, neuronSharedVarReferences);
