@@ -15,6 +15,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateModels::Base::getHashDigest(
 
     Utils::updateHash(getUpdateCode(), hash);
     Utils::updateHash(getVarRefs(), hash);
+    Utils::updateHash(getEGPRefs(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -24,4 +25,5 @@ void CustomUpdateModels::Base::validate() const
     Models::Base::validate();
 
     Utils::validateVecNames(getVarRefs(), "Variable reference");
+    Utils::validateVecNames(getEGPRefs(), "Extra global parameter reference");
 }
