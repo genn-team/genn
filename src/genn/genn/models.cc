@@ -206,6 +206,45 @@ SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
 }
 
 //----------------------------------------------------------------------------
+// EGPReference
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(const NeuronGroup *ng, const std::string &egpName)
+{
+    const auto *nm = ng->getNeuronModel();
+    return EGPReference(nm->getExtraGlobalParamIndex(egpName), nm->getExtraGlobalParams(), ng->getName());
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(const CurrentSource *cs, const std::string &egpName)
+{
+    const auto *cm = cs->getCurrentSourceModel();
+    return EGPReference(cm->getExtraGlobalParamIndex(egpName), cm->getExtraGlobalParams(), cs->getName());
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(const CustomUpdate *cu, const std::string &egpName)
+{
+    const auto *cm = cu->getCustomUpdateModel();
+    return EGPReference(cm->getExtraGlobalParamIndex(egpName), cm->getExtraGlobalParams(), cu->getName());
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(const CustomUpdateWU *cu, const std::string &egpName)
+{
+    const auto *cm = cu->getCustomUpdateModel();
+    return EGPReference(cm->getExtraGlobalParamIndex(egpName), cm->getExtraGlobalParams(), cu->getName());
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    const auto *psm = sg->getPSModel();
+    return EGPReference(psm->getExtraGlobalParamIndex(egpName), psm->getExtraGlobalParams(), sg->getName());
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createWUEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    const auto *wum = sg->getWUModel();
+    return EGPReference(wum->getExtraGlobalParamIndex(egpName), wum->getExtraGlobalParams(), sg->getName());
+}
+
+//----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
 void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
@@ -220,6 +259,12 @@ void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(e.name, hash);
+    Type::updateHash(e.type, hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)

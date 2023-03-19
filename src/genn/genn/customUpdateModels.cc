@@ -21,6 +21,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 
     Utils::updateHash(getUpdateCode(), hash);
     Utils::updateHash(getVarRefs(), hash);
+    Utils::updateHash(getEGPRefs(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -37,6 +38,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 
     // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+    Utils::validateVecNames(getEGPRefs(), "Extra global parameter reference");
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues,
@@ -52,5 +54,6 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 
     // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+    Utils::validateVecNames(getEGPRefs(), "Extra global parameter reference");
 }
 }   // namespace GeNN::CustomUpdateModels
