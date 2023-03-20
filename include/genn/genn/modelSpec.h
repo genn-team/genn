@@ -47,6 +47,7 @@ using ParamValues = std::unordered_map<std::string, double>;
 using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
+using EGPReferences = std::unordered_map<std::string, Models::EGPReference>;
 
 //! Floating point precision to use for "scalar" type variables models
 enum class ScalarPrecision
@@ -552,7 +553,7 @@ public:
         \return pointer to newly created CustomUpdateBase */
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const VarReferences &varReferences);
+                                  const VarReferences &varReferences, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom update with references to weight update model variable to the 
     //! model using a custom update model managed by the user
@@ -565,7 +566,7 @@ public:
         \return pointer to newly created CustomUpdateBase */
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences);
+                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom update to the model using a singleton custom update model 
     //! created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
@@ -579,10 +580,10 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const VarReferences &varReferences)
+                                  const VarReferences &varReferences, const EGPReferences &egpReferences = {})
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
-                               paramValues, varInitialisers, varReferences);
+                               paramValues, varInitialisers, varReferences, egpReferences);
     }
 
 
@@ -598,10 +599,10 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences)
+                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {})
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
-                               paramValues, varInitialisers, varReferences);
+                               paramValues, varInitialisers, varReferences, egpReferences);
     }
 
     //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 

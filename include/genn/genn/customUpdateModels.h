@@ -23,11 +23,11 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets names and types (as strings) of model variable references
+    //! Gets names and typesn of model variable references
     virtual VarRefVec getVarRefs() const{ return {}; }
 
-    //! Gets names and types (as strings) of model extra global parameter references
-    virtual EGPRefVec getEGPRefs() const { return {}; }
+    //! Gets names and types of model extra global parameter references
+    virtual EGPRefVec getExtraGlobalParamRefs() const { return {}; }
 
     //! Gets the code that performs the custom update 
     virtual std::string getUpdateCode() const{ return ""; }

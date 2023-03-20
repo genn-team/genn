@@ -283,4 +283,10 @@ void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
         Utils::updateHash(v.getTransposeVarIndex(), hash);
     }
 }
+//----------------------------------------------------------------------------
+void Models::updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.getTargetName(), hash);
+    Utils::updateHash(v.getEGPIndex(), hash);
+}
 }   // namespace GeNN::Models

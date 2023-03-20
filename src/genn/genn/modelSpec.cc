@@ -149,13 +149,13 @@ CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName,
 // ---------------------------------------------------------------------------
 CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
                                          const ParamValues &paramValues, const VarValues &varInitialisers,
-                                         const VarReferences &varReferences)
+                                         const VarReferences &varReferences, const EGPReferences &egpReferences)
 {
     // Add neuron group to map
     auto result = m_CustomUpdates.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, updateGroupName, model,
-                              paramValues, varInitialisers, varReferences,
+                              paramValues, varInitialisers, varReferences, egpReferences,
                               m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
     if(!result.second) {
@@ -194,13 +194,13 @@ CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::stri
 // ---------------------------------------------------------------------------
 CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers,
-                                           const WUVarReferences &varReferences)
+                                           const WUVarReferences &varReferences, const EGPReferences &egpReferences)
 {
     // Add neuron group to map
     auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, updateGroupName, model,
-                              paramValues, varInitialisers, varReferences,
+                              paramValues, varInitialisers, varReferences, egpReferences,
                               m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
     if(!result.second) {

@@ -386,6 +386,8 @@ private:
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
 
                         // Add reference to this group's variable to data structure
+                        // **NOTE** this works fine with EGP references because the function to
+                        // get their value will just return the name of the referenced EGP
                         assert(std::get<0>(f).isPointer());
                         m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
                             std::piecewise_construct,

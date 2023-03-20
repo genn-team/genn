@@ -41,6 +41,8 @@ public:
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
+    const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
+
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
 
@@ -53,7 +55,7 @@ public:
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                     const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -150,6 +152,8 @@ private:
     std::unordered_map<std::string, double> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
+    std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
+
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
@@ -231,7 +235,7 @@ protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                  const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                 const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -282,7 +286,7 @@ protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                    const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                   const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods

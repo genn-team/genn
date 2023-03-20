@@ -39,6 +39,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     updateHash([](const auto &cg) { return cg.getParams(); }, hash);
     updateHash([](const auto &cg) { return cg.getDerivedParams(); }, hash);
     updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const auto &cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -63,6 +64,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
@@ -168,6 +170,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     updateHash([](const auto &cg) { return cg.getParams(); }, hash);
     updateHash([](const auto &cg) { return cg.getDerivedParams(); }, hash);
     updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const auto &cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -247,6 +250,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(

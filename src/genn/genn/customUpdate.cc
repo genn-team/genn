@@ -34,9 +34,9 @@ bool CustomUpdateBase::isVarInitRequired() const
 //----------------------------------------------------------------------------
 CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                                    const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                                   const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-    m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_Batched(false)
 {
@@ -44,6 +44,16 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
     Utils::validatePopName(name, "Custom update");
     Utils::validatePopName(updateGroupName, "Custom update group name");
 
+    // Loop through all extra global parameter references
+    for (const auto &modelEGPRef : getCustomUpdateModel()->getExtraGlobalParamRefs()) {
+        const auto egpRef = egpReferences.at(modelEGPRef.name);
+
+        // Check types of extra global parameter references against those specified in model
+        // **THINK** due to GeNN's current string-based type system this is rather conservative
+        if (egpRef.getEGP().type != modelEGPRef.type) {
+            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
+        }
+    }
     // Scan custom update model code string
     m_UpdateCodeTokens = Utils::scanCode(getCustomUpdateModel()->getUpdateCode(), 
                                          "Custom update '" + getName() + "' update code");
@@ -110,8 +120,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
 {
     // Validate parameters, variables and variable references
@@ -229,8 +239,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                                const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                               VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+                               const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     // Validate parameters, variables and variable references

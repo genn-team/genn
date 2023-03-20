@@ -503,6 +503,25 @@ public:
         }
     }
 
+    void addExtraGlobalParamRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &arrayPrefix, 
+                                 const std::string &fieldSuffix = "")
+    {
+        // Loop through EGP references
+        for(const auto &e : egpRefs) {
+            const auto resolvedType = e.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            const auto pointerType = resolvedType.createPointer();
+            addField(pointerType, e.name,
+                     pointerType, e.name + fieldSuffix,
+                     [arrayPrefix, e](const auto &g, size_t) 
+                     {
+                         const auto egpRef = g.getEGPReferences().at(e.name);
+                         return arrayPrefix + egpRef.getEGP().name + egpRef.getTargetName(); 
+                     },
+                     "", GroupMergedFieldType::DYNAMIC);
+        }
+    }
+
     template<typename I>
     void addConnectInitParams(const std::string &fieldSuffix, GetConnectivityFn<I> getConnectivity, 
                               IsHeterogeneousFn isHeterogeneous)

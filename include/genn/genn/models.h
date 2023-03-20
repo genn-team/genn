@@ -84,18 +84,18 @@ public:
 
     struct EGPRef
     {
-        EGPRef(const std::string &n, const std::string &t) : name(n), type(t)
+        EGPRef(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
         {}
-        EGPRef() : EGPRef("", "")
+        EGPRef(const std::string &n, const std::string &t) : name(n), type(t)
         {}
 
         bool operator == (const EGPRef &other) const
         {
-            return ((name == other.name) && (type == other.type));
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::string type;
+        Type::UnresolvedType type;
     };
 
     //----------------------------------------------------------------------------
@@ -331,6 +331,7 @@ GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &h
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
