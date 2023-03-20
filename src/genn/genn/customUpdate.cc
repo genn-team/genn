@@ -29,6 +29,34 @@ bool CustomUpdateBase::isVarInitRequired() const
                         [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
 }
 //----------------------------------------------------------------------------
+ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
+                                    const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::EGPReference> &egpReferences,
+                                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_Batched(false)
+{
+    // Validate names
+    Utils::validatePopName(name, "Custom update");
+    Utils::validatePopName(updateGroupName, "Custom update group name");
+    getCustomUpdateModel()->validate();
+
+    // Loop through all extra global parameter references
+    const auto modelEGPRefs = getCustomUpdateModel()->getExtraGlobalParamRefs();
+    for (size_t i = 0; i < egpReferences.size(); i++) {
+        const auto egpRef = egpReferences.at(i);
+        const auto modelEGPRef = modelEGPRefs.at(i);
+
+        // Check types of extra global parameter references against those specified in model
+        // **THINK** due to GeNN's current string-based type system this is rather conservative
+        if (egpRef.getEGP().type != modelEGPRef.type) {
+            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
+        }
+    }
+}
+//----------------------------------------------------------------------------
 void CustomUpdateBase::initDerivedParams(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
@@ -96,8 +124,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
-                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+                           const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                           VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, 
+                    defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize()), 
     m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
 {
@@ -212,8 +242,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                                const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
-                               VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+                               const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                               VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, 
+                     defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
 {
     if(varReferences.empty()) {

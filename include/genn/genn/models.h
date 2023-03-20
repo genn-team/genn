@@ -339,4 +339,5 @@ GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &h
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 } // Models
