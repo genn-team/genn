@@ -7,12 +7,15 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
+#define DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS, NUM_EGP_REFS) \
+    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                              \
+    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                       \
+    typedef Models::VarReferenceContainerBase<NUM_VAR_REFS> VarReferences;                          \
+    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences;                      \
+    typedef Models::EGPReferenceContainerBase<NUM_EGP_REFS> EGPReferences
+
 #define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS)   \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                          \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                   \
-    typedef Models::VarReferenceContainerBase<NUM_VAR_REFS> VarReferences;      \
-    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences;  \
-    typedef Models::EGPReferenceContainerBase<0> EGPReferences
+    DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS, 0)
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_UPDATE_CODE(UPDATE_CODE) virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }
