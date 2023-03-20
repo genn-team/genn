@@ -537,7 +537,7 @@ class GeNNModel(object):
         return c_source
     
     def add_custom_update(self, cu_name, group_name, custom_update_model,
-                          param_space, var_space, var_ref_space):
+                          param_space, var_space, var_ref_space, egp_ref_space={}):
         """Add a current source to the GeNN model
 
         Args:
@@ -554,6 +554,8 @@ class GeNNModel(object):
                                    CustomUpdateModel class
         var_ref_space           -- dict with variable references for the
                                    CustomUpdateModel class
+        egp_ref_space           -- dict with extra global parameter references 
+                                   for the CustomUpdateModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -565,7 +567,7 @@ class GeNNModel(object):
         c_update = CustomUpdate(cu_name, self)
         c_update.set_custom_update_model(custom_update_model,
                                          param_space, var_space, 
-                                         var_ref_space)
+                                         var_ref_space, egp_ref_space)
         c_update.add_to(group_name)
 
         self.custom_updates[cu_name] = c_update
@@ -1062,7 +1064,41 @@ def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
     else:
         return (genn_wrapper.create_wuvar_ref(g.pop, var_name,
                                               tp_sg.pop, tp_var_name), sg)
+
+def create_egp_ref(pop, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a neuron, current source or custom update 
+    extra global parameter for initialising references.
+
+    Args:
+    pop         -- population, either a NeuronGroup or CurrentSource object
+    egp_name    -- name of extra global parameter in population to reference
+    """
+    return genn_wrapper.create_egpref(pop.pop, egp_name)
     
+def create_psm_egp_ref(sg, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a postsynaptic model extra global parameter
+    for initialising references.
+
+    Args:
+    sg          -- SynapseGroup object
+    egp_name    -- name of postsynaptic model extra global
+                   parameter in synapse group to reference
+    """
+    return genn_wrapper.create_psmegpref(sg.pop, egp_name)
+
+def create_wu_egp_ref(sg, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a weight update model extra global parameter
+    for initialising references.
+
+    Args:
+    sg          -- SynapseGroup object
+    egp_name    -- name of weight update model extra global
+                   parameter in synapse group to reference
+    """
+    return genn_wrapper.create_wuegpref(sg.pop, var_name)
 
 def create_custom_neuron_class(class_name, param_names=None,
                                var_name_types=None, derived_params=None,

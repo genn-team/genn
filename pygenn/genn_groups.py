@@ -1435,9 +1435,11 @@ class CustomUpdate(Group):
         super(CustomUpdate, self).__init__(name, model)
         self.custom_update_model = None
         self.var_refs = {}
+        self.egp_refs = {}
         self.custom_wu_update = False
 
-    def set_custom_update_model(self, model, param_space, var_space, var_ref_space):
+    def set_custom_update_model(self, model, param_space, var_space, 
+                                var_ref_space, egp_ref_space):
         """Set custom update model, its parameters, 
         initial variables and variable referneces
 
@@ -1445,7 +1447,8 @@ class CustomUpdate(Group):
         model           --  type as string or instance of the model
         param_space     --  dict with model parameters
         var_space       --  dict with model variables
-        var_references  --  dict with model variables
+        var_ref_space   --  dict with model variable references
+        egp_ref_space   --  dict with model extra global parameter references
         """
 
         # Prepare standard model
@@ -1477,6 +1480,15 @@ class CustomUpdate(Group):
 
         # Store variable references in class
         self.var_refs = var_ref_space
+        
+        # Check EGP references
+        self.egp_ref_names = [e.name for e in self.custom_update_model.get_extra_global_param_refs()]
+        if egp_ref_space is not None and set(iterkeys(egp_ref_space)) != set(self.egp_ref_names):
+            raise ValueError("Invalid extra global parameter reference initializers "
+                             "for CustomUpdateModels")
+        
+        # Store EGP references in class
+        self.egp_refs = egp_ref_space
 
     def add_to(self, group_name):
         """Attach this CurrentSource to NeuronGroup and
@@ -1495,9 +1507,12 @@ class CustomUpdate(Group):
         else:
             var_refs = model_preprocessor.var_ref_space_to_var_refs(
                 self.custom_update_model, self.var_refs)
+        
+        egp_refs = model_preprocessor.egp_ref_space_to_egp_refs(
+                self.custom_update_model, self.egp_refs)
 
         self.pop = add_fct(self.name, group_name, self.custom_update_model, 
-                           self.params, var_ini, var_refs)
+                           self.params, var_ini, var_refs, egp_refs)
 
     def load(self):
         # If this is a custom weight update

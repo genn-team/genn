@@ -8,9 +8,10 @@ from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
-from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector,
-                                  VarReferenceVector, WUVarReferenceVector)
+from .genn_wrapper.Models import (EGPReferenceVector, VarInit, VarReference,
+                                  VarInitVector, VarRefVector, 
+                                  VarReferenceVector, WUVarReference,
+                                  WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
 def prepare_model(model, group, param_space, var_space, model_family):
@@ -182,12 +183,26 @@ def var_ref_space_to_wu_var_refs(model, var_ref_space):
     var_space   -- dict with Variables
 
     Returns:
-    native model's VarValues
+    native model's VarReferences
     """
     return model.make_wuvar_references(
         WUVarReferenceVector([var_ref_space[v.name][0]
                               for v in model.get_var_refs()]))
 
+def egp_ref_space_to_egp_refs(model, egp_ref_space):
+    """Convert a egp_ref_space dict to EGPReferences
+
+    Args:
+    model           -- instance of the model
+    egp_ref_space   -- dict with extra global parameter references
+
+    Returns:
+    native model's EGPReferences
+    """
+    return model.make_egpreferences(
+        EGPReferenceVector([egp_ref_space[v.name][0]
+                            for v in model.get_extra_global_param_refs()]))
+                            
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
 
