@@ -140,7 +140,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 
     // Add EGPs and EGP references to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-    this->addEGPRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
+    addEGPReferences(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix(),
+                     [](const CustomUpdateInternal &cg) { return cg.getEGPReferences(); });
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(size_t index) const
@@ -368,7 +369,8 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     }
     // Add EGPs and EGP references to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-    this->addEGPRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
+    addEGPReferences(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix(),
+                     [](const CustomUpdateWUInternal &cg) { return cg.getEGPReferences(); });
 }
 
 // ----------------------------------------------------------------------------

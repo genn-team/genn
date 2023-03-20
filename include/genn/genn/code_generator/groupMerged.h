@@ -267,14 +267,15 @@ protected:
         }
     }
 
-    void addEGPRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &arrayPrefix)
+    template<typename E>
+    void addEGPReferences(const Models::Base::EGPRefVec &egpRefs, const std::string &arrayPrefix, E getEGPRefFn)
     {
         for(size_t i = 0; i < egpRefs.size(); i++) {
             const auto &e = egpRefs.at(i);
             addField(e.type, e.name,
-                     [arrayPrefix, e, i](const G &g, size_t)
+                     [arrayPrefix, e, getEGPRefFn, i](const G &g, size_t)
                      { 
-                         const auto egpRef = g.getEGPReferences().at(i);
+                         const auto egpRef = getEGPRefFn(g).at(i);
                          return arrayPrefix + egpRef.getEGP().name + egpRef.getTargetName(); 
                      },
                      FieldType::PointerEGP);
