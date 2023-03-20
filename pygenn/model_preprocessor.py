@@ -200,7 +200,7 @@ def egp_ref_space_to_egp_refs(model, egp_ref_space):
     native model's EGPReferences
     """
     return model.make_egpreferences(
-        EGPReferenceVector([egp_ref_space[v.name][0]
+        EGPReferenceVector([egp_ref_space[v.name]
                             for v in model.get_extra_global_param_refs()]))
                             
 def pre_var_space_to_vals(model, var_space):

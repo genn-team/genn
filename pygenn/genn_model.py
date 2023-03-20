@@ -58,8 +58,9 @@ from six import iteritems, itervalues, string_types
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModelNumpy as slm
-from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
-                                  WUVarReference, VarVector, VarRefVector)
+from .genn_wrapper.Models import (EGPRef, EGPRefVector, Var, VarRef,
+                                  VarInit, VarReference, VarVector,
+                                  VarRefVector, WUVarReference)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init as InitSparse
 from .genn_wrapper.InitToeplitzConnectivitySnippet import Init as InitToeplitz
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
@@ -1454,6 +1455,7 @@ def create_custom_custom_update_class(class_name, param_names=None,
                                       var_refs=None,
                                       update_code=None,
                                       extra_global_params=None,
+                                      extra_global_param_refs=None,
                                       custom_body=None):
     """This helper function creates a custom CustomUpdate class.
     See also:
@@ -1464,22 +1466,24 @@ def create_custom_custom_update_class(class_name, param_names=None,
     create_custom_sparse_connect_init_snippet_class
 
     Args:
-    class_name          --  name of the new class
+    class_name              --  name of the new class
 
     Keyword args:
-    param_names         --  list of strings with param names of the model
-    var_name_types      --  list of tuples of strings with varible names and
-                            types of the variable
-    derived_params      --  list of tuples, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    var_refs            --  list of tuples of strings with varible names and
-                            types of variabled variable
-    update_code         --  string with the current injection code
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
-    custom_body         --  dictionary with additional attributes and methods
-                            of the new class
+    param_names             --  list of strings with param names of the model
+    var_name_types          --  list of tuples of strings with varible names and
+                                types of the variable
+    derived_params          --  list of tuples, where the first member is string
+                                with name of the derived parameter and the second
+                                should be a functor returned by create_dpf_class
+    var_refs                --  list of tuples of strings with varible names and
+                                types of variabled variable
+    update_code             --  string with the current injection code
+    extra_global_params     --  list of pairs of strings with names and types of
+                                additional parameters
+    extra_global_param_refs --  list of pairs of strings with names and types of
+                                extra global parameter references
+    custom_body             --  dictionary with additional attributes and methods
+                                of the new class
     """
     if not isinstance(custom_body, dict) and custom_body is not None:
         raise ValueError("custom_body must be an instance of dict or None")
@@ -1493,6 +1497,11 @@ def create_custom_custom_update_class(class_name, param_names=None,
         body["get_var_refs"] = \
             lambda self: VarRefVector([VarRef(*v)
                                        for v in var_refs])
+    
+    if extra_global_param_refs is not None:
+        body["get_extra_global_param_refs"] = \
+            lambda self: EGPRefVector([EGPRef(*e)
+                                       for e in extra_global_param_refs])
     if custom_body is not None:
         body.update(custom_body)
 
