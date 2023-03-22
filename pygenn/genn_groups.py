@@ -871,8 +871,11 @@ class SynapseGroup(Group):
     @matrix_type.setter
     def matrix_type(self, matrix_type):
         if self.weight_sharing_master is None:
-            self._matrix_type = getattr(genn_wrapper,
-                                        "SynapseMatrixType_" + matrix_type)
+            if isinstance(matrix_type, str):
+                self._matrix_type = getattr(
+                    genn_wrapper, "SynapseMatrixType_" + matrix_type)
+            else:
+                self._matrix_type = matrix_type
         else:
             raise Exception("when weight sharing is used, matrix_type"
                             "can only be set on the 'master' population")
