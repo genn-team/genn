@@ -838,7 +838,7 @@ class SynapseGroup(Group):
         else:
             var_view = self.vars[var_name].view
 
-            if self.is_dense:
+            if self.is_dense or self.has_kernel_synapse_vars:
                 return np.copy(var_view)
             elif self.is_ragged:
                 max_rl = self.max_row_length
