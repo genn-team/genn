@@ -19,6 +19,7 @@ namespace GeNN::CodeGenerator
 {
 class EnvironmentExternal : public Transpiler::PrettyPrinter::EnvironmentBase
 {
+protected:
     using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
     EnvironmentExternal(EnvironmentBase &enclosing)
@@ -30,6 +31,8 @@ public:
     :   m_Context(os)
     {
     }
+
+    EnvironmentExternal(const EnvironmentExternal&) = delete;
     
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
@@ -59,15 +62,14 @@ private:
 //! Standard pretty printing environment simply allowing substitutions to be implemented
 class EnvironmentSubstitute : public EnvironmentExternal
 {
-    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
     EnvironmentSubstitute(EnvironmentSubstitute &enclosing)
-    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Contents(m_ContentsStream)
     {
     }
 
     EnvironmentSubstitute(EnvironmentExternal &enclosing)
-    :   EnvironmentExternal(enclosing), m_Contents(m_ContentsStream)
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Contents(m_ContentsStream)
     {
     }
     
@@ -75,6 +77,9 @@ public:
     :   EnvironmentExternal(os), m_Contents(m_ContentsStream)
     {
     }
+
+    EnvironmentSubstitute(const EnvironmentSubstitute&) = delete;
+
     ~EnvironmentSubstitute();
     
     //------------------------------------------------------------------------
@@ -159,23 +164,25 @@ template<typename A, typename G>
 class EnvironmentLocalVarCache : public EnvironmentExternal
 {
     //! Type of a single definition
-    typedef typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type DefType;
+    using DefType = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
     
     //! Type of a single initialiser
-    typedef typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type InitialiserType;
+    using InitialiserType = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
     
     //! Function used to provide index strings based on initialiser and access type
-    typedef std::function<std::string(InitialiserType, decltype(DefType::access))> GetIndexFn;    
+    using GetIndexFn = std::function<std::string(InitialiserType, decltype(DefType::access))>;
 
 public:
     EnvironmentLocalVarCache(const G &group, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(enclosing), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
         std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
                        [](const auto &v){ return std::make_pair(v.name, false); });
     }
+
+    EnvironmentLocalVarCache(const EnvironmentLocalVarCache&) = delete;
     
     ~EnvironmentLocalVarCache()
     {
