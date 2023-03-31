@@ -288,10 +288,19 @@ private:
 
     virtual void visit(const Expression::Call &call) final
     {
+        // **TODO** think about nested calls
+        assert(m_CallArguments.empty());
+
+        // Evaluate argument types and store in class
+        m_CallArguments.clear();
+        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments),
+                       [this](const auto &a){ return evaluateType(a.get()); });
+
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
         auto calleeFunctionType = dynamic_cast<const Type::FunctionBase *>(calleeType);
 
+        m_CallArguments.clear();
         // If callee's a function
         if (calleeFunctionType) {
             // If argument count doesn't match
@@ -428,11 +437,23 @@ private:
 
     virtual void visit(const Expression::Variable &variable)
     {
+        // If type of variable is unambiguous, 
         const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);
         if (varTypes.size() == 1) {
             setExpressionType(&variable, varTypes.front());
         }
+        // Otherwise
         else {
+            // If there are no call arguments to disambiguate, give error
+            if (m_CallArguments.empty()) {
+                m_ErrorHandler.error(variable.getName(),
+                                     "Ambiguous identifier '" + variable.getName().lexeme + "'");
+                throw TypeCheckError();
+            }
+            else {
+                // 1) Viable - same number of arguments
+                // 2) Overload resolution
+            }
             // **TODO** handler overload resolution
             assert(false);
         }
@@ -674,6 +695,7 @@ private:
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     ResolvedTypeMap &m_ResolvedTypes;
+    std::vector<const Type::Base*> m_CallArguments;
     bool m_InLoop;
     bool m_InSwitch;
 };
