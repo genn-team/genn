@@ -34,7 +34,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
     using namespace Type;
 
     // Create type environment
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this);
+    TypeChecker::StandardLibraryFunctionEnvironment stdLibraryEnv;
+    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, &stdLibraryEnv);
 
     addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
     
@@ -266,7 +267,8 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     using namespace Type;
 
     // Create type environment
-    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this);
+    TypeChecker::StandardLibraryFunctionEnvironment stdLibraryEnv;
+    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, &stdLibraryEnv);
 
     // If underlying synapse group has kernel weights
     if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {

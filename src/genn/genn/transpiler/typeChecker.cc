@@ -428,7 +428,14 @@ private:
 
     virtual void visit(const Expression::Variable &variable)
     {
-        setExpressionType(&variable, m_Environment.get().getType(variable.getName(), m_ErrorHandler));
+        const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);
+        if (varTypes.size() == 1) {
+            setExpressionType(&variable, varTypes.front());
+        }
+        else {
+            // **TODO** handler overload resolution
+            assert(false);
+        }
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -683,6 +690,7 @@ const Type::Base *EnvironmentBase::getType(const Token &name, ErrorHandlerBase &
     }
     else {
         errorHandler.error(name, "Unambiguous type expected");
+        throw TypeCheckError();
     }
 }
 //---------------------------------------------------------------------------
