@@ -84,12 +84,12 @@ public:
         return EnvironmentBase::incDec(name, op, existingType->second.first, errorHandler);
     }
 
-    virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(name.lexeme);
         if(type == m_Types.end()) {
             if(m_Enclosing) {
-                return m_Enclosing->getType(name, errorHandler);
+                return m_Enclosing->getTypes(name, errorHandler);
             }
             else {
                 errorHandler.error(name, "Undefined variable");
@@ -100,7 +100,7 @@ public:
             // Add field to merged group if required
             addField(type->second);
 
-            return type->second.first;
+            return {type->second.first};
         }
     }
 
@@ -109,8 +109,7 @@ public:
     //---------------------------------------------------------------------------
     void defineField(const Type::Base *type, const std::string &name)
     {
-        if(!m_Types.try_emplace(name, type, std::nullopt).second) 
-        {
+        if(!m_Types.try_emplace(name, type, std::nullopt).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }

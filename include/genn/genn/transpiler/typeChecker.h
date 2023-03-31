@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 // GeNN includes
 #include "type.h"
@@ -48,7 +49,12 @@ public:
                                      bool initializer = false) = 0;
     virtual const Type::Base *incDec(const Token &name, Token::Type op, 
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler) = 0;
-    virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) = 0;
+    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
+
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler);
 
 protected:
     //---------------------------------------------------------------------------
@@ -60,6 +66,29 @@ protected:
                              bool initializer = false) const;
     const Type::Base *incDec(const Token &name, Token::Type op, 
                              const Type::Base *existingType, ErrorHandlerBase &errorHandler) const;
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::TypeChecker::StandardLibraryFunctionEnvironment
+//---------------------------------------------------------------------------
+class StandardLibraryFunctionEnvironment : public EnvironmentBase
+{
+public:
+    StandardLibraryFunctionEnvironment();
+
+    //------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) final;
+    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
+                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+                                     bool initializer = false) final;
+    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
+                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final;
+    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final;
+
+private:
+    std::unordered_multimap<std::string, const Type::Base*> m_Types;
 };
 
 //---------------------------------------------------------------------------
