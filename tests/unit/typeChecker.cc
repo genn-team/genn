@@ -63,20 +63,20 @@ public:
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
-    
+
     template<typename T>
     void define(const std::string &name, Type::Qualifier qualifiers = Type::Qualifier{0})
     {
         define(name, T::getInstance()->getQualifiedType(qualifiers));
     }
-    
+
     template<typename T>
     void definePointer(const std::string &name, Type::Qualifier valueQualifiers = Type::Qualifier{0}, 
                        Type::Qualifier pointerQualifiers = Type::Qualifier{0})
     {
         define(name, T::getInstance()->getQualifiedType(valueQualifiers)->getPointerType(pointerQualifiers));
     }
-    
+
 
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
@@ -86,7 +86,7 @@ public:
         errorHandler.error(name, "Cannot declare variable in external environment");
         throw TypeChecker::TypeCheckError();
     }
-    
+
     virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
                                      bool initializer = false) final
@@ -97,11 +97,11 @@ public:
             errorHandler.error(name, "Undefined variable");
             throw TypeChecker::TypeCheckError();
         }
-        
+
         // Perform standard type-checking logic
         return EnvironmentBase::assign(name, op, existingType->second, assignedType, context, errorHandler, initializer);    
     }
-    
+
     virtual const Type::Base *incDec(const Token &name, Token::Type op, 
                                      const Type::TypeContext&, ErrorHandlerBase &errorHandler) final
     {
@@ -110,12 +110,12 @@ public:
             errorHandler.error(name, "Undefined variable");
             throw TypeChecker::TypeCheckError();
         }
-        
+
         // Perform standard type-checking logic
         return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);
     }
-    
-    virtual const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler) final
+
+    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(std::string{name.lexeme});
         if(type == m_Types.end()) {
@@ -123,10 +123,10 @@ public:
             throw TypeChecker::TypeCheckError();
         }
         else {
-            return type->second;
+            return {type->second};
         }
     }
-    
+
 private:
     //---------------------------------------------------------------------------
     // Members
@@ -150,7 +150,7 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
     // Parse
     const auto statements = Parser::parseBlockItemList(tokens, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
-     
+
     // Typecheck
     TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
@@ -166,7 +166,7 @@ const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &ty
     // Parse
     const auto expression = Parser::parseExpression(tokens, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
-     
+    
     // Typecheck
     const auto *type = TypeChecker::typeCheck(expression.get(), typeEnvironment, typeContext, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
@@ -189,7 +189,7 @@ TEST(TypeChecker, ArraySubscript)
     }
 
     // Pointer to pointer, double indexing
-    
+
     // Float array indexing
     EXPECT_THROW({
         TestEnvironment typeEnvironment;
@@ -280,7 +280,7 @@ TEST(TypeChecker, Binary)
     }
 
     // **TODO** constness and 
-    
+
     // Pointer + non-integer
     EXPECT_THROW({
         TestEnvironment typeEnvironment;
@@ -328,6 +328,30 @@ TEST(TypeChecker, Binary)
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Call)
 {
+    // Too few arguments
+    TypeChecker::StandardLibraryFunctionEnvironment stdLibraryEnv;
+    EXPECT_THROW({
+        typeCheckExpression("sin()", stdLibraryEnv);}, 
+        TypeChecker::TypeCheckError);
+
+    // Too many arguments
+    EXPECT_THROW({
+        typeCheckExpression("sin(1.0f, 2.0f)", stdLibraryEnv);}, 
+        TypeChecker::TypeCheckError);
+
+    // Floating point trascendental function
+    {
+        const auto *type = typeCheckExpression("sin(1.0f)", stdLibraryEnv);
+        EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
+        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
+    }
+
+    // Double trascendental function
+    {
+        const auto *type = typeCheckExpression("sin(1.0d)", stdLibraryEnv);
+        EXPECT_EQ(type->getName(), Type::Double::getInstance()->getName());
+        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
+    }
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Cast)
@@ -356,7 +380,7 @@ TEST(TypeChecker, Cast)
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto *type = typeCheckExpression("(const int*)intArray", typeEnvironment);
         EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
-        
+
         const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
         EXPECT_TRUE(pointerType);
         EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());
@@ -369,7 +393,7 @@ TEST(TypeChecker, Cast)
         typeEnvironment.definePointer<Type::Int32>("intArray");
         const auto *type = typeCheckExpression("(int * const)intArray", typeEnvironment);
         EXPECT_TRUE(type->hasQualifier(Type::Qualifier::CONSTANT));
-        
+
         const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
         EXPECT_TRUE(pointerType);
         EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());
