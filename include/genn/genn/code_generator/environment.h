@@ -169,10 +169,10 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
 {
     //! Type of a single definition
     using DefType = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
-    
+
     //! Type of a single initialiser
     using InitialiserType = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
-    
+
     //! Function used to provide index strings based on initialiser and access type
     using GetIndexFn = std::function<std::string(InitialiserType, decltype(DefType::access))>;
 
@@ -187,17 +187,17 @@ public:
     }
 
     EnvironmentLocalVarCache(const EnvironmentLocalVarCache&) = delete;
-    
+
     ~EnvironmentLocalVarCache()
     {
         A adapter(m_Group);
-        
+
         // Copy definitions which have been referenced into new vector
         const auto defs = adapter.getDefs();
         std::remove_const_t<decltype(defs)> referencedVars;
         std::copy_if(defs.cbegin(), defs.cend(), std::back_inserter(referencedVars),
                      [this](const auto &v){ return m_VariablesReferenced.at(v.name); });
-        
+
         // Loop through referenced variables
         const auto &initialisers = adapter.getInitialisers();
         for(const auto &v : referencedVars) {
@@ -205,7 +205,7 @@ public:
                 getContextStream() << "const ";
             }
             getContextStream() << v.type->getName() << " " << m_LocalPrefix << v.name;
-            
+
             // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
@@ -214,10 +214,10 @@ public:
             }
             getContextStream() << ";" << std::endl;
         }
-        
+
         // Write contents to context stream
         getContextStream() << m_ContentsStream.str();
-        
+
         // Loop through referenced variables again
         for(const auto &v : referencedVars) {
             // If variables are read-write
@@ -242,17 +242,17 @@ public:
         else {
             // Set flag to indicate that variable has been referenced
             var->second = true;
-            
+
             // Add local prefix to variable name
             return m_LocalPrefix + name;
         }
     }
-    
+
     virtual CodeStream &getStream() final
     {
         return m_Contents;
     }
-    
+
 private:
     //------------------------------------------------------------------------
     // Members
