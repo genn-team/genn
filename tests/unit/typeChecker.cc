@@ -529,7 +529,7 @@ TEST(TypeChecker, Literal)
         const auto *type = typeCheckExpression("1.0", typeEnvironment, typeContext);
         EXPECT_EQ(type->getResolvedName(typeContext), Type::Float::getInstance()->getName());
     }
-    
+
     // Scalar with double-precision
     {
         TestEnvironment typeEnvironment;
@@ -537,7 +537,7 @@ TEST(TypeChecker, Literal)
         const auto *type = typeCheckExpression("1.0", typeEnvironment, typeContext);
         EXPECT_EQ(type->getResolvedName(typeContext), Type::Double::getInstance()->getName());
     }
-    
+
     // Double
     {
         TestEnvironment typeEnvironment;
@@ -557,6 +557,13 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto *type = typeCheckExpression("100U", typeEnvironment);
         EXPECT_EQ(type->getName(), Type::Uint32::getInstance()->getName());
+    }
+
+    // String
+    {
+        TestEnvironment typeEnvironment;
+        const auto *type = typeCheckExpression("\"hello world\"", typeEnvironment);
+        EXPECT_EQ(type->getName(), Type::Int8::getInstance()->getPointerType()->getName());
     }
 }
 //--------------------------------------------------------------------------

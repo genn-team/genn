@@ -237,9 +237,9 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
     //      identifier
     //      constant
     //      "(" expression ")"
-    if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::DOUBLE_NUMBER, 
-                          Token::Type::FLOAT_NUMBER, Token::Type::SCALAR_NUMBER,
-                          Token::Type::INT32_NUMBER, Token::Type::UINT32_NUMBER})) {
+    if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::STRING,
+                           Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER, Token::Type::SCALAR_NUMBER,
+                           Token::Type::INT32_NUMBER, Token::Type::UINT32_NUMBER})) {
         return std::make_unique<Expression::Literal>(parserState.previous());
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {

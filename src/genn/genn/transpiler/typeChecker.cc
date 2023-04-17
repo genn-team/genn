@@ -394,6 +394,9 @@ private:
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
             setExpressionType<Type::Uint32>(&literal);
         }
+        else if(literal.getValue().type == Token::Type::STRING) {
+            setExpressionType(&literal, Type::Int8::getInstance()->getPointerType());
+        }
         else {
             assert(false);
         }
