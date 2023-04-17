@@ -77,7 +77,7 @@ public:
     :   m_Enclosing(enclosing)
     {
     }
-    
+
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
@@ -88,7 +88,7 @@ public:
             throw TypeCheckError();
         }
     }
-    
+
     virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
                                      bool initializer = false) final
@@ -99,12 +99,12 @@ public:
             return m_Enclosing.assign(name, op, assignedType,
                                       context, errorHandler, initializer);
         }
-        
+
         // Perform standard type-checking logic
         return EnvironmentBase::assign(name, op, existingType->second, assignedType, 
                                        context, errorHandler, initializer);    
     }
-    
+
     virtual const Type::Base *incDec(const Token &name, Token::Type op, 
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final
     {
@@ -113,7 +113,7 @@ public:
         if(existingType == m_Types.end()) {
             return m_Enclosing.incDec(name, op, context, errorHandler);
         }
-        
+
         // Perform standard type-checking logic
         return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);    
     }
@@ -302,26 +302,12 @@ private:
         m_CallArguments.clear();
         // If callee's a function
         if (calleeFunctionType) {
-            // If argument count doesn't match
-            const auto argTypes = calleeFunctionType->getArgumentTypes();
-            if (call.getArguments().size() < argTypes.size()) {
-                m_ErrorHandler.error(call.getClosingParen(), "Too many arguments to function");
-                throw TypeCheckError();
-            }
-            else if (call.getArguments().size() > argTypes.size()) {
-                m_ErrorHandler.error(call.getClosingParen(), "Too few arguments to function");
-                throw TypeCheckError();
-            }
-            else {
-                // Loop through arguments
-                // **TODO** check
-                /*for(size_t i = 0; i < argTypes.size(); i++) {
-                    // Evaluate argument type
-                    auto callArgType = evaluateType(call.getArguments().at(i).get());
-                }*/
-                // Type is return type of function
-                setExpressionType(&call, calleeFunctionType->getReturnType());
-            }
+            // Assert that argument count matches
+            // **NOTE** this should have been handled when visiting Expression::Variable
+            assert(call.getArguments().size() == calleeFunctionType->getArgumentTypes().size());
+
+            // Type is return type of function
+            setExpressionType(&call, calleeFunctionType->getReturnType());
         }
         // Otherwise
         else {
@@ -436,9 +422,9 @@ private:
 
     virtual void visit(const Expression::Variable &variable)
     {
-        // If type of variable is unambiguous, 
+        // If type is unambiguous and not a function
         const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);
-        if (varTypes.size() == 1) {
+        if (varTypes.size() == 1 && dynamic_cast<const Type::FunctionBase*>(varTypes.front()) == nullptr) {
             setExpressionType(&variable, varTypes.front());
         }
         // Otherwise
@@ -468,7 +454,7 @@ private:
                         // If both are numeric
                         if(cNumericType && aNumericType) {
                             // If names are identical (we don't care about qualifiers), match is exact
-                            if(cNumericType->getName() == aNumericType->getName()) {
+                            if(cNumericType->getResolvedName(m_Context) == aNumericType->getResolvedName(m_Context)) {
                                 argumentConversionRank.push_back(0);
                             }
                             // Integer promotion
@@ -479,12 +465,13 @@ private:
                                 argumentConversionRank.push_back(1);
                             }
                             // Float promotion
-                            else if(aNumericType->getName() == Type::Double::getInstance()->getName()
-                                        && cNumericType->getName() == Type::Float::getInstance()->getName())
+                            else if(aNumericType->getResolvedName(m_Context) == Type::Double::getInstance()->getName()
+                                    && cNumericType->getResolvedName(m_Context) == Type::Float::getInstance()->getName())
                             {
                                 argumentConversionRank.push_back(1);
                             }
                             // Otherwise, numeric conversion
+                            // **TODO** integer to scalar promotion should be lower ranked than general conversion
                             else {
                                 argumentConversionRank.push_back(2);
                             }
@@ -509,18 +496,19 @@ private:
                 }
             }
 
+            // If there are no viable candidates, give error
             if(viableFunctions.empty()) {
                 m_ErrorHandler.error(variable.getName(),
                                         "No viable function candidates for '" + variable.getName().lexeme + "'");
                 throw TypeCheckError();
             }
+            // Otherwise, sort lexigraphically by conversion rank and return type of lowest
+            // **TODO** handle case when best is ambiguous
             else {
-                std::cout << viableFunctions.size() << " function candidates" << std::endl;;
+                std::sort(viableFunctions.begin(), viableFunctions.end(),
+                          [](auto &f1, auto &f2){ return (f1.second < f2.second); });
+                setExpressionType(&variable, viableFunctions.front().first);
             }
-
-
-            // **TODO** handler overload resolution
-            assert(false);
         }
     }
 
