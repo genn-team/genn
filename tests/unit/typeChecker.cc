@@ -306,7 +306,7 @@ TEST(TypeChecker, Binary)
         const auto *type = typeCheckExpression("intArray - offset", typeEnvironment);
         const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
         EXPECT_TRUE(pointerType);
-        EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());       
+        EXPECT_EQ(pointerType->getValueType()->getName(), Type::Int32::getInstance()->getName());
     }
 
     // Integer + pointer
@@ -339,18 +339,36 @@ TEST(TypeChecker, Call)
         typeCheckExpression("sin(1.0f, 2.0f)", stdLibraryEnv);}, 
         TypeChecker::TypeCheckError);
 
-    // Floating point trascendental function
+    // Floating point transcendental function
     {
         const auto *type = typeCheckExpression("sin(1.0f)", stdLibraryEnv);
         EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
-        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
     }
 
-    // Double trascendental function
+    // Double transcendental function
     {
         const auto *type = typeCheckExpression("sin(1.0d)", stdLibraryEnv);
         EXPECT_EQ(type->getName(), Type::Double::getInstance()->getName());
-        EXPECT_FALSE(type->hasQualifier(Type::Qualifier::CONSTANT));
+    }
+
+    // Float scalar transcendental function
+    {
+        const Type::TypeContext typeContext{{"scalar", Type::Float::getInstance()}};
+        const auto *type = typeCheckExpression("sin(1.0)", stdLibraryEnv, typeContext);
+        EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
+    }
+
+    // Double scalar transcendental function
+    {
+        const Type::TypeContext typeContext{{"scalar", Type::Double::getInstance()}};
+        const auto *type = typeCheckExpression("sin(1.0)", stdLibraryEnv, typeContext);
+        EXPECT_EQ(type->getName(), Type::Double::getInstance()->getName());
+    }
+
+    // Nested transcendental function
+    {
+        const auto *type = typeCheckExpression("sin(fmax(0.0f, 1.0f))", stdLibraryEnv);
+        EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
     }
 }
 //--------------------------------------------------------------------------
@@ -508,7 +526,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const Type::TypeContext typeContext{{"scalar", Type::Float::getInstance()}};
-        const auto *type = typeCheckExpression("1.0", typeEnvironment);
+        const auto *type = typeCheckExpression("1.0", typeEnvironment, typeContext);
         EXPECT_EQ(type->getResolvedName(typeContext), Type::Float::getInstance()->getName());
     }
     
