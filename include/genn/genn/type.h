@@ -299,6 +299,11 @@ public:
     //------------------------------------------------------------------------
     virtual const Base *getReturnType() const = 0;
     virtual std::vector<const Base*> getArgumentTypes() const = 0;
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    bool isVariadic() const;
 };
 
 //----------------------------------------------------------------------------
@@ -309,7 +314,7 @@ class Function : public FunctionBase
 {
 public:
     Function(Qualifier qualifiers = Qualifier{0}) : FunctionBase(qualifiers){}
-    
+
     //------------------------------------------------------------------------
     // Base virtuals
     //------------------------------------------------------------------------
@@ -408,6 +413,35 @@ DECLARE_NUMERIC_TYPE(Uint32, uint32_t, 30, "u");
 //DECLARE_NUMERIC_TYPE(Uint64, uint64_t, 40);
 DECLARE_NUMERIC_TYPE(Float, float, 50, "f");
 DECLARE_NUMERIC_TYPE(Double, double, 60, "");
+
+//----------------------------------------------------------------------------
+// GeNN::Type::PrintF
+//----------------------------------------------------------------------------
+class PrintF : public FunctionBase
+{
+public:
+    DECLARE_TYPE(PrintF);
+
+    PrintF(Qualifier qualifiers = Qualifier{0}) : FunctionBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "PrintF"; }
+    virtual std::string getResolvedName(const TypeContext&) const final{ return "PrintF"; }
+    virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new PrintF(qualifiers); }
+    virtual size_t getSizeBytes(const TypeContext&) const final
+    {
+        assert(false);
+        return 0;
+    }
+
+    //------------------------------------------------------------------------
+    // FunctionBase virtuals
+    //------------------------------------------------------------------------
+    virtual const Base *getReturnType() const final { return Int32::getInstance(); };
+    virtual std::vector<const Base*> getArgumentTypes() const final{ return {Int8::getInstance()->getPointerType(), nullptr}; }
+};
 
 //----------------------------------------------------------------------------
 // Declare standard library function types

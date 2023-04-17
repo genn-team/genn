@@ -73,6 +73,8 @@ IMPLEMENT_TYPE(Uint32);
 IMPLEMENT_TYPE(Float);
 IMPLEMENT_TYPE(Double);
 
+IMPLEMENT_TYPE(PrintF);
+
 // Implement trigonometric functions
 IMPLEMENT_FLOAT_DOUBLE_FUNCTION_TYPE(Cos);
 IMPLEMENT_FLOAT_DOUBLE_FUNCTION_TYPE(Sin);
@@ -224,6 +226,26 @@ const Type::NumericBase *NumericTypedef::getResolvedType(const TypeContext &cont
         }
     }
 }
+
+//----------------------------------------------------------------------------
+// GeNN::Type::FunctionBase
+//----------------------------------------------------------------------------
+bool FunctionBase::isVariadic() const
+{
+    // If variadic marker (nullptr) isn't found, function isn't variadic
+    const auto argTypes = getArgumentTypes();
+    const auto variadicMarker = std::find(argTypes.cbegin(), argTypes.cend(), nullptr);
+    if(variadicMarker == argTypes.cend()) {
+        return false;
+    }
+    // Otherwise, after checking variadic marker is last argument, return true
+    else {
+        assert(argTypes.back() == nullptr);
+        return true;
+    }
+
+}
+
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------

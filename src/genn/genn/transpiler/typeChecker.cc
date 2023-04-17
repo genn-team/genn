@@ -300,13 +300,8 @@ private:
         auto calleeFunctionType = dynamic_cast<const Type::FunctionBase *>(calleeType);
 
         m_CallArguments.clear();
-        // If callee's a function
+        // If callee's a function, type is return type of function
         if (calleeFunctionType) {
-            // Assert that argument count matches
-            // **NOTE** this should have been handled when visiting Expression::Variable
-            assert(call.getArguments().size() == calleeFunctionType->getArgumentTypes().size());
-
-            // Type is return type of function
             setExpressionType(&call, calleeFunctionType->getReturnType());
         }
         // Otherwise
@@ -439,9 +434,13 @@ private:
                 const auto *func = dynamic_cast<const Type::FunctionBase*>(type);
                 assert(func);
 
-                // If number of arguments match
+                // If function is variadic and there are at least as many vall arguments as actual (last is nullptr)
+                // function parameters or function is non-variadic and number of arguments match
                 const auto argumentTypes = func->getArgumentTypes();
-                if(argumentTypes.size() == m_CallArguments.size()) {
+                const bool variadic = func->isVariadic();
+                if((variadic && m_CallArguments.size() >= (argumentTypes.size() - 1))
+                    || (!variadic && m_CallArguments.size() == argumentTypes.size()))
+                {
                     // Create vector to hold argument conversion rank
                     std::vector<int> argumentConversionRank;
                     argumentConversionRank.reserve(m_CallArguments.size());
@@ -450,7 +449,7 @@ private:
                     bool viable = true;
                     auto c = m_CallArguments.cbegin();
                     auto a = argumentTypes.cbegin();
-                    for(;c != m_CallArguments.cend(); c++, a++) {
+                    for(;c != m_CallArguments.cend() && *a != nullptr; c++, a++) {
                         auto cNumericType = dynamic_cast<const Type::NumericBase *>(*c);
                         auto aNumericType = dynamic_cast<const Type::NumericBase *>(*a);
 
@@ -493,7 +492,6 @@ private:
 
                     // If function is viable, add to vector along with vector of conversion ranks
                     if(viable) {
-                        assert(argumentConversionRank.size() == m_CallArguments.size());
                         viableFunctions.emplace_back(func, argumentConversionRank);
                     }
                 }
@@ -885,7 +883,8 @@ StandardLibraryFunctionEnvironment::StandardLibraryFunctionEnvironment()
               ADD_FLOAT_DOUBLE(nearbyint, NearbyInt), ADD_FLOAT_DOUBLE(nextafter, NextAfter),ADD_FLOAT_DOUBLE(remainder, Remainder),
               ADD_FLOAT_DOUBLE(fabs, FAbs), ADD_FLOAT_DOUBLE(fdim, FDim), ADD_FLOAT_DOUBLE(fmax, FMax), ADD_FLOAT_DOUBLE(fmin, FMin),
               ADD_FLOAT_DOUBLE(erf, Erf), ADD_FLOAT_DOUBLE(erfc, ErfC), ADD_FLOAT_DOUBLE(tgamma, TGamma), ADD_FLOAT_DOUBLE(lgamma, LGamma),
-              ADD_FLOAT_DOUBLE(copysign, CopySign), ADD_FLOAT_DOUBLE(fma, FMA)}
+              ADD_FLOAT_DOUBLE(copysign, CopySign), ADD_FLOAT_DOUBLE(fma, FMA),
+              {"printf", Type::PrintF::getInstance()}}
 {
 }
 #undef ADD_FLOAT_DOUBLE

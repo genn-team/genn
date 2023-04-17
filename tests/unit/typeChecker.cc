@@ -370,6 +370,25 @@ TEST(TypeChecker, Call)
         const auto *type = typeCheckExpression("sin(fmax(0.0f, 1.0f))", stdLibraryEnv);
         EXPECT_EQ(type->getName(), Type::Float::getInstance()->getName());
     }
+
+
+    // Variadic with too few arguments
+    EXPECT_THROW({
+        typeCheckExpression("printf()", stdLibraryEnv);},
+        TypeChecker::TypeCheckError);
+
+    // Variadic function with no extra arguments
+    {
+        const auto *type = typeCheckExpression("printf(\"hello world\")", stdLibraryEnv);
+        EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
+    }
+
+    // Variadic function with extra arguments
+    {
+        const auto *type = typeCheckExpression("printf(\"hello world %d, %f\", 12, cos(5.0f))", stdLibraryEnv);
+        EXPECT_EQ(type->getName(), Type::Int32::getInstance()->getName());
+    }
+
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Cast)
