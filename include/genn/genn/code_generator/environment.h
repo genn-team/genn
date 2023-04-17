@@ -5,6 +5,10 @@
 #include <unordered_map>
 #include <variant>
 
+// GeNN includes
+#include "gennUtils.h"
+#include "varAccess.h"
+
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 
@@ -26,14 +30,14 @@ public:
     :   m_Context(enclosing)
     {
     }
-    
+
     EnvironmentExternal(CodeStream &os)
     :   m_Context(os)
     {
     }
 
     EnvironmentExternal(const EnvironmentExternal&) = delete;
-    
+
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
@@ -44,9 +48,9 @@ protected:
     // Protected API
     //------------------------------------------------------------------------
     auto &getContext() const{ return m_Context; }
-    
+
     CodeStream &getContextStream() const;
-    
+
     std::string getContextName(const std::string &name) const;
 
 private:
@@ -81,23 +85,23 @@ public:
     EnvironmentSubstitute(const EnvironmentSubstitute&) = delete;
 
     ~EnvironmentSubstitute();
-    
+
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
     virtual std::string getName(const std::string &name) final;
-    
+
     virtual CodeStream &getStream() final
     {
         return m_Contents;
     }
-    
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     void addSubstitution(const std::string &source, const std::string &destination,
                          std::vector<size_t> initialisers = {});
-    
+
     size_t addInitialiser(const std::string &initialiser);
 
     template<typename T>
