@@ -167,7 +167,7 @@ Token::Type scanIntegerSuffix(ScanState &scanState)
     return integerLiteralTokenTypes.at(suffix);
 }
 //---------------------------------------------------------------------------
-void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens) 
+void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 {
     // If this is a hexadecimal literal
     if(c == '0' && (scanState.match('x') || scanState.match('X'))) {
@@ -222,7 +222,7 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                     scanState.advance();
                 }
             }
-            
+
             // If number has an f suffix, emplace FLOAT_NUMBER token
             if (std::tolower(scanState.peek()) == 'f') {
                 scanState.advance();
@@ -244,6 +244,17 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             emplaceToken(tokens, scanIntegerSuffix(scanState), scanState);
         }
     }
+}
+//---------------------------------------------------------------------------
+void scanString(ScanState &scanState, std::vector<Token> &tokens)
+{
+    // Read until end of string
+    // **TODO** more complex logic here
+    while(scanState.peek() != '"') {
+        scanState.advance();
+    }
+    scanState.match('"');
+    emplaceToken(tokens, Token::Type::STRING, scanState);
 }
 //---------------------------------------------------------------------------
 void scanIdentifier(ScanState &scanState, std::vector<Token> &tokens)
@@ -289,13 +300,13 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
         // Operators
         case '!': emplaceToken(tokens, scanState.match('=') ? Token::Type::NOT_EQUAL : Token::Type::NOT, scanState); break;
         case '=': emplaceToken(tokens, scanState.match('=') ? Token::Type::EQUAL_EQUAL : Token::Type::EQUAL, scanState); break;
-       
+
         // Assignment operators
         case '*': emplaceToken(tokens, scanState.match('=') ? Token::Type::STAR_EQUAL : Token::Type::STAR, scanState); break;
         //case '/': emplaceToken(tokens, scanState.match('=') ? Token::Type::SLASH_EQUAL : Token::Type::SLASH, scanState); break;
         case '%': emplaceToken(tokens, scanState.match('=') ? Token::Type::PERCENT_EQUAL : Token::Type::PERCENT, scanState); break;
         case '^': emplaceToken(tokens, scanState.match('=') ? Token::Type::CARET_EQUAL : Token::Type::CARET, scanState); break;
-        
+
         case '<': 
         {
             if(scanState.match('=')) {
@@ -389,7 +400,7 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
             }
             break;
         }
-        
+
         case '/':
         {
             // Line comment
@@ -403,6 +414,9 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
             }
             break;
         }
+
+        // String
+        case '"': scanString(scanState, tokens); break;
 
         // Whitespace
         case ' ':

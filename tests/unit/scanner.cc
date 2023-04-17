@@ -119,3 +119,18 @@ TEST(Scanner, DecimalFloat)
     ASSERT_EQ(tokens[5].lexeme, "12.0d");
     ASSERT_EQ(tokens[7].lexeme, "0.0004f");
 }
+//--------------------------------------------------------------------------
+TEST(Scanner, String)
+{
+    TestErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource("\"hello world\" \"pre-processor\"", errorHandler);
+    ASSERT_FALSE(errorHandler.hasError());
+
+    ASSERT_EQ(tokens.size(), 3);
+    ASSERT_EQ(tokens[0].type, Token::Type::STRING);
+    ASSERT_EQ(tokens[1].type, Token::Type::STRING);
+    ASSERT_EQ(tokens[2].type, Token::Type::END_OF_FILE);
+
+    ASSERT_EQ(tokens[0].lexeme, "\"hello world\"");
+    ASSERT_EQ(tokens[1].lexeme, "\"pre-processor\"");
+}
