@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <string>
-
+#include <iostream>
 // Standard C includes
 #include <cassert>
 
@@ -266,7 +266,6 @@ private:
 
                     // If operator is a shift, promote left type
                     if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
-                        
                         setExpressionType(&binary, Type::getPromotedType(leftNumericType, m_Context));
                     }
                     // Otherwise, take common type
@@ -444,16 +443,82 @@ private:
         }
         // Otherwise
         else {
-            // If there are no call arguments to disambiguate, give error
-            if (m_CallArguments.empty()) {
+            // Loop through variable types
+            std::vector<std::pair<const Type::FunctionBase*, std::vector<int>>> viableFunctions;
+            for(const auto *type : varTypes) {
+                // Cast to function (only functions should be overloaded)
+                const auto *func = dynamic_cast<const Type::FunctionBase*>(type);
+                assert(func);
+
+                // If number of arguments match
+                const auto argumentTypes = func->getArgumentTypes();
+                if(argumentTypes.size() == m_CallArguments.size()) {
+                    // Create vector to hold argument conversion rank
+                    std::vector<int> argumentConversionRank;
+                    argumentConversionRank.reserve(m_CallArguments.size());
+
+                    // Loop through arguments
+                    bool viable = true;
+                    auto c = m_CallArguments.cbegin();
+                    auto a = argumentTypes.cbegin();
+                    for(;c != m_CallArguments.cend(); c++, a++) {
+                        auto cNumericType = dynamic_cast<const Type::NumericBase *>(*c);
+                        auto aNumericType = dynamic_cast<const Type::NumericBase *>(*a);
+
+                        // If both are numeric
+                        if(cNumericType && aNumericType) {
+                            // If names are identical (we don't care about qualifiers), match is exact
+                            if(cNumericType->getName() == aNumericType->getName()) {
+                                argumentConversionRank.push_back(0);
+                            }
+                            // Integer promotion
+                            else if(aNumericType->getName() == Type::Int32::getInstance()->getName()
+                                    && cNumericType->isIntegral(m_Context)
+                                    && cNumericType->getRank(m_Context) < Type::Int32::getInstance()->getRank(m_Context))
+                            {
+                                argumentConversionRank.push_back(1);
+                            }
+                            // Float promotion
+                            else if(aNumericType->getName() == Type::Double::getInstance()->getName()
+                                        && cNumericType->getName() == Type::Float::getInstance()->getName())
+                            {
+                                argumentConversionRank.push_back(1);
+                            }
+                            // Otherwise, numeric conversion
+                            else {
+                                argumentConversionRank.push_back(2);
+                            }
+                        }
+                        // Otherwise, if they are matching pointers
+                        // **TODO** some more nuance here
+                        else if(checkPointerTypeAssignement(*c, *a, m_Context)) {
+                            argumentConversionRank.push_back(0);
+                        }
+                        // Otherwise, this function is not viable
+                        else {
+                            viable = false;
+                            break;
+                        }
+                    }
+
+                    // If function is viable, add to vector along with vector of conversion ranks
+                    if(viable) {
+                        assert(argumentConversionRank.size() == m_CallArguments.size());
+                        viableFunctions.emplace_back(func, argumentConversionRank);
+                    }
+                }
+            }
+
+            if(viableFunctions.empty()) {
                 m_ErrorHandler.error(variable.getName(),
-                                     "Ambiguous identifier '" + variable.getName().lexeme + "'");
+                                        "No viable function candidates for '" + variable.getName().lexeme + "'");
                 throw TypeCheckError();
             }
             else {
-                // 1) Viable - same number of arguments
-                // 2) Overload resolution
+                std::cout << viableFunctions.size() << " function candidates" << std::endl;;
             }
+
+
             // **TODO** handler overload resolution
             assert(false);
         }
