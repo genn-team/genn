@@ -279,7 +279,7 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             if(!parserState.check(Token::Type::RIGHT_PAREN)) {
                 do {
                     arguments.emplace_back(parseAssignment(parserState));
-                } while(parserState.check(Token::Type::COMMA));
+                } while(parserState.match(Token::Type::COMMA));
             }
 
             Token closingParen = parserState.consume(Token::Type::RIGHT_PAREN,
