@@ -140,7 +140,7 @@ std::string getPointerTypeName()
     return T::getInstance()->getPointerType()->getName();
 }
 
-void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext = {})
+void typeCheckStatements(std::string_view code, TypeChecker::EnvironmentBase &typeEnvironment, const Type::TypeContext &typeContext = {})
 {
     // Scan
     TestErrorHandler errorHandler;
@@ -156,7 +156,7 @@ void typeCheckStatements(std::string_view code, TestEnvironment &typeEnvironment
     ASSERT_FALSE(errorHandler.hasError());
 }
 
-const Type::Base *typeCheckExpression(std::string_view code, TestEnvironment &typeEnvironment, const Type::TypeContext &typeContext = {})
+const Type::Base *typeCheckExpression(std::string_view code, TypeChecker::EnvironmentBase &typeEnvironment, const Type::TypeContext &typeContext = {})
 {
     // Scan
     TestErrorHandler errorHandler;
