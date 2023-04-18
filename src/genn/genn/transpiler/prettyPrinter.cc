@@ -33,7 +33,7 @@ public:
     :   m_Enclosing(enclosing)
     {
     }
-    
+
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
@@ -42,10 +42,10 @@ public:
         if(!m_LocalVariables.emplace(name).second) {
             throw std::runtime_error("Redeclaration of variable");
         }
-        
+
         return "_" + name;
     }
-    
+
     virtual std::string getName(const std::string &name) final
     {
         if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
@@ -55,7 +55,7 @@ public:
             return "_" + name;
         }
     }
-    
+
     virtual CodeStream &getStream()
     {
         return m_Enclosing.getStream();
@@ -188,7 +188,7 @@ private:
         m_Environment.get().getStream() << unary.getOperator().lexeme;
         unary.getRight()->accept(*this);
     }
-    
+
     //---------------------------------------------------------------------------
     // Statement::Visitor virtuals
     //---------------------------------------------------------------------------
@@ -201,17 +201,17 @@ private:
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
-        
+
         // Create new environment and set to current
         EnvironmentInternal environment(m_Environment);
         m_Environment = environment;
-        
+
         CodeGenerator::CodeStream::Scope b(m_Environment.get().getStream());
         for(auto &s : compound.getStatements()) {
             s->accept(*this);
             m_Environment.get().getStream() << std::endl;
         }
-        
+
         // Restore old environment
         m_Environment = oldEnvironment;
     }
@@ -240,11 +240,11 @@ private:
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
-        
+
         // Create new environment and set to current
         EnvironmentInternal environment(m_Environment);
         m_Environment = environment;
-        
+
         m_Environment.get().getStream() << "for(";
         if(forStatement.getInitialiser()) {
             forStatement.getInitialiser()->accept(*this);
@@ -264,7 +264,7 @@ private:
         }
         m_Environment.get().getStream() << ")";
         forStatement.getBody()->accept(*this);
-        
+
         // Restore old environment
         m_Environment = oldEnvironment;
     }
@@ -333,7 +333,6 @@ private:
     void printType(const GeNN::Type::Base *type)
     {
         // **THINK** this should be Type::getName!
-        
         // Loop, building reversed list of tokens
         std::vector<std::string> tokens;
         while(true) {
@@ -344,10 +343,10 @@ private:
                 if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
                     tokens.push_back("const");
                 }
-                
+
                 // Add *
                 tokens.push_back("*");
-                
+
                 // Go to value type
                 type = pointerType->getValueType();
             }
@@ -355,19 +354,17 @@ private:
             else {
                 // Add type specifier
                 tokens.push_back(type->getName());
-                
-                
+
                 if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
                     tokens.push_back("const");
                 }
                 break;
             }
         }
-        
         // Copy tokens backwards into string stream, seperating with spaces
         std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_Environment.get().getStream(), " "));
-        
     }
+
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
