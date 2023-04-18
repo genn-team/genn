@@ -60,6 +60,7 @@
     <ClCompile Include="transpiler\parser.cc" />
     <ClCompile Include="transpiler\prettyPrinter.cc" />
     <ClCompile Include="transpiler\scanner.cc" />
+    <ClCompile Include="transpiler\standardLibrary.cc" />
     <ClCompile Include="transpiler\typeChecker.cc" />
     <ClCompile Include="type.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
@@ -124,6 +125,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\parser.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\prettyPrinter.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\scanner.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\standardLibrary.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\transpilerUtils.h" />
