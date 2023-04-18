@@ -8,14 +8,14 @@
 #include "transpiler/typeChecker.h"
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::StandardLibrary::TypeEnvironment
+// GeNN::Transpiler::StandardLibrary::FunctionTypes
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::StandardLibrary
 {
-class TypeEnvironment : public TypeChecker::EnvironmentBase
+class FunctionTypes : public TypeChecker::EnvironmentBase
 {
 public:
-    TypeEnvironment();
+    FunctionTypes();
 
     //------------------------------------------------------------------------
     // EnvironmentBase virtuals

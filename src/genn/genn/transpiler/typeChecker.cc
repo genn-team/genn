@@ -871,65 +871,6 @@ const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type,
 }
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::StandardLibraryFunctionEnvironment
-//---------------------------------------------------------------------------
-#define ADD_FLOAT_DOUBLE(NAME, CLASS_PREFIX) {#NAME, Type::CLASS_PREFIX##F::getInstance()}, {#NAME, Type::CLASS_PREFIX##D::getInstance()}
-StandardLibraryFunctionEnvironment::StandardLibraryFunctionEnvironment()
-    : m_Types{ADD_FLOAT_DOUBLE(cos, Cos), ADD_FLOAT_DOUBLE(sin, Sin), ADD_FLOAT_DOUBLE(tan, Tan),
-              ADD_FLOAT_DOUBLE(acos, Acos), ADD_FLOAT_DOUBLE(asin, Asin), ADD_FLOAT_DOUBLE(atan, Atan), ADD_FLOAT_DOUBLE(atan2, Atan2),
-              ADD_FLOAT_DOUBLE(cosh, Cosh), ADD_FLOAT_DOUBLE(sinh, Sinh), ADD_FLOAT_DOUBLE(tanh, Tanh),
-              ADD_FLOAT_DOUBLE(exp, Exp), ADD_FLOAT_DOUBLE(expm1, ExpM1), ADD_FLOAT_DOUBLE(exp2, Exp2), ADD_FLOAT_DOUBLE(pow, Pow),
-              ADD_FLOAT_DOUBLE(scalbn, ScalBN), ADD_FLOAT_DOUBLE(log, Log), ADD_FLOAT_DOUBLE(log1p, Log1P), ADD_FLOAT_DOUBLE(log2, Log2), 
-              ADD_FLOAT_DOUBLE(log10, Log10), ADD_FLOAT_DOUBLE(ldexp, LdExp), ADD_FLOAT_DOUBLE(ilogb, ILogB),
-              ADD_FLOAT_DOUBLE(sqrt, Sqrt), ADD_FLOAT_DOUBLE(cbrt, Cbrt), ADD_FLOAT_DOUBLE(hypot, Hypot),
-              ADD_FLOAT_DOUBLE(ceil, Ceil), ADD_FLOAT_DOUBLE(floor, Floor), ADD_FLOAT_DOUBLE(fmod, Fmod),
-              ADD_FLOAT_DOUBLE(round, Round), ADD_FLOAT_DOUBLE(rint, Rint), ADD_FLOAT_DOUBLE(trunc, Trunc),
-              ADD_FLOAT_DOUBLE(nearbyint, NearbyInt), ADD_FLOAT_DOUBLE(nextafter, NextAfter),ADD_FLOAT_DOUBLE(remainder, Remainder),
-              ADD_FLOAT_DOUBLE(fabs, FAbs), ADD_FLOAT_DOUBLE(fdim, FDim), ADD_FLOAT_DOUBLE(fmax, FMax), ADD_FLOAT_DOUBLE(fmin, FMin),
-              ADD_FLOAT_DOUBLE(erf, Erf), ADD_FLOAT_DOUBLE(erfc, ErfC), ADD_FLOAT_DOUBLE(tgamma, TGamma), ADD_FLOAT_DOUBLE(lgamma, LGamma),
-              ADD_FLOAT_DOUBLE(copysign, CopySign), ADD_FLOAT_DOUBLE(fma, FMA),
-              {"printf", Type::PrintF::getInstance()}}
-{
-}
-#undef ADD_FLOAT_DOUBLE
-//------------------------------------------------------------------------
-void StandardLibraryFunctionEnvironment::define(const Token &name, const Type::Base*, ErrorHandlerBase &errorHandler)
-{
-    errorHandler.error(name, "Cannot declare variable in external environment");
-    throw TypeCheckError();
-}
-//---------------------------------------------------------------------------
-const Type::Base *StandardLibraryFunctionEnvironment::assign(const Token &name, Token::Type, const Type::Base*,
-                                                             const Type::TypeContext&, ErrorHandlerBase &errorHandler, bool)
-{
-    errorHandler.error(name, "Cannot assign variable in external environment");
-    throw TypeCheckError();
-}
-//---------------------------------------------------------------------------
-const Type::Base *StandardLibraryFunctionEnvironment::incDec(const Token &name, Token::Type, const Type::TypeContext&, 
-                                                             ErrorHandlerBase &errorHandler)
-{
-    errorHandler.error(name, "Cannot increment/decrement variable in external environment");
-    throw TypeCheckError();
-}
-//---------------------------------------------------------------------------
-std::vector<const Type::Base*> StandardLibraryFunctionEnvironment::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
-{
-    auto [typeBegin, typeEnd] = m_Types.equal_range(name.lexeme);
-    if (typeBegin == typeEnd) {
-         errorHandler.error(name, "Undefined variable");
-         throw TypeCheckError();
-    }
-    else {
-        std::vector<const Type::Base*> types;
-        types.reserve(std::distance(typeBegin, typeEnd));
-        std::transform(typeBegin, typeEnd, std::back_inserter(types),
-                       [](auto t) { return t.second; });
-        return types;
-    }
-}
-
-//---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
 void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 

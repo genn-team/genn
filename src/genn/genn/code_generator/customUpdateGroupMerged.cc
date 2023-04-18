@@ -13,6 +13,7 @@
 #include "transpiler/parser.h"
 #include "transpiler/prettyPrinter.h"
 #include "transpiler/scanner.h"
+#include "transpiler/standardLibrary.h"
 #include "transpiler/typeChecker.h"
 #include "transpiler/transpilerUtils.h"
 
@@ -34,7 +35,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
     using namespace Type;
 
     // Create type environment
-    TypeChecker::StandardLibraryFunctionEnvironment stdLibraryEnv;
+    StandardLibrary::FunctionTypes stdLibraryEnv;
     GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, &stdLibraryEnv);
 
     addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
@@ -267,7 +268,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     using namespace Type;
 
     // Create type environment
-    TypeChecker::StandardLibraryFunctionEnvironment stdLibraryEnv;
+    StandardLibrary::FunctionTypes stdLibraryEnv;
     GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, &stdLibraryEnv);
 
     // If underlying synapse group has kernel weights

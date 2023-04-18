@@ -116,34 +116,43 @@ const auto libraryTypes = initLibraryTypes(
 }
 
 
+/*{,
+{"frexp", "frexpf"},    // pointer arguments
+{"modf", "modff"},      // pointer arguments
+{"scalbln", "scalblnf"},    // long type
+{"lround", "lroundf"},  // long return type
+{"lrint", "lrintf"},    // long return type
+{"remquo", "remquof"},  // pointer arguments
+*/
+//min, max, printf
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::TypeEnvironment
+// GeNN::Transpiler::StandardLibrary::FunctionTypes
 //---------------------------------------------------------------------------
-TypeEnvironment::TypeEnvironment()
+FunctionTypes::FunctionTypes()
 {
 }
 //------------------------------------------------------------------------
-void TypeEnvironment::define(const Token &name, const Type::Base*, ErrorHandlerBase &errorHandler)
+void FunctionTypes::define(const Token &name, const Type::Base*, ErrorHandlerBase &errorHandler)
 {
     errorHandler.error(name, "Cannot declare variable in external environment");
     throw TypeCheckError();
 }
 //---------------------------------------------------------------------------
-const Type::Base *StandardLibraryFunctionEnvironment::assign(const Token &name, Token::Type, const Type::Base*,
-                                                             const Type::TypeContext&, ErrorHandlerBase &errorHandler, bool)
+const Type::Base *FunctionTypes::assign(const Token &name, Token::Type, const Type::Base*,
+                                        const Type::TypeContext&, ErrorHandlerBase &errorHandler, bool)
 {
     errorHandler.error(name, "Cannot assign variable in external environment");
     throw TypeCheckError();
 }
 //---------------------------------------------------------------------------
-const Type::Base *StandardLibraryFunctionEnvironment::incDec(const Token &name, Token::Type, const Type::TypeContext&,
+const Type::Base *FunctionTypes::incDec(const Token &name, Token::Type, const Type::TypeContext&,
                                                              ErrorHandlerBase &errorHandler)
 {
     errorHandler.error(name, "Cannot increment/decrement variable in external environment");
     throw TypeCheckError();
 }
 //---------------------------------------------------------------------------
-std::vector<const Type::Base*> StandardLibraryFunctionEnvironment::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
+std::vector<const Type::Base*> FunctionTypes::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
 {
     const auto [typeBegin, typeEnd] = libraryTypes.equal_range(name.lexeme);
     if (typeBegin == typeEnd) {

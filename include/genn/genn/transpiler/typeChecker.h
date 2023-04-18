@@ -69,29 +69,6 @@ protected:
 };
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::TypeChecker::StandardLibraryFunctionEnvironment
-//---------------------------------------------------------------------------
-class StandardLibraryFunctionEnvironment : public EnvironmentBase
-{
-public:
-    StandardLibraryFunctionEnvironment();
-
-    //------------------------------------------------------------------------
-    // EnvironmentBase virtuals
-    //------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) final;
-    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                     bool initializer = false) final;
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final;
-    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final;
-
-private:
-    std::unordered_multimap<std::string, const Type::Base*> m_Types;
-};
-
-//---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
 void typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 

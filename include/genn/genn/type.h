@@ -50,35 +50,7 @@
         using NumericType = TYPE;                                                                               \
     }                                                                      
 
-#define DECLARE_FUNCTION_TYPE(TYPE, RETURN_TYPE, ...)                                                       \
-    class TYPE : public Function<RETURN_TYPE, __VA_ARGS__>                                                  \
-    {                                                                                                       \
-        DECLARE_TYPE(TYPE)                                                                                  \
-        TYPE(Qualifier qualifiers = Qualifier{0}) : Function<RETURN_TYPE, __VA_ARGS__>(qualifiers){}        \
-        virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new TYPE(qualifiers); }    \
-    }
-
 #define IMPLEMENT_TYPE(TYPE) TYPE *TYPE::s_Instance = NULL
-
-//! Helper macro to declare single and double precision one argument function types
-#define DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(TYPE)    \
-    DECLARE_FUNCTION_TYPE(TYPE##F, Float, Float);           \
-    DECLARE_FUNCTION_TYPE(TYPE##D, Double, Double)
-
-//! Helper macro to declare single and double precision two argument function types
-#define DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(TYPE)    \
-    DECLARE_FUNCTION_TYPE(TYPE##F, Float, Float, Float);    \
-    DECLARE_FUNCTION_TYPE(TYPE##D, Double, Double, Double)
-
-//! Helper macro to declare single and double precision three argument function types
-#define DECLARE_THREE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(TYPE)      \
-    DECLARE_FUNCTION_TYPE(TYPE##F, Float, Float, Float, Float); \
-    DECLARE_FUNCTION_TYPE(TYPE##D, Double, Double, Double, Double)
-
-//! Helper macro to implement single and double precision function types
-#define IMPLEMENT_FLOAT_DOUBLE_FUNCTION_TYPE(TYPE)  \
-    IMPLEMENT_TYPE(TYPE##F);                        \
-    IMPLEMENT_TYPE(TYPE##D)
 
 //----------------------------------------------------------------------------
 // GeNN::Type::TypeTraits
@@ -340,6 +312,11 @@ public:
         return 0;
     }
 
+    virtual Base *getQualifiedType(Qualifier qualifiers) const override 
+    {
+        return new Function<ReturnType, ArgTypes...>(qualifiers); 
+    }
+
     //------------------------------------------------------------------------
     // FunctionBase virtuals
     //------------------------------------------------------------------------
@@ -414,114 +391,6 @@ DECLARE_NUMERIC_TYPE(Uint32, uint32_t, 30, "u");
 DECLARE_NUMERIC_TYPE(Float, float, 50, "f");
 DECLARE_NUMERIC_TYPE(Double, double, 60, "");
 
-//----------------------------------------------------------------------------
-// GeNN::Type::PrintF
-//----------------------------------------------------------------------------
-class PrintF : public FunctionBase
-{
-public:
-    DECLARE_TYPE(PrintF);
-
-    PrintF(Qualifier qualifiers = Qualifier{0}) : FunctionBase(qualifiers){}
-
-    //------------------------------------------------------------------------
-    // Base virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getName() const final{ return "PrintF"; }
-    virtual std::string getResolvedName(const TypeContext&) const final{ return "PrintF"; }
-    virtual Base *getQualifiedType(Qualifier qualifiers) const final{ return new PrintF(qualifiers); }
-    virtual size_t getSizeBytes(const TypeContext&) const final
-    {
-        assert(false);
-        return 0;
-    }
-
-    //------------------------------------------------------------------------
-    // FunctionBase virtuals
-    //------------------------------------------------------------------------
-    virtual const Base *getReturnType() const final { return Int32::getInstance(); };
-    virtual std::vector<const Base*> getArgumentTypes() const final{ return {Int8::getInstance()->getPointerType(), nullptr}; }
-};
-
-//----------------------------------------------------------------------------
-// Declare standard library function types
-//----------------------------------------------------------------------------
-// Trigonometric functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Cos);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Sin);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Tan);
-
-// Inverse trigonometric functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Acos);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Asin);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Atan);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Atan2);
-
-// Hyperbolic functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Cosh);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Sinh);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Tanh);
-
-// Inverse Hyperbolic functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Acosh);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Asinh);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Atanh);
-
-// Exponential functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Exp);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(ExpM1);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Exp2);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Pow);
-DECLARE_FUNCTION_TYPE(ScalBNF, Float, Float, Int32);
-DECLARE_FUNCTION_TYPE(ScalBND, Double, Double, Int32);
-
-// Logarithm functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Log);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Log1P);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Log2);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Log10);
-DECLARE_FUNCTION_TYPE(LdExpF, Float, Float, Int32);
-DECLARE_FUNCTION_TYPE(LdExpD, Double, Double, Int32);
-DECLARE_FUNCTION_TYPE(ILogBF, Int32, Float);
-DECLARE_FUNCTION_TYPE(ILogBD, Int32, Double);
-
-// Root functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Sqrt);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Cbrt);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Hypot);
-
-// Rounding functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Ceil);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Floor);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Fmod);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Round);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Rint);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Trunc);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(NearbyInt);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(NextAfter);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Remainder);
-
-// Range functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FAbs);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FDim);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FMax);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FMin);
-
-// Other functions
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(Erf);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(ErfC);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(TGamma);
-DECLARE_ONE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(LGamma);
-DECLARE_TWO_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(CopySign);
-DECLARE_THREE_ARG_FLOAT_DOUBLE_FUNCTION_TYPE(FMA);
-/*{,
-{"frexp", "frexpf"},    // pointer arguments
-{"modf", "modff"},      // pointer arguments
-{"scalbln", "scalblnf"},    // long type
-{"lround", "lroundf"},  // long return type
-{"lrint", "lrintf"},    // long return type
-{"remquo", "remquof"},  // pointer arguments
-*/
 //! Parse a numeric type
 const NumericBase *parseNumeric(const std::string &typeString);
 
