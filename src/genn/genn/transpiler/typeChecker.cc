@@ -3,8 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 #include <iterator>
+#include <stack>
 #include <string>
-#include <iostream>
+
 // Standard C includes
 #include <cassert>
 
@@ -287,19 +288,19 @@ private:
 
     virtual void visit(const Expression::Call &call) final
     {
-        // **TODO** think about nested calls
-        assert(m_CallArguments.empty());
 
-        // Evaluate argument types and store in class
-        m_CallArguments.clear();
-        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments),
+        // Evaluate argument types and store in top of stack
+        m_CallArguments.emplace();
+        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments.top()),
                        [this](const auto &a){ return evaluateType(a.get()); });
 
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
         auto calleeFunctionType = dynamic_cast<const Type::FunctionBase *>(calleeType);
 
-        m_CallArguments.clear();
+        // Pop stack
+        m_CallArguments.pop();
+
         // If callee's a function, type is return type of function
         if (calleeFunctionType) {
             setExpressionType(&call, calleeFunctionType->getReturnType());
@@ -427,6 +428,9 @@ private:
         }
         // Otherwise
         else {
+            // Check that there are call arguments on the stack
+            assert(!m_CallArguments.empty());
+
             // Loop through variable types
             std::vector<std::pair<const Type::FunctionBase*, std::vector<int>>> viableFunctions;
             for(const auto *type : varTypes) {
@@ -438,18 +442,18 @@ private:
                 // function parameters or function is non-variadic and number of arguments match
                 const auto argumentTypes = func->getArgumentTypes();
                 const bool variadic = func->isVariadic();
-                if((variadic && m_CallArguments.size() >= (argumentTypes.size() - 1))
-                    || (!variadic && m_CallArguments.size() == argumentTypes.size()))
+                if((variadic && m_CallArguments.top().size() >= (argumentTypes.size() - 1))
+                    || (!variadic && m_CallArguments.top().size() == argumentTypes.size()))
                 {
                     // Create vector to hold argument conversion rank
                     std::vector<int> argumentConversionRank;
-                    argumentConversionRank.reserve(m_CallArguments.size());
+                    argumentConversionRank.reserve(m_CallArguments.top().size());
 
                     // Loop through arguments
                     bool viable = true;
-                    auto c = m_CallArguments.cbegin();
+                    auto c = m_CallArguments.top().cbegin();
                     auto a = argumentTypes.cbegin();
-                    for(;c != m_CallArguments.cend() && *a != nullptr; c++, a++) {
+                    for(;c != m_CallArguments.top().cend() && *a != nullptr; c++, a++) {
                         auto cNumericType = dynamic_cast<const Type::NumericBase *>(*c);
                         auto aNumericType = dynamic_cast<const Type::NumericBase *>(*a);
 
@@ -749,7 +753,7 @@ private:
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     ResolvedTypeMap &m_ResolvedTypes;
-    std::vector<const Type::Base*> m_CallArguments;
+    std::stack<std::vector<const Type::Base*>> m_CallArguments;
     bool m_InLoop;
     bool m_InSwitch;
 };
