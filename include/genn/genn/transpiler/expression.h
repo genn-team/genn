@@ -58,6 +58,7 @@ class Base
 {
 public:
     virtual void accept(Visitor &visitor) const = 0;
+    virtual bool isLValue() const{ return false; }
 };
 
 //---------------------------------------------------------------------------
@@ -85,6 +86,11 @@ public:
     ArraySubscript(ExpressionPtr array, Token closingSquareBracket, ExpressionPtr index)
     :  m_Array(std::move(array)), m_ClosingSquareBracket(closingSquareBracket), m_Index(std::move(index))
     {}
+
+    //------------------------------------------------------------------------
+    // Expression::Base virtuals
+    //------------------------------------------------------------------------
+    virtual bool isLValue() const{ return true; }
 
     const Base *getArray() const { return m_Array.get(); }
     const Token &getClosingSquareBracket() const { return m_ClosingSquareBracket; }
@@ -208,6 +214,11 @@ public:
     :  m_Expression(std::move(expression))
     {}
 
+    //------------------------------------------------------------------------
+    // Expression::Base virtuals
+    //------------------------------------------------------------------------
+    virtual bool isLValue() const{ return m_Expression->isLValue(); }
+
     const Base *getExpression() const { return m_Expression.get(); }
 
 private:
@@ -223,6 +234,11 @@ public:
     Literal(Token value)
     :  m_Value(value)
     {}
+
+    //------------------------------------------------------------------------
+    // Expression::Base virtuals
+    //------------------------------------------------------------------------
+    virtual bool isLValue() const{ return (m_Value.type == Token::Type::STRING); }
 
     Token getValue() const { return m_Value; }
 
@@ -295,6 +311,11 @@ public:
     Variable(Token name)
     :  m_Name(name)
     {}
+
+    //------------------------------------------------------------------------
+    // Expression::Base virtuals
+    //------------------------------------------------------------------------
+    virtual bool isLValue() const{ return true; }
 
     const Token &getName() const { return m_Name; }
 
