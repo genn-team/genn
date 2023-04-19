@@ -10,6 +10,8 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
+#include "transpiler/standardLibrary.h"
+
 using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 
@@ -527,7 +529,8 @@ void Backend::genCustomUpdate(CodeStream &os_, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(os_);
 
-            EnvironmentSubstitute funcEnv(os_);
+            StandardLibrary::FunctionEnvironment stdEnv(os_);
+            EnvironmentSubstitute funcEnv(stdEnv);
             funcEnv.addSubstitution("t", "t");
             funcEnv.addSubstitution("batch", "0");
 

@@ -138,7 +138,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         });
 
     // Pretty print previously parsed update statements
-    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext());
+    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext(), m_ResolvedTypes);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -246,7 +246,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         });
 
     // Pretty print previously parsed update statements
-    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext());
+    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext(), getResolvedTypes());
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const

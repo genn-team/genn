@@ -51,7 +51,7 @@ protected:
 
     CodeStream &getContextStream() const;
 
-    std::string getContextName(const std::string &name) const;
+    std::string getContextName(const std::string &name, const Type::Base *type) const;
 
 private:
     //------------------------------------------------------------------------
@@ -89,7 +89,7 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name) final;
+    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final;
 
     virtual CodeStream &getStream() final
     {
@@ -231,12 +231,12 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name) final
+    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final
     {
         // If variable with this name isn't found, try and get name from context
         auto var = m_VariablesReferenced.find(name);
         if(var == m_VariablesReferenced.end()) {
-            return getContextName(name);
+            return getContextName(name, type);
         }
         // Otherwise
         else {

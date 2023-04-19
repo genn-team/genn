@@ -97,7 +97,8 @@ public:
         return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
     }
 
-    const Transpiler::Statement::StatementList &getUpdateStatements() const{ return m_UpdateStatements; }
+    const auto &getUpdateStatements() const{ return m_UpdateStatements; }
+    const auto &getResolvedTypes() const{ return m_ResolvedTypes; }
 
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,

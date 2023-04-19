@@ -173,9 +173,18 @@ std::vector<const Type::Base*> FunctionTypes::getTypes(const Token &name, ErrorH
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::StandardLibrary::FunctionEnvironment
 //---------------------------------------------------------------------------
-std::string FunctionEnvironment::getName(const std::string &name)
+std::string FunctionEnvironment::getName(const std::string &name, const Type::Base *type)
 {
-    return "";
+    const auto [libTypeBegin, libTypeEnd] = libraryTypes.equal_range(name);
+    if (libTypeBegin == libTypeEnd) {
+        return getContextName(name, type);
+    }
+    else {
+        const auto libType = std::find_if(libTypeBegin, libTypeEnd,
+                                          [type](const auto &t){ return t.second.first.get() == type; });
+        assert(libType != libTypeEnd);
+        return libType->second.second;
+    }
 }
 //---------------------------------------------------------------------------
 CodeStream &FunctionEnvironment::getStream()

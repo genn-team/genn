@@ -25,11 +25,11 @@ CodeStream &EnvironmentExternal::getContextStream() const
         getContext());
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentExternal::getContextName(const std::string &name) const
+std::string EnvironmentExternal::getContextName(const std::string &name, const Type::Base *type) const
 {
     return std::visit(
         Transpiler::Utils::Overload{
-            [&name](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name); },
+            [&name, type](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name, type); },
             [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name + "' undefined"); }},
         getContext());
 }
@@ -51,12 +51,12 @@ EnvironmentSubstitute::~EnvironmentSubstitute()
     getContextStream() << m_ContentsStream.str();
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentSubstitute::getName(const std::string &name)
+std::string EnvironmentSubstitute::getName(const std::string &name, const Type::Base *type)
 {
     // If there isn't a substitution for this name, try and get name from context
     auto var = m_VarSubstitutions.find(name);
     if(var == m_VarSubstitutions.end()) {
-        return getContextName(name);
+        return getContextName(name, type);
     }
     // Otherwise, return substitution
     else {

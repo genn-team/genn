@@ -46,7 +46,7 @@ public:
      //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name) final;
+    virtual std::string getName(const std::string &name, const Type::Base *type) final;
     virtual CodeGenerator::CodeStream &getStream() final;
 };
 }   // namespace GeNN::Transpiler::StandardLibrary

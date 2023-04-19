@@ -12,6 +12,7 @@
 
 // Transpiler includes
 #include "transpiler/transpilerUtils.h"
+#include "transpiler/typeChecker.h"
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
@@ -46,10 +47,10 @@ public:
         return "_" + name;
     }
 
-    virtual std::string getName(const std::string &name) final
+    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final
     {
         if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
-            return m_Enclosing.getName(name);
+            return m_Enclosing.getName(name, type);
         }
         else {
             return "_" + name;
@@ -75,9 +76,9 @@ private:
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(const Statement::StatementList &statements, 
-            EnvironmentInternal &environment, const Type::TypeContext &context)
-    :   m_Environment(environment), m_Context(context) 
+    Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment,
+            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
+    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) 
     {
          for(auto &s : statements) {
             s.get()->accept(*this);
@@ -155,7 +156,7 @@ private:
             const Type::NumericBase *scalar = dynamic_cast<const Type::NumericBase*>(m_Context.at("scalar"));
             m_Environment.get().getStream() << lexeme << scalar->getLiteralSuffix(m_Context);
         }
-        // Otherwise, just write out original lexeme directly
+        // Otherwise, just write out original lexeme directly (strings are already quoted)
         else {
             m_Environment.get().getStream() << lexeme;
         }
@@ -180,7 +181,8 @@ private:
 
     virtual void visit(const Expression::Variable &variable) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme);
+        const auto *type = m_ResolvedTypes.at(&variable);
+        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme, type);
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -370,6 +372,7 @@ private:
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentInternal> m_Environment;
     const Type::TypeContext &m_Context;
+    const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
 };
 }   // Anonymous namespace
 
@@ -377,8 +380,8 @@ private:
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
 void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                            const Type::TypeContext &context)
+                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
 {
     EnvironmentInternal internalEnvironment(environment);
-    Visitor(statements, internalEnvironment, context);
+    Visitor(statements, internalEnvironment, context, resolvedTypes);
 }
