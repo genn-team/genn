@@ -593,8 +593,8 @@ TEST(NeuronGroup, CompareNeuronModels)
 
     // Find which merged neuron init group is the one with the single population i.e. the one with constant initialisers
     const size_t constantInitIndex = (modelSpecMerged.getMergedNeuronInitGroups().at(0).getGroups().size() == 1) ? 0 : 1;
-    const auto constantInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(constantInitIndex);
-    const auto uniformInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(1 - constantInitIndex);
+    const auto &constantInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(constantInitIndex);
+    const auto &uniformInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(1 - constantInitIndex);
 
     // Check that only 'd' parameter is heterogeneous in neuron update group
     ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("a"));
@@ -741,8 +741,8 @@ TEST(NeuronGroup, CompareCurrentSources)
 
     // Find which merged neuron group is the one with the single population i.e. the two DC current sources
     const size_t dcDCIndex = (modelSpecMerged.getMergedNeuronUpdateGroups().at(0).getGroups().size() == 4) ? 1 : 0;
-    const auto dcDCMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(dcDCIndex);
-    const auto dcPoissonMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(1 - dcDCIndex);
+    const auto &dcDCMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(dcDCIndex);
+    const auto &dcPoissonMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(1 - dcDCIndex);
     ASSERT_TRUE(dcDCMergedGroup.getGroups().size() == 1);
     
     // Find which child in the DC + poisson merged group is the poisson current source
