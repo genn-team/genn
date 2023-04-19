@@ -70,6 +70,9 @@ public:
     :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
     {}
 
+    GroupMerged(const GroupMerged&) = delete;
+    GroupMerged(GroupMerged&&) = default;
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
