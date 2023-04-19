@@ -252,6 +252,14 @@ TEST(TypeChecker, Assignment)
         typeCheckStatements("float *x = intArray;", typeEnvironment);},
         TypeChecker::TypeCheckError);
 
+    // Dereference assignment
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.definePointer<Type::Int32>("intArray");
+        typeCheckStatements(
+            "*intArray = 7;\n",
+            typeEnvironment);
+    }
     // **TODO** other assignements i.e. += -= %=
 }
 //--------------------------------------------------------------------------
