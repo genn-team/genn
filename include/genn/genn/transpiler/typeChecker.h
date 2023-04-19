@@ -71,8 +71,8 @@ protected:
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-void typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-               const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
 const Type::Base *typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
                             const Type::TypeContext &context, ErrorHandlerBase &errorHandler);

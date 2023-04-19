@@ -873,12 +873,13 @@ const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type,
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                              const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor(statements, context, internalEnvironment, expressionTypes, errorHandler);
+    Visitor visitor(statements, context, internalEnvironment, expressionTypes, errorHandler);
+    return expressionTypes;
 }
 //---------------------------------------------------------------------------
 const Type::Base *GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,

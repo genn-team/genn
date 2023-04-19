@@ -7,6 +7,7 @@
 
 // GeNN transpiler includes
 #include "transpiler/statement.h"
+#include "transpiler/typeChecker.h"
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
@@ -54,6 +55,9 @@ private:
     //----------------------------------------------------------------------------
     //! List of statements parsed and type-checked in constructor; and used to generate code
     Transpiler::Statement::StatementList m_UpdateStatements;
+
+    //! Resolved types used to generate code
+    Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
 };
 
 // ----------------------------------------------------------------------------
@@ -110,6 +114,9 @@ private:
     //----------------------------------------------------------------------------
     //! List of statements parsed and type-checked in constructor; and used to generate code
     Transpiler::Statement::StatementList m_UpdateStatements;
+    
+    //! Resolved types used to generate code
+    Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
 };
 
 // ----------------------------------------------------------------------------

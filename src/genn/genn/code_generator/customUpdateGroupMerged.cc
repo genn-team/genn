@@ -77,7 +77,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
      const std::string code = upgradeCodeString(cm->getUpdateCode());
      const auto tokens = Scanner::scanSource(code, errorHandler);
      m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
-     TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
+     m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -366,7 +366,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     const std::string code = upgradeCodeString(cm->getUpdateCode());
     const auto tokens = Scanner::scanSource(code, errorHandler);
     m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
-    TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
+    m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
 
 // ----------------------------------------------------------------------------
