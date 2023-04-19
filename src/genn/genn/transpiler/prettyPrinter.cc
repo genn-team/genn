@@ -92,7 +92,8 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(arraySubscript.getPointerName().lexeme) << "[";
+        arraySubscript.getArray()->accept(*this);
+        m_Environment.get().getStream() << "[";
         arraySubscript.getIndex()->accept(*this);
         m_Environment.get().getStream() << "]";
     }

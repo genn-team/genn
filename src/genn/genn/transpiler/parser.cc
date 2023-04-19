@@ -213,10 +213,10 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
             }
         }
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
-    
+
     // Lookup numeric type
     const Base *type = getNumericType(typeSpecifiers);
-    
+
     // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier
     if(!typeQualifiers.empty()) {
@@ -285,7 +285,6 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             Token closingParen = parserState.consume(Token::Type::RIGHT_PAREN,
                                                      "Expect ')' after arguments.");
 
-            // Create call expression
             expression = std::make_unique<Expression::Call>(std::move(expression),
                                                             closingParen,
                                                             std::move(arguments));
@@ -296,15 +295,9 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             Token closingSquareBracket = parserState.consume(Token::Type::RIGHT_SQUARE_BRACKET,
                                                              "Expect ']' after index.");
 
-            // **TODO** everything all the way up(?) from unary are l-value so can be used - not just variable
-            auto expressionVariable = dynamic_cast<const Expression::Variable*>(expression.get());
-            if(expressionVariable) {
-                expression = std::make_unique<Expression::ArraySubscript>(expressionVariable->getName(),
-                                                                          std::move(index));
-            }
-            else {
-                parserState.error(closingSquareBracket, "Invalid subscript target");
-            }
+            expression = std::make_unique<Expression::ArraySubscript>(std::move(expression),
+                                                                      closingSquareBracket,
+                                                                      std::move(index));
         }
         // Otherwise if this is an increment or decrement
         else if(parserState.match({Token::Type::PLUS_PLUS, Token::Type::MINUS_MINUS})) {
@@ -313,7 +306,7 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             // **TODO** everything all the way up(?) from unary are l-value so can be used - not just variable
             auto expressionVariable = dynamic_cast<const Expression::Variable*>(expression.get());
             if(expressionVariable) {
-                return std::make_unique<Expression::PostfixIncDec>(expressionVariable->getName(), op);
+                expression = std::make_unique<Expression::PostfixIncDec>(expressionVariable->getName(), op);
             }
             else {
                 parserState.error(op, "Invalid postfix target");

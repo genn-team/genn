@@ -82,15 +82,17 @@ typedef std::vector<ExpressionPtr> ExpressionList;
 class ArraySubscript : public Acceptable<ArraySubscript>
 {
 public:
-    ArraySubscript(Token pointerName, ExpressionPtr index)
-    :  m_PointerName(pointerName), m_Index(std::move(index))
+    ArraySubscript(ExpressionPtr array, Token closingSquareBracket, ExpressionPtr index)
+    :  m_Array(std::move(array)), m_ClosingSquareBracket(closingSquareBracket), m_Index(std::move(index))
     {}
 
-    const Token &getPointerName() const { return m_PointerName; }
-    const ExpressionPtr &getIndex() const { return m_Index; }
+    const Base *getArray() const { return m_Array.get(); }
+    const Token &getClosingSquareBracket() const { return m_ClosingSquareBracket; }
+    const Base *getIndex() const { return m_Index.get(); }
 
 private:
-    const Token m_PointerName;
+    const ExpressionPtr m_Array;
+    const Token m_ClosingSquareBracket;
     const ExpressionPtr m_Index;
 };
 

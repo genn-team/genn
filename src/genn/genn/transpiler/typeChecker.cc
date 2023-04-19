@@ -174,16 +174,16 @@ private:
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
         // Get pointer type
-        auto arrayType = m_Environment.get().getType(arraySubscript.getPointerName(), m_ErrorHandler);
+        auto arrayType = evaluateType(arraySubscript.getArray());
         auto pointerType = dynamic_cast<const Type::Pointer*>(arrayType);
 
         // If pointer is indeed a pointer
         if (pointerType) {
             // Evaluate pointer type
-            auto indexType = evaluateType(arraySubscript.getIndex().get());
-            auto indexNumericType = dynamic_cast<const Type::NumericBase *>(indexType);
+            auto indexType = evaluateType(arraySubscript.getIndex());
+            auto indexNumericType = dynamic_cast<const Type::NumericBase*>(indexType);
             if (!indexNumericType || !indexNumericType->isIntegral(m_Context)) {
-                m_ErrorHandler.error(arraySubscript.getPointerName(),
+                m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
                                      "Invalid subscript index type '" + indexType->getName() + "'");
                 throw TypeCheckError();
             }
@@ -193,7 +193,7 @@ private:
         }
         // Otherwise
         else {
-            m_ErrorHandler.error(arraySubscript.getPointerName(), "Subscripted object is not a pointer");
+            m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(), "Subscripted object is not a pointer");
             throw TypeCheckError();
         }
     }
