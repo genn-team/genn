@@ -24,7 +24,9 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
-from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
+from .genn_wrapper.Models import (VarAccessDuplication_SHARED, 
+                                  VarAccessDuplication_SHARED_NEURON,
+                                  WUVarReference)
 
 class Group(object):
 
@@ -249,9 +251,13 @@ class Group(object):
                 # Determine how many copies of this variable are present
                 num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
                               else self._model.batch_size)
+                
+                # Determine size of this variable
+                var_size = (1 if (v.access & VarAccessDuplication_SHARED_NEURON) != 0
+                            else size)
 
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(v.name, size * num_copies,
+                var_data.view = self._assign_ext_ptr_array(v.name, var_size * num_copies,
                                                            var_data.type)
 
                 # If there is more than one copy, reshape view to 2D
@@ -265,11 +271,7 @@ class Group(object):
                 assert not var_data.init_required
                 var_data.view = None
 
-    def _reinitialise_vars(self, size=None, var_dict=None):
-        # If no size is specified, use standard size
-        if size is None:
-            size = self.size
-
+    def _reinitialise_vars(self, var_dict=None):
         # If no variable dictionary is specified, use standard one
         if var_dict is None:
             var_dict = self.vars
@@ -836,7 +838,7 @@ class SynapseGroup(Group):
         else:
             var_view = self.vars[var_name].view
 
-            if self.is_dense:
+            if self.is_dense or self.has_kernel_synapse_vars:
                 return np.copy(var_view)
             elif self.is_ragged:
                 max_rl = self.max_row_length
@@ -869,8 +871,11 @@ class SynapseGroup(Group):
     @matrix_type.setter
     def matrix_type(self, matrix_type):
         if self.weight_sharing_master is None:
-            self._matrix_type = getattr(genn_wrapper,
-                                        "SynapseMatrixType_" + matrix_type)
+            if isinstance(matrix_type, str):
+                self._matrix_type = getattr(
+                    genn_wrapper, "SynapseMatrixType_" + matrix_type)
+            else:
+                self._matrix_type = matrix_type
         else:
             raise Exception("when weight sharing is used, matrix_type"
                             "can only be set on the 'master' population")
@@ -1308,14 +1313,14 @@ class SynapseGroup(Group):
                     self._init_wum_var(var_data, num_copies)
 
         # Reinitialise weight update model presynaptic variables
-        self._reinitialise_vars(self.src.size, self.pre_vars)
+        self._reinitialise_vars(self.pre_vars)
 
         # Reinitialise weight update model postsynaptic variables
-        self._reinitialise_vars(self.trg.size, self.post_vars)
+        self._reinitialise_vars(self.post_vars)
 
         # Reinitialise postsynaptic update model variables
         if self.has_individual_postsynaptic_vars:
-            self._reinitialise_vars(self.trg.size, self.psm_vars)
+            self._reinitialise_vars(self.psm_vars)
 
     def _init_wum_var(self, var_data, num_copies):
         # If initialisation is required
@@ -1510,6 +1515,7 @@ class CustomUpdate(Group):
                 var_loc = self.pop.get_var_location(v.name) 
                 if (var_loc & VarLocation_HOST) != 0:
                     # Determine how many copies of this variable are present
+                    # **YUCK** this isn't quite right - really should look at is_batched()
                     #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
                     #              else self._model.batch_size)
                     num_copies = 1
@@ -1566,7 +1572,7 @@ class CustomUpdate(Group):
                     self._synapse_group._init_wum_var(var_data, num_copies)
         # Otherwise, reinitialise current source state variables
         else:
-            self._reinitialise_vars(size=self.pop.get_size())
+            self._reinitialise_vars()
 
     @property
     def _synapse_group(self):

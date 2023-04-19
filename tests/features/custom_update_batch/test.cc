@@ -55,6 +55,7 @@ TEST_F(SimTest, CustomUpdateBatch)
             pullVWUMKernelDuplicateSetTimeFromDevice();
             pullVNeuronFromDevice();
             pullUNeuronFromDevice();
+            pullSNeuronFromDevice();
             pullVDenseFromDevice();
             pullUDenseFromDevice();
             pullVSparseFromDevice();
@@ -82,6 +83,7 @@ TEST_F(SimTest, CustomUpdateBatch)
                 const unsigned int startSparseSynIdx = b * (50 * maxRowLengthSparse);
                 const float batchOffset = b * 1000.0f;
                 
+                ASSERT_EQ(SNeuron[b], batchOffset + t);
                 // Check batched variables match expectations
                 ASSERT_TRUE(std::all_of(&VNeuronDuplicateSetTime[startNeuronIdx], &VNeuronDuplicateSetTime[endNeuronIdx],
                             [batchOffset](scalar v) { return v == (batchOffset + t); }));

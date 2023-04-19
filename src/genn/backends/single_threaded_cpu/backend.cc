@@ -587,12 +587,16 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         }
                         else {
                             // Loop through group members
-                            os << "for(unsigned int i = 0; i < group->size; i++)";
+                            Substitutions popSubs(&funcSubs);
+                            if (c.getArchetype().isPerNeuron()) {
+                                os << "for(unsigned int i = 0; i < group->size; i++)";
+                                popSubs.addVarSubstitution("id", "i");
+                            }
+                            else {
+                                popSubs.addVarSubstitution("id", "0");
+                            }
                             {
                                 CodeStream::Scope b(os);
-
-                                Substitutions popSubs(&funcSubs);
-                                popSubs.addVarSubstitution("id", "i");
 
                                 // Generate custom update
                                 c.generateCustomUpdate(*this, os, modelMerged, popSubs);

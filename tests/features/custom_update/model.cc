@@ -12,38 +12,38 @@ suite of minimal models with known analytic outcomes that are used for continuou
 class TestNeuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(TestNeuron, 0, 1);
+    DECLARE_MODEL(TestNeuron, 0, 2);
 
-    SET_VARS({{"V","scalar"}});
+    SET_VARS({{"V","scalar"}, {"VShared", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_MODEL(TestNeuron);
 
 class TestCurrentSource : public CurrentSourceModels::Base
 {
-    DECLARE_MODEL(TestCurrentSource, 0, 1);
+    DECLARE_MODEL(TestCurrentSource, 0, 2);
 
-    SET_VARS({{"C", "scalar"}});
+    SET_VARS({{"C", "scalar"}, {"CShared", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_MODEL(TestCurrentSource);
 
 class TestPSM : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(TestPSM, 0, 1);
+    DECLARE_MODEL(TestPSM, 0, 2);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
-    SET_VARS({{"P", "scalar"}});
+    SET_VARS({{"P", "scalar"}, {"PShared", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_MODEL(TestPSM);
 
 class TestWUM : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(TestWUM, 0, 1, 1, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(TestWUM, 0, 1, 2, 2);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
-    SET_PRE_VARS({{"Pre", "scalar"}});
-    SET_POST_VARS({{"Post", "scalar"}});
+    SET_PRE_VARS({{"Pre", "scalar"}, {"PreShared", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_POST_VARS({{"Post", "scalar"}, {"PostShared", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
 };
 IMPLEMENT_MODEL(TestWUM);
@@ -72,6 +72,18 @@ public:
 };
 IMPLEMENT_MODEL(SetTime);
 
+class SetTimeShared : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(SetTimeShared, 0, 0, 1);
+    
+    SET_UPDATE_CODE(
+        "$(R) = $(t);\n");
+
+    SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
+};
+IMPLEMENT_MODEL(SetTimeShared);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -92,24 +104,24 @@ void modelDefinition(ModelSpec &model)
         10, 10, 1); // conv_oh, conv_ow, conv_oc
         
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
-    auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 100, {}, {0.0});
-    auto *cs = model.addCurrentSource<TestCurrentSource>("CurrentSource", "Neuron", {}, {0.0});
+    auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 100, {}, {0.0, 0.0});
+    auto *cs = model.addCurrentSource<TestCurrentSource>("CurrentSource", "Neuron", {}, {0.0, 0.0});
     auto *denseSG = model.addSynapsePopulation<TestWUM, TestPSM>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0.0}, {0.0}, {0.0},
-        {}, {0.0});
+        {}, {0.0}, {0.0, 0.0}, {0.0, 0.0},
+        {}, {0.0, 0.0});
     auto *sparseSG = model.addSynapsePopulation<TestWUM, TestPSM>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0.0}, {0.0}, {0.0},
-        {}, {0.0},
+        {}, {0.0}, {0.0, 0.0}, {0.0, 0.0},
+        {}, {0.0, 0.0},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
     auto *kernelSG = model.addSynapsePopulation<TestWUM, TestPSM>(
         "Kernel", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0.0}, {0.0}, {0.0},
-        {}, {0.0},
+        {}, {0.0}, {0.0, 0.0}, {0.0, 0.0},
+        {}, {0.0, 0.0},
         initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParams));
     
     TestCU::VarReferences cuTestVarReferences(createVarRef(ng, "V"));
@@ -124,10 +136,16 @@ void modelDefinition(ModelSpec &model)
     SetTime::VarReferences neuronVarReferences(createVarRef(ng, "V")); // R
     model.addCustomUpdate<SetTime>("NeuronSetTime", "Test",
                                    {}, {0.0}, neuronVarReferences);
-    
+    SetTimeShared::VarReferences neuronSharedVarReferences(createVarRef(ng, "VShared")); // R
+    model.addCustomUpdate<SetTimeShared>("NeuronSharedSetTime", "Test",
+                                         {}, {}, neuronSharedVarReferences);
+
     SetTime::VarReferences csVarReferences(createVarRef(cs, "C")); // R
     model.addCustomUpdate<SetTime>("CurrentSourceSetTime", "Test",
                                    {}, {0.0}, csVarReferences);
+    SetTimeShared::VarReferences csSharedVarReferences(createVarRef(cs, "CShared")); // R
+    model.addCustomUpdate<SetTimeShared>("CurrentSourceSharedSetTime", "Test",
+                                         {}, {}, csSharedVarReferences);
    
     SetTime::VarReferences cuVarReferences(createVarRef(cu, "C")); // R
     model.addCustomUpdate<SetTime>("CustomUpdateSetTime", "Test",
@@ -136,15 +154,24 @@ void modelDefinition(ModelSpec &model)
     SetTime::VarReferences psmVarReferences(createPSMVarRef(denseSG, "P")); // R
     model.addCustomUpdate<SetTime>("PSMSetTime", "Test",
                                    {}, {0.0}, psmVarReferences);
-                               
+    SetTimeShared::VarReferences psmSharedVarReferences(createPSMVarRef(denseSG, "PShared")); // R
+    model.addCustomUpdate<SetTimeShared>("PSMSharedSetTime", "Test",
+                                         {}, {}, psmSharedVarReferences);
+                                   
     SetTime::VarReferences wuPreVarReferences(createWUPreVarRef(denseSG, "Pre")); // R
     model.addCustomUpdate<SetTime>("WUPreSetTime", "Test",
                                    {}, {0.0}, wuPreVarReferences);
-                               
+    SetTimeShared::VarReferences wuPreSharedVarReferences(createWUPreVarRef(denseSG, "PreShared")); // R
+    model.addCustomUpdate<SetTimeShared>("WUPreSharedSetTime", "Test",
+                                         {}, {}, wuPreSharedVarReferences);
+
     SetTime::VarReferences wuPostVarReferences(createWUPostVarRef(sparseSG, "Post")); // R
     model.addCustomUpdate<SetTime>("WUPostSetTime", "Test",
                                    {}, {0.0}, wuPostVarReferences);
-                                   
+    SetTimeShared::VarReferences wuPostSharedVarReferences(createWUPostVarRef(sparseSG, "PostShared")); // R
+    model.addCustomUpdate<SetTimeShared>("WUPostSharedSetTime", "Test",
+                                         {}, {}, wuPostSharedVarReferences);
+
     SetTime::WUVarReferences wuDenseVarReferences(createWUVarRef(denseSG, "g")); // R
     model.addCustomUpdate<SetTime>("WUDenseSetTime", "Test",
                                    {}, {0.0}, wuDenseVarReferences);

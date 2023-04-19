@@ -219,8 +219,11 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
     if (cg.isNeuronReduction()) {
         return padKernelSize(32 * numCopies, KernelCustomUpdate);
     }
-    else {
+    else if (cg.isPerNeuron()) {
         return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+    }
+    else {
+        return padKernelSize(numCopies, KernelCustomUpdate);
     }
 }
 //--------------------------------------------------------------------------
@@ -1010,6 +1013,27 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                         }
                     }
+                }
+            }
+            // Otherwise, if this update isn't per-neuron
+            else if (!cg.getArchetype().isPerNeuron()) {
+                if(cg.getArchetype().isBatched()) {
+                    os << "const unsigned int batch = " << cuSubs["id"] << ";" << std::endl;
+                    cuSubs.addVarSubstitution("id", "0", true);
+                    cuSubs.addVarSubstitution("batch", "batch");
+                }
+                // Otherwise, just substitute "batch" for 0
+                else {
+                    cuSubs.addVarSubstitution("batch", "0");
+                }
+
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << cuSubs["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
+                {
+                    CodeStream::Scope b(os);
+
+                    genCustomUpdateIndexCalculation(os, cg);
+                    cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
                 }
             }
             // Otherwise

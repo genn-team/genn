@@ -149,12 +149,12 @@ protected:
     template<typename V>
     void checkVarReferenceBatching(const std::vector<V>& varRefs, unsigned int batchSize)
     {
-        // If target of any variable references is duplicated, custom update should be batched
+        // If target of any variable references is not shared across batches, custom update should be batched
         if(batchSize > 1) {
             m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
                                     [](const V& v) 
                                     {
-                                        return (v.isBatched() && (v.getVar().access & VarAccessDuplication::DUPLICATE)); 
+                                        return (v.isBatched() && !(v.getVar().access & VarAccessDuplication::SHARED)); 
                                     });
         }
         else {
@@ -167,7 +167,7 @@ protected:
             const auto varRef = varRefs.at(i);
             const auto modelVarRef = modelVarRefs.at(i);
 
-             // If custom update is batched, check that any variable references to shared variables are read-only
+            // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
             if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
@@ -227,6 +227,7 @@ protected:
     //------------------------------------------------------------------------
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
+    bool isPerNeuron() const{ return m_PerNeuron; }
 
      //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -245,6 +246,9 @@ private:
     const std::vector<Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
+
+    //! Is this custom update per-neuron i.e. run in parallel across all neurons
+    bool m_PerNeuron;
 };
 
 //------------------------------------------------------------------------

@@ -23,6 +23,7 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdate::isPerNeuron;
     using CustomUpdateBase::getVarLocationHashDigest;
 
     using CustomUpdate::finalize;
