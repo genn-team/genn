@@ -12,6 +12,7 @@
 #include "transpiler/errorHandler.h"
 #include "transpiler/typeChecker.h"
 
+using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler::StandardLibrary;
 using namespace GeNN::Transpiler::TypeChecker;
 namespace Type = GeNN::Type;
@@ -39,7 +40,7 @@ namespace
 template<typename... Args>
 auto initLibraryTypes(Args&&... args)
 {
-    std::unordered_multimap<std::string, std::pair<std::unique_ptr<const Type::Base>, std::string>> map;
+    std::unordered_multimap<std::string, std::pair<std::unique_ptr<Type::Base const>, std::string>> map;
     (map.emplace(std::forward<Args>(args)), ...);
     return map;
 }
@@ -125,6 +126,7 @@ const auto libraryTypes = initLibraryTypes(
 {"remquo", "remquof"},  // pointer arguments
 */
 //min, max, printf
+
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::StandardLibrary::FunctionTypes
 //---------------------------------------------------------------------------
@@ -166,4 +168,17 @@ std::vector<const Type::Base*> FunctionTypes::getTypes(const Token &name, ErrorH
                        [](const auto &t) { return t.second.first.get(); });
         return types;
     }
+}
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::StandardLibrary::FunctionEnvironment
+//---------------------------------------------------------------------------
+std::string FunctionEnvironment::getName(const std::string &name)
+{
+    return "";
+}
+//---------------------------------------------------------------------------
+CodeStream &FunctionEnvironment::getStream()
+{
+    return getContextStream();
 }

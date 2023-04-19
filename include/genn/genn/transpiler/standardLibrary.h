@@ -4,6 +4,10 @@
 #include <unordered_map>
 #include <vector>
 
+// Code generator includes
+#include "code_generator/codeStream.h"
+#include "code_generator/environment.h"
+
 // Transpiler includes
 #include "transpiler/typeChecker.h"
 
@@ -27,5 +31,22 @@ public:
     virtual const Type::Base *incDec(const Token &name, Token::Type op,
                                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final;
     virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final;
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::StandardLibrary::FunctionEnvironment
+//---------------------------------------------------------------------------
+class FunctionEnvironment : public CodeGenerator::EnvironmentExternal
+{
+public:
+    FunctionEnvironment(CodeGenerator::CodeStream &os)
+    :   CodeGenerator::EnvironmentExternal(os)
+    {}
+
+     //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name) final;
+    virtual CodeGenerator::CodeStream &getStream() final;
 };
 }   // namespace GeNN::Transpiler::StandardLibrary
