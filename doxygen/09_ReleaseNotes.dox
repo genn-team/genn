@@ -9,6 +9,8 @@ Bug fixes
 1. Fixed bug relating to merging populations with variable references pointing to variables with different access duplication modes.
 2. Fixed infinite loop that could occur in code generator if a bracket with missed calling a GeNN function in a code snippet.
 3. Fixed bug that meant batched models which required previous spike times failed to compile.
+4. Fixed bug with DLL-searching logic on Windows which meant CUDA backend failed to load on some systems.
+5. Fixed a number of corner cases in the handling of VarAccessDuplication::SHARED_NEURON variables.
 
 Optimisations
 -------------
