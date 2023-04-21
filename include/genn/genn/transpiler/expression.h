@@ -108,16 +108,16 @@ private:
 class Assignment : public Acceptable<Assignment>
 {
 public:
-    Assignment(Token varName, Token op, ExpressionPtr value)
-    :  m_VarName(varName), m_Operator(op), m_Value(std::move(value))
+    Assignment(ExpressionPtr assignee, Token op, ExpressionPtr value)
+    :  m_Assignee(std::move(assignee)), m_Operator(op), m_Value(std::move(value))
     {}
 
-    const Token &getVarName() const { return m_VarName; }
+    const Base *getAssignee() const { return m_Assignee.get(); }
     const Token &getOperator() const { return m_Operator; }
     const Base *getValue() const { return m_Value.get(); }
 
 private:
-    const Token m_VarName;
+    const ExpressionPtr m_Assignee;
     const Token m_Operator;
     const ExpressionPtr m_Value;
 };
@@ -272,15 +272,15 @@ private:
 class PostfixIncDec : public Acceptable<PostfixIncDec>
 {
 public:
-    PostfixIncDec(Token varName, Token op)
-    :  m_VarName(varName), m_Operator(op)
+    PostfixIncDec(ExpressionPtr target, Token op)
+    :  m_Target(std::move(target)), m_Operator(op)
     {}
 
-    const Token &getVarName() const { return m_VarName; }
+    const Base *getTarget() const { return m_Target.get(); }
     const Token &getOperator() const { return m_Operator; }
 
 private:
-    const Token m_VarName;
+    const ExpressionPtr m_Target;
     const Token m_Operator;
 };
 
@@ -290,15 +290,15 @@ private:
 class PrefixIncDec : public Acceptable<PrefixIncDec>
 {
 public:
-    PrefixIncDec(Token varName, Token op)
-    :  m_VarName(varName), m_Operator(op)
+    PrefixIncDec(ExpressionPtr target, Token op)
+    :  m_Target(std::move(target)), m_Operator(op)
     {}
 
-    const Token &getVarName() const { return m_VarName; }
+    const Base *getTarget() const { return m_Target.get(); }
     const Token &getOperator() const { return m_Operator; }
 
 private:
-    const Token m_VarName;
+    const ExpressionPtr m_Target;
     const Token m_Operator;
 };
 

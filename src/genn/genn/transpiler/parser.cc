@@ -303,13 +303,12 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
         else if(parserState.match({Token::Type::PLUS_PLUS, Token::Type::MINUS_MINUS})) {
             Token op = parserState.previous();
 
-            // **TODO** everything all the way up(?) from unary are l-value so can be used - not just variable
-            auto expressionVariable = dynamic_cast<const Expression::Variable*>(expression.get());
-            if(expressionVariable) {
-                expression = std::make_unique<Expression::PostfixIncDec>(expressionVariable->getName(), op);
+            // If expression is a valid l-value, 
+            if(expression->isLValue()) {
+                expression = std::make_unique<Expression::PostfixIncDec>(std::move(expression), op);
             }
             else {
-                parserState.error(op, "Invalid postfix target");
+                parserState.error(op, "Expression is not assignable");
             }
         }
         else {
@@ -335,8 +334,21 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
     //      "!" cast-expression
     //      "sizeof" unary-expression       **TODO** 
     //      "sizeof" "(" type-name ")"      **TODO** 
-    if(parserState.match({Token::Type::AMPERSAND, Token::Type::STAR, Token::Type::PLUS, 
-                         Token::Type::MINUS, Token::Type::TILDA, Token::Type::NOT})) {
+    if(parserState.match(Token::Type::AMPERSAND)) {
+        Token op = parserState.previous();
+        auto expression = parseCast(parserState);
+
+        // If expression is a valid l-value, 
+        if (expression->isLValue()) {
+            return std::make_unique<Expression::Unary>(op, std::move(expression));
+        }
+        else {
+            parserState.error(op, "Cannot take the address of r-value");
+        }
+    }
+    else if(parserState.match({Token::Type::STAR, Token::Type::PLUS, Token::Type::MINUS,
+                               Token::Type::TILDA, Token::Type::NOT}))
+    {
         Token op = parserState.previous();
         return std::make_unique<Expression::Unary>(op, parseCast(parserState));
     }
@@ -344,13 +356,12 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
         Token op = parserState.previous();
         auto expression = parseUnary(parserState);
 
-        // **TODO** everything all the way up(?) from unary are l-value so can be used - not just variable
-        auto expressionVariable = dynamic_cast<const Expression::Variable*>(expression.get());
-        if(expressionVariable) {
-            return std::make_unique<Expression::PrefixIncDec>(expressionVariable->getName(), op);
+        // If expression is a valid l-value, 
+        if(expression->isLValue()) {
+            return std::make_unique<Expression::PrefixIncDec>(std::move(expression), op);
         }
         else {
-            parserState.error(op, "Invalid prefix target");
+            parserState.error(op, "Expression is not assignable");
         }
     }
 
@@ -525,13 +536,12 @@ Expression::ExpressionPtr parseAssignment(ParserState &parserState)
         Token op = parserState.previous();
         auto value = parseAssignment(parserState);
 
-        // **TODO** everything all the way up(?) from unary are l-value so can be used - not just variable
-        auto expressionVariable = dynamic_cast<const Expression::Variable*>(expression.get());
-        if(expressionVariable) {
-            return std::make_unique<Expression::Assignment>(expressionVariable->getName(), op, std::move(value));
+        // If expression is a valid l-value, 
+        if(expression->isLValue()) {
+            return std::make_unique<Expression::Assignment>(std::move(expression), op, std::move(value));
         }
         else {
-            parserState.error(op, "Invalid assignment target");
+            parserState.error(op, "Expression is not assignable");
         }
     }
 
