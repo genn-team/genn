@@ -90,35 +90,6 @@ public:
         }
     }
 
-    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                     bool initializer = false) final
-    {
-        // If type isn't found
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            return m_Enclosing.assign(name, op, assignedType,
-                                      context, errorHandler, initializer);
-        }
-
-        // Perform standard type-checking logic
-        return EnvironmentBase::assign(name, op, existingType->second, assignedType, 
-                                       context, errorHandler, initializer);    
-    }
-
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final
-    {
-        // If type isn't found
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            return m_Enclosing.incDec(name, op, context, errorHandler);
-        }
-
-        // Perform standard type-checking logic
-        return EnvironmentBase::incDec(name, op, existingType->second, errorHandler);    
-    }
-
     virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(name.lexeme);
@@ -200,10 +171,12 @@ private:
 
     virtual void visit(const Expression::Assignment &assignment) final
     {
+        const auto lhsType = evaluateType(assignment.getAssignee());
         const auto rhsType = evaluateType(assignment.getValue());
-        setExpressionType(&assignment,
-                          m_Environment.get().assign(assignment.getVarName(), assignment.getOperator().type, rhsType, 
-                                                     m_Context, m_ErrorHandler));
+
+        assert(false);
+
+        setExpressionType(&assignment, lhsType);
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -407,6 +380,12 @@ private:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
+        const auto lhsType = evaluateType(postfixIncDec.getTarget());
+
+        if(lhsType->hasQualifier(Type::Qualifier::CONSTANT)) {
+            m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
+            throw TypeCheckError();
+        }
         setExpressionType(&postfixIncDec, 
                           m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
                                                      m_Context, m_ErrorHandler));
@@ -414,6 +393,7 @@ private:
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
+        const auto rhsType = evaluateType(prefixIncDec.getTarget());
         setExpressionType(&prefixIncDec,
                           m_Environment.get().incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
                                                      m_Context, m_ErrorHandler));
@@ -694,17 +674,17 @@ private:
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
+        const auto *decType = varDeclaration.getType();
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
-            m_Environment.get().define(std::get<0>(var), varDeclaration.getType(), m_ErrorHandler);
+            m_Environment.get().define(std::get<0>(var), decType, m_ErrorHandler);
 
             // If variable has an initialiser expression
             if (std::get<1>(var)) {
                 // Evaluate type
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
 
-                // Assign initialiser expression to variable
-                m_Environment.get().assign(std::get<0>(var), Token::Type::EQUAL, initialiserType, 
-                                           m_Context, m_ErrorHandler, true);
+                assert(false);
+                // **TODO** check decType = initialiserType is implicit conversion
             }
         }
     }
@@ -855,20 +835,7 @@ const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op,
      // **THINK**
     return existingType;
 }
-//---------------------------------------------------------------------------
-const Type::Base *EnvironmentBase::incDec(const Token &name, Token::Type, 
-                                          const Type::Base *existingType, ErrorHandlerBase &errorHandler) const
-{
-    // If existing type has a constant qualifier, give errors
-    if(existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
-        errorHandler.error(name, "Increment/decrement of read-only variable");
-        throw TypeCheckError();
-    }
-    // Otherwise, return type
-    else {
-        return existingType;
-    }
-}
+
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker

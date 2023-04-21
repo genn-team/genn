@@ -44,28 +44,12 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) = 0;
-    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                     bool initializer = false) = 0;
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) = 0;
     virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
 
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
     const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler);
-
-protected:
-    //---------------------------------------------------------------------------
-    // Protected API
-    //---------------------------------------------------------------------------
-    const Type::Base *assign(const Token &name, Token::Type op, 
-                             const Type::Base *existingType, const Type::Base *assignedType, 
-                             const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                             bool initializer = false) const;
-    const Type::Base *incDec(const Token &name, Token::Type op, 
-                             const Type::Base *existingType, ErrorHandlerBase &errorHandler) const;
 };
 
 //---------------------------------------------------------------------------
