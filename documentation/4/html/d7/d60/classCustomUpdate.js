@@ -8,5 +8,6 @@ var classCustomUpdate =
     [ "getSize", "d7/d60/classCustomUpdate.html#af02deb81c890f633a034c632fdf8d9d2", null ],
     [ "getVarReferences", "d7/d60/classCustomUpdate.html#a97e005f93797e9ca1e118e99e4cd5054", null ],
     [ "isBatchReduction", "d7/d60/classCustomUpdate.html#acc430b012fd91f5d3f8de23a7722ee91", null ],
-    [ "isNeuronReduction", "d7/d60/classCustomUpdate.html#a9946f0cf16f3e1e5917324c40d81c2a5", null ]
+    [ "isNeuronReduction", "d7/d60/classCustomUpdate.html#a9946f0cf16f3e1e5917324c40d81c2a5", null ],
+    [ "isPerNeuron", "d7/d60/classCustomUpdate.html#a621623ac0e6d68e66ca0d6e1f3672f5f", null ]
 ];

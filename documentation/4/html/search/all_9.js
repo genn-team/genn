@@ -46,6 +46,7 @@ var searchData=
   ['generaterunner_2ecc',['generateRunner.cc',['../d3/dad/generateRunner_8cc.html',1,'']]],
   ['generaterunner_2eh',['generateRunner.h',['../d2/d75/generateRunner_8h.html',1,'']]],
   ['generaterunnerbase',['generateRunnerBase',['../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac77f91d8484a2c12b56e94dc23d89003',1,'CodeGenerator::GroupMerged']]],
+  ['generatesimpleerrorhandling',['generateSimpleErrorHandling',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab293678120fd5f7d042ff044897c47a3',1,'CodeGenerator::CUDA::Preferences']]],
   ['generatesparsecolumninit',['generateSparseColumnInit',['../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html#a83cb94b10c047bad2134228dfc1190fe',1,'CodeGenerator::SynapseConnectivityInitGroupMerged']]],
   ['generatesparserowinit',['generateSparseRowInit',['../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html#a13500b93ba8cf268083bbeb5d9bbe981',1,'CodeGenerator::SynapseConnectivityInitGroupMerged']]],
   ['generatespikeeventthreshold',['generateSpikeEventThreshold',['../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#ade5063dab5cf718592d3f8f755c14c4d',1,'CodeGenerator::PresynapticUpdateGroupMerged']]],

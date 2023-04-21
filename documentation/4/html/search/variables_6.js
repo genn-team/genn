@@ -4,6 +4,7 @@ var searchData=
   ['generateemptystatepushpull',['generateEmptyStatePushPull',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a547e3468c515d1400aa2dde51450dd07',1,'CodeGenerator::PreferencesBase']]],
   ['generateextraglobalparampull',['generateExtraGlobalParamPull',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a84bb4b46d6fc46b1df26b0042318d577',1,'CodeGenerator::PreferencesBase']]],
   ['generatelineinfo',['generateLineInfo',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522',1,'CodeGenerator::CUDA::Preferences']]],
+  ['generatesimpleerrorhandling',['generateSimpleErrorHandling',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab293678120fd5f7d042ff044897c47a3',1,'CodeGenerator::CUDA::Preferences']]],
   ['genericname',['genericName',['../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html#aa09ec28bf606147a17f8e71c357b4111',1,'CodeGenerator::Substitutions::FunctionTemplate']]],
   ['genn_5ftypes',['genn_types',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a81288a619a25a65d3ff4afd52bed3647',1,'pygenn::genn_model::GeNNModel']]],
   ['genntype',['GeNNType',['../de/d6e/namespacepygenn_1_1genn__model.html#a9288192a7e32920c04a3647efcd52304',1,'pygenn::genn_model']]],

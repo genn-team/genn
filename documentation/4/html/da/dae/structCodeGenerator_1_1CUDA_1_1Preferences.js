@@ -7,6 +7,7 @@ var structCodeGenerator_1_1CUDA_1_1Preferences =
     [ "deviceSelectMethod", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e", null ],
     [ "enableNCCLReductions", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa506dfb7972b553982cca137b641cca2", null ],
     [ "generateLineInfo", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522", null ],
+    [ "generateSimpleErrorHandling", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab293678120fd5f7d042ff044897c47a3", null ],
     [ "manualBlockSizes", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda", null ],
     [ "manualDeviceID", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d", null ],
     [ "selectGPUByDeviceID", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a05b34883f91558799021fc9b400f0938", null ],

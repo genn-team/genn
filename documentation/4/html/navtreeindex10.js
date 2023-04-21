@@ -1,5 +1,7 @@
 var NAVTREEINDEX10 =
 {
+"dc/de1/modelSpec_8h.html#ae926ed9264cd23650134184f0e3f5fc5":[19,0,84,6],
+"dc/de1/modelSpec_8h.html#af363b46a26aa7e1467d6888d350df204":[19,0,84,10],
 "dc/de1/modelSpec_8h_source.html":[19,0,84],
 "dc/dea/classTimer.html":[18,0,41],
 "dc/dea/classTimer.html#a036c98165b4577cad67c60da162ef6a8":[18,0,41,0],
@@ -247,7 +249,5 @@ var NAVTREEINDEX10 =
 "dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0706fbbd929bd8abc4de386c53d439ff":[19,0,134,0,0],
 "dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da49a65f87e83426c5f9305415b1820360":[19,0,134,0,4],
 "dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89":[19,0,134,0,3],
-"dd/dd5/synapseMatrixType_8h_source.html":[19,0,134],
-"dd/de4/sect_postsyn.html":[8,5],
-"dd/de4/sect_postsyn.html#sect_new_postsynaptic":[8,5,0]
+"dd/dd5/synapseMatrixType_8h_source.html":[19,0,134]
 };

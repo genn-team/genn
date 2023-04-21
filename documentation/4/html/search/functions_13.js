@@ -12,5 +12,5 @@ var searchData=
   ['var_5fspace_5fto_5fvals',['var_space_to_vals',['../d0/d17/namespacepygenn_1_1model__preprocessor.html#a4ece878baa9619ecfcbdf5770e5a4eec',1,'pygenn::model_preprocessor']]],
   ['varinit',['VarInit',['../d8/dee/classModels_1_1VarInit.html#acb27fde6ac6eda66f81020561ca46a62',1,'Models::VarInit::VarInit(const InitVarSnippet::Base *snippet, const std::vector&lt; double &gt; &amp;params)'],['../d8/dee/classModels_1_1VarInit.html#a07c4e76df4caa8a95ff5cf9cce6d7109',1,'Models::VarInit::VarInit(double constant)']]],
   ['varref',['VarRef',['../d1/daf/structModels_1_1Base_1_1VarRef.html#a54e7f72685ca10b68fa89378262698e2',1,'Models::Base::VarRef::VarRef(const std::string &amp;n, const std::string &amp;t, VarAccessMode a)'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a547d1985600c0af6f4274f13a0f94af2',1,'Models::Base::VarRef::VarRef(const std::string &amp;n, const std::string &amp;t)'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a8e97caa157d5bc911cee85a261f2aab3',1,'Models::Base::VarRef::VarRef()']]],
-  ['varreferencebase',['VarReferenceBase',['../df/d91/classModels_1_1VarReferenceBase.html#a66a02d4326878b7e4abb2e594d68fad4',1,'Models::VarReferenceBase']]]
+  ['varreferencebase',['VarReferenceBase',['../df/d91/classModels_1_1VarReferenceBase.html#ad0c0adde5cba209f14957c40228d98ef',1,'Models::VarReferenceBase']]]
 ];

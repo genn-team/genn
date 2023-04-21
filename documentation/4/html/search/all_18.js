@@ -29,7 +29,7 @@ var searchData=
   ['varlocation',['VarLocation',['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087',1,'variableMode.h']]],
   ['varref',['VarRef',['../d1/daf/structModels_1_1Base_1_1VarRef.html',1,'Models::Base::VarRef'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a54e7f72685ca10b68fa89378262698e2',1,'Models::Base::VarRef::VarRef(const std::string &amp;n, const std::string &amp;t, VarAccessMode a)'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a547d1985600c0af6f4274f13a0f94af2',1,'Models::Base::VarRef::VarRef(const std::string &amp;n, const std::string &amp;t)'],['../d1/daf/structModels_1_1Base_1_1VarRef.html#a8e97caa157d5bc911cee85a261f2aab3',1,'Models::Base::VarRef::VarRef()']]],
   ['varreference',['VarReference',['../d1/db6/classModels_1_1VarReference.html',1,'Models']]],
-  ['varreferencebase',['VarReferenceBase',['../df/d91/classModels_1_1VarReferenceBase.html',1,'Models::VarReferenceBase'],['../df/d91/classModels_1_1VarReferenceBase.html#a66a02d4326878b7e4abb2e594d68fad4',1,'Models::VarReferenceBase::VarReferenceBase()']]],
+  ['varreferencebase',['VarReferenceBase',['../df/d91/classModels_1_1VarReferenceBase.html',1,'Models::VarReferenceBase'],['../df/d91/classModels_1_1VarReferenceBase.html#ad0c0adde5cba209f14957c40228d98ef',1,'Models::VarReferenceBase::VarReferenceBase()']]],
   ['varreferencecontainerbase',['VarReferenceContainerBase',['../dd/d20/namespaceModels.html#a7c3dba8861d8593d5ea00006bcb7ae9c',1,'Models']]],
   ['varrefvec',['VarRefVec',['../d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a',1,'Models::Base']]],
   ['vars',['vars',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#ad8e33584773714170465d5166c9c5e3e',1,'pygenn::genn_groups::Group']]],

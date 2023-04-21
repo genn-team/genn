@@ -1,5 +1,7 @@
 var NAVTREEINDEX11 =
 {
+"dd/de4/sect_postsyn.html":[8,5],
+"dd/de4/sect_postsyn.html#sect_new_postsynaptic":[8,5,0],
 "dd/de9/neuronGroup_8cc.html":[19,0,94],
 "dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html":[18,0,0,16],
 "dd/df5/classCodeGenerator_1_1CustomWUUpdateInitGroupMerged.html#a1db7b728fc166c56029dd44a217e8544":[18,0,0,16,2],
@@ -247,7 +249,5 @@ var NAVTREEINDEX11 =
 "de/db7/genn__model_8py.html#ade8879268d2849fd60e6bb5f8e99a66b":[19,0,51,10],
 "de/db7/genn__model_8py.html#aecd5b6795a09e26bee8ad28c193b512d":[19,0,51,16],
 "de/db7/genn__model_8py.html#af88a0be01485d446affa9c96cc4a0361":[19,0,51,22],
-"de/db7/genn__model_8py.html#af914d10d294cbdaefc2895da7ea4e5aa":[19,0,51,21],
-"de/dc1/classInitToeplitzConnectivitySnippet_1_1Uninitialised.html":[18,0,4,4],
-"de/dc1/classInitToeplitzConnectivitySnippet_1_1Uninitialised.html#a0d87b62706af725a8db1ecc1cd2955da":[18,0,4,4,0]
+"de/db7/genn__model_8py.html#af914d10d294cbdaefc2895da7ea4e5aa":[19,0,51,21]
 };

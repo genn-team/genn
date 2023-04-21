@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.0</span>
+   &#160;<span id="projectnumber">4.8.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,23 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN 4.8.0 </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.8.1 </h1>
+<p>This release fixes a number of issues found in the 4.8.0 release and also includes some optimisation which could be very beneficial for some classes of model.</p>
+<h2>Bug fixes </h2>
+<ol type="1">
+<li>Fixed bug relating to merging populations with variable references pointing to variables with different access duplication modes.</li>
+<li>Fixed infinite loop that could occur in code generator if a bracket was missed calling a GeNN function in a code snippet.</li>
+<li>Fixed bug that meant batched models which required previous spike times failed to compile.</li>
+<li>Fixed bug with DLL-searching logic on Windows which meant CUDA backend failed to load on some systems.</li>
+<li>Fixed a number of corner cases in the handling of <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764ab7fd9fc8f33b14088492410047d1a241" title="This variable should be shared between batches. ">VarAccessDuplication::SHARED_NEURON</a> variables.</li>
+</ol>
+<h2>Optimisations </h2>
+<ol type="1">
+<li>When building models with large numbers of populations using the CUDA backend, compile times could be very large. This was at least in part due to over-verbose error handling code being generated. <a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab293678120fd5f7d042ff044897c47a3">CodeGenerator::CUDA::Preferences::generateSimpleErrorHandling</a> enables the generation of much more minimal error-handling code and can speed up compilation by up to 10x.</li>
+<li>Turned on multi-processor compilation option in Visual Studio solutions which speeds up compilation of GeNN by a significant amount.</li>
+<li>Fusing postsynaptic models was previously overly-conservative meaning large, highly-connected models using a postsynaptic model with additional state variables would perform poorly. These checks have been relaxed and brough into line with those used for fusing pre and postsynaptic updates coming from weight update models.</li>
+</ol>
+<h1>Release Notes for GeNN 4.8.0 </h1>
 <p>This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.7.1 release.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -599,7 +615,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
+    <li class="footer">Generated on Fri Apr 21 2023 16:20:24 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

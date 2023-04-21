@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.0</span>
+   &#160;<span id="projectnumber">4.8.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -140,6 +140,8 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:aa506dfb7972b553982cca137b641cca2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa506dfb7972b553982cca137b641cca2">enableNCCLReductions</a> = false</td></tr>
 <tr class="memdesc:aa506dfb7972b553982cca137b641cca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate corresponding NCCL batch reductions.  <a href="#aa506dfb7972b553982cca137b641cca2">More...</a><br /></td></tr>
 <tr class="separator:aa506dfb7972b553982cca137b641cca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab293678120fd5f7d042ff044897c47a3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab293678120fd5f7d042ff044897c47a3">generateSimpleErrorHandling</a> = false</td></tr>
+<tr class="separator:ab293678120fd5f7d042ff044897c47a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3f7e871cfa06d52cdff493f80a9289e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0">DeviceSelect</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e">deviceSelectMethod</a> = <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293">DeviceSelect::OPTIMAL</a></td></tr>
 <tr class="memdesc:ab3f7e871cfa06d52cdff493f80a9289e"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to select GPU device.  <a href="#ab3f7e871cfa06d52cdff493f80a9289e">More...</a><br /></td></tr>
 <tr class="separator:ab3f7e871cfa06d52cdff493f80a9289e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,7 +154,7 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a24e6c8b33837783988259baa53fd4dda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a8d84e884450f8a7a0b2e6195ba046b7e">KernelBlockSize</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda">manualBlockSizes</a></td></tr>
 <tr class="memdesc:a24e6c8b33837783988259baa53fd4dda"><td class="mdescLeft">&#160;</td><td class="mdescRight">If block size select method is set to <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a" title="Use device specified by user. ">BlockSizeSelect::MANUAL</a>, block size to use for each kernel.  <a href="#a24e6c8b33837783988259baa53fd4dda">More...</a><br /></td></tr>
 <tr class="separator:a24e6c8b33837783988259baa53fd4dda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a4fec7ae3b7712a4d60d1cd3ff31c34c1">constantCacheOverhead</a> = 72 * 4</td></tr>
+<tr class="memitem:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a4fec7ae3b7712a4d60d1cd3ff31c34c1">constantCacheOverhead</a> = 72 * 5</td></tr>
 <tr class="memdesc:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">How much constant cache is already used and therefore can't be used by GeNN?  <a href="#a4fec7ae3b7712a4d60d1cd3ff31c34c1">More...</a><br /></td></tr>
 <tr class="separator:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa370bc1e7c48d0928ace7bf4baaa7e73"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73">userNvccFlags</a> = &quot;&quot;</td></tr>
@@ -268,13 +270,13 @@ Public Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">size_t CodeGenerator::CUDA::Preferences::constantCacheOverhead = 72 * 4</td>
+          <td class="memname">size_t CodeGenerator::CUDA::Preferences::constantCacheOverhead = 72 * 5</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>How much constant cache is already used and therefore can't be used by GeNN? </p>
-<p>Each of the four modules which includes <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> headers(neuronUpdate, synapseUpdate, init and runner) Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires additional constant cache, increase this </p>
+<p>Each of the four modules which includes <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> headers(neuronUpdate, synapseUpdate, custom update, init and runner) Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires additional constant cache, increase this </p>
 
 </div>
 </div>
@@ -323,6 +325,21 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Should line info be included in resultant executable for debugging/profiling purposes? </p>
+
+</div>
+</div>
+<a id="ab293678120fd5f7d042ff044897c47a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab293678120fd5f7d042ff044897c47a3">&#9670;&nbsp;</a></span>generateSimpleErrorHandling</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CodeGenerator::CUDA::Preferences::generateSimpleErrorHandling = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>By default, GeNN generates <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> error-handling code that generates exceptions with line numbers etc. This can make compilation of large models very slow and require a large amount of memory. Turning on this option generates much simpler error-handling code that simply raises an abort signal. </p>
 
 </div>
 </div>
@@ -415,7 +432,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li><li class="navelem"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html">Preferences</a></li>
-    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
+    <li class="footer">Generated on Fri Apr 21 2023 16:20:25 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

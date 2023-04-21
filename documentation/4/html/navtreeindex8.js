@@ -1,5 +1,7 @@
 var NAVTREEINDEX8 =
 {
+"da/dfd/classModelSpec.html#ae1678fdcd6c8381a402c58673064fa6a":[18,0,31,58],
+"da/dfd/classModelSpec.html#aee66eb23a248b286f3168ebe70c6ed71":[18,0,31,16],
 "da/dfd/classModelSpec.html#af98330272efa74a925d29854830106de":[18,0,31,28],
 "da/dff/gccfeatures_8h.html":[19,0,38],
 "da/dff/gccfeatures_8h.html#a06de75db20572b1c8ce9e43168928757":[19,0,38,12],
@@ -247,7 +249,5 @@ var NAVTREEINDEX8 =
 "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a8ad49047e343c93b0c92be50b57ae7f5":[18,0,3,6,0],
 "db/d6d/single__threaded__cpu_2backend_8h.html":[19,0,7],
 "db/d6d/single__threaded__cpu_2backend_8h_source.html":[19,0,7],
-"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[18,0,0,3],
-"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[17,0,0,3],
-"db/d97/classSnippet_1_1Base.html":[18,0,10,0]
+"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[18,0,0,3]
 };

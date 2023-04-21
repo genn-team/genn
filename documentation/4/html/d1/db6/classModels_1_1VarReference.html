@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.0</span>
+   &#160;<span id="projectnumber">4.8.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -127,6 +127,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a704fd04cefff717a39d9099be2cb0fd7 inherit pub_methods_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac40d22518bab4dc644a1ec2216c3bc06 inherit pub_methods_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06">getTargetName</a> () const</td></tr>
 <tr class="separator:ac40d22518bab4dc644a1ec2216c3bc06 inherit pub_methods_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fe09beccf92ce528487c141b64adfe2 inherit pub_methods_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a5fe09beccf92ce528487c141b64adfe2">isBatched</a> () const</td></tr>
+<tr class="separator:a5fe09beccf92ce528487c141b64adfe2 inherit pub_methods_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -148,9 +150,11 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_types_classModels_1_1VarReferenceBase"><td colspan="2" onclick="javascript:toggleInherit('pro_types_classModels_1_1VarReferenceBase')"><img src="../../closed.png" alt="-"/>&#160;Protected Types inherited from <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html">Models::VarReferenceBase</a></td></tr>
 <tr class="memitem:a3ecd4b87643fc8b3503035ee49f097cd inherit pro_types_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; std::string(void)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd">GetTargetNameFn</a></td></tr>
 <tr class="separator:a3ecd4b87643fc8b3503035ee49f097cd inherit pro_types_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae05ea542244a506d555a83a7cca05f17 inherit pro_types_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; bool(void)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ae05ea542244a506d555a83a7cca05f17">IsBatchedFn</a></td></tr>
+<tr class="separator:ae05ea542244a506d555a83a7cca05f17 inherit pro_types_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classModels_1_1VarReferenceBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classModels_1_1VarReferenceBase')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html">Models::VarReferenceBase</a></td></tr>
-<tr class="memitem:a66a02d4326878b7e4abb2e594d68fad4 inherit pro_methods_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a66a02d4326878b7e4abb2e594d68fad4">VarReferenceBase</a> (size_t varIndex, const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;varVec, <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd">GetTargetNameFn</a> <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06">getTargetName</a>)</td></tr>
-<tr class="separator:a66a02d4326878b7e4abb2e594d68fad4 inherit pro_methods_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0c0adde5cba209f14957c40228d98ef inherit pro_methods_classModels_1_1VarReferenceBase"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ad0c0adde5cba209f14957c40228d98ef">VarReferenceBase</a> (size_t varIndex, const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;varVec, <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd">GetTargetNameFn</a> <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06">getTargetName</a>, <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#ae05ea542244a506d555a83a7cca05f17">IsBatchedFn</a> <a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html#a5fe09beccf92ce528487c141b64adfe2">isBatched</a>)</td></tr>
+<tr class="separator:ad0c0adde5cba209f14957c40228d98ef inherit pro_methods_classModels_1_1VarReferenceBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="aaa516154c965f0efa425bc0aee22557c"></a>
@@ -430,7 +434,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dd/d20/namespaceModels.html">Models</a></li><li class="navelem"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a></li>
-    <li class="footer">Generated on Mon Oct 31 2022 12:08:59 for GeNN by
+    <li class="footer">Generated on Fri Apr 21 2023 16:20:25 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

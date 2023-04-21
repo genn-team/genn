@@ -1,5 +1,7 @@
 var NAVTREEINDEX12 =
 {
+"de/dc1/classInitToeplitzConnectivitySnippet_1_1Uninitialised.html":[18,0,4,4],
+"de/dc1/classInitToeplitzConnectivitySnippet_1_1Uninitialised.html#a0d87b62706af725a8db1ecc1cd2955da":[18,0,4,4,0],
 "de/ded/input_8h.html":[19,0,66],
 "de/ded/input_8h_source.html":[19,0,66],
 "de/ded/sectNeuronModels.html":[8,3],
@@ -123,11 +125,13 @@ var NAVTREEINDEX12 =
 "df/d86/customUpdateGroupMerged_8h.html":[19,0,34],
 "df/d86/customUpdateGroupMerged_8h_source.html":[19,0,34],
 "df/d91/classModels_1_1VarReferenceBase.html":[18,0,6,3],
-"df/d91/classModels_1_1VarReferenceBase.html#a0614245c5f529c42edf1a6c87f854a0d":[18,0,6,3,3],
+"df/d91/classModels_1_1VarReferenceBase.html#a0614245c5f529c42edf1a6c87f854a0d":[18,0,6,3,4],
 "df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd":[18,0,6,3,0],
-"df/d91/classModels_1_1VarReferenceBase.html#a66a02d4326878b7e4abb2e594d68fad4":[18,0,6,3,1],
-"df/d91/classModels_1_1VarReferenceBase.html#a704fd04cefff717a39d9099be2cb0fd7":[18,0,6,3,4],
-"df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06":[18,0,6,3,2],
+"df/d91/classModels_1_1VarReferenceBase.html#a5fe09beccf92ce528487c141b64adfe2":[18,0,6,3,6],
+"df/d91/classModels_1_1VarReferenceBase.html#a704fd04cefff717a39d9099be2cb0fd7":[18,0,6,3,5],
+"df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06":[18,0,6,3,3],
+"df/d91/classModels_1_1VarReferenceBase.html#ad0c0adde5cba209f14957c40228d98ef":[18,0,6,3,2],
+"df/d91/classModels_1_1VarReferenceBase.html#ae05ea542244a506d555a83a7cca05f17":[18,0,6,3,1],
 "df/da9/generateSupportCode_8cc.html":[19,0,48],
 "df/daa/namespaceSnippet.html":[18,0,10],
 "df/daa/namespaceSnippet.html":[17,0,15],
@@ -219,8 +223,8 @@ var NAVTREEINDEX12 =
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#afcec8eb78ea3e7d0a1bc18344f7391ce":[18,0,0,18,30],
 "examples.html":[20],
 "files.html":[19,0],
-"functions.html":[18,3,0],
 "functions.html":[18,3,0,0],
+"functions.html":[18,3,0],
 "functions_0x7e.html":[18,3,0,24],
 "functions_a.html":[18,3,0,1],
 "functions_b.html":[18,3,0,2],
@@ -245,9 +249,5 @@ var NAVTREEINDEX12 =
 "functions_func_m.html":[18,3,1,11],
 "functions_func_n.html":[18,3,1,12],
 "functions_func_o.html":[18,3,1,13],
-"functions_func_p.html":[18,3,1,14],
-"functions_func_r.html":[18,3,1,15],
-"functions_func_s.html":[18,3,1,16],
-"functions_func_t.html":[18,3,1,17],
-"functions_func_u.html":[18,3,1,18]
+"functions_func_p.html":[18,3,1,14]
 };
