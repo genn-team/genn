@@ -386,6 +386,9 @@ private:
             m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
+        
+        // **TODO**
+
         setExpressionType(&postfixIncDec, 
                           m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
                                                      m_Context, m_ErrorHandler));

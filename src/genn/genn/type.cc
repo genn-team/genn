@@ -17,44 +17,42 @@ using namespace GeNN;
 // Anonymous namespace
 namespace
 {
-const std::map<std::set<std::string>, const Type::NumericBase*> numericTypeSpecifiers{
-    {{"char"}, Type::Int8::getInstance()},
-    {{"int8_t"}, Type::Int8::getInstance()},
+const std::map<std::set<std::string>, Type::Type> numericTypeSpecifiers{
+    {{"char"}, Type::Int8},
+    {{"int8_t"}, Type::Int8},
     
-    {{"unsigned", "char"}, Type::Uint8::getInstance()},
-    {{"uint8_t"}, Type::Uint8::getInstance()},
+    {{"unsigned", "char"}, Type::Uint8},
+    {{"uint8_t"}, Type::Uint8},
 
-    {{"short"}, Type::Int16::getInstance()},
-    {{"short", "int"}, Type::Int16::getInstance()},
-    {{"signed", "short"}, Type::Int16::getInstance()},
-    {{"signed", "short", "int"}, Type::Int16::getInstance()},
-    {{"int16_t"}, Type::Int16::getInstance()},
+    {{"short"}, Type::Int16},
+    {{"short", "int"}, Type::Int16},
+    {{"signed", "short"}, Type::Int16},
+    {{"signed", "short", "int"}, Type::Int16},
+    {{"int16_t"}, Type::Int16},
     
-    {{"unsigned", "short"}, Type::Uint16::getInstance()},
-    {{"unsigned", "short", "int"}, Type::Uint16::getInstance()},
-    {{"uint16_t"}, Type::Uint8::getInstance()},
+    {{"unsigned", "short"}, Type::Uint16},
+    {{"unsigned", "short", "int"}, Type::Uint16},
+    {{"uint16_t"}, Type::Uint8},
 
-    {{"int"}, Type::Int32::getInstance()},
-    {{"signed"}, Type::Int32::getInstance()},
-    {{"signed", "int"}, Type::Int32::getInstance()},
-    {{"int32_t"}, Type::Int32::getInstance()},
+    {{"int"}, Type::Int32},
+    {{"signed"}, Type::Int32},
+    {{"signed", "int"}, Type::Int32},
+    {{"int32_t"}, Type::Int32},
 
-    {{"unsigned"}, Type::Uint32::getInstance()},
-    {{"unsigned", "int"}, Type::Uint32::getInstance()},
-    {{"uint32_t"}, Type::Uint32::getInstance()},
+    {{"unsigned"}, Type::Uint32},
+    {{"unsigned", "int"}, Type::Uint32},
+    {{"uint32_t"}, Type::Uint32},
 
-    {{"float"}, Type::Float::getInstance()},
-    {{"double"}, Type::Double::getInstance()},
-};
+    {{"float"}, Type::Float},
+    {{"double"}, Type::Double}};
 //----------------------------------------------------------------------------
 const std::set<std::string> scalarTypeSpecifier{{"scalar"}};
 //----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
-const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> unsignedType{
-    {Type::Int8::getInstance(), Type::Uint8::getInstance()},
-    {Type::Int16::getInstance(), Type::Uint16::getInstance()},
-    {Type::Int32::getInstance(), Type::Uint32::getInstance()}
-};
+const std::unordered_map<Type::Type, Type::Type> unsignedType{
+    {Type::Int8, Type::Uint8},
+    {Type::Int16, Type::Uint16},
+    {Type::Int32, Type::Uint32}};
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -62,125 +60,10 @@ const std::unordered_map<const Type::NumericBase*, const Type::NumericBase*> uns
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
-// Implement numeric types
-IMPLEMENT_TYPE(Bool);
-IMPLEMENT_TYPE(Int8);
-IMPLEMENT_TYPE(Int16);
-IMPLEMENT_TYPE(Int32);
-IMPLEMENT_TYPE(Uint8);
-IMPLEMENT_TYPE(Uint16);
-IMPLEMENT_TYPE(Uint32);
-IMPLEMENT_TYPE(Float);
-IMPLEMENT_TYPE(Double);
-
-//----------------------------------------------------------------------------
-// GeNN::Type::Base
-//----------------------------------------------------------------------------
-const Pointer *Base::getPointerType(Qualifier qualifiers) const 
-{ 
-    // **TODO** befriend constructor
-    // **TODO** don't just leak these!
-    return new Pointer(this, qualifiers); 
-}
-
-//----------------------------------------------------------------------------
-// GeNN::Type::NumericTypedef
-//----------------------------------------------------------------------------
-std::string NumericTypedef::getResolvedName(const TypeContext &context) const
-{
-    return getResolvedType(context)->getResolvedName(context);
-}
-//----------------------------------------------------------------------------
-size_t NumericTypedef::getSizeBytes(const TypeContext &context) const
-{
-    return getResolvedType(context)->getSizeBytes(context);
-}
-//----------------------------------------------------------------------------
-Base *NumericTypedef::getQualifiedType(Qualifier qualifiers) const
-{ 
-    return new NumericTypedef(m_Name, qualifiers); 
-} 
-//----------------------------------------------------------------------------
-int NumericTypedef::getRank(const TypeContext &context) const
-{
-    return getResolvedType(context)->getRank(context);
-}
-//----------------------------------------------------------------------------
-double NumericTypedef::getMin(const TypeContext &context) const
-{
-    return getResolvedType(context)->getMin(context);
-}
-//----------------------------------------------------------------------------
-double NumericTypedef::getMax(const TypeContext &context) const
-{
-    return getResolvedType(context)->getMax(context);
-}
-//----------------------------------------------------------------------------
-double NumericTypedef::getLowest(const TypeContext &context) const
-{
-    return getResolvedType(context)->getLowest(context);
-}
-//----------------------------------------------------------------------------
-int NumericTypedef::getMaxDigits10(const TypeContext &context) const
-{
-    return getResolvedType(context)->getMaxDigits10(context);
-}
-//----------------------------------------------------------------------------
-bool NumericTypedef::isSigned(const TypeContext &context) const
-{
-    return getResolvedType(context)->getSizeBytes(context);
-}
-//----------------------------------------------------------------------------
-bool NumericTypedef::isIntegral(const TypeContext &context) const
-{
-    return getResolvedType(context)->isIntegral(context);
-}
-//----------------------------------------------------------------------------
-std::string NumericTypedef::getLiteralSuffix(const TypeContext &context) const
-{
-    return getResolvedType(context)->getLiteralSuffix(context);
-}
-//----------------------------------------------------------------------------
-const Type::NumericBase *NumericTypedef::getResolvedType(const TypeContext &context) const
-{
-    const auto t = context.find(m_Name);
-    if (t == context.cend()) {
-        throw std::runtime_error("No context for typedef '" + m_Name + "'");
-    }
-    else {
-        const NumericBase *numericType = dynamic_cast<const NumericBase*>(t->second);
-        if (numericType) {
-            return numericType;
-        }
-        else {
-            throw std::runtime_error("Numeric typedef '" + m_Name + "' resolved to non-numeric type '" + t->second->getName() + "'");
-        }
-    }
-}
-
-//----------------------------------------------------------------------------
-// GeNN::Type::FunctionBase
-//----------------------------------------------------------------------------
-bool FunctionBase::isVariadic() const
-{
-    // If variadic marker (nullptr) isn't found, function isn't variadic
-    const auto argTypes = getArgumentTypes();
-    const auto variadicMarker = std::find(argTypes.cbegin(), argTypes.cend(), nullptr);
-    if(variadicMarker == argTypes.cend()) {
-        return false;
-    }
-    // Otherwise, after checking variadic marker is last argument, return true
-    else {
-        assert(argTypes.back() == nullptr);
-        return true;
-    }
-
-}
-
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-const NumericBase *parseNumeric(const std::string &typeString)
+Type parseNumeric(const std::string &typeString)
 {
     using namespace Transpiler;
 
@@ -189,87 +72,82 @@ const NumericBase *parseNumeric(const std::string &typeString)
     const auto tokens = Scanner::scanSource(typeString, errorHandler);
 
     // Parse type numeric type
-    const auto *type = Parser::parseNumericType(tokens, errorHandler);
+    const auto type = Parser::parseNumericType(tokens, errorHandler);
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
         throw std::runtime_error("Error parsing type '" + std::string{typeString} + "'");
     }
 
-    // If tokens did not contain a valid numeric type, throw exception
-    if (!type) {
-        throw std::runtime_error("Unable to parse type '" + std::string{typeString} + "'");
-    }
     return type;
 }
 //----------------------------------------------------------------------------
-const NumericBase *getNumericType(const std::set<std::string> &typeSpecifiers)
+Type getNumericType(const std::set<std::string> &typeSpecifiers)
 {
     // If type matches scalar type specifiers
     if(typeSpecifiers == scalarTypeSpecifier) {
-        return new NumericTypedef("scalar");
+        //return new NumericTypedef("scalar");
     }
     // Otherwise
     else {
         const auto type = numericTypeSpecifiers.find(typeSpecifiers);
-        return (type == numericTypeSpecifiers.cend()) ? nullptr : type->second;
+        //return (type == numericTypeSpecifiers.cend()) ? nullptr : type->second;
+        return type->second;
     }
 }
 //----------------------------------------------------------------------------
-const NumericBase *getPromotedType(const NumericBase *type, const TypeContext &context)
+Type getPromotedType(const Type &type)
 {
     // If a small integer type is used in an expression, it is implicitly converted to int which is always signed. 
     // This is known as the integer promotions or the integer promotion rule 
     // **NOTE** this is true because in our type system unsigned short is uint16 which can be represented in int32
-    if(type->getRank(context) < Int32::getInstance()->getRank(context)) {
-        return Int32::getInstance();
+    if(type.getNumeric().rank < Int32.getNumeric().rank) {
+        return Int32;
     }
     else {
         return type;
     }
 }
 //----------------------------------------------------------------------------
-const NumericBase *getCommonType(const NumericBase *a, const NumericBase *b, const TypeContext &context)
+Type getCommonType(const Type &a, const Type &b)
 {
     // If either type is double, common type is double
-    const auto &aTypeName = a->getResolvedName(context);
-    const auto &bTypeName = b->getResolvedName(context);
-    if(aTypeName == Double::getInstance()->getName() || bTypeName == Double::getInstance()->getName()) {
-        return Double::getInstance();
+    if(a == Double || b == Double) {
+        return Double;
     }
     // Otherwise, if either type is float, common type is float
-    if(aTypeName == Float::getInstance()->getName() || bTypeName == Float::getInstance()->getName()) {
-        return Float::getInstance();
+    if(a == Float || b == Float) {
+        return Float;
     }
     // Otherwise, must be an integer type
     else {
         // Promote both numeric types
-        const auto *aPromoted = getPromotedType(a, context);
-        const auto *bPromoted = getPromotedType(b, context);
+        const Type aPromoted = getPromotedType(a);
+        const Type bPromoted = getPromotedType(b);
 
         // If both promoted operands have the same type, then no further conversion is needed.
-        if(aPromoted->getResolvedName(context) == bPromoted->getResolvedName(context)) {
+        if(aPromoted == bPromoted) {
             return aPromoted;
         }
         // Otherwise, if both promoted operands have signed integer numeric types or both have unsigned integer numeric types, 
         // the operand with the type of lesser integer conversion rank is converted to the type of the operand with greater rank.
-        else if(aPromoted->isSigned(context) == bPromoted->isSigned(context)) {
-            return (aPromoted->getRank(context) > bPromoted->getRank(context)) ? aPromoted : bPromoted;
+        else if(aPromoted.getNumeric().isSigned == bPromoted.getNumeric().isSigned) {
+            return (aPromoted.getNumeric().rank > bPromoted.getNumeric().rank) ? aPromoted : bPromoted;
         }
         // Otherwise, if signedness of promoted operands differ
         else {
-            const auto *signedOp = aPromoted->isSigned(context) ? aPromoted : bPromoted;
-            const auto *unsignedOp = aPromoted->isSigned(context) ? bPromoted : aPromoted;
+            const Type signedOp = aPromoted.getNumeric().isSigned ? aPromoted : bPromoted;
+            const Type unsignedOp = aPromoted.getNumeric().isSigned ? bPromoted : aPromoted;
 
             // Otherwise, if the operand that has unsigned integer type has rank greater or equal to the rank of the type of the other operand, 
             // then the operand with signed integer type is converted to the type of the operand with unsigned integer type.
-            if(unsignedOp->getRank(context) >= signedOp->getRank(context)) {
+            if(unsignedOp.getNumeric().rank >= signedOp.getNumeric().rank) {
                 return unsignedOp;
             }
             // Otherwise, if the type of the operand with signed integer type can represent all of the values of the type of the operand with unsigned integer type, 
             // then the operand with unsigned integer type is converted to the type of the operand with signed integer type.
-            else if((signedOp->getMin(context) <= unsignedOp->getMin(context))
-                    && (signedOp->getMax(context) >= unsignedOp->getMax(context))) 
+            else if((signedOp.getNumeric().min <= unsignedOp.getNumeric().min)
+                    && (signedOp.getNumeric().max >= unsignedOp.getNumeric().max)) 
             {
                 return signedOp;
             }

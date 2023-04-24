@@ -29,6 +29,6 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
 Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 //! Parse type from tokens
-const GeNN::Type::NumericBase *parseNumericType(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
+const GeNN::Type::Type parseNumericType(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler);
 
 }   // MiniParse::MiniParse
