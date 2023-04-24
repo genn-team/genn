@@ -321,6 +321,25 @@ class Group(object):
         for var_name, var_data in iteritems(var_dict):
             self._load_egp(var_data.extra_global_params, var_name)
 
+    def _unload_vars(self, var_dict=None):
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables and clear views
+        for v in itervalues(var_dict):
+            v.view = None
+            for e in itervalues(v.extra_global_params):
+                e.view = None
+
+    def _unload_egps(self, egp_dict=None):
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Loop through extra global params and clear views
+        for e in itervalues(egp_dict):
+            e.view = None
 
 class NeuronGroup(Group):
 
@@ -339,12 +358,14 @@ class NeuronGroup(Group):
         self.spike_count = None
         self.spike_events = None
         self.spike_event_count = None
-        self.spike_que_ptr = [0]
+        self.spike_que_ptr = None
         self._max_delay_steps = 0
         self.spike_times = None
         self.prev_spike_times = None
         self.spike_event_times = None
         self.prev_spike_event_times = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
 
     @property
     def current_spikes(self):
@@ -590,6 +611,22 @@ class NeuronGroup(Group):
 
         # Load neuron extra global params
         self._load_egp()
+
+    def unload(self):
+        self.spikes = None
+        self.spike_count = None
+        self.spike_events = None
+        self.spike_event_count = None
+        self.spike_que_ptr = None
+        self.spike_times = None
+        self.prev_spike_times = None
+        self.spike_event_times = None
+        self.prev_spike_event_times = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
+
+        self._unload_vars()
+        self._unload_egps()
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
@@ -1293,6 +1330,19 @@ class SynapseGroup(Group):
         self._load_var_init_egps(self.pre_vars)
         self._load_var_init_egps(self.post_vars)
 
+    def unload(self):
+        self._ind = None
+        self._row_lengths = None
+        self.in_syn = None
+
+        self._unload_vars()
+        self._unload_vars(self.pre_vars)
+        self._unload_vars(self.post_vars)
+        self._unload_vars(self.psm_vars)
+        self._unload_egps()
+        self._unload_egps(self.psm_extra_global_params)
+        self._unload_egps(self.connectivity_extra_global_params)
+
     def reinitialise(self):
         """Reinitialise synapse group"""
         # If population has individual synapse variables
@@ -1415,6 +1465,10 @@ class CurrentSource(Group):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
 
     def reinitialise(self):
         """Reinitialise current source"""
@@ -1546,6 +1600,10 @@ class CustomUpdate(Group):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
 
     def reinitialise(self):
         """Reinitialise custom update"""
