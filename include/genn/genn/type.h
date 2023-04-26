@@ -7,6 +7,7 @@
 // Standard C++ includes
 #include <limits>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <typeinfo>
@@ -53,8 +54,6 @@ struct Type
     //------------------------------------------------------------------------
     struct Numeric
     {
-        std::string name;
-
         int rank;
         double min;
         double max;
@@ -79,6 +78,28 @@ struct Type
         {
             return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
                     < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+        }
+    };
+
+    //------------------------------------------------------------------------
+    // Value
+    //------------------------------------------------------------------------
+    struct Value
+    {
+        std::string name;
+        std::optional<Numeric> numeric;
+        
+        //------------------------------------------------------------------------
+        // Operators
+        //------------------------------------------------------------------------
+        bool operator == (const Value &other) const
+        {
+            return (numeric == other.numeric);
+        }
+
+        bool operator < (const Value &other) const
+        {
+            return (numeric < other.numeric);
         }
     };
 
@@ -144,7 +165,7 @@ struct Type
         }
     };
     
-    Type(size_t size, Qualifier qualifiers, const Numeric &numeric)
+    Type(size_t size, Qualifier qualifiers, const Value &numeric)
     :   size(size), qualifiers(qualifiers), detail(numeric)
     {}
     Type(Qualifier qualifiers, const Pointer &pointer)
@@ -162,18 +183,20 @@ struct Type
     size_t size;
     Qualifier qualifiers;
 
-    std::variant<Numeric, Pointer, Function> detail;
+    std::variant<Value, Pointer, Function> detail;
     
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool isNumeric() const{ return std::holds_alternative<Numeric>(detail); }
+    bool isValue() const{ return std::holds_alternative<Value>(detail); }
     bool isPointer() const{ return std::holds_alternative<Pointer>(detail); }
     bool isFunction() const{ return std::holds_alternative<Function>(detail); }
-    const Numeric &getNumeric() const{ return std::get<Numeric>(detail); }
+    bool isNumeric() const{ return isValue() && getValue().numeric; }
+    const Value &getValue() const{ return std::get<Value>(detail); }
     const Pointer &getPointer() const{ return std::get<Pointer>(detail); }
     const Function &getFunction() const{ return std::get<Function>(detail); }
-   
+    const Numeric &getNumeric() const{ return *getValue().numeric; }
+
     const Type addQualifier(Qualifier qualifier) const{ return Type(*this, qualifier); }
     bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
 
@@ -198,9 +221,9 @@ struct Type
     template<typename T>
     static Type createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
     {
-        return Type(sizeof(T), qualifiers, Numeric{name, rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                   std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10, 
-                                                   std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix});
+        return Type{sizeof(T), qualifiers, Value{name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                                               std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                                               std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}}};
     }
 
     static Type createPointer(const Type &valueType, Qualifier qualifiers = Qualifier{0})

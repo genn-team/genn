@@ -32,9 +32,10 @@ std::string getDescription(const Type::Type &type)
     const std::string qualifier = type.hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
      return std::visit(
          Utils::Overload{
-             [&qualifier](const Type::Type::Numeric &numeric)
+             [&qualifier](const Type::Type::Value &value)
              {
-                 return qualifier + numeric.name;
+                 assert(value.numeric);
+                 return qualifier + value.name;
              },
              [&qualifier, &type](const Type::Type::Pointer &pointer)
              {
@@ -55,8 +56,9 @@ bool checkPointerTypeAssignement(const Type::Type &rightType, const Type::Type &
 {
     return std::visit(
         Utils::Overload{
-            [&rightType, &leftType](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            [&rightType, &leftType](const Type::Type::Value &leftValue, const Type::Type::Value &rightValue)
             {
+                assert(leftValue.numeric && rightValue.numeric);
                 return (rightType == leftType);
             },
             [](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
@@ -77,8 +79,8 @@ bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftTyp
 
     return std::visit(
         Utils::Overload{
-            // If both are numeric, return true as const removal has been succesfully checked
-            [](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            // If both are value types
+            [](const Type::Type::Value &rightValue, const Type::Type::Value &leftValue)
             {
                 return true;
             },
@@ -97,14 +99,15 @@ bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &left
     return std::visit(
         Utils::Overload{
             // If both are numeric, return true as any numeric types can be assigned
-            [op](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            [op](const Type::Type::Value &rightValue, const Type::Type::Value &leftValue)
             {
                 // If operator requires it and both arguments are integers, return true
+                assert(leftValue.numeric && rightValue.numeric);
                 if (op == Token::Type::PERCENT_EQUAL || op == Token::Type::SHIFT_LEFT_EQUAL
                     || op == Token::Type::SHIFT_RIGHT_EQUAL || op == Token::Type::CARET
                     || op == Token::Type::AMPERSAND_EQUAL || op == Token::Type::PIPE_EQUAL)
                 {
-                    return (leftNumeric.isIntegral && rightNumeric.isIntegral);
+                    return (leftValue.numeric->isIntegral && rightValue.numeric->isIntegral);
                 }
                 // Otherwise, assignement will work for any numeric type
                 else {
@@ -135,10 +138,11 @@ bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &left
                 }
             },
             // Otherwise, if left is pointer and right is numeric, 
-            [op](const Type::Type::Numeric &rightNumeric, const Type::Type::Pointer &leftPointer) 
+            [op](const Type::Type::Value &rightValue, const Type::Type::Pointer &leftPointer) 
             {
+                assert(rightValue.numeric);
                 if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
-                    return rightNumeric.isIntegral;
+                    return rightValue.numeric->isIntegral;
                 }
                 else {
                     return false;
@@ -283,7 +287,7 @@ private:
                 Utils::Overload{
                     // If both operands are numeric
                     [&leftType, &rightType, opType, this]
-                    (const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
+                    (const Type::Type::Value &rightNumeric, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
                     {
                         // If operator requires integer operands
                         if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
