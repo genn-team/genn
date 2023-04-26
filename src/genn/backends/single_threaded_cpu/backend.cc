@@ -1293,36 +1293,35 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
-                                    const Type::ValueBase *type, const std::string &name, VarLocation) const
+                                    const Type::Type &type, const std::string &name, VarLocation) const
 {
-    definitions << "EXPORT_VAR " << type->getPointerType()->getName() << " " << name << ";" << std::endl;
+    definitions << "EXPORT_VAR " << type.getNumeric().name << "* " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInstantiation(CodeStream &os, 
-                                       const Type::ValueBase *type, const std::string &name, VarLocation) const
+                                       const Type::Type &type, const std::string &name, VarLocation) const
 {
-    os << type->getPointerType()->getName() << " " << name << ";" << std::endl;
+    os << type.getNumeric().name << "* " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableAllocation(CodeStream &os, 
-                                    const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                    const Type::Type &type, const Type::TypeContext &typeContext, const std::string &name, 
                                     VarLocation, size_t count, MemAlloc &memAlloc) const
 {
-    os << name << " = new " << type->getName() << "[" << count << "];" << std::endl;
+    os << name << " = new " << type.getNumeric().name << "[" << count << "];" << std::endl;
 
-    memAlloc += MemAlloc::host(count * type->getSizeBytes(typeContext));
+    memAlloc += MemAlloc::host(count * type.size);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicAllocation(CodeStream &os, 
-                                           const Type::Base *type, const std::string &name, VarLocation, 
+                                           const Type::Type &type, const std::string &name, VarLocation, 
                                            const std::string &countVarName, const std::string &prefix) const
 {
-    const auto *pointerType = dynamic_cast<const Type::Pointer*>(type);
-    if (pointerType) {
-        os << "*" << prefix << name <<  " = new " << pointerType->getValueType()->getName() << "[" << countVarName << "];" << std::endl;
+    if (type.isPointer()) {
+        os << "*" << prefix << name <<  " = new " << type.getPointer().valueType->getNumeric().name << "[" << countVarName << "];" << std::endl;
     }
     else {
-        os << prefix << name << " = new " << type->getName() << "[" << countVarName << "];" << std::endl;
+        os << prefix << name << " = new " << type.getNumeric().name << "[" << countVarName << "];" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1331,39 +1330,39 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const Type::ValueBase*, const std::string&, VarLocation, bool, size_t) const
+void Backend::genVariablePush(CodeStream&, const Type::Type&, const std::string&, VarLocation, bool, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const Type::ValueBase*, const std::string&, VarLocation, size_t) const
+void Backend::genVariablePull(CodeStream&, const Type::Type&, const std::string&, VarLocation, size_t) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ValueBase*, const std::string&, 
+                                     const Type::Type&, const std::string&, 
                                      VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ValueBase*, const std::string&, 
+                                     const Type::Type&, const std::string&, 
                                      VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicPush(CodeStream&, 
-                                     const Type::Base*, const std::string&,
+                                     const Type::Type&, const std::string&,
                                      VarLocation, const std::string&, const std::string&) const
 {
      assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicPull(CodeStream&, 
-                                     const Type::Base*, const std::string&,
+                                     const Type::Type&, const std::string&,
                                       VarLocation, const std::string&, const std::string&) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1377,12 +1376,12 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 }
 
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Type &type) const
 {
-    return type->getName();
+    return type.getNumeric().name;
 }
 //--------------------------------------------------------------------------
-const Type::ValueBase *Backend::getMergedGroupSimRNGType() const
+const Type::Type &Backend::getMergedGroupSimRNGType() const
 {
     assert(false);
     return nullptr;
