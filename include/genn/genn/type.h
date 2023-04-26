@@ -53,32 +53,32 @@ struct Type
     //------------------------------------------------------------------------
     struct Numeric
     {
-        const std::string name;
+        std::string name;
 
-        const int rank;
-        const double min;
-        const double max;
-        const double lowest;
-        const int maxDigits10;
+        int rank;
+        double min;
+        double max;
+        double lowest;
+        int maxDigits10;
 
-        const bool isSigned;
-        const bool isIntegral;
+        bool isSigned;
+        bool isIntegral;
 
-        const std::string literalSuffix;
+        std::string literalSuffix;
 
         //------------------------------------------------------------------------
         // Operators
         //------------------------------------------------------------------------
         bool operator == (const Numeric &other) const
         {
-            return (std::make_tuple(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
-                    == std::make_tuple(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
+                    == std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
         }
 
         bool operator < (const Numeric &other) const
         {
-            return (std::make_tuple(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
-                    < std::make_tuple(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
+                    < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
         }
     };
 
@@ -92,7 +92,7 @@ struct Type
         Pointer(const Pointer &other) : valueType(std::make_unique<Type const>(*other.valueType))
         {}
         
-        const std::unique_ptr<Type const> valueType;
+        std::unique_ptr<Type const> valueType;
 
         bool operator == (const Pointer &other) const
         {
@@ -102,6 +102,12 @@ struct Type
         bool operator < (const Pointer &other) const
         {
             return (*valueType < *other.valueType);
+        }
+
+        Pointer &operator = (const Pointer &other)
+        {
+           valueType.reset(new Type(*other.valueType));
+           return *this;
         }
     };
 
@@ -117,17 +123,24 @@ struct Type
         :   returnType(std::make_unique<Type const>(*other.returnType)), argTypes(other.argTypes)
         {}
 
-        const std::unique_ptr<Type const> returnType;
-        const std::vector<Type> argTypes;
+        std::unique_ptr<Type const> returnType;
+        std::vector<Type> argTypes;
 
         bool operator == (const Function &other) const
         {
-            return (*returnType == *other.returnType && argTypes == other.argTypes);
+            return std::tie(*returnType, argTypes) == std::tie(*other.returnType, other.argTypes);
         }
 
         bool operator < (const Function &other) const
         {
-            return (*returnType < *other.returnType);
+            return std::tie(*returnType, argTypes) < std::tie(*other.returnType, other.argTypes);
+        }
+
+        Function &operator = (const Function &other)
+        {
+           returnType.reset(new Type(*other.returnType));
+           argTypes = other.argTypes;
+           return *this;
         }
     };
     
@@ -140,19 +153,16 @@ struct Type
     Type(const Function &function)
         : size(0), qualifiers(Qualifier{0}), detail(function)
     {}
-
-    Type(const Type &other) : size(other.size), qualifiers(other.qualifiers), detail(other.detail)
-    {}
-    Type(const Type other, Qualifier qualifiers) : size(other.size), qualifiers(qualifiers), detail(other.detail)
+    Type(const Type &other, Qualifier qualifiers) : size(other.size), qualifiers(qualifiers), detail(other.detail)
     {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const size_t size;
-    const Qualifier qualifiers;
+    size_t size;
+    Qualifier qualifiers;
 
-    const std::variant<Numeric, Pointer, Function> detail;
+    std::variant<Numeric, Pointer, Function> detail;
     
     //------------------------------------------------------------------------
     // Public API
@@ -172,14 +182,14 @@ struct Type
     //------------------------------------------------------------------------
     bool operator == (const Type &other) const
     {
-        return (std::make_tuple(size, qualifiers, detail) 
-                == std::make_tuple(other.size, other.qualifiers, other.detail));
+        return (std::tie(size, qualifiers, detail) 
+                == std::tie(other.size, other.qualifiers, other.detail));
     }
 
     bool operator < (const Type &other) const
     {
-        return (std::make_tuple(size, qualifiers, detail) 
-                < std::make_tuple(other.size, other.qualifiers, other.detail));
+        return (std::tie(size, qualifiers, detail) 
+                < std::tie(other.size, other.qualifiers, other.detail));
     }
 
     //------------------------------------------------------------------------
