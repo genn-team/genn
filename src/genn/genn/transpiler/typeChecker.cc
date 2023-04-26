@@ -77,7 +77,7 @@ bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftTyp
 
     return std::visit(
         Utils::Overload{
-            // If both are non-pointers, return true as const removal has been succesfully checked
+            // If both are numeric, return true as const removal has been succesfully checked
             [](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
             {
                 return true;
@@ -88,6 +88,63 @@ bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftTyp
                 return checkForConstRemoval(*rightPointer.valueType, *leftPointer.valueType);
             },
             // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
+            [](auto, auto) { return false; }},
+        rightType.detail, leftType.detail);
+}
+//---------------------------------------------------------------------------
+bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &leftType, Token::Type op = Token::Type::EQUAL)
+{
+    return std::visit(
+        Utils::Overload{
+            // If both are numeric, return true as any numeric types can be assigned
+            [op](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            {
+                // If operator requires it and both arguments are integers, return true
+                if (op == Token::Type::PERCENT_EQUAL || op == Token::Type::SHIFT_LEFT_EQUAL
+                    || op == Token::Type::SHIFT_RIGHT_EQUAL || op == Token::Type::CARET
+                    || op == Token::Type::AMPERSAND_EQUAL || op == Token::Type::PIPE_EQUAL)
+                {
+                    return (leftNumeric.isIntegral && rightNumeric.isIntegral);
+                }
+                // Otherwise, assignement will work for any numeric type
+                else {
+                    return true;
+                }
+            },
+            // Otherwise, if both are pointers, recurse through value type
+            [op, &leftType, &rightType]
+            (const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            {
+                // If operator is equals
+                if (op == Token::Type::EQUAL) {
+                    // Check that value type at the end matches
+                    if (!checkPointerTypeAssignement(*rightPointer.valueType, *leftPointer.valueType)) {
+                        return false;
+                    }
+                    // Check we're not trying to maketype less const
+                    else if(!checkForConstRemoval(rightType, leftType)) {
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                // Two pointers can only be assigned with =
+                else {
+                    return false;
+                }
+            },
+            // Otherwise, if left is pointer and right is numeric, 
+            [op](const Type::Type::Numeric &rightNumeric, const Type::Type::Pointer &leftPointer) 
+            {
+                if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
+                    return rightNumeric.isIntegral;
+                }
+                else {
+                    return false;
+                }
+            },
+            // Otherwise, we're trying to assign invalid types
             [](auto, auto) { return false; }},
         rightType.detail, leftType.detail);
 }
@@ -193,12 +250,21 @@ private:
 
     virtual void visit(const Expression::Assignment &assignment) final
     {
-        const auto lhsType = evaluateType(assignment.getAssignee());
-        const auto rhsType = evaluateType(assignment.getValue());
+        const auto leftType = evaluateType(assignment.getAssignee());
+        const auto rightType = evaluateType(assignment.getValue());
 
-        assert(false);
+        // If existing type is a const qualified and isn't being initialized, give error
+        if(leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
+            m_ErrorHandler.error(assignment.getOperator(), "Assignment of read-only variable");
+            throw TypeCheckError();
+        }
+        // Otherwise, if implicit conversion fails, give error
+        else if (!checkImplicitConversion(rightType, leftType, assignment.getOperator().type)) {
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand types '" + getDescription(leftType) + "' and '" + getDescription(rightType));
+            throw TypeCheckError();
+        }
 
-        setExpressionType(&assignment, lhsType);
+        setExpressionType(&assignment, leftType);
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -433,6 +499,7 @@ private:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
+        // **TODO** more general lvalue thing
         const auto lhsType = evaluateType(postfixIncDec.getTarget());
         if(lhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
             m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
@@ -445,6 +512,7 @@ private:
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
+        // **TODO** more general lvalue thing
         const auto rhsType = evaluateType(prefixIncDec.getTarget());
          if(rhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
             m_ErrorHandler.error(prefixIncDec.getOperator(), "Increment/decrement of read-only variable");
@@ -734,13 +802,13 @@ private:
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
             m_Environment.get().define(std::get<0>(var), decType, m_ErrorHandler);
 
-            // If variable has an initialiser expression
+            // If variable has an initialiser expression, check that 
+            // it can be implicitly converted to variable type
             if (std::get<1>(var)) {
-                // Evaluate type
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
-
-                assert(false);
-                // **TODO** check decType = initialiserType is implicit conversion
+                if (!checkImplicitConversion(initialiserType, decType)) {
+                    m_ErrorHandler.error(std::get<0>(var), "Invalid operand types '" + getDescription(decType) + "' and '" + getDescription(initialiserType));
+                }
             }
         }
     }
@@ -802,89 +870,6 @@ Type::Type EnvironmentBase::getType(const Token &name, ErrorHandlerBase &errorHa
         throw TypeCheckError();
     }
 }
-//---------------------------------------------------------------------------
-Type::Type EnvironmentBase::assign(const Token &name, Token::Type op, 
-                                  const Type::Base *existingType, const Type::Base *assignedType, 
-                                  const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                  bool initializer) const
-{
-    // If existing type is a const qualified and isn't being initialized, give error
-    if(!initializer && existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
-        errorHandler.error(name, "Assignment of read-only variable");
-        throw TypeCheckError();
-    }
-    
-    // If assignment operation is plain equals, any type is fine so return
-    auto numericExistingType = dynamic_cast<const Type::NumericBase *>(existingType);
-    auto pointerExistingType = dynamic_cast<const Type::Pointer *>(existingType);
-    auto numericAssignedType = dynamic_cast<const Type::NumericBase *>(assignedType);
-    auto pointerAssignedType = dynamic_cast<const Type::Pointer *>(assignedType);
-    if(op == Token::Type::EQUAL) {
-        // If we're initialising a pointer with another pointer
-        if (pointerAssignedType && pointerExistingType) {
-            // Check that value type at the end matches
-            if (!checkPointerTypeAssignement(pointerAssignedType->getValueType(), pointerExistingType->getValueType(), context)) {
-                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
-                throw TypeCheckError();
-            }
-
-            // If we're trying to make type less const
-            if (!checkForConstRemoval(pointerAssignedType, pointerExistingType)) {
-                errorHandler.error(name, "Invalid operand types '" + pointerExistingType->getName() + "' and '" + pointerAssignedType->getName());
-                throw TypeCheckError();
-            }
-        }
-        // Otherwise, if we're trying to initialise a pointer with a non-pointer or vice-versa
-        else if (pointerAssignedType || pointerExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "' and '" + assignedType->getName());
-            throw TypeCheckError();
-        }
-    }
-    // Otherwise, if operation is += or --
-    else if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
-        // If the operand being added isn't numeric or the type being added to is neither numeric or a pointer
-        if (!numericAssignedType || (!pointerExistingType && !numericExistingType))
-        {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "' and '" + assignedType->getName() + "'");
-            throw TypeCheckError();
-        }
-
-        // If we're adding a numeric type to a pointer, check it's an integer
-        if (pointerExistingType && numericAssignedType->isIntegral(context)) {
-            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
-            throw TypeCheckError();
-        }
-    }
-    // Otherwise, numeric types are required
-    else {
-        // If either type is non-numeric, give error
-        if(!numericAssignedType) {
-            errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
-            throw TypeCheckError();
-        }
-        if(!numericExistingType) {
-            errorHandler.error(name, "Invalid operand types '" + existingType->getName() + "'");
-            throw TypeCheckError();
-        }
-
-        // If operand isn't one that takes any numeric type, check both operands are integral
-        if (op != Token::Type::STAR_EQUAL && op != Token::Type::SLASH_EQUAL) {
-            if(!numericAssignedType->isIntegral(context)) {
-                errorHandler.error(name, "Invalid operand types '" + numericAssignedType->getName() + "'");
-                throw TypeCheckError();
-            }
-            if(!numericExistingType->isIntegral(context)) {
-                errorHandler.error(name, "Invalid operand types '" + numericExistingType->getName() + "'");
-                throw TypeCheckError();
-            }
-        }
-    }
-   
-     // Return existing type
-     // **THINK**
-    return existingType;
-}
-
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
@@ -898,8 +883,8 @@ ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::Statem
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-const Type::Base *GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
-                                                           const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+Type::Type GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
+                                                    const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
