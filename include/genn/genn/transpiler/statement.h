@@ -255,15 +255,15 @@ class VarDeclaration : public Acceptable<VarDeclaration>
 public:
     typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr>> InitDeclaratorList;
 
-    VarDeclaration(const Type::Base *type, InitDeclaratorList initDeclaratorList)
+    VarDeclaration(const Type::Type &type, InitDeclaratorList initDeclaratorList)
     :   m_Type(type), m_InitDeclaratorList(std::move(initDeclaratorList))
     {}
 
-    const Type::Base *getType() const{ return m_Type; }
+    const Type::Type &getType() const{ return m_Type; }
     const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }    
 
 private:
-    const Type::Base *m_Type;
+    const Type::Type m_Type;
     const std::vector<Token> m_DeclarationSpecifiers;
     const InitDeclaratorList m_InitDeclaratorList;
 };

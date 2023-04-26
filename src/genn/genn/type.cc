@@ -49,7 +49,7 @@ const std::map<std::set<std::string>, Type::Type> numericTypeSpecifiers{
 const std::set<std::string> scalarTypeSpecifier{{"scalar"}};
 //----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
-const std::unordered_map<Type::Type, Type::Type> unsignedType{
+const std::map<Type::Type, Type::Type> unsignedType{
     {Type::Int8, Type::Uint8},
     {Type::Int16, Type::Uint16},
     {Type::Int32, Type::Uint32}};
@@ -86,6 +86,7 @@ Type getNumericType(const std::set<std::string> &typeSpecifiers)
 {
     // If type matches scalar type specifiers
     if(typeSpecifiers == scalarTypeSpecifier) {
+        assert(false);
         //return new NumericTypedef("scalar");
     }
     // Otherwise
@@ -101,6 +102,7 @@ Type getPromotedType(const Type &type)
     // If a small integer type is used in an expression, it is implicitly converted to int which is always signed. 
     // This is known as the integer promotions or the integer promotion rule 
     // **NOTE** this is true because in our type system unsigned short is uint16 which can be represented in int32
+    assert(type.isNumeric());
     if(type.getNumeric().rank < Int32.getNumeric().rank) {
         return Int32;
     }
@@ -112,6 +114,8 @@ Type getPromotedType(const Type &type)
 Type getCommonType(const Type &a, const Type &b)
 {
     // If either type is double, common type is double
+    assert(a.isNumeric());
+    assert(b.isNumeric());
     if(a == Double || b == Double) {
         return Double;
     }

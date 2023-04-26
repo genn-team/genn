@@ -168,16 +168,16 @@ private:
 class Cast : public Acceptable<Cast>
 {
 public:
-    Cast(const Type::Base *type, ExpressionPtr expression, Token closingParen)
+    Cast(const Type::Type &type, ExpressionPtr expression, Token closingParen)
     :  m_Type(type), m_Expression(std::move(expression)), m_ClosingParen(closingParen)
     {}
 
-    const Type::Base *getType() const{ return m_Type; }
+    const Type::Type &getType() const{ return m_Type; }
     const Base *getExpression() const { return m_Expression.get(); }
     const Token &getClosingParen() const { return m_ClosingParen; }
     
 private:
-    const Type::Base *m_Type;
+    const Type::Type m_Type;
     const ExpressionPtr m_Expression;
     const Token m_ClosingParen;
 };

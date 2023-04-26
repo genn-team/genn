@@ -32,7 +32,7 @@ public:
     }
 };
 
-typedef std::unordered_map<const Expression::Base*, const Type::Base*> ResolvedTypeMap;
+typedef std::unordered_map<const Expression::Base*, Type::Type> ResolvedTypeMap;
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
@@ -43,13 +43,13 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) = 0;
-    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
+    virtual void define(const Token &name, const Type::Type &type, ErrorHandlerBase &errorHandler) = 0;
+    virtual std::vector<Type::Type> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
 
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    const Type::Base *getType(const Token &name, ErrorHandlerBase &errorHandler);
+    Type::Type getType(const Token &name, ErrorHandlerBase &errorHandler);
 };
 
 //---------------------------------------------------------------------------

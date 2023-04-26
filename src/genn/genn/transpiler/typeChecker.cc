@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <iterator>
+#include <optional>
 #include <stack>
 #include <string>
 
@@ -26,46 +27,69 @@ namespace Type = GeNN::Type;
 //---------------------------------------------------------------------------
 namespace
 {
-bool checkPointerTypeAssignement(const Type::Base *rightType, const Type::Base *leftType, const Type::TypeContext &typeContext) 
+std::string getDescription(const Type::Type &type)
 {
-    // If both are pointers, recurse through value type
-    auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
-    auto leftPointerType = dynamic_cast<const Type::Pointer *>(leftType);
-    if (rightPointerType && leftPointerType) {
-        return checkPointerTypeAssignement(rightPointerType->getValueType(), leftPointerType->getValueType(), typeContext);
-    }
-    // Otherwise, if we've hit the value type at the end of the chain, check resolved names match
-    else if (!rightPointerType && !leftPointerType) {
-        return (rightType->getResolvedName(typeContext) == leftType->getResolvedName(typeContext));
-    }
-    // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
-    else {
-        return false;
-    }
+    const std::string qualifier = type.hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
+     return std::visit(
+         Utils::Overload{
+             [&qualifier](const Type::Type::Numeric &numeric)
+             {
+                 return qualifier + numeric.name;
+             },
+             [&qualifier, &type](const Type::Type::Pointer &pointer)
+             {
+                 return qualifier + getDescription(*pointer.valueType) + "*";
+             },
+             [&type](const Type::Type::Function &function)
+             {
+                 std::string description = getDescription(*function.returnType) + "(";
+                 for (const auto &a : function.argTypes) {
+                     description += (getDescription(a) + ",");
+                 }
+                 return description + ")";
+             }},
+        type.detail);
 }
 //---------------------------------------------------------------------------
-bool checkForConstRemoval(const Type::Base *rightType, const Type::Base *leftType) 
+bool checkPointerTypeAssignement(const Type::Type &rightType, const Type::Type &leftType) 
+{
+    return std::visit(
+        Utils::Overload{
+            [&rightType, &leftType](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            {
+                return (rightType == leftType);
+            },
+            [](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            {
+                return checkPointerTypeAssignement(*rightPointer.valueType, *leftPointer.valueType);
+            },
+            // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
+            [](auto, auto) { return false; }},
+        rightType.detail, leftType.detail);
+}
+//---------------------------------------------------------------------------
+bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftType) 
 {
     // If const is being removed
-    if (rightType->hasQualifier(Type::Qualifier::CONSTANT) && !leftType->hasQualifier(Type::Qualifier::CONSTANT)) {
+    if (rightType.hasQualifier(Type::Qualifier::CONSTANT) && !leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
         return false;
     }
 
-    // If both are pointers, recurse through value type
-    auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
-    auto leftPointerType = dynamic_cast<const Type::Pointer *>(leftType);
-    if (rightPointerType && leftPointerType) {
-        return checkForConstRemoval(rightPointerType->getValueType(), leftPointerType->getValueType());
-    }
-    // Otherwise, if both are non-pointers, return true as const removal has been succesfully checked
-    else if (!rightPointerType && !leftPointerType) {
-        return true;
-    }
-    // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
-    else {
-        return false;
-    }
-
+    return std::visit(
+        Utils::Overload{
+            // If both are non-pointers, return true as const removal has been succesfully checked
+            [](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric)
+            {
+                return true;
+            },
+            // Otherwise, if both are pointers, recurse through value type
+            [](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            {
+                return checkForConstRemoval(*rightPointer.valueType, *leftPointer.valueType);
+            },
+            // Otherwise, pointers with different levels of indirection e.g. int* and int** are being compared
+            [](auto, auto) { return false; }},
+        rightType.detail, leftType.detail);
 }
 
 //---------------------------------------------------------------------------
@@ -82,7 +106,7 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::Base *type, ErrorHandlerBase &errorHandler) final
+    virtual void define(const Token &name, const Type::Type &type, ErrorHandlerBase &errorHandler) final
     {
         if(!m_Types.try_emplace(name.lexeme, type).second) {
             errorHandler.error(name, "Redeclaration of variable");
@@ -90,7 +114,7 @@ public:
         }
     }
 
-    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual std::vector<Type::Type> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(name.lexeme);
         if(type == m_Types.end()) {
@@ -106,7 +130,7 @@ private:
     // Members
     //---------------------------------------------------------------------------
     EnvironmentBase &m_Enclosing;
-    std::unordered_map<std::string, const Type::Base*> m_Types;
+    std::unordered_map<std::string, Type::Type> m_Types;
 };
 
 //---------------------------------------------------------------------------
@@ -144,23 +168,21 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        // Get pointer type
+        // Evaluate array type
         auto arrayType = evaluateType(arraySubscript.getArray());
-        auto pointerType = dynamic_cast<const Type::Pointer*>(arrayType);
 
         // If pointer is indeed a pointer
-        if (pointerType) {
+        if(arrayType.isPointer()) {
             // Evaluate pointer type
             auto indexType = evaluateType(arraySubscript.getIndex());
-            auto indexNumericType = dynamic_cast<const Type::NumericBase*>(indexType);
-            if (!indexNumericType || !indexNumericType->isIntegral(m_Context)) {
+            if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
                 m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
-                                     "Invalid subscript index type '" + indexType->getName() + "'");
+                                     "Invalid subscript index type '" + getDescription(indexType) + "'");
                 throw TypeCheckError();
             }
 
             // Use value type of array
-            setExpressionType(&arraySubscript, pointerType->getValueType());
+            setExpressionType(&arraySubscript, *arrayType.getPointer().valueType);
         }
         // Otherwise
         else {
@@ -189,79 +211,96 @@ private:
         else {
             // If we're subtracting two pointers
             const auto leftType = evaluateType(binary.getLeft());
-            auto leftNumericType = dynamic_cast<const Type::NumericBase*>(leftType);
-            auto rightNumericType = dynamic_cast<const Type::NumericBase*>(rightType);
-            auto leftPointerType = dynamic_cast<const Type::Pointer*>(leftType);
-            auto rightPointerType = dynamic_cast<const Type::Pointer*>(rightType);
-            if (leftPointerType && rightPointerType && opType == Token::Type::MINUS) {
-                // Check pointers are compatible
-                if (leftPointerType->getResolvedName(m_Context) != rightPointerType->getResolvedName(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
-                    throw TypeCheckError();
-                }
 
-                // **TODO** should be std::ptrdiff/Int64
-                setExpressionType<Type::Int32>(&binary);
-            }
-            // Otherwise, if we're adding to or subtracting from pointers
-            else if (leftPointerType && rightNumericType && (opType == Token::Type::PLUS || opType == Token::Type::MINUS)) {    // P + n or P - n
-                // Check that numeric operand is integer
-                if (!rightNumericType->isIntegral(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
-                    throw TypeCheckError();
-                }
+            // Visit permutations of left and right types
+            const auto resultType = std::visit(
+                Utils::Overload{
+                    // If both operands are numeric
+                    [&leftType, &rightType, opType, this]
+                    (const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
+                    {
+                        // If operator requires integer operands
+                        if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
+                            || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
+                            || opType == Token::Type::AMPERSAND || opType == Token::Type::PIPE)
+                        {
+                            // Check that operands are integers
+                            if (leftNumeric.isIntegral && rightNumeric.isIntegral) {
+                                // If operator is a shift, promote left type
+                                if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
+                                    return Type::getPromotedType(leftType);
+                                }
+                                // Otherwise, take common type
+                                else {
+                                    return Type::getCommonType(leftType, rightType);
+                                }
+                            }
+                            else {
+                                return std::nullopt;
+                            }
+                        }
+                        // Otherwise, any numeric type will do, take common type
+                        else {
+                            return Type::getCommonType(leftType, rightType);
+                        }
+                    },
+                    // Otherwise, if both operands are pointers
+                    [&binary, &leftType, &rightType, opType, this]
+                    (const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer) -> std::optional<Type::Type>
+                    {
+                        // If operator is minus and pointer types match
+                        if (opType == Token::Type::MINUS && leftType == rightType) {
+                            // **TODO** should be std::ptrdiff/Int64
+                            return Type::Int32;
+                        }
+                        else {
+                            return std::nullopt;
+                        }
+                    },
+                    // Otherwise, if right is numeric and left is pointer
+                    [&binary, &leftType, &rightType, opType, this]
+                    (const Type::Type::Numeric &rightNumeric, const Type::Type::Pointer &leftPointer) -> std::optional<Type::Type>
+                    {
+                        // If operator is valid and numeric type is integer
+                        // P + n or P - n
+                        if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightNumeric.isIntegral) {
+                            return leftType;
+                        }
+                        else {
+                             return std::nullopt;
+                        }
+                    },
+                    // Otherwise, if right is pointer and left is numeric
+                    [&binary, &rightType, opType, this]
+                    (const Type::Type::Pointer &rightPointer, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
+                    {
+                        // n + P
+                        if (opType == Token::Type::PLUS && leftNumeric.isIntegral) {
+                            return rightType;
+                        }
+                        else {
+                            return std::nullopt;
+                        }
+                    },
+                    // Otherwise, operator is being applied to unsupported types
+                    [](auto, auto) -> std::optional<Type::Type>
+                    {
+                        return std::nullopt;
+                    }},
+                rightType.detail, leftType.detail);
 
-                // Use left type
-                setExpressionType(&binary, leftType);
-            }
-            // Otherwise, if we're adding a number to a pointer
-            else if (leftNumericType && rightPointerType && opType == Token::Type::PLUS) {  // n + P
-                // Check that numeric operand is integer
-                if (!leftNumericType->isIntegral(m_Context)) {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
-                    throw TypeCheckError();
+                if (resultType) {
+                    setExpressionType(&binary, *resultType);
                 }
-
-                // Use right type
-                setExpressionType(&binary, rightType);
-            }
-            // Otherwise, if both operands are numeric
-            else if (leftNumericType && rightNumericType) {
-                // Otherwise, if operator requires integer operands
-                if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
-                    || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
-                    || opType == Token::Type::AMPERSAND || opType == Token::Type::PIPE)
-                {
-                    // Check that operands are integers
-                    if (!leftNumericType->isIntegral(m_Context) || !rightNumericType->isIntegral(m_Context)) {
-                        m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
-                        throw TypeCheckError();
-                    }
-
-                    // If operator is a shift, promote left type
-                    if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
-                        setExpressionType(&binary, Type::getPromotedType(leftNumericType, m_Context));
-                    }
-                    // Otherwise, take common type
-                    else {
-                        setExpressionType(&binary, Type::getCommonType(leftNumericType, rightNumericType, m_Context));
-                    }
-                }
-                // Otherwise, any numeric type will do, take common type
                 else {
-                    setExpressionType(&binary, Type::getCommonType(leftNumericType, rightNumericType, m_Context));
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + getDescription(leftType) + "' and '" + getDescription(rightType));
+                    throw TypeCheckError();
                 }
-            }
-            else {
-                m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType->getName() + "' and '" + rightType->getName());
-                throw TypeCheckError();
-            }
         }
     }
 
     virtual void visit(const Expression::Call &call) final
     {
-
         // Evaluate argument types and store in top of stack
         m_CallArguments.emplace();
         std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments.top()),
@@ -269,14 +308,13 @@ private:
 
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
-        auto calleeFunctionType = dynamic_cast<const Type::FunctionBase *>(calleeType);
 
         // Pop stack
         m_CallArguments.pop();
 
         // If callee's a function, type is return type of function
-        if (calleeFunctionType) {
-            setExpressionType(&call, calleeFunctionType->getReturnType());
+        if (calleeType.isFunction()) {
+            setExpressionType(&call, *calleeType.getFunction().returnType);
         }
         // Otherwise
         else {
@@ -292,48 +330,61 @@ private:
 
         // If const is being removed
         if (!checkForConstRemoval(rightType, cast.getType())) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + getDescription(cast.getType()) + "' and '" + getDescription(rightType));
             throw TypeCheckError();
         }
 
-        // If we're trying to cast pointer to pointer
-        auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
-        auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
-        auto leftNumericType = dynamic_cast<const Type::NumericBase *>(cast.getType());
-        auto leftPointerType = dynamic_cast<const Type::Pointer *>(cast.getType());
-        if (rightPointerType && leftPointerType) {
-            // Check that value type at the end matches
-            if (!checkPointerTypeAssignement(rightPointerType->getValueType(), leftPointerType->getValueType(), m_Context)) {
-                m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
-                throw TypeCheckError();
-            }
-        }
-        // Otherwise, if either operand isn't numeric
-        else if(!leftNumericType | !rightNumericType) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType()->getName() + "' and '" + rightType->getName());
-            throw TypeCheckError();
-        }
+        const auto resultType = std::visit(
+            Utils::Overload{
+                // If types are numeric, any cast goes
+                [&cast](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &castNumeric) -> std::optional<Type::Type>
+                {
+                    return cast.getType();
+                },
+                // Otherwise, if we're trying to cast pointer to pointer
+                [&cast](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &castPointer) -> std::optional<Type::Type>
+                {
+                   // Check that value type at the end matches
+                    if (checkPointerTypeAssignement(*rightPointer.valueType, *castPointer.valueType)) {
+                        return cast.getType();
+                    }
+                    else {
+                        return std::nullopt;
+                    }
+                },
+                // Otherwise, pointers can't be cast to non-pointers and vice versa
+                [](auto, auto) -> std::optional<Type::Type>
+                { 
+                    return std::nullopt; 
+                }},
+            rightType.detail, cast.getType().detail);
 
-        setExpressionType(&cast, cast.getType());
+        if (resultType) {
+            setExpressionType(&cast, *resultType);
+        }
+        else {
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + getDescription(cast.getType()) + "' and '" + getDescription(rightType));
+             throw TypeCheckError();
+        }
     }
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
         const auto trueType = evaluateType(conditional.getTrue());
         const auto falseType = evaluateType(conditional.getFalse());
-        auto trueNumericType = dynamic_cast<const Type::NumericBase *>(trueType);
-        auto falseNumericType = dynamic_cast<const Type::NumericBase *>(falseType);
-        if (trueNumericType && falseNumericType) {
+        if (trueType.isNumeric() && falseType.isNumeric()) {
             // **TODO** check behaviour
-            const Type::Base *type = Type::getCommonType(trueNumericType, falseNumericType, m_Context);
-            if(trueType->hasQualifier(Type::Qualifier::CONSTANT) || falseType->hasQualifier(Type::Qualifier::CONSTANT)) {
-                type = type->getQualifiedType(Type::Qualifier::CONSTANT);
+            const auto commonType = Type::getCommonType(trueType, falseType);
+            if(trueType.hasQualifier(Type::Qualifier::CONSTANT) || falseType.hasQualifier(Type::Qualifier::CONSTANT)) {
+                setExpressionType(&conditional, commonType.addQualifier(Type::Qualifier::CONSTANT));
             }
-            setExpressionType(&conditional, type);
+            else {
+                setExpressionType(&conditional, commonType);
+            }
         }
         else {
             m_ErrorHandler.error(conditional.getQuestion(),
-                                 "Invalid operand types '" + trueType->getName() + "' and '" + falseType->getName() + "' to conditional");
+                                 "Invalid operand types '" + getDescription(trueType) + "' and '" + getDescription(falseType) + "' to conditional");
             throw TypeCheckError();
         }
     }
@@ -348,23 +399,25 @@ private:
         // Convert number token type to type
         // **THINK** is it better to use typedef for scalar or resolve from m_Context
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
-            setExpressionType<Type::Double>(&literal);
+            setExpressionType(&literal, Type::Double);
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
-            setExpressionType<Type::Float>(&literal);
+            setExpressionType(&literal, Type::Float);
         }
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
             // **TODO** cache
-            setExpressionType(&literal, new Type::NumericTypedef("scalar"));
+            assert(false);
+            // **THINK** why not resolve here?
+            //setExpressionType(&literal, new Type::NumericTypedef("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
-            setExpressionType<Type::Int32>(&literal);
+            setExpressionType(&literal, Type::Int32);
         }
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            setExpressionType<Type::Uint32>(&literal);
+            setExpressionType(&literal, Type::Uint32);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::Int8::getInstance()->getPointerType());
+            setExpressionType(&literal, Type::Type::createPointer(Type::Int8, Type::Qualifier::CONSTANT));
         }
         else {
             assert(false);
@@ -375,38 +428,38 @@ private:
     {
         logical.getLeft()->accept(*this);
         logical.getRight()->accept(*this);
-        setExpressionType<Type::Int32>(&logical);
+        setExpressionType(&logical, Type::Int32);
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
         const auto lhsType = evaluateType(postfixIncDec.getTarget());
-
-        if(lhsType->hasQualifier(Type::Qualifier::CONSTANT)) {
+        if(lhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
             m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
-        
-        // **TODO**
-
-        setExpressionType(&postfixIncDec, 
-                          m_Environment.get().incDec(postfixIncDec.getVarName(), postfixIncDec.getOperator().type, 
-                                                     m_Context, m_ErrorHandler));
+        else {
+            setExpressionType(&postfixIncDec, lhsType);
+        }
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
         const auto rhsType = evaluateType(prefixIncDec.getTarget());
-        setExpressionType(&prefixIncDec,
-                          m_Environment.get().incDec(prefixIncDec.getVarName(), prefixIncDec.getOperator().type, 
-                                                     m_Context, m_ErrorHandler));
+         if(rhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
+            m_ErrorHandler.error(prefixIncDec.getOperator(), "Increment/decrement of read-only variable");
+            throw TypeCheckError();
+        }
+        else {
+            setExpressionType(&prefixIncDec, rhsType);
+        }
     }
 
     virtual void visit(const Expression::Variable &variable)
     {
         // If type is unambiguous and not a function
         const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);
-        if (varTypes.size() == 1 && dynamic_cast<const Type::FunctionBase*>(varTypes.front()) == nullptr) {
+        if (varTypes.size() == 1 && !varTypes.front().isFunction()) {
             setExpressionType(&variable, varTypes.front());
         }
         // Otherwise
@@ -415,19 +468,11 @@ private:
             assert(!m_CallArguments.empty());
 
             // Loop through variable types
-            std::vector<std::pair<const Type::FunctionBase*, std::vector<int>>> viableFunctions;
-            for(const auto *type : varTypes) {
-                // Cast to function (only functions should be overloaded)
-                const auto *func = dynamic_cast<const Type::FunctionBase*>(type);
-                assert(func);
-
-                // If function is variadic and there are at least as many vall arguments as actual (last is nullptr)
-                // function parameters or function is non-variadic and number of arguments match
-                const auto argumentTypes = func->getArgumentTypes();
-                const bool variadic = func->isVariadic();
-                if((variadic && m_CallArguments.top().size() >= (argumentTypes.size() - 1))
-                    || (!variadic && m_CallArguments.top().size() == argumentTypes.size()))
-                {
+            std::vector<std::pair<Type::Type, std::vector<int>>> viableFunctions;
+            for(const auto &type : varTypes) {
+                // If  function is non-variadic and number of arguments match
+                const auto &argumentTypes = type.getFunction().argTypes;
+                if(m_CallArguments.top().size() == argumentTypes.size()) {
                     // Create vector to hold argument conversion rank
                     std::vector<int> argumentConversionRank;
                     argumentConversionRank.reserve(m_CallArguments.top().size());
@@ -436,50 +481,64 @@ private:
                     bool viable = true;
                     auto c = m_CallArguments.top().cbegin();
                     auto a = argumentTypes.cbegin();
-                    for(;c != m_CallArguments.top().cend() && *a != nullptr; c++, a++) {
-                        auto cNumericType = dynamic_cast<const Type::NumericBase *>(*c);
-                        auto aNumericType = dynamic_cast<const Type::NumericBase *>(*a);
+                    for(;c != m_CallArguments.top().cend(); c++, a++) {
+                        const auto argConversionRank = std::visit(
+                            Utils::Overload{
+                                // If types are numeric, any cast goes
+                                [c, a](const Type::Type::Numeric &cNumeric, const Type::Type::Numeric &aNumeric) -> std::optional<int>
+                                {
+                                    // If names are identical, match is exact
+                                    // **TODO** we don't care about qualifiers
+                                    if(*c == *a) {
+                                        return 0;
+                                    }
+                                    // Integer promotion
+                                    else if(*a == Type::Int32 && c->getNumeric().isIntegral
+                                            && c->getNumeric().rank < Type::Int32.getNumeric().rank)
+                                    {
+                                        return 1;
+                                    }
+                                    // Float promotion
+                                    else if(*a == Type::Double && *c == Type::Float) {
+                                        return 1;
+                                    }
+                                    // Otherwise, numeric conversion
+                                    // **TODO** integer to scalar promotion should be lower ranked than general conversion
+                                    else {
+                                        return 2;
+                                    }
+                                },
+                                // Otherwise, if we're trying to cast pointer to pointer
+                                [](const Type::Type::Pointer &cPointer, const Type::Type::Pointer &aPointer) -> std::optional<int>
+                                {
+                                    // Check that value type at the end matches
+                                    if (checkPointerTypeAssignement(*cPointer.valueType, *aPointer.valueType)) {
+                                        return 0;
+                                    } 
+                                    else {
+                                        return std::nullopt;
+                                    }
+                                },
+                                // Otherwise, pointers can't be cast to non-pointers and vice versa
+                                [](auto, auto) -> std::optional<int>
+                                { 
+                                    return std::nullopt; 
+                                }},
+                            c->detail, a->detail);
 
-                        // If both are numeric
-                        if(cNumericType && aNumericType) {
-                            // If names are identical (we don't care about qualifiers), match is exact
-                            if(cNumericType->getResolvedName(m_Context) == aNumericType->getResolvedName(m_Context)) {
-                                argumentConversionRank.push_back(0);
-                            }
-                            // Integer promotion
-                            else if(aNumericType->getName() == Type::Int32::getInstance()->getName()
-                                    && cNumericType->isIntegral(m_Context)
-                                    && cNumericType->getRank(m_Context) < Type::Int32::getInstance()->getRank(m_Context))
-                            {
-                                argumentConversionRank.push_back(1);
-                            }
-                            // Float promotion
-                            else if(aNumericType->getResolvedName(m_Context) == Type::Double::getInstance()->getName()
-                                    && cNumericType->getResolvedName(m_Context) == Type::Float::getInstance()->getName())
-                            {
-                                argumentConversionRank.push_back(1);
-                            }
-                            // Otherwise, numeric conversion
-                            // **TODO** integer to scalar promotion should be lower ranked than general conversion
-                            else {
-                                argumentConversionRank.push_back(2);
-                            }
-                        }
-                        // Otherwise, if they are matching pointers
-                        // **TODO** some more nuance here
-                        else if(checkPointerTypeAssignement(*c, *a, m_Context)) {
-                            argumentConversionRank.push_back(0);
+                        // If there is a valid conversion between argument and definition
+                        if (argConversionRank) {
+                            argumentConversionRank.push_back(*argConversionRank);
                         }
                         // Otherwise, this function is not viable
                         else {
                             viable = false;
-                            break;
                         }
                     }
 
                     // If function is viable, add to vector along with vector of conversion ranks
                     if(viable) {
-                        viableFunctions.emplace_back(func, argumentConversionRank);
+                        viableFunctions.emplace_back(type, argumentConversionRank);
                     }
                 }
             }
@@ -506,52 +565,48 @@ private:
 
         // If operator is pointer de-reference
         if (unary.getOperator().type == Token::Type::STAR) {
-            auto rightPointerType = dynamic_cast<const Type::Pointer *>(rightType);
-            if (!rightPointerType) {
-                m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName() + "'");
-                throw TypeCheckError();
-            }
-
-            // Return value type
-            setExpressionType(&unary, rightPointerType->getValueType());
-        }
-        // Otherwise
-        else {
-            auto rightNumericType = dynamic_cast<const Type::NumericBase *>(rightType);
-            if (rightNumericType) {
-                // If operator is arithmetic, return promoted type
-                if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
-                    // **THINK** const through these?
-                    setExpressionType(&unary, Type::getPromotedType(rightNumericType, m_Context));
-                }
-                // Otherwise, if operator is bitwise
-                else if (unary.getOperator().type == Token::Type::TILDA) {
-                    // If type is integer, return promoted type
-                    if (rightNumericType->isIntegral(m_Context)) {
-                        // **THINK** const through these?
-                        setExpressionType(&unary, Type::getPromotedType(rightNumericType, m_Context));
-                    }
-                    else {
-                        m_ErrorHandler.error(unary.getOperator(),
-                                             "Invalid operand type '" + rightType->getName() + "'");
-                        throw TypeCheckError();
-                    }
-                }
-                // Otherwise, if operator is logical
-                else if (unary.getOperator().type == Token::Type::NOT) {
-                    setExpressionType<Type::Int32>(&unary);
-                }
-                // Otherwise, if operator is address of, return pointer type
-                else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                    setExpressionType(&unary, rightType->getPointerType());
-                }
+            if (rightType.isPointer()) {
+                 setExpressionType(&unary, *rightType.getPointer().valueType);
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + rightType->getName() + "'");
+                                     "Invalid operand type '" + getDescription(rightType) + "'");
                 throw TypeCheckError();
             }
+        }
+        // Otherwise
+        else if (rightType.isNumeric()) {
+            // If operator is arithmetic, return promoted type
+            if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
+                // **THINK** const through these?
+                setExpressionType(&unary, Type::getPromotedType(rightType));
+            }
+            // Otherwise, if operator is bitwise
+            else if (unary.getOperator().type == Token::Type::TILDA) {
+                // If type is integer, return promoted type
+                if (rightType.getNumeric().isIntegral) {
+                    // **THINK** const through these?
+                    setExpressionType(&unary, Type::getPromotedType(rightType));
+                }
+                else {
+                    m_ErrorHandler.error(unary.getOperator(),
+                                            "Invalid operand type '" + getDescription(rightType) + "'");
+                    throw TypeCheckError();
+                }
+            }
+            // Otherwise, if operator is logical
+            else if (unary.getOperator().type == Token::Type::NOT) {
+                setExpressionType(&unary, Type::Int32);
+            }
+            // Otherwise, if operator is address of, return pointer type
+            else if (unary.getOperator().type == Token::Type::AMPERSAND) {
+                setExpressionType(&unary, Type::Type::createPointer(rightType));
+            }
+        }
+        else {
+            m_ErrorHandler.error(unary.getOperator(),
+                                    "Invalid operand type '" + getDescription(rightType) + "'");
+            throw TypeCheckError();
         }
     }
 
@@ -649,10 +704,9 @@ private:
 
         if (labelled.getValue()) {
             auto valType = evaluateType(labelled.getValue());
-            auto valNumericType = dynamic_cast<const Type::NumericBase *>(valType);
-            if (!valNumericType || !valNumericType->isIntegral(m_Context)) {
+            if (!valType.isNumeric() || !valType.getNumeric().isIntegral) {
                 m_ErrorHandler.error(labelled.getKeyword(),
-                                     "Invalid case value '" + valType->getName() + "'");
+                                     "Invalid case value '" + getDescription(valType) + "'");
                 throw TypeCheckError();
             }
         }
@@ -663,10 +717,9 @@ private:
     virtual void visit(const Statement::Switch &switchStatement) final
     {
         auto condType = evaluateType(switchStatement.getCondition());
-        auto condNumericType = dynamic_cast<const Type::NumericBase *>(condType);
-        if (!condNumericType || !condNumericType->isIntegral(m_Context)) {
+        if (!condType.isNumeric() || !condType.getNumeric().isIntegral) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
-                                 "Invalid condition '" + condType->getName() + "'");
+                                 "Invalid condition '" + getDescription(condType) + "'");
             throw TypeCheckError();
         }
 
@@ -677,7 +730,7 @@ private:
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
-        const auto *decType = varDeclaration.getType();
+        const auto decType = varDeclaration.getType();
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
             m_Environment.get().define(std::get<0>(var), decType, m_ErrorHandler);
 
@@ -709,26 +762,19 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    const Type::Base *evaluateType(const Expression::Base *expression)
+    Type::Type evaluateType(const Expression::Base *expression)
     {
         expression->accept(*this);
         return m_ResolvedTypes.at(expression);
     }
    
-    void setExpressionType(const Expression::Base *expression, const Type::Base *type)
+    void setExpressionType(const Expression::Base *expression, const Type::Type &type)
     {
         if (!m_ResolvedTypes.emplace(expression, type).second) {
             throw std::runtime_error("Expression type resolved multiple times");
         }
     }
 
-    template<typename T>
-    void setExpressionType(const Expression::Base *expression)
-    {
-        if (!m_ResolvedTypes.emplace(expression, T::getInstance()).second) {
-            throw std::runtime_error("Expression type resolved multiple times");
-        }
-    }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
@@ -736,7 +782,7 @@ private:
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     ResolvedTypeMap &m_ResolvedTypes;
-    std::stack<std::vector<const Type::Base*>> m_CallArguments;
+    std::stack<std::vector<Type::Type>> m_CallArguments;
     bool m_InLoop;
     bool m_InSwitch;
 };
@@ -745,7 +791,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
-const Type::Base *EnvironmentBase::getType(const Token &name, ErrorHandlerBase &errorHandler)
+Type::Type EnvironmentBase::getType(const Token &name, ErrorHandlerBase &errorHandler)
 {
     const auto types = getTypes(name, errorHandler);
     if (types.size() == 1) {
@@ -757,10 +803,10 @@ const Type::Base *EnvironmentBase::getType(const Token &name, ErrorHandlerBase &
     }
 }
 //---------------------------------------------------------------------------
-const Type::Base *EnvironmentBase::assign(const Token &name, Token::Type op, 
-                                          const Type::Base *existingType, const Type::Base *assignedType, 
-                                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                          bool initializer) const
+Type::Type EnvironmentBase::assign(const Token &name, Token::Type op, 
+                                  const Type::Base *existingType, const Type::Base *assignedType, 
+                                  const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+                                  bool initializer) const
 {
     // If existing type is a const qualified and isn't being initialized, give error
     if(!initializer && existingType->hasQualifier(Type::Qualifier::CONSTANT)) {
