@@ -50,15 +50,8 @@ public:
 
     virtual ~SharedLibraryModel()
     {
-        // Close model library if loaded successfully
-        if(m_Library) {
-            freeMem();
-#ifdef _WIN32
-            FreeLibrary(m_Library);
-#else
-            dlclose(m_Library);
-#endif
-        }
+        // Close model library
+        close();
     }
 
     //----------------------------------------------------------------------------
@@ -110,6 +103,40 @@ public:
 #endif
             return false;
         }
+    }
+
+    void close()
+    {
+        if(m_Library) {
+            freeMem();
+#ifdef _WIN32
+            FreeLibrary(m_Library);
+#else
+            dlclose(m_Library);
+#endif
+            m_Library = nullptr;
+        }
+
+        // Null all pointers
+        m_AllocateMem = nullptr;
+        m_AllocateRecordingBuffers = nullptr;
+        m_FreeMem = nullptr;
+        m_GetFreeDeviceMemBytes = nullptr;
+        m_Initialize = nullptr;
+        m_InitializeSparse = nullptr;
+        m_StepTime = nullptr;
+        m_PullRecordingBuffersFromDevice = nullptr;
+        m_NCCLGenerateUniqueID = nullptr;
+        m_NCCLGetUniqueID = nullptr;
+        m_NCCLInitCommunicator = nullptr;
+        m_NCCLUniqueIDBytes = nullptr;
+        m_T = nullptr;
+        m_Timestep = nullptr;
+
+        // Empty all dictionaries
+        m_PopulationVars.clear();
+        m_PopulationEPGs.clear();
+        m_CustomUpdates.clear();
     }
 
     void allocateExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)

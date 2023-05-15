@@ -646,7 +646,7 @@ class GeNNModel(object):
             # Allocate recording buffers
             self._slm.allocate_recording_buffers(num_recording_timesteps)
 
-        # Loop through synapse populations and load any 
+        # Loop through neuron populations and load any
         # extra global parameters required for initialization
         for pop_data in itervalues(self.neuron_populations):
             pop_data.load_init_egps()
@@ -689,6 +689,29 @@ class GeNNModel(object):
         # Set loaded flag and built flag
         self._loaded = True
         self._built = True
+
+    def unload(self):
+        # Loop through custom updates and unload
+        for cu_data in itervalues(self.custom_updates):
+            cu_data.unload()
+
+        # Loop through current sources and unload
+        for src_data in itervalues(self.current_sources):
+            src_data.unload()
+
+        # Loop through synapse populations and unload
+        for pop_data in itervalues(self.synapse_populations):
+            pop_data.unload()
+
+        # Loop through neuron populations and unload
+        for pop_data in itervalues(self.neuron_populations):
+            pop_data.unload()
+
+        # Close shared library model
+        self._slm.close()
+
+        # Clear loaded flag
+        self._loaded = False
 
     def reinitialise(self):
         """reinitialise model to its original state without re-loading"""
