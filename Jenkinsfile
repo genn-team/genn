@@ -235,7 +235,6 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
-                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             """
 
                             def wheelStatusCode = sh script:script, returnStatus:true
