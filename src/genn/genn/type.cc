@@ -3,8 +3,10 @@
 // Standard C++ includes
 #include <map>
 #include <unordered_map>
+#include <variant>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "logging.h"
 
 // Transpiler includes
@@ -60,6 +62,24 @@ const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
+
+//----------------------------------------------------------------------------
+// UnresolvedType
+//----------------------------------------------------------------------------
+ResolvedType UnresolvedType::resolve(const std::unordered_map<std::string, ResolvedType> &typeContext) const
+{
+    return std::visit(
+         Utils::Overload{
+             [](const Type::ResolvedType &resolved)
+             {
+                 return resolved;
+             },
+             [&typeContext](const std::string &name)
+             {
+                 return typeContext.at(name);
+             }},
+        detail);
+}
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------

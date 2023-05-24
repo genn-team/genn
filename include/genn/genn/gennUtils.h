@@ -179,6 +179,10 @@ inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail
     }
 }
 
+// Boilerplate for overloading base std::visit
+template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
+template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
+
 //! Functor for generating a hash suitable for use in std::unordered_map etc (i.e. size_t size) from a SHA1 digests
 struct SHA1Hash
 {

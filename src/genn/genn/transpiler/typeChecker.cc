@@ -11,16 +11,17 @@
 #include <cassert>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "type.h"
 
 // Transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/expression.h"
-#include "transpiler/transpilerUtils.h"
 
 using namespace GeNN::Transpiler;
 using namespace GeNN::Transpiler::TypeChecker;
 namespace Type = GeNN::Type;
+namespace Utils = GeNN::Utils;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace

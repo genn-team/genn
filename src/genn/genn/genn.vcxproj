@@ -128,7 +128,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\standardLibrary.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\transpiler\transpilerUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\typeChecker.h" />
     <ClInclude Include="..\..\..\include\genn\genn\type.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
