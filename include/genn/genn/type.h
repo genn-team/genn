@@ -86,7 +86,8 @@ struct Type
     //------------------------------------------------------------------------
     struct Value
     {
-        std::string name;
+        size_t size;
+        std::string name;       // **TODO** delete me
         std::optional<Numeric> numeric;
         
         //------------------------------------------------------------------------
@@ -94,12 +95,12 @@ struct Type
         //------------------------------------------------------------------------
         bool operator == (const Value &other) const
         {
-            return (numeric == other.numeric);
+            return std::tie(size, numeric) == std::tie(other.size, other.numeric);
         }
 
         bool operator < (const Value &other) const
         {
-            return (numeric < other.numeric);
+            return std::tie(size, numeric) < std::tie(other.size, other.numeric);
         }
     };
 
@@ -165,22 +166,21 @@ struct Type
         }
     };
     
-    Type(size_t size, Qualifier qualifiers, const Value &numeric)
-    :   size(size), qualifiers(qualifiers), detail(numeric)
+    Type(Qualifier qualifiers, const Value &value)
+    :   qualifiers(qualifiers), detail(value)
     {}
     Type(Qualifier qualifiers, const Pointer &pointer)
-    :   size(sizeof(char*)), qualifiers(qualifiers), detail(pointer)
+    :   qualifiers(qualifiers), detail(pointer)
     {}
     Type(const Function &function)
-        : size(0), qualifiers(Qualifier{0}), detail(function)
+        : qualifiers(Qualifier{0}), detail(function)
     {}
-    Type(const Type &other, Qualifier qualifiers) : size(other.size), qualifiers(qualifiers), detail(other.detail)
+    Type(const Type &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
     {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t size;
     Qualifier qualifiers;
 
     std::variant<Value, Pointer, Function> detail;
@@ -205,14 +205,12 @@ struct Type
     //------------------------------------------------------------------------
     bool operator == (const Type &other) const
     {
-        return (std::tie(size, qualifiers, detail) 
-                == std::tie(other.size, other.qualifiers, other.detail));
+        return std::tie(qualifiers, detail) == std::tie(other.qualifiers, other.detail);
     }
 
     bool operator < (const Type &other) const
     {
-        return (std::tie(size, qualifiers, detail) 
-                < std::tie(other.size, other.qualifiers, other.detail));
+        return std::tie(qualifiers, detail) < std::tie(other.qualifiers, other.detail);
     }
 
     //------------------------------------------------------------------------
@@ -221,7 +219,7 @@ struct Type
     template<typename T>
     static Type createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
     {
-        return Type{sizeof(T), qualifiers, Value{name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+        return Type{qualifiers, Value{sizeof(T), name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
                                                                std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
                                                                std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}}};
     }
