@@ -27,21 +27,21 @@ namespace Type = GeNN::Type;
 //---------------------------------------------------------------------------
 namespace
 {
-std::string getDescription(const Type::Type &type)
+std::string getDescription(const Type::ResolvedType &type)
 {
     const std::string qualifier = type.hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
      return std::visit(
          Utils::Overload{
-             [&qualifier](const Type::Type::Value &value)
+             [&qualifier](const Type::ResolvedType::Value &value)
              {
                  assert(value.numeric);
                  return qualifier + value.name;
              },
-             [&qualifier, &type](const Type::Type::Pointer &pointer)
+             [&qualifier, &type](const Type::ResolvedType::Pointer &pointer)
              {
                  return qualifier + getDescription(*pointer.valueType) + "*";
              },
-             [&type](const Type::Type::Function &function)
+             [&type](const Type::ResolvedType::Function &function)
              {
                  std::string description = getDescription(*function.returnType) + "(";
                  for (const auto &a : function.argTypes) {
@@ -52,16 +52,16 @@ std::string getDescription(const Type::Type &type)
         type.detail);
 }
 //---------------------------------------------------------------------------
-bool checkPointerTypeAssignement(const Type::Type &rightType, const Type::Type &leftType) 
+bool checkPointerTypeAssignement(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType) 
 {
     return std::visit(
         Utils::Overload{
-            [&rightType, &leftType](const Type::Type::Value &leftValue, const Type::Type::Value &rightValue)
+            [&rightType, &leftType](const Type::ResolvedType::Value &leftValue, const Type::ResolvedType::Value &rightValue)
             {
                 assert(leftValue.numeric && rightValue.numeric);
                 return (rightType == leftType);
             },
-            [](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            [](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer)
             {
                 return checkPointerTypeAssignement(*rightPointer.valueType, *leftPointer.valueType);
             },
@@ -70,7 +70,7 @@ bool checkPointerTypeAssignement(const Type::Type &rightType, const Type::Type &
         rightType.detail, leftType.detail);
 }
 //---------------------------------------------------------------------------
-bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftType) 
+bool checkForConstRemoval(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType) 
 {
     // If const is being removed
     if (rightType.hasQualifier(Type::Qualifier::CONSTANT) && !leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
@@ -80,12 +80,12 @@ bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftTyp
     return std::visit(
         Utils::Overload{
             // If both are value types
-            [](const Type::Type::Value &rightValue, const Type::Type::Value &leftValue)
+            [](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue)
             {
                 return true;
             },
             // Otherwise, if both are pointers, recurse through value type
-            [](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            [](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer)
             {
                 return checkForConstRemoval(*rightPointer.valueType, *leftPointer.valueType);
             },
@@ -94,12 +94,12 @@ bool checkForConstRemoval(const Type::Type &rightType, const Type::Type &leftTyp
         rightType.detail, leftType.detail);
 }
 //---------------------------------------------------------------------------
-bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &leftType, Token::Type op = Token::Type::EQUAL)
+bool checkImplicitConversion(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType, Token::Type op = Token::Type::EQUAL)
 {
     return std::visit(
         Utils::Overload{
             // If both are numeric, return true as any numeric types can be assigned
-            [op](const Type::Type::Value &rightValue, const Type::Type::Value &leftValue)
+            [op](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue)
             {
                 // If operator requires it and both arguments are integers, return true
                 assert(leftValue.numeric && rightValue.numeric);
@@ -116,7 +116,7 @@ bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &left
             },
             // Otherwise, if both are pointers, recurse through value type
             [op, &leftType, &rightType]
-            (const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer)
+            (const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer)
             {
                 // If operator is equals
                 if (op == Token::Type::EQUAL) {
@@ -138,7 +138,7 @@ bool checkImplicitConversion(const Type::Type &rightType, const Type::Type &left
                 }
             },
             // Otherwise, if left is pointer and right is numeric, 
-            [op](const Type::Type::Value &rightValue, const Type::Type::Pointer &leftPointer) 
+            [op](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer &leftPointer) 
             {
                 assert(rightValue.numeric);
                 if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
@@ -167,7 +167,7 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::Type &type, ErrorHandlerBase &errorHandler) final
+    virtual void define(const Token &name, const Type::ResolvedType &type, ErrorHandlerBase &errorHandler) final
     {
         if(!m_Types.try_emplace(name.lexeme, type).second) {
             errorHandler.error(name, "Redeclaration of variable");
@@ -175,7 +175,7 @@ public:
         }
     }
 
-    virtual std::vector<Type::Type> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(name.lexeme);
         if(type == m_Types.end()) {
@@ -191,7 +191,7 @@ private:
     // Members
     //---------------------------------------------------------------------------
     EnvironmentBase &m_Enclosing;
-    std::unordered_map<std::string, Type::Type> m_Types;
+    std::unordered_map<std::string, Type::ResolvedType> m_Types;
 };
 
 //---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ private:
                 Utils::Overload{
                     // If both operands are numeric
                     [&leftType, &rightType, opType, this]
-                    (const Type::Type::Value &rightNumeric, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
+                    (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
                         // If operator requires integer operands
                         if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
@@ -295,7 +295,7 @@ private:
                             || opType == Token::Type::AMPERSAND || opType == Token::Type::PIPE)
                         {
                             // Check that operands are integers
-                            if (leftNumeric.isIntegral && rightNumeric.isIntegral) {
+                            if (leftValue.numeric->isIntegral && rightValue.numeric->isIntegral) {
                                 // If operator is a shift, promote left type
                                 if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
                                     return Type::getPromotedType(leftType);
@@ -316,7 +316,7 @@ private:
                     },
                     // Otherwise, if both operands are pointers
                     [&binary, &leftType, &rightType, opType, this]
-                    (const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &leftPointer) -> std::optional<Type::Type>
+                    (const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is minus and pointer types match
                         if (opType == Token::Type::MINUS && leftType == rightType) {
@@ -329,11 +329,11 @@ private:
                     },
                     // Otherwise, if right is numeric and left is pointer
                     [&binary, &leftType, &rightType, opType, this]
-                    (const Type::Type::Numeric &rightNumeric, const Type::Type::Pointer &leftPointer) -> std::optional<Type::Type>
+                    (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer &leftPointer) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is valid and numeric type is integer
                         // P + n or P - n
-                        if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightNumeric.isIntegral) {
+                        if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightValue.numeric->isIntegral) {
                             return leftType;
                         }
                         else {
@@ -342,10 +342,10 @@ private:
                     },
                     // Otherwise, if right is pointer and left is numeric
                     [&binary, &rightType, opType, this]
-                    (const Type::Type::Pointer &rightPointer, const Type::Type::Numeric &leftNumeric) -> std::optional<Type::Type>
+                    (const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
                         // n + P
-                        if (opType == Token::Type::PLUS && leftNumeric.isIntegral) {
+                        if (opType == Token::Type::PLUS && leftValue.numeric->isIntegral) {
                             return rightType;
                         }
                         else {
@@ -353,7 +353,7 @@ private:
                         }
                     },
                     // Otherwise, operator is being applied to unsupported types
-                    [](auto, auto) -> std::optional<Type::Type>
+                    [](auto, auto) -> std::optional<Type::ResolvedType>
                     {
                         return std::nullopt;
                     }},
@@ -407,12 +407,17 @@ private:
         const auto resultType = std::visit(
             Utils::Overload{
                 // If types are numeric, any cast goes
-                [&cast](const Type::Type::Numeric &rightNumeric, const Type::Type::Numeric &castNumeric) -> std::optional<Type::Type>
+                [&cast](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &castValue) -> std::optional<Type::ResolvedType>
                 {
-                    return cast.getType();
+                    if (rightValue.numeric && castValue.numeric) {
+                        return cast.getType();
+                    }
+                    else {
+                        return std::nullopt;
+                    }
                 },
                 // Otherwise, if we're trying to cast pointer to pointer
-                [&cast](const Type::Type::Pointer &rightPointer, const Type::Type::Pointer &castPointer) -> std::optional<Type::Type>
+                [&cast](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &castPointer) -> std::optional<Type::ResolvedType>
                 {
                    // Check that value type at the end matches
                     if (checkPointerTypeAssignement(*rightPointer.valueType, *castPointer.valueType)) {
@@ -423,7 +428,7 @@ private:
                     }
                 },
                 // Otherwise, pointers can't be cast to non-pointers and vice versa
-                [](auto, auto) -> std::optional<Type::Type>
+                [](auto, auto) -> std::optional<Type::ResolvedType>
                 { 
                     return std::nullopt; 
                 }},
@@ -487,7 +492,7 @@ private:
             setExpressionType(&literal, Type::Uint32);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::Type::createPointer(Type::Int8, Type::Qualifier::CONSTANT));
+            setExpressionType(&literal, Type::ResolvedType::createPointer(Type::Int8, Type::Qualifier::CONSTANT));
         }
         else {
             assert(false);
@@ -540,7 +545,7 @@ private:
             assert(!m_CallArguments.empty());
 
             // Loop through variable types
-            std::vector<std::pair<Type::Type, std::vector<int>>> viableFunctions;
+            std::vector<std::pair<Type::ResolvedType, std::vector<int>>> viableFunctions;
             for(const auto &type : varTypes) {
                 // If  function is non-variadic and number of arguments match
                 const auto &argumentTypes = type.getFunction().argTypes;
@@ -557,7 +562,7 @@ private:
                         const auto argConversionRank = std::visit(
                             Utils::Overload{
                                 // If types are numeric, any cast goes
-                                [c, a](const Type::Type::Numeric &cNumeric, const Type::Type::Numeric &aNumeric) -> std::optional<int>
+                                [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value &aValue) -> std::optional<int>
                                 {
                                     // If names are identical, match is exact
                                     // **TODO** we don't care about qualifiers
@@ -565,8 +570,8 @@ private:
                                         return 0;
                                     }
                                     // Integer promotion
-                                    else if(*a == Type::Int32 && c->getNumeric().isIntegral
-                                            && c->getNumeric().rank < Type::Int32.getNumeric().rank)
+                                    else if(*a == Type::Int32 && cValue.numeric->isIntegral
+                                            && cValue.numeric->rank < Type::Int32.getNumeric().rank)
                                     {
                                         return 1;
                                     }
@@ -581,7 +586,7 @@ private:
                                     }
                                 },
                                 // Otherwise, if we're trying to cast pointer to pointer
-                                [](const Type::Type::Pointer &cPointer, const Type::Type::Pointer &aPointer) -> std::optional<int>
+                                [](const Type::ResolvedType::Pointer &cPointer, const Type::ResolvedType::Pointer &aPointer) -> std::optional<int>
                                 {
                                     // Check that value type at the end matches
                                     if (checkPointerTypeAssignement(*cPointer.valueType, *aPointer.valueType)) {
@@ -672,7 +677,7 @@ private:
             }
             // Otherwise, if operator is address of, return pointer type
             else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                setExpressionType(&unary, Type::Type::createPointer(rightType));
+                setExpressionType(&unary, Type::ResolvedType::createPointer(rightType));
             }
         }
         else {
@@ -834,13 +839,13 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    Type::Type evaluateType(const Expression::Base *expression)
+    Type::ResolvedType evaluateType(const Expression::Base *expression)
     {
         expression->accept(*this);
         return m_ResolvedTypes.at(expression);
     }
    
-    void setExpressionType(const Expression::Base *expression, const Type::Type &type)
+    void setExpressionType(const Expression::Base *expression, const Type::ResolvedType &type)
     {
         if (!m_ResolvedTypes.emplace(expression, type).second) {
             throw std::runtime_error("Expression type resolved multiple times");
@@ -854,7 +859,7 @@ private:
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     ResolvedTypeMap &m_ResolvedTypes;
-    std::stack<std::vector<Type::Type>> m_CallArguments;
+    std::stack<std::vector<Type::ResolvedType>> m_CallArguments;
     bool m_InLoop;
     bool m_InSwitch;
 };
@@ -863,7 +868,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
-Type::Type EnvironmentBase::getType(const Token &name, ErrorHandlerBase &errorHandler)
+Type::ResolvedType EnvironmentBase::getType(const Token &name, ErrorHandlerBase &errorHandler)
 {
     const auto types = getTypes(name, errorHandler);
     if (types.size() == 1) {
@@ -887,7 +892,7 @@ ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::Statem
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-Type::Type GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
+Type::ResolvedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
                                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;

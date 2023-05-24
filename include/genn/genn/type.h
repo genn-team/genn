@@ -22,7 +22,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define CREATE_NUMERIC(TYPE, RANK, L_SUFFIX) Type::createNumeric<TYPE>(#TYPE, RANK, L_SUFFIX)
+#define CREATE_NUMERIC(TYPE, RANK, L_SUFFIX) ResolvedType::createNumeric<TYPE>(#TYPE, RANK, L_SUFFIX)
 
 //----------------------------------------------------------------------------
 // GeNN::Type::Qualifier
@@ -45,9 +45,9 @@ inline Qualifier operator | (Qualifier a, Qualifier b)
 }
 
 //----------------------------------------------------------------------------
-// GeNN::Type::Type
+// GeNN::Type::ResolvedType
 //----------------------------------------------------------------------------
-struct Type
+struct ResolvedType
 {
     //------------------------------------------------------------------------
     // Numeric
@@ -109,12 +109,12 @@ struct Type
     //------------------------------------------------------------------------
     struct Pointer
     {
-        Pointer(const Type &valueType) : valueType(std::make_unique<Type const>(valueType))
+        Pointer(const ResolvedType &valueType) : valueType(std::make_unique<ResolvedType const>(valueType))
         {}
-        Pointer(const Pointer &other) : valueType(std::make_unique<Type const>(*other.valueType))
+        Pointer(const Pointer &other) : valueType(std::make_unique<ResolvedType const>(*other.valueType))
         {}
         
-        std::unique_ptr<Type const> valueType;
+        std::unique_ptr<ResolvedType const> valueType;
 
         bool operator == (const Pointer &other) const
         {
@@ -128,7 +128,7 @@ struct Type
 
         Pointer &operator = (const Pointer &other)
         {
-           valueType.reset(new Type(*other.valueType));
+           valueType.reset(new ResolvedType(*other.valueType));
            return *this;
         }
     };
@@ -138,15 +138,15 @@ struct Type
     //------------------------------------------------------------------------
     struct Function
     {
-        Function(const Type &returnType, const std::vector<Type> &argTypes) 
-        :   returnType(std::make_unique<Type const>(returnType)), argTypes(argTypes)
+        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes) 
+        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes)
         {}
         Function(const Function &other)
-        :   returnType(std::make_unique<Type const>(*other.returnType)), argTypes(other.argTypes)
+        :   returnType(std::make_unique<ResolvedType const>(*other.returnType)), argTypes(other.argTypes)
         {}
 
-        std::unique_ptr<Type const> returnType;
-        std::vector<Type> argTypes;
+        std::unique_ptr<ResolvedType const> returnType;
+        std::vector<ResolvedType> argTypes;
 
         bool operator == (const Function &other) const
         {
@@ -160,22 +160,22 @@ struct Type
 
         Function &operator = (const Function &other)
         {
-           returnType.reset(new Type(*other.returnType));
+           returnType.reset(new ResolvedType(*other.returnType));
            argTypes = other.argTypes;
            return *this;
         }
     };
     
-    Type(Qualifier qualifiers, const Value &value)
+    ResolvedType(Qualifier qualifiers, const Value &value)
     :   qualifiers(qualifiers), detail(value)
     {}
-    Type(Qualifier qualifiers, const Pointer &pointer)
+    ResolvedType(Qualifier qualifiers, const Pointer &pointer)
     :   qualifiers(qualifiers), detail(pointer)
     {}
-    Type(const Function &function)
+    ResolvedType(const Function &function)
         : qualifiers(Qualifier{0}), detail(function)
     {}
-    Type(const Type &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
+    ResolvedType(const ResolvedType &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
     {}
 
     //------------------------------------------------------------------------
@@ -197,18 +197,18 @@ struct Type
     const Function &getFunction() const{ return std::get<Function>(detail); }
     const Numeric &getNumeric() const{ return *getValue().numeric; }
 
-    const Type addQualifier(Qualifier qualifier) const{ return Type(*this, qualifier); }
+    const ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifier); }
     bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
 
     //------------------------------------------------------------------------
     // Operators
     //------------------------------------------------------------------------
-    bool operator == (const Type &other) const
+    bool operator == (const ResolvedType &other) const
     {
         return std::tie(qualifiers, detail) == std::tie(other.qualifiers, other.detail);
     }
 
-    bool operator < (const Type &other) const
+    bool operator < (const ResolvedType &other) const
     {
         return std::tie(qualifiers, detail) < std::tie(other.qualifiers, other.detail);
     }
@@ -217,16 +217,16 @@ struct Type
     // Static API
     //------------------------------------------------------------------------
     template<typename T>
-    static Type createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
+    static ResolvedType createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
     {
-        return Type{qualifiers, Value{sizeof(T), name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                               std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                                               std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}}};
+        return ResolvedType{qualifiers, Value{sizeof(T), name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                                                       std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                                                       std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}}};
     }
 
-    static Type createPointer(const Type &valueType, Qualifier qualifiers = Qualifier{0})
+    static ResolvedType createPointer(const ResolvedType &valueType, Qualifier qualifiers = Qualifier{0})
     {
-         return Type(qualifiers, Pointer{valueType});
+         return ResolvedType(qualifiers, Pointer{valueType});
     }
 };
 
@@ -235,29 +235,29 @@ typedef std::unordered_map<std::string, const class Base*> TypeContext;
 //----------------------------------------------------------------------------
 // Declare numeric types
 //----------------------------------------------------------------------------
-inline static const Type Bool = CREATE_NUMERIC(bool, 0, "");
-inline static const Type Int8 = CREATE_NUMERIC(int8_t, 10, "");
-inline static const Type Int16 = CREATE_NUMERIC(int16_t, 20, "");
-inline static const Type Int32 = CREATE_NUMERIC(int32_t, 30, "");
+inline static const ResolvedType Bool = CREATE_NUMERIC(bool, 0, "");
+inline static const ResolvedType Int8 = CREATE_NUMERIC(int8_t, 10, "");
+inline static const ResolvedType Int16 = CREATE_NUMERIC(int16_t, 20, "");
+inline static const ResolvedType Int32 = CREATE_NUMERIC(int32_t, 30, "");
 //DECLARE_NUMERIC_TYPE(Int64, int64_t, 40);
-inline static const Type Uint8 = CREATE_NUMERIC(uint8_t, 10, "u");
-inline static const Type Uint16 = CREATE_NUMERIC(uint16_t, 20, "u");
-inline static const Type Uint32 = CREATE_NUMERIC(uint32_t, 30, "u");
+inline static const ResolvedType Uint8 = CREATE_NUMERIC(uint8_t, 10, "u");
+inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, "u");
+inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, "u");
 //DECLARE_NUMERIC_TYPE(Uint64, uint64_t, 40);
-inline static const Type Float = CREATE_NUMERIC(float, 50, "f");
-inline static const Type Double = CREATE_NUMERIC(double, 60, "");
+inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
+inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
 
 //! Parse a numeric type
-Type parseNumeric(const std::string &typeString);
+ResolvedType parseNumeric(const std::string &typeString);
 
 //! Look up numeric type based on set of type specifiers
-Type getNumericType(const std::set<std::string> &typeSpecifiers);
+ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers);
 
 //! Apply C type promotion rules to numeric type
-Type getPromotedType(const Type &type);
+ResolvedType getPromotedType(const ResolvedType &type);
 
 //! Apply C rules to get common type between numeric types a and b
-Type getCommonType(const Type &a, const Type &b);
+ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b);
 
 
 }   // namespace GeNN::Type

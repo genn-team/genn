@@ -32,7 +32,7 @@ public:
     }
 };
 
-typedef std::unordered_map<const Expression::Base*, Type::Type> ResolvedTypeMap;
+typedef std::unordered_map<const Expression::Base*, Type::ResolvedType> ResolvedTypeMap;
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
@@ -43,13 +43,13 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::Type &type, ErrorHandlerBase &errorHandler) = 0;
-    virtual std::vector<Type::Type> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
+    virtual void define(const Token &name, const Type::ResolvedType &type, ErrorHandlerBase &errorHandler) = 0;
+    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) = 0;
 
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    Type::Type getType(const Token &name, ErrorHandlerBase &errorHandler);
+    Type::ResolvedType getType(const Token &name, ErrorHandlerBase &errorHandler);
 };
 
 //---------------------------------------------------------------------------
@@ -58,6 +58,6 @@ public:
 ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
                           const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
-Type::Type typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
+Type::ResolvedType typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
                      const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler

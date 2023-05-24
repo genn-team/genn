@@ -17,7 +17,7 @@ using namespace GeNN;
 // Anonymous namespace
 namespace
 {
-const std::map<std::set<std::string>, Type::Type> numericTypeSpecifiers{
+const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
     {{"char"}, Type::Int8},
     {{"int8_t"}, Type::Int8},
     
@@ -49,7 +49,7 @@ const std::map<std::set<std::string>, Type::Type> numericTypeSpecifiers{
 const std::set<std::string> scalarTypeSpecifier{{"scalar"}};
 //----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
-const std::map<Type::Type, Type::Type> unsignedType{
+const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
     {Type::Int8, Type::Uint8},
     {Type::Int16, Type::Uint16},
     {Type::Int32, Type::Uint32}};
@@ -63,7 +63,7 @@ namespace GeNN::Type
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-Type parseNumeric(const std::string &typeString)
+ResolvedType parseNumeric(const std::string &typeString)
 {
     using namespace Transpiler;
 
@@ -82,7 +82,7 @@ Type parseNumeric(const std::string &typeString)
     return type;
 }
 //----------------------------------------------------------------------------
-Type getNumericType(const std::set<std::string> &typeSpecifiers)
+ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers)
 {
     // If type matches scalar type specifiers
     if(typeSpecifiers == scalarTypeSpecifier) {
@@ -97,7 +97,7 @@ Type getNumericType(const std::set<std::string> &typeSpecifiers)
     }
 }
 //----------------------------------------------------------------------------
-Type getPromotedType(const Type &type)
+ResolvedType getPromotedType(const ResolvedType &type)
 {
     // If a small integer type is used in an expression, it is implicitly converted to int which is always signed. 
     // This is known as the integer promotions or the integer promotion rule 
@@ -111,7 +111,7 @@ Type getPromotedType(const Type &type)
     }
 }
 //----------------------------------------------------------------------------
-Type getCommonType(const Type &a, const Type &b)
+ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
 {
     // If either type is double, common type is double
     assert(a.isNumeric());
@@ -126,8 +126,8 @@ Type getCommonType(const Type &a, const Type &b)
     // Otherwise, must be an integer type
     else {
         // Promote both numeric types
-        const Type aPromoted = getPromotedType(a);
-        const Type bPromoted = getPromotedType(b);
+        const ResolvedType aPromoted = getPromotedType(a);
+        const ResolvedType bPromoted = getPromotedType(b);
 
         // If both promoted operands have the same type, then no further conversion is needed.
         if(aPromoted == bPromoted) {
@@ -140,8 +140,8 @@ Type getCommonType(const Type &a, const Type &b)
         }
         // Otherwise, if signedness of promoted operands differ
         else {
-            const Type signedOp = aPromoted.getNumeric().isSigned ? aPromoted : bPromoted;
-            const Type unsignedOp = aPromoted.getNumeric().isSigned ? bPromoted : aPromoted;
+            const ResolvedType signedOp = aPromoted.getNumeric().isSigned ? aPromoted : bPromoted;
+            const ResolvedType unsignedOp = aPromoted.getNumeric().isSigned ? bPromoted : aPromoted;
 
             // Otherwise, if the operand that has unsigned integer type has rank greater or equal to the rank of the type of the other operand, 
             // then the operand with signed integer type is converted to the type of the operand with unsigned integer type.
