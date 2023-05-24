@@ -326,16 +326,12 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 //----------------------------------------------------------------------------
-void genTypeRange(CodeStream &os, const Type::NumericBase *precision, const Type::TypeContext &typeContext, const std::string &prefix)
+void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix)
 {
+    const auto &numeric = type.getNumeric();
+    os << "#define " << prefix << "_MIN " << Utils::writePreciseString(numeric.min, numeric.maxDigits10) << numeric.literalSuffix << std::endl << std::endl;
 
-    os << "#define " << prefix << "_MIN ";
-    Utils::writePreciseString(os, precision->getMin(typeContext), precision->getMaxDigits10(typeContext));
-    os << precision->getLiteralSuffix(typeContext) << std::endl << std::endl;
-
-    os << "#define " << prefix << "_MAX ";
-    Utils::writePreciseString(os, precision->getMax(typeContext), precision->getMaxDigits10(typeContext));
-    os << precision->getLiteralSuffix(typeContext) << std::endl;
+    os << "#define " << prefix << "_MAX " << Utils::writePreciseString(numeric.max, numeric.maxDigits10) << numeric.literalSuffix << std::endl;
 }
 //----------------------------------------------------------------------------
 std::string ensureFtype(const std::string &oldcode, const std::string &type)

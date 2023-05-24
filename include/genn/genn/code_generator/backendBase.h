@@ -494,15 +494,10 @@ protected:
     //! Simple struct to hold reduction targets
     struct ReductionTarget
     {
-        ReductionTarget(const std::string &n, const Type::NumericBase *t, VarAccessMode a, const std::string &i)
-            : name(n), type(t), access(a), index(i)
-        {
-        }
-
-        const std::string name;
-        const Type::NumericBase *type;
-        const VarAccessMode access;
-        const std::string index;
+        std::string name;
+        Type::ResolvedType type;
+        VarAccessMode access;
+        std::string index;
     };
 
     //--------------------------------------------------------------------------
@@ -517,11 +512,11 @@ protected:
     void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
     
     //! Get the initial value to start reduction operations from
-    std::string getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context) const;
+    std::string getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const;
 
     //! Generate a reduction operation to reduce value into reduction
-    std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
-                                      const Type::NumericBase *type, const Type::TypeContext &context) const;
+    std::string getReductionOperation(const std::string &reduction, const std::string &value,
+                                      VarAccessMode access, const Type::ResolvedType &type) const;
 
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.

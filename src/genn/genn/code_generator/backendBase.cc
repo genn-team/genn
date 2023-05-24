@@ -190,15 +190,16 @@ void BackendBase::genCustomConnectivityUpdateIndexCalculation(CodeStream &os, co
     }
 }
 //----------------------------------------------------------------------------
-std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Type::NumericBase *type, const Type::TypeContext &context) const
+std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const
 {
     // If reduction is a sum, initialise to zero
+    assert(type.isNumeric());
     if(access & VarAccessModeAttribute::SUM) {
         return "0";
     }
     // Otherwise, reduction is a maximum operation, return lowest value for type
     else if(access & VarAccessModeAttribute::MAX) {
-        return Utils::writePreciseString(type->getLowest(context));
+        return Utils::writePreciseString(type.getNumeric().lowest);
     }
     else {
         assert(false);
@@ -206,17 +207,18 @@ std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Ty
     }
 }
 //----------------------------------------------------------------------------
-std::string BackendBase::getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access,
-                                               const Type::NumericBase *type, const Type::TypeContext &context) const
+std::string BackendBase::getReductionOperation(const std::string &reduction, const std::string &value,
+                                               VarAccessMode access, const Type::ResolvedType &type) const
 {
     // If operation is sum, add output of custom update to sum
+    assert(type.isNumeric());
     if(access & VarAccessModeAttribute::SUM) {
         return reduction + " += " + value;
     }
     // Otherwise, if it's max
     else if(access & VarAccessModeAttribute::MAX) {
         // If type is integral, generate max call
-        if(type->isIntegral(context)) {
+        if(type.getNumeric().isIntegral) {
             return reduction + " = " + "max(" + reduction + ", " + value + ")";
             
         }

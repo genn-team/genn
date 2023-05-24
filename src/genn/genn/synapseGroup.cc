@@ -702,23 +702,23 @@ bool SynapseGroup::canPreOutputBeFused() const
     return true;
 }
 //----------------------------------------------------------------------------
-const Type::NumericBase *SynapseGroup::getSparseIndType() const
+const Type::ResolvedType &SynapseGroup::getSparseIndType() const
 {
     // If narrow sparse inds are enabled
     if(m_NarrowSparseIndEnabled) {
         // If number of target neurons can be represented using a uint8, use this type
         const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
-        if(numTrgNeurons <= Type::Uint8::getInstance()->getMax({})) {
-            return Type::Uint8::getInstance();;
+        if(numTrgNeurons <= Type::Uint8.getNumeric().max) {
+            return Type::Uint8;
         }
         // Otherwise, if they can be represented as a uint16, use this type
-        else if(numTrgNeurons <= Type::Uint16::getInstance()->getMax({})) {
-            return Type::Uint16::getInstance();
+        else if(numTrgNeurons <= Type::Uint16.getNumeric().max) {
+            return Type::Uint16;
         }
     }
 
     // Otherwise, use 32-bit int
-    return Type::Uint32::getInstance();
+    return Type::Uint32;
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const

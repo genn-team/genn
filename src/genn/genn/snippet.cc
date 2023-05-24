@@ -2,42 +2,12 @@
 
 // GeNN includes
 #include "logging.h"
-#include "type.h"
-
-//----------------------------------------------------------------------------
-// GeNN::Snippet::Base::EGP
-//----------------------------------------------------------------------------
-namespace GeNN::Snippet
-{
-Base::EGP::EGP(const std::string &n, const std::string &t) 
-:   name(n), type(Type::parseNumeric((t.back() == '*') ? t.substr(0, t.length() - 1) : t))
-{
-    // If type ends in a *, give warning as this is legacy syntax
-    if(t.back() == '*') {
-        LOGW_GENN << "Extra global parameters are now always arrays so * at end of type is no longer necessary";
-    }
-}
-//----------------------------------------------------------------------------
-bool Base::EGP::operator == (const EGP &other) const
-{
-    return ((name == other.name) && (type->getName() == other.type->getName()));
-}
-
-//----------------------------------------------------------------------------
-// GeNN::Snippet::Base::ParamVal
-//----------------------------------------------------------------------------
-Base::ParamVal::ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(Type::parseNumeric(t)), value(v)
-{
-}
-//----------------------------------------------------------------------------
-bool Base::ParamVal::operator == (const ParamVal &other) const
-{
-    return ((name == other.name) && (type->getName() == other.type->getName()) && (value == other.value));
-}
 
 //----------------------------------------------------------------------------
 // GeNN::Snippet::Base
 //----------------------------------------------------------------------------
+namespace GeNN::Snippet
+{
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getParamNames(), hash);
@@ -72,13 +42,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
 void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(e.name, hash);
-    Utils::updateHash(e.type->getName(), hash);
+    Type::updateHash(e.type, hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(p.name, hash);
-    Utils::updateHash(p.type->getName(), hash);
+    Type::updateHash(p.type, hash);
     Utils::updateHash(p.value, hash);
 }
 //----------------------------------------------------------------------------

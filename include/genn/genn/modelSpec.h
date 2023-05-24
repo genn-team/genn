@@ -25,6 +25,7 @@ Part of the code generation and generated code sections.
 
 // Standard C++ includes
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -231,10 +232,10 @@ public:
     void setName(const std::string &name){ m_Name = name; }
 
     //! Set numerical precision for floating point
-    void setPrecision(const Type::NumericBase *precision){ m_Precision = precision; }
+    void setPrecision(const Type::ResolvedType &precision);
 
     //! Set numerical precision for time
-    void setTimePrecision(const Type::NumericBase *timePrecision){ m_TimePrecision = timePrecision; }
+    void setTimePrecision(const Type::ResolvedType &timePrecision);
 
     //! Set the integration step size of the model
     void setDT(double dt){ m_DT = dt; }
@@ -278,10 +279,10 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     //! Gets the floating point numerical precision
-    const Type::NumericBase *getPrecision() const{ return m_Precision; }
+    const Type::ResolvedType &getPrecision() const{ return m_Precision; }
 
     //! Gets the floating point numerical precision used to represent time
-    const Type::NumericBase *getTimePrecision() const{ return m_TimePrecision ? m_TimePrecision : m_Precision; }
+    const Type::ResolvedType &getTimePrecision() const{ return m_TimePrecision ? m_TimePrecision.value() : m_Precision; }
 
     //! Gets the model integration step size
     double getDT() const { return m_DT; }
@@ -728,10 +729,10 @@ private:
     std::string m_Name;
 
     //! Type of floating point variables (float, double, ...; default: float)
-    const Type::NumericBase *m_Precision;
+    Type::ResolvedType m_Precision;
 
     //! Type of floating point variables used to store time
-    const Type::NumericBase *m_TimePrecision;
+    std::optional<Type::ResolvedType> m_TimePrecision;
 
     //! The integration time step of the model
     double m_DT;

@@ -13,15 +13,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
-
-// Forward declarations
-namespace GeNN
-{
-namespace Type
-{
-class NumericBase;
-}
-}
+#include "type.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -65,31 +57,41 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
-        EGP(const std::string &n, const Type::NumericBase *t);
-        EGP(const std::string &n, const std::string &t);
+        EGP(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
+        {}
+        EGP(const std::string &n, const std::string &t) : name(n), type(t)
+        {}
         
-        bool operator == (const EGP &other) const;
+        bool operator == (const EGP &other) const
+        {
+            return (std::tie(name, type) == std::tie(other.name, other.type));
+        }
 
-        const std::string name;
-        const Type::NumericBase *type;
+        std::string name;
+        Type::UnresolvedType type;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
-        ParamVal(const std::string &n, const Type::NumericBase *t, const std::string &v) : name(n), type(t), value(v)
+        ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v) : name(n), type(t), value(v)
         {}
-        ParamVal(const std::string &n, const Type::NumericBase *t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
+        ParamVal(const std::string &n, const Type::ResolvedType &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
         {}
-        ParamVal(const std::string &n, const std::string &t, const std::string &v);
+        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        {}
         ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
         {}
 
-        bool operator == (const ParamVal &other) const;
+        bool operator == (const ParamVal &other) const
+        {
+            // **THINK** why isn't value included?
+            return (std::tie(name, type) == std::tie(other.name, other.type));
+        }
 
-        const std::string name;
-        const Type::NumericBase *type;
-        const std::string value;
+        std::string name;
+        Type::UnresolvedType type;
+        std::string value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
@@ -100,8 +102,8 @@ public:
             return (name == other.name);
         }
 
-        const std::string name;
-        const std::function<double(const std::unordered_map<std::string, double>&, double)> func;
+        std::string name;
+        std::function<double(const std::unordered_map<std::string, double>&, double)> func;
     };
 
 

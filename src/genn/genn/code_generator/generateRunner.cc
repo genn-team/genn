@@ -256,7 +256,7 @@ void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, C
 void genVariable(const ModelSpecMerged &modelMerged, const BackendBase &backend,
                  CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternal, 
                  CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &push, CodeStream &pull, 
-                 const Type::ValueBase *type, const std::string &name,
+                 const Type::ResolvedType &type, const std::string &name,
                  VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
                  std::vector<std::string> &statePushPullFunction)
 {
@@ -274,7 +274,7 @@ void genVariable(const ModelSpecMerged &modelMerged, const BackendBase &backend,
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar,
                          CodeStream &definitionsFunc, CodeStream &definitionsInternalVar, CodeStream &runner,
-                         CodeStream &extraGlobalParam, const Type::NumericBase *type, const std::string &name, bool apiRequired, VarLocation loc)
+                         CodeStream &extraGlobalParam, const Type::ResolvedType &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
     backend.genVariableDefinition(definitionsVar, definitionsInternalVar, type, name, loc);

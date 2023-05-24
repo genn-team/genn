@@ -36,7 +36,7 @@
 namespace GeNN
 {
 ModelSpec::ModelSpec()
-:   m_Precision(Type::Float::getInstance()), m_TimePrecision(nullptr), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
+:   m_Precision(Type::Float), m_TimePrecision(std::nullopt), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
     m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
@@ -45,6 +45,32 @@ ModelSpec::ModelSpec()
 // ---------------------------------------------------------------------------
 ModelSpec::~ModelSpec() 
 {
+}
+// ---------------------------------------------------------------------------
+void ModelSpec::setPrecision(const Type::ResolvedType &precision)
+{
+    if (!precision.isNumeric()) {
+        throw std::runtime_error("Only numeric types can be used for precision");
+    }
+    else {
+        if (precision.getNumeric().isIntegral) {
+            throw std::runtime_error("Only floating point types can be used for precision");
+        }
+        m_Precision = precision;
+    }
+}
+// ---------------------------------------------------------------------------
+void ModelSpec::setTimePrecision(const Type::ResolvedType &timePrecision)
+{ 
+    if (!timePrecision.isNumeric()) {
+        throw std::runtime_error("Only numeric types can be used for timeprecision");
+    }
+    else {
+        if (timePrecision.getNumeric().isIntegral) {
+            throw std::runtime_error("Only floating point types can be used for time precision");
+        }
+        m_TimePrecision = timePrecision; 
+    }
 }
 // ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const
@@ -349,8 +375,8 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
     boost::uuids::detail::sha1 hash;
 
     Utils::updateHash(getName(), hash);
-    Utils::updateHash(getPrecision()->getName(), hash);
-    Utils::updateHash(getTimePrecision()->getName(), hash);
+    Type::updateHash(getPrecision(), hash);
+    Type::updateHash(getTimePrecision(), hash);
     Utils::updateHash(getDT(), hash);
     Utils::updateHash(isTimingEnabled(), hash);
     Utils::updateHash(getBatchSize(), hash);
