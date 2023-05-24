@@ -18,6 +18,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -74,6 +75,12 @@ struct ResolvedType
                     == std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
         }
 
+        bool operator != (const Numeric &other) const
+        {
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
+                    != std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+        }
+
         bool operator < (const Numeric &other) const
         {
             return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
@@ -95,12 +102,17 @@ struct ResolvedType
         //------------------------------------------------------------------------
         bool operator == (const Value &other) const
         {
-            return std::tie(size, numeric) == std::tie(other.size, other.numeric);
+            return (std::tie(size, numeric) == std::tie(other.size, other.numeric));
+        }
+
+        bool operator != (const Value &other) const
+        {
+            return (std::tie(size, numeric) != std::tie(other.size, other.numeric));
         }
 
         bool operator < (const Value &other) const
         {
-            return std::tie(size, numeric) < std::tie(other.size, other.numeric);
+            return (std::tie(size, numeric) < std::tie(other.size, other.numeric));
         }
     };
 
@@ -119,6 +131,11 @@ struct ResolvedType
         bool operator == (const Pointer &other) const
         {
             return (*valueType == *other.valueType);
+        }
+
+        bool operator != (const Pointer &other) const
+        {
+            return (*valueType != *other.valueType);
         }
 
         bool operator < (const Pointer &other) const
@@ -150,12 +167,17 @@ struct ResolvedType
 
         bool operator == (const Function &other) const
         {
-            return std::tie(*returnType, argTypes) == std::tie(*other.returnType, other.argTypes);
+            return (std::tie(*returnType, argTypes) == std::tie(*other.returnType, other.argTypes));
+        }
+
+        bool operator != (const Function &other) const
+        {
+            return (std::tie(*returnType, argTypes) != std::tie(*other.returnType, other.argTypes));
         }
 
         bool operator < (const Function &other) const
         {
-            return std::tie(*returnType, argTypes) < std::tie(*other.returnType, other.argTypes);
+            return (std::tie(*returnType, argTypes) < std::tie(*other.returnType, other.argTypes));
         }
 
         Function &operator = (const Function &other)
@@ -205,12 +227,17 @@ struct ResolvedType
     //------------------------------------------------------------------------
     bool operator == (const ResolvedType &other) const
     {
-        return std::tie(qualifiers, detail) == std::tie(other.qualifiers, other.detail);
+        return (std::tie(qualifiers, detail) == std::tie(other.qualifiers, other.detail));
+    }
+
+    bool operator != (const ResolvedType &other) const
+    {
+        return (std::tie(qualifiers, detail) != std::tie(other.qualifiers, other.detail));
     }
 
     bool operator < (const ResolvedType &other) const
     {
-        return std::tie(qualifiers, detail) < std::tie(other.qualifiers, other.detail);
+        return (std::tie(qualifiers, detail) < std::tie(other.qualifiers, other.detail));
     }
 
     //------------------------------------------------------------------------
@@ -227,6 +254,47 @@ struct ResolvedType
     static ResolvedType createPointer(const ResolvedType &valueType, Qualifier qualifiers = Qualifier{0})
     {
          return ResolvedType(qualifiers, Pointer{valueType});
+    }
+};
+
+//----------------------------------------------------------------------------
+// UnresolvedType
+//----------------------------------------------------------------------------
+struct UnresolvedType
+{
+    UnresolvedType(const ResolvedType &type)
+    :   detail(type)
+    {}
+    UnresolvedType(const std::string &name)
+        : detail(name)
+    {}
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::variant<ResolvedType, std::string> detail;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    ResolvedType resolve(const std::unordered_map<std::string, ResolvedType> &typeContext) const;
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    bool operator == (const UnresolvedType &other) const
+    {
+        return (detail == other.detail);
+    }
+
+    bool operator != (const UnresolvedType &other) const
+    {
+        return (detail != other.detail);
+    }
+
+    bool operator < (const UnresolvedType &other) const
+    {
+        return (detail < other.detail);
     }
 };
 
@@ -248,16 +316,24 @@ inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
 
 //! Parse a numeric type
-ResolvedType parseNumeric(const std::string &typeString);
+GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString);
 
 //! Look up numeric type based on set of type specifiers
-ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers);
+GENN_EXPORT ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers);
 
 //! Apply C type promotion rules to numeric type
-ResolvedType getPromotedType(const ResolvedType &type);
+GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 
 //! Apply C rules to get common type between numeric types a and b
-ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b);
+GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b);
 
-
+//----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const ResolvedType::Numeric &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const ResolvedType::Value &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const ResolvedType::Pointer &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const ResolvedType::Function &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const ResolvedType &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const UnresolvedType &v, boost::uuids::detail::sha1 &hash);
 }   // namespace GeNN::Type

@@ -6,7 +6,6 @@
 #include <variant>
 
 // GeNN includes
-#include "gennUtils.h"
 #include "logging.h"
 
 // Transpiler includes
@@ -181,5 +180,45 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
             }
         }
     }
+}
+//----------------------------------------------------------------------------
+void updateHash(const ResolvedType::Numeric &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.rank, hash);
+    Utils::updateHash(v.min, hash);
+    Utils::updateHash(v.max, hash);
+    Utils::updateHash(v.lowest, hash);
+    Utils::updateHash(v.maxDigits10, hash);
+    Utils::updateHash(v.isSigned, hash);
+    Utils::updateHash(v.isIntegral, hash);
+    Utils::updateHash(v.literalSuffix, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const ResolvedType::Value &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.size, hash);
+    Utils::updateHash(v.numeric, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const ResolvedType::Pointer &v, boost::uuids::detail::sha1 &hash)
+{
+    updateHash(*v.valueType, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const ResolvedType::Function &v, boost::uuids::detail::sha1 &hash)
+{
+    updateHash(*v.returnType, hash);
+    Utils::updateHash(v.argTypes, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const ResolvedType &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.qualifiers, hash);
+    Utils::updateHash(v.detail, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const UnresolvedType &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.detail, hash);
 }
 }   // namespace GeNN::Type

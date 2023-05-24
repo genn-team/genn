@@ -4,10 +4,12 @@
 #include <array>
 #include <iomanip>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 // Standard C includes
@@ -125,6 +127,10 @@ inline std::string writePreciseString(T value, int maxDigits10 = std::numeric_li
     return s.str();
 }
 
+//! Boilerplate for overloading base std::visit
+template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
+template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
+
 //! Hash arithmetic types and enums
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type* = nullptr>
 inline void updateHash(const T& value, boost::uuids::detail::sha1& hash)
@@ -179,9 +185,30 @@ inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail
     }
 }
 
-// Boilerplate for overloading base std::visit
-template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
-template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
+//! Hash optional types which can, themeselves, be hashed
+template<typename T>
+inline void updateHash(const std::optional<T> &optional, boost::uuids::detail::sha1 &hash)
+{
+    updateHash(optional.has_value(), hash);
+    if (optional) {
+        updateHash(optional.value(), hash);
+    }
+}
+
+//! Hash variants of types which can, themeselves, be hashed
+template<typename... T>
+inline void updateHash(const std::variant<T...> &variant, boost::uuids::detail::sha1 &hash)
+{
+    updateHash(variant.index(), hash);
+    std::visit(
+         Utils::Overload{
+             [&hash](const auto &v)
+             {
+                 updateHash(v, hash);
+             }},
+        variant);
+}
+
 
 //! Functor for generating a hash suitable for use in std::unordered_map etc (i.e. size_t size) from a SHA1 digests
 struct SHA1Hash

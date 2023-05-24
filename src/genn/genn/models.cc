@@ -6,38 +6,12 @@
 #include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "type.h"
-
-//----------------------------------------------------------------------------
-// GeNN::Models::Base::Var
-//----------------------------------------------------------------------------
-namespace GeNN::Models
-{
-Base::Var::Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(Type::parseNumeric(t)), access(a)
-{}
-//----------------------------------------------------------------------------
-bool Base::Var::operator == (const Var &other) const
-{
-    return (std::make_tuple(name, type->getName(), access) == std::make_tuple(other.name, other.type->getName(), other.access));
-}
-
-//----------------------------------------------------------------------------
-// GeNN::Models::Base::VarRef
-//----------------------------------------------------------------------------
-Base::VarRef::VarRef(const std::string &n, const std::string &t, VarAccessMode a) : name(n), type(Type::parseNumeric(t)), access(a)
-{}
-//----------------------------------------------------------------------------
-Base::VarRef::VarRef(const std::string &n, const std::string &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
-{}
-//----------------------------------------------------------------------------
-bool Base::VarRef::operator == (const VarRef &other) const
-{
-    return (std::make_tuple(name, type->getName(), access) == std::make_tuple(other.name, other.type->getName(), other.access));
-}
 
 //----------------------------------------------------------------------------
 // GeNN::Models::Base
 //----------------------------------------------------------------------------
+namespace GeNN::Models
+{
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
@@ -195,7 +169,8 @@ WUVarReference::WUVarReference(SynapseGroup *sg, const std::string &varName,
         }
 
         // Check types
-        if(getVar().type->getName() != getTransposeVar().type->getName()) {
+        // **NOTE** this is a bit over-conservative as, at this point, types are not resolved so "scalar" cannot be compared with "float"
+        if(getVar().type != getTransposeVar().type) {
             throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
         }
 
@@ -236,14 +211,14 @@ SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
 void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
-    Utils::updateHash(v.type->getName(), hash);
+    Type::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
-    Utils::updateHash(v.type->getName(), hash);
+    Type::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------

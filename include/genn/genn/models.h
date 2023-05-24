@@ -51,35 +51,39 @@ public:
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct Var
     {
-        Var(const std::string &n, const Type::NumericBase *t, VarAccess a) : name(n), type(t), access(a)
+        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a) : name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const Type::NumericBase *t) : Var(n, t, VarAccess::READ_WRITE)
+        Var(const std::string &n, const Type::ResolvedType &t) : Var(n, t, VarAccess::READ_WRITE)
         {}
-        Var(const std::string &n, const std::string &t, VarAccess a);
+        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
+        {}
         Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
         {}
 
-        bool operator == (const Var &other) const;
+        bool operator == (const Var &other) const
+        {
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
+        }
 
-        const std::string name;
-        const Type::NumericBase *type;
-        const VarAccess access;
+        std::string name;
+        Type::UnresolvedType type;
+        VarAccess access;
     };
 
     struct VarRef
     {
-        VarRef(const std::string &n, const Type::NumericBase *t, VarAccessMode a) : name(n), type(t), access(a)
+        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a) : name(n), type(t), access(a)
         {}
-        VarRef(const std::string &n, const Type::NumericBase *t) : VarRef(n, t, VarAccessMode::READ_WRITE)
+        VarRef(const std::string &n, const Type::ResolvedType &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
         {}
         VarRef(const std::string &n, const std::string &t, VarAccessMode a);
         VarRef(const std::string &n, const std::string &t);
 
         bool operator == (const VarRef &other) const;
 
-        const std::string name;
-        const Type::NumericBase *type;
-        const VarAccessMode access;
+        std::string name;
+        Type::UnresolvedType type;
+        VarAccessMode access;
     };
 
     //----------------------------------------------------------------------------
@@ -91,7 +95,7 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    //! Gets names and types (as strings) of model variables
+    //! Gets model variables
     virtual VarVec getVars() const{ return {}; }
 
     //------------------------------------------------------------------------
