@@ -362,7 +362,6 @@ TEST(TypeChecker, Cast)
         typeEnvironment.define(Type::Int32, "intVal");
         const auto type = typeCheckExpression("(float)intVal", typeEnvironment);
         EXPECT_EQ(type, Type::Float);
-        EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Numeric cast to const
@@ -370,8 +369,7 @@ TEST(TypeChecker, Cast)
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32, "intVal");
         const auto type = typeCheckExpression("(const int)intVal", typeEnvironment);
-        EXPECT_EQ(type, Type::Int32);
-        EXPECT_TRUE(type.hasQualifier(Type::Qualifier::CONSTANT));
+        EXPECT_EQ(type, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Pointer cast to value const
@@ -381,8 +379,7 @@ TEST(TypeChecker, Cast)
         const auto type = typeCheckExpression("(const int*)intArray", typeEnvironment);
         EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
 
-        EXPECT_EQ(*type.getPointer().valueType, Type::Int32);
-        EXPECT_TRUE(type.getPointer().valueType->hasQualifier(Type::Qualifier::CONSTANT));
+        EXPECT_EQ(*type.getPointer().valueType, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Pointer cast to pointer const
@@ -391,8 +388,7 @@ TEST(TypeChecker, Cast)
         typeEnvironment.definePointer(Type::Int32, "intArray");
         const auto type = typeCheckExpression("(int * const)intArray", typeEnvironment);
         EXPECT_TRUE(type.hasQualifier(Type::Qualifier::CONSTANT));
-        EXPECT_EQ(*type.getPointer().valueType, Type::Int32);
-        EXPECT_FALSE(type.getPointer().valueType->hasQualifier(Type::Qualifier::CONSTANT));        
+        EXPECT_EQ(*type.getPointer().valueType, Type::Int32);    
     }
 
     // Can't remove value const from numeric
@@ -468,8 +464,7 @@ TEST(TypeChecker, IncDec)
         typeEnvironment.definePointer(Type::Int32, "intArray", Type::Qualifier::CONSTANT);
         const auto type = typeCheckExpression("intArray++", typeEnvironment);
         EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
-        EXPECT_EQ(*type.getPointer().valueType, Type::Int32);
-        EXPECT_TRUE(type.getPointer().valueType->hasQualifier(Type::Qualifier::CONSTANT));        
+        EXPECT_EQ(*type.getPointer().valueType, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 
    // Can't increment const number
@@ -537,7 +532,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("\"hello world\"", typeEnvironment);
-        EXPECT_EQ(type, Type::Int8.createPointer());
+        EXPECT_EQ(type, Type::Int8.createPointer(Type::Qualifier::CONSTANT));
     }
 }
 //--------------------------------------------------------------------------
@@ -549,7 +544,6 @@ TEST(TypeChecker, Unary)
         typeEnvironment.definePointer(Type::Int32, "intArray");
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type, Type::Int32);
-        EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference pointer to const
@@ -557,8 +551,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer(Type::Int32, "intArray", Type::Qualifier::CONSTANT);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type, Type::Int32);
-        EXPECT_TRUE(type.hasQualifier(Type::Qualifier::CONSTANT));
+        EXPECT_EQ(type, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference const pointer
@@ -567,7 +560,6 @@ TEST(TypeChecker, Unary)
         typeEnvironment.definePointer(Type::Int32, "intArray", Type::Qualifier{0}, Type::Qualifier::CONSTANT);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
         EXPECT_EQ(type, Type::Int32);
-        EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference const pointer to const
@@ -575,8 +567,7 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer(Type::Int32, "intArray", Type::Qualifier::CONSTANT, Type::Qualifier::CONSTANT);
         const auto type = typeCheckExpression("*intArray", typeEnvironment);
-        EXPECT_EQ(type, Type::Int32);
-        EXPECT_TRUE(type.hasQualifier(Type::Qualifier::CONSTANT));
+        EXPECT_EQ(type, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 
     // Dereference numeric
