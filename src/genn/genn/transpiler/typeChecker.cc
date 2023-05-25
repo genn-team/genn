@@ -28,31 +28,6 @@ namespace Utils = GeNN::Utils;
 //---------------------------------------------------------------------------
 namespace
 {
-std::string getDescription(const Type::ResolvedType &type)
-{
-    const std::string qualifier = type.hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
-     return std::visit(
-         Utils::Overload{
-             [&qualifier](const Type::ResolvedType::Value &value)
-             {
-                 assert(value.numeric);
-                 return qualifier + value.name;
-             },
-             [&qualifier, &type](const Type::ResolvedType::Pointer &pointer)
-             {
-                 return qualifier + getDescription(*pointer.valueType) + "*";
-             },
-             [&type](const Type::ResolvedType::Function &function)
-             {
-                 std::string description = getDescription(*function.returnType) + "(";
-                 for (const auto &a : function.argTypes) {
-                     description += (getDescription(a) + ",");
-                 }
-                 return description + ")";
-             }},
-        type.detail);
-}
-//---------------------------------------------------------------------------
 bool checkPointerTypeAssignement(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType) 
 {
     return std::visit(
@@ -239,7 +214,7 @@ private:
             auto indexType = evaluateType(arraySubscript.getIndex());
             if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
                 m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
-                                     "Invalid subscript index type '" + getDescription(indexType) + "'");
+                                     "Invalid subscript index type '" + indexType.getName() + "'");
                 throw TypeCheckError();
             }
 
@@ -265,7 +240,7 @@ private:
         }
         // Otherwise, if implicit conversion fails, give error
         else if (!checkImplicitConversion(rightType, leftType, assignment.getOperator().type)) {
-            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand types '" + getDescription(leftType) + "' and '" + getDescription(rightType));
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName());
             throw TypeCheckError();
         }
 
@@ -364,7 +339,7 @@ private:
                     setExpressionType(&binary, *resultType);
                 }
                 else {
-                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + getDescription(leftType) + "' and '" + getDescription(rightType));
+                    m_ErrorHandler.error(binary.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName());
                     throw TypeCheckError();
                 }
         }
@@ -401,7 +376,7 @@ private:
 
         // If const is being removed
         if (!checkForConstRemoval(rightType, cast.getType())) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + getDescription(cast.getType()) + "' and '" + getDescription(rightType));
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType().getName() + "' and '" + rightType.getName());
             throw TypeCheckError();
         }
 
@@ -439,7 +414,7 @@ private:
             setExpressionType(&cast, *resultType);
         }
         else {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + getDescription(cast.getType()) + "' and '" + getDescription(rightType));
+            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType().getName() + "' and '" + rightType.getName());
              throw TypeCheckError();
         }
     }
@@ -460,7 +435,7 @@ private:
         }
         else {
             m_ErrorHandler.error(conditional.getQuestion(),
-                                 "Invalid operand types '" + getDescription(trueType) + "' and '" + getDescription(falseType) + "' to conditional");
+                                 "Invalid operand types '" + trueType.getName() + "' and '" + falseType.getName() + "' to conditional");
             throw TypeCheckError();
         }
     }
@@ -473,7 +448,6 @@ private:
     virtual void visit(const Expression::Literal &literal) final
     {
         // Convert number token type to type
-        // **THINK** is it better to use typedef for scalar or resolve from m_Context
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
             setExpressionType(&literal, Type::Double);
         }
@@ -481,10 +455,7 @@ private:
             setExpressionType(&literal, Type::Float);
         }
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            // **TODO** cache
-            assert(false);
-            // **THINK** why not resolve here?
-            //setExpressionType(&literal, new Type::NumericTypedef("scalar"));
+            setExpressionType(&literal, m_Context.at("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
             setExpressionType(&literal, Type::Int32);
@@ -493,7 +464,7 @@ private:
             setExpressionType(&literal, Type::Uint32);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::ResolvedType::createPointer(Type::Int8, Type::Qualifier::CONSTANT));
+            setExpressionType(&literal, Type::Int8.createPointer(Type::Qualifier::CONSTANT));
         }
         else {
             assert(false);
@@ -648,7 +619,7 @@ private:
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
-                                     "Invalid operand type '" + getDescription(rightType) + "'");
+                                     "Invalid operand type '" + rightType.getName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -668,7 +639,7 @@ private:
                 }
                 else {
                     m_ErrorHandler.error(unary.getOperator(),
-                                            "Invalid operand type '" + getDescription(rightType) + "'");
+                                            "Invalid operand type '" + rightType.getName() + "'");
                     throw TypeCheckError();
                 }
             }
@@ -678,12 +649,12 @@ private:
             }
             // Otherwise, if operator is address of, return pointer type
             else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                setExpressionType(&unary, Type::ResolvedType::createPointer(rightType));
+                setExpressionType(&unary, rightType.createPointer());
             }
         }
         else {
             m_ErrorHandler.error(unary.getOperator(),
-                                    "Invalid operand type '" + getDescription(rightType) + "'");
+                                    "Invalid operand type '" + rightType.getName() + "'");
             throw TypeCheckError();
         }
     }
@@ -784,7 +755,7 @@ private:
             auto valType = evaluateType(labelled.getValue());
             if (!valType.isNumeric() || !valType.getNumeric().isIntegral) {
                 m_ErrorHandler.error(labelled.getKeyword(),
-                                     "Invalid case value '" + getDescription(valType) + "'");
+                                     "Invalid case value '" + valType.getName() + "'");
                 throw TypeCheckError();
             }
         }
@@ -797,7 +768,7 @@ private:
         auto condType = evaluateType(switchStatement.getCondition());
         if (!condType.isNumeric() || !condType.getNumeric().isIntegral) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
-                                 "Invalid condition '" + getDescription(condType) + "'");
+                                 "Invalid condition '" + condType.getName() + "'");
             throw TypeCheckError();
         }
 
@@ -817,7 +788,7 @@ private:
             if (std::get<1>(var)) {
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
                 if (!checkImplicitConversion(initialiserType, decType)) {
-                    m_ErrorHandler.error(std::get<0>(var), "Invalid operand types '" + getDescription(decType) + "' and '" + getDescription(initialiserType));
+                    m_ErrorHandler.error(std::get<0>(var), "Invalid operand types '" + decType.getName() + "' and '" + initialiserType.getName());
                 }
             }
         }

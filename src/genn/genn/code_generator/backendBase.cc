@@ -16,7 +16,7 @@
 namespace GeNN::CodeGenerator
 {
 BackendBase::BackendBase(const PreferencesBase &preferences)
-:   m_Preferences(preferences)
+:   m_PointerBytes(sizeof(char *)), m_Preferences(preferences)
 {
 }
 //--------------------------------------------------------------------------

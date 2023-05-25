@@ -31,7 +31,7 @@ public:
     virtual std::string define(const std::string &name) = 0;
     
     //! Get the name to use in code for the variable named by token
-    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) = 0;
+    virtual std::string getName(const std::string &name, const Type::ResolvedType &type) = 0;
     
     //! Get stream to write code within this environment to
     virtual CodeGenerator::CodeStream &getStream() = 0;

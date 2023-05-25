@@ -259,7 +259,7 @@ public:
 
     //! Generate code to allocate variable with a size known at compile-time
     virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       const Type::ResolvedType &type, const std::string &name, 
                                        VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
     
     //! Generate code to allocate variable with a size known at runtime
@@ -322,12 +322,12 @@ public:
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, const Type::TypeContext &typeContext, MemAlloc &memAlloc) const = 0;
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
 
     //! Generate an RNG with a state per population member
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocations, CodeStream &free, 
-                                  const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
@@ -427,15 +427,6 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
-    //! Templated version of helper function to generate matching push and pull functions for
-    //!  a variable when type is known at compile time
-    template<typename T>
-    void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
-    {
-        genVariablePushPull(push, pull, T::getInstance(), name, loc, autoInitialized, count);
-    }
-
     //! Helper function to generate matching push and pull functions for the current state of a variable
     void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, 
                                     const Type::ResolvedType &type, const std::string &name, 
@@ -445,35 +436,18 @@ public:
         genCurrentVariablePull(pull, ng, type, name, loc, batchSize);
     }
 
-    //! Templated version of gelper function to generate matching push and pull functions 
-    //! for the current state of variable when type is known at compile time
-    template<typename T>
-    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, 
-                                    const std::string &name, VarLocation loc, unsigned int batchSize) const
-    {
-        genCurrentVariablePushPull(push, pull, ng, T::getInstance(), name, loc, batchSize);
-    }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for a statically-sized array
     void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const Type::ResolvedType &type, const Type::TypeContext &typeContext, const std::string &name, 
+                  const Type::ResolvedType &type, const std::string &name, 
                   VarLocation loc, size_t count, MemAlloc &memAlloc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type, name, loc);
         genVariableInstantiation(runner, type, name, loc);
         genVariableFree(free, name, loc);
-        genVariableAllocation(allocations, type, typeContext, name, loc, count, memAlloc);
+        genVariableAllocation(allocations, type, name, loc, count, memAlloc);
     }
 
-    //! Templated version of helper function to generate matching definition, declaration, 
-    //! allocation and free code for a statically-sized array when type is known at compile-time
-    template<typename T>
-    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const Type::TypeContext &typeContext, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
-    {
-        genArray(definitions, definitionsInternal, runner, allocations, free, T::getInstance(), typeContext, name, loc, count, memAlloc);
-        
-    }
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
@@ -481,6 +455,9 @@ public:
     }
 
     bool areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const;
+
+    //! Get backend-specific pointer size in bytes
+    size_t getPointerBytes() const{ return m_PointerBytes; }
 
     const PreferencesBase &getPreferences() const { return m_Preferences; }
 
@@ -503,6 +480,11 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
+    void setPointerBytes(size_t pointerBytes) 
+    {
+        m_PointerBytes = pointerBytes;
+    }
+
     void genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const;
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
@@ -540,7 +522,7 @@ private:
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
-                os << v.type->getName() << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type, cg.getTypeContext()) << ";" << std::endl;
+                os << v.type->getName() << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type) << ";" << std::endl;
                 reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access),
                                               cg.getVarIndex(getVarAccessDuplication(v.access), idx));
             }
@@ -552,7 +534,7 @@ private:
 
             // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
             if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
-                os << modelVarRef.type->getName() << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type, cg.getTypeContext()) << ";" << std::endl;
+                os << modelVarRef.type->getName() << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type) << ";" << std::endl;
                 reductionTargets.emplace_back(modelVarRef.name, modelVarRef.type, modelVarRef.access,
                                               getVarRefIndexFn(varRef, idx));
             }
@@ -564,6 +546,9 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
+     //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
+    size_t m_PointerBytes;
+
     //! Preferences
     const PreferencesBase &m_Preferences;
 };

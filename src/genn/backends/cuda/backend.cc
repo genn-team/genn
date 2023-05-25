@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <iterator>
 
+// CUDA includes
+#include <curand_kernel.h>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
@@ -47,50 +50,8 @@ const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions 
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
-//! Tag class used to mark types which are only usable on device
-struct CUDADeviceType
-{
-};
-
-//--------------------------------------------------------------------------
-// CURandState
-//--------------------------------------------------------------------------
-class CURandState : public Type::ValueBase, public CUDADeviceType
-{
-public:
-    DECLARE_TYPE(CURandState);
-    
-    CURandState(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
-
-    //------------------------------------------------------------------------
-    // Base overloads
-    //------------------------------------------------------------------------
-    virtual std::string getName() const final{ return "curandState"; }
-    virtual std::string getResolvedName(const Type::TypeContext&) const final{ return "curandState"; }
-    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CURandState(qualifiers); }
-    virtual size_t getSizeBytes(const Type::TypeContext&) const final{ return 44; }
-};
-IMPLEMENT_TYPE(CURandState);
-
-//--------------------------------------------------------------------------
-// CURandStatePhilox43210
-//--------------------------------------------------------------------------
-class CURandStatePhilox43210 : public Type::ValueBase, public CUDADeviceType
-{
-public:
-    DECLARE_TYPE(CURandStatePhilox43210);
-    
-    CURandStatePhilox43210(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
-
-    //------------------------------------------------------------------------
-    // Base overloads
-    //------------------------------------------------------------------------
-    virtual std::string getName() const final{ return "curandStatePhilox4_32_10_t"; }
-    virtual std::string getResolvedName(const Type::TypeContext&) const final{ return "curandStatePhilox4_32_10_t"; }
-    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CURandStatePhilox43210(qualifiers); }
-    virtual size_t getSizeBytes(const Type::TypeContext&) const final{ return 64; }
-};
-IMPLEMENT_TYPE(CURandStatePhilox43210);
+const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>();
+const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>();
 
 //--------------------------------------------------------------------------
 // Timer

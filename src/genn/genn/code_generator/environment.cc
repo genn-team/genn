@@ -6,6 +6,9 @@
 // Standard C includes
 #include <cassert>
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
@@ -19,16 +22,16 @@ std::string EnvironmentExternal::define(const std::string&)
 CodeStream &EnvironmentExternal::getContextStream() const
 {
     return std::visit(
-        Transpiler::Utils::Overload{
+        Utils::Overload{
             [](std::reference_wrapper<EnvironmentBase> enclosing)->CodeStream& { return enclosing.get().getStream(); },
             [](std::reference_wrapper<CodeStream> os)->CodeStream& { return os.get(); }},
         getContext());
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentExternal::getContextName(const std::string &name, const Type::Base *type) const
+std::string EnvironmentExternal::getContextName(const std::string &name, const Type::ResolvedType &type) const
 {
     return std::visit(
-        Transpiler::Utils::Overload{
+        Utils::Overload{
             [&name, type](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name, type); },
             [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name + "' undefined"); }},
         getContext());
@@ -51,7 +54,7 @@ EnvironmentSubstitute::~EnvironmentSubstitute()
     getContextStream() << m_ContentsStream.str();
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentSubstitute::getName(const std::string &name, const Type::Base *type)
+std::string EnvironmentSubstitute::getName(const std::string &name, const Type::ResolvedType &type)
 {
     // If there isn't a substitution for this name, try and get name from context
     auto var = m_VarSubstitutions.find(name);

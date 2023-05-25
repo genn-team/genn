@@ -93,8 +93,8 @@ struct ResolvedType
     //------------------------------------------------------------------------
     struct Value
     {
+        std::string name;
         size_t size;
-        std::string name;       // **TODO** delete me
         std::optional<Numeric> numeric;
         
         //------------------------------------------------------------------------
@@ -188,14 +188,14 @@ struct ResolvedType
         }
     };
     
-    ResolvedType(Qualifier qualifiers, const Value &value)
+    ResolvedType(const Value &value, Qualifier qualifiers = Qualifier{0})
     :   qualifiers(qualifiers), detail(value)
     {}
-    ResolvedType(Qualifier qualifiers, const Pointer &pointer)
+    ResolvedType(const Pointer &pointer, Qualifier qualifiers = Qualifier{0})
     :   qualifiers(qualifiers), detail(pointer)
     {}
     ResolvedType(const Function &function)
-        : qualifiers(Qualifier{0}), detail(function)
+    :   qualifiers(Qualifier{0}), detail(function)
     {}
     ResolvedType(const ResolvedType &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
     {}
@@ -214,6 +214,7 @@ struct ResolvedType
     bool isPointer() const{ return std::holds_alternative<Pointer>(detail); }
     bool isFunction() const{ return std::holds_alternative<Function>(detail); }
     bool isNumeric() const{ return isValue() && getValue().numeric; }
+
     const Value &getValue() const{ return std::get<Value>(detail); }
     const Pointer &getPointer() const{ return std::get<Pointer>(detail); }
     const Function &getFunction() const{ return std::get<Function>(detail); }
@@ -221,6 +222,14 @@ struct ResolvedType
 
     const ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifier); }
     bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
+
+    std::string getName() const;
+    size_t getSize(size_t pointerBytes) const;
+
+    ResolvedType createPointer(Qualifier qualifiers = Qualifier{0}) const
+    {
+        return ResolvedType(Pointer{*this}, qualifiers);
+    }
 
     //------------------------------------------------------------------------
     // Operators
@@ -246,16 +255,20 @@ struct ResolvedType
     template<typename T>
     static ResolvedType createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
     {
-        return ResolvedType{qualifiers, Value{sizeof(T), name, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                                       std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                                                       std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}}};
+        return ResolvedType{Value{name, sizeof(T), Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                                           std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                                           std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
+                            qualifiers};
     }
 
-    static ResolvedType createPointer(const ResolvedType &valueType, Qualifier qualifiers = Qualifier{0})
+    template<typename T>
+    static ResolvedType createValue(const std::string &name, Qualifier qualifiers = Qualifier{0})
     {
-         return ResolvedType(qualifiers, Pointer{valueType});
+        return ResolvedType{Value{name, sizeof(T), std::nullopt}, qualifiers};
     }
 };
+
+typedef std::unordered_map<std::string, ResolvedType> TypeContext;
 
 //----------------------------------------------------------------------------
 // UnresolvedType
@@ -277,7 +290,7 @@ struct UnresolvedType
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    ResolvedType resolve(const std::unordered_map<std::string, ResolvedType> &typeContext) const;
+    ResolvedType resolve(const TypeContext &typeContext) const;
 
     //------------------------------------------------------------------------
     // Operators
@@ -298,7 +311,6 @@ struct UnresolvedType
     }
 };
 
-typedef std::unordered_map<std::string, const class Base*> TypeContext;
 
 //----------------------------------------------------------------------------
 // Declare numeric types

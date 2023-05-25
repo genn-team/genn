@@ -14,7 +14,6 @@
 
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
-#include "transpiler/transpilerUtils.h"
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternal
@@ -51,7 +50,7 @@ protected:
 
     CodeStream &getContextStream() const;
 
-    std::string getContextName(const std::string &name, const Type::Base *type) const;
+    std::string getContextName(const std::string &name, const Type::ResolvedType &type) const;
 
 private:
     //------------------------------------------------------------------------
@@ -89,7 +88,7 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final;
+    virtual std::string getName(const std::string &name, const Type::ResolvedType &type) final;
 
     virtual CodeStream &getStream() final
     {
@@ -231,7 +230,7 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final
+    virtual std::string getName(const std::string &name, const Type::ResolvedType &type) final
     {
         // If variable with this name isn't found, try and get name from context
         auto var = m_VariablesReferenced.find(name);

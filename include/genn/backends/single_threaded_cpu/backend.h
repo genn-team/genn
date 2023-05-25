@@ -69,7 +69,7 @@ public:
 
     //! Generate code to allocate variable with a size known at compile-time
     virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       const Type::ResolvedType &type, const std::string &name, 
                                        VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
     
     //! Generate code to allocate variable with a size known at runtime
@@ -130,10 +130,10 @@ public:
     virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
 
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                    CodeStream &allocations, CodeStream &free, const Type::TypeContext &typeContext, MemAlloc &memAlloc) const final;
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocations, CodeStream &free,
-                                  const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const final;
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 

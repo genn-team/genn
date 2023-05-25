@@ -64,7 +64,7 @@ public:
     typedef G GroupInternal;
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
     typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
-    typedef std::tuple<const Type::Base*, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
+    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
     GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
     :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
@@ -99,10 +99,11 @@ public:
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
+        const size_t pointerBytes = backend.getPointerBytes();
         std::sort(sortedFields.begin(), sortedFields.end(),
-                  [&backend, this](const Field &a, const Field &b)
+                  [pointerBytes](const Field &a, const Field &b)
                   {
-                      return (std::get<0>(a)->getSizeBytes(m_TypeContext) > std::get<0>(b)->getSizeBytes(m_TypeContext));
+                      return (std::get<0>(a).getSize(pointerBytes) > std::get<0>(b).getSize(pointerBytes));
                   });
         return sortedFields;
 
@@ -119,20 +120,20 @@ public:
             for(const auto &f : sortedFields) {
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
-                const auto *type = std::get<0>(f);
-                if(dynamic_cast<const Type::Pointer*>(type) && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
+                const auto &type = std::get<0>(f);
+                if(type.isPointer() && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
                         os << backend.getMergedGroupFieldHostTypeName(type);
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type->getName();
+                        os << backend.getPointerPrefix() << type.getName();
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type->getName();
+                    os << type.getName();
                 }
                 os << " " << std::get<1>(f) << ";" << std::endl;
             }
@@ -205,8 +206,8 @@ public:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    const Type::NumericBase *getScalarType() const{ return dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("scalar")); }
-    const Type::NumericBase *getTimeType() const{ return dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("timepoint")); }
+    const Type::ResolvedType &getScalarType() const{ return m_TypeContext.at("scalar"); }
+    const Type::ResolvedType &getTimeType() const{ return m_TypeContext.at("timepoint"); }
 
     //! Helper to test whether parameter is referenced in vector of codestrings
     bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
@@ -248,17 +249,10 @@ public:
                            });
     }
 
-    void addField(const Type::Base *type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
+    void addField(const Type::ResolvedType &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
-    }
-
-    template<typename T>
-    void addField(const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
-    {
-        // Add field to data structure
-        m_Fields.emplace_back(T::getInstance(), name, getFieldValue, fieldType);
     }
 
     void addScalarField(const std::string &name, GetFieldDoubleValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
@@ -266,20 +260,16 @@ public:
         addField(getScalarType(), name,
                  [getFieldValue, this](const G &g, size_t i)
                  {
-                     return Utils::writePreciseString(getFieldValue(g, i), getScalarType()->getMaxDigits10(m_TypeContext)) + getScalarType()->getLiteralSuffix(m_TypeContext);
+                     return Utils::writePreciseString(getFieldValue(g, i), getScalarType().getNumeric().maxDigits10) + getScalarType().getNumeric().literalSuffix;
                  },
                  fieldType);
     }
 
-    void addPointerField(const Type::Base *type, const std::string &name, const std::string &prefix)
+    void addPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix)
     {
-        addField(type->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
-    }
-
-    template<typename T>
-    void addPointerField(const std::string &name, const std::string &prefix)
-    {
-        addField(T::getInstance()->getPointerType(), name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        assert(type.isValue());
+        addField(type.createPointer(), name,
+                 [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
 
@@ -296,7 +286,7 @@ public:
     {
         // Loop through variables
         for(const auto &v : varReferences) {
-            addField(v.type->getPointerType(), v.name, 
+            addField(v.type.resolve(getTypeContext()).createPointer(), v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
@@ -308,7 +298,7 @@ public:
     void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            addField(e.type->getPointerType(), e.name + varName,
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + varName,
                      [e, arrayPrefix, varName](const G &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
                      GroupMergedFieldType::DYNAMIC);
         }
@@ -479,7 +469,7 @@ public:
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
             // If this field is a dynamic pointer
-            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && dynamic_cast<const Type::Pointer*>(std::get<0>(f))) {
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && std::get<0>(f).isPointer()) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }
@@ -832,7 +822,7 @@ protected:
                       S getEGPSuffixFn)
     {
         for(const auto &e : egps) {
-            addField(e.type->getPointerType(), e.name + prefix + std::to_string(childIndex),
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + prefix + std::to_string(childIndex),
                      [getEGPSuffixFn, childIndex, e, arrayPrefix](const NeuronGroupInternal&, size_t groupIndex)
                      {
                          return arrayPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
@@ -934,10 +924,10 @@ protected:
         }
     }
 
-    void addMergedInSynPointerField(const Type::NumericBase *type, const std::string &name,
+    void addMergedInSynPointerField(const Type::ResolvedType &type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);
 
-    void addMergedPreOutputOutSynPointerField(const Type::NumericBase *type, const std::string &name,
+    void addMergedPreOutputOutSynPointerField(const Type::ResolvedType &type, const std::string &name,
                                               size_t archetypeIndex, const std::string &prefix);
 
 
@@ -1088,10 +1078,10 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
-    void addPreOutputPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
-    void addSrcPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
-    void addTrgPointerField(const Type::NumericBase *type, const std::string &name, const std::string &prefix);
+    void addPSPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
+    void addPreOutputPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
+    void addSrcPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
+    void addTrgPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
 
     std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
                             const std::string &index, const std::string &prefix) const;

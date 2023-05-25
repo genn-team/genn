@@ -6,6 +6,7 @@
 #include <variant>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "logging.h"
 
 // Transpiler includes
@@ -57,15 +58,57 @@ const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// GeNN::Type
+// GeNN::Type::ResolvedType
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
-
+std::string ResolvedType::getName() const
+{
+    const std::string qualifier = hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
+    return std::visit(
+        Utils::Overload{
+            [&qualifier](const Type::ResolvedType::Value &value)
+            {
+                assert(value.numeric);
+                return qualifier + value.name;
+            },
+            [&qualifier](const Type::ResolvedType::Pointer &pointer)
+            {
+                return qualifier + pointer.valueType->getName() + "*";
+            },
+            [&qualifier](const Type::ResolvedType::Function &function)
+            {
+                std::string description = qualifier + function.returnType->getName() + "(";
+                for (const auto &a : function.argTypes) {
+                    description += (a.getName() + ",");
+                }
+                return description + ")";
+            }},
+        detail);
+}
 //----------------------------------------------------------------------------
-// UnresolvedType
+size_t ResolvedType::getSize(size_t pointerBytes) const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const Type::ResolvedType::Value &value)
+            {
+                return value.size;
+            },
+            [pointerBytes](const Type::ResolvedType::Pointer&)
+            {
+                return pointerBytes;
+            },
+            [](const Type::ResolvedType::Function&)
+            {
+                throw std::runtime_error("Function types do not have size");
+            }},
+            detail);
+}
 //----------------------------------------------------------------------------
-ResolvedType UnresolvedType::resolve(const std::unordered_map<std::string, ResolvedType> &typeContext) const
+// GeNN::Type::UnresolvedType
+//----------------------------------------------------------------------------
+ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
 {
     return std::visit(
          Utils::Overload{

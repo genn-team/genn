@@ -579,7 +579,7 @@ void Backend::genCustomUpdate(CodeStream &os_, const ModelSpecMerged &modelMerge
 
                                 // Loop through reduction targets and generate reduction
                                 for (const auto &r : reductionTargets) {
-                                    env.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type, modelMerged.getTypeContext()) << ";" << std::endl;
+                                    env.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
                                 }
                             }
 
@@ -1295,22 +1295,21 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
                                     const Type::ResolvedType &type, const std::string &name, VarLocation) const
 {
-    definitions << "EXPORT_VAR " << type.getNumeric().name << "* " << name << ";" << std::endl;
+    definitions << "EXPORT_VAR " << type.getValue().name << "* " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInstantiation(CodeStream &os, 
                                        const Type::ResolvedType &type, const std::string &name, VarLocation) const
 {
-    os << type.getNumeric().name << "* " << name << ";" << std::endl;
+    os << type.getValue().name << "* " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, 
-                                    const Type::ResolvedType &type, const Type::TypeContext &typeContext, const std::string &name, 
+void Backend::genVariableAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name, 
                                     VarLocation, size_t count, MemAlloc &memAlloc) const
 {
-    os << name << " = new " << type.getNumeric().name << "[" << count << "];" << std::endl;
+    os << name << " = new " << type.getValue().name << "[" << count << "];" << std::endl;
 
-    memAlloc += MemAlloc::host(count * type.size);
+    memAlloc += MemAlloc::host(count * type.getValue().size);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDynamicAllocation(CodeStream &os, 
@@ -1318,10 +1317,10 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
                                            const std::string &countVarName, const std::string &prefix) const
 {
     if (type.isPointer()) {
-        os << "*" << prefix << name <<  " = new " << type.getPointer().valueType->getNumeric().name << "[" << countVarName << "];" << std::endl;
+        os << "*" << prefix << name <<  " = new " << type.getPointer().valueType->getValue().name << "[" << countVarName << "];" << std::endl;
     }
     else {
-        os << prefix << name << " = new " << type.getNumeric().name << "[" << countVarName << "];" << std::endl;
+        os << prefix << name << " = new " << type.getValue().name << "[" << countVarName << "];" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1378,7 +1377,7 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
 {
-    return type.getNumeric().name;
+    return type.getName();
 }
 //--------------------------------------------------------------------------
 const Type::ResolvedType &Backend::getMergedGroupSimRNGType() const
@@ -1445,13 +1444,13 @@ void Backend::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUp
     //genKernelIteration(os, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), kernelSubs, handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, const Type::TypeContext&, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
 {
     assert(false);
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
-                               const Type::TypeContext&, const std::string&, size_t, MemAlloc&) const
+                               const std::string&, size_t, MemAlloc&) const
 {
 }
 //--------------------------------------------------------------------------

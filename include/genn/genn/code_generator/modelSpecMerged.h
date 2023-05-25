@@ -40,20 +40,20 @@ public:
     //! Immutable structure for tracking fields of merged group structure containing EGPs
     struct EGPField
     {
-        EGPField(size_t m, const Type::Pointer *t, const std::string &f, bool h)
+        EGPField(size_t m, const Type::ResolvedType &t, const std::string &f, bool h)
         :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
 
-        const size_t mergedGroupIndex;
-        const Type::Pointer *type;
-        const std::string fieldName;
-        const bool hostGroup;
+        size_t mergedGroupIndex;
+        Type::ResolvedType type;
+        std::string fieldName;
+        bool hostGroup;
 
         //! Less than operator (used for std::set::insert), 
         //! lexicographically compares all three struct members
         bool operator < (const EGPField &other) const
         {
-            return (std::make_tuple(mergedGroupIndex, type->getName(), fieldName, hostGroup) 
-                    < std::make_tuple(other.mergedGroupIndex, other.type->getName(), other.fieldName, other.hostGroup));
+            return (std::make_tuple(mergedGroupIndex, type, fieldName, hostGroup) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.hostGroup));
         }
     };
     
@@ -63,7 +63,7 @@ public:
     //! Immutable structure for tracking where an extra global variable ends up after merging
     struct MergedEGP : public EGPField
     {
-        MergedEGP(size_t m, size_t g, const Type::Pointer *t, const std::string &f, bool h)
+        MergedEGP(size_t m, size_t g, const Type::ResolvedType &t, const std::string &f, bool h)
         :   EGPField(m, t, f, h), groupIndex(g) {}
 
         const size_t groupIndex;
