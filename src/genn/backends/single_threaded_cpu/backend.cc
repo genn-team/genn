@@ -153,7 +153,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
 
@@ -320,7 +320,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "void updateSynapses(timepoint t)";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
         funcSubs.addVarSubstitution("t", "t");
         funcSubs.addVarSubstitution("batch", "0");
 
@@ -815,7 +815,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
 
         Timer t(os, "init", model.isTimingEnabled());
 
@@ -1070,7 +1070,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()->getName()));
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
 
         Timer t(os, "initSparse", model.isTimingEnabled());
 
@@ -1224,9 +1224,9 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
     if(isGlobalHostRNGRequired(modelMerged)) {
-        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision()->getName() << "> standardUniformDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision()->getName() << "> standardNormalDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision()->getName() << "> standardExponentialDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
         os << std::endl;
     }
 }
@@ -1272,9 +1272,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
     if(isGlobalHostRNGRequired(modelMerged)) {
-        os << "std::uniform_real_distribution<" << model.getPrecision()->getName() << "> standardUniformDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::normal_distribution<" << model.getPrecision()->getName() << "> standardNormalDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::exponential_distribution<" << model.getPrecision()->getName() << "> standardExponentialDistribution(" << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << modelMerged.scalarExpr(1.0) << ");" << std::endl;
         os << std::endl;
     }
     os << std::endl;
@@ -1380,10 +1380,10 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &t
     return type.getName();
 }
 //--------------------------------------------------------------------------
-const Type::ResolvedType &Backend::getMergedGroupSimRNGType() const
+std::optional<Type::ResolvedType> Backend::getMergedGroupSimRNGType() const
 {
     assert(false);
-    return nullptr;
+    return std::nullopt;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
@@ -1664,7 +1664,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
                 //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-                os << d.type->getName() << " " << d.name << " = " << value << ";" << std::endl;
+                os << d.type.resolve(sg.getTypeContext()).getName() << " " << d.name << " = " << value << ";" << std::endl;
             }
 
              // Detect spike events or spikes and do the update

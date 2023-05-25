@@ -728,7 +728,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash(getSparseIndType()->getName(), hash);
+    Type::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getNumThreadsPerSpike(), hash);
     Utils::updateHash(isEventThresholdReTestRequired(), hash);
     Utils::updateHash(getSpanType(), hash);
@@ -893,7 +893,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMatrixType(), hash);
-    Utils::updateHash(getSparseIndType()->getName(), hash);
+    Type::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
     Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
@@ -958,7 +958,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDig
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     Utils::updateHash(getMatrixType(), hash);
-    Utils::updateHash(getSparseIndType()->getName(), hash);
+    Type::updateHash(getSparseIndType(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

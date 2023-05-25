@@ -176,26 +176,26 @@ private:
 class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
-    Visitor(const Statement::StatementList &statements, const Type::TypeContext &context, 
-            EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   Visitor(context, environment, resolvedTypes, errorHandler)
+    Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment, 
+            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
+    :   Visitor(environment, resolvedTypes, errorHandler)
     {
         for (auto &s : statements) {
             s.get()->accept(*this);
         }
     }
     
-    Visitor(const Expression::Base *expression, const Type::TypeContext &context, 
-            EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   Visitor(context, environment, resolvedTypes, errorHandler)
+    Visitor(const Expression::Base *expression, EnvironmentInternal &environment, 
+            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
+    :   Visitor(environment, resolvedTypes, errorHandler)
     {
         expression->accept(*this);
     }
     
 private:
-    Visitor(const Type::TypeContext &context, EnvironmentInternal &environment, 
+    Visitor(EnvironmentInternal &environment, 
             ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   m_Environment(environment), m_Context(context), m_ErrorHandler(errorHandler), 
+    :   m_Environment(environment), m_ErrorHandler(errorHandler), 
         m_ResolvedTypes(resolvedTypes), m_InLoop(false), m_InSwitch(false)
     {
     }
@@ -453,9 +453,6 @@ private:
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
             setExpressionType(&literal, Type::Float);
-        }
-        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            setExpressionType(&literal, m_Context.at("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
             setExpressionType(&literal, Type::Int32);
@@ -828,7 +825,6 @@ private:
     // Members
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentInternal> m_Environment;
-    const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     ResolvedTypeMap &m_ResolvedTypes;
     std::stack<std::vector<Type::ResolvedType>> m_CallArguments;
@@ -856,19 +852,19 @@ Type::ResolvedType EnvironmentBase::getType(const Token &name, ErrorHandlerBase 
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
 ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+                                                         ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, context, internalEnvironment, expressionTypes, errorHandler);
+    Visitor visitor(statements, internalEnvironment, expressionTypes, errorHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
 Type::ResolvedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
-                                                    const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+                                                            ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, context, internalEnvironment, expressionTypes, errorHandler);
+    Visitor visitor(expression, internalEnvironment, expressionTypes, errorHandler);
     return expressionTypes.at(expression);
 }

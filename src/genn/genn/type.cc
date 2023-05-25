@@ -67,7 +67,6 @@ std::string ResolvedType::getName() const
         Utils::Overload{
             [&qualifier](const Type::ResolvedType::Value &value)
             {
-                assert(value.numeric);
                 return qualifier + value.name;
             },
             [&qualifier](const Type::ResolvedType::Pointer &pointer)
@@ -97,7 +96,7 @@ size_t ResolvedType::getSize(size_t pointerBytes) const
             {
                 return pointerBytes;
             },
-            [](const Type::ResolvedType::Function&)
+            [](const Type::ResolvedType::Function&)->size_t
             {
                 throw std::runtime_error("Function types do not have size");
             }},
@@ -123,16 +122,16 @@ ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-ResolvedType parseNumeric(const std::string &typeString)
+ResolvedType parseNumeric(const std::string &typeString, const TypeContext &context)
 {
     using namespace Transpiler;
 
     // Scan type
     SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, errorHandler);
+    const auto tokens = Scanner::scanSource(typeString, context, errorHandler);
 
     // Parse type numeric type
-    const auto type = Parser::parseNumericType(tokens, errorHandler);
+    const auto type = Parser::parseNumericType(tokens, context, errorHandler);
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {

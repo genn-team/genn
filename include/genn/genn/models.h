@@ -313,7 +313,7 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
 
         // Check types of variable references against those specified in model
         // **THINK** this is rather conservative but I think not allowing scalar and whatever happens to be scalar type is ok
-        if(varRef.getVar().type->getName() != modelVarRef.type->getName()) {
+        if(varRef.getVar().type != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
         }
 

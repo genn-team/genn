@@ -158,13 +158,16 @@ std::vector<Type::ResolvedType> FunctionTypes::getTypes(const Token &name, Error
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::StandardLibrary::FunctionEnvironment
 //---------------------------------------------------------------------------
-std::string FunctionEnvironment::getName(const std::string &name, const Type::ResolvedType &type)
+std::string FunctionEnvironment::getName(const std::string &name, std::optional<Type::ResolvedType> type)
 {
     const auto [libTypeBegin, libTypeEnd] = libraryTypes.equal_range(name);
     if (libTypeBegin == libTypeEnd) {
         return getContextName(name, type);
     }
     else {
+        if (!type) {
+            throw std::runtime_error("Ambiguous reference to '" + name + "' but no type provided to disambiguate");
+        }
         const auto libType = std::find_if(libTypeBegin, libTypeEnd,
                                           [type](const auto &t){ return t.second.first == type; });
         assert(libType != libTypeEnd);

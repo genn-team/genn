@@ -156,12 +156,12 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             // If dendritic delay is required, use atomic operation to update dendritic delay buffer
             if(sg.getArchetype().isDendriticDelayRequired()) {
                 synSubs.addFuncSubstitution("addToInSynDelay", 2, 
-                                            backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
+                                            backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
             }
             // Otherwise, substitute global memory array for $(inSyn)
             else {
                 synSubs.addFuncSubstitution("addToInSyn", 1, 
-                                            backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
+                                            backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             }
 
             if(sg.getArchetype().isPresynapticOutputRequired()) {
@@ -184,7 +184,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         // Should this be in the Postamble?
         if(sg.getArchetype().isPresynapticOutputRequired()) {
             // write lrevInSyn to global memory if not 0
-            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
         }
         
     }
@@ -343,7 +343,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
                     synSubs.addFuncSubstitution("addToInSynDelay", 2, 
-                                                backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, synSubs["id_post"], "$(1)") + "], $(0))");
+                                                backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, synSubs["id_post"], "$(1)") + "], $(0))");
                 }
                 // Otherwise
                 else {
@@ -359,13 +359,13 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     // Otherwise, use global memory atomic
                     else {
                         synSubs.addFuncSubstitution("addToInSyn", 1, 
-                                                    backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
+                                                    backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                     }
                 }
 
                 if(sg.getArchetype().isPresynapticOutputRequired()) {
                     synSubs.addFuncSubstitution("addToPre", 1,
-                                                backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                                                backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
                 }
                 
                 if(trueSpike) {
@@ -403,7 +403,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
             CodeStream::Scope b(os);
             const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(batchSize, popSubs["id"]) + "]";
             if(sg.getArchetype().isPSModelFused()) {
-                os << backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
             }
             else {
                 os << inSyn << " += linSyn;" << std::endl;
@@ -416,7 +416,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
         {
             CodeGenerator::CodeStream::Scope b(os);
-            os << backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) << "(&group->inSyn[" << sg.getPostISynIndex(batchSize, backend.getThreadID()) << "], ";
+            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << sg.getPostISynIndex(batchSize, backend.getThreadID()) << "], ";
             os << "shLg[" << backend.getThreadID() << "]); " << std::endl;
         }
     }
@@ -577,12 +577,12 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         // If dendritic delay is required, use atomic operation to update dendritic delay buffer
         if(sg.getArchetype().isDendriticDelayRequired()) {
             presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, 
-                                                      backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                                                      backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
         }
         // Otherwise, substitute global memory array for $(inSyn)
         else {
             presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
-                                                      backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
+                                                      backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
         
         if(sg.getArchetype().isPresynapticOutputRequired()) {
@@ -612,7 +612,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         // Should this be in the Postamble?
         if(sg.getArchetype().isPresynapticOutputRequired()) {
             // write lrevInSyn to global memory if not 0
-            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
         }
 
     }
@@ -753,7 +753,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
 
                     if(sg.getArchetype().isPresynapticOutputRequired()) {
                         synSubs.addFuncSubstitution("addToPre", 1,
-                                                    backend.getAtomic(modelMerged.getModel().getPrecision(), modelMerged.getTypeContext()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                                                    backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
                     }
  
                     if(trueSpike) {
@@ -793,7 +793,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
             CodeStream::Scope b(os);
             const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), "glbIdx") +"]";
             if(sg.getArchetype().isPSModelFused()) {
-                os << backend.getAtomic(modelMerged.getModel().getPrecision(), modelMerged.getTypeContext()) << "(&" << inSyn << ", shLg[shIdx]);" << std::endl;
+                os << backend.getAtomic(modelMerged.getModel().getPrecision()) << "(&" << inSyn << ", shLg[shIdx]);" << std::endl;
             }
             else {
                 os << inSyn << " += shLg[shIdx];" << std::endl;
@@ -871,7 +871,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-        os << d.type->getName() << " " << d.name << " = " << value << ";" << std::endl;
+        os << d.type.resolve(sg.getTypeContext()).getName() << " " << d.name << " = " << value << ";" << std::endl;
     }
 
     os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
@@ -936,7 +936,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
                     presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, 
-                                                              backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                                                              backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 }
                 // Otherwise
                 else {
@@ -947,13 +947,13 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                     // Otherwise, use global memory atomic
                     else {
                         presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
-                                                                   backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
+                                                                   backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                     }
                 }
 
                 if(sg.getArchetype().isPresynapticOutputRequired()) {
                     presynapticUpdateSubs.addFuncSubstitution("addToPre", 1,
-                                                              backend.getAtomic(model.getPrecision(), modelMerged.getTypeContext()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, presynapticUpdateSubs["id_pre"]) + "], $(0))");
+                                                              backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, presynapticUpdateSubs["id_pre"]) + "], $(0))");
                 }
 
                 // Generate presynaptic simulation code into new stringstream-backed code stream
@@ -989,7 +989,7 @@ void PostSpanToeplitz::genPostamble(CodeStream &os, const ModelSpecMerged &model
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
         {
             CodeGenerator::CodeStream::Scope b(os);
-            os << backend.getAtomic(modelMerged.getModel().getPrecision(), modelMerged.getTypeContext());
+            os << backend.getAtomic(modelMerged.getModel().getPrecision());
             os << "(&group->inSyn[" << sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), backend.getThreadID()) << "], ";
             os << "shLg[" << backend.getThreadID() << "]); " << std::endl;
         }

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -309,7 +310,7 @@ public:
     virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const = 0;
 
     //! When generating merged structures what type to use for simulation RNGs
-    virtual const Type::ResolvedType &getMergedGroupSimRNGType() const = 0;
+    virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -522,9 +523,10 @@ private:
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
-                os << v.type->getName() << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), v.type) << ";" << std::endl;
-                reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access),
-                                              cg.getVarIndex(getVarAccessDuplication(v.access), idx));
+                const auto resolvedType = v.type.resolve(cg.getTypeContext());
+                os << resolvedType.getName() << " lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
+                reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(v.access),
+                                            cg.getVarIndex(getVarAccessDuplication(v.access), idx)});
             }
         }
 
@@ -534,9 +536,10 @@ private:
 
             // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
             if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
-                os << modelVarRef.type->getName() << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, modelVarRef.type) << ";" << std::endl;
-                reductionTargets.emplace_back(modelVarRef.name, modelVarRef.type, modelVarRef.access,
-                                              getVarRefIndexFn(varRef, idx));
+                const auto resolvedType = modelVarRef.type.resolve(cg.getTypeContext());
+                os << resolvedType.getName() << " lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, resolvedType) << ";" << std::endl;
+                reductionTargets.push_back({modelVarRef.name, resolvedType, modelVarRef.access,
+                                            getVarRefIndexFn(varRef, idx)});
             }
         }
         return reductionTargets;

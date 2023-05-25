@@ -11,7 +11,6 @@
 #include "code_generator/codeStream.h"
 
 // Transpiler includes
-#include "transpiler/transpilerUtils.h"
 #include "transpiler/typeChecker.h"
 
 using namespace GeNN;
@@ -47,7 +46,7 @@ public:
         return "_" + name;
     }
 
-    virtual std::string getName(const std::string &name, const Type::Base *type = nullptr) final
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type) final
     {
         if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
             return m_Enclosing.getName(name, type);
@@ -100,7 +99,8 @@ private:
 
     virtual void visit(const Expression::Assignment &assignement) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(assignement.getVarName().lexeme) << " " << assignement.getOperator().lexeme << " ";
+        assignement.getAssignee()->accept(*this);
+        m_Environment.get().getStream() << " " << assignement.getOperator().lexeme << " ";
         assignement.getValue()->accept(*this);
     }
 
@@ -123,9 +123,7 @@ private:
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        m_Environment.get().getStream() << "(";
-        printType(cast.getType());
-        m_Environment.get().getStream() << ")";
+        m_Environment.get().getStream() << "(" << cast.getType().getName() << ")";
         cast.getExpression()->accept(*this);
     }
 
@@ -147,15 +145,10 @@ private:
 
     virtual void visit(const Expression::Literal &literal) final
     {
-        // If literal is a double, we want to remove the d suffix in generated code
+        // If literal is a float, add f suffix
         std::string_view lexeme = literal.getValue().lexeme;
-        if (literal.getValue().type == Token::Type::DOUBLE_NUMBER){
-            m_Environment.get().getStream() << lexeme.substr(0, literal.getValue().lexeme.size() - 1);
-        }
-        // Otherwise, if literal is a scalar, we want to add appropriate suffix for scalar type
-        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            const Type::NumericBase *scalar = dynamic_cast<const Type::NumericBase*>(m_Context.at("scalar"));
-            m_Environment.get().getStream() << lexeme << scalar->getLiteralSuffix(m_Context);
+        if (literal.getValue().type == Token::Type::FLOAT_NUMBER){
+            m_Environment.get().getStream() << lexeme << "f";
         }
         // Otherwise, just write out original lexeme directly (strings are already quoted)
         else {
@@ -172,17 +165,19 @@ private:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        m_Environment.get().getStream() << m_Environment.get().getName(postfixIncDec.getVarName().lexeme) << postfixIncDec.getOperator().lexeme;
+        postfixIncDec.getTarget()->accept(*this);
+        m_Environment.get().getStream() <<  postfixIncDec.getOperator().lexeme;
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        m_Environment.get().getStream() << prefixIncDec.getOperator().lexeme << m_Environment.get().getName(prefixIncDec.getVarName().lexeme);
+        m_Environment.get().getStream() << prefixIncDec.getOperator().lexeme;
+        prefixIncDec.getTarget()->accept(*this);
     }
 
     virtual void visit(const Expression::Variable &variable) final
     {
-        const auto *type = m_ResolvedTypes.at(&variable);
+        const auto &type = m_ResolvedTypes.at(&variable);
         m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme, type);
     }
 
@@ -304,7 +299,7 @@ private:
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
     {
-        printType(varDeclaration.getType());
+        m_Environment.get().getStream() << varDeclaration.getType().getName() << " ";
 
         for(const auto &var : varDeclaration.getInitDeclaratorList()) {
             m_Environment.get().getStream() << m_Environment.get().define(std::get<0>(var).lexeme);
@@ -333,41 +328,6 @@ private:
     }
 
 private:
-    void printType(const GeNN::Type::Base *type)
-    {
-        // **THINK** this should be Type::getName!
-        // Loop, building reversed list of tokens
-        std::vector<std::string> tokens;
-        while(true) {
-            // If type is a pointer
-            const auto *pointerType = dynamic_cast<const GeNN::Type::Pointer*>(type);
-            if(pointerType) {
-                // If pointer has const qualifier, add const
-                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
-                    tokens.push_back("const");
-                }
-
-                // Add *
-                tokens.push_back("*");
-
-                // Go to value type
-                type = pointerType->getValueType();
-            }
-            // Otherwise
-            else {
-                // Add type specifier
-                tokens.push_back(type->getName());
-
-                if(pointerType->hasQualifier(GeNN::Type::Qualifier::CONSTANT)) {
-                    tokens.push_back("const");
-                }
-                break;
-            }
-        }
-        // Copy tokens backwards into string stream, seperating with spaces
-        std::copy(tokens.rbegin(), tokens.rend(), std::ostream_iterator<std::string>(m_Environment.get().getStream(), " "));
-    }
-
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------

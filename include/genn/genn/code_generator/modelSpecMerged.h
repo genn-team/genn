@@ -323,12 +323,11 @@ private:
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
 
                         // Add reference to this group's variable to data structure
-                        const auto *pointerType = dynamic_cast<const Type::Pointer*>(std::get<0>(f));
-                        assert(pointerType);
+                        assert(std::get<0>(f).isPointer());
                         m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
                             std::piecewise_construct,
                             std::forward_as_tuple(MergedGroup::name),
-                            std::forward_as_tuple(i, groupIndex, pointerType, std::get<1>(f), host));
+                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
                     }
                 }
             }

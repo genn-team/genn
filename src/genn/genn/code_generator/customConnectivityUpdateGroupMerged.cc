@@ -18,19 +18,19 @@ CustomConnectivityUpdateGroupMergedBase::CustomConnectivityUpdateGroupMergedBase
 {
     using namespace Type;
 
-    addField<Uint32>("numSrcNeurons",
-            [](const auto &cg, size_t) 
-            {
-                const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-            });
+    addField(Uint32, "numSrcNeurons",
+             [](const auto &cg, size_t) 
+             {
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
+             });
 
-    addField<Uint32>("numTrgNeurons",
-            [](const auto &cg, size_t)
-            { 
-                const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-            });
+    addField(Uint32, "numTrgNeurons",
+             [](const auto &cg, size_t)
+             { 
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+             });
 
     // Add heterogeneous custom update model parameters
     addHeterogeneousParams<CustomConnectivityUpdateGroupMergedBase>(
@@ -80,11 +80,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         dependentVarsList.sort([](const auto &a, const auto &b)
                                {  
                                    boost::uuids::detail::sha1 hashA;  
-                                   Utils::updateHash(a.getVar().type->getName(), hashA);
+                                   Type::updateHash(a.getVar().type, hashA);
                                    Utils::updateHash(getVarAccessDuplication(a.getVar().access), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
-                                   Utils::updateHash(b.getVar().type->getName(), hashB);
+                                   Type::updateHash(b.getVar().type, hashB);
                                    Utils::updateHash(getVarAccessDuplication(b.getVar().access), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
@@ -102,22 +102,22 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                        }));
     
     
-    addField<Uint32>("rowStride",
-                     [&backend](const auto &cg, size_t) 
-                     { 
-                         const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                         return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-                     });
+    addField(Uint32, "rowStride",
+            [&backend](const auto &cg, size_t) 
+            { 
+                const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+            });
     
     
     assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
+    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
              });
 
-    addField(Uint32::getInstance()->getPointerType(), "rowLength",
+    addField(Uint32.createPointer(), "rowLength",
              [&backend](const auto &cg, size_t) 
              { 
                  return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
@@ -125,7 +125,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     // If some presynaptic variables are delayed, add delay pointer
     if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        addField(Uint32::getInstance()->getPointerType(), "preSpkQuePtr", 
+        addField(Uint32.createPointer(), "preSpkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
@@ -134,7 +134,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
 
     // If some postsynaptic variables are delayed, add delay pointer
     if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        addField(Uint32::getInstance()->getPointerType(), "postSpkQuePtr", 
+        addField(Uint32.createPointer(), "postSpkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
@@ -143,7 +143,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // If this backend requires per-population RNGs and this group requires one
     if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired()){
-        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
+        addPointerField(*backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
     }
 
     // Add variables to struct
@@ -166,7 +166,8 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
     
     // Loop through sorted dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        addField(getSortedArchetypeDependentVars().at(i).getVar().type->getPointerType(), "_dependentVar" + std::to_string(i), 
+        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVar().type.resolve(getTypeContext());
+        addField(resolvedType.createPointer(), "_dependentVar" + std::to_string(i), 
                  [i, &backend, this](const auto&, size_t g) 
                  { 
                      const auto &varRef = m_SortedDependentVars[g][i];
@@ -266,7 +267,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             if ((batchSize > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
-                addSynapse << "const " << ccuVarRefs[i].type->getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
+                addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
@@ -440,12 +441,13 @@ CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged
 
     // Add host extra global parameters
     for(const auto &e : cm->getExtraGlobalParams()) {
-        addField(e.type->getPointerType(), e.name,
+        const auto resolvedType = e.type.resolve(getTypeContext());
+        addField(resolvedType.createPointer(), e.name,
                  [e](const auto &g, size_t) { return e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
 
         if(!backend.getDeviceVarPrefix().empty()) {
-            addField(e.type->getPointerType(), backend.getDeviceVarPrefix() + e.name,
+            addField(resolvedType.createPointer(), backend.getDeviceVarPrefix() + e.name,
                      [e, &backend](const auto &g, size_t)
                      {
                          return backend.getDeviceVarPrefix() + e.name + g.getName();
@@ -485,10 +487,12 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
+            const auto resolvedType = egp.type.resolve(getTypeContext());
+
             // Generate code to push this EGP with count specified by $(0)
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, egp.type, egp.name,
+            backend.genVariableDynamicPush(push, resolvedType, egp.name,
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
@@ -497,7 +501,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
             // Generate code to pull this EGP with count specified by $(0)
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, egp.type, egp.name,
+            backend.genVariableDynamicPull(pull, resolvedType, egp.name,
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
@@ -523,13 +527,15 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
 {
     // Loop through variables
     for(const auto &v : vars) {
+        const auto resolvedType = v.type.resolve(getTypeContext());
+
         // If var is located on the host
         const auto loc = std::invoke(getVarLocationFn, getArchetype(), v.name);
         if (loc & VarLocation::HOST) {
             // Generate code to push this variable
             std::stringstream pushStream;
             CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, v.type, v.name,
+            backend.genVariableDynamicPush(push, resolvedType, v.name,
                                            loc, count, "group->");
 
             // Add substitution
@@ -539,7 +545,7 @@ void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const Backe
             // **YUCK** these EGP functions should probably just be called dynamic or something
             std::stringstream pullStream;
             CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, v.type, v.name,
+            backend.genVariableDynamicPull(pull, resolvedType, v.name,
                                            loc, count, "group->");
 
             // Add substitution
@@ -556,14 +562,15 @@ void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend
     // Loop through variables
     for(const auto &v : vars) {
         // If var is located on the host
+        const auto resolvedType = v.type.resolve(getTypeContext());
         if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(v.type->getPointerType(), v.name,
+            addField(resolvedType.createPointer(), v.name,
                     [v](const auto &g, size_t) { return v.name + g.getName(); },
                     GroupMergedFieldType::HOST);
 
             if(!backend.getDeviceVarPrefix().empty())  {
                 // **TODO** I think could use addPointerField
-                addField(v.type->getPointerType(), backend.getDeviceVarPrefix() + v.name,
+                addField(resolvedType.createPointer(), backend.getDeviceVarPrefix() + v.name,
                          [v, &backend](const auto &g, size_t)
                          {
                              return backend.getDeviceVarPrefix() + v.name + g.getName();

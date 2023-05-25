@@ -333,7 +333,7 @@ inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
 
 //! Parse a numeric type
-GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString);
+GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString, const TypeContext &context);
 
 //! Look up numeric type based on set of type specifiers
 GENN_EXPORT ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const TypeContext &context);

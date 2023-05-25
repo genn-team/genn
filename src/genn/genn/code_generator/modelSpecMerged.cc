@@ -566,8 +566,8 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 //----------------------------------------------------------------------------
 std::string ModelSpecMerged::scalarExpr(double value) const
 {
-    const auto *scalarType = dynamic_cast<const Type::NumericBase*>(m_TypeContext.at("scalar"));
-    return Utils::writePreciseString(value, scalarType->getMaxDigits10(m_TypeContext)) + scalarType->getLiteralSuffix(m_TypeContext);
+    const auto scalarNumeric = m_TypeContext.at("scalar").getNumeric();
+    return Utils::writePreciseString(value, scalarNumeric.maxDigits10) + scalarNumeric.literalSuffix;
 }
 //----------------------------------------------------------------------------
 bool ModelSpecMerged::anyPointerEGPs() const
@@ -577,10 +577,7 @@ bool ModelSpecMerged::anyPointerEGPs() const
         // If there's any pointer EGPs, return true
         // **TODO** without scalar EGPS, all EGPS are pointer EGPS!
         if(std::any_of(e.second.cbegin(), e.second.cend(),
-                       [](const MergedEGPDestinations::value_type &g) 
-                       {
-                           return dynamic_cast<const Type::Pointer*>(g.second.type); 
-                       }))
+                       [](const MergedEGPDestinations::value_type &g){ return g.second.type.isPointer(); }))
         {
             return true;
         }

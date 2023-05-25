@@ -37,11 +37,11 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
     StandardLibrary::FunctionTypes stdLibraryEnv;
     GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, &stdLibraryEnv);
 
-    addField<Uint32>("size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    addField(Uint32, "size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(Uint32::getInstance()->getPointerType(), "spkQuePtr", 
+        addField(Uint32.createPointer(), "spkQuePtr", 
                  [&backend](const auto &cg, size_t) 
                  { 
                      return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
@@ -75,8 +75,8 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
      ErrorHandler errorHandler;
      const std::string code = upgradeCodeString(cm->getUpdateCode());
      const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
-     m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
-     m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
+     m_UpdateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+     m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -120,7 +120,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
-        getArchetype(), envSubs, 
+        getArchetype(), getTypeContext(), envSubs, 
         [this](const Models::VarInit&, VarAccess a)
         {
             return getVarIndex(getVarAccessDuplication(a), "id");
@@ -128,7 +128,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
-        getArchetype(), varSubs, 
+        getArchetype(), getTypeContext(), varSubs, 
         [this](const Models::VarReference &v, VarAccessMode)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
@@ -229,7 +229,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUInternal> varSubs(
-        getArchetype(), envSubs, 
+        getArchetype(), getTypeContext(), envSubs, 
         [this](const Models::VarInit&, VarAccess a)
         {
             return getVarIndex(getVarAccessDuplication(a), "id_syn");
@@ -237,7 +237,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUInternal> varRefSubs(
-        getArchetype(), varSubs, 
+        getArchetype(), getTypeContext(), varSubs, 
         [this](const Models::WUVarReference &v, VarAccessMode)
         { 
             return getVarRefIndex(getVarAccessDuplication(v.getVar().access),
@@ -276,46 +276,46 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(d)) {
-                addField<Uint32>("kernelSize" + std::to_string(d),
-                                 [d](const auto &cu, size_t) 
-                                 {
-                                     return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
-                                 });
+                addField(Uint32, "kernelSize" + std::to_string(d),
+                         [d](const auto &cu, size_t) 
+                         {
+                             return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
+                         });
             }
         }
     }
     // Otherwise
     else {
-        addField<Uint32>("rowStride",
-                         [&backend](const auto &cg, size_t) 
-                         { 
-                             const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                             return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-                         });
+        addField(Uint32, "rowStride",
+                [&backend](const auto &cg, size_t) 
+                { 
+                    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                    return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+                });
     
-        addField<Uint32>("numSrcNeurons",
-                         [](const auto &cg, size_t) 
-                         {
-                             const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                             return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-                         });
+        addField(Uint32, "numSrcNeurons",
+                 [](const auto &cg, size_t) 
+                 {
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
+                 });
 
-        addField<Uint32>("numTrgNeurons",
-                         [](const auto &cg, size_t)
-                         { 
-                             const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                             return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-                         });
+        addField(Uint32, "numTrgNeurons",
+                 [](const auto &cg, size_t)
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+                 });
 
         // If synapse group has sparse connectivity
         if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
+            addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                      });
 
-            addField(Uint32::getInstance()->getPointerType(), "rowLength",
+            addField(Uint32.createPointer(), "rowLength",
                      [&backend](const auto &cg, size_t) 
                      { 
                          return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
@@ -349,7 +349,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(v.type->getPointerType(), v.name + "Transpose",
+            addField(v.type.resolve(getTypeContext()).createPointer(), v.name + "Transpose",
                      [&backend, v](const auto &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
@@ -364,8 +364,8 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     ErrorHandler errorHandler;
     const std::string code = upgradeCodeString(cm->getUpdateCode());
     const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
-    m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
-    m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
+    m_UpdateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+    m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, errorHandler);
 }
 
 // ----------------------------------------------------------------------------
@@ -389,13 +389,12 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
 {
     using namespace Type;
 
-    addField<Uint32>("size",
-                     [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    addField(Uint32, "size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
 
     // If some variables are delayed, add delay pointer
     // **NOTE** this is HOST delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(Uint32::getInstance()->getPointerType(), "spkQuePtr", 
+        addField(Uint32.createPointer(), "spkQuePtr", 
                  [](const auto &cg, size_t) 
                  { 
                      return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
@@ -414,9 +413,9 @@ CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(s
 {
     using namespace Type;
 
-    addField<Uint32>("size",
-                     [&backend](const auto &cg, size_t) 
-                     {
-                         return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
-                     });
+    addField(Uint32, "size",
+             [&backend](const auto &cg, size_t) 
+             {
+                 return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+             });
 }

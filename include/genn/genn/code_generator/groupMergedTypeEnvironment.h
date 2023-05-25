@@ -83,9 +83,14 @@ public:
 
     void definePointerField(const Type::ResolvedType &type, const std::string &name,const std::string &prefix, VarAccessMode access)
     {
-        const auto *qualifiedType = type.addQualifier((access & VarAccessModeAttribute::READ_ONLY) ? Type::Qualifier::CONSTANT : Type::Qualifier{0});
+        const auto qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type.addQualifier(Type::Qualifier::CONSTANT) : type;
         defineField(qualifiedType, name,
-                    type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
+                    type.createPointer(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
+    }
+
+    void definePointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix, VarAccessMode access)
+    {
+        definePointerField(type.resolve(m_GroupMerged.getTypeContext()), name, prefix, access);
     }
 
     void defineScalarField(const std::string &name, typename G::GetFieldDoubleValueFunc getFieldValue)
@@ -94,8 +99,8 @@ public:
                     m_GroupMerged.getScalarType(), name,
                     [getFieldValue, this](const auto &g, size_t i)
                     {
-                        return (Utils::writePreciseString(getFieldValue(g, i), m_GroupMerged.getScalarType()->getMaxDigits10(m_GroupMerged.getTypeContext())) 
-                                + m_GroupMerged.getScalarType()->getLiteralSuffix(m_GroupMerged.getTypeContext()));
+                        return (Utils::writePreciseString(getFieldValue(g, i), m_GroupMerged.getScalarType().getNumeric().maxDigits10) 
+                                + m_GroupMerged.getScalarType().getNumeric().literalSuffix);
                     });
     }
     
@@ -114,7 +119,7 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), p + suffix);
+                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), p + suffix);
             }
         }
     }
@@ -133,7 +138,7 @@ public:
                                   });
             }
             else {
-                defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), d.name + suffix);
+                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), d.name + suffix);
             }
         }
     }
@@ -152,9 +157,10 @@ public:
         // Loop through variables
         for(const auto &v : varReferences) {
             // If variable access is read-only, qualify type with const
-            const auto *qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? v.type->getQualifiedType(Type::Qualifier::CONSTANT) : v.type;
+            const auto resolvedType = v.type.resolve(m_GroupMerged.getTypeContext());
+            const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addQualifier(Type::Qualifier::CONSTANT) : resolvedType;
             defineField(qualifiedType, v.name,
-                        v.type->getPointerType(), v.name,
+                        resolvedType.createPointer(), v.name,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
                         { 
                             const auto varRef = getVarRefFn(g).at(v.name);
@@ -162,12 +168,13 @@ public:
                         });
         }
     }
-
+  
     void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
-            defineField(e.type->getPointerType(), e.name,
-                        e.type->getPointerType(), e.name + varName,
+            const auto pointerType = e.type.resolve(m_GroupMerged.getTypeContext()).createPointer();
+            defineField(pointerType, e.name,
+                        pointerType, e.name + varName,
                         [arrayPrefix, e, varName](const auto &g, size_t) 
                         {
                             return arrayPrefix + e.name + varName + g.getName(); 
@@ -180,7 +187,7 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    void addField(std::pair<const Type::ResolvedType, std::optional<typename G::Field>> &type)
+    void addField(std::pair<Type::ResolvedType, std::optional<typename G::Field>> &type)
     {
         // If this type has an associated field
         if (type.second) {

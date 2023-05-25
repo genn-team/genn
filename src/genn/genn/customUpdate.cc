@@ -267,7 +267,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
     CustomUpdateBase::updateHash(hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType()->getName(), hash);
+    Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
     // Loop through variable references
     for(const auto &v : getVarReferences()) {
@@ -288,7 +288,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getInitHashDigest() cons
     CustomUpdateBase::updateInitHash(hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType()->getName(), hash);
+    Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
     return hash.get_digest();
 }
 }   // namespace GeNN

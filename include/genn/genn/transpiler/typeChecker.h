@@ -56,8 +56,8 @@ public:
 // Free functions
 //---------------------------------------------------------------------------
 ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+                          ErrorHandlerBase &errorHandler);
 
 Type::ResolvedType typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
-                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+                             ErrorHandlerBase &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler

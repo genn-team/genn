@@ -176,8 +176,8 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
     using GetIndexFn = std::function<std::string(InitialiserType, decltype(DefType::access))>;
 
 public:
-    EnvironmentLocalVarCache(const G &group, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
@@ -203,7 +203,7 @@ public:
             if(v.access & VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
             }
-            getContextStream() << v.type->getName() << " " << m_LocalPrefix << v.name;
+            getContextStream() << v.type.resolve(m_Context).getName() << " " << m_LocalPrefix << v.name;
 
             // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
@@ -257,10 +257,11 @@ private:
     // Members
     //------------------------------------------------------------------------
     const G &m_Group;
+    const Type::TypeContext &m_Context;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
-    const std::string m_LocalPrefix;
-    const GetIndexFn m_GetIndex;
+    std::string m_LocalPrefix;
+    GetIndexFn m_GetIndex;
     std::unordered_map<std::string, bool> m_VariablesReferenced;
 };
 }   // namespace GeNN::CodeGenerator

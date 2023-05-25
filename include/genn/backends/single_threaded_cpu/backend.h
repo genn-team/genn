@@ -119,7 +119,7 @@ public:
     virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
     //! When generating merged structures what type to use for simulation RNGs
-    virtual const Type::ResolvedType &getMergedGroupSimRNGType() const final;
+    virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const final;
 
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,

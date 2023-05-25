@@ -1089,7 +1089,7 @@ CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroup
     
     // If this backend initialises population RNGs on device and this group requires one for simulation
     if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired() && backend.isPopulationRNGInitialisedOnDevice()) {
-        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
+        addPointerField(*backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rowRNG");
     }
 }
 //----------------------------------------------------------------------------
