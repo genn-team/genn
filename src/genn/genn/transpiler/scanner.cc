@@ -67,16 +67,6 @@ public:
     ScanState(std::string_view source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
         : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_Context(context), m_ErrorHandler(errorHandler)
     {
-        const auto &scalarType = context.at("scalar");
-        if (scalarType == Type::Float) {
-            m_ScalarTokenType = Token::Type::FLOAT_NUMBER;
-        }
-        else if (scalarType == Type::Double) {
-            m_ScalarTokenType = Token::Type::DOUBLE_NUMBER;
-        }
-        else {
-            throw std::runtime_error("Unsupported scalar type '" + scalarType.getName() + "'");
-        }
     }
 
     //---------------------------------------------------------------------------
@@ -143,7 +133,24 @@ public:
         return (m_Context.find(std::string{lexeme}) != m_Context.cend());
     }
 
-    Token::Type getScalarTokenType() const{ return m_ScalarTokenType; }
+    Token::Type getScalarTokenType() const
+    {
+        const auto scalarType = m_Context.find("scalar");
+        if (scalarType == m_Context.cend()) {
+            throw std::runtime_error("Cannot scan scalar literals without 'scalar' type being defined in type context");
+        }
+        else {
+            if (scalarType->second == Type::Float) {
+                return Token::Type::FLOAT_NUMBER;
+            }
+            else if (scalarType->second == Type::Double) {
+                return Token::Type::DOUBLE_NUMBER;
+            }
+            else {
+                throw std::runtime_error("Unsupported scalar type '" + scalarType->first + "'");
+            }
+        }
+    }
     
 private:
     //---------------------------------------------------------------------------
@@ -156,7 +163,6 @@ private:
     std::string_view m_Source;
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
-    Token::Type m_ScalarTokenType;
 };
 
 bool isodigit(char c)
@@ -238,14 +244,14 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 
             // If number has an f suffix, emplace FLOAT_NUMBER token
             if (std::tolower(scanState.peek()) == 'f') {
-                scanState.advance();
                 emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
+                scanState.advance();
             }
             // Otherwise, if it has a d suffix, emplace DOUBLE_NUMBER token
             // **NOTE** 'd' is a GeNN extension not standard C
             else if (std::tolower(scanState.peek()) == 'd') {
-                scanState.advance();
                 emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
+                scanState.advance();
             }
             // Otherwise, emplace literal with whatever type is specified
             else {
