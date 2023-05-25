@@ -415,7 +415,7 @@ private:
         }
         else {
             m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType().getName() + "' and '" + rightType.getName());
-             throw TypeCheckError();
+            throw TypeCheckError();
         }
     }
 
