@@ -97,9 +97,9 @@ public:
     const Base *getIndex() const { return m_Index.get(); }
 
 private:
-    const ExpressionPtr m_Array;
-    const Token m_ClosingSquareBracket;
-    const ExpressionPtr m_Index;
+    ExpressionPtr m_Array;
+    Token m_ClosingSquareBracket;
+    ExpressionPtr m_Index;
 };
 
 //---------------------------------------------------------------------------
@@ -117,9 +117,9 @@ public:
     const Base *getValue() const { return m_Value.get(); }
 
 private:
-    const ExpressionPtr m_Assignee;
-    const Token m_Operator;
-    const ExpressionPtr m_Value;
+    ExpressionPtr m_Assignee;
+    Token m_Operator;
+    ExpressionPtr m_Value;
 };
 
 //---------------------------------------------------------------------------
@@ -137,9 +137,9 @@ public:
     const Base *getRight() const { return m_Right.get(); }
 
 private:
-    const ExpressionPtr m_Left;
-    const Token m_Operator;
-    const ExpressionPtr m_Right;
+    ExpressionPtr m_Left;
+    Token m_Operator;
+    ExpressionPtr m_Right;
 };
 
 //---------------------------------------------------------------------------
@@ -157,9 +157,9 @@ public:
     const ExpressionList &getArguments() const { return m_Arguments; }
 
 private:
-    const ExpressionPtr m_Callee;
-    const Token m_ClosingParen;
-    const ExpressionList m_Arguments;
+    ExpressionPtr m_Callee;
+    Token m_ClosingParen;
+    ExpressionList m_Arguments;
 };
 
 //---------------------------------------------------------------------------
@@ -177,9 +177,9 @@ public:
     const Token &getClosingParen() const { return m_ClosingParen; }
     
 private:
-    const Type::ResolvedType m_Type;
-    const ExpressionPtr m_Expression;
-    const Token m_ClosingParen;
+    Type::ResolvedType m_Type;
+    ExpressionPtr m_Expression;
+    Token m_ClosingParen;
 };
 
 //---------------------------------------------------------------------------
@@ -198,10 +198,10 @@ public:
     const Base *getFalse() const { return m_False.get(); }
 
 private:
-    const ExpressionPtr m_Condition;
-    const Token m_Question;
-    const ExpressionPtr m_True;
-    const ExpressionPtr m_False;
+    ExpressionPtr m_Condition;
+    Token m_Question;
+    ExpressionPtr m_True;
+    ExpressionPtr m_False;
 };
 
 //---------------------------------------------------------------------------
@@ -222,7 +222,7 @@ public:
     const Base *getExpression() const { return m_Expression.get(); }
 
 private:
-    const ExpressionPtr m_Expression;
+    ExpressionPtr m_Expression;
 };
 
 //---------------------------------------------------------------------------
@@ -261,9 +261,9 @@ public:
     const Base *getRight() const { return m_Right.get(); }
 
 private:
-    const ExpressionPtr m_Left;
-    const Token m_Operator;
-    const ExpressionPtr m_Right;
+    ExpressionPtr m_Left;
+    Token m_Operator;
+    ExpressionPtr m_Right;
 };
 
 //---------------------------------------------------------------------------
@@ -280,8 +280,8 @@ public:
     const Token &getOperator() const { return m_Operator; }
 
 private:
-    const ExpressionPtr m_Target;
-    const Token m_Operator;
+    ExpressionPtr m_Target;
+    Token m_Operator;
 };
 
 //---------------------------------------------------------------------------
@@ -298,8 +298,8 @@ public:
     const Token &getOperator() const { return m_Operator; }
 
 private:
-    const ExpressionPtr m_Target;
-    const Token m_Operator;
+    ExpressionPtr m_Target;
+    Token m_Operator;
 };
 
 //---------------------------------------------------------------------------
@@ -320,7 +320,7 @@ public:
     const Token &getName() const { return m_Name; }
 
 private:
-    const Token m_Name;
+    Token m_Name;
 };
 
 //---------------------------------------------------------------------------
@@ -337,7 +337,7 @@ public:
     const Base *getRight() const { return m_Right.get(); }
 
 private:
-    const Token m_Operator;
-    const ExpressionPtr m_Right;
+    Token m_Operator;
+    ExpressionPtr m_Right;
 };
 }   // namespace GeNN::Transpiler::Expression

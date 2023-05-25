@@ -454,6 +454,6 @@ private:
     MergedEGPMap m_MergedEGPs;
     
     //! Type context used to resolve all types used in model
-    const Type::TypeContext m_TypeContext;
+    Type::TypeContext m_TypeContext;
 };
 }   // namespace GeNN::CodeGenerator

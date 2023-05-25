@@ -244,7 +244,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeConte
     for(const auto &var : vars) {
         // If we're not initialising or if there is initialization code for this variable
         if(!init || !varInit.at(var.name).getSnippet()->getCode().empty()) {
-            addPointerField(var.type.resolve(getTypeContext()), var.name, 
+            addPointerField(var.type, var.name, 
                             backend.getDeviceVarPrefix() + var.name);
         }
 
@@ -970,7 +970,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const Type::TypeCon
 
             // If we're performing an update with individual weights; or this variable should be initialised
             if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
-                addPointerField(var.type.resolve(getTypeContext()), var.name,
+                addPointerField(var.type, var.name,
                                 backend.getDeviceVarPrefix() + var.name);
             }
 

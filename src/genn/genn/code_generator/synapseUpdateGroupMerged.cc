@@ -90,7 +90,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                 varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
 
                 // Declare local variable
-                os << var.type->getName() << " " << "l" << var.name << ";" << std::endl;
+                os << var.type.resolve(sg.getTypeContext()).getName() << " " << "l" << var.name << ";" << std::endl;
 
                 // Insert code to initialize variable into scope
                 {
@@ -251,7 +251,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
-        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type.resolve(getTypeContext()).getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
 
     // Loop through synapses in row
@@ -325,7 +325,7 @@ SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(s
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
-    addField(Type::Uint32::getInstance()->getPointerType(), "denDelayPtr", 
+    addField(Type::Uint32.createPointer(), "denDelayPtr", 
              [&backend](const SynapseGroupInternal &sg, size_t) 
              {
                  return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 

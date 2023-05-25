@@ -183,7 +183,7 @@ Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, s
     return expression;
 }
 
-const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
+const GeNN::Type::ResolvedType *parseDeclarationSpecifiers(ParserState &parserState)
 {
     using namespace GeNN::Type;
     
@@ -215,7 +215,7 @@ const GeNN::Type::Base *parseDeclarationSpecifiers(ParserState &parserState)
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
 
     // Lookup numeric type
-    const Base *type = getNumericType(typeSpecifiers);
+    const Type::ResolvedType *type = getNumericType(typeSpecifiers);
 
     // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier

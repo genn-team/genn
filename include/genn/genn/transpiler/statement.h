@@ -88,7 +88,7 @@ public:
     const Token &getToken() const { return m_Token; }
 
 private:
-    const Token m_Token;
+    Token m_Token;
 };
 
 //---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ public:
     const StatementList &getStatements() const { return m_Statements; }
 
 private:
-    const StatementList m_Statements;
+    StatementList m_Statements;
 };
 
 //---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ public:
     const Token &getToken() const { return m_Token; }
 
 private:
-    const Token m_Token;
+    Token m_Token;
 };
 
 //---------------------------------------------------------------------------
@@ -138,8 +138,8 @@ public:
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const ExpressionPtr m_Condition;
-    const StatementPtr m_Body;
+    ExpressionPtr m_Condition;
+    StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ public:
     const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
 private:
-    const ExpressionPtr m_Expression;
+    ExpressionPtr m_Expression;
 };
 
 //---------------------------------------------------------------------------
@@ -176,10 +176,10 @@ public:
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const StatementPtr m_Initialiser;
-    const ExpressionPtr m_Condition;
-    const ExpressionPtr m_Increment;
-    const StatementPtr m_Body;
+    StatementPtr m_Initialiser;
+    ExpressionPtr m_Condition;
+    ExpressionPtr m_Increment;
+    StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
@@ -198,9 +198,9 @@ public:
     const Base *getElseBranch() const { return m_ElseBranch.get(); }
 
 private:
-    const ExpressionPtr m_Condition;
-    const StatementPtr m_ThenBranch;
-    const StatementPtr m_ElseBranch;
+    ExpressionPtr m_Condition;
+    StatementPtr m_ThenBranch;
+    StatementPtr m_ElseBranch;
 };
 
 //---------------------------------------------------------------------------
@@ -219,9 +219,9 @@ public:
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const Token m_Keyword;
-    const ExpressionPtr m_Value;
-    const StatementPtr m_Body;
+    Token m_Keyword;
+    ExpressionPtr m_Value;
+    StatementPtr m_Body;
 };
 
 
@@ -241,9 +241,9 @@ public:
     const Base *getBody() const { return m_Body.get(); }
     
 private:
-    const Token m_Switch;
-    const ExpressionPtr m_Condition;
-    const StatementPtr m_Body;
+    Token m_Switch;
+    ExpressionPtr m_Condition;
+    StatementPtr m_Body;
 };
 
 
@@ -263,9 +263,9 @@ public:
     const InitDeclaratorList &getInitDeclaratorList() const { return m_InitDeclaratorList; }    
 
 private:
-    const Type::ResolvedType m_Type;
-    const std::vector<Token> m_DeclarationSpecifiers;
-    const InitDeclaratorList m_InitDeclaratorList;
+    Type::ResolvedType m_Type;
+    std::vector<Token> m_DeclarationSpecifiers;
+    InitDeclaratorList m_InitDeclaratorList;
 };
 
 //---------------------------------------------------------------------------
@@ -283,8 +283,8 @@ public:
     const Base *getBody() const { return m_Body.get(); }
 
 private:
-    const ExpressionPtr m_Condition;
-    const StatementPtr m_Body;
+    ExpressionPtr m_Condition;
+    StatementPtr m_Body;
 };
 
 //---------------------------------------------------------------------------
@@ -302,6 +302,6 @@ public:
     const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
 
 private:
-    const ExpressionPtr m_Expression;
+    ExpressionPtr m_Expression;
 };
 }   // namespace GeNN::Transpiler::Statement

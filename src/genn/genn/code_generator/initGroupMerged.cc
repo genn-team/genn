@@ -86,7 +86,7 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
-                        os << var.type->getName() << " initVal;" << std::endl;
+                        os << var.type.resolve(modelMerged.getTypeContext()).getName() << " initVal;" << std::endl;
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
@@ -106,7 +106,7 @@ void genInitNeuronVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, co
                     (CodeStream &os, Substitutions &varInitSubs)
                     {
                         // Generate initial value into temporary variable
-                        os << var.type->getName() << " initVal;" << std::endl;
+                        os << var.type.resolve(modelMerged.getTypeContext()).getName() << " initVal;" << std::endl;
                         varInitSubs.addVarSubstitution("value", "initVal");
                         std::string code = varInit.getSnippet()->getCode();
                         varInitSubs.applyCheckUnreplaced(code, "initVar : " + var.name + "merged" + std::to_string(groupIndex));
@@ -164,7 +164,7 @@ void genInitWUVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
                                                    "", "group->", var.name);
 
                     // Generate initial value into temporary variable
-                    os << var.type->getName() << " initVal;" << std::endl;
+                    os << var.type.resolve(modelMerged.getTypeContext()).getName() << " initVal;" << std::endl;
                     varSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(groupIndex));
@@ -444,7 +444,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                addField(var.type->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+                addField(var.type.resolve(getTypeContext()).createPointer(), var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto&, size_t groupIndex)
                          {
                              const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -652,7 +652,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
                                             "", "group->", var.name);
 
             // Generate initial value into temporary variable
-            os << var.type->getName() << " initVal;" << std::endl;
+            os << var.type.resolve(getTypeContext()).getName() << " initVal;" << std::endl;
             popSubs.addVarSubstitution("value", "initVal");
             std::string code = varInit.getSnippet()->getCode();
             //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
@@ -691,7 +691,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, ftype);
 
-        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type.resolve(getTypeContext()).getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
     os << "while(true)";
     {
@@ -721,12 +721,12 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
     using namespace Type;
 
     // **TODO** these could be generic
-    addField<Uint32>("numSrcNeurons",
-                     [](const auto &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    addField<Uint32>("numTrgNeurons",
-                     [](const auto &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-    addField<Uint32>("rowStride",
-                     [&backend](const auto &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+    addField(Uint32, "numSrcNeurons",
+             [](const auto &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "numTrgNeurons",
+             [](const auto &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "rowStride",
+             [&backend](const auto &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
 
     // Add heterogeneous connectivity initialiser model parameters
     addHeterogeneousParams<SynapseConnectivityHostInitGroupMerged>(
@@ -743,7 +743,7 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
     // Add EGP pointers to struct for both host and device EGPs if they are seperate
     const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
     for(const auto &e : egps) {
-        const auto *pointerToPointerToEGP = e.type->getPointerType()->getPointerType();
+        const auto &pointerToPointerToEGP = e.type.resolve(getTypeContext()).createPointer().createPointer();
         addField(pointerToPointerToEGP, e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
                  GroupMergedFieldType::HOST_DYNAMIC);
@@ -806,7 +806,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Generate code to allocate this EGP with count specified by $(0)
                 // **NOTE** we generate these with a pointer type as the fields are pointer to pointer
                 std::stringstream allocStream;
-                const auto *pointerToEGP = egp.type->getPointerType();
+                const auto &pointerToEGP = egp.type.resolve(getTypeContext()).createPointer();
                 CodeGenerator::CodeStream alloc(allocStream);
                 backend.genVariableDynamicAllocation(alloc, 
                                                      pointerToEGP, egp.name,
@@ -864,8 +864,8 @@ CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const Typ
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>(index, typeContext, backend, groups)
 {
-    addField<Type::Uint32>("size",
-                           [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    addField(Type::Uint32, "size",
+             [](const auto &c, size_t) { return std::to_string(c.getSize()); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDigest() const
@@ -906,18 +906,18 @@ CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(d)) {
-                addField<Uint32>("kernelSize" + std::to_string(d),
-                                 [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+                addField(Uint32, "kernelSize" + std::to_string(d),
+                         [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
             }
         }
     }
     else {
-        addField<Uint32>("rowStride",
-                         [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-        addField<Uint32>("numSrcNeurons",
-                         [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-        addField<Uint32>("numTrgNeurons",
-                         [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+        addField(Uint32, "rowStride",
+                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+        addField(Uint32, "numSrcNeurons",
+                 [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+        addField(Uint32, "numTrgNeurons",
+                 [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
     }
 }
 //----------------------------------------------------------------------------
@@ -1011,21 +1011,21 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
 {
     using namespace Type;
 
-    addField<Uint32>("rowStride",
-                     [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    addField(Uint32, "rowStride",
+             [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
 
-    addField<Uint32>("numSrcNeurons",
-                     [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    addField<Uint32>("numTrgNeurons",
-                     [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "numSrcNeurons",
+             [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "numTrgNeurons",
+             [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField(Uint32::getInstance()->getPointerType(), "rowLength", 
+    addField(Uint32.createPointer(), "rowLength", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind", 
+    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
              [&backend](const auto &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
@@ -1081,13 +1081,11 @@ CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroup
                                                                                        const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePreVarAdapter>(index, typeContext, backend, groups)
 {
-    using namespace Type;
-
-    addField<Uint32>("size",
-                     [](const auto &c, size_t) 
-                     { 
-                         return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
-                     });
+    addField(Type::Uint32, "size",
+             [](const auto &c, size_t) 
+             { 
+                 return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+             });
     
     // If this backend initialises population RNGs on device and this group requires one for simulation
     if(backend.isPopulationRNGRequired() && getArchetype().isRowSimRNGRequired() && backend.isPopulationRNGInitialisedOnDevice()) {
@@ -1130,11 +1128,11 @@ CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGro
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdatePostVarAdapter>(index, typeContext, backend, groups)
 {
-    addField<Type::Uint32>("size",
-                           [](const auto &c, size_t)
-                           {
-                               return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons());
-                           });
+    addField(Type::Uint32, "size",
+             [](const auto &c, size_t)
+             {
+                 return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons());
+             });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMerged::getHashDigest() const
@@ -1174,21 +1172,21 @@ CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseIni
 {
     using namespace Type;
 
-    addField<Uint32>("rowStride",
-                     [&backend](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    addField(Uint32, "rowStride",
+             [&backend](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
 
-    addField<Uint32>("numSrcNeurons",
-                     [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    addField<Uint32>("numTrgNeurons",
-                     [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "numSrcNeurons",
+             [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField(Uint32, "numTrgNeurons",
+             [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
-    addField(Uint32::getInstance()->getPointerType(), "rowLength",
+    addField(Uint32.createPointer(), "rowLength",
              [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField(getArchetype().getSynapseGroup()->getSparseIndType()->getPointerType(), "ind",
+    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind",
              [&backend](const auto &cg, size_t)
              {
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();

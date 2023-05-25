@@ -32,59 +32,13 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual void define(const Transpiler::Token &name, const Type::Base*, ErrorHandlerBase &errorHandler) final
+    virtual void define(const Transpiler::Token &name, const Type::ResolvedType&, ErrorHandlerBase &errorHandler) final
     {
         errorHandler.error(name, "Cannot declare variable in external environment");
         throw TypeCheckError();
     }
 
-    virtual const Type::Base *assign(const Token &name, Token::Type op, const Type::Base *assignedType, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                                     bool initializer) final
-    {
-        // If type isn't found
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->assign(name, op, assignedType, 
-                                           context, errorHandler, initializer);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
-            }
-        }
-
-        // Add field to merged group if required
-        addField(existingType->second);
-    
-        // Perform standard type-checking logicGroupMergedTypeEnvironment
-        return EnvironmentBase::assign(name, op, existingType->second.first, assignedType, 
-                                       context, errorHandler, initializer);
-    }
-
-    virtual const Type::Base *incDec(const Token &name, Token::Type op, 
-                                     const Type::TypeContext &context, ErrorHandlerBase &errorHandler) final
-    {
-        auto existingType = m_Types.find(name.lexeme);
-        if(existingType == m_Types.end()) {
-            if(m_Enclosing) {
-                return m_Enclosing->incDec(name, op, context, errorHandler);
-            }
-            else {
-                errorHandler.error(name, "Undefined variable");
-                throw TypeCheckError();
-            }
-        }
-    
-        // Add field to merged group if required
-        addField(existingType->second);
-
-        // Perform standard type-checking logic
-        return EnvironmentBase::incDec(name, op, existingType->second.first, errorHandler);
-    }
-
-    virtual std::vector<const Type::Base*> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
     {
         auto type = m_Types.find(name.lexeme);
         if(type == m_Types.end()) {
@@ -107,21 +61,16 @@ public:
     //---------------------------------------------------------------------------
     // Public API
     //---------------------------------------------------------------------------
-    void defineField(const Type::Base *type, const std::string &name)
+    void defineField(const Type::ResolvedType &type, const std::string &name)
     {
         if(!m_Types.try_emplace(name, type, std::nullopt).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
 
-    template<typename T>
-    void defineField(const std::string &name)
-    {
-        defineField(T::getInstance(), name);
-    }
 
-    void defineField(const Type::Base *type, const std::string &name,
-                     const Type::Base *fieldType, std::string_view fieldName, typename G::GetFieldValueFunc getFieldValue, 
+    void defineField(const Type::ResolvedType &type, const std::string &name,
+                     const Type::ResolvedType &fieldType, std::string_view fieldName, typename G::GetFieldValueFunc getFieldValue, 
                      GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
     {
         if(!m_Types.try_emplace(name, std::piecewise_construct,
@@ -132,16 +81,16 @@ public:
         }
     }
 
-    void definePointerField(const Type::NumericBase *type, const std::string &name,const std::string &prefix, VarAccessMode access)
+    void definePointerField(const Type::ResolvedType &type, const std::string &name,const std::string &prefix, VarAccessMode access)
     {
-        const auto *qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type->getQualifiedType(Type::Qualifier::CONSTANT) : type;
+        const auto *qualifiedType = type.addQualifier((access & VarAccessModeAttribute::READ_ONLY) ? Type::Qualifier::CONSTANT : Type::Qualifier{0});
         defineField(qualifiedType, name,
                     type->getPointerType(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
     }
 
     void defineScalarField(const std::string &name, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
-        defineField(m_GroupMerged.getScalarType()->getQualifiedType(Type::Qualifier::CONSTANT), name,
+        defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), name,
                     m_GroupMerged.getScalarType(), name,
                     [getFieldValue, this](const auto &g, size_t i)
                     {
@@ -231,7 +180,7 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    void addField(std::pair<const Type::Base*, std::optional<typename G::Field>> &type)
+    void addField(std::pair<const Type::ResolvedType, std::optional<typename G::Field>> &type)
     {
         // If this type has an associated field
         if (type.second) {
@@ -252,6 +201,6 @@ private:
     G &m_GroupMerged;
     EnvironmentBase *m_Enclosing;
 
-    std::unordered_map<std::string, std::pair<const Type::Base*, std::optional<typename G::Field>>> m_Types;
+    std::unordered_map<std::string, std::pair<Type::ResolvedType, std::optional<typename G::Field>>> m_Types;
 };
 }	// namespace GeNN::CodeGenerator

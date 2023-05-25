@@ -28,7 +28,7 @@ CodeStream &EnvironmentExternal::getContextStream() const
         getContext());
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentExternal::getContextName(const std::string &name, const Type::ResolvedType &type) const
+std::string EnvironmentExternal::getContextName(const std::string &name, std::optional<Type::ResolvedType> type) const
 {
     return std::visit(
         Utils::Overload{
@@ -54,7 +54,7 @@ EnvironmentSubstitute::~EnvironmentSubstitute()
     getContextStream() << m_ContentsStream.str();
 }
 //----------------------------------------------------------------------------
-std::string EnvironmentSubstitute::getName(const std::string &name, const Type::ResolvedType &type)
+std::string EnvironmentSubstitute::getName(const std::string &name, std::optional<Type::ResolvedType> type)
 {
     // If there isn't a substitution for this name, try and get name from context
     auto var = m_VarSubstitutions.find(name);

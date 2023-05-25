@@ -70,8 +70,8 @@ public:
     :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
     {}
 
-    GroupMerged(const GroupMerged&) = delete;
-    GroupMerged(GroupMerged&&) = default;
+    //GroupMerged(const GroupMerged&) = delete;
+    //GroupMerged(GroupMerged&&) = default;
 
     //------------------------------------------------------------------------
     // Public API
@@ -164,7 +164,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(const auto &f : sortedFields) {
             // Add size of field to total
-            const size_t fieldSize = std::get<0>(f)->getSizeBytes(m_TypeContext);
+            const size_t fieldSize = std::get<0>(f).getSize(backend.getPointerBytes());
             structSize += fieldSize;
 
             // Update largest field size
@@ -270,6 +270,11 @@ public:
         assert(type.isValue());
         addField(type.createPointer(), name,
                  [prefix](const G &g, size_t) { return prefix + g.getName(); });
+    }
+
+    void addPointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix)
+    {
+        addPointerField(type.resolve(getTypeContext()), name, prefix);
     }
 
 
@@ -532,7 +537,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const size_t m_Index;
+    size_t m_Index;
     const Type::TypeContext &m_TypeContext;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;

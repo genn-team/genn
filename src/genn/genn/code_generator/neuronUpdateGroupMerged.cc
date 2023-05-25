@@ -66,7 +66,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
                 // If EGP is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + egp.name + ")") != std::string::npos) {
                     const std::string prefix = backend.getDeviceVarPrefix();
-                    addField(egp.type->getPointerType(), egp.name + "EventThresh" + std::to_string(i),
+                    addField(egp.type.resolve(getTypeContext()).createPointer(), egp.name + "EventThresh" + std::to_string(i),
                              [eventThresholdSGs, prefix, egp, i](const auto &, size_t groupIndex)
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -80,7 +80,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
             for(const auto &var : sgPreVars) {
                 // If variable is referenced in event threshold code
                 if(s.eventThresholdCode.find("$(" + var.name + ")") != std::string::npos) {
-                    addField(var.type->getPointerType(), var.name + "EventThresh" + std::to_string(i),
+                    addField(var.type.resolve(getTypeContext()).createPointer(), var.name + "EventThresh" + std::to_string(i),
                              [&backend, eventThresholdSGs, var, i](const auto&, size_t groupIndex)
                              {
                                  return backend.getDeviceVarPrefix() + var.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
@@ -93,7 +93,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
 
     if(getArchetype().isSpikeRecordingEnabled()) {
         // Add field for spike recording
-        addField(Uint32::getInstance()->getPointerType(), "recordSpk",
+        addField(Uint32.createPointer(), "recordSpk",
                  [&backend](const auto &ng, size_t) 
                  { 
                      return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
@@ -103,7 +103,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
 
     if(getArchetype().isSpikeEventRecordingEnabled()) {
         // Add field for spike event recording
-        addField(Uint32::getInstance()->getPointerType(), "recordSpkEvent",
+        addField(Uint32.createPointer(), "recordSpkEvent",
                  [&backend](const auto &ng, size_t)
                  {
                      return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
@@ -187,7 +187,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type->getName() << " l" << v.name << " = group->" << v.name << "[";
+        os << v.type.resolve(getTypeContext()).getName() << " l" << v.name << " = group->" << v.name << "[";
         const bool delayed = (getArchetype().isVarQueueRequired(v.name) && getArchetype().isDelayRequired());
         os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
     }
@@ -249,7 +249,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
         //value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-        os << a.type->getName() << " " << a.name << " = " << value << ";" << std::endl;
+        os << a.type.resolve(getTypeContext()).getName() << " " << a.name << " = " << value << ";" << std::endl;
     }
 
     // Loop through incoming synapse groups
@@ -282,7 +282,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type->getName() << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
+            os << v.type.resolve(getTypeContext()).getName() << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), neuronSubs["id"]) << "];" << std::endl;
         }
 
@@ -366,7 +366,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             if(v.access & VarAccessMode::READ_ONLY) {
                 os << "const ";
             }
-            os << v.type->getName() << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
+            os << v.type.resolve(getTypeContext()).getName() << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
             os << getVarIndex(batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
         }
 
@@ -716,7 +716,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars[v];
-            addField(var.type->getPointerType(), var.name + fieldPrefixStem + std::to_string(i),
+            addField(var.type.resolve(getTypeContext()).createPointer(), var.name + fieldPrefixStem + std::to_string(i),
                      [i, var, &backend, &sortedSyn, getFusedVarSuffix](const auto &, size_t groupIndex)
                      {
                          const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
@@ -794,7 +794,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
                 if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
                 }
-                os << v.type->getName() << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
+                os << v.type.resolve(getTypeContext()).getName() << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
                 os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), subs["id"]) << "];" << std::endl;
             }
 

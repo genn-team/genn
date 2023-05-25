@@ -266,6 +266,11 @@ struct ResolvedType
     {
         return ResolvedType{Value{name, sizeof(T), std::nullopt}, qualifiers};
     }
+
+    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes)
+    {
+        return ResolvedType{Function{returnType, argTypes}, Qualifier{0}};
+    }
 };
 
 typedef std::unordered_map<std::string, ResolvedType> TypeContext;
