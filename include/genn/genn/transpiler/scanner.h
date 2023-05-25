@@ -8,14 +8,13 @@
 #include <variant>
 #include <vector>
 
+// GeNN includes
+#include "type.h"
+
 // Transpiler includes
 #include "transpiler/token.h"
 
 // Forward declarations
-namespace GeNN::Type
-{
-class NumericBase;
-}
 namespace GeNN::Transpiler
 {
 class ErrorHandlerBase;
@@ -26,6 +25,6 @@ class ErrorHandlerBase;
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler);
+std::vector<Token> scanSource(const std::string_view &source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
 }   // namespace Scanner

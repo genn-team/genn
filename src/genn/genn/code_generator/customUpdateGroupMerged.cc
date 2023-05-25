@@ -15,7 +15,6 @@
 #include "transpiler/scanner.h"
 #include "transpiler/standardLibrary.h"
 #include "transpiler/typeChecker.h"
-#include "transpiler/transpilerUtils.h"
 
 
 using namespace GeNN;
@@ -75,7 +74,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
      // Scan, parse and type-check update code
      ErrorHandler errorHandler;
      const std::string code = upgradeCodeString(cm->getUpdateCode());
-     const auto tokens = Scanner::scanSource(code, errorHandler);
+     const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
      m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
      m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }
@@ -364,7 +363,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Scan, parse and type-check update code
     ErrorHandler errorHandler;
     const std::string code = upgradeCodeString(cm->getUpdateCode());
-    const auto tokens = Scanner::scanSource(code, errorHandler);
+    const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
     m_UpdateStatements = Parser::parseBlockItemList(tokens, errorHandler);
     m_ResolvedTypes = TypeChecker::typeCheck(m_UpdateStatements, typeEnvironment, typeContext, errorHandler);
 }

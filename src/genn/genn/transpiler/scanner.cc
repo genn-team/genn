@@ -12,7 +12,6 @@
 
 // Transpiler includes
 #include "transpiler/errorHandler.h"
-#include "transpiler/transpilerUtils.h"
 
 using namespace GeNN;
 using namespace GeNN::Transpiler;
@@ -65,9 +64,20 @@ const std::map<std::set<char>, Token::Type> integerLiteralTokenTypes{
 class ScanState
 {
 public:
-    ScanState(std::string_view source, const std::unordered_set<std::string> &typedefNames, ErrorHandlerBase &errorHandler)
-        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_TypedefNames(typedefNames), m_ErrorHandler(errorHandler)
-    {}
+    ScanState(std::string_view source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_Context(context), m_ErrorHandler(errorHandler)
+    {
+        const auto &scalarType = context.at("scalar");
+        if (scalarType == Type::Float) {
+            m_ScalarTokenType = Token::Type::FLOAT_NUMBER;
+        }
+        else if (scalarType == Type::Double) {
+            m_ScalarTokenType = Token::Type::DOUBLE_NUMBER;
+        }
+        else {
+            throw std::runtime_error("Unsupported scalar type '" + scalarType.getName() + "'");
+        }
+    }
 
     //---------------------------------------------------------------------------
     // Public API
@@ -130,8 +140,10 @@ public:
     }
     
     bool isTypedefIdentifier(std::string_view lexeme) {
-        return (m_TypedefNames.find(std::string{lexeme}) != m_TypedefNames.cend());
+        return (m_Context.find(std::string{lexeme}) != m_Context.cend());
     }
+
+    Token::Type getScalarTokenType() const{ return m_ScalarTokenType; }
     
 private:
     //---------------------------------------------------------------------------
@@ -141,9 +153,10 @@ private:
     size_t m_Current;
     size_t m_Line;
 
-    const std::string_view m_Source;
-    const std::unordered_set<std::string> m_TypedefNames;
+    std::string_view m_Source;
+    const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
+    Token::Type m_ScalarTokenType;
 };
 
 bool isodigit(char c)
@@ -234,9 +247,9 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 scanState.advance();
                 emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
             }
-            // Otherwise, emplace SCALAR_NUMBER token
+            // Otherwise, emplace literal with whatever type is specified
             else {
-                emplaceToken(tokens, Token::Type::SCALAR_NUMBER, scanState);
+                emplaceToken(tokens, scanState.getScalarTokenType(), scanState);
             }
         }
         // Otherwise, emplace integer token 
@@ -450,11 +463,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 
-    ScanState scanState(source, {"scalar"}, errorHandler);
+    ScanState scanState(source, context, errorHandler);
 
     // Scan tokens
     while(!scanState.isAtEnd()) {
