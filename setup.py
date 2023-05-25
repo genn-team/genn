@@ -7,6 +7,7 @@ from copy import deepcopy
 from platform import system, uname
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
+from distutils.command.build import build as _build
 from shutil import copytree, rmtree
 from generate_swig_interfaces import generateConfigs
 
@@ -124,7 +125,7 @@ if opencl_installed:
         opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
     else:
         opencl_library_dir = os.path.join(opencl_path, "lib64")
-    
+
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("opencl", "OpenCL",
@@ -192,11 +193,19 @@ for filename, namespace, kwargs in backends:
 with open(os.path.join(genn_path, "version.txt")) as version_file:
     version = version_file.read().strip()
 
+# Create custom build command which build extensions BEFORE collecting Python modules
+# https://stackoverflow.com/a/26556654
+class build(_build):
+    sub_commands = [("build_ext",     _build.has_ext_modules),
+                    ("build_py",      _build.has_pure_modules),
+                    ("build_clib",    _build.has_c_libraries),
+                    ("build_scripts", _build.has_scripts)]
+
 setup(name = "pygenn",
       version = version,
       packages = find_packages(),
       package_data={"pygenn": package_data},
-
+      cmdclass = {"build": build},
       url="https://github.com/genn-team/genn",
       author="University of Sussex",
       description="Python interface to the GeNN simulator",
