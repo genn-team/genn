@@ -336,7 +336,7 @@ inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
 GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString);
 
 //! Look up numeric type based on set of type specifiers
-GENN_EXPORT ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers);
+GENN_EXPORT ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const TypeContext &context);
 
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);

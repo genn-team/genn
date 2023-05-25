@@ -17,6 +17,7 @@
 // Transpiler includes
 #include "transpiler/errorHandler.h"
 
+using namespace GeNN;
 using namespace GeNN::Transpiler;
 
 //---------------------------------------------------------------------------
@@ -38,8 +39,8 @@ class ParseError
 class ParserState
 {
 public:
-    ParserState(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
-        : m_Current(0), m_Tokens(tokens), m_ErrorHandler(errorHandler)
+    ParserState(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+        : m_Current(0), m_Tokens(tokens), m_Context(context), m_ErrorHandler(errorHandler)
     {}
 
     //---------------------------------------------------------------------------
@@ -128,6 +129,7 @@ public:
 
     bool isAtEnd() const { return (peek().type == Token::Type::END_OF_FILE); }
     
+    const Type::TypeContext &getContext() const{ return m_Context; }
     
 private:
     //---------------------------------------------------------------------------
@@ -136,6 +138,7 @@ private:
     size_t m_Current;
 
     const std::vector<Token> &m_Tokens;
+    const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -183,7 +186,7 @@ Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, s
     return expression;
 }
 
-const GeNN::Type::ResolvedType *parseDeclarationSpecifiers(ParserState &parserState)
+GeNN::Type::ResolvedType parseDeclarationSpecifiers(ParserState &parserState)
 {
     using namespace GeNN::Type;
     
@@ -215,18 +218,18 @@ const GeNN::Type::ResolvedType *parseDeclarationSpecifiers(ParserState &parserSt
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
 
     // Lookup numeric type
-    const Type::ResolvedType *type = getNumericType(typeSpecifiers);
+    Type::ResolvedType type = getNumericType(typeSpecifiers, parserState.getContext());
 
     // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier
     if(!typeQualifiers.empty()) {
-        type = type->getQualifiedType(Qualifier::CONSTANT);
+        type = type.addQualifier(Qualifier::CONSTANT);
     }
     
     // Loop through levels of pointer indirection
     // **THINK** this relies of const being only qualifier
     for(const auto &p : pointerTypeQualifiers) {
-        type = type->getPointerType(p.empty() ? Qualifier{0} : Qualifier::CONSTANT);
+        type = type.createPointer(p.empty() ? Qualifier{0} : Qualifier::CONSTANT);
     }
     return type;
 }
@@ -238,7 +241,7 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
     //      constant
     //      "(" expression ")"
     if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::STRING,
-                           Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER, Token::Type::SCALAR_NUMBER,
+                           Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER,
                            Token::Type::INT32_NUMBER, Token::Type::UINT32_NUMBER})) {
         return std::make_unique<Expression::Literal>(parserState.previous());
     }
@@ -379,7 +382,7 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
         // If this is followed by some part of a type declarator
         if(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER})) {
             // Parse declaration specifiers
-            const auto *type = parseDeclarationSpecifiers(parserState);
+            const auto type = parseDeclarationSpecifiers(parserState);
 
             const auto closingParen = parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
 
@@ -798,7 +801,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     //      "const"
 
     // Parse declaration specifiers
-    const auto *type = parseDeclarationSpecifiers(parserState);
+    const auto type = parseDeclarationSpecifiers(parserState);
 
     // Read init declarator list
     std::vector<std::tuple<Token, Expression::ExpressionPtr>> initDeclaratorList;
@@ -851,9 +854,9 @@ std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
+Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, context, errorHandler);
 
     try {
         return parseExpression(parserState);
@@ -863,9 +866,9 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, Erro
     }
 }
 //---------------------------------------------------------------------------
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
+Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, context, errorHandler);
     std::vector<std::unique_ptr<const Statement::Base>> statements;
 
     while(!parserState.isAtEnd()) {
@@ -874,9 +877,9 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, Er
     return statements;
 }
 //---------------------------------------------------------------------------
-const GeNN::Type::NumericBase *parseNumericType(const std::vector<Token> &tokens, ErrorHandlerBase &errorHandler)
+const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
-    ParserState parserState(tokens, errorHandler);
+    ParserState parserState(tokens, context, errorHandler);
     std::set<std::string> typeSpecifiers;
     while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
         if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
@@ -885,6 +888,6 @@ const GeNN::Type::NumericBase *parseNumericType(const std::vector<Token> &tokens
     };
     
     // Return numeric type
-    return GeNN::Type::getNumericType(typeSpecifiers);
+    return GeNN::Type::getNumericType(typeSpecifiers, context);
 }
 }

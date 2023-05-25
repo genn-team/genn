@@ -48,8 +48,6 @@ const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
     {{"float"}, Type::Float},
     {{"double"}, Type::Double}};
 //----------------------------------------------------------------------------
-const std::set<std::string> scalarTypeSpecifier{{"scalar"}};
-//----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
 const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
     {Type::Int8, Type::Uint8},
@@ -144,18 +142,24 @@ ResolvedType parseNumeric(const std::string &typeString)
     return type;
 }
 //----------------------------------------------------------------------------
-ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers)
+ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const TypeContext &context)
 {
-    // If type matches scalar type specifiers
-    if(typeSpecifiers == scalarTypeSpecifier) {
-        assert(false);
-        //return new NumericTypedef("scalar");
-    }
-    // Otherwise
-    else {
-        const auto type = numericTypeSpecifiers.find(typeSpecifiers);
-        //return (type == numericTypeSpecifiers.cend()) ? nullptr : type->second;
+    // If type is numeric, return 
+    const auto type = numericTypeSpecifiers.find(typeSpecifiers);
+    if (type != numericTypeSpecifiers.cend()) {
         return type->second;
+    }
+    else {
+        // **YUCK** use sets everywhere
+        if (typeSpecifiers.size() == 1) {
+            const auto contextType = context.find(*typeSpecifiers.begin());
+            if (contextType != context.cend()) {
+                return contextType->second;
+            }
+        }
+
+        // **TODO** improve error
+        throw std::runtime_error("Unknown numeric type specifier");
     }
 }
 //----------------------------------------------------------------------------
