@@ -458,7 +458,7 @@ TEST(TypeChecker, IncDec)
         TestEnvironment typeEnvironment;
         typeEnvironment.definePointer(Type::Int32, "intArray");
         const auto type = typeCheckExpression("intArray++", typeEnvironment);
-        EXPECT_EQ(type, Type::Int32.getPointer());
+        EXPECT_EQ(type, Type::Int32.createPointer());
         EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
     }
 
@@ -537,7 +537,7 @@ TEST(TypeChecker, Literal)
     {
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("\"hello world\"", typeEnvironment);
-        EXPECT_EQ(type, Type::Int8.getPointer());
+        EXPECT_EQ(type, Type::Int8.createPointer());
     }
 }
 //--------------------------------------------------------------------------
@@ -593,7 +593,7 @@ TEST(TypeChecker, Unary)
         const auto type = typeCheckExpression("&intVal", typeEnvironment);
         EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
         EXPECT_EQ(*type.getPointer().valueType, Type::Int32);
-        EXPECT_FALSE(type.getPointer().valueType,->hasQualifier(Type::Qualifier::CONSTANT));        
+        EXPECT_FALSE(type.getPointer().valueType->hasQualifier(Type::Qualifier::CONSTANT));        
     }
 
     // Address of pointer
