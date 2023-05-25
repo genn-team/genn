@@ -51,15 +51,11 @@ public:
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct Var
     {
-        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a) : name(n), type(t), access(a)
+        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const Type::ResolvedType &t) : Var(n, t, VarAccess::READ_WRITE)
+        Var(const std::string &n, const std::string &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
-        {}
-        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
-        {}
-
+        
         bool operator == (const Var &other) const
         {
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
@@ -72,14 +68,15 @@ public:
 
     struct VarRef
     {
-        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a) : name(n), type(t), access(a)
+        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
         {}
-        VarRef(const std::string &n, const Type::ResolvedType &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
+        VarRef(const std::string &n, const std::string &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
         {}
-        VarRef(const std::string &n, const std::string &t, VarAccessMode a);
-        VarRef(const std::string &n, const std::string &t);
-
-        bool operator == (const VarRef &other) const;
+        
+        bool operator == (const VarRef &other) const
+        {
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
+        }
 
         std::string name;
         Type::UnresolvedType type;
