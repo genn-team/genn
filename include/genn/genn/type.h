@@ -155,35 +155,41 @@ struct ResolvedType
     //------------------------------------------------------------------------
     struct Function
     {
-        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes) 
-        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes)
+        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false) 
+        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes), variadic(variadic)
         {}
         Function(const Function &other)
-        :   returnType(std::make_unique<ResolvedType const>(*other.returnType)), argTypes(other.argTypes)
+        :   returnType(std::make_unique<ResolvedType const>(*other.returnType)), 
+            argTypes(other.argTypes), variadic(other.variadic)
         {}
 
         std::unique_ptr<ResolvedType const> returnType;
         std::vector<ResolvedType> argTypes;
+        bool variadic;
 
         bool operator == (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes) == std::tie(*other.returnType, other.argTypes));
+            return (std::tie(*returnType, argTypes, variadic) 
+                    == std::tie(*other.returnType, other.argTypes, other.variadic));
         }
 
         bool operator != (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes) != std::tie(*other.returnType, other.argTypes));
+            return (std::tie(*returnType, argTypes, variadic) 
+                    != std::tie(*other.returnType, other.argTypes, other.variadic));
         }
 
         bool operator < (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes) < std::tie(*other.returnType, other.argTypes));
+            return (std::tie(*returnType, argTypes, variadic) 
+                    < std::tie(*other.returnType, other.argTypes, other.variadic));
         }
 
         Function &operator = (const Function &other)
         {
            returnType.reset(new ResolvedType(*other.returnType));
            argTypes = other.argTypes;
+           variadic = other.variadic;
            return *this;
         }
     };
@@ -267,9 +273,9 @@ struct ResolvedType
         return ResolvedType{Value{name, sizeof(T), std::nullopt}, qualifiers};
     }
 
-    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes)
+    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false)
     {
-        return ResolvedType{Function{returnType, argTypes}, Qualifier{0}};
+        return ResolvedType{Function{returnType, argTypes, variadic}, Qualifier{0}};
     }
 };
 

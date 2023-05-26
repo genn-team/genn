@@ -112,7 +112,10 @@ const auto libraryTypes = initLibraryTypes(
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(tgamma),
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(lgamma),
     ADD_TWO_ARG_FLOAT_DOUBLE_FUNC(copysign),
-    ADD_THREE_ARG_FLOAT_DOUBLE_FUNC(fma));
+    ADD_THREE_ARG_FLOAT_DOUBLE_FUNC(fma),
+    
+    // Printf
+    std::make_pair("printf", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int8.addQualifier(Type::Qualifier::CONSTANT).createPointer()}, true), "printf($(0), $(@))")));
 }
 
 

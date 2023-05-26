@@ -515,18 +515,23 @@ private:
             // Loop through variable types
             std::vector<std::pair<Type::ResolvedType, std::vector<int>>> viableFunctions;
             for(const auto &type : varTypes) {
-                // If  function is non-variadic and number of arguments match
+                // If  function is non-variadic and number of arguments 
+                // match or variadic and enough arguments are provided
                 const auto &argumentTypes = type.getFunction().argTypes;
-                if(m_CallArguments.top().size() == argumentTypes.size()) {
+                const bool variadic = type.getFunction().variadic;
+                if((!variadic && m_CallArguments.top().size() == argumentTypes.size())
+                   || (variadic && m_CallArguments.top().size() >= argumentTypes.size()))
+                {
                     // Create vector to hold argument conversion rank
                     std::vector<int> argumentConversionRank;
                     argumentConversionRank.reserve(m_CallArguments.top().size());
 
                     // Loop through arguments
+                    // **NOTE** we loop through function arguments to deal with variadic
                     bool viable = true;
                     auto c = m_CallArguments.top().cbegin();
                     auto a = argumentTypes.cbegin();
-                    for(;c != m_CallArguments.top().cend(); c++, a++) {
+                    for(;a != argumentTypes.cend(); c++, a++) {
                         const auto argConversionRank = std::visit(
                             Utils::Overload{
                                 // If types are numeric, any cast goes
