@@ -145,14 +145,16 @@ private:
 
     virtual void visit(const Expression::Literal &literal) final
     {
+        // Write out lexeme
+        m_Environment.get().getStream() << literal.getValue().lexeme;
+        
         // If literal is a float, add f suffix
-        std::string_view lexeme = literal.getValue().lexeme;
         if (literal.getValue().type == Token::Type::FLOAT_NUMBER){
-            m_Environment.get().getStream() << lexeme << "f";
+            m_Environment.get().getStream() << "f";
         }
-        // Otherwise, just write out original lexeme directly (strings are already quoted)
-        else {
-            m_Environment.get().getStream() << lexeme;
+        // Otherwise, if it's an unsigned integer, add u suffix
+        else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
+            m_Environment.get().getStream() << "u";
         }
     }
 

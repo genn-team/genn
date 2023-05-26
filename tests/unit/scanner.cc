@@ -90,7 +90,7 @@ TEST(Scanner, HexInt)
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "0x1234");
-    ASSERT_EQ(tokens[1].lexeme, "0xFFFFFFFFU");
+    ASSERT_EQ(tokens[1].lexeme, "0xFFFFFFFF");
     ASSERT_EQ(tokens[3].lexeme, "0x1234");
     ASSERT_EQ(tokens[5].lexeme, "0x7FFFFFFF");
 }
@@ -114,10 +114,10 @@ TEST(Scanner, DecimalFloat)
 
     ASSERT_EQ(tokens[0].lexeme, "1.0");
     ASSERT_EQ(tokens[1].lexeme, "0.2");
-    ASSERT_EQ(tokens[2].lexeme, "100.0f");
-    ASSERT_EQ(tokens[3].lexeme, "0.2f");
-    ASSERT_EQ(tokens[5].lexeme, "12.0d");
-    ASSERT_EQ(tokens[7].lexeme, "0.0004f");
+    ASSERT_EQ(tokens[2].lexeme, "100.0");
+    ASSERT_EQ(tokens[3].lexeme, "0.2");
+    ASSERT_EQ(tokens[5].lexeme, "12.0");
+    ASSERT_EQ(tokens[7].lexeme, "0.0004");
 }
 //--------------------------------------------------------------------------
 TEST(Scanner, String)

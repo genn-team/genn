@@ -53,11 +53,6 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"int32_t", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER}};
 //---------------------------------------------------------------------------
-const std::map<std::set<char>, Token::Type> integerLiteralTokenTypes{
-    {{}, Token::Type::INT32_NUMBER},
-    {{'U'}, Token::Type::UINT32_NUMBER}
-};
-//---------------------------------------------------------------------------
 // ScanState
 //---------------------------------------------------------------------------
 //! Class encapsulated logic to navigate through source characters
@@ -176,16 +171,6 @@ void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState 
     tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine());
 }
 //---------------------------------------------------------------------------
-Token::Type scanIntegerSuffix(ScanState &scanState)
-{
-    // Read suffix
-    std::set<char> suffix;
-    while(std::toupper(scanState.peek()) == 'U' || std::toupper(scanState.peek()) == 'L') {
-        suffix.insert(std::toupper(scanState.advance()));
-    }
-    return integerLiteralTokenTypes.at(suffix);
-}
-//---------------------------------------------------------------------------
 void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 {
     // If this is a hexadecimal literal
@@ -205,8 +190,15 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
             scanState.advance();
         }
 
-        // Add integer token
-        emplaceToken(tokens, scanIntegerSuffix(scanState), scanState);
+        // If there's a U suffix, emplace 
+        if (std::toupper(scanState.peek()) == 'U') {
+            emplaceToken(tokens, Token::Type::UINT32_NUMBER, scanState);
+            scanState.advance();
+        }
+        else {
+            emplaceToken(tokens, Token::Type::INT32_NUMBER, scanState);
+        }
+        
     }
     // Otherwise, if this is an octal integer
     else if(c == '0' && isodigit(scanState.peek())){
@@ -260,7 +252,14 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
         }
         // Otherwise, emplace integer token 
         else {
-            emplaceToken(tokens, scanIntegerSuffix(scanState), scanState);
+            // If there's a U suffix, emplace 
+            if (std::toupper(scanState.peek()) == 'U') {
+                emplaceToken(tokens, Token::Type::UINT32_NUMBER, scanState);
+                scanState.advance();
+            }
+            else {
+                emplaceToken(tokens, Token::Type::INT32_NUMBER, scanState);
+            }
         }
     }
 }
