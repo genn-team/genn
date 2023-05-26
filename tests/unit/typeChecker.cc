@@ -534,23 +534,6 @@ TEST(TypeChecker, Unary)
         typeEnvironment.define(Type::Int32, "intVal");
         typeCheckExpression("*intVal", typeEnvironment); },
         TypeChecker::TypeCheckError);
-
-    // Address of numeric
-    {
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32, "intVal");
-        const auto type = typeCheckExpression("&intVal", typeEnvironment);
-        EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
-        EXPECT_EQ(*type.getPointer().valueType, Type::Int32);
-        EXPECT_FALSE(type.getPointer().valueType->hasQualifier(Type::Qualifier::CONSTANT));        
-    }
-
-    // Address of pointer
-    EXPECT_THROW({
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
-        typeCheckExpression("&intArray", typeEnvironment);},
-        TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, VarDeclaration)

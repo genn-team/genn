@@ -643,9 +643,10 @@ private:
             else if (unary.getOperator().type == Token::Type::NOT) {
                 setExpressionType(&unary, Type::Int32);
             }
-            // Otherwise, if operator is address of, return pointer type
-            else if (unary.getOperator().type == Token::Type::AMPERSAND) {
-                setExpressionType(&unary, rightType.createPointer());
+            else {
+                m_ErrorHandler.error(unary.getOperator(),
+                                     "Invalid operand type '" + rightType.getName() + "'");
+                throw TypeCheckError();
             }
         }
         else {

@@ -329,7 +329,6 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
     //      postfix-expression
     //      "++" unary-expression
     //      "--" unary-expression
-    //      "&" cast-expression
     //      "*" cast-expression
     //      "+" cast-expression
     //      "-" cast-expression
@@ -337,20 +336,8 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
     //      "!" cast-expression
     //      "sizeof" unary-expression       **TODO** 
     //      "sizeof" "(" type-name ")"      **TODO** 
-    if(parserState.match(Token::Type::AMPERSAND)) {
-        Token op = parserState.previous();
-        auto expression = parseCast(parserState);
-
-        // If expression is a valid l-value, 
-        if (expression->isLValue()) {
-            return std::make_unique<Expression::Unary>(op, std::move(expression));
-        }
-        else {
-            parserState.error(op, "Cannot take the address of r-value");
-        }
-    }
-    else if(parserState.match({Token::Type::STAR, Token::Type::PLUS, Token::Type::MINUS,
-                               Token::Type::TILDA, Token::Type::NOT}))
+    if(parserState.match({Token::Type::STAR, Token::Type::PLUS, Token::Type::MINUS,
+                          Token::Type::TILDA, Token::Type::NOT}))
     {
         Token op = parserState.previous();
         return std::make_unique<Expression::Unary>(op, parseCast(parserState));
