@@ -803,11 +803,6 @@ private:
         m_InLoop = false;
     }
 
-    virtual void visit(const Statement::Print &print) final
-    {
-        print.getExpression()->accept(*this);
-    }
-
 private:
     //---------------------------------------------------------------------------
     // Private methods

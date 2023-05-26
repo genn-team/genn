@@ -24,7 +24,6 @@ class Labelled;
 class Switch;
 class VarDeclaration;
 class While;
-class Print;
 }
 
 //---------------------------------------------------------------------------
@@ -46,7 +45,6 @@ public:
     virtual void visit(const Switch &switchStatement) = 0;
     virtual void visit(const VarDeclaration &varDeclaration) = 0;
     virtual void visit(const While &whileStatement) = 0;
-    virtual void visit(const Print &print) = 0;
 };
 
 //---------------------------------------------------------------------------
@@ -285,23 +283,5 @@ public:
 private:
     ExpressionPtr m_Condition;
     StatementPtr m_Body;
-};
-
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::Statement::Print
-//---------------------------------------------------------------------------
-// **HACK** temporary until function calling is working
-class Print : public Acceptable<Print>
-{
-    using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
-public:
-    Print(ExpressionPtr expression)
-    :  m_Expression(std::move(expression))
-    {}
-
-    const ExpressionPtr::element_type *getExpression() const { return m_Expression.get(); }
-
-private:
-    ExpressionPtr m_Expression;
 };
 }   // namespace GeNN::Transpiler::Statement

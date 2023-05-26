@@ -594,14 +594,6 @@ Statement::StatementPtr parseExpressionStatement(ParserState &parserState)
     return std::make_unique<Statement::Expression>(std::move(expression));
 }
 
-Statement::StatementPtr parsePrintStatement(ParserState &parserState)
-{
-    auto expression = parseExpression(parserState);
-
-    parserState.consume(Token::Type::SEMICOLON, "Expect ';' after expression");
-    return std::make_unique<Statement::Print>(std::move(expression));
-}
-
 Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
 {
     // selection-statement ::=
@@ -734,15 +726,14 @@ Statement::StatementPtr parseStatement(ParserState &parserState)
     //      labeled-statement
     //      compound-statement
     //      expression-statement
-    //      print-statement         // **TEMP**
     //      selection-statement     
     //      iteration-statement
     //      jump-statement
-    if(parserState.match(Token::Type::PRINT)) {
-        return parsePrintStatement(parserState);
-    }
-    else if(parserState.match({Token::Type::CASE, Token::Type::DEFAULT})) {
+    if(parserState.match({Token::Type::CASE, Token::Type::DEFAULT})) {
         return parseLabelledStatement(parserState);
+    }
+    else if(parserState.match(Token::Type::LEFT_BRACE)) {
+        return parseCompoundStatement(parserState);
     }
     else if(parserState.match({Token::Type::IF, Token::Type::SWITCH})) {
         return parseSelectionStatement(parserState);
@@ -752,9 +743,6 @@ Statement::StatementPtr parseStatement(ParserState &parserState)
     }
     else if(parserState.match({Token::Type::CONTINUE, Token::Type::BREAK})) {
         return parseJumpStatement(parserState);
-    }
-    else if(parserState.match(Token::Type::LEFT_BRACE)) {
-        return parseCompoundStatement(parserState);
     }
     else {
         return parseExpressionStatement(parserState);

@@ -322,13 +322,6 @@ private:
         whileStatement.getBody()->accept(*this);
     }
 
-    virtual void visit(const Statement::Print &print) final
-    {
-        m_Environment.get().getStream() << "print ";
-        print.getExpression()->accept(*this);
-        m_Environment.get().getStream() << ";";
-    }
-
 private:
     //---------------------------------------------------------------------------
     // Members
