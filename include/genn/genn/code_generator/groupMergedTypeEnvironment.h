@@ -46,7 +46,7 @@ public:
                 return m_Enclosing->getTypes(name, errorHandler);
             }
             else {
-                errorHandler.error(name, "Undefined variable");
+                errorHandler.error(name, "Undefined identifier");
                 throw TypeCheckError();
             }
         }

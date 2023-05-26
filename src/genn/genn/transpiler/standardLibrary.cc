@@ -146,7 +146,7 @@ std::vector<Type::ResolvedType> FunctionTypes::getTypes(const Token &name, Error
 {
     const auto [typeBegin, typeEnd] = libraryTypes.equal_range(name.lexeme);
     if (typeBegin == typeEnd) {
-         errorHandler.error(name, "Undefined variable");
+         errorHandler.error(name, "Undefined identifier");
          throw TypeCheckError();
     }
     else {

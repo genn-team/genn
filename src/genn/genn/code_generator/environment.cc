@@ -33,7 +33,7 @@ std::string EnvironmentExternal::getContextName(const std::string &name, std::op
     return std::visit(
         Utils::Overload{
             [&name, type](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name, type); },
-            [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Variable '" + name + "' undefined"); }},
+            [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Identifier '" + name + "' undefined"); }},
         getContext());
 }
 
