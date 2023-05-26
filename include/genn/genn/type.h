@@ -220,7 +220,7 @@ struct ResolvedType
     const Function &getFunction() const{ return std::get<Function>(detail); }
     const Numeric &getNumeric() const{ return *getValue().numeric; }
 
-    const ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifier); }
+    const ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifiers | qualifier); }
     bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
 
     std::string getName() const;
