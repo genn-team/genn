@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <stack>
 #include <unordered_set>
 
 // GeNN code generator includes
@@ -70,6 +71,52 @@ private:
 };
 
 //---------------------------------------------------------------------------
+// EnvironmentCallArgument
+//---------------------------------------------------------------------------
+class EnvironmentCallArgument : public EnvironmentBase
+{
+public:
+    EnvironmentCallArgument(EnvironmentBase &enclosing)
+    :   m_Enclosing(enclosing), m_CodeStream(m_Stream)
+    {
+    }
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual std::string define(const std::string &name) final
+    {
+        throw std::runtime_error("Cannot declare variable in call environment");
+    }
+
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type) final
+    {
+        return m_Enclosing.getName(name, type);
+    }
+
+    virtual CodeStream &getStream()
+    {
+        return m_CodeStream;
+    }
+
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    std::string getString() const
+    {
+        return m_Stream.str(); 
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    EnvironmentBase &m_Enclosing;
+    std::ostringstream m_Stream;
+    CodeStream m_CodeStream;
+};
+
+//---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
 class Visitor : public Expression::Visitor, public Statement::Visitor
@@ -113,12 +160,36 @@ private:
 
     virtual void visit(const Expression::Call &call) final
     {
-        call.getCallee()->accept(*this);
-        m_Environment.get().getStream() << "(";
-        for(const auto &a : call.getArguments()) {
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
+        
+        // Push new vector of arguments onto call argument stack and 
+        // reserve memory to hold all arguments
+        m_CallArguments.emplace();
+        m_CallArguments.top().reserve(call.getArguments().size());
+
+        // Loop through call arguments
+        for (const auto &a : call.getArguments()) {
+            // Create new call argument environment and set to current
+            EnvironmentCallArgument environment(oldEnvironment.get());
+            m_Environment = environment;
+
+            // Pretty print argument
             a->accept(*this);
-        }
-        m_Environment.get().getStream() << ")";
+            
+            // Add pretty printed argument to vector on top of stack
+            m_CallArguments.top().push_back(environment.getString());
+         }
+
+        // Restore old environment
+        m_Environment = oldEnvironment;
+         
+        // Pretty print callee
+        call.getCallee()->accept(*this);
+
+        // Pop stack
+        m_CallArguments.pop();
+
     }
 
     virtual void visit(const Expression::Cast &cast) final
@@ -179,8 +250,63 @@ private:
 
     virtual void visit(const Expression::Identifier &variable) final
     {
+        // Get name of identifier
         const auto &type = m_ResolvedTypes.at(&variable);
-        m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme, type);
+        std::string name = m_Environment.get().getName(variable.getName().lexeme, type);
+
+        // If identifier is function i.e. name is a function template
+        if (type.isFunction()) {
+            // Check that there are call arguments on the stack
+            assert(!m_CallArguments.empty());
+
+            // Loop through call arguments on top of stack
+            size_t i = 0;
+            for (i = 0; i < m_CallArguments.top().size(); i++) {
+                // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
+                const std::string placeholder = "$(" + std::to_string(i) + ")";
+                const size_t found = name.find(placeholder);
+                if (found != std::string::npos) {
+                    name.replace(found, placeholder.length(), m_CallArguments.top().at(i));
+                }
+                // Otherwise, stop searching
+                else {
+                    break;
+                }
+            }
+
+            // If all arguments haven't been substituted
+            if (i != m_CallArguments.top().size()) {
+                // If function is variadic
+                if (type.getFunction().variadic) {
+                    // If variadic placeholder is found
+                    const std::string variadicPlaceholder = "$(@)";
+                    const size_t found = name.find(variadicPlaceholder);
+                    if (found != std::string::npos) {
+                        // Concatenate together all remaining arguments
+                        std::ostringstream variadicArgumentsStream;
+                        std::copy(m_CallArguments.top().cbegin() + i, m_CallArguments.top().cend(),
+                                  std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
+
+                        // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
+                        std::string variadicArguments = variadicArgumentsStream.str();
+                        name.replace(found, variadicPlaceholder.length(),
+                                     variadicArguments.substr(0, variadicArguments.length() - 2));
+                    }
+                    else {
+                        throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
+                                                 "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
+                    }
+                }
+                // Otherwise, give error
+                else {
+                    throw std::runtime_error("Function template for '" + variable.getName().lexeme + "' (" + name + ") has "
+                                             "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call");
+                }
+            }
+        }
+        // Print out name
+        // **NOTE** in case of function this will be full pretty-printed call
+        m_Environment.get().getStream() << name;
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -200,7 +326,7 @@ private:
     virtual void visit(const Statement::Compound &compound) final
     {
         // Cache reference to current reference
-        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
 
         // Create new environment and set to current
         EnvironmentInternal environment(m_Environment);
@@ -239,7 +365,7 @@ private:
     virtual void visit(const Statement::For &forStatement) final
     {
         // Cache reference to current reference
-        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
 
         // Create new environment and set to current
         EnvironmentInternal environment(m_Environment);
@@ -326,9 +452,10 @@ private:
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
-    std::reference_wrapper<EnvironmentInternal> m_Environment;
+    std::reference_wrapper<EnvironmentBase> m_Environment;
     const Type::TypeContext &m_Context;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
+    std::stack<std::vector<std::string>> m_CallArguments;
 };
 }   // Anonymous namespace
 
@@ -339,5 +466,5 @@ void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &stat
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
 {
     EnvironmentInternal internalEnvironment(environment);
-    Visitor(statements, internalEnvironment, context, resolvedTypes);
+    Visitor visitor(statements, internalEnvironment, context, resolvedTypes);
 }
