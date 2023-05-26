@@ -177,7 +177,7 @@ private:
         prefixIncDec.getTarget()->accept(*this);
     }
 
-    virtual void visit(const Expression::Variable &variable) final
+    virtual void visit(const Expression::Identifier &variable) final
     {
         const auto &type = m_ResolvedTypes.at(&variable);
         m_Environment.get().getStream() << m_Environment.get().getName(variable.getName().lexeme, type);

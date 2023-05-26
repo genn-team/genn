@@ -246,7 +246,7 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
         return std::make_unique<Expression::Literal>(parserState.previous());
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {
-        return std::make_unique<Expression::Variable>(parserState.previous());
+        return std::make_unique<Expression::Identifier>(parserState.previous());
     }
     else if(parserState.match(Token::Type::LEFT_PAREN)) {
         auto expression = parseExpression(parserState);

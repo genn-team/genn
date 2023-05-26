@@ -500,7 +500,7 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Variable &variable)
+    virtual void visit(const Expression::Identifier &variable)
     {
         // If type is unambiguous and not a function
         const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);

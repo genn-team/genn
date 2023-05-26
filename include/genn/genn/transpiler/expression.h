@@ -24,7 +24,7 @@ class Literal;
 class Logical;
 class PostfixIncDec;
 class PrefixIncDec;
-class Variable;
+class Identifier;
 class Unary;
 }
 
@@ -47,7 +47,7 @@ public:
     virtual void visit(const Logical &logical) = 0;
     virtual void visit(const PostfixIncDec &postfixIncDec) = 0;
     virtual void visit(const PrefixIncDec &postfixIncDec) = 0;
-    virtual void visit(const Variable &variable) = 0;
+    virtual void visit(const Identifier &variable) = 0;
     virtual void visit(const Unary &unary) = 0;
 };
 
@@ -303,12 +303,12 @@ private:
 };
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::Expression::Variable
+// GeNN::Transpiler::Expression::Identifier
 //---------------------------------------------------------------------------
-class Variable : public Acceptable<Variable>
+class Identifier : public Acceptable<Identifier>
 {
 public:
-    Variable(Token name)
+    Identifier(Token name)
     :  m_Name(name)
     {}
 
