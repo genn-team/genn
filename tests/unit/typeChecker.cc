@@ -370,7 +370,6 @@ TEST(TypeChecker, Cast)
         typeEnvironment.define(Type::Int32.createPointer(), "intArray");
         const auto type = typeCheckExpression("(const int*)intArray", typeEnvironment);
         EXPECT_FALSE(type.hasQualifier(Type::Qualifier::CONSTANT));
-
         EXPECT_EQ(*type.getPointer().valueType, Type::Int32.addQualifier(Type::Qualifier::CONSTANT));
     }
 

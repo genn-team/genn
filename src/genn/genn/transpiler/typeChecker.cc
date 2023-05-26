@@ -32,10 +32,9 @@ bool checkPointerTypeAssignement(const Type::ResolvedType &rightType, const Type
 {
     return std::visit(
         Utils::Overload{
-            [&rightType, &leftType](const Type::ResolvedType::Value &leftValue, const Type::ResolvedType::Value &rightValue)
+            [](const Type::ResolvedType::Value &leftValue, const Type::ResolvedType::Value &rightValue)
             {
-                assert(leftValue.numeric && rightValue.numeric);
-                return (rightType == leftType);
+                return (rightValue == leftValue);
             },
             [](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer)
             {
@@ -592,7 +591,7 @@ private:
             // If there are no viable candidates, give error
             if(viableFunctions.empty()) {
                 m_ErrorHandler.error(variable.getName(),
-                                        "No viable function candidates for '" + variable.getName().lexeme + "'");
+                                     "No viable function candidates for '" + variable.getName().lexeme + "'");
                 throw TypeCheckError();
             }
             // Otherwise, sort lexigraphically by conversion rank and return type of lowest
@@ -663,6 +662,7 @@ private:
     {
         if (!m_InLoop && !m_InSwitch) {
             m_ErrorHandler.error(breakStatement.getToken(), "Statement not within loop");
+            throw TypeCheckError(); 
         }
     }
 
@@ -687,6 +687,7 @@ private:
     {
         if (!m_InLoop) {
             m_ErrorHandler.error(continueStatement.getToken(), "Statement not within loop");
+            throw TypeCheckError();
         }
     }
 
@@ -746,6 +747,7 @@ private:
     {
         if (!m_InSwitch) {
             m_ErrorHandler.error(labelled.getKeyword(), "Statement not within switch statement");
+            throw TypeCheckError();
         }
 
         if (labelled.getValue()) {
@@ -786,6 +788,7 @@ private:
                 const auto initialiserType = evaluateType(std::get<1>(var).get());
                 if (!checkImplicitConversion(initialiserType, decType)) {
                     m_ErrorHandler.error(std::get<0>(var), "Invalid operand types '" + decType.getName() + "' and '" + initialiserType.getName());
+                    throw TypeCheckError();
                 }
             }
         }
