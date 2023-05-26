@@ -333,6 +333,11 @@ public:
     :  m_Operator(op), m_Right(std::move(right))
     {}
 
+    //------------------------------------------------------------------------
+    // Expression::Base virtuals
+    //------------------------------------------------------------------------
+    virtual bool isLValue() const{ return (m_Operator.type == Token::Type::STAR); }
+
     const Token &getOperator() const { return m_Operator; }
     const Base *getRight() const { return m_Right.get(); }
 
