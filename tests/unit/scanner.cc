@@ -69,7 +69,7 @@ TEST(Scanner, DecimalInt)
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "1234");
-    ASSERT_EQ(tokens[1].lexeme, "4294967295U");
+    ASSERT_EQ(tokens[1].lexeme, "4294967295");
     ASSERT_EQ(tokens[3].lexeme, "2345");
     ASSERT_EQ(tokens[5].lexeme, "2147483647");
 }
