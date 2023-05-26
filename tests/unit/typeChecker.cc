@@ -161,55 +161,21 @@ TEST(TypeChecker, ArraySubscript)
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Assignment)
 {
-    // Numeric assignment
-    {
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32, "intVal");
-        typeEnvironment.define(Type::Float, "floatVal");
-        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT), "intValConst");
-        typeCheckStatements(
-            "int w = intVal;\n"
-            "float x = floatVal;\n"
-            "int y = floatVal;\n"
-            "float z = intVal;\n"
-            "int wc = intValConst;\n"
-            "const int cw = intVal;\n"
-            "const int cwc = intValConst;\n",
-            typeEnvironment);
-    }
-
-    // Pointer assignement
-    {
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
-        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT).createPointer(), "intArrayConst");
-        typeCheckStatements(
-            "int *x = intArray;\n"
-            "const int *y = intArray;\n"
-            "const int *z = intArrayConst;\n", 
-            typeEnvironment);
-    }
-
-    // Pointer assignement, attempt to remove const
-    EXPECT_THROW({
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT).createPointer(), "intArray");
-        typeCheckStatements("int *x = intArray;", typeEnvironment);},
-        TypeChecker::TypeCheckError);
-
-    // Pointer assignement without explicit cast
-    EXPECT_THROW({
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
-        typeCheckStatements("float *x = intArray;", typeEnvironment);},
-        TypeChecker::TypeCheckError);
-
     // Dereference assignment
     {
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32.createPointer(), "intArray");
         typeCheckStatements(
             "*intArray = 7;\n",
+            typeEnvironment);
+    }
+
+    // Array subscript assignment
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
+        typeCheckStatements(
+            "intArray[5] = 7;\n",
             typeEnvironment);
     }
     // **TODO** other assignements i.e. += -= %=
@@ -584,5 +550,51 @@ TEST(TypeChecker, Unary)
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32.createPointer(), "intArray");
         typeCheckExpression("&intArray", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+}
+//--------------------------------------------------------------------------
+TEST(TypeChecker, VarDeclaration)
+{
+    // Numeric var declaration
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32, "intVal");
+        typeEnvironment.define(Type::Float, "floatVal");
+        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT), "intValConst");
+        typeCheckStatements(
+            "int w = intVal;\n"
+            "float x = floatVal;\n"
+            "int y = floatVal;\n"
+            "float z = intVal;\n"
+            "int wc = intValConst;\n"
+            "const int cw = intVal;\n"
+            "const int cwc = intValConst;\n",
+            typeEnvironment);
+    }
+
+    // Pointer var declaration
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
+        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT).createPointer(), "intArrayConst");
+        typeCheckStatements(
+            "int *x = intArray;\n"
+            "const int *y = intArray;\n"
+            "const int *z = intArrayConst;\n", 
+            typeEnvironment);
+    }
+
+    // Pointer var declaration, attempt to remove const
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT).createPointer(), "intArray");
+        typeCheckStatements("int *x = intArray;", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Pointer var declaration without explicit cast
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
+        typeCheckStatements("float *x = intArray;", typeEnvironment);},
         TypeChecker::TypeCheckError);
 }
