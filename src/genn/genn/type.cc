@@ -115,7 +115,7 @@ ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
              },
              [&typeContext](const std::string &name)
              {
-                 return typeContext.at(name);
+                 return parseNumeric(name, typeContext);
              }},
         detail);
 }
