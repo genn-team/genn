@@ -7,6 +7,49 @@ using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
+//----------------------------------------------------------------------------
+NeuronUpdateGroupMerged::CurrentSource::CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                                      const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
+:   GroupMerged<CurrentSource>(index, typeContext, groups)
+{
+    // **TODO** correct "CS" + index field names + source name (for current source just its name but for PSM etc fused name)
+    addVars(getArchetype().getCurrentSourceModel()->getVars(), backend.getDeviceVarPrefix());
+    
+    // **TODO** correct "CS" + index field names + source name (for current source just its name but for PSM etc fused name)
+    addHeterogeneousParams(getArchetype().getCurrentSourceModel()->getParamNames(), "CS",
+                           &NeuronUpdateGroupMerged::CurrentSource::isParamHeterogeneous,
+                           &CurrentSourceInternal::getParams);
+
+    // **TODO** correct "CS" + index field names + source name (for current source just its name but for PSM etc fused name)
+    addHeterogeneousDerivedParams(getArchetype().getCurrentSourceModel()->getDerivedParams(), "CS",
+                                  &NeuronUpdateGroupMerged::CurrentSource::isDerivedParamHeterogeneous,
+                                  &CurrentSourceInternal::getDerivedParams);
+
+    // Add EGPs
+    // **TODO** correct field names + source name (for current source just its name but for PSM etc fused name)
+    addEGPs(getArchetype().getCurrentSourceModel()->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::CurrentSource::isParamHeterogeneous(const std::string &paramName) const
+{
+    return (isParamReferenced(paramName) &&
+            isParamValueHeterogeneous(paramName, [](const CurrentSourceInternal &cs) { return cs.getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::CurrentSource::isDerivedParamHeterogeneous( const std::string &paramName) const
+{
+    return (isParamReferenced(paramName) &&
+            isParamValueHeterogeneous(paramName, [](const CurrentSourceInternal &cs) { return cs.getDerivedParams(); }));
+ 
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::CurrentSource::isParamReferenced(const std::string &paramName) const
+{
+    return isParamReferenced({getArchetype().getCurrentSourceModel()->getInjectionCode()}, paramName);
+}
+
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";

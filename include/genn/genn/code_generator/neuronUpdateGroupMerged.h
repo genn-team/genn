@@ -11,6 +11,27 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
+    //----------------------------------------------------------------------------
+    class CurrentSource : public GroupMerged<CurrentSourceInternal>
+    {
+    public:
+        CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                      const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+
+        // Public API
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //! Is the current source parameter referenced?
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
