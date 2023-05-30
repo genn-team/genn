@@ -29,10 +29,10 @@ TEST_F(SimulationTest, ExtraGlobalCSParams)
         
         for(int j = 0; j < 10; j++) {
             if(j == i) {
-                error = fabs(xpop[j] - 1.0f);
+                error += fabs(xpop[j] - 1.0f);
             }
             else {
-                error = fabs(xpop[j]);
+                error += fabs(xpop[j]);
             }
         }
     }
