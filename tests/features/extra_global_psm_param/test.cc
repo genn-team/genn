@@ -29,10 +29,10 @@ TEST_F(SimulationTest, ExtraGlobalPSMParams)
         
         for(int j = 0; j < 10; j++) {
             if(i > 1 && j == (i - 1)) {
-                error = fabs(xpost[j] - ((i - 1) * DT));
+                error += fabs(xpost[j] - ((i - 1) * DT));
             }
             else {
-                error = fabs(xpost[j]);
+                error += fabs(xpost[j]);
             }
         }
     }
