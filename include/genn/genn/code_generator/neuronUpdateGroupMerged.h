@@ -25,7 +25,10 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
 
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
@@ -49,13 +52,13 @@ public:
     {
     public:
         InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
@@ -85,7 +88,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
     };
 
     //----------------------------------------------------------------------------
@@ -102,7 +105,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike);
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
 
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
@@ -132,7 +135,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike);
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
 
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
@@ -154,24 +157,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
-
-    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
-
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -203,36 +188,16 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
-                       const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
-                       Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const,
-                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
-
-    //! Is the incoming synapse weight update model parameter referenced?
-    bool isInSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the outgoing synapse weight update model parameter referenced?
-    bool isOutSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
     void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
-    
-    void generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
-                             const std::string &fieldPrefixStem, const std::string &sourceSuffix, 
-                             bool useLocalNeuronVars, unsigned int batchSize, 
-                             const std::vector<SynapseGroupInternal*> &archetypeSyn,
-                             unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
-                             Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                             std::string(WeightUpdateModels::Base::*getCode)(void) const,
-                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const) const;
     
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
+    std::vector<CurrentSource> m_CurrentSources;
+    std::vector<InSynPSM> m_InSynPSMs;
+    std::vector<OutSynPreOutput> m_OutSynPreOutput;
+    std::vector<CurrentSource> m_SortedInSynWithPostCode;
+    std::vector<InSynWUMPostCode> m_InSynWUMPostCode;
+    std::vector<OutSynWUMPreCode> m_OutSynWUMPreCode;
 };
 }   // namespace GeNN::CodeGenerator

@@ -126,80 +126,11 @@ bool NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string
                                       [varName](const NeuronGroupInternal &sg){ return sg.getVarInitialisers().at(varName).getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceParamHeterogeneous(size_t childIndex, const std::string &paramName) const
-{
-    return (isCurrentSourceParamReferenced(childIndex, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
-                                           [](const CurrentSourceInternal *cs) { return cs->getParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
-{
-    return (isCurrentSourceParamReferenced(childIndex, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
-                                           [](const CurrentSourceInternal *cs) { return cs->getDerivedParams(); }));
- 
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    return (isCurrentSourceVarInitParamReferenced(childIndex, varName, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
-                                           [varName](const CurrentSourceInternal *cs) { return cs->getVarInitialisers().at(varName).getParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    return (isCurrentSourceVarInitParamReferenced(childIndex, varName, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
-                                           [varName](const CurrentSourceInternal *cs) { return cs->getVarInitialisers().at(varName).getDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMParamHeterogeneous(size_t childIndex, const std::string &paramName) const
-{
-    return (isPSMParamReferenced(childIndex, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns,
-                                           [](const SynapseGroupInternal *inSyn) { return inSyn->getPSParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
-{
-    return (isPSMParamReferenced(childIndex, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns, 
-                                           [](const SynapseGroupInternal *inSyn) { return inSyn->getPSDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    return (isPSMVarInitParamReferenced(childIndex, varName, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns,
-                                           [varName](const SynapseGroupInternal *inSyn){ return inSyn->getPSVarInitialisers().at(varName).getParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{    
-    return (isPSMVarInitParamReferenced(childIndex, varName, paramName) &&
-            isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns,
-                                          [varName](const SynapseGroupInternal *inSyn){ return inSyn->getPSVarInitialisers().at(varName).getDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
 NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
-                                             bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+                                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
 {
     using namespace Type;
-
-    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
-                             init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
-
-    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                             init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
-
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
-                             init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
 
     addField(Uint32, "numNeurons",
              [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
@@ -231,7 +162,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeConte
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
-    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() 
+    /*if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() 
        && (!init || backend.isPopulationRNGInitialisedOnDevice())) 
     {
         addPointerField(*backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rng");
@@ -397,7 +328,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeConte
                          });
 
         }
-    }
+    }*/
 }
 //----------------------------------------------------------------------------
 void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const
@@ -456,52 +387,6 @@ bool NeuronGroupMergedBase::isVarInitParamReferenced(const std::string &varName,
 {
     const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *csm = getSortedArchetypeCurrentSources().at(childIndex)->getCurrentSourceModel();
-    return isParamReferenced({csm->getInjectionCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeCurrentSources().at(childIndex)->getVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *psm = getSortedArchetypeMergedInSyns().at(childIndex)->getPSModel();
-    return isParamReferenced({psm->getApplyInputCode(), psm->getDecayCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeMergedInSyns().at(childIndex)->getPSVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-void NeuronGroupMergedBase::addMergedInSynPointerField(const Type::ResolvedType &type, const std::string &name, 
-                                                       size_t archetypeIndex, const std::string &prefix)
-{
-    assert(type.isValue());
-    addField(type.createPointer(), name + std::to_string(archetypeIndex),
-             [prefix, archetypeIndex, this](const auto&, size_t groupIndex)
-             {
-                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getFusedPSVarSuffix();
-             });
-}
-//----------------------------------------------------------------------------
-void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField(const Type::ResolvedType &type, const std::string &name, 
-                                                                 size_t archetypeIndex, const std::string &prefix)
-{
-    assert(type.isValue());
-    addField(type.createPointer(), name + std::to_string(archetypeIndex),
-             [prefix, archetypeIndex, this](const auto&, size_t groupIndex)
-             {
-                 return prefix + m_SortedMergedPreOutputOutSyns.at(groupIndex).at(archetypeIndex)->getFusedPreOutputSuffix();
-             });
 }
 
 //----------------------------------------------------------------------------
