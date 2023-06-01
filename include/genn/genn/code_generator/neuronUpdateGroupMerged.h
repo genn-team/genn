@@ -148,8 +148,6 @@ public:
         bool isParamReferenced(const std::string &paramName) const;
     };
 
-
-
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 

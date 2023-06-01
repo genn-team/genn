@@ -351,7 +351,7 @@ public:
     }
 
     template<typename T, typename A, typename H>
-    void addHeterogeneousVarInitParams(H isHeterogeneous)
+    void addHeterogeneousVarInitParams(H isHeterogeneous, const std::string &suffix = "")
     {
         // Loop through weight update model variables
         const A archetypeAdaptor(getArchetype());
@@ -359,7 +359,7 @@ public:
             // Loop through parameters
             for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
-                    addScalarField(p.first + v.name,
+                    addScalarField(p.first + v.name + suffix,
                                    [p, v](const G &g, size_t)
                                    {
                                        return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
@@ -370,7 +370,7 @@ public:
     }
 
     template<typename T, typename A, typename H>
-    void addHeterogeneousVarInitDerivedParams(H isHeterogeneous)
+    void addHeterogeneousVarInitDerivedParams(H isHeterogeneous, const std::string &suffix = "")
     {
         // Loop through weight update model variables
         const A archetypeAdaptor(getArchetype());
@@ -378,7 +378,7 @@ public:
             // Loop through parameters
             for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
                 if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
-                    addScalarField(p.first + v.name,
+                    addScalarField(p.first + v.name + suffix,
                                    [p, v](const G &g, size_t)
                                    {
                                        return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);

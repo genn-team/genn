@@ -11,6 +11,143 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
+    //----------------------------------------------------------------------------
+    //! Child group merged for current sources attached to this neuron update group
+    class CurrentSource : public GroupMerged<CurrentSourceInternal>
+    {
+    public:
+        CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                      const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+    
+    private:
+        //----------------------------------------------------------------------------
+        // Private methods
+        //----------------------------------------------------------------------------
+        //! Is the var init parameter referenced?
+        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups
+    class InSynPSM : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private methods
+        //----------------------------------------------------------------------------
+        //! Is the var init parameter referenced?
+        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynPreOutput
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with $(addToPre) logic
+    class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynWUMPostCode
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups with postsynaptic variables
+    class InSynWUMPostVars : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private methods
+        //----------------------------------------------------------------------------
+        //! Is the var init parameter referenced?
+        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with presynaptic variables
+    class OutSynWUMPreVars: public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+    
+    private:
+        //----------------------------------------------------------------------------
+        // Private methods
+        //----------------------------------------------------------------------------
+        //! Is the var init parameter referenced?
+        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    };
+
     NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 

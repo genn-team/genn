@@ -181,6 +181,351 @@ void genInitWUVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
+//----------------------------------------------------------------------------
+NeuronInitGroupMerged::CurrentSource::CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                                    const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
+:   GroupMerged<CurrentSourceInternal>(index, typeContext, groups)
+{
+    const std::string suffix =  "CS" + std::to_string(getIndex());
+
+    // Loop through variables
+    // **TODO** adaptor
+    const auto &varInit = getArchetype().getVarInitialisers();
+    for(const auto &var : getArchetype().getCurrentSourceModel()->getVars()) {
+        // Add pointers to state variable
+        if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
+            addPointerField(var.type, var.name + suffix, 
+                            backend.getDeviceVarPrefix() + var.name);
+        }
+
+        // Add heterogeneous var init parameters
+        addHeterogeneousVarInitParams<CurrentSource, CurrentSourceVarAdapter>(
+            &CurrentSource::isVarInitParamHeterogeneous, suffix);
+        addHeterogeneousVarInitDerivedParams<CurrentSource, CurrentSourceVarAdapter>(
+            &CurrentSource::isVarInitDerivedParamHeterogeneous, suffix);
+
+        // Add extra global parameters
+        for(const auto &e : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + var.name + suffix,
+                     [&backend, e, suffix, var](const auto &g, size_t)
+                     { 
+                         return backend.getDeviceVarPrefix() + e.name + var.name + g.getName(); 
+                     },
+                     GroupMergedFieldType::DYNAMIC);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::CurrentSource::generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                                                    const ModelSpecMerged &modelMerged, Substitutions &popSubs)
+{
+    const std::string suffix =  "CS" + std::to_string(getIndex());
+
+    genInitNeuronVarCode(os, modelMerged, backend, popSubs, getArchetype().getCurrentSourceModel()->getVars(), getArchetype().getVarInitialisers(),
+                         suffix, "numNeurons", getIndex(), modelMerged.getModel().getBatchSize(),
+                         [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::CurrentSource::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &cs){ return cs.getVarInitialisers().at(varName).getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::CurrentSource::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &cs){ return cs.getVarInitialisers().at(varName).getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::CurrentSource::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
+{
+    const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();
+    return isParamReferenced({varInitSnippet->getCode()}, paramName);
+}
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
+//----------------------------------------------------------------------------
+NeuronInitGroupMerged::InSynPSM::InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
+{
+    const std::string suffix =  "InSyn" + std::to_string(getIndex());
+
+    // Add pointer to insyn
+    addField(getScalarType().createPointer(), "inSyn" + suffix,
+             [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "inSyn" + g.getFusedPSVarSuffix(); });
+    
+    // Add pointer to dendritic delay buffer if required
+    if(getArchetype().isDendriticDelayRequired()) {
+        addField(getScalarType().createPointer(), "denDelay" + suffix,
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
+
+        addField(Type::Uint32.createPointer(), "denDelayPtr" + suffix,
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+    }
+
+    // Loop through variables
+    // **TODO** adaptor
+    const auto &varInit = getArchetype().getPSVarInitialisers();
+    for(const auto &var : getArchetype().getPSModel()->getVars()) {
+        // Add pointers to state variable
+        if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
+            addField(var.type.resolve(getTypeContext()).createPointer(), var.name + suffix,
+                     [&backend, var](const auto &g, size_t) { return backend.getDeviceVarPrefix() + var.name + g.getFusedPSVarSuffix(); });
+        }
+
+        // Add heterogeneous var init parameters
+        addHeterogeneousVarInitParams<InSynPSM, SynapsePSMVarAdapter>(
+            &InSynPSM::isVarInitParamHeterogeneous, suffix);
+        addHeterogeneousVarInitDerivedParams<InSynPSM, SynapsePSMVarAdapter>(
+            &InSynPSM::isVarInitDerivedParamHeterogeneous, suffix);
+
+        // Add extra global parameters
+        for(const auto &e : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + var.name + suffix,
+                     [&backend, e, suffix, var](const auto &g, size_t)
+                     { 
+                         return backend.getDeviceVarPrefix() + e.name + var.name + g.getFusedPSVarSuffix(); 
+                     },
+                     GroupMergedFieldType::DYNAMIC);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                                               const ModelSpecMerged &modelMerged, Substitutions &popSubs)
+{
+    const std::string suffix =  "InSyn" + std::to_string(getIndex());
+
+    // Zero InSyn
+    backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+        [&modelMerged, &suffix] (CodeStream &os, Substitutions &varSubs)
+        {
+            genVariableFill(os, "inSyn" + suffix, modelMerged.scalarExpr(0.0), 
+                            varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, 
+                            modelMerged.getModel().getBatchSize());
+
+        });
+
+    // If dendritic delays are required
+    if(getArchetype().isDendriticDelayRequired()) {
+        // Zero dendritic delay buffer
+        backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+            [&modelMerged, &suffix, this](CodeStream &os, Substitutions &varSubs)
+            {
+                genVariableFill(os, "denDelay" + suffix, modelMerged.scalarExpr(0.0),
+                                varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, 
+                                modelMerged.getModel().getBatchSize(),
+                                true, getArchetype().getMaxDendriticDelayTimesteps());
+            });
+
+        // Zero dendritic delay pointer
+        backend.genPopVariableInit(os, popSubs,
+            [&suffix](CodeStream &os, Substitutions &)
+            {
+                os << "*group->denDelayPtr" << suffix << " = 0;" << std::endl;
+            });
+    }
+
+    // **TODO** adaptor
+    genInitNeuronVarCode(os, modelMerged, backend, popSubs, getArchetype().getPSModel()->getVars(), getArchetype().getPSVarInitialisers(),
+                         suffix, "numNeurons", getIndex(), modelMerged.getModel().getBatchSize(),
+                         [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynPSM::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getPSVarInitialisers().at(varName).getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynPSM::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getPSVarInitialisers().at(varName).getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynPSM::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
+{
+    const auto *varInitSnippet = getArchetype().getPSVarInitialisers().at(varName).getSnippet();
+    return isParamReferenced({varInitSnippet->getCode()}, paramName);
+}
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynPreOutput
+//----------------------------------------------------------------------------
+NeuronInitGroupMerged::OutSynPreOutput::OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
+{
+    const std::string suffix =  "OutSyn" + std::to_string(getIndex());
+
+    addField(getScalarType().createPointer(), "revInSyn" + suffix,
+             [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "revInSyn" + g.getFusedPreOutputSuffix(); });
+}
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                                                      const ModelSpecMerged &modelMerged, Substitutions &popSubs)
+{
+    const std::string suffix =  "OutSyn" + std::to_string(getIndex());
+
+    backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+                                [&modelMerged, suffix] (CodeStream &os, Substitutions &varSubs)
+                                {
+                                    genVariableFill(os, "revInSyn" + suffix, modelMerged.scalarExpr(0.0),
+                                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, 
+                                                    modelMerged.getModel().getBatchSize());
+                                });
+}
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::InSynWUMPostVars
+//----------------------------------------------------------------------------
+NeuronInitGroupMerged::InSynWUMPostVars::InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
+{
+    const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
+
+    // Loop through variables
+    // **TODO** adaptor
+    const auto &varInit = getArchetype().getWUPostVarInitialisers();
+    for(const auto &var : getArchetype().getWUModel()->getPostVars()) {
+        // Add pointers to state variable
+        if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
+            addField(var.type.resolve(getTypeContext()).createPointer(), var.name + suffix,
+                     [&backend, var](const auto &g, size_t) { return backend.getDeviceVarPrefix() + var.name + g.getFusedWUPostVarSuffix(); });
+        }
+
+        // Add heterogeneous var init parameters
+        addHeterogeneousVarInitParams<InSynWUMPostVars, SynapseWUPostVarAdapter>(
+            &InSynWUMPostVars::isVarInitParamHeterogeneous, suffix);
+        addHeterogeneousVarInitDerivedParams<InSynWUMPostVars, SynapseWUPostVarAdapter>(
+            &InSynWUMPostVars::isVarInitDerivedParamHeterogeneous, suffix);
+
+        // Add extra global parameters
+        for(const auto &e : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + var.name + suffix,
+                     [&backend, e, suffix, var](const auto &g, size_t)
+                     { 
+                         return backend.getDeviceVarPrefix() + e.name + var.name + g.getFusedWUPostVarSuffix(); 
+                     },
+                     GroupMergedFieldType::DYNAMIC);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::InSynWUMPostVars::generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
+                                                       const ModelSpecMerged &modelMerged, Substitutions &popSubs)
+{
+    const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
+
+    genInitNeuronVarCode(os, modelMerged, backend, popSubs, getArchetype().getWUModel()->getPostVars(), getArchetype().getWUPostVarInitialisers(),
+                         suffix, "numNeurons", getArchetype().getTrgNeuronGroup()->getNumDelaySlots(), getIndex(), modelMerged.getModel().getBatchSize(),
+                         [this](const std::string&){ return (getArchetype().getBackPropDelaySteps() != NO_DELAY); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getWUPostVarInitialisers().at(varName).getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getWUPostVarInitialisers().at(varName).getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
+{
+    const auto *varInitSnippet = getArchetype().getWUPostVarInitialisers().at(varName).getSnippet();
+    return isParamReferenced({varInitSnippet->getCode()}, paramName);
+}
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
+//----------------------------------------------------------------------------
+NeuronInitGroupMerged::OutSynWUMPreVars::OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
+{
+    const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
+
+    // Loop through variables
+    // **TODO** adaptor
+    const auto &varInit = getArchetype().getWUPreVarInitialisers();
+    for(const auto &var : getArchetype().getWUModel()->getPreVars()) {
+        // Add pointers to state variable
+        if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
+            addField(var.type.resolve(getTypeContext()).createPointer(), var.name + suffix,
+                     [&backend, var](const auto &g, size_t) { return backend.getDeviceVarPrefix() + var.name + g.getFusedWUPreVarSuffix(); });
+        }
+
+        // Add heterogeneous var init parameters
+        addHeterogeneousVarInitParams<OutSynWUMPreVars, SynapseWUPreVarAdapter>(
+            &OutSynWUMPreVars::isVarInitParamHeterogeneous, suffix);
+        addHeterogeneousVarInitDerivedParams<OutSynWUMPreVars, SynapseWUPreVarAdapter>(
+            &OutSynWUMPreVars::isVarInitDerivedParamHeterogeneous, suffix);
+
+        // Add extra global parameters
+        for(const auto &e : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
+            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + var.name + suffix,
+                     [&backend, e, suffix, var](const auto &g, size_t)
+                     { 
+                         return backend.getDeviceVarPrefix() + e.name + var.name + g.getFusedWUPreVarSuffix(); 
+                     },
+                     GroupMergedFieldType::DYNAMIC);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::OutSynWUMPreVars::generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                                                       const ModelSpecMerged &modelMerged, Substitutions &popSubs)
+{
+    const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
+
+    genInitNeuronVarCode(os, modelMerged, backend, popSubs, getArchetype().getWUModel()->getPreVars(), getArchetype().getWUPreVarInitialisers(),
+                         suffix, "numNeurons", getArchetype().getSrcNeuronGroup()->getNumDelaySlots(), getIndex(), modelMerged.getModel().getBatchSize(),
+                         [this](const std::string&){ return (getArchetype().getDelaySteps() != NO_DELAY); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getWUPreVarInitialisers().at(varName).getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return (isVarInitParamReferenced(varName, paramName) &&
+            isParamValueHeterogeneous(paramName,
+                                      [varName](const auto &sg){ return sg.getWUPreVarInitialisers().at(varName).getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
+{
+    const auto *varInitSnippet = getArchetype().getWUPreVarInitialisers().at(varName).getSnippet();
+    return isParamReferenced({varInitSnippet->getCode()}, paramName);
+}
+
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
