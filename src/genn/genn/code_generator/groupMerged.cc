@@ -331,58 +331,6 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeConte
     }*/
 }
 //----------------------------------------------------------------------------
-void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const
-{
-    // Update hash with each group's neuron count
-    updateHash([](const NeuronGroupInternal &g) { return g.getNumNeurons(); }, hash);
-
-    // **YUCK** it would be much nicer to have this in derived classes
-    if(init) {
-        // Loop through child current sources
-        for(size_t c = 0; c < getSortedArchetypeCurrentSources().size(); c++) {
-            const auto *cs = getSortedArchetypeCurrentSources().at(c);
-
-            // Loop through variables and update hash with variable initialisation parameters and derived parameters
-            for(const auto &v : cs->getVarInitialisers()) {
-                updateChildVarInitParamsHash<CurrentSourceVarAdapter>(
-                    m_SortedCurrentSources, c, v.first, &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, hash);
-                updateChildVarInitDerivedParamsHash<CurrentSourceVarAdapter>(
-                    m_SortedCurrentSources, c, v.first, &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, hash);
-            }
-        }
-
-        // Loop through child merged insyns
-        for(size_t c = 0; c < getSortedArchetypeMergedInSyns().size(); c++) {
-            const auto *sg = getSortedArchetypeMergedInSyns().at(c);
-
-            // Loop through variables and update hash with variable initialisation parameters and derived parameters
-            for(const auto &v : sg->getPSVarInitialisers()) {
-                updateChildVarInitParamsHash<SynapsePSMVarAdapter>(
-                    m_SortedMergedInSyns, c, v.first, &NeuronGroupMergedBase::isPSMVarInitParamReferenced, hash);
-                updateChildVarInitDerivedParamsHash<SynapsePSMVarAdapter>(
-                    m_SortedMergedInSyns, c, v.first, &NeuronGroupMergedBase::isPSMVarInitParamReferenced, hash);
-            }
-        }
-    }
-    else {
-        // Loop through child current sources
-        for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
-            updateChildParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceParamReferenced, 
-                                 &CurrentSourceInternal::getParams, hash);
-            updateChildDerivedParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceParamReferenced, 
-                                        &CurrentSourceInternal::getDerivedParams, hash);
-        }
-
-        // Loop through child merged insyns
-        for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
-            updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
-                                 &SynapseGroupInternal::getPSParams, hash);
-            updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
-                                        &SynapseGroupInternal::getPSDerivedParams, hash);
-        }
-    }
-}
-//----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
 {
     const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();

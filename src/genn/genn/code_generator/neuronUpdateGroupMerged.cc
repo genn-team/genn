@@ -252,6 +252,14 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Cod
     }
 }
 //----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    updateParamHash<InSynPSM>(&InSynPSM::isParamReferenced, 
+                               [](const SynapseGroupInternal &g) { return g.getPSParams(); }, hash);
+    updateParamHash<InSynPSM>(&InSynPSM::isParamReferenced, 
+                              [](const SynapseGroupInternal &g) { return g.getPSDerivedParams(); }, hash);
+}
+//----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::InSynPSM::isParamHeterogeneous(const std::string &paramName) const
 {
     return (isParamReferenced(paramName) &&
@@ -395,6 +403,35 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
     }
 }
 //----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                                                                   const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
+    const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
+    if(getArchetype().getBackPropDelaySteps() != NO_DELAY && getArchetype().getWUModel()->getPostDynamicsCode().empty()) {
+        // Loop through variables and copy between read and write delay slots
+        for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
+            if(v.access & VarAccessMode::READ_WRITE) {
+                os << "group->" << v.name << suffix << "[";
+                os << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
+                os << "] = ";
+
+                os << "group->" << v.name << suffix << "[";
+                os << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
+                os << "];" << std::endl;
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::InSynWUMPostCode::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    updateParamHash<InSynWUMPostCode>(&InSynWUMPostCode::isParamReferenced, 
+                                      [](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
+    updateParamHash<InSynWUMPostCode>(&InSynWUMPostCode::isParamReferenced, 
+                                      [](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+}
+//----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::InSynWUMPostCode::isParamHeterogeneous(const std::string &paramName) const
 {
     return (isParamReferenced(paramName) &&
@@ -511,6 +548,35 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
     }
 }
 //----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                                                                   const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
+    const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
+    if(getArchetype().getDelaySteps() != NO_DELAY && getArchetype().getWUModel()->getPreDynamicsCode().empty()) {
+        // Loop through variables and copy between read and write delay slots
+        for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
+            if(v.access & VarAccessMode::READ_WRITE) {
+                os << "group->" << v.name << suffix << "[";
+                os << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
+                os << "] = ";
+
+                os << "group->" << v.name << suffix << "[";
+                os << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
+                os << "];" << std::endl;
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    updateParamHash<OutSynWUMPreCode>(&OutSynWUMPreCode::isParamReferenced, 
+                                      [](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
+    updateParamHash<OutSynWUMPreCode>(&OutSynWUMPreCode::isParamReferenced, 
+                                      [](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+}
+//----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isParamHeterogeneous(const std::string &paramName) const
 {
     return (isParamReferenced(paramName) &&
@@ -550,7 +616,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
     // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_OutSynPreOutput, typeContext, backend, 
                              &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                             SynapseGroupInternal::getPreOutputHashDigest);
+                             &SynapseGroupInternal::getPreOutputHashDigest);
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_CurrentSources, typeContext, backend,
@@ -648,8 +714,8 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 {
     boost::uuids::detail::sha1 hash;
 
-    // Update hash with generic neuron group data
-    updateBaseHash(false, hash);
+    // Update hash with each group's neuron count
+    updateHash([](const NeuronGroupInternal &g) { return g.getNumNeurons(); }, hash);
 
     // Update hash with archetype's hash digest
     Utils::updateHash(getArchetype().getHashDigest(), hash);
@@ -657,21 +723,19 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     // Update hash with each group's parameters and derived parameters
     updateHash([](const NeuronGroupInternal &g) { return g.getParams(); }, hash);
     updateHash([](const NeuronGroupInternal &g) { return g.getDerivedParams(); }, hash);
-        
-    // Loop through child incoming synapse groups with postsynaptic update code
-    for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
-        updateChildParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
-                                                      &SynapseGroupInternal::getWUParams, hash);
-        updateChildDerivedParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
-                                                             &SynapseGroupInternal::getWUDerivedParams, hash);
+    
+    // Update hash with child groups
+    for (const auto &cs : m_CurrentSources) {
+        cs.updateHash(hash);
     }
-
-    // Loop through child outgoing synapse groups with presynaptic update code
-    for(size_t i = 0; i < getSortedArchetypeOutSynWithPreCode().size(); i++) {
-        updateChildParamHash<NeuronUpdateGroupMerged>(m_SortedOutSynWithPreCode, i, &NeuronUpdateGroupMerged::isOutSynWUMParamReferenced, 
-                                                      &SynapseGroupInternal::getWUParams, hash);
-        updateChildDerivedParamHash<NeuronUpdateGroupMerged>( m_SortedOutSynWithPreCode, i, &NeuronUpdateGroupMerged::isOutSynWUMParamReferenced, 
-                                                             &SynapseGroupInternal::getWUDerivedParams, hash);
+    for(const auto &sg : m_InSynPSMs) {
+        sg.updateHash(hash);
+    }
+    for (const auto &sg : m_OutSynWUMPreCode) {
+        sg.updateHash(hash);
+    }
+    for (const auto &sg : m_OutSynWUMPreCode) {
+        sg.updateHash(hash);
     }
 
     return hash.get_digest();
@@ -766,8 +830,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
-    
-
+ 
     // Loop through all of neuron group's current sources
     for (const auto &cs : m_CurrentSources) {
         CodeStream::Scope b(os);
@@ -929,20 +992,20 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             
             // Are there any outgoing synapse groups with presynaptic code
             // which have axonal delay and no presynaptic dynamics
-            const bool preVars = std::any_of(getSortedArchetypeOutSynWithPreCode().cbegin(), getSortedArchetypeOutSynWithPreCode().cend(),
-                                             [](const SynapseGroupInternal *sg)
+            const bool preVars = std::any_of(m_OutSynWUMPreCode.cbegin(), m_OutSynWUMPreCode.cend(),
+                                             [](const OutSynWUMPreCode &sg)
                                              {
-                                                 return ((sg->getDelaySteps() != NO_DELAY)
-                                                         && sg->getWUModel()->getPreDynamicsCode().empty());
+                                                 return ((sg.getArchetype().getDelaySteps() != NO_DELAY)
+                                                         && sg.getArchetype().getWUModel()->getPreDynamicsCode().empty());
                                              });
 
             // Are there any incoming synapse groups with postsynaptic code
             // which have back-propagation delay and no postsynaptic dynamics
-            const bool postVars = std::any_of(getSortedArchetypeInSynWithPostCode().cbegin(), getSortedArchetypeInSynWithPostCode().cend(),
-                                              [](const SynapseGroupInternal *sg)
+            const bool postVars = std::any_of(m_InSynWUMPostCode.cbegin(), m_InSynWUMPostCode.cend(),
+                                              [](const auto &sg)
                                               {
-                                                  return ((sg->getBackPropDelaySteps() != NO_DELAY)
-                                                          && sg->getWUModel()->getPostDynamicsCode().empty());
+                                                  return ((sg.getArchetype().getBackPropDelaySteps() != NO_DELAY)
+                                                           && sg.getArchetype().getWUModel()->getPostDynamicsCode().empty());
                                               });
 
             // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
@@ -961,33 +1024,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
-                for(size_t i = 0; i < getSortedArchetypeOutSynWithPreCode().size(); i++) {
-                    const auto *sg = getSortedArchetypeOutSynWithPreCode().at(i);
-                    // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
-                    if(sg->getDelaySteps() != NO_DELAY && sg->getWUModel()->getPreDynamicsCode().empty()) {
-                        // Loop through variables and copy between read and write delay slots
-                        for(const auto &v : sg->getWUModel()->getPreVars()) {
-                            if(v.access & VarAccessMode::READ_WRITE) {
-                                os << "group->" << v.name << "WUPre" << i << "[" << getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "] = ";
-                                os << "group->" << v.name << "WUPre" << i << "[" << getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
-                            }
-                        }
-                    }
+                for (const auto &sg : m_OutSynWUMPreCode) {
+                    sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
 
                 // Loop through outgoing synapse groups with some sort of postsynaptic code
-                for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
-                    const auto *sg = getSortedArchetypeInSynWithPostCode().at(i);
-                    // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
-                    if(sg->getBackPropDelaySteps() != NO_DELAY && sg->getWUModel()->getPostDynamicsCode().empty()) {
-                        // Loop through variables and copy between read and write delay slots
-                        for(const auto &v : sg->getWUModel()->getPostVars()) {
-                            if(v.access & VarAccessMode::READ_WRITE) {
-                                os << "group->" << v.name << "WUPost" << i << "[" << getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "] = ";
-                                os << "group->" << v.name << "WUPost" << i << "[" << getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
-                            }
-                        }
-                    }
+                for (const auto &sg : m_OutSynWUMPreCode) {
+                    sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
             }
         }

@@ -628,8 +628,6 @@ protected:
     NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
-
     template<typename M, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, const BackendBase &backend,
                                   G getVectorFunc, H getHashDigestFunc) const
@@ -647,7 +645,7 @@ protected:
         // Loop through groups
         for(const auto &g : getGroups()) {
             // Get group children
-            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            const std::vector<typename M::GroupInternal*> &groupChildren = (g.get().*getVectorFunc)();
             assert(groupChildren.size() == archetypeChildren.size());
 
             // Loop through children and add them and their digests to vector
@@ -671,7 +669,7 @@ protected:
         }
 
         // Reserve vector of child groups and create merged group objects based on vector of groups
-        childGroups.reserve(archetypeChildren);
+        childGroups.reserve(archetypeChildren.size());
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
             childGroups.emplace_back(i, typeContext, backend, sortedGroupChildren[i]);
         }

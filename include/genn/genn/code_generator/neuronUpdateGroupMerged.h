@@ -60,6 +60,9 @@ public:
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
 
@@ -107,6 +110,12 @@ public:
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
 
+        void genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                                const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
 
@@ -136,6 +145,12 @@ public:
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
+
+        void genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                                const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
 
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
