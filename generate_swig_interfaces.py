@@ -220,6 +220,8 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
     # **YUCK** note this has to be tested AFTER WUVarReference because this is a substring
     elif 'VarReference' in valueName:
         paramType = 'Models::VarReference'
+    elif 'EGPReference' in valueName:
+        paramType = 'Models::EGPReference'
     else:
         paramType = 'double'
     mg.write( 'static {0}::{1}::{2}* make{2}( const std::vector<{3}> & {4} )'.format(
@@ -269,7 +271,8 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
     if customUpdateModel:
         varValuesTypedef += '''
         typedef CustomValues::VarReferences VarReferences;
-        typedef CustomValues::WUVarReferences WUVarReferences;'''
+        typedef CustomValues::WUVarReferences WUVarReferences;
+        typedef CustomValues::EGPReferences EGPReferences;'''
 
         varValuesMaker += '''
         static CustomValues::VarReferences *makeVarReferences(const std::vector<Models::VarReference> &varRefs)
@@ -279,6 +282,10 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
         static CustomValues::WUVarReferences* makeWUVarReferences(const std::vector<Models::WUVarReference> &varRefs)
         {
             return new CustomValues::WUVarReferences(varRefs);
+        }
+        static CustomValues::EGPReferences* makeEGPReferences(const std::vector<Models::EGPReference> &egpRefs)
+        {
+            return new CustomValues::EGPReferences(egpRefs);
         }'''
 
     return Template('''
@@ -440,6 +447,7 @@ def generateCustomModelDeclImpls(swigPath):
             if model == CUSTOMUPDATEMODELS:
                 mg.addCppInclude( '"customVarReferences.h"' )
                 mg.addCppInclude( '"customWUVarReferences.h"' )
+                mg.addCppInclude( '"customEGPReferences.h"' )
             
             mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET or model==SPARSEINITSNIPPET or model==TOEPLITZINITSNIPPET, 
                                                     model==WUPDATEMODELS, model==CUSTOMUPDATEMODELS))
@@ -667,13 +675,17 @@ def generateConfigs(gennPath, backends):
                 line = line.rstrip()
                 if line.startswith( 'DECLARE_' ) and line.endswith(';'):
                     is_new_wum_declaration = (mg.name == 'WeightUpdateModels' and line.startswith('DECLARE_WEIGHT_UPDATE_MODEL'))
+                    is_new_new_custom_update_declaration = (mg.name == 'CustomUpdateModels' and line.startswith('DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF'))
                     is_new_custom_update_declaration = (mg.name == 'CustomUpdateModels' and line.startswith('DECLARE_CUSTOM_UPDATE_MODEL'))
                     if is_snippet:
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_wum_declaration:
                         nspace_model_name, num_params, num_vars, num_pre_vars, num_post_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
+                    elif is_new_new_custom_update_declaration:
+                        nspace_model_name, num_params, num_vars, num_var_refs, num_egp_refs = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_custom_update_declaration:
                         nspace_model_name, num_params, num_vars, num_var_refs = line.split( '(' )[1].split( ')' )[0].split( ',' )
+                        num_egp_refs = 0
                     else:
                         nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
 
@@ -695,6 +707,7 @@ def generateConfigs(gennPath, backends):
                         if is_new_custom_update_declaration:
                             writeValueMakerFunc( model_name, 'VarReferences', int(num_var_refs), mg )
                             writeValueMakerFunc( model_name, 'WUVarReferences', int(num_var_refs), mg )
+                            writeValueMakerFunc( model_name, 'EGPReferences', int(num_egp_refs), mg )
 
         # Define wrapper around InitSparseConnectivitySnippet::Base::CalcMaxLengthFunc
         calcMaxRowWrapper='''
@@ -815,6 +828,8 @@ def generateConfigs(gennPath, backends):
             # Ignore the overload of the function which automatically gets instance from class name
             pygennSmg.addSwigIgnore("ModelSpec::addCustomUpdate<CustomUpdateModels::{0}>(std::string const &,std::string const &,CustomUpdateModels::{0}::ParamValues const &,CustomUpdateModels::{0}::VarValues const &,CustomUpdateModels::{0}::VarReferences const &)".format(cu_model))
             pygennSmg.addSwigIgnore("ModelSpec::addCustomUpdate<CustomUpdateModels::{0}>(std::string const &,std::string const &,CustomUpdateModels::{0}::ParamValues const &,CustomUpdateModels::{0}::VarValues const &,CustomUpdateModels::{0}::WUVarReferences const &)".format(cu_model))
+            pygennSmg.addSwigIgnore("ModelSpec::addCustomUpdate<CustomUpdateModels::{0}>(std::string const &,std::string const &,CustomUpdateModels::{0}::ParamValues const &,CustomUpdateModels::{0}::VarValues const &,CustomUpdateModels::{0}::VarReferences const &,CustomUpdateModels::{0}::EGPReferences const &)".format(cu_model))
+            pygennSmg.addSwigIgnore("ModelSpec::addCustomUpdate<CustomUpdateModels::{0}>(std::string const &,std::string const &,CustomUpdateModels::{0}::ParamValues const &,CustomUpdateModels::{0}::VarValues const &,CustomUpdateModels::{0}::WUVarReferences const &,CustomUpdateModels::{0}::EGPReferences const &)".format(cu_model))
             pygennSmg.addSwigTemplate(
                 'ModelSpec::addCustomUpdate<CustomUpdateModels::{}>'.format(cu_model),
                 'add_custom_update_{}'.format(cu_model))

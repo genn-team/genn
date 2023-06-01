@@ -267,6 +267,21 @@ protected:
         }
     }
 
+    template<typename E>
+    void addEGPReferences(const Models::Base::EGPRefVec &egpRefs, const std::string &arrayPrefix, E getEGPRefFn)
+    {
+        for(size_t i = 0; i < egpRefs.size(); i++) {
+            const auto &e = egpRefs.at(i);
+            addField(e.type, e.name,
+                     [arrayPrefix, e, getEGPRefFn, i](const G &g, size_t)
+                     { 
+                         const auto egpRef = getEGPRefFn(g).at(i);
+                         return arrayPrefix + egpRef.getEGP().name + egpRef.getTargetName(); 
+                     },
+                     FieldType::PointerEGP);
+        }
+    }
+
     template<typename T, typename P, typename H>
     void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
                                 P getParamValues, H isHeterogeneous)
@@ -437,7 +452,7 @@ protected:
 
         // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
-            // If this field is for a pointer EGP, also declare function to push it
+            // If this field is for a pointer EGP (or reference to one), also declare function to push it
             if(std::get<3>(f) == FieldType::PointerEGP) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;

@@ -177,6 +177,42 @@ inline Models::WUVarReference createWUVarRef(const CustomUpdateWU *cu, const std
     return Models::WUVarReference(cu, varName);
 }
 
+//! Creates a reference to a neuron group extra global parameter
+inline Models::EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(ng, egpName);
+}
+
+//! Creates a reference to a current source extra global parameter
+inline Models::EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cs, egpName);
+}
+
+//! Creates a reference to a custom update extra global parameter
+inline Models::EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cu, egpName);
+}
+
+//! Creates a reference to a custom weight update extra global parameter
+inline Models::EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cu, egpName);
+}
+
+//! Creates a reference to a postsynaptic model extra global parameter
+inline Models::EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    return Models::EGPReference::createPSMEGPRef(sg, egpName);
+}
+
+//! Creates a reference to a weight update model extra global parameter
+inline Models::EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    return Models::EGPReference::createWUEGPRef(sg, egpName);
+}
+
 //----------------------------------------------------------------------------
 // ModelSpec
 //----------------------------------------------------------------------------
@@ -666,14 +702,15 @@ public:
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
                                   const typename CustomUpdateModel::ParamValues &paramValues,
                                   const typename CustomUpdateModel::VarValues &varInitialisers,
-                                  const typename CustomUpdateModel::VarReferences &varReferences)
+                                  const typename CustomUpdateModel::VarReferences &varReferences,
+                                  const typename CustomUpdateModel::EGPReferences &egpReferences = {})
     {
          // Add neuron group to map
         auto result = m_CustomUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+                                  egpReferences.getInitialisers(), m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
             throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
@@ -698,14 +735,15 @@ public:
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const CustomUpdateModel *model, const typename CustomUpdateModel::ParamValues &paramValues,
                                     const typename CustomUpdateModel::VarValues &varInitialisers,
-                                    const typename CustomUpdateModel::WUVarReferences &varReferences)
+                                    const typename CustomUpdateModel::WUVarReferences &varReferences,
+                                    const typename CustomUpdateModel::EGPReferences &egpReferences = {})
     {
         // Add neuron group to map
         auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+                                  egpReferences.getInitialisers(), m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
             throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
@@ -728,10 +766,11 @@ public:
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                   const typename CustomUpdateModel::ParamValues &paramValues,
                                   const typename CustomUpdateModel::VarValues &varInitialisers,
-                                   const typename CustomUpdateModel::VarReferences &varReferences)
+                                  const typename CustomUpdateModel::VarReferences &varReferences,
+                                  const typename CustomUpdateModel::EGPReferences &egpReferences = {})
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
-                                                  paramValues, varInitialisers, varReferences);
+                                                  paramValues, varInitialisers, varReferences, egpReferences);
     }
 
 
@@ -749,10 +788,11 @@ public:
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const typename CustomUpdateModel::ParamValues &paramValues,
                                     const typename CustomUpdateModel::VarValues &varInitialisers,
-                                    const typename CustomUpdateModel::WUVarReferences &varReferences)
+                                    const typename CustomUpdateModel::WUVarReferences &varReferences,
+                                    const typename CustomUpdateModel::EGPReferences &egpReferences = {})
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
-                                                  paramValues, varInitialisers, varReferences);
+                                                  paramValues, varInitialisers, varReferences, egpReferences);
     }
 
 protected:

@@ -93,11 +93,28 @@ public:
         VarAccessMode access;
     };
 
+    struct EGPRef
+    {
+        EGPRef(const std::string &n, const std::string &t) : name(n), type(t)
+        {}
+        EGPRef() : EGPRef("", "")
+        {}
+
+        bool operator == (const EGPRef &other) const
+        {
+            return ((name == other.name) && (type == other.type));
+        }
+
+        std::string name;
+        std::string type;
+    };
+
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::vector<Var> VarVec;
     typedef std::vector<VarRef> VarRefVec;
+    typedef std::vector<EGPRef> EGPRefVec;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -273,10 +290,54 @@ template<size_t NumVars>
 using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
 
 //----------------------------------------------------------------------------
+// Models::EGPReference
+//----------------------------------------------------------------------------
+class GENN_EXPORT EGPReference
+{
+public:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const Models::Base::EGP &getEGP() const { return m_EGP; }
+    size_t getEGPIndex() const { return m_EGPIndex; }
+    std::string getTargetName() const { return m_TargetName; }
+
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
+    static EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName);
+    static EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName);
+    static EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName);
+    static EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName);
+    static EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName);
+    static EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName);
+
+private:
+    EGPReference(size_t egpIndex, const Models::Base::EGPVec &egpVec, 
+                 const std::string &targetName)
+    :   m_EGPIndex(egpIndex), m_EGP(egpVec.at(egpIndex)), m_TargetName(targetName)
+    {}
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    size_t m_EGPIndex;
+    Models::Base::EGP m_EGP;
+    std::string m_TargetName;
+};
+
+//----------------------------------------------------------------------------
+// Models::EGPReferenceContainerBase
+//----------------------------------------------------------------------------
+template<size_t NumEGPs>
+using EGPReferenceContainerBase = Snippet::InitialiserContainerBase<EGPReference, NumEGPs>;
+
+//----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
 GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 } // Models

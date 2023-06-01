@@ -68,6 +68,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
                                        [&cg](size_t i) { return cg.isDerivedParamHeterogeneous(i);  },
                                        "", "group->");
     updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
+    updateSubs.addVarNameSubstitution(cm->getExtraGlobalParamRefs(), "", "group->");
 
     std::string code = cm->getUpdateCode();
     updateSubs.applyCheckUnreplaced(code, "custom update : merged" + std::to_string(cg.getIndex()));
@@ -137,8 +138,10 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
                     [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
 
-    // Add EGPs to struct
+    // Add EGPs and EGP references to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    addEGPReferences(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix(),
+                     [](const CustomUpdateInternal &cg) { return cg.getEGPReferences(); });
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(size_t index) const
@@ -165,6 +168,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     updateHash([](const CustomUpdateInternal &cg) { return cg.getParams(); }, hash);
     updateHash([](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); }, hash);
     updateHash([](const CustomUpdateInternal &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -255,6 +259,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getParams(); }, hash);
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); }, hash);
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); }, hash);
+    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -362,8 +367,10 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                      });
             }
     }
-    // Add EGPs to struct
+    // Add EGPs and EGP references to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    addEGPReferences(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix(),
+                     [](const CustomUpdateWUInternal &cg) { return cg.getEGPReferences(); });
 }
 
 // ----------------------------------------------------------------------------

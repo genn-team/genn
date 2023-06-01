@@ -58,8 +58,9 @@ from six import iteritems, itervalues, string_types
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModelNumpy as slm
-from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
-                                  WUVarReference, VarVector, VarRefVector)
+from .genn_wrapper.Models import (EGPRef, EGPRefVector, Var, VarRef,
+                                  VarInit, VarReference, VarVector,
+                                  VarRefVector, WUVarReference)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init as InitSparse
 from .genn_wrapper.InitToeplitzConnectivitySnippet import Init as InitToeplitz
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
@@ -537,7 +538,7 @@ class GeNNModel(object):
         return c_source
     
     def add_custom_update(self, cu_name, group_name, custom_update_model,
-                          param_space, var_space, var_ref_space):
+                          param_space, var_space, var_ref_space, egp_ref_space={}):
         """Add a current source to the GeNN model
 
         Args:
@@ -554,6 +555,8 @@ class GeNNModel(object):
                                    CustomUpdateModel class
         var_ref_space           -- dict with variable references for the
                                    CustomUpdateModel class
+        egp_ref_space           -- dict with extra global parameter references 
+                                   for the CustomUpdateModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -565,7 +568,7 @@ class GeNNModel(object):
         c_update = CustomUpdate(cu_name, self)
         c_update.set_custom_update_model(custom_update_model,
                                          param_space, var_space, 
-                                         var_ref_space)
+                                         var_ref_space, egp_ref_space)
         c_update.add_to(group_name)
 
         self.custom_updates[cu_name] = c_update
@@ -1085,7 +1088,41 @@ def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
     else:
         return (genn_wrapper.create_wuvar_ref(g.pop, var_name,
                                               tp_sg.pop, tp_var_name), sg)
+
+def create_egp_ref(pop, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a neuron, current source or custom update 
+    extra global parameter for initialising references.
+
+    Args:
+    pop         -- population, either a NeuronGroup or CurrentSource object
+    egp_name    -- name of extra global parameter in population to reference
+    """
+    return genn_wrapper.create_egpref(pop.pop, egp_name)
     
+def create_psm_egp_ref(sg, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a postsynaptic model extra global parameter
+    for initialising references.
+
+    Args:
+    sg          -- SynapseGroup object
+    egp_name    -- name of postsynaptic model extra global
+                   parameter in synapse group to reference
+    """
+    return genn_wrapper.create_psmegpref(sg.pop, egp_name)
+
+def create_wu_egp_ref(sg, egp_name):
+    """This helper function creates a Models::EGPReference
+    pointing to a weight update model extra global parameter
+    for initialising references.
+
+    Args:
+    sg          -- SynapseGroup object
+    egp_name    -- name of weight update model extra global
+                   parameter in synapse group to reference
+    """
+    return genn_wrapper.create_wuegpref(sg.pop, var_name)
 
 def create_custom_neuron_class(class_name, param_names=None,
                                var_name_types=None, derived_params=None,
@@ -1441,6 +1478,7 @@ def create_custom_custom_update_class(class_name, param_names=None,
                                       var_refs=None,
                                       update_code=None,
                                       extra_global_params=None,
+                                      extra_global_param_refs=None,
                                       custom_body=None):
     """This helper function creates a custom CustomUpdate class.
     See also:
@@ -1451,22 +1489,24 @@ def create_custom_custom_update_class(class_name, param_names=None,
     create_custom_sparse_connect_init_snippet_class
 
     Args:
-    class_name          --  name of the new class
+    class_name              --  name of the new class
 
     Keyword args:
-    param_names         --  list of strings with param names of the model
-    var_name_types      --  list of tuples of strings with varible names and
-                            types of the variable
-    derived_params      --  list of tuples, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    var_refs            --  list of tuples of strings with varible names and
-                            types of variabled variable
-    update_code         --  string with the current injection code
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
-    custom_body         --  dictionary with additional attributes and methods
-                            of the new class
+    param_names             --  list of strings with param names of the model
+    var_name_types          --  list of tuples of strings with varible names and
+                                types of the variable
+    derived_params          --  list of tuples, where the first member is string
+                                with name of the derived parameter and the second
+                                should be a functor returned by create_dpf_class
+    var_refs                --  list of tuples of strings with varible names and
+                                types of variabled variable
+    update_code             --  string with the current injection code
+    extra_global_params     --  list of pairs of strings with names and types of
+                                additional parameters
+    extra_global_param_refs --  list of pairs of strings with names and types of
+                                extra global parameter references
+    custom_body             --  dictionary with additional attributes and methods
+                                of the new class
     """
     if not isinstance(custom_body, dict) and custom_body is not None:
         raise ValueError("custom_body must be an instance of dict or None")
@@ -1480,6 +1520,11 @@ def create_custom_custom_update_class(class_name, param_names=None,
         body["get_var_refs"] = \
             lambda self: VarRefVector([VarRef(*v)
                                        for v in var_refs])
+    
+    if extra_global_param_refs is not None:
+        body["get_extra_global_param_refs"] = \
+            lambda self: EGPRefVector([EGPRef(*e)
+                                       for e in extra_global_param_refs])
     if custom_body is not None:
         body.update(custom_body)
 

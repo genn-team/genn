@@ -12,9 +12,10 @@ public:
     CustomUpdateInternal(const std::string &name, const std::string &updateGroupName,
                          const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
                          const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
-                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                         const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                         VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdate(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
-                     defaultVarLocation, defaultExtraGlobalParamLocation)
+                     egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
 
@@ -43,9 +44,10 @@ public:
     CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences, 
-                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                           const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                           VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
-                       defaultVarLocation, defaultExtraGlobalParamLocation)
+                       egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
 

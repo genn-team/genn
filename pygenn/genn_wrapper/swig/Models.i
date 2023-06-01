@@ -3,7 +3,7 @@
   
    Institute: Center for Computational Neuroscience and Robotics
               University of Sussex
-	      Falmer, Brighton BN1 9QJ, UK 
+              Falmer, Brighton BN1 9QJ, UK 
   
    email to:  T.Nowotny@sussex.ac.uk
   
@@ -18,6 +18,7 @@
 #include "models.h"
 
 // PyGenn includes
+#include "customEGPReferences.h"
 #include "customParamValues.h"
 #include "customVarValues.h"
 #include "customVarReferences.h"
@@ -43,14 +44,17 @@
 %nodefaultctor Models::VarInit;
 %nodefaultctor Models::VarReference;
 %nodefaultctor Models::WUVarReference;
+%nodefaultctor Models::EGPReference;
 
 // flatten nested classes
 %rename (Var) Models::Base::Var;
 %rename (VarRef) Models::Base::VarRef;
+%rename (EGPRef) Models::Base::EGPRef;
 
 // add vector overrides for them
 %template(VarVector) std::vector<Models::Base::Var>;
 %template(VarRefVector) std::vector<Models::Base::VarRef>;
+%template(EGPRefVector) std::vector<Models::Base::EGPRef>;
 
 // Add standard exception handler
 %exception {
@@ -74,6 +78,8 @@
 %include "customWUVarReferences.h"
 %nodefaultctor CustomValues::ParamValues;
 %include "customParamValues.h"
+%nodefaultctor CustomValues::EGPReferences;
+%include "customEGPReferences.h"
 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
 %template(CustomVarValues) CustomValues::VarValues::VarValues<Models::VarInit>;
@@ -91,3 +97,7 @@
 %ignore std::vector<Models::WUVarReference>::vector(size_type);
 %ignore std::vector<Models::WUVarReference>::resize;
 %template(WUVarReferenceVector) std::vector<Models::WUVarReference>;
+
+%ignore std::vector<Models::EGPReference>::vector(size_type);
+%ignore std::vector<Models::EGPReference>::resize;
+%template(EGPReferenceVector) std::vector<Models::EGPReference>;

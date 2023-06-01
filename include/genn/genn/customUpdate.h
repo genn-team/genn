@@ -38,6 +38,8 @@ public:
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
+    const std::vector<Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
+
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
 
@@ -50,18 +52,8 @@ public:
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
                      const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                     const std::vector<Models::VarInit> &varInitialisers,
-                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-        m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_Batched(false)
-    {
-        // Validate names
-        Utils::validatePopName(name, "Custom update");
-        Utils::validatePopName(updateGroupName, "Custom update group name");
-        getCustomUpdateModel()->validate();
-    }
+                     const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::EGPReference> &egpReferences,
+                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -189,6 +181,8 @@ private:
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
+    std::vector<Models::EGPReference> m_EGPReferences;
+
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
@@ -215,7 +209,8 @@ protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                  const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                 const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                 VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -266,7 +261,8 @@ protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
-                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                   const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
+                   VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
