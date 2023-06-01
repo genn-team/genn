@@ -265,16 +265,19 @@ public:
                  fieldType);
     }
 
-    void addPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix)
+    void addPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix,
+                         GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         assert(type.isValue());
         addField(type.createPointer(), name,
-                 [prefix](const G &g, size_t) { return prefix + g.getName(); });
+                 [prefix](const G &g, size_t) { return prefix + g.getName(); },
+                 fieldType);
     }
 
-    void addPointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix)
+    void addPointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix,
+                         GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
-        addPointerField(type.resolve(getTypeContext()), name, prefix);
+        addPointerField(type.resolve(getTypeContext()), name, prefix, fieldType);
     }
 
 

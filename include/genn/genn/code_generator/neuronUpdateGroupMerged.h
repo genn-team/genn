@@ -14,13 +14,19 @@ public:
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
+    //! Child group merged for current sources attached to this neuron update group
     class CurrentSource : public GroupMerged<CurrentSourceInternal>
     {
     public:
         CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                       const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
 
+        //----------------------------------------------------------------------------
         // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
 
@@ -28,9 +34,100 @@ public:
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
         //! Is the current source parameter referenced?
         bool isParamReferenced(const std::string &paramName) const;
     };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups
+    class InSynPSM : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the current source parameter referenced?
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with $(addToPre) logic
+    class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups with postsynaptic update/spike code
+    class InSynWUMPostCode : public GroupMerged<SynapseGroupInternal>
+    {
+    public:
+        InSynWUMPostCode(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                      const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike);
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the current source parameter referenced?
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreCode
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with presynaptic update/spike code
+    class OutSynPreCode : public GroupMerged<SynapseGroupInternal>
+    {
+
+    };
+
+
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
