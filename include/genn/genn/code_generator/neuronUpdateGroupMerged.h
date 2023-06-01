@@ -96,7 +96,7 @@ public:
     {
     public:
         InSynWUMPostCode(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                      const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -119,12 +119,33 @@ public:
     };
 
     //----------------------------------------------------------------------------
-    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreCode
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with presynaptic update/spike code
-    class OutSynPreCode : public GroupMerged<SynapseGroupInternal>
+    class OutSynWUMPreCode : public GroupMerged<SynapseGroupInternal>
     {
+    public:
+        OutSynWUMPreCode(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike);
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the current source parameter referenced?
+        bool isParamReferenced(const std::string &paramName) const;
     };
 
 
