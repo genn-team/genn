@@ -30,18 +30,18 @@ public:
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
 
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
     private:
         //----------------------------------------------------------------------------
         // Private methods
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -63,18 +63,18 @@ public:
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
 
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
     private:
         //----------------------------------------------------------------------------
         // Private methods
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -113,18 +113,18 @@ public:
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
 
+        //! Should the var init parameter be implemented heterogeneously?
+        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+        //! Should the var init derived parameter be implemented heterogeneously?
+        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
     private:
         //----------------------------------------------------------------------------
         // Private methods
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -146,18 +146,18 @@ public:
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
 
-    private:
-        //----------------------------------------------------------------------------
-        // Private methods
-        //----------------------------------------------------------------------------
-        //! Is the var init parameter referenced?
-        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
         //! Should the var init parameter be implemented heterogeneously?
         bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
         //! Should the var init derived parameter be implemented heterogeneously?
         bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private methods
+        //----------------------------------------------------------------------------
+        //! Is the var init parameter referenced?
+        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;  
     };
 
     NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
