@@ -746,19 +746,19 @@ TEST(NeuronGroup, CompareCurrentSources)
     ASSERT_TRUE(dcDCMergedGroup.getGroups().size() == 1);
     
     // Find which child in the DC + poisson merged group is the poisson current source
-    const size_t poissonIndex = (dcPoissonMergedGroup.getSortedArchetypeCurrentSources().at(0)->getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
+    const size_t poissonIndex = (dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(0).getArchetype().getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the ExpDecay and Init derived parameters of the poisson exp current sources are heterogeneous
     // **NOTE** tauSyn is not heterogeneous because it's not referenced directly
-    ASSERT_FALSE(dcDCMergedGroup.isCurrentSourceParamHeterogeneous(0, "amp"));
-    ASSERT_FALSE(dcDCMergedGroup.isCurrentSourceParamHeterogeneous(1, "amp"));
-    ASSERT_FALSE(dcPoissonMergedGroup.isCurrentSourceParamHeterogeneous(poissonIndex, "weight"));
-    ASSERT_FALSE(dcPoissonMergedGroup.isCurrentSourceParamHeterogeneous(poissonIndex, "tauSyn"));
-    ASSERT_FALSE(dcPoissonMergedGroup.isCurrentSourceParamHeterogeneous(poissonIndex, "rate"));
-    ASSERT_FALSE(dcPoissonMergedGroup.isCurrentSourceParamHeterogeneous(1 - poissonIndex, "amp"));
-    ASSERT_TRUE(dcPoissonMergedGroup.isCurrentSourceDerivedParamHeterogeneous(poissonIndex, "ExpDecay"));
-    ASSERT_TRUE(dcPoissonMergedGroup.isCurrentSourceDerivedParamHeterogeneous(poissonIndex, "Init"));
-    ASSERT_FALSE(dcPoissonMergedGroup.isCurrentSourceDerivedParamHeterogeneous(poissonIndex, "ExpMinusLambda"));
+    ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(0).isParamHeterogeneous("amp"));
+    ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(1).isParamHeterogeneous("amp"));
+    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("weight"));
+    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("tauSyn"));
+    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("rate"));
+    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(1 - poissonIndex).isParamHeterogeneous("amp"));
+    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("ExpDecay"));
+    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("Init"));
+    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("ExpMinusLambda"));
 }
 
 TEST(NeuronGroup, ComparePostsynapticModels)
@@ -865,17 +865,17 @@ TEST(NeuronGroup, ComparePostsynapticModels)
                                                         [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Find which child in the DC + gaussian merged group is the gaussian current source
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().size() == 2);
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().size() == 2);
-    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
-    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().size() == 2);
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().size() == 2);
+    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(0).getArchetype().getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(0).getArchetype().getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
     // **NOTE** tau is NOT heterogeneous because it's unused
-    ASSERT_FALSE(deltaAlphaMergedUpdateGroup->isPSMParamHeterogeneous(alphaUpdateIndex, "tau"));
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, "expDecay"));
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, "init"));
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaInitIndex, "x", "constant"));
+    ASSERT_FALSE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isParamHeterogeneous("tau"));
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("expDecay"));
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("init"));
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(alphaInitIndex).isVarInitParamHeterogeneous("x", "constant"));
 }
 
 
@@ -1056,8 +1056,8 @@ TEST(NeuronGroup, CompareWUPreUpdate)
                                                     [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Check that parameter is heterogeneous
-    ASSERT_TRUE(wumPreMergedUpdateGroup->isOutSynWUMParamHeterogeneous(0, "p"));
-    ASSERT_TRUE(wumPreMergedInitGroup->isOutSynWUMVarInitParamHeterogeneous(0, "s", "constant"));
+    ASSERT_TRUE(wumPreMergedUpdateGroup->getMergedOutSynWUMPreCodeGroups().at(0).isParamHeterogeneous("p"));
+    ASSERT_TRUE(wumPreMergedInitGroup->getMergedOutSynWUMPreVarGroups().at(0).isVarInitParamHeterogeneous("s", "constant"));
 }
 
 TEST(NeuronGroup, CompareWUPostUpdate)
@@ -1157,6 +1157,6 @@ TEST(NeuronGroup, CompareWUPostUpdate)
                                                      [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Check that parameter is heterogeneous
-    ASSERT_TRUE(wumPostMergedUpdateGroup->isInSynWUMParamHeterogeneous(0, "p"));
-    ASSERT_TRUE(wumPostMergedInitGroup->isInSynWUMVarInitParamHeterogeneous(0, "s", "constant"));
+    ASSERT_TRUE(wumPostMergedUpdateGroup->getMergedInSynWUMPostCodeGroups().at(0).isParamHeterogeneous("p"));
+    ASSERT_TRUE(wumPostMergedInitGroup->getMergedInSynWUMPostVarGroups().at(0).isVarInitParamHeterogeneous("s", "constant"));
 }
