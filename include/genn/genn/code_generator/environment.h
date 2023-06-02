@@ -173,11 +173,23 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
     using InitialiserType = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
 
     //! Function used to provide index strings based on initialiser and access type
-    using GetIndexFn = std::function<std::string(InitialiserType, decltype(DefType::access))>;
+    using GetIndexFn = std::function<std::string(const std::string&, InitialiserType, decltype(DefType::access))>;
 
 public:
+    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, 
+                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex, const std::string &localPrefix = "l")
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), 
+        m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    {
+        // Add name of each definition to map, initially with value set to value
+        const auto defs = A(m_Group).getDefs();
+        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+                       [](const auto &v){ return std::make_pair(v.name, false); });
+    }
+
     EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetIndex(getIndex)
+    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), 
+        m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
@@ -209,7 +221,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << "[" << m_GetIndex(initialisers.at(v.name), v.access) << "]";
+                getContextStream() << " = group->" << v.name << "[" << m_GetReadIndex(v.name, initialisers.at(v.name), v.access) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -221,7 +233,7 @@ public:
         for(const auto &v : referencedVars) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << "[" << m_GetIndex(initialisers.at(v.name), v.access) << "]";
+                getContextStream() << "group->" << v.name << "[" << m_GetWriteIndex(v.name, initialisers.at(v.name), v.access) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -261,7 +273,8 @@ private:
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
     std::string m_LocalPrefix;
-    GetIndexFn m_GetIndex;
+    GetIndexFn m_GetReadIndex;
+    GetIndexFn m_GetWriteIndex;
     std::unordered_map<std::string, bool> m_VariablesReferenced;
 };
 }   // namespace GeNN::CodeGenerator

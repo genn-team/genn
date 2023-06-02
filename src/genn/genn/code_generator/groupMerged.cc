@@ -147,6 +147,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeConte
         addPointerField(Uint32, "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
     }
 
+    // **TODO** add to type environment for update
     if(getArchetype().isSpikeTimeRequired()) {
         addPointerField(getTimeType(), "sT", backend.getDeviceVarPrefix() + "sT");
     }

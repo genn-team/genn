@@ -28,6 +28,10 @@
 #include "code_generator/groupMerged.h"
 #include "code_generator/substitutions.h"
 
+// GeNN transpiler includes
+#include "transpiler/parser.h"
+#include "transpiler/scanner.h"
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -480,5 +484,25 @@ std::string upgradeCodeString(const std::string &codeString)
  
     return std::regex_replace(codeString, variable, "$1");
 }
+//----------------------------------------------------------------------------
+std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheck(
+    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
+{
+    using namespace Transpiler;
 
+    // Upgrade code string
+    const std::string upgradedCode = upgradeCodeString(code);
+
+    // Scan code string to convert to tokens
+    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
+
+    // Parse tokens as block item list (function body)
+    auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+
+    // Resolve types
+    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, environment, errorHandler);
+
+    // Move into tuple and eturn
+    return std::make_tuple(std::move(updateStatements), std::move(resolvedTypes));
+}
 }   // namespace GeNN::CodeGenerator

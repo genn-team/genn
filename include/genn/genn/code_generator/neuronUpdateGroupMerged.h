@@ -24,8 +24,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -47,10 +47,10 @@ public:
         // Members
         //----------------------------------------------------------------------------
         //! List of statements parsed and type-checked in constructor; and used to generate code
-        Transpiler::Statement::StatementList m_UpdateStatements;
+        Transpiler::Statement::StatementList m_InjectionStatements;
 
         //! Resolved types used to generate code
-        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
+        Transpiler::TypeChecker::ResolvedTypeMap m_InjectionResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -66,8 +66,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env,
+                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -88,11 +88,17 @@ public:
         //----------------------------------------------------------------------------
         // Members
         //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate code
-        Transpiler::Statement::StatementList m_UpdateStatements;
+        //! List of statements parsed and type-checked in constructor; and used to generate decay code
+        Transpiler::Statement::StatementList m_DecayStatements;
+        
+        //! List of statements parsed and type-checked in constructor; and used to generate apply inputcode
+        Transpiler::Statement::StatementList m_ApplyInputStatements;
 
-        //! Resolved types used to generate code
-        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
+        //! Resolved types used to generate decay code
+        Transpiler::TypeChecker::ResolvedTypeMap m_DecayResolvedTypes;
+
+        //! Resolved types used to generate apply input code
+        Transpiler::TypeChecker::ResolvedTypeMap m_ApplyInputResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -108,8 +114,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng, 
+                      const ModelSpecMerged &modelMerged) const;
     };
 
     //----------------------------------------------------------------------------
@@ -125,8 +131,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
 
         void genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
                                 const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -150,11 +156,17 @@ public:
         //----------------------------------------------------------------------------
         // Members
         //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate code
-        Transpiler::Statement::StatementList m_UpdateStatements;
+        //! List of statements parsed and type-checked in constructor; and used to generate dynamics code
+        Transpiler::Statement::StatementList m_DynamicsStatements;
 
-        //! Resolved types used to generate code
-        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
+        //! List of statements parsed and type-checked in constructor; and used to generate spike code
+        Transpiler::Statement::StatementList m_SpikeStatements;
+
+        //! Resolved types used to generate dynamics code
+        Transpiler::TypeChecker::ResolvedTypeMap m_DynamicsResolvedTypes;
+
+        //! Resolved types used to generate spike code
+        Transpiler::TypeChecker::ResolvedTypeMap m_SpikeResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -195,11 +207,17 @@ public:
         //----------------------------------------------------------------------------
         // Members
         //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate code
-        Transpiler::Statement::StatementList m_UpdateStatements;
+        //! List of statements parsed and type-checked in constructor; and used to generate dynamics code
+        Transpiler::Statement::StatementList m_DynamicsStatements;
 
-        //! Resolved types used to generate code
-        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
+        //! List of statements parsed and type-checked in constructor; and used to generate spike code
+        Transpiler::Statement::StatementList m_SpikeStatements;
+
+        //! Resolved types used to generate dynamics code
+        Transpiler::TypeChecker::ResolvedTypeMap m_DynamicsResolvedTypes;
+
+        //! Resolved types used to generate spike code
+        Transpiler::TypeChecker::ResolvedTypeMap m_SpikeResolvedTypes;
     };
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
@@ -220,9 +238,9 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
-    void generateNeuronUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs,
-                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitTrueSpike,
-                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
+    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
+                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
+                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
     
     void generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
     

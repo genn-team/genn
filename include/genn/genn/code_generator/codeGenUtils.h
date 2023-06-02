@@ -21,6 +21,10 @@
 #include "substitutions.h"
 #include "teeStream.h"
 
+// GeNN transpiler includes
+#include "transpiler/statement.h"
+#include "transpiler/typeChecker.h"
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
@@ -92,6 +96,13 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
  */
  //--------------------------------------------------------------------------
 GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
+
+//--------------------------------------------------------------------------
+/*! \brief This function uses the transpiler to scan, parse and type check a code string
+ */
+ //--------------------------------------------------------------------------
+GENN_EXPORT std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheck(
+    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler);
 
 //-------------------------------------------------------------------------
 /*!

@@ -24,6 +24,7 @@ class GroupMergedTypeEnvironment : public Transpiler::TypeChecker::EnvironmentBa
     using TypeCheckError = Transpiler::TypeChecker::TypeCheckError;
     
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
+    using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
 
     using GroupInternal = typename G::GroupInternal;
     using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
@@ -149,6 +150,50 @@ public:
             }
             else {
                 defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), d.name);
+            }
+        }
+    }
+
+    template<typename A>
+    void defineHeterogeneousVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &fieldSuffix = "")
+    {
+        // Loop through weight update model variables
+        const A archetypeAdaptor(m_GroupMerged.getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            // Loop through parameters
+            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
+                if(std::invoke(isHeterogeneous, m_GroupMerged, v.name, p.first)) {
+                    defineScalarField(p.first, v.name + fieldSuffix,
+                                      [p, v](const auto &g, size_t)
+                                      {
+                                          return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
+                                       });
+                }
+                else {
+                    defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), p.first + v.name);
+                }
+            }
+        }
+    }
+
+    template<typename A>
+    void defineHeterogeneousVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &fieldSuffix = "")
+    {
+        // Loop through weight update model variables
+        const A archetypeAdaptor(m_GroupMerged.getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            // Loop through parameters
+            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
+                if(std::invoke(isHeterogeneous, m_GroupMerged, v.name, p.first)) {
+                    defineScalarField(p.first, v.name + fieldSuffix,
+                                      [p, v](const auto &g, size_t)
+                                      {
+                                          return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
+                                      });
+                }
+                else {
+                    defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), p.first + v.name);
+                }
             }
         }
     }

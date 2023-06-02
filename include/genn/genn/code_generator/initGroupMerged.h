@@ -42,6 +42,12 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! Parsed statements and resolved types for initialising each variable
+        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -75,6 +81,12 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! Parsed statements and resolved types for initialising each variable
+        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -125,6 +137,12 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! Parsed statements and resolved types for initialising each variable
+        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -158,6 +176,12 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;  
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! Parsed statements and resolved types for initialising each variable
+        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
     };
 
     NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,

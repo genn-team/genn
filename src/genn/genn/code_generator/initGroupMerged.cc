@@ -290,26 +290,34 @@ NeuronInitGroupMerged::InSynPSM::InSynPSM(size_t index, const Type::TypeContext 
     // **TODO** adaptor
     const auto &varInit = getArchetype().getPSVarInitialisers();
     for(const auto &var : getArchetype().getPSModel()->getVars()) {
-        // Add pointers to state variable
-        if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-            addField(var.type.resolve(getTypeContext()).createPointer(), var.name + suffix,
-                     [&backend, var](const auto &g, size_t) { return backend.getDeviceVarPrefix() + var.name + g.getFusedPSVarSuffix(); });
-        }
+        // If there is any initialisation code
+        const auto *snippet = varInit.at(var.name).getSnippet();
+        if (!snippet->getCode().empty()) {
+            // Create type environment for this variable's initialisation
+            GroupMergedTypeEnvironment<InSynPSM> typeEnvironment(*this, &enclosingEnv);
 
-        // Add heterogeneous var init parameters
-        addHeterogeneousVarInitParams<InSynPSM, SynapsePSMVarAdapter>(
-            &InSynPSM::isVarInitParamHeterogeneous, suffix);
-        addHeterogeneousVarInitDerivedParams<InSynPSM, SynapsePSMVarAdapter>(
-            &InSynPSM::isVarInitDerivedParamHeterogeneous, suffix);
+            // Add pointers to state variable itself
+            typeEnvironment.definePointerField(var.type, var.name, backend.getDeviceVarPrefix(), 
+                                               getVarAccessMode(var.access), suffix, &SynapseGroupInternal::getFusedPSVarSuffix);
 
-        // Add extra global parameters
-        for(const auto &e : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
-            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + var.name + suffix,
-                     [&backend, e, suffix, var](const auto &g, size_t)
-                     { 
-                         return backend.getDeviceVarPrefix() + e.name + var.name + g.getFusedPSVarSuffix(); 
-                     },
-                     GroupMergedFieldType::DYNAMIC);
+            // Add heterogeneous var init parameters
+            typeEnvironment.defineHeterogeneousVarInitParams<SynapsePSMVarAdapter>(&InSynPSM::isVarInitParamHeterogeneous, suffix);
+            typeEnvironment.defineHeterogeneousVarInitDerivedParams<SynapsePSMVarAdapter>(&InSynPSM::isVarInitDerivedParamHeterogeneous, suffix);
+
+            // Add EGPs
+            typeEnvironment.defineEGPs(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), 
+                                       var.name, suffix, &SynapseGroupInternal::getFusedPSVarSuffix);
+
+            // Scan, parse and type-check update code
+            ErrorHandler errorHandler;
+            const std::string code = upgradeCodeString(snippet->getCode());
+            const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
+            
+            auto initStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+            auto initTypes = TypeChecker::typeCheck(initStatements, typeEnvironment, errorHandler);
+
+            // Add to map of per-variable initialistion AST
+            m_VarInitASTs.emplace(var.name, std::make_tuple(std::move(initStatements), std::move(initTypes)));
         }
     }
 }
