@@ -180,6 +180,12 @@ public:
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
+    const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
+    const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
+    const std::vector<InSynWUMPostVars> &getMergedInSynWUMPostVarGroups() const { return m_MergedInSynWUMPostVarGroups; }
+    const std::vector<OutSynWUMPreVars> &getMergedOutSynWUMPreVarGroups() const { return m_MergedOutSynWUMPreVarGroups; }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -201,12 +207,11 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<CurrentSource> m_CurrentSources;
-    std::vector<InSynPSM> m_InSynPSMs;
-    std::vector<OutSynPreOutput> m_OutSynPreOutput;
-    std::vector<CurrentSource> m_SortedInSynWithPostCode;
-    std::vector<InSynWUMPostVars> m_InSynWUMPostVars;
-    std::vector<OutSynWUMPreVars> m_OutSynWUMPreVars;
+    std::vector<CurrentSource> m_MergedCurrentSourceGroups;
+    std::vector<InSynPSM> m_MergedInSynPSMGroups;
+    std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
+    std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;
+    std::vector<OutSynWUMPreVars> m_MergedOutSynWUMPreVarGroups;
 };
 
 

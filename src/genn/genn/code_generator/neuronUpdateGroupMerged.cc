@@ -609,30 +609,30 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
     using namespace Type;
 
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_InSynPSMs, typeContext, backend,
+    orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext, backend,
                              &NeuronGroupInternal::getFusedPSMInSyn,
                              &SynapseGroupInternal::getPSHashDigest);
 
     // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_OutSynPreOutput, typeContext, backend, 
+    orderNeuronGroupChildren(m_MergedOutSynPreOutputGroups, typeContext, backend, 
                              &NeuronGroupInternal::getFusedPreOutputOutSyn,
                              &SynapseGroupInternal::getPreOutputHashDigest);
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_CurrentSources, typeContext, backend,
+    orderNeuronGroupChildren(m_MergedCurrentSourceGroups, typeContext, backend,
                              &NeuronGroupInternal::getCurrentSources,
                              &CurrentSourceInternal::getHashDigest);
 
 
     // Build vector of vectors containing each child group's incoming synapse groups
     // with postsynaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_InSynWUMPostCode, typeContext, backend,
+    orderNeuronGroupChildren(m_MergedInSynWUMPostCodeGroups, typeContext, backend,
                              &NeuronGroupInternal::getFusedInSynWithPostCode,
                              &SynapseGroupInternal::getWUPostHashDigest);
 
     // Build vector of vectors containing each child group's outgoing synapse groups
     // with presynaptic synaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_OutSynWUMPreCode, typeContext, backend, 
+    orderNeuronGroupChildren(m_MergedOutSynWUMPreCodeGroups, typeContext, backend, 
                              &NeuronGroupInternal::getFusedOutSynWithPreCode,
                              &SynapseGroupInternal::getWUPreHashDigest);
 
@@ -745,16 +745,16 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     updateHash([](const NeuronGroupInternal &g) { return g.getDerivedParams(); }, hash);
     
     // Update hash with child groups
-    for (const auto &cs : m_CurrentSources) {
+    for (const auto &cs : getMergedCurrentSourceGroups()) {
         cs.updateHash(hash);
     }
-    for(const auto &sg : m_InSynPSMs) {
+    for(const auto &sg : getMergedInSynPSMGroups()) {
         sg.updateHash(hash);
     }
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         sg.updateHash(hash);
     }
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         sg.updateHash(hash);
     }
 
@@ -840,19 +840,19 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     }
 
     // Loop through incoming synapse groups
-    for(const auto &sg : m_InSynPSMs) {
+    for(const auto &sg : getMergedInSynPSMGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
 
     // Loop through outgoing synapse groups with presynaptic output
-    for (const auto &sg : m_OutSynPreOutput) {
+    for (const auto &sg : getMergedOutSynPreOutputGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
  
     // Loop through all of neuron group's current sources
-    for (const auto &cs : m_CurrentSources) {
+    for (const auto &cs : getMergedCurrentSourceGroups()) {
         CodeStream::Scope b(os);
         cs.generate(backend, os, *this, modelMerged, popSubs);
     }
@@ -896,13 +896,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     os << sCode << std::endl;
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, true);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, true);
     }
@@ -1012,7 +1012,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             
             // Are there any outgoing synapse groups with presynaptic code
             // which have axonal delay and no presynaptic dynamics
-            const bool preVars = std::any_of(m_OutSynWUMPreCode.cbegin(), m_OutSynWUMPreCode.cend(),
+            const bool preVars = std::any_of(getMergedOutSynWUMPreCodeGroups().cbegin(), getMergedOutSynWUMPreCodeGroups().cend(),
                                              [](const OutSynWUMPreCode &sg)
                                              {
                                                  return ((sg.getArchetype().getDelaySteps() != NO_DELAY)
@@ -1021,7 +1021,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 
             // Are there any incoming synapse groups with postsynaptic code
             // which have back-propagation delay and no postsynaptic dynamics
-            const bool postVars = std::any_of(m_InSynWUMPostCode.cbegin(), m_InSynWUMPostCode.cend(),
+            const bool postVars = std::any_of(getMergedInSynWUMPostCodeGroups().cbegin(), getMergedInSynWUMPostCodeGroups().cend(),
                                               [](const auto &sg)
                                               {
                                                   return ((sg.getArchetype().getBackPropDelaySteps() != NO_DELAY)
@@ -1044,12 +1044,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
-                for (const auto &sg : m_OutSynWUMPreCode) {
+                for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
                     sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
 
                 // Loop through outgoing synapse groups with some sort of postsynaptic code
-                for (const auto &sg : m_OutSynWUMPreCode) {
+                for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
                     sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
             }
@@ -1072,13 +1072,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
 void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, false);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    for (const auto &sg : m_OutSynWUMPreCode) {
+    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, false);
     }

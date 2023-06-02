@@ -194,6 +194,12 @@ public:
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
 
+    const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
+    const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
+    const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
+    const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -208,11 +214,10 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<CurrentSource> m_CurrentSources;
-    std::vector<InSynPSM> m_InSynPSMs;
-    std::vector<OutSynPreOutput> m_OutSynPreOutput;
-    std::vector<CurrentSource> m_SortedInSynWithPostCode;
-    std::vector<InSynWUMPostCode> m_InSynWUMPostCode;
-    std::vector<OutSynWUMPreCode> m_OutSynWUMPreCode;
+    std::vector<CurrentSource> m_MergedCurrentSourceGroups;
+    std::vector<InSynPSM> m_MergedInSynPSMGroups;
+    std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
+    std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
+    std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };
 }   // namespace GeNN::CodeGenerator

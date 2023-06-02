@@ -229,7 +229,7 @@ protected:
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
+    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_MergedCurrentSourceGroups; }
 
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
@@ -290,7 +290,7 @@ private:
     std::vector<SynapseGroupInternal *> m_FusedPreOutputOutSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
-    std::vector<CurrentSourceInternal*> m_CurrentSources;
+    std::vector<CurrentSourceInternal*> m_MergedCurrentSourceGroups;
 
     //! Vector specifying which variables require queues
     std::vector<bool> m_VarQueueRequired;

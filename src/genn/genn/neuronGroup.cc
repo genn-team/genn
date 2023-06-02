@@ -232,7 +232,7 @@ bool NeuronGroup::isSimRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for simulation
-    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
+    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return cs->isSimRNGRequired(); }))
     {
         return true;
@@ -256,7 +256,7 @@ bool NeuronGroup::isInitRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for initialisation
-    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
+    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return cs->isInitRNGRequired(); }))
     {
         return true;
@@ -300,7 +300,7 @@ bool NeuronGroup::isRecordingEnabled() const
 //----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
-    m_CurrentSources.push_back(src);
+    m_MergedCurrentSourceGroups.push_back(src);
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
