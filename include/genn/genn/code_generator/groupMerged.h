@@ -628,6 +628,9 @@ protected:
     NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
     template<typename M, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, const BackendBase &backend,
                                   G getVectorFunc, H getHashDigestFunc) const
@@ -677,99 +680,6 @@ protected:
 
     //! Is the var init parameter referenced?
     bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                              size_t childIndex, R isChildParamReferencedFn, V getValueFn, 
-                              boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        const auto &archetypeParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
-        for(const auto &p : archetypeParams) {
-            // If any of the code strings reference the parameter
-            // **TODO** std::invoke
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p.first)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-
-                    // Update hash with parameter value
-                    Utils::updateHash((child->*getValueFn)().at(p.first), hash);
-                }
-            }
-        }
-    }
-
-    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildDerivedParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                     size_t childIndex,  R isChildParamReferencedFn, V getValueFn, 
-                                     boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through derived parameters
-        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
-        for(const auto &d : archetypeDerivedParams) {
-            // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, d.first)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-
-                    // Update hash with parameter value
-                    Utils::updateHash((child->*getValueFn)().at(d.first), hash);
-                }
-            }
-        }
-    }
-
-    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
-    void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                      size_t childIndex, const std::string &varName, R isChildParamReferencedFn,
-                                      boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getInitialisers();
-        const auto &archetypeParams = archetypeVarInit.at(varName).getParams();
-        for(const auto &p : archetypeParams) {
-            // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, p.first)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group and its variable initialisers
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = A(*child).getInitialisers();
-
-                    // Update hash with parameter value
-                    Utils::updateHash(varInit.at(varName).getParams().at(p.first), hash);
-                }
-            }
-        }
-    }
-
-    template<typename A, typename T = NeuronGroupMergedBase, typename C, typename R>
-    void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                             size_t childIndex, const std::string &varName, R isChildParamReferencedFn,
-                                             boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through derived parameters
-        const auto &archetypeVarInit = A(*sortedGroupChildren.front().at(childIndex)).getInitialisers();
-        const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
-        for(const auto &d : archetypeDerivedParams) {
-            // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, d.first)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group and its variable initialisers
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = A(*child).getInitialisers();
-
-                    // Update hash with parameter value
-                    Utils::updateHash(varInit.at(varName).getDerivedParams().at(d.first), hash);
-                }
-            }
-        }
-    }
 };
 
 //----------------------------------------------------------------------------

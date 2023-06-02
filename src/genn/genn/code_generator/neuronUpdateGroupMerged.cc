@@ -636,6 +636,26 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
                              &NeuronGroupInternal::getFusedOutSynWithPreCode,
                              &SynapseGroupInternal::getWUPreHashDigest);
 
+    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired()) {
+        addPointerField(*backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rng");
+    }
+
+    // Add variables and extra global parameters
+    addVars(getArchetype().getNeuronModel()->getVars(), backend.getDeviceVarPrefix());
+    addEGPs(getArchetype().getNeuronModel()->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+
+    // Add heterogeneous neuron model parameters
+    addHeterogeneousParams<NeuronGroupMergedBase>(
+        getArchetype().getNeuronModel()->getParamNames(), "",
+        [](const NeuronGroupInternal &ng) { return ng.getParams(); },
+        &NeuronGroupMergedBase::isParamHeterogeneous);
+
+    // Add heterogeneous neuron model derived parameters
+    addHeterogeneousDerivedParams<NeuronGroupMergedBase>(
+        getArchetype().getNeuronModel()->getDerivedParams(), "",
+        [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); },
+        &NeuronGroupMergedBase::isDerivedParamHeterogeneous);
+
     // Loop through neuron groups
     std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
     for(const auto &g : getGroups()) {
