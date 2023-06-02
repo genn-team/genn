@@ -19,10 +19,18 @@
 #include "code_generator/backendBase.h"
 #include "code_generator/codeGenUtils.h"
 
+// GeNN transpiler includes
+#include "transpiler/typeChecker.h"
+
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
 class CodeStream;
+}
+
+namespace Transpiler::TypeChecker
+{
+class EnvironmentBase;
 }
 
 //------------------------------------------------------------------------
@@ -632,8 +640,8 @@ protected:
     // Protected API
     //------------------------------------------------------------------------
     template<typename M, typename G, typename H>
-    void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                  G getVectorFunc, H getHashDigestFunc) const
+    void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                                  const BackendBase &backend, G getVectorFunc, H getHashDigestFunc) const
     {
         const std::vector<typename M::GroupInternal*> &archetypeChildren = (getArchetype().*getVectorFunc)();
 
@@ -674,7 +682,7 @@ protected:
         // Reserve vector of child groups and create merged group objects based on vector of groups
         childGroups.reserve(archetypeChildren.size());
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            childGroups.emplace_back(i, typeContext, backend, sortedGroupChildren[i]);
+            childGroups.emplace_back(i, typeContext, enclosingEnv, backend, sortedGroupChildren[i]);
         }
     }
 

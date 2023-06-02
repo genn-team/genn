@@ -50,23 +50,22 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.defineHeterogeneousParams<CustomUpdateGroupMerged>(
+    typeEnvironment.defineHeterogeneousParams(
         cm->getParamNames(), "",
-        [](const auto &cg) { return cg.getParams(); },
+        &CustomUpdateInternal::getParams,
         &CustomUpdateGroupMerged::isParamHeterogeneous);
 
-    // Add heterogeneous weight update model derived parameters
-    typeEnvironment.defineHeterogeneousDerivedParams<CustomUpdateGroupMerged>(
+    // Add heterogeneous custom update model derived parameters
+    typeEnvironment.defineHeterogeneousDerivedParams(
         cm->getDerivedParams(), "",
-        [](const auto &cg) { return cg.getDerivedParams(); },
+        &CustomUpdateInternal::getDerivedParams,
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
 
     // Add variables to struct
     typeEnvironment.defineVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
-    typeEnvironment.defineVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
-                    [](const auto &cg) { return cg.getVarReferences(); });
+    typeEnvironment.defineVarReferences<Models::VarReference>(cm->getVarRefs(), backend.getDeviceVarPrefix());
 
      // Add EGPs to struct
      typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
@@ -325,15 +324,15 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.defineHeterogeneousParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.defineHeterogeneousParams(
         cm->getParamNames(), "",
-        [](const auto &cg) { return cg.getParams(); },
+        &CustomUpdateWUInternal::getParams,
         &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
-    typeEnvironment.defineHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
+    typeEnvironment.defineHeterogeneousDerivedParams(
         cm->getDerivedParams(), "",
-        [](const auto &cg) { return cg.getDerivedParams(); },
+        &CustomUpdateWUInternal::getDerivedParams,
         &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
 
     // Add variables to struct
@@ -341,8 +340,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
-    typeEnvironment.defineVarReferences(varRefs, backend.getDeviceVarPrefix(),
-                                        [](const auto &cg) { return cg.getVarReferences(); });
+    typeEnvironment.defineVarReferences<Models::WUVarReference>(varRefs, backend.getDeviceVarPrefix());
 
      // Loop through variables
     for(const auto &v : varRefs) {

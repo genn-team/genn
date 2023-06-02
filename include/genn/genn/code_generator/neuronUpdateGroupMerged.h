@@ -3,6 +3,10 @@
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 
+// GeNN transpiler includes
+#include "transpiler/statement.h"
+#include "transpiler/typeChecker.h"
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
@@ -18,8 +22,8 @@ public:
     class CurrentSource : public GroupMerged<CurrentSourceInternal>
     {
     public:
-        CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                      const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+        CurrentSource(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                      const BackendBase &backend, const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -40,8 +44,17 @@ public:
         //----------------------------------------------------------------------------
         // Private API
         //----------------------------------------------------------------------------
-        //! Is the current source parameter referenced?
+        //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! List of statements parsed and type-checked in constructor; and used to generate code
+        Transpiler::Statement::StatementList m_UpdateStatements;
+
+        //! Resolved types used to generate code
+        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -51,8 +64,8 @@ public:
     class InSynPSM : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        InSynPSM(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                 const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -73,8 +86,17 @@ public:
         //----------------------------------------------------------------------------
         // Private API
         //----------------------------------------------------------------------------
-        //! Is the current source parameter referenced?
+        //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! List of statements parsed and type-checked in constructor; and used to generate code
+        Transpiler::Statement::StatementList m_UpdateStatements;
+
+        //! Resolved types used to generate code
+        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -84,8 +106,8 @@ public:
     class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                        const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -101,8 +123,8 @@ public:
     class InSynWUMPostCode : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynWUMPostCode(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        InSynWUMPostCode(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -126,8 +148,17 @@ public:
         //----------------------------------------------------------------------------
         // Private API
         //----------------------------------------------------------------------------
-        //! Is the current source parameter referenced?
+        //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! List of statements parsed and type-checked in constructor; and used to generate code
+        Transpiler::Statement::StatementList m_UpdateStatements;
+
+        //! Resolved types used to generate code
+        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -137,8 +168,8 @@ public:
     class OutSynWUMPreCode : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynWUMPreCode(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        OutSynWUMPreCode(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -162,8 +193,17 @@ public:
         //----------------------------------------------------------------------------
         // Private API
         //----------------------------------------------------------------------------
-        //! Is the current source parameter referenced?
+        //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
+
+        //----------------------------------------------------------------------------
+        // Members
+        //----------------------------------------------------------------------------
+        //! List of statements parsed and type-checked in constructor; and used to generate code
+        Transpiler::Statement::StatementList m_UpdateStatements;
+
+        //! Resolved types used to generate code
+        Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
     };
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,

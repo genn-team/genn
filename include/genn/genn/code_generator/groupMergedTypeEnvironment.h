@@ -22,6 +22,15 @@ class GroupMergedTypeEnvironment : public Transpiler::TypeChecker::EnvironmentBa
     using ErrorHandlerBase = Transpiler::ErrorHandlerBase;
     using EnvironmentBase = Transpiler::TypeChecker::EnvironmentBase;
     using TypeCheckError = Transpiler::TypeChecker::TypeCheckError;
+    
+    using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
+
+    using GroupInternal = typename G::GroupInternal;
+    using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
+    using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
+
+    template<typename V>
+    using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
 
 public:
     GroupMergedTypeEnvironment(G &groupMerged, EnvironmentBase *enclosing = nullptr)
@@ -81,22 +90,25 @@ public:
         }
     }
 
-    void definePointerField(const Type::ResolvedType &type, const std::string &name,const std::string &prefix, VarAccessMode access)
+    void definePointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix, VarAccessMode access, 
+                            const std::string &fieldSuffix = "", GetVarSuffixFn getVarSuffixFn = &GroupInternal::getName)
     {
         const auto qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type.addQualifier(Type::Qualifier::CONSTANT) : type;
         defineField(qualifiedType, name,
-                    type.createPointer(), name, [prefix](const auto &g, size_t) { return prefix + g.getName(); });
+                    type.createPointer(), name + fieldSuffix, 
+                    [prefix, getVarSuffixFn](const auto &g, size_t) { return prefix + std::invoke(getVarSuffixFn, g); });
     }
 
-    void definePointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix, VarAccessMode access)
+    void definePointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix, VarAccessMode access,
+                            const std::string &fieldSuffix = "", GetVarSuffixFn getVarSuffixFn = &GroupInternal::getName)
     {
-        definePointerField(type.resolve(m_GroupMerged.getTypeContext()), name, prefix, access);
+        definePointerField(type.resolve(m_GroupMerged.getTypeContext()), name, prefix, access, fieldSuffix, getVarSuffixFn);
     }
 
-    void defineScalarField(const std::string &name, typename G::GetFieldDoubleValueFunc getFieldValue)
+    void defineScalarField(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
         defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), name,
-                    m_GroupMerged.getScalarType(), name,
+                    m_GroupMerged.getScalarType(), name + fieldSuffix,
                     [getFieldValue, this](const auto &g, size_t i)
                     {
                         return (Utils::writePreciseString(getFieldValue(g, i), m_GroupMerged.getScalarType().getNumeric().maxDigits10) 
@@ -104,55 +116,56 @@ public:
                     });
     }
     
-    template<typename T, typename P, typename H>
-    void defineHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
-                                   P getParamValues, H isHeterogeneous)
+    void defineHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &fieldSuffix, 
+                                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
         for(const auto &p : paramNames) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, p)) {
-                defineScalarField(p + suffix,
+                defineScalarField(p, fieldSuffix,
                                   [p, getParamValues](const auto &g, size_t)
                                   {
-                                      return getParamValues(g).at(p);
+                                      return std::invoke(getParamValues, g).at(p);
                                   });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), p + suffix);
+                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), p);
             }
         }
     }
 
-    template<typename T, typename D, typename H>
-    void defineHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
-                                          D getDerivedParamValues, H isHeterogeneous)
+    void defineHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &fieldSuffix,
+                                          GetParamValuesFn getDerivedParamValues, IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through derived params
         for(const auto &d : derivedParams) {
             if (std::invoke(isHeterogeneous, m_GroupMerged, d.name)) {
-                defineScalarField(d.name + suffix,
+                defineScalarField(d.name, fieldSuffix,
                                   [d, getDerivedParamValues](const auto &g, size_t)
                                   {
-                                      return getDerivedParamValues(g).at(d.name);
+                                      return std::invoke(getDerivedParamValues, g).at(d.name);
                                   });
             }
             else {
-                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), d.name + suffix);
+                defineField(m_GroupMerged.getScalarType().addQualifier(Type::Qualifier::CONSTANT), d.name);
             }
         }
     }
 
-    void defineVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
+    void defineVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix,
+                    const std::string &fieldSuffix = "", GetVarSuffixFn getVarSuffixFn = &GroupInternal::getName)
     {
         // Loop through variables
         for(const auto &v : vars) {
-            definePointerField(v.type, v.name, arrayPrefix, getVarAccessMode(v.access));
+            definePointerField(v.type, v.name, arrayPrefix, getVarAccessMode(v.access), 
+                               fieldSuffix, getVarSuffixFn);
         }
     }
 
     template<typename V>
-    void defineVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
+    void defineVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, 
+                             const std::string &fieldSuffix = "", GetVarReferencesFn<V> getVarRefFn =  &GroupInternal::getVarReferences)
     {
         // Loop through variables
         for(const auto &v : varReferences) {
@@ -160,24 +173,25 @@ public:
             const auto resolvedType = v.type.resolve(m_GroupMerged.getTypeContext());
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addQualifier(Type::Qualifier::CONSTANT) : resolvedType;
             defineField(qualifiedType, v.name,
-                        resolvedType.createPointer(), v.name,
+                        resolvedType.createPointer(), v.name + fieldSuffix,
                         [arrayPrefix, getVarRefFn, v](const auto &g, size_t) 
                         { 
-                            const auto varRef = getVarRefFn(g).at(v.name);
+                            const auto varRef = std::invoke(getVarRefFn, g).at(v.name);
                             return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
                         });
         }
     }
   
-    void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
+    void defineEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "",
+                    const std::string &fieldSuffix = "", GetVarSuffixFn getVarSuffixFn = &GroupInternal::getName)
     {
         for(const auto &e : egps) {
             const auto pointerType = e.type.resolve(m_GroupMerged.getTypeContext()).createPointer();
             defineField(pointerType, e.name,
-                        pointerType, e.name + varName,
-                        [arrayPrefix, e, varName](const auto &g, size_t) 
+                        pointerType, e.name + varName + fieldSuffix,
+                        [arrayPrefix, e, varName, getVarSuffixFn](const auto &g, size_t) 
                         {
-                            return arrayPrefix + e.name + varName + g.getName(); 
+                            return arrayPrefix + e.name + varName + std::invoke(getVarSuffixFn, g); 
                         },
                         GroupMergedFieldType::DYNAMIC);
         }
