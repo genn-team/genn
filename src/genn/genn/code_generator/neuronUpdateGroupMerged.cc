@@ -108,6 +108,7 @@ bool NeuronUpdateGroupMerged::CurrentSource::isDerivedParamHeterogeneous( const 
 {
     return isParamValueHeterogeneous(paramName, [](const CurrentSourceInternal &cs) { return cs.getDerivedParams(); });
 }
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
 //----------------------------------------------------------------------------

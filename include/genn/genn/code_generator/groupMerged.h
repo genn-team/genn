@@ -20,6 +20,7 @@
 #include "code_generator/codeGenUtils.h"
 
 // GeNN transpiler includes
+#include "transpiler/statement.h"
 #include "transpiler/typeChecker.h"
 
 // Forward declarations

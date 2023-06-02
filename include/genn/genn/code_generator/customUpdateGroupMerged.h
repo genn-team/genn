@@ -5,10 +5,6 @@
 #include "code_generator/environment.h"
 #include "code_generator/groupMerged.h"
 
-// GeNN transpiler includes
-#include "transpiler/statement.h"
-#include "transpiler/typeChecker.h"
-
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------

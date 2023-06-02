@@ -18,8 +18,8 @@ public:
     class CurrentSource : public GroupMerged<CurrentSourceInternal>
     {
     public:
-        CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                      const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+        CurrentSource(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                      const BackendBase &backend, const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -51,8 +51,8 @@ public:
     class InSynPSM : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        InSynPSM(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                 const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -84,8 +84,8 @@ public:
     class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                        const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -101,8 +101,8 @@ public:
     class InSynWUMPostVars : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -134,8 +134,8 @@ public:
     class OutSynWUMPreVars: public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                         const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
         //----------------------------------------------------------------------------
         // Public API
@@ -222,7 +222,7 @@ class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
     SynapseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
-                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::Init, "", groups)
     {}
 

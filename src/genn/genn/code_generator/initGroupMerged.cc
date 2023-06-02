@@ -1,10 +1,20 @@
 #include "code_generator/initGroupMerged.h"
 
 // GeNN code generator includes
+#include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
+
+// GeNN transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/parser.h"
+#include "transpiler/prettyPrinter.h"
+#include "transpiler/scanner.h"
+#include "transpiler/standardLibrary.h"
+#include "transpiler/typeChecker.h"
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Transpiler;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -183,8 +193,8 @@ void genInitWUVarCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::CurrentSource::CurrentSource(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                    const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
+NeuronInitGroupMerged::CurrentSource::CurrentSource(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                                                    const BackendBase &backend, const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
 :   GroupMerged<CurrentSourceInternal>(index, typeContext, groups)
 {
     const std::string suffix =  "CS" + std::to_string(getIndex());
@@ -257,8 +267,8 @@ bool NeuronInitGroupMerged::CurrentSource::isVarInitParamReferenced(const std::s
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::InSynPSM::InSynPSM(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+NeuronInitGroupMerged::InSynPSM::InSynPSM(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                                          const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     const std::string suffix =  "InSyn" + std::to_string(getIndex());
@@ -375,8 +385,8 @@ bool NeuronInitGroupMerged::InSynPSM::isVarInitParamReferenced(const std::string
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynPreOutput
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::OutSynPreOutput::OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+NeuronInitGroupMerged::OutSynPreOutput::OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &,
+                                                        const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     const std::string suffix =  "OutSyn" + std::to_string(getIndex());
@@ -402,8 +412,8 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynWUMPostVars
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::InSynWUMPostVars::InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+NeuronInitGroupMerged::InSynWUMPostVars::InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                                                          const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
@@ -477,8 +487,8 @@ bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitParamReferenced(const std
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::OutSynWUMPreVars::OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                          const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+NeuronInitGroupMerged::OutSynWUMPreVars::OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
+                                                          const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
 {
     const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
@@ -558,38 +568,14 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeConte
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, typeContext, backend, groups)
 {
-    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext, backend,
-                             &NeuronGroupInternal::getFusedPSMInSyn,
-                             &SynapseGroupInternal::getPSInitHashDigest );
-
-    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_MergedOutSynPreOutputGroups, typeContext, backend, 
-                             &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                             &SynapseGroupInternal::getPreOutputInitHashDigest );
-
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_MergedCurrentSourceGroups, typeContext, backend,
-                             &NeuronGroupInternal::getCurrentSources,
-                             &CurrentSourceInternal::getInitHashDigest );
-
-
-    // Build vector of vectors containing each child group's incoming synapse groups
-    // with postsynaptic weight update model variable, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_MergedInSynWUMPostVarGroups, typeContext, backend,
-                             &NeuronGroupInternal::getFusedInSynWithPostVars,
-                             &SynapseGroupInternal::getWUPostInitHashDigest);
-
-    // Build vector of vectors containing each child group's outgoing synapse groups
-    // with presynaptic weight update model variables, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_MergedOutSynWUMPreVarGroups, typeContext, backend, 
-                             &NeuronGroupInternal::getFusedOutSynWithPreVars,
-                             &SynapseGroupInternal::getWUPreInitHashDigest);
-
+    // Create type environment
+    StandardLibrary::FunctionTypes stdLibraryEnv;
+    GroupMergedTypeEnvironment<NeuronInitGroupMerged> typeEnvironment(*this, &stdLibraryEnv);
 
     if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() 
        && backend.isPopulationRNGInitialisedOnDevice()) 
     {
+         // **TODO** inject RNG types into environment
         addPointerField(*backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rng");
     }
 
@@ -614,6 +600,33 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeConte
 
     addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase, NeuronVarAdapter>(
         &NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous);
+
+    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext, typeEnvironment, backend,
+                             &NeuronGroupInternal::getFusedPSMInSyn,
+                             &SynapseGroupInternal::getPSInitHashDigest );
+
+    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_MergedOutSynPreOutputGroups, typeContext, typeEnvironment, backend, 
+                             &NeuronGroupInternal::getFusedPreOutputOutSyn,
+                             &SynapseGroupInternal::getPreOutputInitHashDigest );
+
+    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_MergedCurrentSourceGroups, typeContext, typeEnvironment, backend,
+                             &NeuronGroupInternal::getCurrentSources,
+                             &CurrentSourceInternal::getInitHashDigest );
+
+    // Build vector of vectors containing each child group's incoming synapse groups
+    // with postsynaptic weight update model variable, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_MergedInSynWUMPostVarGroups, typeContext, typeEnvironment, backend,
+                             &NeuronGroupInternal::getFusedInSynWithPostVars,
+                             &SynapseGroupInternal::getWUPostInitHashDigest);
+
+    // Build vector of vectors containing each child group's outgoing synapse groups
+    // with presynaptic weight update model variables, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_MergedOutSynWUMPreVarGroups, typeContext, typeEnvironment, backend, 
+                             &NeuronGroupInternal::getFusedOutSynWithPreVars,
+                             &SynapseGroupInternal::getWUPreInitHashDigest); 
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() const
