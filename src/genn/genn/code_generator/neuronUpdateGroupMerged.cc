@@ -751,7 +751,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     for(const auto &sg : getMergedInSynPSMGroups()) {
         sg.updateHash(hash);
     }
-    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
+    for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
         sg.updateHash(hash);
     }
     for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
@@ -902,7 +902,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
+    for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, true);
     }
@@ -1048,8 +1048,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
                     sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
 
-                // Loop through outgoing synapse groups with some sort of postsynaptic code
-                for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
+                // Loop through incoming synapse groups with some sort of presynaptic code
+                for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
                     sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
                 }
             }
@@ -1078,7 +1078,7 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, Co
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
-    for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
+    for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
         CodeStream::Scope b(os);
         sg.generate(backend, os, *this, modelMerged, popSubs, false);
     }

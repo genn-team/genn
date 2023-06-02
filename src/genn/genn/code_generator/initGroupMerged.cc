@@ -637,7 +637,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
     for(const auto &sg : getMergedInSynPSMGroups()) {
         sg.updateHash(hash);
     }
-    for (const auto &sg : getMergedOutSynWUMPreVarGroups()) {
+    for (const auto &sg : getMergedInSynWUMPostVarGroups()) {
         sg.updateHash(hash);
     }
     for (const auto &sg : getMergedOutSynWUMPreVarGroups()) {
@@ -695,27 +695,20 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                          [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
                          [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
  
-     // Loop through all of neuron group's current sources
+    // Generate initialisation code for child groups
     for (const auto &cs : getMergedCurrentSourceGroups()) {
         cs.generate(backend, os, *this, modelMerged, popSubs);
     }
-
     for(const auto &sg : getMergedInSynPSMGroups()) {
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
-
-    // Loop through outgoing synapse groups with presynaptic output
     for (const auto &sg : getMergedOutSynPreOutputGroups()) {
         sg.generate(backend, os, *this, modelMerged, popSubs);
-    }
- 
-   
+    }  
     for (const auto &sg : getMergedOutSynWUMPreVarGroups()) {
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
-
-    // Generate var update for incoming synaptic populations with postsynaptic code
-    for (const auto &sg : getMergedOutSynWUMPreVarGroups()) {
+    for (const auto &sg : getMergedInSynWUMPostVarGroups()) {
         sg.generate(backend, os, *this, modelMerged, popSubs);
     }
 }
