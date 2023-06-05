@@ -72,7 +72,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeC
 
      // Scan, parse and type-check update code
      ErrorHandler errorHandler;
-     std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheck(cm->getUpdateCode(), typeContext, 
+     std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheckStatements(cm->getUpdateCode(), typeContext, 
                                                                            typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
@@ -118,19 +118,19 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
         getArchetype(), getTypeContext(), envSubs, 
-        [this](const std::string&, const Models::VarInit&, VarAccess a)
+        [this, &envSubs](const std::string&, const Models::VarInit&, VarAccess a)
         {
-            return getVarIndex(getVarAccessDuplication(a), "id");
+            return getVarIndex(getVarAccessDuplication(a), envSubs["id"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
         getArchetype(), getTypeContext(), varSubs, 
-        [this](const std::string&, const Models::VarReference &v, VarAccessMode)
+        [this, &envSubs](const std::string&, const Models::VarReference &v, VarAccessMode)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
                                   getVarAccessDuplication(v.getVar().access), 
-                                  "id");
+                                  envSubs["id"]);
         });
 
     // Pretty print previously parsed update statements
@@ -227,18 +227,18 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUInternal> varSubs(
         getArchetype(), getTypeContext(), envSubs, 
-        [this](const std::string&, const Models::VarInit&, VarAccess a)
+        [&envSubs, this](const std::string&, const Models::VarInit&, VarAccess a)
         {
-            return getVarIndex(getVarAccessDuplication(a), "id_syn");
+            return getVarIndex(getVarAccessDuplication(a), envSubs["id_syn"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUInternal> varRefSubs(
         getArchetype(), getTypeContext(), varSubs, 
-        [this](const std::string&, const Models::WUVarReference &v, VarAccessMode)
+        [&envSubs, this](const std::string&, const Models::WUVarReference &v, VarAccessMode)
         { 
             return getVarRefIndex(getVarAccessDuplication(v.getVar().access),
-                                  "id_syn");
+                                  envSubs["id_syn"]);
         });
 
     // Pretty print previously parsed update statements
@@ -358,7 +358,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Scan, parse and type-check update code
     ErrorHandler errorHandler;
-    std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheck(cm->getUpdateCode(), typeContext, 
+    std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheckStatements(cm->getUpdateCode(), typeContext, 
                                                                         typeEnvironment, errorHandler);
 }
 
