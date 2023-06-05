@@ -134,8 +134,8 @@ public:
         void generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
 
-        void genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                                const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                                const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -182,11 +182,11 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
 
-        void genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                                const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                                const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -242,7 +242,7 @@ public:
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
     
-    void generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const;
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
@@ -261,11 +261,6 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
-    
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
@@ -273,5 +268,23 @@ private:
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
+
+    //! List of statements parsed and type-checked in constructor; and used to generate sim code
+    Transpiler::Statement::StatementList m_SimStatements;
+
+    //! Expression parsed and type-checked in constructor; and used to generate threshold condition code
+    Transpiler::Expression::ExpressionPtr m_ThresholdConditionExpression;
+
+    //! List of statements parsed and type-checked in constructor; and used to generate reset code
+    Transpiler::Statement::StatementList m_ResetStatements;
+
+    //! Resolved types used to generate sim code
+    Transpiler::TypeChecker::ResolvedTypeMap m_SimResolvedTypes;
+
+    //! Resolved types used to generate threshold condition code
+    Transpiler::TypeChecker::ResolvedTypeMap m_ThresholdConditionResolvedTypes;
+
+    //! Resolved types used to generate threshold condition code
+    Transpiler::TypeChecker::ResolvedTypeMap m_ResetResolvedTypes;
 };
 }   // namespace GeNN::CodeGenerator

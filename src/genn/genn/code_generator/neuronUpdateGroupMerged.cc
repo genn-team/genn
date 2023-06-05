@@ -51,7 +51,7 @@ NeuronUpdateGroupMerged::CurrentSource::CurrentSource(size_t index, const Type::
 
     // Scan, parse and type-check injection code
     ErrorHandler errorHandler;
-    std::tie(m_InjectionStatements, m_InjectionResolvedTypes) = scanParseAndTypeCheck(cm->getInjectionCode(), typeContext, 
+    std::tie(m_InjectionStatements, m_InjectionResolvedTypes) = scanParseAndTypeCheckStatements(cm->getInjectionCode(), typeContext, 
                                                                           typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
@@ -73,9 +73,9 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSourceInternal> varSubs(
         getArchetype(), getTypeContext(), envSubs, 
-        [&modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+        [&envSubs, &modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
         {
-            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), "id");
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), envSubs["id"]);
         });
 
     //currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
@@ -148,9 +148,9 @@ NeuronUpdateGroupMerged::InSynPSM::InSynPSM(size_t index, const Type::TypeContex
 
     // Scan, parse and type-check decay and apply input code
     ErrorHandler errorHandler;
-    std::tie(m_DecayStatements, m_DecayResolvedTypes) = scanParseAndTypeCheck(psm->getDecayCode(), typeContext, 
+    std::tie(m_DecayStatements, m_DecayResolvedTypes) = scanParseAndTypeCheckStatements(psm->getDecayCode(), typeContext, 
                                                                               typeEnvironment, errorHandler);
-    std::tie(m_ApplyInputStatements, m_ApplyInputResolvedTypes) = scanParseAndTypeCheck(psm->getApplyInputCode(), typeContext, 
+    std::tie(m_ApplyInputStatements, m_ApplyInputResolvedTypes) = scanParseAndTypeCheckStatements(psm->getApplyInputCode(), typeContext, 
                                                                                         typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
@@ -165,7 +165,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     envSubs.getStream() << "// current source " << getIndex() << std::endl;
     envSubs.getStream() << "scalar linSyn = group->inSynInSyn" << getIndex() << "[";
-    envSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    envSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, envSubs["id"]);
     envSubs.getStream() << "];" << std::endl;
 
     // If dendritic delay is required
@@ -173,7 +173,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
         // Get reference to dendritic delay buffer input for this timestep
         envSubs.getStream() << backend.getPointerPrefix() << "scalar *denDelayFront = ";
         envSubs.getStream() << "&group->denDelay" << suffix << "[(*group->denDelayPtr" << suffix << " * group->numNeurons) + ";
-        envSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+        envSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, envSubs["id"]);
         envSubs.getStream() << "];" << std::endl;
 
         // Add delayed input from buffer into inSyn
@@ -199,9 +199,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, SynapseGroupInternal> varSubs(
         getArchetype(), getTypeContext(), envSubs, 
-        [&modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+        [&envSubs, &modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
         {
-            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), "id");
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), envSubs["id"]);
         });
 
     // Pretty print previously parsed update statements
@@ -210,7 +210,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Write back linSyn
     varSubs.getStream() << "group->inSyn" << suffix << "[";
-    varSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    varSubs.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, envSubs["id"]);
     varSubs.getStream() << "] = linSyn;" << std::endl;
 }
 //----------------------------------------------------------------------------
@@ -252,10 +252,10 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternal &env
      
     env.getStream() << getArchetype().getPreTargetVar() << " += ";
     env.getStream() << "group->revInSyn" << suffix << "[";
-    env.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    env.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, env["id"]);
     env.getStream() << "];" << std::endl;
     env.getStream() << "group->revInSyn" << suffix << "[";
-    env.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    env.getStream() << ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, env["id"]);
     env.getStream() << "] = " << modelMerged.scalarExpr(0.0) << ";" << std::endl;
 }
 
@@ -292,9 +292,9 @@ NeuronUpdateGroupMerged::InSynWUMPostCode::InSynWUMPostCode(size_t index, const 
 
     // Scan, parse and type-check dynamics and spike code
     ErrorHandler errorHandler;
-    std::tie(m_DynamicsStatements, m_DynamicsResolvedTypes) = scanParseAndTypeCheck(wum->getPostDynamicsCode(), typeContext, 
+    std::tie(m_DynamicsStatements, m_DynamicsResolvedTypes) = scanParseAndTypeCheckStatements(wum->getPostDynamicsCode(), typeContext, 
                                                                                     typeEnvironment, errorHandler);
-    std::tie(m_SpikeStatements, m_SpikeResolvedTypes) = scanParseAndTypeCheck(wum->getPostSpikeCode(), typeContext, 
+    std::tie(m_SpikeStatements, m_SpikeResolvedTypes) = scanParseAndTypeCheckStatements(wum->getPostSpikeCode(), typeContext, 
                                                                               typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
@@ -306,7 +306,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
 
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-    // If there are any statements to executre here
+    // If there are any statements to execute here
     const auto &statements = dynamicsNotSpike ? m_DynamicsStatements : m_SpikeStatements;
     const auto &resolvedTypes = dynamicsNotSpike ? m_DynamicsResolvedTypes : m_SpikeResolvedTypes;
     if(!statements.empty()) {
@@ -323,13 +323,13 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynapseGroupInternal> varSubs(
             getArchetype(), getTypeContext(), envSubs, 
-            [batchSize, delayed, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+            [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
             {
-                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), "id");
+                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
             },
-            [batchSize, delayed, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+            [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
             {
-                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(a), "id");
+                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
             });
 
         /*neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), "", "_post", "", "", "", dynamicsNotSpike,
@@ -349,8 +349,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                                                                   const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                                                                   const ModelSpecMerged &modelMerged) const
 {
     // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
     const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
@@ -358,13 +358,13 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(CodeStream &o
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
-                os << "group->" << v.name << suffix << "[";
-                os << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
-                os << "] = ";
+                env.getStream() << "group->" << v.name << suffix << "[";
+                env.getStream() << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), env["id"]);
+                env.getStream() << "] = ";
 
-                os << "group->" << v.name << suffix << "[";
-                os << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
-                os << "];" << std::endl;
+                env.getStream() << "group->" << v.name << suffix << "[";
+                env.getStream() << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), env["id"]);
+                env.getStream() << "];" << std::endl;
             }
         }
     }
@@ -421,46 +421,48 @@ NeuronUpdateGroupMerged::OutSynWUMPreCode::OutSynWUMPreCode(size_t index, const 
 
     // Scan, parse and type-check dynamics and spike code
     ErrorHandler errorHandler;
-    std::tie(m_DynamicsStatements, m_DynamicsResolvedTypes) = scanParseAndTypeCheck(wum->getPreDynamicsCode(), typeContext, 
+    std::tie(m_DynamicsStatements, m_DynamicsResolvedTypes) = scanParseAndTypeCheckStatements(wum->getPreDynamicsCode(), typeContext, 
                                                                                     typeEnvironment, errorHandler);
-    std::tie(m_SpikeStatements, m_SpikeResolvedTypes) = scanParseAndTypeCheck(wum->getPreSpikeCode(), typeContext, 
+    std::tie(m_SpikeStatements, m_SpikeResolvedTypes) = scanParseAndTypeCheckStatements(wum->getPreSpikeCode(), typeContext, 
                                                                               typeEnvironment, errorHandler);
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &backend, CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                                                         const ModelSpecMerged &modelMerged, Substitutions &popSubs, bool dynamicsNotSpike) const
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                                                         const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const
 {
     const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
-    
+    const auto *wum = getArchetype().getWUModel();
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+   
+    // If there are any statements to executre here
+    const auto &statements = dynamicsNotSpike ? m_DynamicsStatements : m_SpikeStatements;
+    const auto &resolvedTypes = dynamicsNotSpike ? m_DynamicsResolvedTypes : m_SpikeResolvedTypes;
+    
+    // If there are any statements to execute here
+    if(!statements.empty()) {
+        // Create new substitution environment and add parameters, derived parameters and extra global parameters
+        EnvironmentSubstitute envSubs(env);
+        envSubs.getStream() << "// presynaptic weight update " << getIndex() << std::endl;
+        envSubs.addParamValueSubstitution(wum->getParamNames(), getArchetype().getWUParams(),
+                                         [this](const std::string &p) { return isParamHeterogeneous(p); });
+        envSubs.addVarValueSubstitution(wum->getDerivedParams(), getArchetype().getWUDerivedParams(),
+                                        [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
+        envSubs.addVarNameSubstitution(wum->getExtraGlobalParams());
 
-    // If this code string isn't empty
-    std::string code = dynamicsNotSpike ? getArchetype().getWUModel()->getPreDynamicsCode() : getArchetype().getWUModel()->getPreSpikeCode();
-    if(!code.empty()) {
-        Substitutions subs(&popSubs);
-
-        // Fetch presynaptic variables from global memory
-        os << "// perform WUM update required for merged" << getIndex() << std::endl;
-        const auto vars = getArchetype().getWUModel()->getPreVars();
+        // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
-        for(const auto &v : vars) {
-            if(v.access & VarAccessMode::READ_ONLY) {
-                os << "const ";
-            }
-            os << v.type.resolve(getTypeContext()).getName() << " l" << v.name << " = group->" << v.name << suffix << "[";
-            os << ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), subs["id"]) << "];" << std::endl;
-        }
-
-        subs.addParamValueSubstitution(getArchetype().getWUModel()->getParamNames(), getArchetype().getWUParams(),
-                                       [this](const std::string &p) { return isParamHeterogeneous(p); },
-                                       "", "group->", suffix);
-        subs.addVarValueSubstitution(getArchetype().getWUModel()->getDerivedParams(), getArchetype().getWUDerivedParams(),
-                                     [this](const std::string &p) { return isDerivedParamHeterogeneous(p); },
-                                     "", "group->", suffix);
-        subs.addVarNameSubstitution(getArchetype().getWUModel()->getExtraGlobalParams(), "", "group->", suffix);
-        subs.addVarNameSubstitution(vars, "", "l");
-
-        neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), "", "_pre", "", "", "", dynamicsNotSpike,
+        EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynapseGroupInternal> varSubs(
+            getArchetype(), getTypeContext(), envSubs, 
+            [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+            {
+                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
+            },
+            [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
+            {
+                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
+            });     
+        
+        /*neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), "", "_pre", "", "", "", dynamicsNotSpike,
                                           [&ng](const std::string &p) { return ng.isParamHeterogeneous(p); },
                                           [&ng](const std::string &p) { return ng.isDerivedParamHeterogeneous(p); },
                                           [&subs, &ng, batchSize](bool delay, VarAccessDuplication varDuplication) 
@@ -470,28 +472,15 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
                                           [&subs, &ng, batchSize](bool delay, VarAccessDuplication varDuplication) 
                                           { 
                                               return ng.getReadVarIndex(delay, batchSize, varDuplication, subs["id"]); 
-                                          });
+                                          });*/
 
-        // Perform standard substitutions
-        subs.applyCheckUnreplaced(code, "spikeCode : merged" + getIndex());
-        //code = ensureFtype(code, precision);
-        os << code;
-
-        // Write back presynaptic variables into global memory
-        for(const auto &v : vars) {
-            // If state variables is read/write - meaning that it may have been updated - or it is delayed -
-            // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
-            // back to global state variables dd_V etc
-            if((v.access & VarAccessMode::READ_WRITE) || delayed) {
-                os << "group->" << v.name << suffix << "[";
-                os << ng.getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), subs["id"]) << "] = l" << v.name << ";" << std::endl;
-            }
-        }
+        // Pretty print previously parsed statements
+        PrettyPrinter::print(statements, varSubs, getTypeContext(), resolvedTypes);
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(CodeStream &os, const NeuronUpdateGroupMerged &ng,
-                                                                   const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+                                                                   const ModelSpecMerged &modelMerged) const
 {
     // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
     const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
@@ -499,13 +488,13 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(CodeStream &o
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
-                os << "group->" << v.name << suffix << "[";
-                os << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
-                os << "] = ";
+                env.getStream() << "group->" << v.name << suffix << "[";
+                env.getStream() << ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), env["id"]);
+                env.getStream() << "] = ";
 
-                os << "group->" << v.name << suffix << "[";
-                os << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), popSubs["id"]);
-                os << "];" << std::endl;
+                env.getStream() << "group->" << v.name << suffix << "[";
+                env.getStream() << ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), env["id"]);
+                env.getStream() << "];" << std::endl;
             }
         }
     }
@@ -641,6 +630,15 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
                  GroupMergedFieldType::DYNAMIC);
     }
 
+    // Parse code
+    ErrorHandler errorHandler;
+    std::tie(m_SimStatements, m_SimResolvedTypes) = scanParseAndTypeCheckStatements(
+        nm->getSimCode(), typeContext, typeEnvironment, errorHandler);
+    std::tie(m_ThresholdConditionExpression, m_ThresholdConditionResolvedTypes) = scanParseAndTypeCheckExpression(
+        nm->getThresholdConditionCode(), typeContext, typeEnvironment, errorHandler);
+    std::tie(m_ResetStatements, m_ResetResolvedTypes) = scanParseAndTypeCheckStatements(
+        nm->getResetCode(), typeContext, typeEnvironment, errorHandler);
+
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext, typeEnvironment, backend,
                              &NeuronGroupInternal::getFusedPSMInSyn, &SynapseGroupInternal::getPSHashDigest);
@@ -705,114 +703,92 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
  
 
-    // Create an environment which caches variables in local variables if they are accessed
-    // **NOTE** we do this right at the top so that local copies can be used by child groups
-    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronGroupInternal> neuronVarEnv(
-        getArchetype(), getTypeContext(), env, 
-        [batchSize, this](const std::string &varName, const Models::VarInit&, VarAccess a)
-        {
-            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), "id") ;
-        },
-        [batchSize, this](const std::string &varName, const Models::VarInit&, VarAccess a)
-        {
-            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(a), "id") ;
-        });
+    EnvironmentSubstitute neuronEnv(env);
+    neuronEnv.addSubstitution("Isyn", "Isyn",
+                              {neuronEnv.addInitialiser("scalar Isyn = 0;")});
 
-    // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
-    // OR any incoming synapse groups have post synaptic models which reference $(Isyn), declare it
-    if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
-        std::any_of(getArchetype().getFusedPSMInSyn().cbegin(), getArchetype().getFusedPSMInSyn().cend(),
-                    [](const SynapseGroupInternal *sg)
-                    {
-                        return (sg->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos
-                                || sg->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
-                    }))
-    {
-        os << "scalar Isyn = 0;" << std::endl;
+    // **NOTE** arbitrary code in param value to be deprecated
+    for (const auto &v : nm->getAdditionalInputVars()) {
+        const std::string typeName = v.type.resolve(getTypeContext()).getName();
+        neuronEnv.addSubstitution(v.name, v.value,
+                                  {neuronEnv.addInitialiser(typeName + " " + v.name + " = " + v.value + ";")});
     }
 
-    Substitutions neuronSubs(&popSubs);
-    neuronSubs.addVarSubstitution("Isyn", "Isyn");
-
-   
-    neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
-    addNeuronModelSubstitutions(neuronSubs);
-
-    // Initialise any additional input variables supported by neuron model
-    for (const auto &a : nm->getAdditionalInputVars()) {
-        // Apply substitutions to value
-        std::string value = a.value;
-        neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
-        //value = ensureFtype(value, modelMerged.getModel().getPrecision());
-
-        os << a.type.resolve(getTypeContext()).getName() << " " << a.name << " = " << value << ";" << std::endl;
-    }
-
-    // Loop through incoming synapse groups
-    for(const auto &sg : getMergedInSynPSMGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs);
-    }
-
-    // Loop through outgoing synapse groups with presynaptic output
-    for (const auto &sg : getMergedOutSynPreOutputGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs);
-    }
- 
-    // Loop through all of neuron group's current sources
-    for (const auto &cs : getMergedCurrentSourceGroups()) {
-        CodeStream::Scope b(os);
-        cs.generate(backend, os, *this, modelMerged, popSubs);
-    }
-
-    // Read spike and spike-like-event times into local variables if required
-    EnvironmentSubstitute neuronEnv(neuronVarEnv);
+    neuronEnv.addParamValueSubstitution(nm->getParamNames(), getArchetype().getParams(), 
+                                        [this](const std::string &p) { return isParamHeterogeneous(p);  });
+    neuronEnv.addVarValueSubstitution(nm->getDerivedParams(), getArchetype().getDerivedParams(), 
+                                      [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
+    neuronEnv.addVarNameSubstitution(nm->getExtraGlobalParams());
+    
     if(getArchetype().isSpikeTimeRequired()) {
         const size_t initialiser = neuronEnv.addInitialiser(
-            "const timepoint lsT = group->sT[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id") + "];");
+            "const timepoint lsT = group->sT[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, neuronEnv["id"]) + "];");
         neuronEnv.addSubstitution("sT", "lsT", {initialiser});
     }
     if(getArchetype().isPrevSpikeTimeRequired()) {
         const size_t initialiser = neuronEnv.addInitialiser(
-            "const timepoint lprevST = group->prevST[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id") + "];");
+            "const timepoint lprevST = group->prevST[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, neuronEnv["id"]) + "];");
         neuronEnv.addSubstitution("prev_sT", "lprevST", {initialiser});
     }
     if(getArchetype().isSpikeEventTimeRequired()) {
         const size_t initialiser = neuronEnv.addInitialiser(
-            "const timepoint lseT = group->seT[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id") + "];");
+            "const timepoint lseT = group->seT[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, neuronEnv["id"]) + "];");
         neuronEnv.addSubstitution("seT", "lseT", {initialiser});
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
         const size_t initialiser = neuronEnv.addInitialiser(
-            "const timepoint lprevSET = group->prevSET[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id") << "];");
+            "const timepoint lprevSET = group->prevSET[" + getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, neuronEnv["id"]) + "];");
         neuronEnv.addSubstitution("prev_seT", "lprevSET", {initialiser});
     }
-    neuronEnv.getStream() << std::endl;
 
-    // Add neuron parameters, derived parameters and extra global parameters to neuron environment
-    neuronEnv.addParamValueSubstitution(nm->getParamNames(), getArchetype().getParams(),
-                                        [this](const std::string &p) { return isParamHeterogeneous(p); });
-    neuronEnv.addVarValueSubstitution(nm->getDerivedParams(), getArchetype().getDerivedParams(),
-                                      [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-    neuronEnv.addVarNameSubstitution(nm->getExtraGlobalParams());
+    // Create an environment which caches variables in local variables if they are accessed
+    // **NOTE** we do this right at the top so that local copies can be used by child groups
+    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronGroupInternal> neuronVarEnv(
+        getArchetype(), getTypeContext(), neuronEnv, 
+        [batchSize, &neuronEnv, this](const std::string &varName, const Models::VarInit&, VarAccess a)
+        {
+            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
+            return getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), neuronEnv["id"]) ;
+        },
+        [batchSize, &neuronEnv, this](const std::string &varName, const Models::VarInit&, VarAccess a)
+        {
+            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
+            return getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(a), neuronEnv["id"]) ;
+        });
+
+
+    // Loop through incoming synapse groups
+    for(const auto &sg : getMergedInSynPSMGroups()) {
+        CodeStream::Scope b(env.getStream());
+        sg.generate(backend, env, *this, modelMerged);
+    }
+
+    // Loop through outgoing synapse groups with presynaptic output
+    for (const auto &sg : getMergedOutSynPreOutputGroups()) {
+        CodeStream::Scope b(env.getStream());
+        sg.generate(env, *this, modelMerged);
+    }
+ 
+    // Loop through all of neuron group's current sources
+    for (const auto &cs : getMergedCurrentSourceGroups()) {
+        CodeStream::Scope b(env.getStream());
+        cs.generate(backend, env, *this, modelMerged);
+    }
+
+
 
     // If a threshold condition is provided
-    std::string thCode = nm->getThresholdConditionCode();
-    if (!thCode.empty()) {
-        os << "// test whether spike condition was fulfilled previously" << std::endl;
-
-        neuronSubs.applyCheckUnreplaced(thCode, "thresholdConditionCode : merged" + std::to_string(getIndex()));
-        //thCode= ensureFtype(thCode, model.getPrecision());
-
-        if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-            thCode = disambiguateNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
-        }
+    if (m_ThresholdConditionExpression) {
+        neuronVarEnv.getStream() << "// test whether spike condition was fulfilled previously" << std::endl;
+        
+        //if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
+        //    thCode = disambiguateNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
+        //}
 
         if (nm->isAutoRefractoryRequired()) {
-            os << "const bool oldSpike = (" << thCode << ");" << std::endl;
+            neuronVarEnv.getStream() << "const bool oldSpike = (";
+            PrettyPrinter::print(m_ThresholdConditionExpression, neuronVarEnv, getTypeContext(), m_ThresholdConditionResolvedTypes);
+            neuronVarEnv.getStream() << ");" << std::endl;
         }
     }
     // Otherwise, if any outgoing synapse groups have spike-processing code
@@ -822,30 +798,25 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         LOGW_CODE_GEN << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << getName() << "\" was provided. There will be no spikes detected in this population!";
     }*/
 
-    os << "// calculate membrane potential" << std::endl;
-    std::string sCode = nm->getSimCode();
-    neuronSubs.applyCheckUnreplaced(sCode, "simCode : merged" + std::to_string(getIndex()));
-    //sCode = ensureFtype(sCode, model.getPrecision());
-
-
-    os << sCode << std::endl;
+    neuronVarEnv.getStream() << "// calculate membrane potential" << std::endl;
+    PrettyPrinter::print(m_SimStatements, neuronVarEnv, getTypeContext(), m_SimResolvedTypes);
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs, true);
+        CodeStream::Scope b(neuronVarEnv.getStream());
+        sg.generate(backend, neuronVarEnv, *this, modelMerged, true);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs, true);
+        CodeStream::Scope b(neuronVarEnv.getStream());
+        sg.generate(backend, neuronVarEnv, *this, modelMerged, true);
     }
 
     // look for spike type events first.
-    if (getArchetype().isSpikeEventRequired()) {
+    /*if (getArchetype().isSpikeEventRequired()) {
         // Create local variable
-        os << "bool spikeLikeEvent = false;" << std::endl;
+        neuronVarEnv.getStream() << "bool spikeLikeEvent = false;" << std::endl;
 
         // Loop through outgoing synapse populations that will contribute to event condition code
         size_t i = 0;
@@ -912,29 +883,26 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                 os << "group->prevSET[" << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "] = lprevSET;" << std::endl;
             }
         }
-    }
+    }*/
 
     // test for true spikes if condition is provided
-    if (!thCode.empty()) {
-        os << "// test for and register a true spike" << std::endl;
+    if (m_ThresholdConditionExpression) {
+        neuronVarEnv.getStream() << "// test for and register a true spike" << std::endl;
+        neuronVarEnv.getStream() << "if ((";
+        PrettyPrinter::print(m_ThresholdConditionExpression, neuronVarEnv, getTypeContext(), m_ThresholdConditionResolvedTypes);
+        neuronVarEnv.getStream() << ")";
         if (nm->isAutoRefractoryRequired()) {
-            os << "if ((" << thCode << ") && !(oldSpike))";
+            neuronVarEnv.getStream() << " && !oldSpike";
         }
-        else {
-            os << "if (" << thCode << ")";
-        }
+        neuronVarEnv.getStream() << ")";
         {
-            CodeStream::Scope b(os);
-            genEmitTrueSpike(os, *this, popSubs);
+            CodeStream::Scope b(neuronVarEnv.getStream());
+            genEmitTrueSpike(neuronVarEnv, *this);
 
             // add after-spike reset if provided
-            if (!nm->getResetCode().empty()) {
-                std::string rCode = nm->getResetCode();
-                neuronSubs.applyCheckUnreplaced(rCode, "resetCode : merged" + std::to_string(getIndex()));
-                //rCode = ensureFtype(rCode, model.getPrecision());
-
-                os << "// spike reset code" << std::endl;
-                os << rCode << std::endl;
+            if (!m_ResetStatements.empty()) {
+                neuronVarEnv.getStream() << "// spike reset code" << std::endl;
+                PrettyPrinter::print(m_ResetStatements, neuronVarEnv, getTypeContext(), m_ResetResolvedTypes);
             }
         }
 
@@ -965,45 +933,49 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
             // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
             if(getArchetype().isSpikeTimeRequired() || getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
-                os << "else";
-                CodeStream::Scope b(os);
+                neuronVarEnv.getStream() << "else";
+                CodeStream::Scope b(neuronVarEnv.getStream());
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    os << "group->sT[" << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "] = lsT;" << std::endl;
+                    neuronVarEnv.getStream() << "group->sT[";
+                    neuronVarEnv.getStream() << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, neuronVarEnv["id"]);
+                    neuronVarEnv.getStream()  << "] = lsT;" << std::endl;
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    os << "group->prevST[" << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "] = lprevST;" << std::endl;
+                    neuronVarEnv.getStream() << "group->prevST[";
+                    neuronVarEnv.getStream() << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, neuronVarEnv["id"]);
+                    neuronVarEnv.getStream() << "] = lprevST;" << std::endl;
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
                 for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
-                    sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
+                    sg.genCopyDelayedVars(neuronVarEnv, *this, modelMerged);
                 }
 
                 // Loop through incoming synapse groups with some sort of presynaptic code
                 for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
-                    sg.genCopyDelayedVars(os, *this, modelMerged, popSubs);
+                    sg.genCopyDelayedVars(neuronVarEnv, *this, modelMerged);
                 }
             }
         }
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (const auto &sg : getMergedOutSynWUMPreCodeGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs, false);
+        CodeStream::Scope b(env.getStream());
+        sg.generate(backend, env, *this, modelMerged, false);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
-        CodeStream::Scope b(os);
-        sg.generate(backend, os, *this, modelMerged, popSubs, false);
+        CodeStream::Scope b(env.getStream());
+        sg.generate(backend, env, *this, modelMerged, false);
     }
 }
 //--------------------------------------------------------------------------
@@ -1055,17 +1027,4 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
     else {
         return getVarIndex(batchSize, varDuplication, index);
     }
-}
-//----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix, const std::string &destSuffix) const
-{
-    const NeuronModels::Base *nm = getArchetype().getNeuronModel();
-    substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
-    substitution.addParamValueSubstitution(nm->getParamNames(), getArchetype().getParams(), 
-                                           [this](const std::string &p) { return isParamHeterogeneous(p);  },
-                                           sourceSuffix, "group->");
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), getArchetype().getDerivedParams(), 
-                                         [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  },
-                                         sourceSuffix, "group->");
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->");
 }
