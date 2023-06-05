@@ -485,7 +485,7 @@ std::string upgradeCodeString(const std::string &codeString)
     return std::regex_replace(codeString, variable, "$1");
 }
 //----------------------------------------------------------------------------
-std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheck(
+std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(
     const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
 {
     using namespace Transpiler;
@@ -504,5 +504,26 @@ std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::Resolv
 
     // Move into tuple and eturn
     return std::make_tuple(std::move(updateStatements), std::move(resolvedTypes));
+}
+//----------------------------------------------------------------------------
+GENN_EXPORT std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
+    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
+{
+    using namespace Transpiler;
+
+    // Upgrade code string
+    const std::string upgradedCode = upgradeCodeString(code);
+
+    // Scan code string to convert to tokens
+    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
+
+    // Parse tokens as expression
+    auto expression = Parser::parseExpression(tokens, typeContext, errorHandler);
+
+    // Resolve types
+    auto resolvedTypes= TypeChecker::typeCheck(expression.get(), environment, errorHandler);
+
+    // Move into tuple and eturn
+    return std::make_tuple(std::move(expression), std::move(resolvedTypes));
 }
 }   // namespace GeNN::CodeGenerator

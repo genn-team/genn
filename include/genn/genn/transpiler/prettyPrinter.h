@@ -35,11 +35,22 @@ public:
     
     //! Get stream to write code within this environment to
     virtual CodeGenerator::CodeStream &getStream() = 0;
+    
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    std::string operator[] (const std::string &name)
+    {
+        return getName(name);
+    }
+
 };
 
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
 void print(const Statement::StatementList &statements, EnvironmentBase &environment, 
+           const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
+void print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment, 
            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
 }

@@ -864,11 +864,11 @@ ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::Statem
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-Type::ResolvedType GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
                                                             ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
     Visitor visitor(expression, internalEnvironment, expressionTypes, errorHandler);
-    return expressionTypes.at(expression);
+    return expressionTypes;
 }

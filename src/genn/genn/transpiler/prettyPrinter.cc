@@ -132,6 +132,13 @@ public:
         }
     }
 
+    Visitor(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
+            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
+    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) 
+    {
+        expression.get()->accept(*this);
+    }
+
 private:
     //---------------------------------------------------------------------------
     // Expression::Visitor virtuals
@@ -467,4 +474,11 @@ void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &stat
 {
     EnvironmentInternal internalEnvironment(environment);
     Visitor visitor(statements, internalEnvironment, context, resolvedTypes);
+}
+//---------------------------------------------------------------------------
+void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment,
+                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
+{
+    EnvironmentInternal internalEnvironment(environment);
+    Visitor visitor(expression, internalEnvironment, context, resolvedTypes);
 }

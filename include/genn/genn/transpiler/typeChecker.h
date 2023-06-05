@@ -58,6 +58,6 @@ public:
 ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
                           ErrorHandlerBase &errorHandler);
 
-Type::ResolvedType typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
-                             ErrorHandlerBase &errorHandler);
+ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
+                          ErrorHandlerBase &errorHandler);
 }   // namespace MiniParse::GeNN::Transpiler
