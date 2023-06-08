@@ -64,15 +64,15 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Create new substitution environment and add parameters, derived parameters and extra global parameters
     EnvironmentSubstitute envSubs(env);
     envSubs.getStream() << "// current source " << getIndex() << std::endl;
-    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
+    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(), suffix,
                                      [this](const std::string &p) { return isParamHeterogeneous(p); });
-    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
+    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(), suffix,
                                     [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams());
+    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), suffix);
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSourceInternal> varSubs(
-        getArchetype(), getTypeContext(), envSubs, 
+        getArchetype(), getTypeContext(), envSubs, "l", suffix,
         [&envSubs, &modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
         {
             return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), envSubs["id"]);
@@ -184,11 +184,11 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     }
 
     // Add parameters, derived parameters and extra global parameters to environment
-    envSubs.addParamValueSubstitution(psm->getParamNames(), getArchetype().getPSParams(),
+    envSubs.addParamValueSubstitution(psm->getParamNames(), getArchetype().getPSParams(), suffix,
                                       [this](const std::string &p) { return isParamHeterogeneous(p); });
-    envSubs.addVarValueSubstitution(psm->getDerivedParams(), getArchetype().getPSDerivedParams(),
+    envSubs.addVarValueSubstitution(psm->getDerivedParams(), getArchetype().getPSDerivedParams(), suffix,
                                     [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-    envSubs.addVarNameSubstitution(psm->getExtraGlobalParams());
+    envSubs.addVarNameSubstitution(psm->getExtraGlobalParams(), suffix);
     
     // **TODO** naming convention
     envSubs.addSubstitution("inSyn", "linSyn");
@@ -198,7 +198,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, SynapseGroupInternal> varSubs(
-        getArchetype(), getTypeContext(), envSubs, 
+        getArchetype(), getTypeContext(), envSubs, "l", suffix,
         [&envSubs, &modelMerged, &ng](const std::string&, const Models::VarInit&, VarAccess a)
         {
             return ng.getVarIndex(modelMerged.getModel().getBatchSize(), getVarAccessDuplication(a), envSubs["id"]);
@@ -313,16 +313,16 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         // Create new substitution environment and add parameters, derived parameters and extra global parameters
         EnvironmentSubstitute envSubs(env);
         envSubs.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
-        envSubs.addParamValueSubstitution(wum->getParamNames(), getArchetype().getWUParams(),
+        envSubs.addParamValueSubstitution(wum->getParamNames(), getArchetype().getWUParams(), suffix,
                                          [this](const std::string &p) { return isParamHeterogeneous(p); });
-        envSubs.addVarValueSubstitution(wum->getDerivedParams(), getArchetype().getWUDerivedParams(),
+        envSubs.addVarValueSubstitution(wum->getDerivedParams(), getArchetype().getWUDerivedParams(), suffix,
                                         [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-        envSubs.addVarNameSubstitution(wum->getExtraGlobalParams());
+        envSubs.addVarNameSubstitution(wum->getExtraGlobalParams(), suffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynapseGroupInternal> varSubs(
-            getArchetype(), getTypeContext(), envSubs, 
+            getArchetype(), getTypeContext(), envSubs, "l", suffix,
             [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
@@ -443,16 +443,16 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         // Create new substitution environment and add parameters, derived parameters and extra global parameters
         EnvironmentSubstitute envSubs(env);
         envSubs.getStream() << "// presynaptic weight update " << getIndex() << std::endl;
-        envSubs.addParamValueSubstitution(wum->getParamNames(), getArchetype().getWUParams(),
+        envSubs.addParamValueSubstitution(wum->getParamNames(), getArchetype().getWUParams(), suffix,
                                          [this](const std::string &p) { return isParamHeterogeneous(p); });
-        envSubs.addVarValueSubstitution(wum->getDerivedParams(), getArchetype().getWUDerivedParams(),
+        envSubs.addVarValueSubstitution(wum->getDerivedParams(), getArchetype().getWUDerivedParams(), suffix,
                                         [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-        envSubs.addVarNameSubstitution(wum->getExtraGlobalParams());
+        envSubs.addVarNameSubstitution(wum->getExtraGlobalParams(), suffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynapseGroupInternal> varSubs(
-            getArchetype(), getTypeContext(), envSubs, 
+            getArchetype(), getTypeContext(), envSubs, "l", suffix,
             [batchSize, delayed, &envSubs, &ng](const std::string&, const Models::VarInit&, VarAccess a)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDuplication(a), envSubs["id"]);
@@ -714,9 +714,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                   {neuronEnv.addInitialiser(typeName + " " + v.name + " = " + v.value + ";")});
     }
 
-    neuronEnv.addParamValueSubstitution(nm->getParamNames(), getArchetype().getParams(), 
+    neuronEnv.addParamValueSubstitution(nm->getParamNames(), getArchetype().getParams(), "",
                                         [this](const std::string &p) { return isParamHeterogeneous(p);  });
-    neuronEnv.addVarValueSubstitution(nm->getDerivedParams(), getArchetype().getDerivedParams(), 
+    neuronEnv.addVarValueSubstitution(nm->getDerivedParams(), getArchetype().getDerivedParams(), "",
                                       [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
     neuronEnv.addVarNameSubstitution(nm->getExtraGlobalParams());
     
@@ -744,7 +744,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronGroupInternal> neuronVarEnv(
-        getArchetype(), getTypeContext(), neuronEnv, 
+        getArchetype(), getTypeContext(), neuronEnv, "l", "",
         [batchSize, &neuronEnv, this](const std::string &varName, const Models::VarInit&, VarAccess a)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());

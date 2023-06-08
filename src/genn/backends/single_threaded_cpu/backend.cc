@@ -1386,23 +1386,21 @@ std::optional<Type::ResolvedType> Backend::getMergedGroupSimRNGType() const
     return std::nullopt;
 }
 //--------------------------------------------------------------------------
-void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const
 {
-    Substitutions varSubs(&kernelSubs);
-    handler(os, varSubs);
+    handler(env);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
-                              const Substitutions &kernelSubs, Handler handler) const
+void Backend::genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const
 {
-     // **TODO** loops like this should be generated like CUDA threads
-    os << "for (unsigned i = 0; i < (" << count << "); i++)";
+    // **TODO** loops like this should be generated like CUDA threads
+    env.getStream() << "for (unsigned i = 0; i < (" << count << "); i++)";
     {
-        CodeStream::Scope b(os);
+        CodeStream::Scope b(env.getStream());
 
-        Substitutions varSubs(&kernelSubs);
-        varSubs.addVarSubstitution(indexVarName, "i");
-        handler(os, varSubs);
+        EnvironmentSubstitute varSubs(env);
+        varSubs.addSubstitution(indexVarName, "i");
+        handler(varSubs);
     }
 }
 //--------------------------------------------------------------------------

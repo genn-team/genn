@@ -11,6 +11,8 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
+    using VarInitAST = std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>>;
+
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
@@ -24,8 +26,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
     
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -47,7 +49,7 @@ public:
         // Members
         //----------------------------------------------------------------------------
         //! Parsed statements and resolved types for initialising each variable
-        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
+        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -63,8 +65,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -86,7 +88,7 @@ public:
         // Members
         //----------------------------------------------------------------------------
         //! Parsed statements and resolved types for initialising each variable
-        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
+        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -102,8 +104,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
     };
 
     //----------------------------------------------------------------------------
@@ -119,8 +121,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -142,7 +144,7 @@ public:
         // Members
         //----------------------------------------------------------------------------
         //! Parsed statements and resolved types for initialising each variable
-        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
+        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -158,8 +160,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, CodeStream &os, const NeuronInitGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -181,7 +183,7 @@ public:
         // Members
         //----------------------------------------------------------------------------
         //! Parsed statements and resolved types for initialising each variable
-        std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>> m_VarInitASTs;
+        VarInitAST m_VarInitASTs;
     };
 
     NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
@@ -202,7 +204,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const;
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
@@ -219,14 +221,11 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                           bool spikeEvent, unsigned int batchSize) const;
+    void genInitSpikeCount(const BackendBase &backend, EnvironmentExternal &env, bool spikeEvent, unsigned int batchSize) const;
 
-    void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                       bool spikeEvent, unsigned int batchSize) const;
+    void genInitSpikes(const BackendBase &backend, EnvironmentExternal &env, bool spikeEvent, unsigned int batchSize) const;
 
-    void genInitSpikeTime(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                          const std::string &varName, unsigned int batchSize) const;
+    void genInitSpikeTime(const BackendBase &backend, EnvironmentExternal &env, const std::string &varName, unsigned int batchSize) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -236,6 +235,9 @@ private:
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;
     std::vector<OutSynWUMPreVars> m_MergedOutSynWUMPreVarGroups;
+
+    //! Parsed statements and resolved types for initialising each variable
+    VarInitAST m_VarInitASTs;
 };
 
 

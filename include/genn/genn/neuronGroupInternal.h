@@ -66,6 +66,10 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
+    bool isVarDelayed(const std::string &varName) const{ return m_NG.isVarQueueRequired(varName); }
+
+    const std::string &getNameSuffix() const{ return m_NG.getName(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members

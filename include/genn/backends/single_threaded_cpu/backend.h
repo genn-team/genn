@@ -121,9 +121,8 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const final;
 
-    virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
-                                 const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const final;
+    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;

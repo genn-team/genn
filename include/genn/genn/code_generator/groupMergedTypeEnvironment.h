@@ -97,7 +97,7 @@ public:
         const auto qualifiedType = (access & VarAccessModeAttribute::READ_ONLY) ? type.addQualifier(Type::Qualifier::CONSTANT) : type;
         defineField(qualifiedType, name,
                     type.createPointer(), name + fieldSuffix, 
-                    [prefix, getVarSuffixFn](const auto &g, size_t) { return prefix + std::invoke(getVarSuffixFn, g); });
+                    [name, prefix, getVarSuffixFn](const auto &g, size_t) { return prefix + name + std::invoke(getVarSuffixFn, g); });
     }
 
     void definePointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix, VarAccessMode access,

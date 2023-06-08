@@ -104,16 +104,16 @@ public:
     size_t addInitialiser(const std::string &initialiser);
 
     template<typename T>
-    void addVarNameSubstitution(const std::vector<T> &variables)
+    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &fieldSuffix = "")
     {
         for(const auto &v : variables) {
-            addSubstitution(v.name, "group->" + v.name);
+            addSubstitution(v.name, "group->" + v.name + fieldSuffix);
         }
     }
 
     template<typename G>
     void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, 
-                                   G isHeterogeneousFn)
+                                   const std::string &fieldSuffix, G isHeterogeneousFn)
     {
         if(paramNames.size() != values.size()) {
             throw std::runtime_error("Number of parameters does not match number of values");
@@ -121,7 +121,7 @@ public:
 
         for(const auto &p : paramNames) {
             if(isHeterogeneousFn(p)) {
-                addSubstitution(p, "group->" + p);
+                addSubstitution(p, "group->" + p + fieldSuffix);
             }
             else {
                 // **TODO** scalar suffix
@@ -132,7 +132,7 @@ public:
 
     template<typename T, typename G>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, 
-                                 G isHeterogeneousFn)
+                                 const std::string &fieldSuffix, G isHeterogeneousFn)
     {
         if(variables.size() != values.size()) {
             throw std::runtime_error("Number of variables does not match number of values");
@@ -140,7 +140,7 @@ public:
 
         for(const auto &v : variables) {
             if(isHeterogeneousFn(v.name)) {
-                addSubstitution(v.name, "group->" + v.name);
+                addSubstitution(v.name, "group->" + v.name + fieldSuffix);
             }
             else {
                 addSubstitution(v.name, Utils::writePreciseString(values.at(v.name)));
@@ -156,7 +156,6 @@ private:
     CodeStream m_Contents;
     std::unordered_map<std::string, std::pair<std::string, std::vector<size_t>>> m_VarSubstitutions;
     std::vector<std::pair<bool, std::string>> m_Initialisers;
-
 };
 
 //----------------------------------------------------------------------------
@@ -177,9 +176,10 @@ class EnvironmentLocalVarCache : public EnvironmentExternal
 
 public:
     EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, 
-                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex, const std::string &localPrefix = "l")
+                             const std::string &fieldSuffix, const std::string & localPrefix,
+                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
     :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), 
-        m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
@@ -187,9 +187,10 @@ public:
                        [](const auto &v){ return std::make_pair(v.name, false); });
     }
 
-    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, GetIndexFn getIndex, const std::string &localPrefix = "l")
+    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, 
+                             const std::string &fieldSuffix, const std::string & localPrefix, GetIndexFn getIndex)
     :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), 
-        m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
+        m_Contents(m_ContentsStream), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {
         // Add name of each definition to map, initially with value set to value
         const auto defs = A(m_Group).getDefs();
@@ -221,7 +222,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << "[" << m_GetReadIndex(v.name, initialisers.at(v.name), v.access) << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << m_GetReadIndex(v.name, initialisers.at(v.name), v.access) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -233,7 +234,7 @@ public:
         for(const auto &v : referencedVars) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << "[" << m_GetWriteIndex(v.name, initialisers.at(v.name), v.access) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << m_GetWriteIndex(v.name, initialisers.at(v.name), v.access) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -272,6 +273,7 @@ private:
     const Type::TypeContext &m_Context;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
+    std::string m_FieldSuffix;
     std::string m_LocalPrefix;
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;

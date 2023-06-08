@@ -186,6 +186,8 @@ public:
     typedef std::function<void(CodeStream &)> HostHandler;
 
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
+
+    typedef std::function<void(EnvironmentExternal&)> HandlerEnv;
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
@@ -312,9 +314,8 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const = 0;
 
-    virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
-                                 const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const = 0;
+    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const = 0;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;

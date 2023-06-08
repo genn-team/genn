@@ -185,6 +185,8 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members

@@ -122,9 +122,8 @@ public:
     //! This function returns the device prefix so it can be used in otherwise platform-independent code.
     virtual std::string getDeviceVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
 
-    virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
-                                 const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const final;
+    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
     {
         genSynapseVariableRowInit(os, kernelSubs, handler);

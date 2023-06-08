@@ -95,7 +95,9 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
 
-    const std::string &getFusedSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
 
 private:
     //----------------------------------------------------------------------------
@@ -147,7 +149,9 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
-    const std::string &getFusedSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+
+    bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
 private:
     //----------------------------------------------------------------------------
@@ -174,7 +178,9 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
-    const std::string &getFusedSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+
+    bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 
 private:
     //----------------------------------------------------------------------------
