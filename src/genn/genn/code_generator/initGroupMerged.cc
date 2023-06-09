@@ -1047,16 +1047,11 @@ boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDige
     return hash.get_digest();
 }
 // ----------------------------------------------------------------------------
-void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const
 {
     // Initialise custom update variables
     genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, env, *this, m_VarInitASTs, ""), 
                                                   "size", 1, getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1);
-
-    genInitNeuronVarCode(os, modelMerged, backend, popSubs, getArchetype().getCustomUpdateModel()->getVars(), getArchetype().getVarInitialisers(),
-                        "", "size", getIndex(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
-                        [this](const std::string &v, const std::string &p) { return isVarInitParamHeterogeneous(v, p); },
-                        [this](const std::string &v, const std::string &p) { return isVarInitDerivedParamHeterogeneous(v, p); });
 }
 
 // ----------------------------------------------------------------------------
