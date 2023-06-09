@@ -153,60 +153,61 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
-        funcSubs.addVarSubstitution("t", "t");
-        funcSubs.addVarSubstitution("batch", "0");
-
-        Timer t(os, "neuronUpdate", model.isTimingEnabled());
+        StandardLibrary::FunctionEnvironment stdEnv(os);
+        EnvironmentSubstitute funcEnv(stdEnv);
+        funcEnv.addSubstitution("t", "t");
+        funcEnv.addSubstitution("batch", "0");
+        
+        Timer t(funcEnv.getStream(), "neuronUpdate", model.isTimingEnabled());
 
         // Loop through merged previous spike time update groups
         for(const auto &n : modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) {
-            CodeStream::Scope b(os);
-            os << "// merged neuron prev spike update group " << n.getIndex() << std::endl;
-            os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+            CodeStream::Scope b(funcEnv.getStream());
+            funcEnv.getStream() << "// merged neuron prev spike update group " << n.getIndex() << std::endl;
+            funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(funcEnv.getStream());
 
                 // Get reference to group
-                os << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                funcEnv.getStream() << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) {
                     // Calculate delay slot corresponding to last timestep
-                    os << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
-                    os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
+                    funcEnv.getStream() << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+                    funcEnv.getStream() << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
 
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
+                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                            CodeStream::Scope b(funcEnv.getStream());
+                            funcEnv.getStream() << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
                         }
                     }
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCntEvnt[lastTimestepDelaySlot]; i++)";
+                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->spkCntEvnt[lastTimestepDelaySlot]; i++)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                            CodeStream::Scope b(funcEnv.getStream());
+                            funcEnv.getStream() << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
                         }
                     }
                 }
                 else {
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
+                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
+                            CodeStream::Scope b(funcEnv.getStream());
+                            funcEnv.getStream() << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
                         }
                     }
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
+                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
                         {
-                            CodeStream::Scope b(os);
-                            os << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
+                            CodeStream::Scope b(funcEnv.getStream());
+                            funcEnv.getStream() << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
                         }
                     }
                 }
@@ -215,77 +216,77 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         // Loop through merged neuron spike queue update groups
         for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-            CodeStream::Scope b(os);
-            os << "// merged neuron spike queue update group " << n.getIndex() << std::endl;
-            os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+            CodeStream::Scope b(funcEnv.getStream());
+            funcEnv.getStream() << "// merged neuron spike queue update group " << n.getIndex() << std::endl;
+            funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(funcEnv.getStream());
 
                 // Get reference to group
-                os << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                funcEnv.getStream() << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // Generate spike count reset
-                n.genMergedGroupSpikeCountReset(os, 1);
+                n.genMergedGroupSpikeCountReset(funcEnv.getStream(), 1);
             }
             
         }
         // Loop through merged neuron update groups
         for(const auto &n : modelMerged.getMergedNeuronUpdateGroups()) {
-            CodeStream::Scope b(os);
-            os << "// merged neuron update group " << n.getIndex() << std::endl;
-            os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+            CodeStream::Scope b(funcEnv.getStream());
+            funcEnv.getStream() << "// merged neuron update group " << n.getIndex() << std::endl;
+            funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(funcEnv.getStream());
 
                 // Get reference to group
-                os << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // If spike or spike-like event recording is in use
                 if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
                     // Calculate number of words which will be used to record this population's spikes
-                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+                    funcEnv.getStream() << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
 
                     // Zero spike recording buffer
                     if(n.getArchetype().isSpikeRecordingEnabled()) {
-                        os << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                        funcEnv.getStream() << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
                     }
 
                     // Zero spike-like-event recording buffer
                     if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                        os << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                        funcEnv.getStream() << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
                     }
                 }
 
-                genNeuronIndexCalculation(os, n, 1);
-                os << std::endl;
+                genNeuronIndexCalculation(funcEnv.getStream(), n, 1);
+                funcEnv.getStream() << std::endl;
 
-                os << "for(unsigned int i = 0; i < group->numNeurons; i++)";
+                funcEnv.getStream() << "for(unsigned int i = 0; i < group->numNeurons; i++)";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(funcEnv.getStream());
 
-                    Substitutions popSubs(&funcSubs);
-                    popSubs.addVarSubstitution("id", "i");
+                    EnvironmentSubstitute popEnv(funcEnv);
+                    popEnv.addSubstitution("id", "i");
 
                     // If this neuron group requires a simulation RNG, substitute in global RNG
                     if(n.getArchetype().isSimRNGRequired()) {
-                        popSubs.addVarSubstitution("rng", "hostRNG");
+                        popEnv.addSubstitution("rng", "hostRNG");
                     }
 
-                    n.generateNeuronUpdate(*this, os, modelMerged, popSubs,
+                    n.generateNeuronUpdate(*this, popEnv, modelMerged,
                                            // Emit true spikes
-                                           [&modelMerged, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                           [&modelMerged, this](EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng)
                                            {
                                                // Insert code to update WU vars
-                                               ng.generateWUVarUpdate(*this, os, modelMerged, subs);
+                                               ng.generateWUVarUpdate(*this, env, modelMerged);
 
                                                // Insert code to emit true spikes
-                                               genEmitSpike(os, ng, subs, true, ng.getArchetype().isSpikeRecordingEnabled());
+                                               genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
                                            },
                                            // Emit spike-like events
-                                           [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                           [this](EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng)
                                            {
                                                // Insert code to emit spike-like events
-                                               genEmitSpike(os, ng, subs, false, ng.getArchetype().isSpikeEventRecordingEnabled());
+                                               genEmitSpike(env, ng, false, ng.getArchetype().isSpikeEventRecordingEnabled());
                                            });
                 }
             }
@@ -1890,36 +1891,36 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const
+void Backend::genEmitSpike(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
     const std::string spikeQueueOffset = spikeDelayRequired ? "writeDelayOffset + " : "";
 
     const std::string suffix = trueSpike ? "" : "Evnt";
-    os << "group->spk" << suffix << "[" << spikeQueueOffset << "group->spkCnt" << suffix;
+    env.getStream() << "group->spk" << suffix << "[" << spikeQueueOffset << "group->spkCnt" << suffix;
     if(spikeDelayRequired) { // WITH DELAY
-        os << "[*group->spkQuePtr]++]";
+        env.getStream() << "[*group->spkQuePtr]++]";
     }
     else { // NO DELAY
-        os << "[0]++]";
+        env.getStream() << "[0]++]";
     }
-    os << " = " << subs["id"] << ";" << std::endl;
+    env.getStream() << " = " << env["id"] << ";" << std::endl;
 
     // Reset spike and spike-like-event times
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        os << "group->sT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
+        env.getStream() << "group->sT[" << queueOffset << env["id"] << "] = " << env["t"] << ";" << std::endl;
     }
     else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-        os << "group->seT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
+        env.getStream() << "group->seT[" << queueOffset << env["id"] << "] = " << env["t"] << ";" << std::endl;
     }
     
     // If recording is enabled
     if(recordingEnabled) {
         const std::string recordSuffix = trueSpike ? "" : "Event";
-        os << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << subs["id"] << " / 32)]";
-        os << " |= (1 << (" << subs["id"] << " % 32));" << std::endl;
+        env.getStream() << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << env["id"] << " / 32)]";
+        env.getStream() << " |= (1 << (" << env["id"] << " % 32));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

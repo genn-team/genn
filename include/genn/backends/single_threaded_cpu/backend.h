@@ -188,7 +188,7 @@ private:
     //--------------------------------------------------------------------------
     void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, bool trueSpike) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const;
+    void genEmitSpike(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,bool trueSpike, bool recordingEnabled) const;
 
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
