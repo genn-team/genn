@@ -16,6 +16,8 @@ namespace GeNN::CodeGenerator::StandardLibrary
 class Environment : public EnvironmentExternal
 {
 public:
+    using EnvironmentExternal::EnvironmentExternal;
+
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
     //------------------------------------------------------------------------
