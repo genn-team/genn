@@ -291,7 +291,7 @@ private:
     }
 
     template<typename Group, typename MergedGroup, typename D>
-    void createMergedGroupsHash(const BackendBase &backend,
+    void createMergedGroups(const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
                                 std::vector<MergedGroup> &mergedGroups, D getHashDigest, bool host = false)
     {
@@ -337,7 +337,7 @@ private:
     }
 
     template<typename Group, typename MergedGroup, typename F, typename U>
-    void createMergedGroupsHash(const BackendBase &backend,
+    void createMergedGroups(const BackendBase &backend,
                                 const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
                                 F filter, U updateHash, bool host = false)
     {
@@ -350,7 +350,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroupsHash(backend, unmergedGroups, mergedGroups, updateHash, host);
+        createMergedGroups(backend, unmergedGroups, mergedGroups, updateHash, host);
     }
 
     //--------------------------------------------------------------------------
