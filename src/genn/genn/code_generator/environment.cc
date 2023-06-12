@@ -19,6 +19,12 @@ std::string EnvironmentExternal::define(const std::string&)
     throw std::runtime_error("Cannot declare variable in external environment");
 }
 //----------------------------------------------------------------------------    
+void EnvironmentExternal::define(const Transpiler::Token&, const Type::ResolvedType&, 
+                                 Transpiler::ErrorHandlerBase&)
+{
+    throw std::runtime_error("Cannot declare variable in external environment");
+}
+//----------------------------------------------------------------------------    
 CodeStream &EnvironmentExternal::getContextStream() const
 {
     return std::visit(

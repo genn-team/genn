@@ -14,13 +14,14 @@
 
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
+#include "transpiler/typeChecker.h"
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternal
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-class EnvironmentExternal : public Transpiler::PrettyPrinter::EnvironmentBase
+class EnvironmentExternal : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
 {
 protected:
     using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
@@ -42,6 +43,12 @@ public:
     //------------------------------------------------------------------------
     virtual std::string define(const std::string &name);
     
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual void define(const Transpiler::Token &name, const Type::ResolvedType &type, 
+                        Transpiler::ErrorHandlerBase &errorHandler);
+
 protected:
     //------------------------------------------------------------------------
     // Protected API

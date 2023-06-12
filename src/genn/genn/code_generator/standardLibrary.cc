@@ -1,4 +1,4 @@
-#include "transpiler/standardLibrary.h"
+#include "code_generator/standardLibrary.h"
 
 // Standard C++ library
 #include <algorithm>
@@ -12,7 +12,7 @@
 #include "transpiler/typeChecker.h"
 
 using namespace GeNN::CodeGenerator;
-using namespace GeNN::Transpiler::StandardLibrary;
+using namespace GeNN::CodeGenerator::StandardLibrary;
 using namespace GeNN::Transpiler::TypeChecker;
 namespace Type = GeNN::Type;
 
@@ -130,19 +130,9 @@ const auto libraryTypes = initLibraryTypes(
 //min, max, printf
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::StandardLibrary::FunctionTypes
+// GeNN::Transpiler::StandardLibrary::Environment
 //---------------------------------------------------------------------------
-FunctionTypes::FunctionTypes()
-{
-}
-//------------------------------------------------------------------------
-void FunctionTypes::define(const Token &name, const Type::ResolvedType&, ErrorHandlerBase &errorHandler)
-{
-    errorHandler.error(name, "Cannot declare variable in external environment");
-    throw TypeCheckError();
-}
-//---------------------------------------------------------------------------
-std::vector<Type::ResolvedType> FunctionTypes::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
+std::vector<Type::ResolvedType> Environment::getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler)
 {
     const auto [typeBegin, typeEnd] = libraryTypes.equal_range(name.lexeme);
     if (typeBegin == typeEnd) {
@@ -157,11 +147,8 @@ std::vector<Type::ResolvedType> FunctionTypes::getTypes(const Token &name, Error
         return types;
     }
 }
-
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::StandardLibrary::FunctionEnvironment
-//---------------------------------------------------------------------------
-std::string FunctionEnvironment::getName(const std::string &name, std::optional<Type::ResolvedType> type)
+std::string Environment::getName(const std::string &name, std::optional<Type::ResolvedType> type)
 {
     const auto [libTypeBegin, libTypeEnd] = libraryTypes.equal_range(name);
     if (libTypeBegin == libTypeEnd) {
@@ -178,7 +165,7 @@ std::string FunctionEnvironment::getName(const std::string &name, std::optional<
     }
 }
 //---------------------------------------------------------------------------
-CodeStream &FunctionEnvironment::getStream()
+CodeStream &Environment::getStream()
 {
     return getContextStream();
 }
