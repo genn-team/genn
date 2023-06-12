@@ -27,10 +27,10 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    //! Define named variable and return the name as it should be used in code
+    //! Define identifier and return the name as it should be used in code
     virtual std::string define(const std::string &name) = 0;
     
-    //! Get the name to use in code for the variable named by token
+    //! Get the name to use in code for the named identifier
     virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) = 0;
     
     //! Get stream to write code within this environment to
