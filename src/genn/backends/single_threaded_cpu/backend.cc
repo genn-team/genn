@@ -8,9 +8,8 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/environment.h"
 #include "code_generator/modelSpecMerged.h"
+#include "code_generator/standardLibrary.h"
 #include "code_generator/substitutions.h"
-
-#include "transpiler/standardLibrary.h"
 
 using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
@@ -125,7 +124,7 @@ void genKernelIteration(EnvironmentExternal &env, const G &g, size_t numKernelDi
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -153,7 +152,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        StandardLibrary::FunctionEnvironment stdEnv(os);
+        StandardLibrary::Environment stdEnv(os);
         EnvironmentSubstitute funcEnv(stdEnv);
         funcEnv.addSubstitution("t", "t");
         funcEnv.addSubstitution("batch", "0");
@@ -304,78 +303,102 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
     CodeStream synapseUpdate(synapseUpdateStream);
-    synapseUpdate << "void updateSynapses(timepoint t)";
+
+    // Begin environment with standard library
+    StandardLibrary::Environment synapseUpdateEnv(synapseUpdate);
+
+    synapseUpdateEnv.getStream() << "void updateSynapses(timepoint t)";
     {
-        CodeStream::Scope b(synapseUpdate);
-        Substitutions funcSubs(getFunctionTemplates(model.getPrecision().getName()));
-        funcSubs.addVarSubstitution("t", "t");
-        funcSubs.addVarSubstitution("batch", "0");
+        CodeStream::Scope b(synapseUpdateEnv.getStream());
+
+        EnvironmentExternal funcEnv(synapseUpdateEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+        funcEnv.add(Type::Uint32.addConst(), "batch", "0");
 
         // Synapse dynamics
         {
             Timer t(synapseUpdate, "synapseDynamics", model.isTimingEnabled());
             modelMerged.genMergedSynapseDynamicsGroups(
                 *this,
-                [this, &funcSubs, &synapseUpdate](SynapseDynamicsGroupMerged &s)
+                [this, &funcEnv, &modelMerged, &synapseUpdate](SynapseDynamicsGroupMerged &s)
                 {
-                    CodeStream::Scope b(synapseUpdate);
-                    synapseUpdate << "// merged synapse dynamics group " << s.getIndex() << std::endl;
-                    synapseUpdate << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "// merged synapse dynamics group " << s.getIndex() << std::endl;
+                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
-                        CodeStream::Scope b(synapseUpdate);
+                        CodeStream::Scope b(funcEnv.getStream());
 
                         // Get reference to group
-                        synapseUpdate << "const auto *group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
+                        funcEnv.getStream() << "const auto *group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
 
-                        genSynapseIndexCalculation(synapseUpdate, s, 1);
+                        // Create matching environment
+                        EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(s, funcEnv);
+
+                        // Add basic fields **TODO** move to group merged
+                        groupEnv.add(Type::Uint32.addConst(), "num_pre",
+                                     Type::Uint32, "numSrcNeurons", 
+                                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                        groupEnv.add(Type::Uint32.addConst(), "num_post",
+                                     Type::Uint32, "numTrgNeurons", 
+                                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                        groupEnv.add(Type::Uint32.addConst(), "_row_stride",
+                                     Type::Uint32, "rowStride", 
+                                     [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
+                        
+                        // _row_length
+                        // _ind
+                        genSynapseIndexCalculation(funcEnv, s, 1);
 
                         // Loop through presynaptic neurons
-                        synapseUpdate << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                        groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
                         {
                             // If this synapse group has sparse connectivity, loop through length of this row
-                            CodeStream::Scope b(synapseUpdate);
+                            CodeStream::Scope b(groupEnv.getStream());
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                synapseUpdate << "for(unsigned int s = 0; s < group->rowLength[i]; s++)";
+                                groupEnv.getStream() << "for(unsigned int s = 0; s < " << groupEnv["_row_length"] << "[i]; s++)";
                             }
                             // Otherwise, if it's dense, loop through each postsynaptic neuron
                             else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                                synapseUpdate << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
+                                groupEnv.getStream() << "for (unsigned int j = 0; j < " << groupEnv["num_post"] << "; j++)";
                             }
                             else {
                                 throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for synapse dynamics");
                             }
                             {
-                                CodeStream::Scope b(synapseUpdate);
+                                EnvironmentExternal synEnv(groupEnv);
+                                CodeStream::Scope b(synEnv.getStream());
 
-                                Substitutions synSubs(&funcSubs);
-                                if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    // Calculate index of synapse and use it to look up postsynaptic index
-                                    synapseUpdate << "const unsigned int n = (i * group->rowStride) + s;" << std::endl;
-                                    synapseUpdate << "const unsigned int j = group->ind[n];" << std::endl;
+                                // Add presynaptic index to substitutions
+                                synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
 
-                                    synSubs.addVarSubstitution("id_syn", "n");
+                                if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                    // Add initialiser strings to calculate synaptic and presynaptic index
+                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["_row_stride"] + ") + s;");
+                                    const size_t idPostInit = synEnv.addInitialiser("const unsigned int idPost = " + synEnv["_ind"] + "[idSyn];");
+
+                                    // **TODO** id_syn can be 64-bit
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit}, {"_row_stride"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "idPost", {idPostInit, idSynInit}, {"_ind"});
                                 }
                                 else {
-                                    synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
-                                }
+                                    // Add postsynaptic index to substitutions
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
-                                // Add pre and postsynaptic indices to substitutions
-                                synSubs.addVarSubstitution("id_pre", "i");
-                                synSubs.addVarSubstitution("id_post", "j");
+                                    // Add initialiser to calculate synaptic index
+                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + j;");
+
+                                    // **TODO** id_syn can be 64-bit
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
+
+                                }
 
                                 // Add correct functions for apply synaptic input
-                                if(s.getArchetype().isDendriticDelayRequired()) {
-                                    synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
-                                }
-                                else {
-                                    synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + s.getPostISynIndex(1, "j") + "] += $(0)");
-                                }
-
-                                if(s.getArchetype().isPresynapticOutputRequired()) {
-                                    synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
-                                }
+                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", synEnv["_den_delay"] + "[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
+                                synEnv.add(Type::AddToPost, "addToPost", synEnv["_out_post"] + "[" + s.getPostISynIndex(1, "j") + "] += $(0)");
+                                synEnv.add(Type::AddToPre, "addToPre", synEnv["_out_pre"] + "[" + s.getPreISynIndex(1, synEnv["id_pre"]) + "] += $(0)");
+                                
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, synapseUpdate, modelMerged, synSubs);
+                                s.generateSynapseUpdate(*this, synEnv, modelMerged);
                             }
                         }
                     }
@@ -543,7 +566,7 @@ void Backend::genCustomUpdate(CodeStream &os_, ModelSpecMerged &modelMerged, Hos
         {
             CodeStream::Scope b(os_);
 
-            StandardLibrary::FunctionEnvironment stdEnv(os_);
+            StandardLibrary::Environment stdEnv(os_);
             EnvironmentSubstitute funcEnv(stdEnv);
             funcEnv.addSubstitution("t", "t");
             funcEnv.addSubstitution("batch", "0");

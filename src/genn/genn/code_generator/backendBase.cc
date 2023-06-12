@@ -66,24 +66,28 @@ void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGr
     }
 }
 //-----------------------------------------------------------------------
-void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+void BackendBase::genSynapseIndexCalculation(EnvironmentExternal &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
     // If batching is enabled
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
-        os << "const unsigned int preBatchOffset = group->numSrcNeurons * batch;" << std::endl;
-        os << "const unsigned int postBatchOffset = group->numTrgNeurons * batch;" << std::endl;
-
+        env.add(Type::Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
+                {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_pre"] + " * " + env["batch"] + ";")});
+        env.add(Type::Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
+                {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_post"] + " * " + env["batch"] + ";")});
+        
         // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
         if(areSixtyFourBitSynapseIndicesRequired(sg)) {
-            os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
+            assert(false);
+            //os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
         }
         else {
-            os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
+            env.add(Type::Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
+                {env.addInitialiser("const unsigned int synBatchOffset = " + env["_pre_batch_offset"] + " * " + env["_row_stride"] + ";")});
         }
         
         // If synapse group has kernel weights
-        const auto &kernelSize = sg.getArchetype().getKernelSize();
+        /*const auto &kernelSize = sg.getArchetype().getKernelSize();
         if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
             // Loop through kernel dimensions and multiply together
             os << "const unsigned int kernBatchOffset = ";
@@ -151,7 +155,7 @@ void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupM
             }
 
         }
-    }
+    }*/
 }
 //-----------------------------------------------------------------------
 void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const

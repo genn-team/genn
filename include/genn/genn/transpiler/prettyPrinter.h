@@ -35,15 +35,6 @@ public:
     
     //! Get stream to write code within this environment to
     virtual CodeGenerator::CodeStream &getStream() = 0;
-    
-    //------------------------------------------------------------------------
-    // Operators
-    //------------------------------------------------------------------------
-    std::string operator[] (const std::string &name)
-    {
-        return getName(name);
-    }
-
 };
 
 //---------------------------------------------------------------------------

@@ -205,13 +205,15 @@ struct ResolvedType
     {}
     ResolvedType(const ResolvedType &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
     {}
+    explicit ResolvedType(Qualifier qualifiers = Qualifier{0}) : qualifiers(qualifiers), detail(std::monostate{})
+    {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     Qualifier qualifiers;
 
-    std::variant<Value, Pointer, Function> detail;
+    std::variant<Value, Pointer, Function, std::monostate> detail;
     
     //------------------------------------------------------------------------
     // Public API
@@ -220,6 +222,7 @@ struct ResolvedType
     bool isPointer() const{ return std::holds_alternative<Pointer>(detail); }
     bool isFunction() const{ return std::holds_alternative<Function>(detail); }
     bool isNumeric() const{ return isValue() && getValue().numeric; }
+    bool isVoid() const{ return std::holds_alternative<std::monostate>(detail); }
 
     const Value &getValue() const{ return std::get<Value>(detail); }
     const Pointer &getPointer() const{ return std::get<Pointer>(detail); }
@@ -338,6 +341,16 @@ inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, "u");
 //DECLARE_NUMERIC_TYPE(Uint64, uint64_t, 40);
 inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
+
+// Void
+inline static const ResolvedType Void = ResolvedType();
+
+//----------------------------------------------------------------------------
+// Standard function types
+//----------------------------------------------------------------------------
+inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {Uint32});
+inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
+inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
 
 //! Parse a numeric type
 GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString, const TypeContext &context);

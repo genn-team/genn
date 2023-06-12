@@ -11,26 +11,23 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorContext,
-                               const SynapseGroupMergedBase &sg, const Substitutions &baseSubs,
-                               const ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
+template<typename G>
+void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, std::string code, const std::string &errorContext,
+                               const G &sg, const ModelSpecMerged &modelMerged, bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     const unsigned int batchSize = model.getBatchSize();
     const auto *wu = sg.getArchetype().getWUModel();
 
-    Substitutions synapseSubs(&baseSubs);
+    EnvironmentGroupMergedField<G> synEnv(sg, env);
 
     // Substitute parameter and derived parameter names
-    synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams(),
-                                          [&sg](const std::string &p) { return sg.isWUParamHeterogeneous(p);  },
-                                          "", "group->");
-    synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getArchetype().getWUDerivedParams(),
-                                        [&sg](const std::string &p) { return sg.isWUDerivedParamHeterogeneous(p);  },
-                                        "", "group->");
-    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group->");
+    synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
+    synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
+    synEnv.addEGPs<SynapseWUEGPAdapter>(backend.getDeviceVarPrefix());
 
-    // Substitute names of pre and postsynaptic weight update variables
+    // Substitute names of pre and postsynaptic weight update variable
+    synEnv.addVars<SynapseWUPreVarAdapter>(backend.getDeviceVarPrefix());
     synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->", 
                                        [&sg, &synapseSubs, batchSize](VarAccess a, const std::string&) 
                                        { 
@@ -220,14 +217,14 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    applySynapseSubstitutions(os, getArchetype().getWUModel()->getEventCode(), "eventCode",
-                              *this, popSubs, modelMerged, backend.supportsNamespace());
+    applySynapseSubstitutions(backend, os, getArchetype().getWUModel()->getEventCode(), "eventCode",
+                              *this, popSubs, modelMerged);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    applySynapseSubstitutions(os, getArchetype().getWUModel()->getSimCode(), "simCode",
-                              *this, popSubs, modelMerged, backend.supportsNamespace());
+    applySynapseSubstitutions(backend, os, getArchetype().getWUModel()->getSimCode(), "simCode",
+                              *this, popSubs, modelMerged);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, CodeStream &os, Substitutions &popSubs) const
@@ -304,15 +301,15 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
 {
     const auto *wum = getArchetype().getWUModel();
-    if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
+    /*if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
         os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
-    }
+    }*/
 
-    applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
-                              *this, popSubs, modelMerged, backend.supportsNamespace());
+    applySynapseSubstitutions(backend, env, wum->getSynapseDynamicsCode(), "synapseDynamics",
+                              *this, modelMerged, backend.supportsNamespace());
 }
 
 

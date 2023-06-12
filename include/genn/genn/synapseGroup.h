@@ -201,12 +201,6 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
 
-    //! Does this synapse group require dendritic delay?
-    bool isDendriticDelayRequired() const;
-
-    //! Does this synapse group define presynaptic output?
-    bool isPresynapticOutputRequired() const;    
-    
     //! Does this synapse group require an RNG to generate procedural connectivity?
     bool isProceduralConnectivityRNGRequired() const;
 

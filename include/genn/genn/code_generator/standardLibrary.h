@@ -13,10 +13,10 @@
 //---------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::StandardLibrary
 {
-class Environment : public EnvironmentExternal
+class Environment : public EnvironmentExternalBase
 {
 public:
-    using EnvironmentExternal::EnvironmentExternal;
+    using EnvironmentExternalBase::EnvironmentExternalBase;
 
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals

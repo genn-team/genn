@@ -103,7 +103,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
 
     //----------------------------------------------------------------------------
     // Static constants
