@@ -9,7 +9,12 @@
 // GeNN includes
 #include "gennUtils.h"
 
+// Transpiler includes
+#include "transpiler/errorHandler.h"
+
+using namespace GeNN;
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Transpiler;
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternal
@@ -19,17 +24,66 @@ std::string EnvironmentExternal::define(const std::string&)
     throw std::runtime_error("Cannot declare variable in external environment");
 }
 //----------------------------------------------------------------------------    
-void EnvironmentExternal::define(const Transpiler::Token&, const Type::ResolvedType&, 
-                                 Transpiler::ErrorHandlerBase&)
+std::string EnvironmentExternal::getName(const std::string &name, std::optional<Type::ResolvedType> type)
+{
+    // If name isn't found in environment
+    auto env = m_Environment.find(name);
+    if (env == m_Environment.end()) {
+        // If there's a parent environment in context, lookup there
+        if (std::holds_alternative<std::reference_wrapper<EnvironmentExternal>>(m_Context)) {
+            return std::get<std::reference_wrapper<EnvironmentExternal>>(m_Context).get().getName(name, type);
+        }
+        // Otherwise, give error
+        // **NOTE** this should never throw as type checking should happen first
+        else {
+            throw std::runtime_error("Undefined identifier '" + name + "'");
+        }
+    }
+    // Otherwise, return it's value
+    else {
+        return env->second.second;
+    }
+}
+//----------------------------------------------------------------------------    
+void EnvironmentExternal::define(const Token&, const Type::ResolvedType&, ErrorHandlerBase&)
 {
     throw std::runtime_error("Cannot declare variable in external environment");
+}
+//----------------------------------------------------------------------------    
+std::vector<Type::ResolvedType> EnvironmentExternal::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
+{
+     // If name isn't found in environment
+    auto env = m_Environment.find(name.lexeme);
+    if (env == m_Environment.end()) {
+        // If there's a parent environment in context, lookup there
+        if (std::holds_alternative<std::reference_wrapper<EnvironmentExternal>>(m_Context)) {
+            return std::get<std::reference_wrapper<EnvironmentExternal>>(m_Context).get().getTypes(name, errorHandler);
+        }
+        // Otherwise, give error
+        // **NOTE** this should never throw as type checking should happen first
+        else {
+            errorHandler.error(name, "Undefined identifier");
+            throw TypeChecker::TypeCheckError();
+        }
+    }
+    // Otherwise, return it's type
+    else {
+        return {env->second.first};
+    }
+}
+//----------------------------------------------------------------------------
+void EnvironmentExternal::add(const Type::ResolvedType &type, const std::string &name, const std::string &value)
+{
+    if(!m_Environment.try_emplace(name, type, value).second) {
+        throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+    }
 }
 //----------------------------------------------------------------------------    
 CodeStream &EnvironmentExternal::getContextStream() const
 {
     return std::visit(
         Utils::Overload{
-            [](std::reference_wrapper<EnvironmentBase> enclosing)->CodeStream& { return enclosing.get().getStream(); },
+            [](std::reference_wrapper<EnvironmentExternal> enclosing)->CodeStream& { return enclosing.get().getStream(); },
             [](std::reference_wrapper<CodeStream> os)->CodeStream& { return os.get(); }},
         getContext());
 }
@@ -38,7 +92,7 @@ std::string EnvironmentExternal::getContextName(const std::string &name, std::op
 {
     return std::visit(
         Utils::Overload{
-            [&name, type](std::reference_wrapper<EnvironmentBase> enclosing)->std::string { return enclosing.get().getName(name, type); },
+            [&name, type](std::reference_wrapper<EnvironmentExternal> enclosing)->std::string { return enclosing.get().getName(name, type); },
             [&name](std::reference_wrapper<CodeStream>)->std::string { throw std::runtime_error("Identifier '" + name + "' undefined"); }},
         getContext());
 }

@@ -8,6 +8,7 @@
 // GeNN includes
 #include "gennUtils.h"
 #include "varAccess.h"
+#include "type.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -16,6 +17,11 @@
 #include "transpiler/prettyPrinter.h"
 #include "transpiler/typeChecker.h"
 
+namespace GeNN::Transpiler
+{
+class ErrorHandlerBase;
+struct Token;
+}
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternal
 //----------------------------------------------------------------------------
@@ -23,15 +29,13 @@ namespace GeNN::CodeGenerator
 {
 class EnvironmentExternal : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
 {
-protected:
-    using EnvironmentBase = Transpiler::PrettyPrinter::EnvironmentBase;
 public:
-    EnvironmentExternal(EnvironmentBase &enclosing)
+    explicit EnvironmentExternal(EnvironmentExternal &enclosing)
     :   m_Context(enclosing)
     {
     }
 
-    EnvironmentExternal(CodeStream &os)
+    explicit EnvironmentExternal(CodeStream &os)
     :   m_Context(os)
     {
     }
@@ -41,13 +45,22 @@ public:
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual std::string define(const std::string &name);
+    virtual std::string define(const std::string &name) override;
+
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) override;
     
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
     //------------------------------------------------------------------------
-    virtual void define(const Transpiler::Token &name, const Type::ResolvedType &type, 
-                        Transpiler::ErrorHandlerBase &errorHandler);
+    virtual void define(const Transpiler::Token &name, const GeNN::Type::ResolvedType &type, 
+                        Transpiler::ErrorHandlerBase &errorHandler) override;
+
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) override;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value);
 
 protected:
     //------------------------------------------------------------------------
@@ -63,7 +76,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::variant<std::reference_wrapper<EnvironmentBase>, std::reference_wrapper<CodeStream>> m_Context;
+    std::variant<std::reference_wrapper<EnvironmentExternal>, std::reference_wrapper<CodeStream>> m_Context;
+    std::unordered_map<std::string, std::pair<Type::ResolvedType, std::string>> m_Environment;
 };
 
 //----------------------------------------------------------------------------
@@ -74,12 +88,12 @@ class EnvironmentSubstitute : public EnvironmentExternal
 {
 public:
     EnvironmentSubstitute(EnvironmentSubstitute &enclosing)
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Contents(m_ContentsStream)
+    :   EnvironmentExternal(static_cast<EnvironmentExternal&>(enclosing)), m_Contents(m_ContentsStream)
     {
     }
 
     EnvironmentSubstitute(EnvironmentExternal &enclosing)
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Contents(m_ContentsStream)
+    :   EnvironmentExternal(static_cast<EnvironmentExternal&>(enclosing)), m_Contents(m_ContentsStream)
     {
     }
     
