@@ -227,6 +227,7 @@ struct ResolvedType
     const Numeric &getNumeric() const{ return *getValue().numeric; }
 
     const ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifiers | qualifier); }
+    const ResolvedType addConst() const{ return addQualifier(Qualifier::CONSTANT); }
     bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
 
     std::string getName() const;
