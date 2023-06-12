@@ -23,38 +23,73 @@ class ErrorHandlerBase;
 struct Token;
 }
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentExternal
+// GeNN::CodeGenerator::EnvironmentExternalBase
 //----------------------------------------------------------------------------
+//! Base class for external environments i.e. those defines OUTSIDE of transpiled code by code generator
 namespace GeNN::CodeGenerator
 {
-class EnvironmentExternal : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
+class EnvironmentExternalBase : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
 {
 public:
-    explicit EnvironmentExternal(EnvironmentExternal &enclosing)
+    explicit EnvironmentExternalBase(EnvironmentExternalBase &enclosing)
     :   m_Context(enclosing)
     {
     }
 
-    explicit EnvironmentExternal(CodeStream &os)
+    explicit EnvironmentExternalBase(CodeStream &os)
     :   m_Context(os)
     {
     }
 
-    EnvironmentExternal(const EnvironmentExternal&) = delete;
+    EnvironmentExternalBase(const EnvironmentExternalBase&) = delete;
 
     //------------------------------------------------------------------------
     // PrettyPrinter::EnvironmentBase virtuals
     //------------------------------------------------------------------------
     virtual std::string define(const std::string &name) override;
-
-    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) override;
-    
+   
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
     //------------------------------------------------------------------------
     virtual void define(const Transpiler::Token &name, const GeNN::Type::ResolvedType &type, 
                         Transpiler::ErrorHandlerBase &errorHandler) override;
 
+protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    //! Get stream exposed by context
+    CodeStream &getContextStream() const;
+
+    //! Get name from context if it provides this functionality
+    std::string getContextName(const std::string &name, std::optional<Type::ResolvedType> type) const;
+
+    //! Get vector of types from context if it provides this functionality
+    std::vector<Type::ResolvedType> getContextTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler)  const;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::variant<std::reference_wrapper<EnvironmentExternalBase>, std::reference_wrapper<CodeStream>> m_Context;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentExternal
+//----------------------------------------------------------------------------
+//! Minimal environment, not tied to any sort of group - just lets you define things
+class EnvironmentExternal : public EnvironmentExternalBase
+{
+public:
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) override;
+    virtual CodeStream &getStream() override { return getContextStream(); }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) override;
 
     //------------------------------------------------------------------------
@@ -62,21 +97,10 @@ public:
     //------------------------------------------------------------------------
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value);
 
-protected:
-    //------------------------------------------------------------------------
-    // Protected API
-    //------------------------------------------------------------------------
-    auto &getContext() const{ return m_Context; }
-
-    CodeStream &getContextStream() const;
-
-    std::string getContextName(const std::string &name, std::optional<Type::ResolvedType> type) const;
-
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::variant<std::reference_wrapper<EnvironmentExternal>, std::reference_wrapper<CodeStream>> m_Context;
     std::unordered_map<std::string, std::pair<Type::ResolvedType, std::string>> m_Environment;
 };
 
@@ -84,21 +108,16 @@ private:
 // GeNN::CodeGenerator::EnvironmentSubstitute
 //----------------------------------------------------------------------------
 //! Standard pretty printing environment simply allowing substitutions to be implemented
-class EnvironmentSubstitute : public EnvironmentExternal
+class EnvironmentSubstitute : public EnvironmentExternalBase
 {
 public:
-    EnvironmentSubstitute(EnvironmentSubstitute &enclosing)
-    :   EnvironmentExternal(static_cast<EnvironmentExternal&>(enclosing)), m_Contents(m_ContentsStream)
-    {
-    }
-
-    EnvironmentSubstitute(EnvironmentExternal &enclosing)
-    :   EnvironmentExternal(static_cast<EnvironmentExternal&>(enclosing)), m_Contents(m_ContentsStream)
+    EnvironmentSubstitute(EnvironmentExternalBase &enclosing)
+    :   EnvironmentExternalBase(static_cast<EnvironmentExternalBase&>(enclosing)), m_Contents(m_ContentsStream)
     {
     }
     
     EnvironmentSubstitute(CodeStream &os)
-    :   EnvironmentExternal(os), m_Contents(m_ContentsStream)
+    :   EnvironmentExternalBase(os), m_Contents(m_ContentsStream)
     {
     }
 
@@ -184,7 +203,7 @@ private:
 //----------------------------------------------------------------------------
 //! Pretty printing environment which caches used variables in local variables
 template<typename A, typename G>
-class EnvironmentLocalVarCache : public EnvironmentExternal
+class EnvironmentLocalVarCache : public EnvironmentExternalBase
 {
     //! Type of a single definition
     using DefType = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
