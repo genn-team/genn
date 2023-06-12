@@ -42,13 +42,13 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
+    virtual void genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 

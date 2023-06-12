@@ -208,25 +208,25 @@ public:
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
         \param preambleHandler          callback to write functions for pushing extra-global parameters*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
 
     //! Generate platform-specific functions to perform custom updates
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
+    virtual void genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;

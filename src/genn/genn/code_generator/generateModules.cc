@@ -104,16 +104,17 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     ModelSpecMerged modelMerged(model, backend);
     
     // If force rebuild flag is set or model should be rebuilt
-    const auto hashDigest = modelMerged.getHashDigest(backend);
+    //const auto hashDigest = modelMerged.getHashDigest(backend);
     MemAlloc mem = MemAlloc::zero();
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
+    if(true/*forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)*/) {
         // Generate modules
-        mem = generateRunner(outputPath, modelMerged, backend);
+        // **NOTE** these are ordered in terms of memory-space priority
         generateSynapseUpdate(outputPath, modelMerged, backend);
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
         generateInit(outputPath, modelMerged, backend);
-
+        mem = generateRunner(outputPath, modelMerged, backend);
+        
         // Generate support code module if the backend supports namespaces
         if(backend.supportsNamespace()) {
             generateSupportCode(outputPath, modelMerged);
@@ -182,7 +183,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     return std::make_pair(modules, mem);
 }
 //--------------------------------------------------------------------------
-void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
                           const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
@@ -206,7 +207,7 @@ void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMer
         });
 }
 //--------------------------------------------------------------------------
-void generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
                           const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
@@ -229,7 +230,7 @@ void generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMer
         });
 }
 //--------------------------------------------------------------------------
-void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
                            const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
@@ -254,7 +255,7 @@ void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMe
         });
 }
 //--------------------------------------------------------------------------
-void generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
                   const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream

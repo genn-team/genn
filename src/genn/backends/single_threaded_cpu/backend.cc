@@ -294,7 +294,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -493,7 +493,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os_, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genCustomUpdate(CodeStream &os_, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -779,7 +779,7 @@ void Backend::genCustomUpdate(CodeStream &os_, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
