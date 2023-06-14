@@ -18,11 +18,13 @@
 #include "transpiler/prettyPrinter.h"
 #include "transpiler/typeChecker.h"
 
+// Forward declarations
 namespace GeNN::Transpiler
 {
 class ErrorHandlerBase;
 struct Token;
 }
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentExternalBase
 //----------------------------------------------------------------------------
@@ -84,72 +86,94 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentExternal
+// GeNN::CodeGenerator::EnvironmentSubstitutionPolicy
 //----------------------------------------------------------------------------
-//! Minimal external environment, not tied to any sort of group - just lets you define things
-class EnvironmentExternal : public EnvironmentExternalBase
+struct EnvironmentSubstitutionPolicy
 {
-public:
-    using EnvironmentExternalBase::EnvironmentExternalBase;
-    EnvironmentExternal(const EnvironmentExternal&) = delete;
-    ~EnvironmentExternal();
+    using Payload = std::string;
 
-    //------------------------------------------------------------------------
-    // PrettyPrinter::EnvironmentBase virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final;
-    virtual CodeStream &getStream() final { return  m_Contents;; }
+    std::string getName(const std::string &payload)
+    {
+        return payload;
+    }
 
-    //------------------------------------------------------------------------
-    // TypeChecker::EnvironmentBase virtuals
-    //------------------------------------------------------------------------
-    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final;
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {});
-
-    size_t addInitialiser(const std::string &initialiser);
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::ostringstream m_ContentsStream;
-    CodeStream m_Contents;
-
-    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::string, std::vector<size_t>, std::vector<std::string>>> m_Environment;
-    std::vector<std::pair<bool, std::string>> m_Initialisers;
+    void setRequired(std::string&)
+    {
+    }
 };
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentGroupMergedField
+// GeNN::CodeGenerator::EnvironmentFieldPolicy
 //----------------------------------------------------------------------------
-//! External environment, for substituting 
 template<typename G>
-class EnvironmentGroupMergedField : public EnvironmentExternalBase
+struct EnvironmentFieldPolicy
 {
-    using GroupInternal = typename G::GroupInternal;
-    using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
-    using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
+    using Payload = std::tuple<bool, std::string, std::optional<typename G::Field>>;
 
-    using GroupInternal = typename G::GroupInternal;
-    using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
-    using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
-
-    template<typename V>
-    using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
-
-public:
-    EnvironmentGroupMergedField(G &group, EnvironmentExternalBase &enclosing)
-    :   EnvironmentExternalBase(enclosing), m_Group(group)
+    EnvironmentFieldPolicy(G &group) : m_Group(group)
     {
     }
-    EnvironmentGroupMergedField(G &group, CodeStream &os)
-    :   EnvironmentExternalBase(os), m_Group(group)
+
+    std::string getName(const Payload &payload)
     {
+        // If a field is specified
+        if(std::get<2>(payload)) {
+            return "group->" + std::get<1>(std::get<2>(payload).get()) + std::get<1>(payload); 
+        }
+        // Otherwise, use value directly
+        else {
+            assert(!std::get<1>(payload).empty());
+            return std::get<1>(payload); 
+        }
+    }
+
+    void setRequired(Payload &payload)
+    {
+        // If a field is specified but it hasn't already been added
+        if (std::get<2>(payload) && !std::get<0>(payload)) {
+            // Call function to add field to underlying merged group
+            const auto &field = std::get<2>(payload).get();
+            m_Group.addField(std::get<0>(field), std::get<1>(field),
+                             std::get<2>(field), std::get<3>(field));
+
+            // Set flag so field doesn't get re-added
+            std::get<0>(payload) = true;
+        }
+    }
+
+private:
+    std::reference_wrapper<G> m_Group;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentExternalDynamicBase
+//----------------------------------------------------------------------------
+template<typename P>
+class EnvironmentExternalDynamicBase : public EnvironmentExternalBase, private P
+{
+public:
+    template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(EnvironmentExternalBase &enclosing, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    {}
+
+    template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(CodeStream &os, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...)
+    {}
+
+    ~EnvironmentExternalDynamicBase()
+    {
+        // Loop through initialiser
+        for(const auto &i : m_Initialisers) {
+            // If variable requiring initialiser has been referenced, write out initialiser
+            if (i.first) {
+                getContextStream() << i.second << std::endl;
+            }
+        }
+        
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
     }
 
     //------------------------------------------------------------------------
@@ -162,12 +186,13 @@ public:
         if (env == m_Environment.end()) {
             return getContextName(name, type);
         }
-        // Otherwise, visit field in environment
+        // Otherwise, get name from payload
         else {
-            return "group->" + std::get<1>(env->second.second); 
+            return getName(std::get<3>(env->second));
         }
     }
-    virtual CodeStream &getStream() final { return getContextStream(); }
+
+    virtual CodeStream &getStream() final { return  m_Contents; }
 
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
@@ -175,42 +200,122 @@ public:
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
     {
         // If name isn't found in environment
-        auto env = m_Environment.find(name);
+        auto env = m_Environment.find(name.lexeme);
         if (env == m_Environment.end()) {
-            return getContextType(name, type);
+            return getContextTypes(name, errorHandler);
         }
-        // Otherwise, return type
+        // Otherwise
         else {
-            // If field hasn't already been added
-            if (!std::get<1>(env->second)) {
-                // Call function to add field to underlying merged group
-                const auto &field = std::get<2>(env->second);
-                m_GroupMerged.addField(std::get<0>(field), std::get<1>(field),
-                                       std::get<2>(field), std::get<3>(field));
-
-                // Set flag so field doesn't get re-added
-                std::get<1>(env->second) = true;
+            // If this identifier relies on any initialiser statements, mark these initialisers as required
+            for(size_t i : std::get<1>(env->second)) {
+                m_Initialisers.at(i).first = true;
             }
-            // Return type
+
+            // If this identifier relies on any others, get their types
+            // **YUCK**
+            for(const std::string &id : std::get<2>(env->second)) {
+                getTypes(Token{Token::Type::IDENTIFIER, id, 0}, errorHandler);
+            }
+
+            // Perform any type-specific logic to mark this identifier as required
+            setRequired(std::get<3>(env->second));
+
+            // Return type of variables
             return {std::get<0>(env->second)};
         }
     }
 
+   
+    size_t addInitialiser(const std::string &initialiser)
+    {
+        m_Initialisers.emplace_back(false, initialiser);
+        return (m_Initialisers.size() - 1);
+    }
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    //! Map an identifier to a type (for type-checking), lists of initialisers and dependencies and a payload 
+    void addInternal(const GeNN::Type::ResolvedType &type, const std::string &name, const typename P::Payload &payload,
+                     const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    {
+        if(!m_Environment.try_emplace(name, type, initialisers, dependents, payload).second) {
+            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+        }
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+
+    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, std::vector<std::string>, typename P::Payload>> m_Environment;
+    std::vector<std::pair<bool, std::string>> m_Initialisers;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentExternal
+//----------------------------------------------------------------------------
+//! Minimal external environment, not tied to any sort of group - just lets you define things
+class EnvironmentExternal : public EnvironmentExternalDynamicBase<EnvironmentSubstitutionPolicy>
+{
+public:
+    using EnvironmentExternalDynamicBase::EnvironmentExternalDynamicBase;
+    EnvironmentExternal(const EnvironmentExternal&) = delete;
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
+             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    {
+        addInternal(type, name, value, initialisers, dependents);
+    }
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentGroupMergedField
+//----------------------------------------------------------------------------
+//! External environment, for substituting 
+template<typename G>
+class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G>>
+{
+    using GroupInternal = typename G::GroupInternal;
+    using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
+    using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
+
+    using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
+    using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
+
+    template<typename V>
+    using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
+
+public:
+    using EnvironmentExternalDynamicBase::EnvironmentExternalDynamicBase;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Map a type and a value to an identifier
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
+             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    {
+        addInternal(type, name, std::make_tuple(false, value, std::nullopt),
+                    initialisers, dependents);
+    }
+
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void add(const GeNN::Type::ResolvedType &type, const std::string &name,
              const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-             GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD)
+             const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
     {
-        if(!m_Environment.try_emplace(name, std::piecewise_construct,
-                                      std::forward_as_tuple(type),
-                                      std::forward_as_tuple(false),
-                                      std::forward_as_tuple(std::in_place, fieldType, fieldName, getFieldValue, mergedFieldType)).second) 
-        {
-            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
-        }
+         addInternal(type, name, std::make_tuple(false, indexSuffix, std::forward_as_tuple(std::in_place, fieldType, fieldName, getFieldValue, mergedFieldType)),
+                    initialisers, dependents);
     }
 
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
@@ -219,7 +324,7 @@ public:
             m_Group.getScalarType(), name + fieldSuffix,
             [getFieldValue, this](const auto &g, size_t i)
             {
-                return getScalarString(getFieldValue(g, i);
+                return getScalarString(getFieldValue(g, i));
             });
     }
 
@@ -228,6 +333,7 @@ public:
     {
         // Loop through params
         for(const auto &p : paramNames) {
+            // If parameter is heterogeneous, add scalar field
             if (std::invoke(isHeterogeneous, m_Group, p)) {
                 addScalar(p, fieldSuffix,
                           [p, getParamValues](const auto &g, size_t)
@@ -237,7 +343,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(m_Group.getScalarType().addConst(), p, getScalarString(std::invoke(getParamValues, m_Group.getArchetype()).at(p)));
+                add(m_Group.getScalarType().addConst(), p, 
+                    getScalarString(std::invoke(getParamValues, m_Group.getArchetype()).at(p)));
             }
         }
     }
@@ -247,6 +354,7 @@ public:
     {
         // Loop through derived params
         for(const auto &d : derivedParams) {
+            // If derived parameter is heterogeneous, add scalar field
             if (std::invoke(isHeterogeneous, m_Group, d.name)) {
                 addScalar(d.name, fieldSuffix,
                           [d, getDerivedParamValues](const auto &g, size_t)
@@ -254,8 +362,10 @@ public:
                               return std::invoke(getDerivedParamValues, g).at(d.name);
                           });
             }
+            // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(m_Group.getScalarType().addConst(), d.name, getScalarString(std::invoke(getDerivedParamValues, m_Group).at(d.name));
+                add(m_Group.getScalarType().addConst(), d.name, 
+                    getScalarString(std::invoke(getDerivedParamValues, m_Group).at(d.name)));
             }
         }
     }
@@ -268,15 +378,17 @@ public:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // Loop through parameters
             for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
+                // If parameter is heterogeneous, add scalar field
                 if(std::invoke(isHeterogeneous, m_Group, v.name, p.first)) {
-                    defineScalarField(p.first, v.name + fieldSuffix,
-                                      [p, v](const auto &g, size_t)
-                                      {
-                                          return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
-                                       });
+                    addScalar(p.first, v.name + fieldSuffix,
+                              [p, v](const auto &g, size_t)
+                              {
+                                  return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
+                              });
                 }
+                // Otherwise, just add a const-qualified scalar to the type environment with archetype value
                 else {
-                    defineField(m_Group.getScalarType().addConst(), p.first);
+                    add(m_Group.getScalarType().addConst(), p.first, getScalarString(p.second));
                 }
             }
         }
@@ -290,22 +402,25 @@ public:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // Loop through parameters
             for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
+                // If derived parameter is heterogeneous, add scalar field
                 if(std::invoke(isHeterogeneous, m_Group, v.name, p.first)) {
-                    defineScalarField(p.first, v.name + fieldSuffix,
-                                      [p, v](const auto &g, size_t)
-                                      {
-                                          return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
-                                      });
+                    addScalar(p.first, v.name + fieldSuffix,
+                              [p, v](const auto &g, size_t)
+                              {
+                                  return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
+                              });
                 }
+                // Otherwise, just add a const-qualified scalar to the type environment with archetype value
                 else {
-                    defineField(m_Group.getScalarType().addConst(), p.first);
+                    add(m_Group.getScalarType().addConst(), p.first, getScalarString(p.second));
                 }
             }
         }
     }
 
-    template<typename A>
-    void addVars(const std::string &arrayPrefix, const std::string &fieldSuffix = "")
+    template<typename A, typename I>
+    void addVars(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "",
+                 const std::vector<std::string> &dependents = {})
     {
         // Loop through variables
         const A archetypeAdaptor(m_Group.getArchetype());
@@ -314,15 +429,25 @@ public:
             const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             add(qualifiedType, v.name,
                 resolvedType.createPointer(), v.name + fieldSuffix, 
-                [arrayPrefix, v](const auto &g, size_t) 
+                [arrayPrefix, getIndexFn, v](const auto &g, size_t) 
                 { 
                     return prefix + v.name + A(g).getNameSuffix();
-                });
+                },
+                getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
         }
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, const std::string &fieldSuffix = "")
+    void addVars(const std::string &arrayPrefix, const std::string &index, const std::string &fieldSuffix = "",
+                 const std::vector<std::string> &dependents = {})
+    {
+        addVars<A>(arrayPrefix, [&index](VarAccess a, const std::string &) { return index; }, 
+                   fieldSuffix, dependents);
+    }
+
+    template<typename A, typename I>
+    void addVarRefs(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "",
+                    const std::vector<std::string> &dependents = {})
     {
         // Loop through variable references
         const A archetypeAdaptor(m_Group.getArchetype());
@@ -330,14 +455,23 @@ public:
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(m_Group.getTypeContext());
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            defineField(qualifiedType, v.name,
-                        resolvedType.createPointer(), v.name + fieldSuffix,
-                        [arrayPrefix, v](const auto &g, size_t) 
-                        { 
-                            const auto varRef = A(g).getInitialisers().at(v.name);
-                            return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
-                        });
+            add(qualifiedType, v.name,
+                resolvedType.createPointer(), v.name + fieldSuffix,
+                [arrayPrefix, v](const auto &g, size_t) 
+                { 
+                    const auto varRef = A(g).getInitialisers().at(v.name);
+                    return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                },
+                getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
         }
+    }
+
+    template<typename A>
+    void addVarRefs(const std::string &arrayPrefix, const std::string &index, const std::string &fieldSuffix = "",
+                    const std::vector<std::string> &dependents = {})
+    {
+        addVarRefs<A>(arrayPrefix, [&index](VarAccess a, const std::string &) { return index; }, 
+                      fieldSuffix, dependents);
     }
   
     template<typename A>
@@ -353,23 +487,27 @@ public:
                         {
                             return arrayPrefix + e.name + varName + g.getName(); 
                         },
-                        GroupMergedFieldType::DYNAMIC);
+                        "", GroupMergedFieldType::DYNAMIC);
         }
     }
 
 private:
+    //------------------------------------------------------------------------
+    // Private API
+    //------------------------------------------------------------------------
     std::string getScalarString(double scalar) const
     {
         return (Utils::writePreciseString(scalar, m_GroupMerged.getScalarType().getNumeric().maxDigits10) 
-                + m_GroupMerged.getScalarType().getNumeric().literalSuffix));
+                + m_GroupMerged.getScalarType().getNumeric().literalSuffix);
     }
+    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::reference_wrapper<G> m_Group;
 
     //! Environment mapping names to types to fields to pull values from
-    std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::variant<std::string, typename G::Field>>> m_Environment;
+    std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
 
