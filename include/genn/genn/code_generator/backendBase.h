@@ -35,7 +35,7 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
-class EnvironmentExternal;
+class EnvironmentExternalBase;
 class ModelSpecMerged;
 class NeuronUpdateGroupMerged;
 class Substitutions;
@@ -489,7 +489,7 @@ protected:
 
     void genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const;
 
-    void genSynapseIndexCalculation(EnvironmentExternal &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
+    void genSynapseIndexCalculation(EnvironmentExternalBase &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
     

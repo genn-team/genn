@@ -186,7 +186,7 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, bool trueSpike) const;
+    void genPresynapticUpdate(EnvironmentExternal &env, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, bool trueSpike) const;
 
     void genEmitSpike(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,bool trueSpike, bool recordingEnabled) const;
 

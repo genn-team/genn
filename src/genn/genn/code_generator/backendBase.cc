@@ -66,7 +66,7 @@ void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGr
     }
 }
 //-----------------------------------------------------------------------
-void BackendBase::genSynapseIndexCalculation(EnvironmentExternal &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+void BackendBase::genSynapseIndexCalculation(EnvironmentExternalBase &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
     // If batching is enabled
     if(batchSize > 1) {

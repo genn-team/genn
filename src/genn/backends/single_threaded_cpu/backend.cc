@@ -332,7 +332,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                         funcEnv.getStream() << "const auto *group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
 
                         // Create matching environment
-                        EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(s, funcEnv);
+                        EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(funcEnv, s);
 
                         // Add basic fields **TODO** move to group merged
                         groupEnv.add(Type::Uint32.addConst(), "num_pre",
@@ -347,7 +347,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                         
                         // _row_length
                         // _ind
-                        genSynapseIndexCalculation(funcEnv, s, 1);
+                        genSynapseIndexCalculation(groupEnv, s, 1);
 
                         // Loop through presynaptic neurons
                         groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
@@ -410,18 +410,21 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
             Timer t(synapseUpdate, "presynapticUpdate", model.isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
                 *this,
-                [this, &funcSubs, &synapseUpdate](SynapseDynamicsGroupMerged &s)
+                [this, &funcEnv, &synapseUpdate](PresynapticUpdateGroupMerged &s)
                 {
-                    CodeStream::Scope b(synapseUpdate);
-                    synapseUpdate << "// merged presynaptic update group " << s.getIndex() << std::endl;
-                    synapseUpdate << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "// merged presynaptic update group " << s.getIndex() << std::endl;
+                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
-                        CodeStream::Scope b(synapseUpdate);
+                        CodeStream::Scope b(funcEnv.getStream());
 
                         // Get reference to group
-                        synapseUpdate << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+                        funcEnv.getStream() << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+                        
+                        // Create matching environment
+                        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
 
-                        genSynapseIndexCalculation(synapseUpdate, s, 1);
+                        genSynapseIndexCalculation(groupEnv, s, 1);
                     
                         // generate the code for processing spike-like events
                         if (s.getArchetype().isSpikeEventRequired()) {
@@ -1664,7 +1667,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, bool trueSpike) const
+void Backend::genPresynapticUpdate(EnvironmentExternal &env, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
