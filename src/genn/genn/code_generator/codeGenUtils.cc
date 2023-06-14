@@ -25,11 +25,12 @@
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/environment.h"
 #include "code_generator/groupMerged.h"
-#include "code_generator/substitutions.h"
 
 // GeNN transpiler includes
 #include "transpiler/parser.h"
+#include "transpiler/prettyPrinter.h"
 #include "transpiler/scanner.h"
 
 //--------------------------------------------------------------------------
@@ -506,7 +507,7 @@ std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::Resolv
     return std::make_tuple(std::move(updateStatements), std::move(resolvedTypes));
 }
 //----------------------------------------------------------------------------
-GENN_EXPORT std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
+std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
     const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
 {
     using namespace Transpiler;
@@ -525,5 +526,23 @@ GENN_EXPORT std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeCh
 
     // Move into tuple and eturn
     return std::make_tuple(std::move(expression), std::move(resolvedTypes));
+}
+//----------------------------------------------------------------------------
+void prettyPrintExpression(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
+{
+    // Scan, parse and type check expression
+    auto expressionTypes = scanParseAndTypeCheckExpression(code, typeContext, env, errorHandler);
+
+    // Pretty print
+    Transpiler::PrettyPrinter::print(std::get<0>(expressionTypes), env, typeContext, std::get<1>(expressionTypes));
+}
+ //--------------------------------------------------------------------------
+void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
+{
+     // Scan, parse and type check statements
+    auto statementTypes = scanParseAndTypeCheckStatements(code, typeContext, env, errorHandler);
+
+    // Pretty print
+    Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes));
 }
 }   // namespace GeNN::CodeGenerator

@@ -25,6 +25,12 @@
 #include "transpiler/statement.h"
 #include "transpiler/typeChecker.h"
 
+// Forward declarations
+namespace GeNN::CodeGenerator
+{
+class EnvironmentExternalBase;
+}
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
@@ -111,6 +117,18 @@ GENN_EXPORT std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChe
 GENN_EXPORT std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
     const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler);
 
+
+//--------------------------------------------------------------------------
+/*! \brief This function uses the transpiler to scan, parse, type check and pretty print expression contained in a code string
+ */
+ //--------------------------------------------------------------------------
+GENN_EXPORT void prettyPrintExpression(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler);
+
+//--------------------------------------------------------------------------
+/*! \brief This function uses the transpiler to scan, parse, type check and pretty print statametns contained in a code string
+ */
+ //--------------------------------------------------------------------------
+GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler);
 
 //-------------------------------------------------------------------------
 /*!
