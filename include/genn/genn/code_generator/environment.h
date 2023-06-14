@@ -16,6 +16,7 @@
 
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
+#include "transpiler/token.h"
 #include "transpiler/typeChecker.h"
 
 // Forward declarations
@@ -83,6 +84,37 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::variant<std::reference_wrapper<EnvironmentExternalBase>, std::reference_wrapper<CodeStream>> m_Context;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentLibrary
+//----------------------------------------------------------------------------
+class EnvironmentLibrary : public EnvironmentExternalBase
+{
+public:
+    using Library = std::unordered_multimap<std::string, std::pair<Type::ResolvedType, std::string>>;
+
+    EnvironmentLibrary(EnvironmentExternalBase &enclosing, const Library &library)
+    :   EnvironmentExternalBase(enclosing), m_Library(library)
+    {}
+
+    EnvironmentLibrary(CodeStream &os, const Library &library)
+    :   EnvironmentExternalBase(os), m_Library(library)
+    {}
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final;
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final;
+    virtual CodeGenerator::CodeStream &getStream() final;
+
+private:
+    std::reference_wrapper<const Library> m_Library;
 };
 
 //----------------------------------------------------------------------------
@@ -214,7 +246,8 @@ public:
             // If this identifier relies on any others, get their types
             // **YUCK**
             for(const std::string &id : std::get<2>(env->second)) {
-                getTypes(Token{Token::Type::IDENTIFIER, id, 0}, errorHandler);
+                getTypes(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, id, 0}, 
+                         errorHandler);
             }
 
             // Perform any type-specific logic to mark this identifier as required

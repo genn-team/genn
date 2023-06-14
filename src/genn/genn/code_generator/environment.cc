@@ -64,6 +64,47 @@ std::vector<Type::ResolvedType> EnvironmentExternalBase::getContextTypes(const T
         m_Context);
 }
 
+//---------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentLibrary
+//---------------------------------------------------------------------------
+std::vector<Type::ResolvedType> EnvironmentLibrary::getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler)
+{
+    const auto [typeBegin, typeEnd] = m_Library.get().equal_range(name.lexeme);
+    if (typeBegin == typeEnd) {
+         errorHandler.error(name, "Undefined identifier");
+         throw TypeChecker::TypeCheckError();
+    }
+    else {
+        std::vector<Type::ResolvedType> types;
+        types.reserve(std::distance(typeBegin, typeEnd));
+        std::transform(typeBegin, typeEnd, std::back_inserter(types),
+                       [](const auto &t) { return t.second.first; });
+        return types;
+    }
+}
+//---------------------------------------------------------------------------
+std::string EnvironmentLibrary::getName(const std::string &name, std::optional<Type::ResolvedType> type)
+{
+    const auto [libTypeBegin, libTypeEnd] = m_Library.get().equal_range(name);
+    if (libTypeBegin == libTypeEnd) {
+        return getContextName(name, type);
+    }
+    else {
+        if (!type) {
+            throw std::runtime_error("Ambiguous reference to '" + name + "' but no type provided to disambiguate");
+        }
+        const auto libType = std::find_if(libTypeBegin, libTypeEnd,
+                                          [type](const auto &t){ return t.second.first == type; });
+        assert(libType != libTypeEnd);
+        return libType->second.second;
+    }
+}
+//---------------------------------------------------------------------------
+CodeStream &EnvironmentLibrary::getStream()
+{
+    return getContextStream();
+}
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentSubstitute
 //----------------------------------------------------------------------------

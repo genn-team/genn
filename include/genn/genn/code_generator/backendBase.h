@@ -35,6 +35,8 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
+template<typename G>
+class EnvironmentGroupMergedField;
 class EnvironmentExternalBase;
 class ModelSpecMerged;
 class NeuronUpdateGroupMerged;
@@ -187,13 +189,13 @@ public:
 
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
 
-    typedef std::function<void(EnvironmentExternal&)> HandlerEnv;
+    typedef std::function<void(EnvironmentExternalBase&)> HandlerEnv;
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     template<typename T>
-    using GroupHandlerEnv = std::function <void(EnvironmentExternal&, const T &)> ;
+    using GroupHandlerEnv = std::function <void(EnvironmentExternalBase&, const T &)> ;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -314,12 +316,12 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const = 0;
 
-    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const = 0;
-    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const = 0;
-    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const = 0;
+    virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const = 0;
+    virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Handler handler) const = 0;
+    virtual void genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handler handler) const = 0;
+    virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const = 0;
+    virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const = 0;
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
@@ -487,10 +489,132 @@ protected:
         m_PointerBytes = pointerBytes;
     }
 
-    void genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const;
+    template<typename G>
+    void genNeuronIndexCalculation(EnvironmentGroupMergedField<G> &env, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
+    {
+        // If batching is enabled, calculate batch offset
+        if(batchSize > 1) {
+            os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
+        }
+            
+        // If axonal delays are required
+        if(ng.getArchetype().isDelayRequired()) {
+            // We should READ from delay slot before spkQuePtr
+            os << "const unsigned int readDelaySlot = (*group->spkQuePtr + " << (ng.getArchetype().getNumDelaySlots() - 1) << ") % " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
+            os << "const unsigned int readDelayOffset = readDelaySlot * group->numNeurons;" << std::endl;
 
-    void genSynapseIndexCalculation(EnvironmentExternalBase &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
+            // And we should WRITE to delay slot pointed to be spkQuePtr
+            os << "const unsigned int writeDelaySlot = *group->spkQuePtr;" << std::endl;
+            os << "const unsigned int writeDelayOffset = writeDelaySlot * group->numNeurons;" << std::endl;
 
+            // If batching is also enabled
+            if(batchSize > 1) {
+                // Calculate batched delay slots
+                os << "const unsigned int readBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + readDelaySlot;" << std::endl;
+                os << "const unsigned int writeBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + writeDelaySlot;" << std::endl;
+
+                // Calculate current batch offset
+                os << "const unsigned int batchDelayOffset = batchOffset * " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
+
+                // Calculate further offsets to include delay and batch
+                os << "const unsigned int readBatchDelayOffset = readDelayOffset + batchDelayOffset;" << std::endl;
+                os << "const unsigned int writeBatchDelayOffset = writeDelayOffset + batchDelayOffset;" << std::endl;
+            }
+        }
+    }
+
+    template<typename G>
+    void genSynapseIndexCalculation(EnvironmentGroupMergedField<G> &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+    {
+        // If batching is enabled
+        if(batchSize > 1) {
+            // Calculate batch offsets into pre and postsynaptic populations
+            env.add(Type::Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
+                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_pre"] + " * " + env["batch"] + ";")});
+            env.add(Type::Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
+                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_post"] + " * " + env["batch"] + ";")});
+        
+            // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
+            if(areSixtyFourBitSynapseIndicesRequired(sg)) {
+                assert(false);
+                //os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
+            }
+            else {
+                env.add(Type::Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
+                    {env.addInitialiser("const unsigned int synBatchOffset = " + env["_pre_batch_offset"] + " * " + env["_row_stride"] + ";")});
+            }
+        
+            // If synapse group has kernel weights
+            /*const auto &kernelSize = sg.getArchetype().getKernelSize();
+            if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
+                // Loop through kernel dimensions and multiply together
+                os << "const unsigned int kernBatchOffset = ";
+                for(size_t i = 0; i < kernelSize.size(); i++) {
+                    os << sg.getKernelSize(i) << " * ";
+                }
+            
+                // And finally by batch
+                os << "batch;" << std::endl;
+            }*/
+        }
+
+        // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+        /*if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+            const unsigned int numDelaySteps = sg.getArchetype().getDelaySteps();
+            const unsigned int numSrcDelaySlots = sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
+
+            os << "const unsigned int preDelaySlot = ";
+            if(numDelaySteps == 0) {
+                os << "*group->srcSpkQuePtr;" << std::endl;
+            }
+            else {
+                os << "(*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
+            }
+            os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
+
+            if(batchSize > 1) {
+                os << "const unsigned int preBatchDelaySlot = preDelaySlot + (batch * " << numSrcDelaySlots << ");" << std::endl;
+                os << "const unsigned int preBatchDelayOffset = preDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
+            }
+
+            if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
+                os << "const unsigned int prePrevSpikeTimeDelayOffset = " << "((*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps - 1) << ") % " << numSrcDelaySlots << ")" << " * group->numSrcNeurons;" << std::endl;
+
+                if(batchSize > 1) {
+                    os << "const unsigned int prePrevSpikeTimeBatchDelayOffset = prePrevSpikeTimeDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
+                }
+            }
+        }
+
+        // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+        if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+            const unsigned int numBackPropDelaySteps = sg.getArchetype().getBackPropDelaySteps();
+            const unsigned int numTrgDelaySlots = sg.getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+
+            os << "const unsigned int postDelaySlot = ";
+            if(numBackPropDelaySteps == 0) {
+                os << "*group->trgSpkQuePtr;" << std::endl;
+            }
+            else {
+                os << "(*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
+            }
+            os << "const unsigned int postDelayOffset = postDelaySlot * group->numTrgNeurons;" << std::endl;
+
+            if(batchSize > 1) {
+                os << "const unsigned int postBatchDelaySlot = postDelaySlot + (batch * " << numTrgDelaySlots << ");" << std::endl;
+                os << "const unsigned int postBatchDelayOffset = postDelayOffset + (postBatchOffset * " << numTrgDelaySlots << ");" << std::endl;
+            }
+
+            if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
+                os << "const unsigned int postPrevSpikeTimeDelayOffset = " << "((*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps - 1) << ") % " << numTrgDelaySlots << ")" << " * group->numTrgNeurons;" << std::endl;
+            
+                if(batchSize > 1) {
+                    os << "const unsigned int postPrevSpikeTimeBatchDelayOffset = postPrevSpikeTimeDelayOffset + (postBatchOffset * " << numTrgDelaySlots << ");" << std::endl;
+                }
+
+            }
+        }*/
+    }
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
     
     void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;

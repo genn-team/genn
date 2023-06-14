@@ -121,12 +121,12 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const final;
 
-    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const final;
-    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
-    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
+    virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
+    virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                     CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;

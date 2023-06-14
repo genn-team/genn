@@ -7,13 +7,6 @@
 // GeNN includes
 #include "type.h"
 
-// Transpiler includes
-#include "transpiler/errorHandler.h"
-#include "transpiler/typeChecker.h"
-
-using namespace GeNN::CodeGenerator;
-using namespace GeNN::CodeGenerator::StandardLibrary;
-using namespace GeNN::Transpiler::TypeChecker;
 namespace Type = GeNN::Type;
 
 //---------------------------------------------------------------------------
@@ -39,7 +32,7 @@ namespace
 template<typename... Args>
 auto initLibraryTypes(Args&&... args)
 {
-    std::unordered_multimap<std::string, std::pair<Type::ResolvedType, std::string>> map;
+    GeNN::CodeGenerator::EnvironmentLibrary::Library map;
     (map.emplace(std::forward<Args>(args)), ...);
     return map;
 }
@@ -129,43 +122,8 @@ const auto libraryTypes = initLibraryTypes(
 */
 //min, max, printf
 
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::StandardLibrary::Environment
-//---------------------------------------------------------------------------
-std::vector<Type::ResolvedType> Environment::getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler)
+
+const GeNN::CodeGenerator::EnvironmentLibrary::Library &GeNN::CodeGenerator::StandardLibrary::getFunctions()
 {
-    const auto [typeBegin, typeEnd] = libraryTypes.equal_range(name.lexeme);
-    if (typeBegin == typeEnd) {
-         errorHandler.error(name, "Undefined identifier");
-         throw TypeCheckError();
-    }
-    else {
-        std::vector<Type::ResolvedType> types;
-        types.reserve(std::distance(typeBegin, typeEnd));
-        std::transform(typeBegin, typeEnd, std::back_inserter(types),
-                       [](const auto &t) { return t.second.first; });
-        return types;
-    }
-}
-//---------------------------------------------------------------------------
-std::string Environment::getName(const std::string &name, std::optional<Type::ResolvedType> type)
-{
-    const auto [libTypeBegin, libTypeEnd] = libraryTypes.equal_range(name);
-    if (libTypeBegin == libTypeEnd) {
-        return getContextName(name, type);
-    }
-    else {
-        if (!type) {
-            throw std::runtime_error("Ambiguous reference to '" + name + "' but no type provided to disambiguate");
-        }
-        const auto libType = std::find_if(libTypeBegin, libTypeEnd,
-                                          [type](const auto &t){ return t.second.first == type; });
-        assert(libType != libTypeEnd);
-        return libType->second.second;
-    }
-}
-//---------------------------------------------------------------------------
-CodeStream &Environment::getStream()
-{
-    return getContextStream();
+    return libraryTypes;
 }
