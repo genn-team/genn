@@ -27,7 +27,7 @@ public:
 class ErrorHandler : public ErrorHandlerBase
 {
 public:
-    ErrorHandler() : m_Error(false)
+    explicit ErrorHandler(const std::string &context) : m_Context(context), m_Error(false)
     {
     }
 
@@ -51,6 +51,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    std::string m_Context;
     bool m_Error;
 };
 

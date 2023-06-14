@@ -25,7 +25,7 @@ void ErrorHandler::error(const Token &token, std::string_view message)
 //----------------------------------------------------------------------------
 void ErrorHandler::report(size_t line, std::string_view where, std::string_view message) 
 {
-    LOGE_TRANSPILER << "[line " << line << "] Error" << where << ": " << message;
+    LOGE_TRANSPILER << "[" << m_Context << ", line " << line << "] Error" << where << ": " << message;
     m_Error = true;
 }
 
