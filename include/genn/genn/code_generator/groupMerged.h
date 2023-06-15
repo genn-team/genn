@@ -803,37 +803,15 @@ public:
     
 protected:
     //----------------------------------------------------------------------------
-    // Enumerations
-    //----------------------------------------------------------------------------
-    enum class Role
-    {
-        PresynapticUpdate,
-        PostsynapticUpdate,
-        SynapseDynamics,
-        Init,
-        SparseInit,
-        ConnectivityInit,
-    };
-
-    SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                           Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-    //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest(Role role) const;
 
-    const std::string &getArchetypeCode() const { return m_ArchetypeCode; }
 
 private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
-    void addPreOutputPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
-    void addSrcPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
-    void addTrgPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix);
-
     std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
                             const std::string &index, const std::string &prefix) const;
     
@@ -862,10 +840,5 @@ private:
     {
         return g.getKernelSize();
     }
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const std::string m_ArchetypeCode;
 };
 }   // namespace GeNN::CodeGenerator
