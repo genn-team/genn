@@ -351,6 +351,14 @@ public:
                     initialisers, dependents);
     }
 
+    //! Map a type (for type-checking) and a group merged field to back it to an identifier
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
+             typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    {
+         add(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers, dependents);
+    }
+
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
         add(m_Group.getScalarType().addConst(), name,
@@ -397,8 +405,7 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(m_Group.getScalarType().addConst(), d.name, 
-                    getScalarString(std::invoke(getDerivedParamValues, m_Group).at(d.name)));
+                add(m_Group.getScalarType().addConst(), d.name, getScalarString(d.second);
             }
         }
     }
@@ -543,101 +550,6 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentSubstitute
-//----------------------------------------------------------------------------
-//! Standard pretty printing environment simply allowing substitutions to be implemented
-class EnvironmentSubstitute : public EnvironmentExternalBase
-{
-public:
-    EnvironmentSubstitute(EnvironmentExternalBase &enclosing)
-    :   EnvironmentExternalBase(static_cast<EnvironmentExternalBase&>(enclosing)), m_Contents(m_ContentsStream)
-    {
-    }
-    
-    EnvironmentSubstitute(CodeStream &os)
-    :   EnvironmentExternalBase(os), m_Contents(m_ContentsStream)
-    {
-    }
-
-    EnvironmentSubstitute(const EnvironmentSubstitute&) = delete;
-
-    ~EnvironmentSubstitute();
-
-    //------------------------------------------------------------------------
-    // PrettyPrinter::EnvironmentBase virtuals
-    //------------------------------------------------------------------------
-    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final;
-
-    virtual CodeStream &getStream() final
-    {
-        return m_Contents;
-    }
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void addSubstitution(const std::string &source, const std::string &destination,
-                         std::vector<size_t> initialisers = {});
-
-    size_t addInitialiser(const std::string &initialiser);
-
-    template<typename T>
-    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &fieldSuffix = "")
-    {
-        for(const auto &v : variables) {
-            addSubstitution(v.name, "group->" + v.name + fieldSuffix);
-        }
-    }
-
-    template<typename G>
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, 
-                                   const std::string &fieldSuffix, G isHeterogeneousFn)
-    {
-        if(paramNames.size() != values.size()) {
-            throw std::runtime_error("Number of parameters does not match number of values");
-        }
-
-        for(const auto &p : paramNames) {
-            if(isHeterogeneousFn(p)) {
-                addSubstitution(p, "group->" + p + fieldSuffix);
-            }
-            else {
-                // **TODO** scalar suffix
-                addSubstitution(p, Utils::writePreciseString(values.at(p)));
-            }
-        }
-    }
-
-    template<typename T, typename G>
-    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, 
-                                 const std::string &fieldSuffix, G isHeterogeneousFn)
-    {
-        if(variables.size() != values.size()) {
-            throw std::runtime_error("Number of variables does not match number of values");
-        }
-
-        for(const auto &v : variables) {
-            if(isHeterogeneousFn(v.name)) {
-                addSubstitution(v.name, "group->" + v.name + fieldSuffix);
-            }
-            else {
-                addSubstitution(v.name, Utils::writePreciseString(values.at(v.name)));
-            }
-        }
-    }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::ostringstream m_ContentsStream;
-    CodeStream m_Contents;
-    std::unordered_map<std::string, std::pair<std::string, std::vector<size_t>>> m_VarSubstitutions;
-    std::vector<std::pair<bool, std::string>> m_Initialisers;
-};
-
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentLocalVarCache
 //----------------------------------------------------------------------------
@@ -655,10 +567,10 @@ class EnvironmentLocalVarCache : public EnvironmentExternalBase
     using GetIndexFn = std::function<std::string(const std::string&, InitialiserType, decltype(DefType::access))>;
 
 public:
-    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, 
-                             const std::string &fieldSuffix, const std::string & localPrefix,
+    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &fieldSuffix, const std::string &localPrefix,
                              GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), 
+    :   EnvironmentExternalBase(enclosing), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), 
         m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
     {
         // Add name of each definition to map, initially with value set to value
@@ -667,15 +579,10 @@ public:
                        [](const auto &v){ return std::make_pair(v.name, false); });
     }
 
-    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternal &enclosing, 
-                             const std::string &fieldSuffix, const std::string & localPrefix, GetIndexFn getIndex)
-    :   EnvironmentExternal(static_cast<EnvironmentBase&>(enclosing)), m_Group(group), m_Context(context), 
-        m_Contents(m_ContentsStream), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
+    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
+    :   EnvironmentLocalVarCache<A, G>(group, context, enclosing, fieldSuffix, getIndex, getIndex)
     {
-        // Add name of each definition to map, initially with value set to value
-        const auto defs = A(m_Group).getDefs();
-        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
-                       [](const auto &v){ return std::make_pair(v.name, false); });
     }
 
     EnvironmentLocalVarCache(const EnvironmentLocalVarCache&) = delete;
@@ -717,6 +624,32 @@ public:
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << m_GetWriteIndex(v.name, initialisers.at(v.name), v.access) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
+    {
+        // If name isn't found in environment
+        auto var = m_VariablesReferenced.find(name.lexeme);
+        if (var == m_VariablesReferenced.end()) {
+            return getContextTypes(name, errorHandler);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second = true;
+
+            // Find corresponsing variable definition
+            const auto varDefs = A(m_Group).getDefs();
+            auto varDef = std::find_if(varDefs.cbegin(), varDefs.cend(),
+                                       [](const auto &v){ return v.name == name.lexeme; });
+            assert(varDef != varDefs.cend());
+
+            // Return it's resolved type
+            return {varDef->type.resolve(m_Context)};
         }
     }
 

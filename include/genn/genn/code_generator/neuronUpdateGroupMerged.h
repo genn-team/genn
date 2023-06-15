@@ -24,7 +24,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                       const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
@@ -42,15 +42,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate code
-        Transpiler::Statement::StatementList m_InjectionStatements;
-
-        //! Resolved types used to generate code
-        Transpiler::TypeChecker::ResolvedTypeMap m_InjectionResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -66,7 +57,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
                       const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
@@ -84,21 +75,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate decay code
-        Transpiler::Statement::StatementList m_DecayStatements;
-        
-        //! List of statements parsed and type-checked in constructor; and used to generate apply inputcode
-        Transpiler::Statement::StatementList m_ApplyInputStatements;
-
-        //! Resolved types used to generate decay code
-        Transpiler::TypeChecker::ResolvedTypeMap m_DecayResolvedTypes;
-
-        //! Resolved types used to generate apply input code
-        Transpiler::TypeChecker::ResolvedTypeMap m_ApplyInputResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -114,7 +90,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng, 
+        void generate(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng, 
                       const ModelSpecMerged &modelMerged) const;
     };
 
@@ -131,10 +107,10 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
 
-        void genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
                                 const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
@@ -152,21 +128,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate dynamics code
-        Transpiler::Statement::StatementList m_DynamicsStatements;
-
-        //! List of statements parsed and type-checked in constructor; and used to generate spike code
-        Transpiler::Statement::StatementList m_SpikeStatements;
-
-        //! Resolved types used to generate dynamics code
-        Transpiler::TypeChecker::ResolvedTypeMap m_DynamicsResolvedTypes;
-
-        //! Resolved types used to generate spike code
-        Transpiler::TypeChecker::ResolvedTypeMap m_SpikeResolvedTypes;
     };
 
     //----------------------------------------------------------------------------
@@ -182,10 +143,10 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
 
-        void genCopyDelayedVars(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,
+        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
                                 const ModelSpecMerged &modelMerged) const;
 
         //! Update hash with child groups
@@ -203,21 +164,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the parameter referenced? **YUCK** only used for hashing
         bool isParamReferenced(const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! List of statements parsed and type-checked in constructor; and used to generate dynamics code
-        Transpiler::Statement::StatementList m_DynamicsStatements;
-
-        //! List of statements parsed and type-checked in constructor; and used to generate spike code
-        Transpiler::Statement::StatementList m_SpikeStatements;
-
-        //! Resolved types used to generate dynamics code
-        Transpiler::TypeChecker::ResolvedTypeMap m_DynamicsResolvedTypes;
-
-        //! Resolved types used to generate spike code
-        Transpiler::TypeChecker::ResolvedTypeMap m_SpikeResolvedTypes;
     };
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
@@ -238,11 +184,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
-    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
+    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
     
-    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const;
+    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
@@ -268,23 +214,5 @@ private:
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
-
-    //! List of statements parsed and type-checked in constructor; and used to generate sim code
-    Transpiler::Statement::StatementList m_SimStatements;
-
-    //! Expression parsed and type-checked in constructor; and used to generate threshold condition code
-    Transpiler::Expression::ExpressionPtr m_ThresholdConditionExpression;
-
-    //! List of statements parsed and type-checked in constructor; and used to generate reset code
-    Transpiler::Statement::StatementList m_ResetStatements;
-
-    //! Resolved types used to generate sim code
-    Transpiler::TypeChecker::ResolvedTypeMap m_SimResolvedTypes;
-
-    //! Resolved types used to generate threshold condition code
-    Transpiler::TypeChecker::ResolvedTypeMap m_ThresholdConditionResolvedTypes;
-
-    //! Resolved types used to generate threshold condition code
-    Transpiler::TypeChecker::ResolvedTypeMap m_ResetResolvedTypes;
 };
 }   // namespace GeNN::CodeGenerator

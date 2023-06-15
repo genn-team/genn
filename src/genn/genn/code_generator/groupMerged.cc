@@ -10,6 +10,7 @@
 #include "code_generator/backendBase.h"
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/environment.h"
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
@@ -36,30 +37,30 @@ NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t inde
     }
 }
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const
+void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const
 {
     if(getArchetype().isSpikeEventRequired()) {
         if(getArchetype().isDelayRequired()) {
-            os << "group->spkCntEvnt[*group->spkQuePtr";
+            env.getStream() << env["_spk_cnt_evnt"] << "[*" << env["_spk_que_ptr"];
             if(batchSize > 1) {
-                os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+                env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
             }
-            os << "] = 0; " << std::endl;
+            env.getStream() << "] = 0; " << std::endl;
         }
         else {
-            os << "group->spkCntEvnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+            env.getStream() << env["_spk_cnt_evnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
     }
 
     if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
-        os << "group->spkCnt[*group->spkQuePtr";
+        env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
         if(batchSize > 1) {
-            os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
         }
-        os << "] = 0; " << std::endl;
+        env.getStream() << "] = 0; " << std::endl;
     }
     else {
-        os << "group->spkCnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+        env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
     }
 }
 

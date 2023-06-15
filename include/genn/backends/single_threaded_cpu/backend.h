@@ -186,9 +186,9 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(EnvironmentExternal &env, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, bool trueSpike) const;
+    void genPresynapticUpdate(EnvironmentExternalBase &env, const PresynapticUpdateGroupMerged &sg, const ModelSpecMerged &modelMerged, bool trueSpike) const;
 
-    void genEmitSpike(EnvironmentExternal &env, const NeuronUpdateGroupMerged &ng,bool trueSpike, bool recordingEnabled) const;
+    void genEmitSpike(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const;
 
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const

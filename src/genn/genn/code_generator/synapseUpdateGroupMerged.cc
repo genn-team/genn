@@ -53,8 +53,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         kernelIndexStream << ";" << std::endl;
 
         // Add substitution
-        env.add(Type::Uint32, "id_kernel", "kernelInd", 
-                {synEnv.addInitialiser(kernelIndexStream.str())});
+        synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
+                   {synEnv.addInitialiser(kernelIndexStream.str())});
     }
 
     // If weights are individual, substitute variables for values stored in global memory
@@ -109,7 +109,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         assert(!sg.getArchetype().getKernelSize().empty());
 
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
-                                            [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
+                                            [&synEnv, batchSize](VarAccess a, const std::string&) 
                                             { 
                                                 return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_kernel"]) + "]";
                                             },

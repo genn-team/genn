@@ -577,7 +577,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const;
+    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -803,6 +803,24 @@ public:
     
 protected:
     //----------------------------------------------------------------------------
+    // Enumerations
+    //----------------------------------------------------------------------------
+    enum class Role
+    {
+        PresynapticUpdate,
+        PostsynapticUpdate,
+        SynapseDynamics,
+        Init,
+        SparseInit,
+        ConnectivityInit,
+    };
+
+    SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+                           Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups), m_ArchetypeCode(archetypeCode)
+    {}
+
+    //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest(Role role) const;
@@ -840,5 +858,10 @@ private:
     {
         return g.getKernelSize();
     }
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::string m_ArchetypeCode;
 };
 }   // namespace GeNN::CodeGenerator
