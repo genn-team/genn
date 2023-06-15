@@ -35,7 +35,7 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
-template<typename G>
+template<typename G, typename F = G>
 class EnvironmentGroupMergedField;
 class EnvironmentExternalBase;
 class ModelSpecMerged;

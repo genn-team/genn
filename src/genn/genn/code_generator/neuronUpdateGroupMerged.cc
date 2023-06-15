@@ -57,6 +57,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     const std::string suffix =  "CS" + std::to_string(getIndex());
     const auto *cm = getArchetype().getCurrentSourceModel();
 
+    EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> synEnv(env, *this, ng, &NeuronUpdateGroupMerged::getMergedCurrentSourceGroups);
     // Create new substitution environment and add parameters, derived parameters and extra global parameters
     EnvironmentSubstitute envSubs(env);
     envSubs.getStream() << "// current source " << getIndex() << std::endl;

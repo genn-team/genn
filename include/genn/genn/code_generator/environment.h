@@ -137,12 +137,19 @@ struct EnvironmentSubstitutionPolicy
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentFieldPolicy
 //----------------------------------------------------------------------------
-template<typename G>
+template<typename G, typename F>
 struct EnvironmentFieldPolicy
 {
-    using Payload = std::tuple<bool, std::string, std::optional<typename G::Field>>;
+    using Payload = std::tuple<bool, std::string, std::optional<typename F::Field>>;
+    using GetGroupsFn = const std::vector<std::reference_wrapper<const typename G::GroupInternal>> &(F::*)() const;
 
-    EnvironmentFieldPolicy(G &group) : m_Group(group)
+    EnvironmentFieldPolicy(G &group, F &fieldGroup, GetGroupsFn getGroups) 
+    :   m_Group(group), m_FieldGroup(fieldGroup), m_GetGroups(getGroups)
+    {
+    }
+
+    // **TODO** only enable if G == F
+    EnvironmentFieldPolicy(G &group) : EnvironmentFieldPolicy(group, group, &G::getGroups)
     {
     }
 
@@ -165,16 +172,22 @@ struct EnvironmentFieldPolicy
         if (std::get<2>(payload) && !std::get<0>(payload)) {
             // Call function to add field to underlying merged group
             const auto &field = std::get<2>(payload).get();
-            m_Group.addField(std::get<0>(field), std::get<1>(field),
-                             std::get<2>(field), std::get<3>(field));
+            m_FieldGroup.addField(std::get<0>(field), std::get<1>(field),
+                                  [this](const F &, size_t i)
+                                  {
+                                      const auto &childGroups = std::invoke(m_FieldGroup, m_GetGroups).at(m_Group.getIndex());
+                                      return .get();
+                                  },
+                                  std::get<3>(field));
 
             // Set flag so field doesn't get re-added
             std::get<0>(payload) = true;
         }
     }
 
-private:
+    std::reference_wrapper<F> m_FieldGroup;
     std::reference_wrapper<G> m_Group;
+    GetGroupsFn m_GetGroups;
 };
 
 //----------------------------------------------------------------------------
@@ -314,8 +327,8 @@ public:
 // GeNN::CodeGenerator::EnvironmentGroupMergedField
 //----------------------------------------------------------------------------
 //! External environment, for substituting 
-template<typename G>
-class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G>>
+template<typename G, typename F = G>
+class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>
 {
     using GroupInternal = typename G::GroupInternal;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
@@ -405,7 +418,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(m_Group.getScalarType().addConst(), d.name, getScalarString(d.second);
+                add(m_Group.getScalarType().addConst(), d.name, 
+                    std::invoke(getDerivedParamValues, m_Group.getArchetype()).at(d.name));
             }
         }
     }
