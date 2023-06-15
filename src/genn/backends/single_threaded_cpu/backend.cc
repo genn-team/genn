@@ -127,13 +127,11 @@ namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-    if(model.getBatchSize() != 1) {
+    if(modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
     }
-
    
-     // Generate stream with neuron update code
+    // Generate stream with neuron update code
     std::ostringstream neuronUpdateStream;
     CodeStream neuronUpdate(neuronUpdateStream);
 
@@ -141,7 +139,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getFunctions());
 
     neuronUpdateEnv.getStream() << "void updateNeurons(timepoint t";
-    if(model.isRecordingInUse()) {
+    if(modelMerged.getModel().isRecordingInUse()) {
         neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
     }
     neuronUpdateEnv.getStream() << ")";
@@ -152,7 +150,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
         
-        Timer t(funcEnv.getStream(), "neuronUpdate", model.isTimingEnabled());
+        Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
             *this,
             [this, &funcEnv, &modelMerged](auto &n)
@@ -316,8 +314,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-    if (model.getBatchSize() != 1) {
+    if (modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
     }
     
@@ -338,7 +335,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
         // Synapse dynamics
         {
-            Timer t(funcEnv.getStream(), "synapseDynamics", model.isTimingEnabled());
+            Timer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedSynapseDynamicsGroups(
                 *this,
                 [this, &funcEnv, &modelMerged](auto &s)
@@ -355,19 +352,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                         // Create matching environment
                         EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(funcEnv, s);
 
-                        // Add basic fields **TODO** move to group merged
-                        groupEnv.add(Type::Uint32.addConst(), "num_pre",
-                                     Type::Uint32, "numSrcNeurons", 
-                                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-                        groupEnv.add(Type::Uint32.addConst(), "num_post",
-                                     Type::Uint32, "numTrgNeurons", 
-                                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-                        groupEnv.add(Type::Uint32.addConst(), "_row_stride",
-                                     Type::Uint32, "rowStride", 
-                                     [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
-                        
-                        // _row_length
-                        // _ind
+                        // **TODO** rename as it does more!
                         genSynapseIndexCalculation(groupEnv, s, 1);
 
                         // Loop through presynaptic neurons
@@ -387,38 +372,41 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                             }
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
+                                EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> synEnv(groupEnv, s);
 
                                 // Add presynaptic index to substitutions
-                                groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                                synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
 
                                 if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     // Add initialiser strings to calculate synaptic and presynaptic index
-                                    const size_t idSynInit = groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["_row_stride"] + ") + s;");
-                                    const size_t idPostInit = groupEnv.addInitialiser("const unsigned int idPost = " + groupEnv["_ind"] + "[idSyn];");
+                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["_row_stride"] + ") + s;");
+                                    const size_t idPostInit = synEnv.addInitialiser("const unsigned int idPost = " + synEnv["_ind"] + "[idSyn];");
 
                                     // **TODO** id_syn can be 64-bit
-                                    groupEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit}, {"_row_stride"});
-                                    groupEnv.add(Type::Uint32.addConst(), "id_post", "idPost", {idPostInit, idSynInit}, {"_ind"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit}, {"_row_stride"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "idPost", {idPostInit, idSynInit}, {"_ind"});
                                 }
                                 else {
                                     // Add postsynaptic index to substitutions
-                                    groupEnv.add(Type::Uint32.addConst(), "id_post", "j");
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
                                     // Add initialiser to calculate synaptic index
-                                    const size_t idSynInit = groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["num_post"] + ") + j;");
+                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + j;");
 
                                     // **TODO** id_syn can be 64-bit
-                                    groupEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
-
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
                                 }
 
                                 // Add correct functions for apply synaptic input
-                                groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", groupEnv["_den_delay"] + "[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
-                                groupEnv.add(Type::AddToPost, "addToPost", groupEnv["_out_post"] + "[" + s.getPostISynIndex(1, "j") + "] += $(0)");
-                                groupEnv.add(Type::AddToPre, "addToPre", groupEnv["_out_pre"] + "[" + s.getPreISynIndex(1, groupEnv["id_pre"]) + "] += $(0)");
+                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", synEnv["_den_delay"] + "[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)",
+                                           {}, {"_den_delay"});
+                                synEnv.add(Type::AddToPost, "addToPost", synEnv["_out_post"] + "[" + s.getPostISynIndex(1, "j") + "] += $(0)",
+                                           {}, {"_out_post"});
+                                synEnv.add(Type::AddToPre, "addToPre", synEnv["_out_pre"] + "[" + s.getPreISynIndex(1, synEnv["id_pre"]) + "] += $(0)",
+                                           {}, {"id_pre"}));
                                 
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, groupEnv, modelMerged);
+                                s.generateSynapseUpdate(*this, synEnv, modelMerged);
                             }
                         }
                     }
@@ -427,7 +415,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
         // Presynaptic update
         {
-            Timer t(funcEnv.getStream(), "presynapticUpdate", model.isTimingEnabled());
+            Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
                 *this,
                 [this, &funcEnv](auto &s)
@@ -462,7 +450,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
         // Postsynaptic update
         {
-            Timer t(funcEnv.getStream(), "postsynapticUpdate", model.isTimingEnabled());
+            Timer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPostsynapticUpdateGroups(
                 *this,
                 [this, &funcEnv](auto &s)
@@ -508,31 +496,32 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                             }
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
+                                EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(groupEnv, s);
 
                                 if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     // Add initialisers to calculate column and row-major indices
                                     // **TODO** fast divide optimisations
-                                    const size_t colMajorIdxInit = groupEnv.addInitialiser("const unsigned int colMajorIndex = (spike * " + groupEnv["_col_stride"] + ") + i;");
-                                    const size_t rowMajorIdxInit = groupEnv.addInitialiser("const unsigned int rowMajorIndex = " + groupEnv["_remap"] + "[colMajorIndex];");
-                                    const size_t idPreInit = groupEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / " + groupEnv["_row_stride"] + ";");
+                                    const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * " + synEnv["_col_stride"] + ") + i;");
+                                    const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = " + synEnv["_remap"] + "[colMajorIndex];");
+                                    const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / " + synEnv["_row_stride"] + ";");
 
                                     // Add presynaptic and synapse index to environment
-                                    groupEnv.add("id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit}, {"_col_stride", "_row_stride", "_remap"});
-                                    groupEnv.add("id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit}, {"_col_stride", "_remap"});
+                                    synEnv.add("id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit}, {"_col_stride", "_row_stride", "_remap"});
+                                    synEnv.add("id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit}, {"_col_stride", "_remap"});
                                 }
                                 else {
                                     // Add initialiser to calculate synaptic index
-                                    const size_t idSynInit = groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["num_post"] + ") + spike;");
+                                    const size_t idSynInit = groupEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + spike;");
 
                                     // Add presynaptic and synapse index to environment
-                                    groupEnv.add(Type::Uint32, "id_pre", "i");
-                                    groupEnv.add(Type::Uint32, "id_syn", "idSyn", {idSynInit}, {"num_post"});
+                                    synEnv.add(Type::Uint32, "id_pre", "i");
+                                    synEnv.add(Type::Uint32, "id_syn", "idSyn", {idSynInit}, {"num_post"});
                                 }
 
-                                groupEnv.add(Type::Uint32, "id_post", "spike");
-                                groupEnv.add(Type::AddToPre, "addToPre", groupEnv["_out_pre"] + "[" + s.getPreISynIndex(1, groupEnv["id_pre"]) + "] += $(0)");
+                                synEnv.add(Type::Uint32, "id_post", "spike");
+                                synEnv.add(Type::AddToPre, "addToPre", synEnv["_out_pre"] + "[" + s.getPreISynIndex(1, synEnv["id_pre"]) + "] += $(0)");
             
-                                s.generateSynapseUpdate(*this, groupEnv, modelMerged);
+                                s.generateSynapseUpdate(*this, synEnv, modelMerged);
                             }
                         }
                         groupEnv.getStream() << std::endl;

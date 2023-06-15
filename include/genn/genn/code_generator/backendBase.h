@@ -526,13 +526,74 @@ protected:
     template<typename G>
     void genSynapseIndexCalculation(EnvironmentGroupMergedField<G> &env, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
     {
+        // Synapse group fields 
+        groupEnv.add(Type::Uint32.addConst(), "num_pre",
+                     Type::Uint32, "numSrcNeurons", 
+                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        groupEnv.add(Type::Uint32.addConst(), "num_post",
+                     Type::Uint32, "numTrgNeurons", 
+                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        groupEnv.add(Type::Uint32.addConst(), "_row_stride",
+                     Type::Uint32, "rowStride", 
+                     [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
+        groupEnv.add(Type::Uint32.addConst(), "_col_stride",
+                     Type::Uint32, "colStride", 
+                     [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+                        
+        // Postsynaptic model fields         
+        groupEnv.add(modelMerged.getModel().getPrecision(), "_out_post",
+                     modelMerged.getModel().getPrecision().createPointer(), "outPost",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
+        groupEnv.add(modelMerged.getModel().getPrecision(), "_den_delay",
+                     modelMerged.getModel().getPrecision().createPointer(), "denDelay",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
+        groupEnv.add(Type::Uint32, "_den_delay_ptr",
+                     Type::Uint32.createPointer(), "denDelayPtr",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+                       
+        // Presynaptic output fields
+        groupEnv.add(modelMerged.getModel().getPrecision(), "_out_pre",
+                     modelMerged.getModel().getPrecision().createPointer(), "outPre",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
+                        
+
+        // Source neuron fields
+        groupEnv.add(Type::Uint32, "_src_spk_que_ptr",
+                     Type::Uint32.createPointer(), "srcSpkQuePtr",
+                     [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_src_spk_cnt",
+                     Type::Uint32.createPointer(), "srcSpkCnt",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_src_spk",
+                     Type::Uint32.createPointer(), "srcSpk",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_src_spk_evnt_cnt",
+                     Type::Uint32.createPointer(), "srcSpkCntEvnt",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_src_spk_evnt",
+                     Type::Uint32.createPointer(), "srcSpkEvnt",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
+
+        // Target neuron fields
+        groupEnv.add(Type::Uint32, "_trg_spk_que_ptr",
+                     Type::Uint32.createPointer(), "trgSpkQuePtr",
+                     [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_trg_spk_cnt",
+                     Type::Uint32.createPointer(), "trgSpkCnt",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
+        groupEnv.add(Type::Uint32, "_trg_spk",
+                     Type::Uint32.createPointer(), "trgSpk",
+                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
+
         // If batching is enabled
         if(batchSize > 1) {
             // Calculate batch offsets into pre and postsynaptic populations
             env.add(Type::Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_pre"] + " * " + env["batch"] + ";")});
+                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_pre"] + " * batch;")},
+                    {"num_pre"});
             env.add(Type::Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_post"] + " * " + env["batch"] + ";")});
+                    {env.addInitialiser("const unsigned int preBatchOffset = " + env["num_post"] + " * batch;")},
+                    {"num_post"});
         
             // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
             if(areSixtyFourBitSynapseIndicesRequired(sg)) {
@@ -541,40 +602,59 @@ protected:
             }
             else {
                 env.add(Type::Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
-                    {env.addInitialiser("const unsigned int synBatchOffset = " + env["_pre_batch_offset"] + " * " + env["_row_stride"] + ";")});
+                        {env.addInitialiser("const unsigned int synBatchOffset = " + env["_pre_batch_offset"] + " * " + env["_row_stride"] + ";")},
+                        {"_pre_batch_offset", "_row_stride"});
             }
         
-            // If synapse group has kernel weights
-            /*const auto &kernelSize = sg.getArchetype().getKernelSize();
-            if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
+            // If synapse group has kernel
+            const auto &kernelSize = sg.getArchetype().getKernelSize();
+            if(!kernelSize.empty()) {
                 // Loop through kernel dimensions and multiply together
-                os << "const unsigned int kernBatchOffset = ";
+                // **TODO** extract list of kernel size variables referenced
+                std::ostringstream kernBatchOffsetInit;
+                kernBatchOffsetInit << "const unsigned int kernBatchOffset = ";
                 for(size_t i = 0; i < kernelSize.size(); i++) {
-                    os << sg.getKernelSize(i) << " * ";
+                    kernBatchOffsetInit << sg.getKernelSize(i) << " * ";
                 }
             
                 // And finally by batch
-                os << "batch;" << std::endl;
-            }*/
+                kernBatchOffsetInit << "batch;" << std::endl;
+
+                env.add(Type::Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
+                        {env.addInitialiser(kernBatchOffsetInit.str())});
+            }
         }
 
         // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-        /*if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+        if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             const unsigned int numDelaySteps = sg.getArchetype().getDelaySteps();
             const unsigned int numSrcDelaySlots = sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
 
-            os << "const unsigned int preDelaySlot = ";
+            std::ostringstream preDelaySlotInit;
+            preDelaySlotInit << "const unsigned int preDelaySlot = ";
             if(numDelaySteps == 0) {
-                os << "*group->srcSpkQuePtr;" << std::endl;
+                preDelaySlotInit << "*" << env["_src_spk_que_ptr"] << ";" << std::endl;
             }
             else {
-                os << "(*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
+                preDelaySlotInit << "(*" << env["_src_spk_que_ptr"] << " + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
             }
-            os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
+            env.add(Type::Uint32, "_pre_delay_slot", "preDelaySlot", 
+                    {env.addInitialiser(preDelaySlotInit.str())}, {"_src_spk_que_ptr"});
+
+            env.add(Type::Uint32, "_pre_delay_offset", "preDelayOffset",
+                    {env.addInitialiser("const unsigned int preDelayOffset = preDelaySlot * " + env["num_pre"] + ";")},
+                    {"num_pre", "_pre_delay_slot"});
 
             if(batchSize > 1) {
-                os << "const unsigned int preBatchDelaySlot = preDelaySlot + (batch * " << numSrcDelaySlots << ");" << std::endl;
-                os << "const unsigned int preBatchDelayOffset = preDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
+                env.add(Type::Uint32, "_pre_batch_delay_slot", "preBatchDelaySlot",
+                        {env.addInitialiser("const unsigned int preBatchDelaySlot = preDelaySlot + (batch * " + std::to_string(numSrcDelaySlots) + ");")},
+                        {"_pre_delay_slot"});
+
+                os <<  << std::endl;
+
+                env.add(Type::Uint32, "_pre_batch_delay_offset", "preBatchDelayOffset",
+                        {env.addInitialiser("const unsigned int preBatchDelayOffset = preDelayOffset + (preBatchOffset * " + std::to_string(numSrcDelaySlots) + ");")},
+                        {"_pre_delay_offset", "_pre_batch_offset"});
             }
 
             if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
@@ -613,7 +693,7 @@ protected:
                 }
 
             }
-        }*/
+        }
     }
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
     
