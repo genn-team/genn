@@ -16,13 +16,13 @@ namespace
 {
 template<typename G>
 void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, std::string code, const std::string &errorContext,
-                               const G &sg, const ModelSpecMerged &modelMerged, bool backendSupportsNamespace)
+                               G &sg, const ModelSpecMerged &modelMerged, bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     const unsigned int batchSize = model.getBatchSize();
     const auto *wu = sg.getArchetype().getWUModel();
 
-    EnvironmentGroupMergedField<G> synEnv(sg, env);
+    EnvironmentGroupMergedField<G> synEnv(env, sg);
 
     // Substitute parameter and derived parameter names
     synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
@@ -46,15 +46,10 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     
     // If this synapse group has a kernel
     if (!sg.getArchetype().getKernelSize().empty()) {
-        // Generate kernel index calculation
-        std::ostringstream kernelIndexStream;
-        kernelIndexStream << "const unsigned int kernelInd = ";
-        sg.genKernelIndex(kernelIndexStream, synEnv);
-        kernelIndexStream << ";" << std::endl;
-
         // Add substitution
+        // **TODO** dependencies on kernel fields
         synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                   {synEnv.addInitialiser(kernelIndexStream.str())});
+                   {synEnv.addInitialiser("const unsigned int kernelInd = " + sg.getKernelIndex(synEnv) + ";")});
     }
 
     // If weights are individual, substitute variables for values stored in global memory
@@ -68,12 +63,14 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        const auto vars = wu->getVars();
+        assert(false);
+        /*const auto vars = wu->getVars();
         for(const auto &var : vars) {
             const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
-
+            
             // If this variable has any initialisation code
             if(!varInit.getSnippet()->getCode().empty()) {
+                
                 // Configure variable substitutions
                 CodeGenerator::Substitutions varSubs(&synapseSubs);
                 varSubs.addVarSubstitution("value", "l" + var.name);
@@ -102,24 +99,25 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         }
 
         // Substitute variables for newly-declared local variables
-        synEnv.add(vars, "", "l");
+        synEnv.add(vars, "", "l");*/
     }
     // Otherwise, if weights are kernels, use kernel index to index into variables
     else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
         assert(!sg.getArchetype().getKernelSize().empty());
 
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
-                                            [&synEnv, batchSize](VarAccess a, const std::string&) 
+                                            [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
                                             { 
-                                                return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_kernel"]) + "]";
+                                                return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synEnv["id_kernel"]) + "]";
                                             },
                                             {"id_kernel"});
     }
     // Otherwise, substitute variables for constant values
     else {
-        synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals(),
+        assert(false);
+        /*synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals(),
                                             [&sg](const std::string &v) { return sg.isWUGlobalVarHeterogeneous(v); },
-                                            "", "group->");
+                                            "", "group->");*/
     }
 
     // Make presynaptic neuron substitutions
@@ -177,7 +175,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
 
@@ -206,29 +204,30 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     prettyPrintStatements(wum->getEventThresholdConditionCode(), getTypeContext(), synEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUModel()->getEventCode(), "eventCode",
                               *this, modelMerged, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUModel()->getSimCode(), "simCode",
                               *this, modelMerged, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, EnvironmentExternalBase &env) const
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, EnvironmentExternalBase &env)
 {
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
 
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
 
+    assert(false);
     // Add substitutions
     //synEnv.addParams()
     //synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
     //synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
-    popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+    /*popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
                                       [this](const std::string &p) { return isSparseConnectivityInitParamHeterogeneous(p);  },
                                       "", "group->");
     popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
@@ -244,10 +243,10 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     //pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
 
     // Write out code
-    os << pCode << std::endl;
+    os << pCode << std::endl;*/
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, EnvironmentExternalBase &env) const
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, EnvironmentExternalBase &env)
 {
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("toeplitzSparseConnectivity" + std::to_string(getIndex()));
@@ -260,7 +259,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     const auto *wum = getArchetype().getWUModel();
     /*if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
@@ -276,7 +275,7 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     const auto *wum = getArchetype().getWUModel();
     /*if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {

@@ -29,7 +29,7 @@ namespace GeNN::CodeGenerator
 class CodeStream;
 }
 
-namespace Transpiler::TypeChecker
+namespace GeNN::Transpiler::TypeChecker
 {
 class EnvironmentBase;
 }
@@ -752,9 +752,9 @@ public:
     }
     
     //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    void genKernelIndex(std::ostream& os, const CodeGenerator::Substitutions& subs) const
+    std::string getKernelIndex(EnvironmentExternalBase &env) const
     {
-        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
+        return CodeGenerator::getKernelIndex(this, env, getGroupKernelSize);
     }
 
     std::string getPreSlot(unsigned int batchSize) const;

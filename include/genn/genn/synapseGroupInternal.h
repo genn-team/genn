@@ -124,6 +124,7 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
+    const std::string &getNameSuffix() const{ return m_SG.getName(); }
 private:
     //----------------------------------------------------------------------------
     // Members

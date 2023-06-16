@@ -211,23 +211,26 @@ std::string getKernelSize(const G *group, size_t dimensionIndex, K getKernelSize
 }
 
 template<typename G, typename K>
-void genKernelIndex(const G *group, std::ostream &os, const CodeGenerator::Substitutions &subs, 
-                    K getKernelSizeFn)
+std::string getKernelIndex(const G *group, EnvironmentExternalBase &env, 
+                           K getKernelSizeFn)
 {
     // Loop through kernel dimensions to calculate array index
     const auto &kernelSize = getKernelSizeFn(group->getArchetype());
+    std::ostringstream kernelIndex;
     for (size_t i = 0; i < kernelSize.size(); i++) {
-        os << "(" << subs["id_kernel_" + std::to_string(i)];
+        kernelIndex << "(" << env["id_kernel_" + std::to_string(i)];
         // Loop through remainining dimensions of kernel and multiply
         for (size_t j = i + 1; j < kernelSize.size(); j++) {
-            os << " * " << getKernelSize(group, j, getKernelSizeFn);
+            kernelIndex << " * " << getKernelSize(group, j, getKernelSizeFn);
         }
-        os << ")";
+        kernelIndex << ")";
 
         // If this isn't the last dimension, add +
         if (i != (kernelSize.size() - 1)) {
-            os << " + ";
+            kernelIndex << " + ";
         }
     }
+
+    return kernelIndex.str();
 }
 }   // namespace GeNN::CodeGenerator

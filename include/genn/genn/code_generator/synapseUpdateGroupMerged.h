@@ -31,11 +31,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
-    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
-    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
-    void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env) const;
-    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env) const;
+    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -69,7 +69,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -103,7 +103,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
