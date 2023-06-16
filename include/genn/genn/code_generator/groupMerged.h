@@ -74,8 +74,8 @@ public:
     typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
     typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
-    ChildGroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_Groups(std::move(groups))
+    ChildGroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
     {}
 
     ChildGroupMerged(const ChildGroupMerged&) = delete;
@@ -84,6 +84,9 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Get type context used to resolve any types involved in this group
+    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
+
     size_t getIndex() const { return m_Index; }
 
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
@@ -91,6 +94,9 @@ public:
 
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
+
+    const Type::ResolvedType &getScalarType() const{ return m_TypeContext.at("scalar"); }
+    const Type::ResolvedType &getTimeType() const{ return m_TypeContext.at("timepoint"); }
 
 protected:
     //------------------------------------------------------------------------
@@ -211,6 +217,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     size_t m_Index;
+    const Type::TypeContext &m_TypeContext;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };
 
@@ -223,7 +230,7 @@ class GroupMerged : public ChildGroupMerged<G>
 {
 public:
     GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   ChildGroupMerged<G>(index, std::move(groups)), m_TypeContext(typeContext)
+    :   ChildGroupMerged<G>(index, typeContext, std::move(groups))
     {}
 
     GroupMerged(const GroupMerged&) = delete;
@@ -232,9 +239,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get type context used to resolve any types involved in this group
-    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
-    
     //! Get name of memory space assigned to group
     const std::string &getMemorySpace() const { return m_MemorySpace; }
 
@@ -354,9 +358,6 @@ public:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    const Type::ResolvedType &getScalarType() const{ return m_TypeContext.at("scalar"); }
-    const Type::ResolvedType &getTimeType() const{ return m_TypeContext.at("timepoint"); }
-
     void addField(const Type::ResolvedType &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
@@ -578,7 +579,6 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const Type::TypeContext &m_TypeContext;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
 };
@@ -668,7 +668,7 @@ protected:
     // Protected API
     //------------------------------------------------------------------------
     template<typename M, typename G, typename H>
-    void orderNeuronGroupChildren(std::vector<M> &childGroups, G getVectorFunc, H getHashDigestFunc) const
+    void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, G getVectorFunc, H getHashDigestFunc) const
     {
         const std::vector<typename M::GroupInternal*> &archetypeChildren = (getArchetype().*getVectorFunc)();
 
@@ -709,7 +709,7 @@ protected:
         // Reserve vector of child groups and create merged group objects based on vector of groups
         childGroups.reserve(archetypeChildren.size());
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            childGroups.emplace_back(i, typeContext, enclosingEnv, sortedGroupChildren[i]);
+            childGroups.emplace_back(i, typeContext, sortedGroupChildren[i]);
         }
     }
 

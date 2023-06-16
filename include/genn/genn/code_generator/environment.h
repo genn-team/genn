@@ -142,7 +142,7 @@ template<typename G, typename F>
 class EnvironmentFieldPolicy
 {
 protected:
-    using Payload = std::tuple<bool, std::string, std::optional<typename F::Field>>;
+    using Payload = std::tuple<bool, std::string, std::optional<typename G::Field>>;
     
     EnvironmentFieldPolicy(G &group, F &fieldGroup)
     :   m_Group(group), m_FieldGroup(fieldGroup)
@@ -570,34 +570,40 @@ private:
 // GeNN::CodeGenerator::EnvironmentLocalVarCache
 //----------------------------------------------------------------------------
 //! Pretty printing environment which caches used variables in local variables
-template<typename A, typename G>
+template<typename A, typename G, typename F = G>
 class EnvironmentLocalVarCache : public EnvironmentExternalBase
 {
-    //! Type of a single definition
-    using DefType = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
-
-    //! Type of a single initialiser
-    using InitialiserType = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
-
-    //! Function used to provide index strings based on initialiser and access type
-    using GetIndexFn = std::function<std::string(const std::string&, InitialiserType, decltype(DefType::access))>;
+    //! Function used to provide index strings based on var name and
+    using GetIndexFn = std::function<std::string(const std::string&, VarAccess)>;
 
 public:
-    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &fieldSuffix, const std::string &localPrefix,
+    EnvironmentLocalVarCache(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
                              GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   EnvironmentExternalBase(enclosing), m_Group(group), m_Context(context), m_Contents(m_ContentsStream), 
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    :   EnvironmentExternalBase(enclosing), m_Group(group), m_FieldGroup(fieldGroup), m_Context(context), m_Contents(m_ContentsStream), 
+        m_ArrayPrefix(arrayPrefix), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
     {
-        // Add name of each definition to map, initially with value set to value
-        const auto defs = A(m_Group).getDefs();
+        // Copy variables into variables referenced, alongside boolean
+        const auto defs = A(m_Group.get().getArchetype()).getDefs();
         std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
-                       [](const auto &v){ return std::make_pair(v.name, false); });
+                       [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
     }
 
-    EnvironmentLocalVarCache(const G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
-    :   EnvironmentLocalVarCache<A, G>(group, context, enclosing, fieldSuffix, getIndex, getIndex)
+    EnvironmentLocalVarCache(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
+                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
+    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getReadIndex, getWriteIndex)
+    {}
+
+    EnvironmentLocalVarCache(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
+    :   EnvironmentLocalVarCache(group, fieldGroup, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getIndex, getIndex)
+    {
+    }
+
+    EnvironmentLocalVarCache(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
+    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getIndex, getIndex)
     {
     }
 
@@ -605,27 +611,35 @@ public:
 
     ~EnvironmentLocalVarCache()
     {
-        A adapter(m_Group);
+        A archetypeAdapter(m_Group.get().getArchetype());
 
-        // Copy definitions which have been referenced into new vector
-        const auto defs = adapter.getDefs();
-        std::remove_const_t<decltype(defs)> referencedVars;
-        std::copy_if(defs.cbegin(), defs.cend(), std::back_inserter(referencedVars),
-                     [this](const auto &v){ return m_VariablesReferenced.at(v.name); });
+        // Copy definitions of variables which have been referenced into new vector
+        const auto varDefs = archetypeAdapter.getDefs();
+        Models::Base::VarVec referencedVars;
+        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedVars),
+                     [this](const auto &v){ return m_VariablesReferenced.at(v.name).first; });
 
         // Loop through referenced variables
-        const auto &initialisers = adapter.getInitialisers();
         for(const auto &v : referencedVars) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+
+            // Add field to underlying field group
+            m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
+                                        [this, v](const typename F::GroupInternal &, size_t i)
+                                        {
+                                            return m_ArrayPrefix + v.name + A(m_Group.get().getGroups().at(i)).getNameSuffix();
+                                        });
+
             if(v.access & VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
             }
-            getContextStream() << v.type.resolve(m_Context).getName() << " " << m_LocalPrefix << v.name;
+            getContextStream() << resolvedType.getName() << " " << m_LocalPrefix << v.name;
 
             // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << m_GetReadIndex(v.name, initialisers.at(v.name), v.access) << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << m_GetReadIndex(v.name, v.access) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -637,7 +651,7 @@ public:
         for(const auto &v : referencedVars) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << m_GetWriteIndex(v.name, initialisers.at(v.name), v.access) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << m_GetWriteIndex(v.name, v.access) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -656,16 +670,12 @@ public:
         // Otherwise
         else {
             // Set flag to indicate that variable has been referenced
-            var->second = true;
+            var->second.first = true;
 
-            // Find corresponsing variable definition
-            const auto varDefs = A(m_Group).getDefs();
-            auto varDef = std::find_if(varDefs.cbegin(), varDefs.cend(),
-                                       [](const auto &v){ return v.name == name.lexeme; });
-            assert(varDef != varDefs.cend());
-
-            // Return it's resolved type
-            return {varDef->type.resolve(m_Context)};
+            // Resolve type, add qualifier if required and return
+            const auto resolvedType = var->second.second.type.resolve(m_Context.get());
+            const auto qualifiedType = (var->second.second.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            return {qualifiedType};
         }
     }
 
@@ -682,7 +692,7 @@ public:
         // Otherwise
         else {
             // Set flag to indicate that variable has been referenced
-            var->second = true;
+            var->second.first = true;
 
             // Add local prefix to variable name
             return m_LocalPrefix + name;
@@ -698,14 +708,16 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const G &m_Group;
-    const Type::TypeContext &m_Context;
+    std::reference_wrapper<G> m_Group;
+    std::reference_wrapper<F> m_FieldGroup;
+    std::reference_wrapper<const Type::TypeContext> m_Context;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
+    std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;
-    std::unordered_map<std::string, bool> m_VariablesReferenced;
+    std::unordered_map<std::string, std::pair<bool, Models::Base::Var>> m_VariablesReferenced;
 };
 }   // namespace GeNN::CodeGenerator

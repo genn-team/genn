@@ -24,7 +24,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -56,7 +56,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -87,8 +87,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng, 
-                      const ModelSpecMerged &modelMerged);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
     };
 
     //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
@@ -138,7 +138,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       const ModelSpecMerged &modelMerged, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
