@@ -33,7 +33,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Substitute parameter and derived parameter names
     csEnv.addParams(cm->getParamNames(), fieldSuffix, &CurrentSourceInternal::getParams, &CurrentSource::isParamHeterogeneous);
     csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
-    csEnv.addEGPs<CurrentSourceEGPAdapter>(backend.getDeviceVarPrefix(), "", fieldSuffix);
+    csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
     // Define inject current function
     csEnv.add(Type::ResolvedType::createFunction(Type::Void, {modelMerged.getModel().getPrecision()}), "injectCurrent", csEnv["Isyn"] + " += $(0)",
@@ -117,7 +117,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Add parameters, derived parameters and extra global parameters to environment
     psmEnv.addParams(psm->getParamNames(), fieldSuffix, &SynapseGroupInternal::getPSParams, &InSynPSM::isParamHeterogeneous);
     psmEnv.addDerivedParams(psm->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getPSDerivedParams, &InSynPSM::isDerivedParamHeterogeneous);
-    psmEnv.addEGPs<SynapsePSMEGPAdapter>(backend.getDeviceVarPrefix(), "", fieldSuffix);
+    psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
     
     // **TODO** naming convention
     psmEnv.add(modelMerged.getModel().getPrecision().addConst(), "inSyn", "linSyn");
@@ -212,7 +212,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &InSynWUMPostCode::isParamHeterogeneous);
         synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &InSynWUMPostCode::isDerivedParamHeterogeneous);
-        synEnv.addEGPs<SynapseWUEGPAdapter>(backend.getDeviceVarPrefix(), "", fieldSuffix);
+        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
@@ -304,7 +304,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &OutSynWUMPreCode::isParamHeterogeneous);
         synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
-        synEnv.addEGPs<SynapseWUEGPAdapter>(backend.getDeviceVarPrefix(), "", fieldSuffix);
+        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
@@ -526,7 +526,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParamNames(), "", &NeuronGroupInternal::getParams, &NeuronUpdateGroupMerged::isParamHeterogeneous);
     neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams, &NeuronUpdateGroupMerged::isDerivedParamHeterogeneous);
-    neuronEnv.addEGPs<NeuronEGPAdapter>(backend.getDeviceVarPrefix());
+    neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
     
     // Substitute spike times
     const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, neuronEnv["id"]);

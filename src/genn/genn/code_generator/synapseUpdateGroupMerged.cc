@@ -27,7 +27,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute parameter and derived parameter names
     synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
     synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
-    synEnv.addEGPs<SynapseWUEGPAdapter>(backend.getDeviceVarPrefix());
+    synEnv.addExtraGlobalParams(wu->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.addVars<SynapseWUPreVarAdapter>(backend.getDeviceVarPrefix(),
@@ -183,7 +183,7 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     const auto *wum = getArchetype().getWUModel();
     synEnv.addParams(wum->getParamNames(), "", &SynapseGroupInternal::getWUParams, &PresynapticUpdateGroupMerged::isWUParamHeterogeneous);
     synEnv.addDerivedParams(wum->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
-    synEnv.addEGPs<SynapseWUEGPAdapter>(backend.getDeviceVarPrefix());
+    synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
     // Substitute in presynaptic neuron properties
     /*const unsigned int batchSize = modelMerged.getModel().getBatchSize();

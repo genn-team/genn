@@ -428,6 +428,22 @@ public:
         }
     }
 
+    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, 
+                              const std::string &varName = "", const std::string &fieldSuffix = "")
+    {
+        // Loop through EGPs
+        for(const auto &e : egps) {
+            const auto pointerType = e.type.resolve(getGroup().getTypeContext()).createPointer();
+            addField(pointerType, e.name,
+                     pointerType, e.name + varName + fieldSuffix,
+                     [arrayPrefix, e, varName](const auto &g, size_t) 
+                     {
+                         return arrayPrefix + e.name + varName + g.getName(); 
+                     },
+                     "", GroupMergedFieldType::DYNAMIC);
+        }
+    }
+
     template<typename A>
     void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &fieldSuffix = "")
     {
@@ -530,23 +546,6 @@ public:
     {
         addVarRefs<A>(arrayPrefix, [&index](VarAccess a, const std::string &) { return index; }, 
                       fieldSuffix, dependents);
-    }
-  
-    template<typename A>
-    void addEGPs(const std::string &arrayPrefix, const std::string &varName = "", const std::string &fieldSuffix = "")
-    {
-        // Loop through EGPs
-        const A archetypeAdaptor(getGroup().getArchetype());
-        for(const auto &e : archetypeAdaptor.getDefs()) {
-            const auto pointerType = e.type.resolve(getGroup().getTypeContext()).createPointer();
-            addField(pointerType, e.name,
-                     pointerType, e.name + varName + fieldSuffix,
-                     [arrayPrefix, e, varName](const auto &g, size_t) 
-                     {
-                         return arrayPrefix + e.name + varName + g.getName(); 
-                     },
-                     "", GroupMergedFieldType::DYNAMIC);
-        }
     }
 
 private:
