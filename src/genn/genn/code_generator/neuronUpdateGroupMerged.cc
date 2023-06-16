@@ -382,7 +382,7 @@ const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------
 NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
                                                  const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, typeContext, backend, groups)
+:   NeuronGroupMergedBase(index, typeContext, groups)
 {
     // Loop through neuron groups
     /*std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
@@ -833,4 +833,14 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
     else {
         return getVarIndex(batchSize, varDuplication, index);
     }
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }

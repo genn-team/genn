@@ -103,67 +103,6 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return (isVarInitParamReferenced(varName, paramName) &&
-            isParamValueHeterogeneous(paramName,
-                                      [varName](const NeuronGroupInternal &sg) { return sg.getVarInitialisers().at(varName).getParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return (isVarInitParamReferenced(varName, paramName) &&
-            isParamValueHeterogeneous(paramName,
-                                      [varName](const NeuronGroupInternal &sg){ return sg.getVarInitialisers().at(varName).getDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
-NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
-                                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
-{
-    using namespace Type;
-
-    addField(Uint32, "numNeurons",
-             [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-
-    addPointerField(Uint32, "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
-    addPointerField(Uint32, "spk", backend.getDeviceVarPrefix() + "glbSpk");
-
-    if(getArchetype().isSpikeEventRequired()) {
-        addPointerField(Uint32, "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
-        addPointerField(Uint32, "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-    }
-
-    if(getArchetype().isDelayRequired()) {
-        addPointerField(Uint32, "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
-    }
-
-    // **TODO** add to type environment for update
-    if(getArchetype().isSpikeTimeRequired()) {
-        addPointerField(getTimeType(), "sT", backend.getDeviceVarPrefix() + "sT");
-    }
-    if(getArchetype().isSpikeEventTimeRequired()) {
-        addPointerField(getTimeType(), "seT", backend.getDeviceVarPrefix() + "seT");
-    }
-
-    if(getArchetype().isPrevSpikeTimeRequired()) {
-        addPointerField(getTimeType(), "prevST", backend.getDeviceVarPrefix() + "prevST");
-    }
-    if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        addPointerField(getTimeType(), "prevSET", backend.getDeviceVarPrefix() + "prevSET");
-    }
-}
-//----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
 {
     const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();

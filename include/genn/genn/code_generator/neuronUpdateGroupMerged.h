@@ -201,6 +201,12 @@ public:
     static const std::string name;
 
 private:
+     //! Should the parameter be implemented heterogeneously?
+    bool isParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the derived parameter be implemented heterogeneously?
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

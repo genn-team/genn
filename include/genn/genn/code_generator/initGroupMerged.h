@@ -186,6 +186,12 @@ private:
 
     void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
 
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

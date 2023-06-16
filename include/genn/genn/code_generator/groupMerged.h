@@ -354,149 +354,16 @@ public:
         }
     }
 
-//protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
     void addField(const Type::ResolvedType &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
-    void addScalarField(const std::string &name, GetFieldDoubleValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
-    {
-        addField(getScalarType(), name,
-                 [getFieldValue, this](const G &g, size_t i)
-                 {
-                     return Utils::writePreciseString(getFieldValue(g, i), getScalarType().getNumeric().maxDigits10) + getScalarType().getNumeric().literalSuffix;
-                 },
-                 fieldType);
-    }
-
-    void addPointerField(const Type::ResolvedType &type, const std::string &name, const std::string &prefix,
-                         GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
-    {
-        assert(type.isValue());
-        addField(type.createPointer(), name,
-                 [prefix](const G &g, size_t) { return prefix + g.getName(); },
-                 fieldType);
-    }
-
-    void addPointerField(const Type::UnresolvedType &type, const std::string &name, const std::string &prefix,
-                         GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
-    {
-        addPointerField(type.resolve(getTypeContext()), name, prefix, fieldType);
-    }
-
-
-    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
-    {
-        // Loop through variables
-        for(const auto &v : vars) {
-            addPointerField(v.type, v.name, arrayPrefix + v.name);
-        }
-    }
-
-    template<typename V>
-    void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
-    {
-        // Loop through variables
-        for(const auto &v : varReferences) {
-            addField(v.type.resolve(getTypeContext()).createPointer(), v.name, 
-                     [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
-                     { 
-                         const auto varRef = getVarRefFn(g).at(v.name);
-                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
-                     });
-        }
-    }
-
-    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
-    {
-        for(const auto &e : egps) {
-            addField(e.type.resolve(getTypeContext()).createPointer(), e.name + varName,
-                     [e, arrayPrefix, varName](const G &g, size_t) { return arrayPrefix + e.name + varName + g.getName(); },
-                     GroupMergedFieldType::DYNAMIC);
-        }
-    }
-
-    template<typename T, typename P, typename H>
-    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
-                                P getParamValues, H isHeterogeneous)
-    {
-        // Loop through params
-        for(const auto &p : paramNames) {
-            // If parameters is heterogeneous
-            // **TODO** std::invoke
-            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
-                // Add field
-                addScalarField(p + suffix,
-                               [p, getParamValues](const G &g, size_t)
-                               {
-                                   return getParamValues(g).at(p);
-                               });
-            }
-        }
-    }
-
-    template<typename T, typename D, typename H>
-    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
-                                       D getDerivedParamValues, H isHeterogeneous)
-    {
-        // Loop through derived params
-        for(const auto &d : derivedParams) {
-            // If parameters isn't homogeneous
-            // **TODO** std::invoke
-            if((static_cast<const T*>(this)->*isHeterogeneous)(d.name)) {
-                // Add field
-                addScalarField(d.name + suffix,
-                               [d, getDerivedParamValues](const G &g, size_t)
-                               {
-                                   return getDerivedParamValues(g).at(d.name);
-                               });
-            }
-        }
-    }
-
-    template<typename T, typename A, typename H>
-    void addHeterogeneousVarInitParams(H isHeterogeneous, const std::string &suffix = "")
-    {
-        // Loop through weight update model variables
-        const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
-                    addScalarField(p.first + v.name + suffix,
-                                   [p, v](const G &g, size_t)
-                                   {
-                                       return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
-                                   });
-                }
-            }
-        }
-    }
-
-    template<typename T, typename A, typename H>
-    void addHeterogeneousVarInitDerivedParams(H isHeterogeneous, const std::string &suffix = "")
-    {
-        // Loop through weight update model variables
-        const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v.name, p.first)) {
-                    addScalarField(p.first + v.name + suffix,
-                                   [p, v](const G &g, size_t)
-                                   {
-                                       return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
-                                   });
-                }
-            }
-        }
-    }
-
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
     void generateRunnerBase(const BackendBase &backend, 
                             CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                             CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
@@ -645,25 +512,9 @@ public:
 class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    //! Should the parameter be implemented heterogeneously?
-    bool isParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the derived parameter be implemented heterogeneously?
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    using GroupMerged::GroupMerged;
 
 protected:
-    NeuronGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
-                          const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
-
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
