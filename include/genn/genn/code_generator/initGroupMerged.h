@@ -11,23 +11,18 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    using VarInitAST = std::unordered_map<std::string, std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap>>;
-
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
     //! Child group merged for current sources attached to this neuron update group
-    class CurrentSource : public GroupMerged<CurrentSourceInternal>
+    class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
     {
     public:
-        CurrentSource(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                      const BackendBase &backend, const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
-
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
-                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
     
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -44,12 +39,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! Parsed statements and resolved types for initialising each variable
-        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -59,14 +48,11 @@ public:
     class InSynPSM : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynPSM(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                 const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-        //----------------------------------------------------------------------------
+       //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
-                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -83,12 +69,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! Parsed statements and resolved types for initialising each variable
-        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -98,14 +78,11 @@ public:
     class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                        const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
-                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
     };
 
     //----------------------------------------------------------------------------
@@ -115,14 +92,11 @@ public:
     class InSynWUMPostVars : public GroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynWUMPostVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
-                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -139,12 +113,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! Parsed statements and resolved types for initialising each variable
-        VarInitAST m_VarInitASTs;
     };
 
     //----------------------------------------------------------------------------
@@ -154,14 +122,11 @@ public:
     class OutSynWUMPreVars: public GroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynWUMPreVars(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternal &env, 
-                      const NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -178,12 +143,6 @@ public:
         //----------------------------------------------------------------------------
         //! Is the var init parameter referenced?
         bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;  
-
-        //----------------------------------------------------------------------------
-        // Members
-        //----------------------------------------------------------------------------
-        //! Parsed statements and resolved types for initialising each variable
-        VarInitAST m_VarInitASTs;
     };
 
     NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
@@ -204,7 +163,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
@@ -221,11 +180,11 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void genInitSpikeCount(const BackendBase &backend, EnvironmentExternal &env, bool spikeEvent, unsigned int batchSize) const;
+    void genInitSpikeCount(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
 
-    void genInitSpikes(const BackendBase &backend, EnvironmentExternal &env, bool spikeEvent, unsigned int batchSize) const;
+    void genInitSpikes(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
 
-    void genInitSpikeTime(const BackendBase &backend, EnvironmentExternal &env, const std::string &varName, unsigned int batchSize) const;
+    void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Members
@@ -235,9 +194,6 @@ private:
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;
     std::vector<OutSynWUMPreVars> m_MergedOutSynWUMPreVarGroups;
-
-    //! Parsed statements and resolved types for initialising each variable
-    VarInitAST m_VarInitASTs;
 };
 
 
@@ -514,13 +470,6 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    //! Parsed statements and resolved types for initialising each variable
-    NeuronInitGroupMerged::VarInitAST m_VarInitASTs;
 };
 
 
