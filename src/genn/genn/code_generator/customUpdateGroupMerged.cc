@@ -13,7 +13,6 @@
 #include "transpiler/parser.h"
 #include "transpiler/prettyPrinter.h"
 #include "transpiler/scanner.h"
-#include "transpiler/standardLibrary.h"
 #include "transpiler/typeChecker.h"
 
 
@@ -26,65 +25,6 @@ using namespace GeNN::Transpiler;
 // GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
-//----------------------------------------------------------------------------
-CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                 const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   GroupMerged<CustomUpdateInternal>(index, typeContext, groups)
-{
-    using namespace Type;
-
-    // Create type environment
-    StandardLibrary::FunctionTypes stdLibraryEnv;
-    GroupMergedTypeEnvironment<CustomUpdateGroupMerged> typeEnvironment(*this, &stdLibraryEnv);
-
-    addField(Uint32, "size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
-    
-    // If some variables are delayed, add delay pointer
-    if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "spkQuePtr", 
-                 [&backend](const auto &cg, size_t) 
-                 { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
-                 });
-    }
-
-    // Add heterogeneous custom update model parameters
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.defineHeterogeneousParams(
-        cm->getParamNames(), "",
-        &CustomUpdateInternal::getParams,
-        &CustomUpdateGroupMerged::isParamHeterogeneous);
-
-    // Add heterogeneous custom update model derived parameters
-    typeEnvironment.defineHeterogeneousDerivedParams(
-        cm->getDerivedParams(), "",
-        &CustomUpdateInternal::getDerivedParams,
-        &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
-
-    // Add variables to struct
-    typeEnvironment.defineVars(cm->getVars(), backend.getDeviceVarPrefix());
-
-    // Add variable references to struct
-    typeEnvironment.defineVarReferences<Models::VarReference>(cm->getVarRefs(), backend.getDeviceVarPrefix());
-
-     // Add EGPs to struct
-     typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-
-     // Scan, parse and type-check update code
-     ErrorHandler errorHandler;
-     std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheckStatements(cm->getUpdateCode(), typeContext, 
-                                                                           typeEnvironment, errorHandler);
-}
-//----------------------------------------------------------------------------
-bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------    
-bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getDerivedParams(); });
-}
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest() const
 {
@@ -104,37 +44,37 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
 {
     // Add parameters, derived parameters and EGPs to environment
-    EnvironmentSubstitute envSubs(env);
+    EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
+
+    // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
-                                     [this](const std::string &p) { return isParamHeterogeneous(p); });
-    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
-                                    [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams());
+    cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
+    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateInternal> varSubs(
-        getArchetype(), getTypeContext(), envSubs, 
-        [this, &envSubs](const std::string&, const Models::VarInit&, VarAccess a)
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
+        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        [this, &cuEnv](const std::string&, VarAccess a)
         {
-            return getVarIndex(getVarAccessDuplication(a), envSubs["id"]);
+            return getVarIndex(getVarAccessDuplication(a), cuEnv["id"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarRefAdapter, CustomUpdateInternal> varRefSubs(
-        getArchetype(), getTypeContext(), varSubs, 
-        [this, &envSubs](const std::string&, const Models::VarReference &v, VarAccessMode)
+    EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
+        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", 
+        [this, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
                                   getVarAccessDuplication(v.getVar().access), 
-                                  envSubs["id"]);
+                                  varEnv["id"]);
         });
 
-    // Pretty print previously parsed update statements
-    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext(), m_ResolvedTypes);
+    Transpiler::ErrorHandler errorHandler("Custom update code " + std::to_string(getIndex()));
+    prettyPrintExpression(cm->getUpdateCode(), getTypeContext(), varRefEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -172,6 +112,16 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplica
     else {
         return getVarIndex(varDuplication, index);
     }    
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getParams(); });
+}
+//----------------------------------------------------------------------------    
+bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getDerivedParams(); });
 }
 
 // ----------------------------------------------------------------------------
@@ -213,36 +163,36 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
 {
-     // Add parameters, derived parameters and EGPs to environment
-    EnvironmentSubstitute envSubs(env);
+    // Add parameters, derived parameters and EGPs to environment
+    EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
+
+     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    envSubs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
-                                     [this](const std::string &p) { return isParamHeterogeneous(p); });
-    envSubs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
-                                    [this](const std::string &p) { return isDerivedParamHeterogeneous(p);  });
-    envSubs.addVarNameSubstitution(cm->getExtraGlobalParams());
+    cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
+    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUInternal> varSubs(
-        getArchetype(), getTypeContext(), envSubs, 
-        [&envSubs, this](const std::string&, const Models::VarInit&, VarAccess a)
+    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
+        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        [this, &cuEnv](const std::string&, VarAccess a)
         {
-            return getVarIndex(getVarAccessDuplication(a), envSubs["id_syn"]);
+            return getVarIndex(getVarAccessDuplication(a), cuEnv["id_syn"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUInternal> varRefSubs(
-        getArchetype(), getTypeContext(), varSubs, 
-        [&envSubs, this](const std::string&, const Models::WUVarReference &v, VarAccessMode)
+    EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
+        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", 
+        [this, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
-            return getVarRefIndex(getVarAccessDuplication(v.getVar().access),
-                                  envSubs["id_syn"]);
+            return getVarRefIndex(getVarAccessDuplication(v.getVar().access), 
+                                  varEnv["id_syn"]);
         });
 
-    // Pretty print previously parsed update statements
-    PrettyPrinter::print(getUpdateStatements(), varRefSubs, getTypeContext(), getResolvedTypes());
+    Transpiler::ErrorHandler errorHandler("Custom WU update code " + std::to_string(getIndex()));
+    prettyPrintExpression(cm->getUpdateCode(), getTypeContext(), varRefEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -261,7 +211,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, typeContext, groups)
 {
-    using namespace Type;
+    /*using namespace Type;
 
     // Create type environment
     StandardLibrary::FunctionTypes stdLibraryEnv;
@@ -359,7 +309,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Scan, parse and type-check update code
     ErrorHandler errorHandler;
     std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheckStatements(cm->getUpdateCode(), typeContext, 
-                                                                        typeEnvironment, errorHandler);
+                                                                        typeEnvironment, errorHandler);*/
 }
 
 // ----------------------------------------------------------------------------

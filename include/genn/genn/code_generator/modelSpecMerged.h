@@ -197,58 +197,76 @@ public:
     }
 
     template<typename G>
-    void genMergedCustomUpdateGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                           [](const CustomUpdateInternal &) { return true; },
+                           [&updateGroupName](const CustomUpdateInternal &cg) { return cg.getUpdateGroupName() == updateGroupName(); },
                            &CustomUpdateInternal::getHashDigest, generateGroup);
     }
 
     template<typename G>
-    void genMergedCustomUpdateWUGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomUpdateWUGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                           [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
+                           [&updateGroupName](const CustomUpdateWUInternal &cg) 
+                           {
+                               return (!cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName()); 
+                           },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup);
     }
 
     template<typename G>
-    void genMergedCustomUpdateTransposeWUGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomUpdateTransposeWUGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
-                           [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
+                           [&updateGroupName](const CustomUpdateWUInternal &cg)
+                           {
+                               return (cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName()); 
+                           },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup);
     }
 
     template<typename G>
-    void genMergedCustomUpdateHostReductionGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                           [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
+                           [&updateGroupName](const CustomUpdateInternal &cg)
+                           {
+                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName()); 
+                           },
                            &CustomUpdateInternal::getHashDigest, generateGroup, true);
     }
 
     template<typename G>
-    void genMergedCustomWUUpdateHostReductionGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomWUUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                           [](const CustomUpdateWUInternal &cg) { return cg.isBatchReduction(); },
+                           [&updateGroupName](const CustomUpdateWUInternal &cg)
+                           {
+                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName()); 
+                           },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup, true);
     }
 
     template<typename G>
-    void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, G generateGroup)
+    void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
-                           [](const CustomConnectivityUpdateInternal &cg) { return !cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty(); },
+                           [&updateGroupName](const CustomConnectivityUpdateInternal &cg)
+                           {
+                               return (!cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName()); 
+                           },
                            &CustomConnectivityUpdateInternal::getHashDigest, genereateGroup);
     }
 
     template<typename G>
-    void genMergedCustomConnectivityHostUpdateGroups(BackendBase &backend, G generateGroup)
+    void genMergedCustomConnectivityHostUpdateGroups(BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
          createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityHostUpdateGroups,
-                            [](const CustomConnectivityUpdateInternal &cg) { return !cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty(); },
+                            [&updateGroupName](const CustomConnectivityUpdateInternal &cg) 
+                            { 
+                                return (!cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName()); 
+                            },
                             &CustomConnectivityUpdateInternal::getHashDigest, generateGroup, true);
     }
 
@@ -540,7 +558,7 @@ private:
         }
 
         // Reserve final merged groups vector
-        mergedGroups.reserve(protoMergedGroups.size());
+        mergedGroups.reserve(mergedGroups.size() + protoMergedGroups.size());
 
         // Loop through resultant merged groups
         size_t i = 0;
@@ -571,10 +589,10 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename F, typename U, typename G>
+    template<typename Group, typename MergedGroup, typename F, typename D, typename G>
     void createMergedGroups(const BackendBase &backend,
                             const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                            F filter, U updateHash, G generateGroup, bool host = false)
+                            F filter, D getHashDigest, G generateGroup, bool host = false)
     {
         // Build temporary vector of references to groups that pass filter
         std::vector<std::reference_wrapper<const Group>> unmergedGroups;
@@ -585,7 +603,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(backend, unmergedGroups, mergedGroups, updateHash, generateGroup, host);
+        createMergedGroups(backend, unmergedGroups, mergedGroups, getHashDigest, generateGroup, host);
     }
 
     //--------------------------------------------------------------------------

@@ -13,15 +13,9 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
 public:
-    CustomUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                            const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
-
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &paramName) const;
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend,
@@ -33,12 +27,10 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
-
-    const Transpiler::Statement::StatementList &getUpdateStatements() const{ return m_UpdateStatements; }
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -47,13 +39,10 @@ public:
 
 private:
     //----------------------------------------------------------------------------
-    // Members
+    // Private methods
     //----------------------------------------------------------------------------
-    //! List of statements parsed and type-checked in constructor; and used to generate code
-    Transpiler::Statement::StatementList m_UpdateStatements;
-
-    //! Resolved types used to generate code
-    Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
+    bool isParamHeterogeneous(const std::string &paramName) const;
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 };
 
 // ----------------------------------------------------------------------------
@@ -70,7 +59,7 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternal &env) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
@@ -193,7 +182,7 @@ protected:
         //GroupMergedTypeEnvironment<CustomUpdateHostReductionGroupMergedBase> typeEnvironment(*this, Type::parseNumeric(precision));
         
         // Loop through variables and add pointers if they are reduction targets
-        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        /*const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
@@ -205,7 +194,7 @@ protected:
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
             }
-        }
+        }*/
     }
 };
 

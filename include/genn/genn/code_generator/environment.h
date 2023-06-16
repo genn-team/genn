@@ -565,22 +565,100 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
+template<typename A, typename G>
+class VarCachePolicy
+{
+public:
+    using GroupInternal = typename G::GroupInternal;
+    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDuplication)>;
+
+    VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
+    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    {}
+
+    VarCachePolicy(GetIndexFn getIndex)
+    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
+    {}
+
+    std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var &var)
+    {
+        return A(g).getNameSuffix();
+    }
+
+    std::string getReadIndex(G &g, const Models::Base::Var &var)
+    {
+        return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
+    }
+
+    std::string getWriteIndex(G &g, const Models::Base::Var &var)
+    {
+        return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
+    }
+
+private:
+    GetIndexFn m_GetReadIndex;
+    GetIndexFn m_GetWriteIndex;
+};
+
+template<typename A, typename G>
+class VarRefCachePolicy
+{
+protected:
+    using GroupInternal = typename G::GroupInternal;
+    using Initialiser = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
+    using GetIndexFn = std::function<std::string(const std::string&, const Initialiser&)>;
+  
+
+    VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
+    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    {}
+
+    VarRefCachePolicy(GetIndexFn getIndex)
+    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
+    {}
+
+    std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var)
+    {
+        return A(g).getInitialisers().at(var.name).getTargetName();
+    }
+
+    std::string getReadIndex(G &g, const Models::Base::VarRef &var)
+    {
+        return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
+    }
+
+    std::string getWriteIndex(G &g, const Models::Base::VarRef &var)
+    {
+        return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
+    }
+
+private:
+    GetIndexFn m_GetReadIndex;
+    GetIndexFn m_GetWriteIndex;
+};
+
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentLocalVarCache
 //----------------------------------------------------------------------------
 //! Pretty printing environment which caches used variables in local variables
-template<typename A, typename G, typename F = G>
-class EnvironmentLocalVarCache : public EnvironmentExternalBase
+template<typename P, typename A, typename G, typename F = G>
+class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
 {
-    //! Function used to provide index strings based on var name and
-    using GetIndexFn = std::function<std::string(const std::string&, VarAccess)>;
+    //! Type of a single definition
+    using Def = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
 
 public:
-    EnvironmentLocalVarCache(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
-                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   EnvironmentExternalBase(enclosing), m_Group(group), m_FieldGroup(fieldGroup), m_Context(context), m_Contents(m_ContentsStream), 
-        m_ArrayPrefix(arrayPrefix), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    /*template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(EnvironmentExternalBase &enclosing, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    {}*/
+
+    template<typename... PolicyArgs>
+    EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
+                              PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
+        m_Context(context), m_Contents(m_ContentsStream), m_ArrayPrefix(arrayPrefix), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -588,45 +666,35 @@ public:
                        [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
     }
 
-    EnvironmentLocalVarCache(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
-                             GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getReadIndex, getWriteIndex)
-    {}
+    /*template<typename... PolicyArgs>
+    EnvironmentLocalCacheBase(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
+                              PolicyArgs&&... policyArgs)
+    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, std::forward<PolicyArgs>(policyArgs)...)
+    {}*/
+   
 
-    EnvironmentLocalVarCache(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
-    :   EnvironmentLocalVarCache(group, fieldGroup, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getIndex, getIndex)
-    {
-    }
+    EnvironmentLocalCacheBase(const EnvironmentLocalCacheBase&) = delete;
 
-    EnvironmentLocalVarCache(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                             const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, GetIndexFn getIndex)
-    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, getIndex, getIndex)
-    {
-    }
-
-    EnvironmentLocalVarCache(const EnvironmentLocalVarCache&) = delete;
-
-    ~EnvironmentLocalVarCache()
+    ~EnvironmentLocalCacheBase()
     {
         A archetypeAdapter(m_Group.get().getArchetype());
 
         // Copy definitions of variables which have been referenced into new vector
         const auto varDefs = archetypeAdapter.getDefs();
-        Models::Base::VarVec referencedVars;
-        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedVars),
+        std::vector<Def> referencedDefs;
+        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
                      [this](const auto &v){ return m_VariablesReferenced.at(v.name).first; });
 
-        // Loop through referenced variables
-        for(const auto &v : referencedVars) {
+        // Loop through referenced definitions
+        for(const auto &v : referencedDefs) {
             const auto resolvedType = v.type.resolve(m_Context.get());
 
             // Add field to underlying field group
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
                                         [this, v](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return m_ArrayPrefix + v.name + A(m_Group.get().getGroups().at(i)).getNameSuffix();
+                                            return m_ArrayPrefix + v.name + getVarSuffix(m_Group.get().getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
@@ -638,7 +706,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << m_GetReadIndex(v.name, v.access) << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << getReadIndex(m_Group.get(), v) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -646,11 +714,11 @@ public:
         // Write contents to context stream
         getContextStream() << m_ContentsStream.str();
 
-        // Loop through referenced variables again
-        for(const auto &v : referencedVars) {
+        // Loop through referenced definitions again
+        for(const auto &v : referencedDefs) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << m_GetWriteIndex(v.name, v.access) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << getWriteIndex(m_Group.get(), v) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -715,8 +783,13 @@ private:
     std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    GetIndexFn m_GetReadIndex;
-    GetIndexFn m_GetWriteIndex;
-    std::unordered_map<std::string, std::pair<bool, Models::Base::Var>> m_VariablesReferenced;
+    std::unordered_map<std::string, std::pair<bool, Def>> m_VariablesReferenced;
 };
+
+template<typename A, typename G, typename F = G>
+using EnvironmentLocalVarCache = EnvironmentLocalCacheBase<VarCachePolicy<A, G>, A, G, F>;
+
+template<typename A, typename G, typename F = G>
+using EnvironmentLocalVarRefCache = EnvironmentLocalCacheBase<VarRefCachePolicy<A, G>, A, G, F>;
+
 }   // namespace GeNN::CodeGenerator

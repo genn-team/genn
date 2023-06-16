@@ -729,7 +729,7 @@ protected:
             }
         }
     }
-    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
+    void genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
     
     void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
     
