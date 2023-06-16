@@ -305,6 +305,51 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
     return m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isDendriticDelayRequired() const
+{
+    // If addToInSynDelay function is used in sim code, return true
+    if(getWUModel()->getSimCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    // If addToInSynDelay function is used in event code, return true
+    if(getWUModel()->getEventCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    // If addToInSynDelay function is used in synapse dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPresynapticOutputRequired() const
+{
+    // If addToPre function is used in sim_code, return true
+    if(getWUModel()->getSimCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in learn_post_code, return true
+    if(getWUModel()->getLearnPostCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in event_code, return true
+    if(getWUModel()->getEventCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in synapse_dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 {
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
