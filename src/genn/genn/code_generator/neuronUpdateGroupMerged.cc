@@ -1,7 +1,6 @@
 #include "code_generator/neuronUpdateGroupMerged.h"
 
 // GeNN code generator includes
-#include "code_generator/standardLibrary.h"
 #include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
 
@@ -709,7 +708,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                 neuronVarEnv.getStream() << "// spike reset code" << std::endl;
                 
                 Transpiler::ErrorHandler errorHandler("Neuron reset code " + std::to_string(getIndex()));
-                prettyPrintExpression(nm->getResetCode(), getTypeContext(), neuronVarEnv, errorHandler);
+                prettyPrintStatements(nm->getResetCode(), getTypeContext(), neuronVarEnv, errorHandler);
             }
         }
 

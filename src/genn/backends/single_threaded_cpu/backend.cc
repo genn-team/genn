@@ -1445,7 +1445,7 @@ void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handle
 void Backend::genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
-    env.getStream() << "for (unsigned int i = 0; i < (" << count << "); i++)";
+    env.getStream() << "for (unsigned int i = 0; i < (" << env[count] << "); i++)";
     {
         CodeStream::Scope b(env.getStream());
 

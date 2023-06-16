@@ -492,28 +492,28 @@ protected:
     template<typename G>
     void genNeuronIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
     {
-        env.add(Type::Uint32.addConst(), "num_neurons",
-                Type::Uint32, "numNeurons",
-                [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-        env.add(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getName(); });
-        env.add(Type::Uint32.createPointer(), "_spk", "spk",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getName(); });
-        env.add(Type::Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getName(); });
-        env.add(Type::Uint32.createPointer(), "_spk_evnt", "spkEvnt",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getName(); });
-        env.add(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
+        env.addField(Type::Uint32.addConst(), "num_neurons",
+                     Type::Uint32, "numNeurons",
+                     [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+        env.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getName(); });
+        env.addField(Type::Uint32.createPointer(), "_spk", "spk",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getName(); });
+        env.addField(Type::Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getName(); });
+        env.addField(Type::Uint32.createPointer(), "_spk_evnt", "spkEvnt",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getName(); });
+        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
+                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
 
-        env.add(env.getGroup().getTimeType().createPointer(), "_spk_time", "sT",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "sT" + g.getName(); });
-        env.add(env.getGroup().getTimeType().createPointer(), "_spk_evnt_time", "seT",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "seT" + g.getName(); });
-        env.add(env.getGroup().getTimeType().createPointer(), "_prev_spk_time", "prevST", 
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevST" + g.getName(); });
-        env.add(env.getGroup().getTimeType().createPointer(), "_prev_spk_evnt_time", "prevSET",
-                [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevSET" + g.getName(); });
+        env.addField(env.getGroup().getTimeType().createPointer(), "_spk_time", "sT",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "sT" + g.getName(); });
+        env.addField(env.getGroup().getTimeType().createPointer(), "_spk_evnt_time", "seT",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "seT" + g.getName(); });
+        env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_time", "prevST", 
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevST" + g.getName(); });
+        env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_evnt_time", "prevSET",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevSET" + g.getName(); });
 
 
         // If batching is enabled, calculate batch offset
@@ -573,49 +573,49 @@ protected:
     void genSynapseIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
     {
         // Synapse group fields 
-        groupEnv.add(Type::Uint32.addConst(), "num_pre",
-                     Type::Uint32, "numSrcNeurons", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-        groupEnv.add(Type::Uint32.addConst(), "num_post",
-                     Type::Uint32, "numTrgNeurons", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-        groupEnv.add(Type::Uint32, "_row_stride", "rowStride", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
-        groupEnv.add(Type::Uint32, "_col_stride", "colStride", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+        groupEnv.addField(Type::Uint32.addConst(), "num_pre",
+                          Type::Uint32, "numSrcNeurons", 
+                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        groupEnv.addField(Type::Uint32.addConst(), "num_post",
+                          Type::Uint32, "numTrgNeurons", 
+                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        groupEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
+                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
+        groupEnv.addField(Type::Uint32, "_col_stride", "colStride", 
+                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
                         
         // Postsynaptic model fields         
-        groupEnv.add(modelMerged.getModel().getPrecision().createPointer(), "_out_post", "outPost",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
-        groupEnv.add(modelMerged.getModel().getPrecision().createPointer(), "_den_delay", "denDelay",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+        groupEnv.addField(modelMerged.getModel().getPrecision().createPointer(), "_out_post", "outPost",
+                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
+        groupEnv.addField(modelMerged.getModel().getPrecision().createPointer(), "_den_delay", "denDelay",
+                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
+                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
                        
         // Presynaptic output fields
-        groupEnv.add(modelMerged.getModel().getPrecision().createPointer(), "_out_pre", "outPre",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
+        groupEnv.addField(modelMerged.getModel().getPrecision().createPointer(), "_out_pre", "outPre",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
                         
 
         // Source neuron fields
-        groupEnv.add(Type::Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getSrcNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_src_spk", "srcSpk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_src_spk_evnt_cnt", "srcSpkCntEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
+                          [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_src_spk", "srcSpk",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_src_spk_evnt_cnt", "srcSpkCntEvnt",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
 
         // Target neuron fields
-        groupEnv.add(Type::Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
-        groupEnv.add(Type::Uint32.createPointer(), "_trg_spk", "trgSpk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
+                          [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
+        groupEnv.addField(Type::Uint32.createPointer(), "_trg_spk", "trgSpk",
+                          [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
 
         // If batching is enabled
         if(batchSize > 1) {
