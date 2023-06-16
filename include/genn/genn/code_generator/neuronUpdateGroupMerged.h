@@ -15,17 +15,16 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
     //! Child group merged for current sources attached to this neuron update group
-    class CurrentSource : public GroupMerged<CurrentSourceInternal>
+    class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
     {
     public:
-        CurrentSource(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                      const BackendBase &backend, const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+        using ChildGroupMerged::ChildGroupMerged;
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -48,17 +47,16 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups
-    class InSynPSM : public GroupMerged<SynapseGroupInternal>
+    class InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynPSM(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                 const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        using ChildGroupMerged::ChildGroupMerged;
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged) const;
+                      const NeuronUpdateGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -81,37 +79,35 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with $(addToPre) logic
-    class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
+    class OutSynPreOutput : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynPreOutput(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                        const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        using ChildGroupMerged::ChildGroupMerged;
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng, 
-                      const ModelSpecMerged &modelMerged) const;
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng, 
+                      const ModelSpecMerged &modelMerged);
     };
 
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups with postsynaptic update/spike code
-    class InSynWUMPostCode : public GroupMerged<SynapseGroupInternal>
+    class InSynWUMPostCode : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
-        InSynWUMPostCode(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        using ChildGroupMerged::ChildGroupMerged;
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
+                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
-                                const ModelSpecMerged &modelMerged) const;
+                                const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -134,20 +130,19 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with presynaptic update/spike code
-    class OutSynWUMPreCode : public GroupMerged<SynapseGroupInternal>
+    class OutSynWUMPreCode : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
-        OutSynWUMPreCode(size_t index, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                         const BackendBase &backend, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+        using ChildGroupMerged::ChildGroupMerged;
 
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
-                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike) const;
+                      const ModelSpecMerged &modelMerged, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
-                                const ModelSpecMerged &modelMerged) const;
+                                const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -186,9 +181,9 @@ public:
     
     void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
-                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
+                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
-    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const;
+    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;

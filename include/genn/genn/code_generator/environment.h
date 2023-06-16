@@ -359,31 +359,31 @@ public:
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name,
-             const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-             const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
+                 const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
+                 const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                 const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
     {
          addInternal(type, name, std::make_tuple(false, indexSuffix, std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
                     initialisers, dependents);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
-             typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
+                  typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
     {
-         add(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers, dependents);
+         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers, dependents);
     }
 
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
-        add(getGroup().getScalarType().addConst(), name,
-            getGroup().getScalarType(), name + fieldSuffix,
-            [getFieldValue, this](const auto &g, size_t i)
-            {
-                return getScalarString(getFieldValue(g, i));
-            });
+        addField(getGroup().getScalarType().addConst(), name,
+                 getGroup().getScalarType(), name + fieldSuffix,
+                 [getFieldValue, this](const auto &g, size_t i)
+                 {
+                     return getScalarString(getFieldValue(g, i));
+                 });
     }
 
     void addParams(const Snippet::Base::StringVec &paramNames, const std::string &fieldSuffix, 
@@ -485,13 +485,13 @@ public:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
             const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            add(qualifiedType, v.name,
-                resolvedType.createPointer(), v.name + fieldSuffix, 
-                [arrayPrefix, getIndexFn, v](const auto &g, size_t) 
-                { 
-                    return arrayPrefix + v.name + A(g).getNameSuffix();
-                },
-                getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
+            addField(qualifiedType, v.name,
+                     resolvedType.createPointer(), v.name + fieldSuffix, 
+                     [arrayPrefix, getIndexFn, v](const auto &g, size_t) 
+                     { 
+                         return arrayPrefix + v.name + A(g).getNameSuffix();
+                     },
+                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
         }
     }
 
@@ -513,14 +513,14 @@ public:
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            add(qualifiedType, v.name,
-                resolvedType.createPointer(), v.name + fieldSuffix,
-                [arrayPrefix, v](const auto &g, size_t) 
-                { 
-                    const auto varRef = A(g).getInitialisers().at(v.name);
-                    return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
-                },
-                getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
+            addField(qualifiedType, v.name,
+                     resolvedType.createPointer(), v.name + fieldSuffix,
+                     [arrayPrefix, v](const auto &g, size_t) 
+                     { 
+                         const auto varRef = A(g).getInitialisers().at(v.name);
+                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                     },
+                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
         }
     }
 
@@ -539,13 +539,13 @@ public:
         const A archetypeAdaptor(getGroup().getArchetype());
         for(const auto &e : archetypeAdaptor.getDefs()) {
             const auto pointerType = e.type.resolve(getGroup().getTypeContext()).createPointer();
-            add(pointerType, e.name,
-                pointerType, e.name + varName + fieldSuffix,
-                [arrayPrefix, e, varName](const auto &g, size_t) 
-                {
-                    return arrayPrefix + e.name + varName + g.getName(); 
-                },
-                "", GroupMergedFieldType::DYNAMIC);
+            addField(pointerType, e.name,
+                     pointerType, e.name + varName + fieldSuffix,
+                     [arrayPrefix, e, varName](const auto &g, size_t) 
+                     {
+                         return arrayPrefix + e.name + varName + g.getName(); 
+                     },
+                     "", GroupMergedFieldType::DYNAMIC);
         }
     }
 

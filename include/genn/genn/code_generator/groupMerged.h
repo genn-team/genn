@@ -70,6 +70,9 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
+    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+    typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
+    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
     ChildGroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
     :   m_Index(index), m_Groups(std::move(groups))
@@ -93,6 +96,46 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
+    //! Helper to test whether parameter is referenced in vector of codestrings
+    bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
+    {
+        return std::any_of(codeStrings.begin(), codeStrings.end(),
+                           [&paramName](const std::string &c)
+                           {
+                               return (c.find("$(" + paramName + ")") != std::string::npos);
+                           });
+    }
+
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P>
+    bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
+    {
+        // Get value of parameter in archetype group
+        const double archetypeValue = getParamValuesFn(getArchetype()).at(name);
+
+        // Return true if any parameter values differ from the archetype value
+        return std::any_of(getGroups().cbegin(), getGroups().cend(),
+                           [&name, archetypeValue, getParamValuesFn](const GroupInternal &g)
+                           {
+                               return (getParamValuesFn(g).at(name) != archetypeValue);
+                           });
+    }
+
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P>
+    bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
+    {
+        // Get value of parameter in archetype group
+        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
+
+        // Return true if any parameter values differ from the archetype value
+        return std::any_of(getGroups().cbegin(), getGroups().cend(),
+                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
+                           {
+                               return (getParamValuesFn(g).at(index) != archetypeValue);
+                           });
+    }
+
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
@@ -179,13 +222,6 @@ template<typename G>
 class GroupMerged : public ChildGroupMerged<G>
 {
 public:
-    //------------------------------------------------------------------------
-    // Typedefines
-    //------------------------------------------------------------------------
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
-    typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
-    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
-
     GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
     :   ChildGroupMerged<G>(index, std::move(groups)), m_TypeContext(typeContext)
     {}
@@ -320,46 +356,6 @@ public:
     //------------------------------------------------------------------------
     const Type::ResolvedType &getScalarType() const{ return m_TypeContext.at("scalar"); }
     const Type::ResolvedType &getTimeType() const{ return m_TypeContext.at("timepoint"); }
-
-    //! Helper to test whether parameter is referenced in vector of codestrings
-    bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
-    {
-        return std::any_of(codeStrings.begin(), codeStrings.end(),
-                           [&paramName](const std::string &c)
-                           {
-                               return (c.find("$(" + paramName + ")") != std::string::npos);
-                           });
-    }
-
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(name);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [&name, archetypeValue, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(name) != archetypeValue);
-                           });
-    }
-
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(index) != archetypeValue);
-                           });
-    }
 
     void addField(const Type::ResolvedType &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {

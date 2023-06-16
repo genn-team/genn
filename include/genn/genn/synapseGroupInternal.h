@@ -107,6 +107,29 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// SynapsePSMEGPAdapter
+//----------------------------------------------------------------------------
+class SynapsePSMEGPAdapter
+{
+public:
+    SynapsePSMEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSExtraGlobalParamLocation(varName); }
+    
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getPSModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
 // SynapseWUVarAdapter
 //----------------------------------------------------------------------------
 class SynapseWUVarAdapter
