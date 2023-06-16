@@ -60,27 +60,23 @@ inline bool operator & (GroupMergedFieldType typeA, GroupMergedFieldType typeB)
 }
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::GroupMerged
+// GeNN::CodeGenerator::ChildGroupMerged
 //----------------------------------------------------------------------------
-//! Very thin wrapper around a number of groups which have been merged together
 template<typename G>
-class GroupMerged
+class ChildGroupMerged
 {
 public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
-    typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
-    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
-    GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
+    ChildGroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_Groups(std::move(groups))
     {}
 
-    GroupMerged(const GroupMerged&) = delete;
-    GroupMerged(GroupMerged&&) = default;
+    ChildGroupMerged(const ChildGroupMerged&) = delete;
+    ChildGroupMerged(ChildGroupMerged&&) = default;
 
     //------------------------------------------------------------------------
     // Public API
@@ -90,14 +86,121 @@ public:
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
 
+    //! Gets access to underlying vector of neuron groups which have been merged
+    const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    //! Helper to update hash with the hash of calling getHashableFn on each group
+    template<typename H>
+    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
+    {
+        for(const auto &g : getGroups()) {
+            Utils::updateHash(getHashableFn(g.get()), hash);
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        const auto &archetypeParams = getValueFn(getArchetype());
+        for(const auto &p : archetypeParams) {
+            // If any of the code strings reference the parameter
+            if((static_cast<const T*>(this)->*isParamReferencedFn)(p.first)) {
+                // Loop through groups
+                for(const auto &g : getGroups()) {
+                    // Update hash with parameter value
+                    Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T, typename A, typename R>
+    void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
+        for(const auto &varInit : archetypeVarInitialisers) {
+            // Loop through parameters
+            for(const auto &p : varInit.second.getParams()) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(p.first), hash);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T, typename A, typename R>
+    void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
+        for(const auto &varInit : archetypeVarInitialisers) {
+            // Loop through parameters
+            for(const auto &d : varInit.second.getDerivedParams()) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(d.first), hash);
+                    }
+                }
+            }
+        }
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    size_t m_Index;
+    std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::GroupMerged
+//----------------------------------------------------------------------------
+//! Very thin wrapper around a number of groups which have been merged together
+template<typename G>
+class GroupMerged : public ChildGroupMerged<G>
+{
+public:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+    typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
+    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
+
+    GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   ChildGroupMerged<G>(index, std::move(groups)), m_TypeContext(typeContext)
+    {}
+
+    GroupMerged(const GroupMerged&) = delete;
+    GroupMerged(GroupMerged&&) = default;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
     //! Get type context used to resolve any types involved in this group
     const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
     
     //! Get name of memory space assigned to group
     const std::string &getMemorySpace() const { return m_MemorySpace; }
-
-    //! Gets access to underlying vector of neuron groups which have been merged
-    const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
     //! Get group fields
     const std::vector<Field> &getFields() const{ return m_Fields; }
@@ -397,76 +500,6 @@ public:
         }
     }
 
-    //! Helper to update hash with the hash of calling getHashableFn on each group
-    template<typename H>
-    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
-    {
-        for(const auto &g : getGroups()) {
-            Utils::updateHash(getHashableFn(g.get()), hash);
-        }
-    }
-
-    template<typename T, typename V, typename R>
-    void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        const auto &archetypeParams = getValueFn(getArchetype());
-        for(const auto &p : archetypeParams) {
-            // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isParamReferencedFn)(p.first)) {
-                // Loop through groups
-                for(const auto &g : getGroups()) {
-                    // Update hash with parameter value
-                    Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
-                }
-            }
-        }
-    }
-
-    template<typename T, typename A, typename R>
-    void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through variables
-        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
-        for(const auto &varInit : archetypeVarInitialisers) {
-            // Loop through parameters
-            for(const auto &p : varInit.second.getParams()) {
-                // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
-                    // Loop through groups
-                    for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
-
-                        // Update hash with parameter value
-                        Utils::updateHash(values.at(p.first), hash);
-                    }
-                }
-            }
-        }
-    }
-
-    template<typename T, typename A, typename R>
-    void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through variables
-        const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
-        for(const auto &varInit : archetypeVarInitialisers) {
-            // Loop through parameters
-            for(const auto &d : varInit.second.getDerivedParams()) {
-                // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
-                    // Loop through groups
-                    for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
-
-                        // Update hash with parameter value
-                        Utils::updateHash(values.at(d.first), hash);
-                    }
-                }
-            }
-        }
-    }
-
     void generateRunnerBase(const BackendBase &backend, 
                             CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                             CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
@@ -549,11 +582,9 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t m_Index;
     const Type::TypeContext &m_TypeContext;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
-    std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };
 
 //----------------------------------------------------------------------------
@@ -641,8 +672,7 @@ protected:
     // Protected API
     //------------------------------------------------------------------------
     template<typename M, typename G, typename H>
-    void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &enclosingEnv,
-                                  const BackendBase &backend, G getVectorFunc, H getHashDigestFunc) const
+    void orderNeuronGroupChildren(std::vector<M> &childGroups, G getVectorFunc, H getHashDigestFunc) const
     {
         const std::vector<typename M::GroupInternal*> &archetypeChildren = (getArchetype().*getVectorFunc)();
 
@@ -683,7 +713,7 @@ protected:
         // Reserve vector of child groups and create merged group objects based on vector of groups
         childGroups.reserve(archetypeChildren.size());
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            childGroups.emplace_back(i, typeContext, enclosingEnv, backend, sortedGroupChildren[i]);
+            childGroups.emplace_back(i, typeContext, enclosingEnv, sortedGroupChildren[i]);
         }
     }
 
