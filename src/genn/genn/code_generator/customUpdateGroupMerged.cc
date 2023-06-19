@@ -58,9 +58,9 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &cuEnv](const std::string&, VarAccess a)
+        [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
-            return getVarIndex(getVarAccessDuplication(a), cuEnv["id"]);
+            return getVarIndex(d, cuEnv["id"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -177,9 +177,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &cuEnv](const std::string&, VarAccess a)
+        [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
-            return getVarIndex(getVarAccessDuplication(a), cuEnv["id_syn"]);
+            return getVarIndex(d, cuEnv["id_syn"]);
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
