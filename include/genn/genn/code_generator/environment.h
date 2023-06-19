@@ -648,11 +648,6 @@ class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
     using Def = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
 
 public:
-    /*template<typename... PolicyArgs>
-    EnvironmentExternalDynamicBase(EnvironmentExternalBase &enclosing, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
-    {}*/
-
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
                               const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
