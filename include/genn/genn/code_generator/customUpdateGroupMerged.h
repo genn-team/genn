@@ -13,6 +13,8 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
 public:
+    using GroupMerged::GroupMerged;
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -51,6 +53,8 @@ private:
 class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
 {
 public:
+    using GroupMerged::GroupMerged;
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -58,8 +62,6 @@ public:
     bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
@@ -82,27 +84,14 @@ public:
         return CodeGenerator::getKernelIndex(this, env, getGroupKernelSize);
     }
 
-    const auto &getUpdateStatements() const{ return m_UpdateStatements; }
-    const auto &getResolvedTypes() const{ return m_ResolvedTypes; }
-
 protected:
-    CustomUpdateWUGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env);
 
 private:
     static const std::vector<unsigned int>& getGroupKernelSize(const CustomUpdateWUInternal& g)
     {
         return g.getSynapseGroup()->getKernelSize();
     }
-
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    //! List of statements parsed and type-checked in constructor; and used to generate code
-    Transpiler::Statement::StatementList m_UpdateStatements;
-    
-    //! Resolved types used to generate code
-    Transpiler::TypeChecker::ResolvedTypeMap m_ResolvedTypes;
 };
 
 // ----------------------------------------------------------------------------
@@ -111,11 +100,7 @@ private:
 class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateWUGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, typeContext, backend, groups)
-    {
-    }
+    using CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -127,6 +112,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+    {
+        generateCustomUpdateBase(backend, env);
     }
 
     //----------------------------------------------------------------------------
@@ -141,11 +131,7 @@ public:
 class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateTransposeWUGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, typeContext, backend, groups)
-    {
-    }
+    using CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -158,6 +144,8 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -173,28 +161,36 @@ template<typename G>
 class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
 {
 protected:
-     CustomUpdateHostReductionGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                              const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, typeContext, groups)
+    using GroupMerged::GroupMerged;
+
+    template<typename M>
+    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentGroupMergedField<M> &env)
     {
-        // Create type environment
-        // **TEMP** parse precision to get scalar type
-        //GroupMergedTypeEnvironment<CustomUpdateHostReductionGroupMergedBase> typeEnvironment(*this, Type::parseNumeric(precision));
-        
         // Loop through variables and add pointers if they are reduction targets
-        /*const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        const auto *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
+                env.addField(fieldType, v.name, v.name,
+                             [&backend, v](const auto &g, size_t) 
+                             {
+                                 return backend.getDeviceVarPrefix() + v.name + g.getName(); 
+                             });
             }
         }
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
+                env.addField(fieldType, v.name, v.name,
+                             [&backend, v](const auto &g, size_t) 
+                             {
+                                 const auto varRef = g.getVarReferences().at(v.name);
+                                 return backend.getDeviceVarPrefix() + v.name + varRef.getTargetName(); 
+                             });
             }
-        }*/
+        }
     }
 };
 
@@ -204,8 +200,7 @@ protected:
 class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
-    CustomUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+    using CustomUpdateHostReductionGroupMergedBase::CustomUpdateHostReductionGroupMergedBase;
 
     //------------------------------------------------------------------------
     // Public API
@@ -218,6 +213,8 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -231,8 +228,7 @@ public:
 class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    using CustomUpdateHostReductionGroupMergedBase::CustomUpdateHostReductionGroupMergedBase;
 
     //------------------------------------------------------------------------
     // Public API
@@ -245,6 +241,8 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants

@@ -49,6 +49,16 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
 
+    cuEnv.addField(Type::Uint32.addConst(), "size",
+                   Type::Uint32, "size",
+                   [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+    
+    // If some variables are delayed, add delay pointer
+    if(getArchetype().getDelayNeuronGroup() != nullptr) {
+        cuEnv.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
+                       [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getDelayNeuronGroup()->getName(); });
+    }
+
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
@@ -163,10 +173,75 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+}
+//----------------------------------------------------------------------------
+void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env)
 {
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
+
+    // If underlying synapse group has kernel weights
+    if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(d)) {
+                cuEnv.addField(Type::Uint32, "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                               [d](const auto &cu, size_t) 
+                               {
+                                   return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
+                               });
+            }
+        }
+    }
+    // Otherwise
+    else {
+        cuEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
+                       [&backend](const auto &cg, size_t) 
+                       {
+                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                           return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+                       });
+    
+        cuEnv.addField(Type::Uint32, "num_pre", "numSrcNeurons",
+                       [](const auto &cg, size_t) 
+                       {
+                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
+                       });
+
+        cuEnv.addField(Type::Uint32, "num_post", "numTrgNeurons",
+                       [](const auto &cg, size_t)
+                       { 
+                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                           return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+                       });
+
+        // If synapse group has sparse connectivity
+        if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            cuEnv.addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "_ind", "ind", 
+                           [&backend](const auto &cg, size_t) 
+                           { 
+                               return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                           });
+
+            cuEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                           [&backend](const auto &cg, size_t) 
+                           { 
+                               return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                           });
+        }
+    }
 
      // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
@@ -194,124 +269,6 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     Transpiler::ErrorHandler errorHandler("Custom WU update code " + std::to_string(getIndex()));
     prettyPrintExpression(cm->getUpdateCode(), getTypeContext(), varRefEnv, errorHandler);
 }
-//----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
-{
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
-}
-//----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
-{
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
-}
-//----------------------------------------------------------------------------
-CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                             const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   GroupMerged<CustomUpdateWUInternal>(index, typeContext, groups)
-{
-    /*using namespace Type;
-
-    // Create type environment
-    StandardLibrary::FunctionTypes stdLibraryEnv;
-    GroupMergedTypeEnvironment<CustomUpdateWUGroupMergedBase> typeEnvironment(*this, &stdLibraryEnv);
-
-    // If underlying synapse group has kernel weights
-    if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        // Loop through kernel size dimensions
-        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(d)) {
-                addField(Uint32, "kernelSize" + std::to_string(d),
-                         [d](const auto &cu, size_t) 
-                         {
-                             return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
-                         });
-            }
-        }
-    }
-    // Otherwise
-    else {
-        addField(Uint32, "rowStride",
-                [&backend](const auto &cg, size_t) 
-                { 
-                    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                    return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-                });
-    
-        addField(Uint32, "numSrcNeurons",
-                 [](const auto &cg, size_t) 
-                 {
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-                 });
-
-        addField(Uint32, "numTrgNeurons",
-                 [](const auto &cg, size_t)
-                 { 
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-                 });
-
-        // If synapse group has sparse connectivity
-        if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
-                     [&backend](const auto &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
-                     });
-
-            addField(Uint32.createPointer(), "rowLength",
-                     [&backend](const auto &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                     });
-        }
-    }
-
-    // Add heterogeneous custom update model parameters
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    typeEnvironment.defineHeterogeneousParams(
-        cm->getParamNames(), "",
-        &CustomUpdateWUInternal::getParams,
-        &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
-
-    // Add heterogeneous weight update model derived parameters
-    typeEnvironment.defineHeterogeneousDerivedParams(
-        cm->getDerivedParams(), "",
-        &CustomUpdateWUInternal::getDerivedParams,
-        &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
-
-    // Add variables to struct
-    typeEnvironment.defineVars(cm->getVars(), backend.getDeviceVarPrefix());
-
-    // Add variable references to struct
-    const auto varRefs = cm->getVarRefs();
-    typeEnvironment.defineVarReferences<Models::WUVarReference>(varRefs, backend.getDeviceVarPrefix());
-
-     // Loop through variables
-    for(const auto &v : varRefs) {
-        // If variable has a transpose 
-        if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
-            // Add field with transpose suffix, pointing to transpose var
-            addField(v.type.resolve(getTypeContext()).createPointer(), v.name + "Transpose",
-                     [&backend, v](const auto &g, size_t)
-                     {
-                         const auto varRef = g.getVarReferences().at(v.name);
-                         return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
-                     });
-            }
-    }
-    // Add EGPs to struct
-    typeEnvironment.defineEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-
-    // Scan, parse and type-check update code
-    ErrorHandler errorHandler;
-    std::tie(m_UpdateStatements, m_ResolvedTypes) = scanParseAndTypeCheckStatements(cm->getUpdateCode(), typeContext, 
-                                                                        typeEnvironment, errorHandler);*/
-}
-
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
@@ -321,45 +278,61 @@ const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 // CustomUpdateTransposeWUGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
+// ----------------------------------------------------------------------------
+void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+{
+    // Add parameters, derived parameters and EGPs to environment
+    EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> cuEnv(env, *this);
+
+    // Loop through variable references
+    const auto varRefs = getArchetype().getCustomUpdateModel()->getVarRefs();
+    for(const auto &v : varRefs) {
+        const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
+
+        // If variable has a transpose, add field with transpose suffix, pointing to transpose var
+        if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
+            cuEnv.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
+                           [&backend, v](const auto &g, size_t)
+                           {
+                               const auto varRef = g.getVarReferences().at(v.name);
+                               return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
+                           });
+        }
+    }
+
+    generateCustomUpdateBase(backend, cuEnv);
+}
 
 // ----------------------------------------------------------------------------
 // CustomUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHostReduction";
 //----------------------------------------------------------------------------
-CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                                           const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, typeContext, backend, groups)
+void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
-    using namespace Type;
-
-    addField(Uint32, "size", [](const auto &c, size_t) { return std::to_string(c.getSize()); });
-
+    env.addField(Type::Uint32, "_size", "size",
+                 [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    
     // If some variables are delayed, add delay pointer
-    // **NOTE** this is HOST delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "spkQuePtr", 
-                 [](const auto &cg, size_t) 
-                 { 
-                     return "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
-                 });
+        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
+                     [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getDelayNeuronGroup()->getName(); });
     }
-}
 
+    generateCustomUpdateBase(backend, env);
+}
 // ----------------------------------------------------------------------------
 // CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdateHostReduction";
 //----------------------------------------------------------------------------
-CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                                               const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, typeContext, backend, groups)
+void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
-    using namespace Type;
+    env.addField(Type::Uint32, "_size", "size",
+                 [](const auto &c, size_t) 
+                 { 
+                     return std::to_string(c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+                 });
 
-    addField(Uint32, "size",
-             [&backend](const auto &cg, size_t) 
-             {
-                 return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
-             });
+    generateCustomUpdateBase(backend, env);
 }
