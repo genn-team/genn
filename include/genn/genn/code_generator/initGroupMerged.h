@@ -4,21 +4,80 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::NeuronInitGroupMerged
+// GeNN::CodeGenerator::InitGroupMergedBase
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
+template<typename B, typename A>
+class GENN_EXPORT InitGroupMergedBase : public B
+{
+public:
+    using B::B;
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+    {
+        return (isVarInitParamReferenced(varName, paramName) &&
+                this->isParamValueHeterogeneous(paramName, 
+                                                [&varName](const auto &g)
+                                                { 
+                                                    return A(g).getInitialisers().at(varName).getParams(); 
+                                                }));
+    }
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+    {
+        return (isVarInitParamReferenced(varName, paramName) &&
+                this->isParamValueHeterogeneous(paramName, 
+                                                [&varName](const auto &g) 
+                                                { 
+                                                    return A(g).getInitialisers().at(varName).getDerivedParams();
+                                                }));
+    }
+protected:
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
+    void updateBaseHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        this->template updateVarInitParamHash<InitGroupMergedBase<B, A>, A>(
+            &InitGroupMergedBase<B, A>::isVarInitParamHeterogeneous, hash);
+
+        this->template updateVarInitDerivedParamHash<InitGroupMergedBase<B, A>, A>(
+            &InitGroupMergedBase<B, A>::isVarInitDerivedParamHeterogeneous, hash);
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    //! Is the var init parameter referenced?
+    bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
+    {
+        const auto *varInitSnippet = A(this->getArchetype()).getInitialisers().at(varName).getSnippet();
+        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
+    }
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronInitGroupMerged : public InitGroupMergedBase<NeuronGroupMergedBase, NeuronVarAdapter>
 {
 public:
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
     //! Child group merged for current sources attached to this neuron update group
-    class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
+    class CurrentSource : public InitGroupMergedBase<ChildGroupMerged<CurrentSourceInternal>, CurrentSourceVarAdapter>
     {
     public:
-        using ChildGroupMerged::ChildGroupMerged;
+        using InitGroupMergedBase::InitGroupMergedBase;
 
         //----------------------------------------------------------------------------
         // Public API
@@ -27,30 +86,22 @@ public:
                       NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
     
         //! Update hash with child groups
-        void updateHash(boost::uuids::detail::sha1 &hash) const;
+        void updateHash(boost::uuids::detail::sha1 &hash) const
+        {
+            updateBaseHash(hash);
+            Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private methods
-        //----------------------------------------------------------------------------
-        //! Is the var init parameter referenced?
-        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+        }
     };
 
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups
-    class InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
+    class InSynPSM : public InitGroupMergedBase<ChildGroupMerged<SynapseGroupInternal>, SynapsePSMVarAdapter>
     {
     public:
-       using ChildGroupMerged::ChildGroupMerged;
+       using InitGroupMergedBase::InitGroupMergedBase;
 
        //----------------------------------------------------------------------------
         // Public API
@@ -59,20 +110,11 @@ public:
                       NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
         
         //! Update hash with child groups
-        void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private methods
-        //----------------------------------------------------------------------------
-        //! Is the var init parameter referenced?
-        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+        void updateHash(boost::uuids::detail::sha1 &hash) const
+        {
+            updateBaseHash(hash);
+            Utils::updateHash(getArchetype().getPSInitHashDigest(), hash);
+        }
     };
 
     //----------------------------------------------------------------------------
@@ -95,10 +137,10 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynWUMPostCode
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups with postsynaptic variables
-    class InSynWUMPostVars : public ChildGroupMerged<SynapseGroupInternal>
+    class InSynWUMPostVars : public InitGroupMergedBase<ChildGroupMerged<SynapseGroupInternal>, SynapseWUPostVarAdapter>
     {
     public:
-        using ChildGroupMerged::ChildGroupMerged;
+        using InitGroupMergedBase::InitGroupMergedBase;
 
         //----------------------------------------------------------------------------
         // Public API
@@ -107,30 +149,21 @@ public:
                       NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
 
         //! Update hash with child groups
-        void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private methods
-        //----------------------------------------------------------------------------
-        //! Is the var init parameter referenced?
-        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
+        void updateHash(boost::uuids::detail::sha1 &hash) const
+        {
+            updateBaseHash(hash);
+            Utils::updateHash(getArchetype().getWUPostInitHashDigest(), hash);
+        }
     };
 
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with presynaptic variables
-    class OutSynWUMPreVars: public ChildGroupMerged<SynapseGroupInternal>
+    class OutSynWUMPreVars: public InitGroupMergedBase<ChildGroupMerged<SynapseGroupInternal>, SynapseWUPreVarAdapter>
     {
     public:
-        using ChildGroupMerged::ChildGroupMerged;
+        using InitGroupMergedBase::InitGroupMergedBase;
 
         //----------------------------------------------------------------------------
         // Public API
@@ -139,23 +172,14 @@ public:
                       NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
         
         //! Update hash with child groups
-        void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the var init parameter be implemented heterogeneously?
-        bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-        //! Should the var init derived parameter be implemented heterogeneously?
-        bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private methods
-        //----------------------------------------------------------------------------
-        //! Is the var init parameter referenced?
-        bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;  
+        void updateHash(boost::uuids::detail::sha1 &hash) const
+        {
+            updateBaseHash(hash);
+            Utils::updateHash(getArchetype().getWUPreInitHashDigest(), hash);
+        }
     };
 
-    NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+    NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -180,12 +204,6 @@ public:
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
     const std::vector<InSynWUMPostVars> &getMergedInSynWUMPostVarGroups() const { return m_MergedInSynWUMPostVarGroups; }
     const std::vector<OutSynWUMPreVars> &getMergedOutSynWUMPreVarGroups() const { return m_MergedOutSynWUMPreVarGroups; }
-
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -216,18 +234,12 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseInitGroupMerged : public InitGroupMergedBase<GroupMerged<SynapseGroupInternal>, SynapseWUVarAdapter>
 {
 public:
-    SynapseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, 
-                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::Init, "", groups)
-    {}
+    using InitGroupMergedBase::InitGroupMergedBase;
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::Init);
-    }
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
@@ -249,18 +261,10 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseSparseInitGroupMerged : public InitGroupMergedBase<GroupMerged<SynapseGroupInternal>, SynapseWUVarAdapter>
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
-                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::SparseInit, "", groups)
-    {}
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SparseInit);
-    }
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, 
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
@@ -363,85 +367,14 @@ private:
     bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
 };
 
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::CustomUpdateInitGroupMergedBase
-//----------------------------------------------------------------------------
-//! Boilerplate base class for creating merged init groups for various types of CustomUpdate CustomConectivityUpdate
-template<typename G, typename A>
-class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
-{
-public:
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-    {
-        return (isVarInitParamReferenced(varName, paramName) &&
-                this->isParamValueHeterogeneous(paramName, 
-                                                [&varName](const G &cg)
-                                                { 
-                                                    A archetypeAdaptor(cg);
-                                                    return archetypeAdaptor.getInitialisers().at(varName).getParams(); 
-                                                }));
-    }
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-    {
-        return (isVarInitParamReferenced(varName, paramName) &&
-                this->isParamValueHeterogeneous(paramName, 
-                                                [&varName](const G &cg) 
-                                                { 
-                                                    A archetypeAdaptor(cg);
-                                                    return archetypeAdaptor.getInitialisers().at(varName).getDerivedParams();
-                                                }));
-    }
-protected:
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    void updateBaseHash(boost::uuids::detail::sha1 &hash) const
-    {
-        // Update hash with archetype's hash digest
-        Utils::updateHash(this->getArchetype().getInitHashDigest(), hash);
-
-        // Update hash with each group's variable initialisation parameters and derived parameters
-        this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G, A>, A>(
-            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitParamHeterogeneous, hash);
-
-        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<G, A>, A>(
-            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitDerivedParamHeterogeneous, hash);
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Private methods
-    //----------------------------------------------------------------------------
-    //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-    {
-        A archetypeAdaptor(this->getArchetype());
-        const auto *varInitSnippet = archetypeAdaptor.getInitialisers().at(varName).getSnippet();
-        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
-    }
-
-    //! Is the var init derived parameter referenced?
-    bool isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const
-    {
-        A archetypeAdaptor(this->getArchetype());
-        const auto *varInitSnippet = archetypeAdaptor.getInitialisers().at(varName).getSnippet();
-        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
-    }
-};
-
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
+class GENN_EXPORT CustomUpdateInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomUpdateInternal>,
+                                                                           CustomUpdateVarAdapter>
 {
 public:
-    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -469,12 +402,11 @@ public:
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                         CustomUpdateVarAdapter>
+class GENN_EXPORT CustomWUUpdateInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomUpdateWUInternal>, 
+                                                                             CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -492,47 +424,20 @@ public:
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
-    {
-        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const
-    {
-        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    std::string getKernelIndex(EnvironmentExternalBase &env) const
-    {
-        return CodeGenerator::getKernelIndex(this, env, getGroupKernelSize);
-    }
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
-
-private:
-    //----------------------------------------------------------------------------
-    // Private static methods
-    //----------------------------------------------------------------------------
-    static const std::vector<unsigned int> &getGroupKernelSize(const CustomUpdateWUInternal &g)
-    {
-        return g.getSynapseGroup()->getKernelSize();
-    }
 };
 
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomWUUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal,
-                                                                                               CustomUpdateVarAdapter>
+class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomUpdateWUInternal>, 
+                                                                                   CustomUpdateVarAdapter>
 {
 public:
-    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -559,12 +464,11 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomConnectivityUpdatePreInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                      CustomConnectivityUpdatePreVarAdapter>
+class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomConnectivityUpdateInternal>, 
+                                                                                          CustomConnectivityUpdatePreVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                               const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+    InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -591,12 +495,11 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomConnectivityUpdatePostInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                       CustomConnectivityUpdatePostVarAdapter>
+class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomConnectivityUpdateInternal>, 
+                                                                                           CustomConnectivityUpdatePostVarAdapter>
 {
 public:
-    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -623,11 +526,11 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomConnectivityUpdateSparseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal,
-                                                                                                         CustomConnectivityUpdateVarAdapter>
+class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public InitGroupMergedBase<GroupMerged<CustomConnectivityUpdateInternal>, 
+                                                                                             CustomConnectivityUpdateVarAdapter>
 {
 public:
-    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API

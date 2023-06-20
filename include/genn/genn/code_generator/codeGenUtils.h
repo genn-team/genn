@@ -182,46 +182,45 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
 }
 
-template<typename G, typename K>
-bool isKernelSizeHeterogeneous(const G *group, size_t dimensionIndex, K getKernelSizeFn)
+template<typename G>
+bool isKernelSizeHeterogeneous(const G &group, size_t dimensionIndex)
 {
     // Get size of this kernel dimension for archetype
-    const unsigned archetypeValue = getKernelSizeFn(group->getArchetype()).at(dimensionIndex);
+    const unsigned archetypeValue = group.getArchetype().getKernelSize().at(dimensionIndex);
 
     // Return true if any of the other groups have a different value
-    return std::any_of(group->getGroups().cbegin(), group->getGroups().cend(),
-                       [archetypeValue, dimensionIndex, getKernelSizeFn]
+    return std::any_of(group.getGroups().cbegin(), group.getGroups().cend(),
+                       [archetypeValue, dimensionIndex]
                        (const typename G::GroupInternal& g)
                        {
-                           return (getKernelSizeFn(g).at(dimensionIndex) != archetypeValue);
+                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
                        });
 }
 
-template<typename G, typename K>
-std::string getKernelSize(const G *group, size_t dimensionIndex, K getKernelSizeFn)
+template<typename G>
+std::string getKernelSize(const G &group, size_t dimensionIndex)
 {
     // If kernel size if heterogeneous in this dimension, return group structure entry
-    if (isKernelSizeHeterogeneous(group, dimensionIndex, getKernelSizeFn)) {
+    if (isKernelSizeHeterogeneous(group, dimensionIndex)) {
         return "group->kernelSize" + std::to_string(dimensionIndex);
     }
     // Otherwise, return literal
     else {
-        return std::to_string(getKernelSizeFn(group->getArchetype()).at(dimensionIndex));
+        return std::to_string(group.getArchetype().getKernelSize().at(dimensionIndex));
     }
 }
 
-template<typename G, typename K>
-std::string getKernelIndex(const G *group, EnvironmentExternalBase &env, 
-                           K getKernelSizeFn)
+template<typename G>
+std::string getKernelIndex(const G &group, EnvironmentExternalBase &env)
 {
     // Loop through kernel dimensions to calculate array index
-    const auto &kernelSize = getKernelSizeFn(group->getArchetype());
+    const auto &kernelSize = group.getArchetype().getKernelSize();
     std::ostringstream kernelIndex;
     for (size_t i = 0; i < kernelSize.size(); i++) {
         kernelIndex << "(" << env["id_kernel_" + std::to_string(i)];
         // Loop through remainining dimensions of kernel and multiply
         for (size_t j = i + 1; j < kernelSize.size(); j++) {
-            kernelIndex << " * " << getKernelSize(group, j, getKernelSizeFn);
+            kernelIndex << " * " << getKernelSize(group, j);
         }
         kernelIndex << ")";
 

@@ -87,6 +87,7 @@ public:
     using CustomUpdateWU::getHashDigest;
     using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;
+    using CustomUpdateWU::getKernelSize;
     using CustomUpdateWU::isBatchReduction;
     using CustomUpdateWU::isTransposeOperation;
 };

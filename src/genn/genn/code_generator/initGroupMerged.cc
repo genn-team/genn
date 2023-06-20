@@ -203,30 +203,7 @@ void NeuronInitGroupMerged::CurrentSource::generate(const BackendBase &backend, 
         backend, env, *this, ng, "CS" + std::to_string(getIndex()), 
         "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
-//----------------------------------------------------------------------------
-void NeuronInitGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sha1 &hash) const
-{
-    updateVarInitParamHash<CurrentSource, CurrentSourceVarAdapter>(&CurrentSource::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<CurrentSource, CurrentSourceVarAdapter>(&CurrentSource::isVarInitParamReferenced, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::CurrentSource::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &cs){ return cs.getVarInitialisers().at(varName).getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::CurrentSource::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &cs){ return cs.getVarInitialisers().at(varName).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::CurrentSource::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
+
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
@@ -278,30 +255,6 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     genInitNeuronVarCode<SynapsePSMVarAdapter, NeuronInitGroupMerged>(
         backend, groupEnv, *this, ng, fieldSuffix, "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
-//----------------------------------------------------------------------------
-void NeuronInitGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
-{
-    updateVarInitParamHash<InSynPSM, SynapsePSMVarAdapter>(&InSynPSM::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<InSynPSM, SynapsePSMVarAdapter>(&InSynPSM::isVarInitParamReferenced, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynPSM::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getPSVarInitialisers().at(varName).getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynPSM::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getPSVarInitialisers().at(varName).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynPSM::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getArchetype().getPSVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynPreOutput
@@ -335,30 +288,6 @@ void NeuronInitGroupMerged::InSynWUMPostVars::generate(const BackendBase &backen
     genInitNeuronVarCode<SynapseWUPostVarAdapter, NeuronInitGroupMerged>(
         backend, env, *this, ng, "InSynWUMPost" + std::to_string(getIndex()), "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
-//----------------------------------------------------------------------------
-void NeuronInitGroupMerged::InSynWUMPostVars::updateHash(boost::uuids::detail::sha1 &hash) const
-{
-    updateVarInitParamHash<InSynWUMPostVars, SynapseWUPostVarAdapter>(&InSynWUMPostVars::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<InSynWUMPostVars, SynapseWUPostVarAdapter>(&InSynWUMPostVars::isVarInitParamReferenced, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getWUPostVarInitialisers().at(varName).getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getWUPostVarInitialisers().at(varName).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::InSynWUMPostVars::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getArchetype().getWUPostVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
@@ -369,39 +298,15 @@ void NeuronInitGroupMerged::OutSynWUMPreVars::generate(const BackendBase &backen
     genInitNeuronVarCode<SynapseWUPreVarAdapter, NeuronInitGroupMerged>(
         backend, env, *this, ng, "OutSynWUMPre" + std::to_string(getIndex()), "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
-//----------------------------------------------------------------------------
-void NeuronInitGroupMerged::OutSynWUMPreVars::updateHash(boost::uuids::detail::sha1 &hash) const
-{
-    updateVarInitParamHash<OutSynWUMPreVars, SynapseWUPreVarAdapter>(&OutSynWUMPreVars::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<OutSynWUMPreVars, SynapseWUPreVarAdapter>(&OutSynWUMPreVars::isVarInitParamReferenced, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getWUPreVarInitialisers().at(varName).getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName,
-                                     [varName](const auto &sg){ return sg.getWUPreVarInitialisers().at(varName).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::OutSynWUMPreVars::isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getArchetype().getWUPreVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, typeContext, groups)
+:   InitGroupMergedBase<NeuronGroupMergedBase, NeuronVarAdapter>(index, typeContext, groups)
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext,
@@ -435,16 +340,15 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
 {
     boost::uuids::detail::sha1 hash;
 
-    /// Update hash with each group's neuron count
+    // Update hash with standard archetype hash and var init parameters and derived parameters
+    updateBaseHash(hash);
+
+    // Update hash with each group's neuron count
     updateHash([](const NeuronGroupInternal &g) { return g.getNumNeurons(); }, hash);
 
     // Update hash with archetype's hash digest
     Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
-    // Update hash with each group's variable initialisation parameters and derived parameters
-    updateVarInitParamHash<NeuronInitGroupMerged, NeuronVarAdapter>(&NeuronInitGroupMerged::isVarInitParamReferenced, hash);
-    updateVarInitDerivedParamHash<NeuronInitGroupMerged, NeuronVarAdapter>(&NeuronInitGroupMerged::isVarInitParamReferenced, hash);
-    
     // Update hash with child groups
     for (const auto &cs : getMergedCurrentSourceGroups()) {
         cs.updateHash(hash);
@@ -528,18 +432,6 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     for (auto &sg : m_MergedInSynWUMPostVarGroups) {
         sg.generate(backend, env, *this, modelMerged);
     }
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return (isParamValueHeterogeneous(paramName,
-                                      [varName](const NeuronGroupInternal &sg) { return sg.getVarInitialisers().at(varName).getParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return (isParamValueHeterogeneous(paramName,
-                                      [varName](const NeuronGroupInternal &sg){ return sg.getVarInitialisers().at(varName).getDerivedParams(); }));
 }
 //--------------------------------------------------------------------------
 void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, EnvironmentExternalBase &env, 
@@ -637,7 +529,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
         batchStrideInit << "const unsigned int batchStride = ";
         const auto &kernelSize = getArchetype().getKernelSize();
         for (size_t i = 0; i < kernelSize.size(); i++) {
-            batchStrideInit << getKernelSize(i);
+            batchStrideInit << getKernelSize(*this, i);
 
             if (i != (kernelSize.size() - 1)) {
                 batchStrideInit << " * ";
@@ -712,7 +604,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
     // Add substitution
     // **TODO** dependencies on kernel fields
     groupEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                 {groupEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(groupEnv) + ";")});
+                 {groupEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(*this, groupEnv) + ";")});
 
     // Initialise single (hence empty lambda function) synapse variable
     genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, groupEnv["num_pre"] + " * " + groupEnv["_row_stride"], modelMerged.getModel().getBatchSize(),
@@ -804,27 +696,6 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                              &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
-        /*const auto &pointerToPointerToEGP = e.type.resolve(getTypeContext()).createPointer().createPointer();
-        addField(pointerToPointerToEGP, e.name,
-                 [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
-                 GroupMergedFieldType::HOST_DYNAMIC);
-
-        if(!backend.getDeviceVarPrefix().empty()) {
-            addField(pointerToPointerToEGP, backend.getDeviceVarPrefix() + e.name,
-                     [e, &backend](const SynapseGroupInternal &g, size_t)
-                     {
-                         return "&" + backend.getDeviceVarPrefix() + e.name + g.getName();
-                     },
-                     GroupMergedFieldType::DYNAMIC);
-        }
-        if(!backend.getHostVarPrefix().empty()) {
-            addField(pointerToPointerToEGP, backend.getHostVarPrefix() + e.name,
-                     [e, &backend](const SynapseGroupInternal &g, size_t)
-                     {
-                         return "&" + backend.getHostVarPrefix() + e.name + g.getName();
-                     },
-                     GroupMergedFieldType::DYNAMIC);
-        }*/
         // Loop through EGPs
         for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
             // If EGP is located on the host
@@ -921,6 +792,9 @@ boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDige
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+
     // Update hash with size of custom update
     updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
 
@@ -945,6 +819,9 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateInitGroupMerged::getHashDi
     
     // Update hash with generic custom update init data
     updateBaseHash(hash);
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
     // If underlying synapse group has kernel weights, update hash with kernel size
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
@@ -981,7 +858,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
         // Loop through kernel size dimensions
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(d)) {
+            if (isKernelSizeHeterogeneous(*this, d)) {
                 groupEnv.addField(Type::Uint32, "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
                                   [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
             }
@@ -993,7 +870,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
             batchStrideInit << "const unsigned int batchStride = ";
             const auto &kernelSize = getArchetype().getSynapseGroup()->getKernelSize();
             for (size_t i = 0; i < kernelSize.size(); i++) {
-                batchStrideInit << getKernelSize(i);
+                batchStrideInit << getKernelSize(*this, i);
 
                 if (i != (kernelSize.size() - 1)) {
                     batchStrideInit << " * ";
@@ -1051,6 +928,9 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
     
     // Update hash with generic custom update init data
     updateBaseHash(hash);
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
     // Update hash with sizes of pre and postsynaptic neuron groups; and max row length
     updateHash([](const auto &cg) 
@@ -1117,6 +997,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerg
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+
     // Update hash with size of custom update
     updateHash([](const auto &cg) 
                { 
@@ -1154,6 +1037,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMer
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+
     // Update hash with size of custom update
     updateHash([](const auto &cg)
                {
@@ -1190,6 +1076,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
 
     // Update hash with generic custom update init data
     updateBaseHash(hash);
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
     // Update hash with sizes of pre and postsynaptic neuron groups; and max row length
     updateHash([](const CustomConnectivityUpdateInternal &cg)

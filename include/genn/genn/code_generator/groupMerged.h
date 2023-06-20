@@ -128,7 +128,7 @@ protected:
     }
 
     //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
+    /*template<typename P>
     bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
     {
         // Get value of parameter in archetype group
@@ -140,7 +140,7 @@ protected:
                            {
                                return (getParamValuesFn(g).at(index) != archetypeValue);
                            });
-    }
+    }*/
 
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
@@ -616,24 +616,6 @@ public:
     //! Is postsynaptic neuron derived parameter heterogeneous?
     bool isTrgNeuronDerivedParamHeterogeneous(const std::string &paramName) const;
 
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
-    {
-        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
-    }
-    
-    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const
-    {
-        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
-    }
-    
-    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    std::string getKernelIndex(EnvironmentExternalBase &env) const
-    {
-        return CodeGenerator::getKernelIndex(this, env, getGroupKernelSize);
-    }
-
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
 
@@ -730,11 +712,6 @@ private:
 
     //! Is postsynaptic neuron parameter referenced?
     bool isTrgNeuronParamReferenced(const std::string &paramName) const;
-
-    static const std::vector<unsigned int>& getGroupKernelSize(const SynapseGroupInternal& g)
-    {
-        return g.getKernelSize();
-    }
 
     //------------------------------------------------------------------------
     // Members

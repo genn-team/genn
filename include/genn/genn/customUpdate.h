@@ -297,6 +297,8 @@ protected:
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
+    const std::vector<unsigned int> &getKernelSize() const { return getSynapseGroup()->getKernelSize(); }
+
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;

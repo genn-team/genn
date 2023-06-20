@@ -66,32 +66,8 @@ public:
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
-    {
-        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const
-    {
-        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    std::string getKernelIndex(EnvironmentExternalBase &env) const
-    {
-        return CodeGenerator::getKernelIndex(this, env, getGroupKernelSize);
-    }
-
 protected:
     void generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env);
-
-private:
-    static const std::vector<unsigned int>& getGroupKernelSize(const CustomUpdateWUInternal& g)
-    {
-        return g.getSynapseGroup()->getKernelSize();
-    }
 };
 
 // ----------------------------------------------------------------------------
