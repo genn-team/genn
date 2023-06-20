@@ -18,6 +18,8 @@ public:
     class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
     {
     public:
+        using ChildGroupMerged::ChildGroupMerged;
+
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
@@ -45,9 +47,11 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups
-    class InSynPSM : public GroupMerged<SynapseGroupInternal>
+    class InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
+       using ChildGroupMerged::ChildGroupMerged;
+
        //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
@@ -75,9 +79,11 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynPreOutput
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with $(addToPre) logic
-    class OutSynPreOutput : public GroupMerged<SynapseGroupInternal>
+    class OutSynPreOutput : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
+        using ChildGroupMerged::ChildGroupMerged;
+
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
@@ -89,9 +95,11 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynWUMPostCode
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups with postsynaptic variables
-    class InSynWUMPostVars : public GroupMerged<SynapseGroupInternal>
+    class InSynWUMPostVars : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
+        using ChildGroupMerged::ChildGroupMerged;
+
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
@@ -119,9 +127,11 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::OutSynWUMPreVars
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with presynaptic variables
-    class OutSynWUMPreVars: public GroupMerged<SynapseGroupInternal>
+    class OutSynWUMPreVars: public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
+        using ChildGroupMerged::ChildGroupMerged;
+
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
@@ -171,6 +181,12 @@ public:
     const std::vector<InSynWUMPostVars> &getMergedInSynWUMPostVarGroups() const { return m_MergedInSynWUMPostVarGroups; }
     const std::vector<OutSynWUMPreVars> &getMergedOutSynWUMPreVarGroups() const { return m_MergedOutSynWUMPreVarGroups; }
 
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -185,13 +201,7 @@ private:
     void genInitSpikes(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
 
     void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
-
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
+ 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -242,9 +252,9 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
+    SynapseSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::SparseInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -275,9 +285,9 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+    SynapseConnectivityInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -296,7 +306,7 @@ public:
 
     void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -318,8 +328,7 @@ private:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    using GroupMerged::GroupMerged;
 
     //------------------------------------------------------------------------
     // Public API
@@ -361,9 +370,9 @@ private:
 template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
-protected:
+public:
     //----------------------------------------------------------------------------
-    // Protected methods
+    // Public API
     //----------------------------------------------------------------------------
     //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
@@ -388,7 +397,10 @@ protected:
                                                     return archetypeAdaptor.getInitialisers().at(varName).getDerivedParams();
                                                 }));
     }
-
+protected:
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
     void updateBaseHash(boost::uuids::detail::sha1 &hash) const
     {
         // Update hash with archetype's hash digest
@@ -520,8 +532,7 @@ class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitG
                                                                                                CustomUpdateVarAdapter>
 {
 public:
-    CustomWUUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API

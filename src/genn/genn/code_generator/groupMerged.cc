@@ -130,13 +130,13 @@ bool SynapseGroupMergedBase::isWUGlobalVarHeterogeneous(const std::string &varNa
             isParamValueHeterogeneous(varName, [](const SynapseGroupInternal &sg) { return sg.getWUConstInitVals(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+bool SynapseGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
     return (isWUVarInitParamReferenced(varName, paramName) &&
             isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg){ return sg.getWUVarInitialisers().at(varName).getParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+bool SynapseGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
     return (isWUVarInitParamReferenced(varName, paramName) && 
             isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varName).getDerivedParams(); }));

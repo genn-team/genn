@@ -437,7 +437,9 @@ public:
     {
         // Loop through EGPs
         for(const auto &e : egps) {
-            const auto pointerType = e.type.resolve(getGroup().getTypeContext()).createPointer();
+            const auto resolvedType = e.type.resolve(getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
                      pointerType, e.name + varName + fieldSuffix,
                      [arrayPrefix, e, varName](const auto &g, size_t) 
@@ -461,7 +463,7 @@ public:
                 addScalar(p, fieldSuffix,
                           [p, getConnectivity](const auto &g, size_t)
                           {
-                              return std::invoke(getConnectivity, g).at(p).getParams();
+                              return std::invoke(getConnectivity, g).getParams().at(p);
                           });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
@@ -482,10 +484,10 @@ public:
         for(const auto &d : snippet->getDerivedParams()) {
             // If parameter is heterogeneous, add scalar field
             if (std::invoke(isHeterogeneous, getGroup(), d.name)) {
-                addScalar(d, fieldSuffix,
+                addScalar(d.name, fieldSuffix,
                           [d, getConnectivity](const auto &g, size_t)
                           {
-                              return std::invoke(getConnectivity, g).at(d.name).getDerivedParams()();
+                              return std::invoke(getConnectivity, g).getDerivedParams().at(d.name);
                           });
             }
             // Otherwise, just add a const-qualified scalar to the type environment

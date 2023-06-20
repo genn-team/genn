@@ -185,6 +185,8 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
+    bool isVarDelayed(const std::string &) const { return false; }
+
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:

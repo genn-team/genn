@@ -97,8 +97,8 @@ void genKernelIteration(EnvironmentExternal &env, const G &g, size_t numKernelDi
                     // Generate kernel index and use as "synapse" index
                     // **TODO** rename
                     assert(false);
-                    //const size_t kernelInit = loopEnv.addInitialiser("const unsigned int kernelInd = " + g.genKernelIndex(loopEnv) + ";");
-                    //loopEnv.addVarSubstitution("id_syn", "kernelInd", kernelInit);
+                    //const size_t addSynapse = loopEnv.addInitialiser("const unsigned int kernelInd = " + g.genKernelIndex(loopEnv) + ";");
+                    //loopEnv.addVarSubstitution("id_syn", "kernelInd", addSynapse);
 
                     // Call handler
                     handler(loopEnv);
@@ -1046,21 +1046,21 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     CodeStream::Scope b(os);
 
                     // Create new stream to generate addSynapse function which initializes all kernel variables
-                    std::ostringstream kernelInitStream;
-                    CodeStream kernelInit(kernelInitStream);
+                    std::ostringstream addSynapseStream;
+                    CodeStream addSynapse(addSynapseStream);
 
                     // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
-                    kernelInit << "do";
+                    addSynapse << "do";
                     {
-                        CodeStream::Scope b(kernelInit);
+                        CodeStream::Scope b(addSynapse);
 
                         // Calculate index in data structure of this synapse
                         if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             if(!snippet->getRowBuildCode().empty()) {
-                                kernelInit << "const unsigned int idx = " << "(" + popSubs["id_pre"] + " * group->rowStride) + group->rowLength[i];" << std::endl;
+                                addSynapse << "const unsigned int idx = " << "(" + popSubs["id_pre"] + " * group->rowStride) + group->rowLength[i];" << std::endl;
                             }
                             else {
-                                kernelInit << "const unsigned int idx = " << "(($(0)) * group->rowStride) + group->rowLength[$(0)];" << std::endl;
+                                addSynapse << "const unsigned int idx = " << "(($(0)) * group->rowStride) + group->rowLength[$(0)];" << std::endl;
                             }
                         }
 
@@ -1088,39 +1088,39 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                             }
 
                             // Call handler to initialize variables
-                            s.generateKernelInit(*this, kernelInit, modelMerged, kernelInitSubs);
+                            s.generateKernelInit(*this, addSynapse, modelMerged, kernelInitSubs);
                         }
 
                         // If there is row-building code in this snippet
                         if(!snippet->getRowBuildCode().empty()) {
                             // If matrix is sparse, add function to increment row length and insert synapse into ind array
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                kernelInit << "group->ind[idx] = $(0);" << std::endl;
-                                kernelInit << "group->rowLength[i]++;" << std::endl;
+                                addSynapse << "group->ind[idx] = $(0);" << std::endl;
+                                addSynapse << "group->rowLength[i]++;" << std::endl;
                             }
                             // Otherwise, add function to set correct bit in bitmask
                             else {
-                                kernelInit << "const int64_t rowStartGID = i * group->rowStride;" << std::endl;
-                                kernelInit << "setB(group->gp[(rowStartGID + ($(0))) / 32], (rowStartGID + $(0)) & 31);" << std::endl;
+                                addSynapse << "const int64_t rowStartGID = i * group->rowStride;" << std::endl;
+                                addSynapse << "setB(group->gp[(rowStartGID + ($(0))) / 32], (rowStartGID + $(0)) & 31);" << std::endl;
                             }
                         }
                         // Otherwise
                         else {
                             // If matrix is sparse, add function to increment row length and insert synapse into ind array
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                kernelInit << "group->ind[idx] = " << popSubs["id_post"] << ";" << std::endl;
-                                kernelInit << "group->rowLength[$(0)]++;" << std::endl;
+                                addSynapse << "group->ind[idx] = " << popSubs["id_post"] << ";" << std::endl;
+                                addSynapse << "group->rowLength[$(0)]++;" << std::endl;
                             }
                             else {
-                                kernelInit << "const int64_t colStartGID = j;" << std::endl;
-                                kernelInit << "setB(group->gp[(colStartGID + (($(0)) * group->rowStride)) / 32], ((colStartGID + (($(0)) * group->rowStride)) & 31));" << std::endl;
+                                addSynapse << "const int64_t colStartGID = j;" << std::endl;
+                                addSynapse << "setB(group->gp[(colStartGID + (($(0)) * group->rowStride)) / 32], ((colStartGID + (($(0)) * group->rowStride)) & 31));" << std::endl;
                             }
                         }
                     }
-                    kernelInit << "while(false)";
+                    addSynapse << "while(false)";
 
                     popSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)s.getArchetype().getKernelSize().size(),
-                                                kernelInitStream.str());
+                                                addSynapseStream.str());
 
                     // Call appropriate connectivity handler
                     if(!snippet->getRowBuildCode().empty()) {

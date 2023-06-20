@@ -220,6 +220,7 @@ struct ResolvedType
     //------------------------------------------------------------------------
     bool isValue() const{ return std::holds_alternative<Value>(detail); }
     bool isPointer() const{ return std::holds_alternative<Pointer>(detail); }
+    bool isPointerToPointer() const{ return isPointer() && getPointer().valueType->isPointer(); }
     bool isFunction() const{ return std::holds_alternative<Function>(detail); }
     bool isNumeric() const{ return isValue() && getValue().numeric; }
     bool isVoid() const{ return std::holds_alternative<std::monostate>(detail); }

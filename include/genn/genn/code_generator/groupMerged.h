@@ -587,10 +587,10 @@ public:
     bool isWUGlobalVarHeterogeneous(const std::string &varName) const;
 
     //! Should the weight update model variable initialization parameter be implemented heterogeneously?
-    bool isWUVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
     
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
-    bool isWUVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
     bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;

@@ -84,6 +84,10 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -108,6 +112,10 @@ public:
     Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:
     //----------------------------------------------------------------------------
