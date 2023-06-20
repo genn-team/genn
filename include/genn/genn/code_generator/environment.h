@@ -342,6 +342,10 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
 
     template<typename V>
+    using GetConnectivityFn = const Snippet::Init<V> &(GroupInternal::*)(void) const;
+
+
+    template<typename V>
     using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
 
 public:
@@ -360,9 +364,9 @@ public:
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
-                 const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                 const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                 const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
+                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
     {
          addInternal(type, name, std::make_tuple(false, indexSuffix, std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
                     initialisers, dependents);
@@ -441,6 +445,54 @@ public:
                          return arrayPrefix + e.name + varName + g.getName(); 
                      },
                      "", GroupMergedFieldType::DYNAMIC);
+        }
+    }
+
+    template<typename C>
+    void addConnectInitParams(const std::string &fieldSuffix, GetConnectivityFn<C> getConnectivity, 
+                              IsHeterogeneousFn isHeterogeneous)
+    {
+        // Loop through params
+        const auto &connectInit = std::invoke(getConnectivity, getGroup().getArchetype());
+        const auto *snippet = connectInit.getSnippet();
+        for(const auto &p : snippet->getParamNames()) {
+            // If parameter is heterogeneous, add scalar field
+            if (std::invoke(isHeterogeneous, getGroup(), p)) {
+                addScalar(p, fieldSuffix,
+                          [p, getConnectivity](const auto &g, size_t)
+                          {
+                              return std::invoke(getConnectivity, g).at(p).getParams();
+                          });
+            }
+            // Otherwise, just add a const-qualified scalar to the type environment
+            else {
+                add(getGroup().getScalarType().addConst(), p, 
+                    getScalarString(connectInit.getParams().at(p)));
+            }
+        }
+    }
+
+    template<typename C>
+    void addConnectInitDerivedParams(const std::string &fieldSuffix,  GetConnectivityFn<C> getConnectivity, 
+                                     IsHeterogeneousFn isHeterogeneous)
+    {
+        // Loop through params
+        const auto &connectInit = std::invoke(getConnectivity, getGroup().getArchetype());
+        const auto *snippet = connectInit.getSnippet();
+        for(const auto &d : snippet->getDerivedParams()) {
+            // If parameter is heterogeneous, add scalar field
+            if (std::invoke(isHeterogeneous, getGroup(), d.name)) {
+                addScalar(d, fieldSuffix,
+                          [d, getConnectivity](const auto &g, size_t)
+                          {
+                              return std::invoke(getConnectivity, g).at(d.name).getDerivedParams()();
+                          });
+            }
+            // Otherwise, just add a const-qualified scalar to the type environment
+            else {
+                add(getGroup().getScalarType().addConst(), d.name, 
+                    getScalarString(connectInit.getDerivedParams().at(d.name)));
+            }
         }
     }
 

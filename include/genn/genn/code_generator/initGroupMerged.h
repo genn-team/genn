@@ -209,9 +209,9 @@ private:
 class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
+    SynapseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, 
                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, backend, SynapseGroupMergedBase::Role::Init, "", groups)
+    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::Init, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -228,7 +228,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -261,7 +261,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -294,9 +294,9 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSparseRowInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateSparseColumnInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateKernelInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -308,7 +308,7 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Generate either row or column connectivity init code
-    void genInitConnectivity(CodeStream &os, Substitutions &popSubs, bool rowNotColumns) const;
+    void genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns);
 };
 
 
@@ -333,7 +333,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -362,30 +362,6 @@ template<typename G, typename A>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 protected:
-    CustomUpdateInitGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                    const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, typeContext, groups)
-    {
-        // Loop through variables
-        A archetypeAdaptor(this->getArchetype());
-        for (const auto &var : archetypeAdaptor.getDefs()) {
-            // If we're not initialising or if there is initialization code for this variable
-            const auto &varInit = archetypeAdaptor.getInitialisers().at(var.name);
-            if (!varInit.getSnippet()->getCode().empty()) {
-                this->addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
-            }
-
-            // Add any var init EGPs to structure
-            this->addEGPs(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
-        }
-
-        this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G, A>, A>(
-            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitParamHeterogeneous);
-
-        this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G, A>, A>(
-            &CustomUpdateInitGroupMergedBase<G, A>::isVarInitDerivedParamHeterogeneous);
-    }
-
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
@@ -453,8 +429,7 @@ private:
 class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateVarAdapter>
 {
 public:
-    CustomUpdateInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -470,7 +445,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternal &env, const ModelSpecMerged &modelMerged) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -503,7 +478,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //! Is kernel size heterogeneous in this dimension?
     bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
@@ -562,7 +537,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -594,7 +569,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -626,7 +601,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -641,8 +616,7 @@ class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomU
                                                                                                          CustomConnectivityUpdateVarAdapter>
 {
 public:
-    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+    using CustomUpdateInitGroupMergedBase::CustomUpdateInitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
@@ -658,7 +632,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
 
     //----------------------------------------------------------------------------
     // Static constants

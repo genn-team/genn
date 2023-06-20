@@ -729,97 +729,99 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                     }
                                 }
                             }
-                        });
-                }
+                        }
+                    });
                 
                 // Loop through merged custom connectivity update groups
-                for(const auto &c : modelMerged.getMergedCustomConnectivityUpdateGroups()) {
-                    // If this update group isn't for current group, skip
-                    if(c.getArchetype().getUpdateGroupName() != g) {
-                        continue;
-                    }
-
-                    CodeStream::Scope b(funcEnv.getStream());
-                    funcEnv.getStream() << "// merged custom connectivity update group " << c.getIndex() << std::endl;
-                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                modelMerged.genMergedCustomConnectivityUpdateGroups(
+                    *this, g,
+                    [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
-
-                        // Get reference to group
-                        funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
-                        
-                        genCustomConnectivityUpdateIndexCalculation(funcEnv.getStream(), c);
-                        
-                        // Loop through presynaptic neurons
-                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                        funcEnv.getStream() << "// merged custom connectivity update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group
+                            funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                             
-                            // Configure substitutions
-                            EnvironmentSubstitute cuEnv(funcEnv);
-                            cuEnv.addSubstitution("id_pre", "i");
-                            cuEnv.addSubstitution("rng", "hostRNG");
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(funcEnv, c);
+
+                            genCustomConnectivityUpdateIndexCalculation(funcEnv.getStream(), c);
+                        
+                            // Loop through presynaptic neurons
+                            funcEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                            {
+                                CodeStream::Scope b(funcEnv.getStream());
+                            
+                                // Configure substitutions
+                                groupEnv.add(Type::Uint32, "id_pre", "i");
         
-                            assert(false);
-                            //c.generateUpdate(*this, cuEnv, model.getBatchSize());
+                                assert(false);
+                                //c.generateUpdate(*this, cuEnv, model.getBatchSize());
+                            }
                         }
-                    }
-                }
+                    });
             }
 
             // Loop through merged custom WU transpose update groups
             {
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
-                for(const auto &c : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
-                    // If this update group isn't for current group, skip
-                    if(c.getArchetype().getUpdateGroupName() != g) {
-                        continue;
-                    }
-
-                    CodeStream::Scope b(funcEnv.getStream());
-                    funcEnv.getStream() << "// merged custom WU transpose update group " << c.getIndex() << std::endl;
-                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                // Loop through merged custom connectivity update groups
+                modelMerged.genMergedCustomUpdateTransposeWUGroups(
+                    *this, g,
+                    [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
-
-                        // Get reference to group
-                        funcEnv.getStream() << "const auto *group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
-
-                        // Get index of variable being transposed
-                        const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
-                                                                     std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
-                                                                                  [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
-                        const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
-
-                        // Loop through presynaptic neurons
-                        funcEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                        funcEnv.getStream() << "// merged custom WU transpose update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
-                            // Loop through each postsynaptic neuron
-                            funcEnv.getStream() << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
+                            // Get reference to group
+                            funcEnv.getStream() << "const auto *group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
+
+                            // Get index of variable being transposed
+                            const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
+                                                                         std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
+                                                                                      [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
+                            const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+
+                            // Loop through presynaptic neurons
+                            groupEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
                             {
-                                CodeStream::Scope b(funcEnv.getStream());
+                                CodeStream::Scope b(groupEnv.getStream());
 
-                                // Add pre and postsynaptic indices to environment
-                                EnvironmentSubstitute synEnv(funcEnv);
-                                synEnv.addSubstitution("id_pre", "i");
-                                synEnv.addSubstitution("id_post", "j");
-                                
-                                // Add conditional initialisation code to calculate synapse index
-                                const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * group->numTrgNeurons) + j;");
-                                synEnv.addSubstitution("id_syn", "idSyn", {idSynInit});
-                                
-                                // Generate custom update
-                                c.generateCustomUpdate(*this, synEnv);
+                                // Loop through each postsynaptic neuron
+                                groupEnv.getStream() << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
+                                {
+                                    CodeStream::Scope b(groupEnv.getStream());
 
-                                // Update transpose variable
-                                synEnv.getStream() << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;
+                                    // Add pre and postsynaptic indices to environment
+                                    groupEnv.add(Type::Uint32, "id_pre", "i");
+                                    groupEnv.add(Type::Uint32, "id_post", "j");
+                                
+                                    // Add conditional initialisation code to calculate synapse index
+                                    groupEnv.addSubstitution(Type::Uint32, "id_syn", "idSyn", 
+                                                             {groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["num_post"] + ") + j;")},
+                                                             {"num_post"});
+                                
+                                    // Generate custom update
+                                    c.generateCustomUpdate(*this, synEnv);
+
+                                    // Update transpose variable
+                                    // **YUCK** this is sorta outside scope
+                                    synEnv.getStream() << groupEnv[transposeVarName + "_transpose"] << "[(j * " << groupEnv["num_pre"] << ") + i] = l" << transposeVarName << ";" << std::endl;
+                                }
                             }
-                        }
 
-                    }
-                }
+                        }
+                    });
             }
         }
     }

@@ -692,7 +692,7 @@ protected:
         ConnectivityInit,
     };
 
-    SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+    SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext,
                            Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups), m_ArchetypeCode(archetypeCode)
     {}
