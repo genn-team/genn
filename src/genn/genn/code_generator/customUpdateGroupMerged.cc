@@ -195,7 +195,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
         // Loop through kernel size dimensions
         for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(d)) {
+            if (isKernelSizeHeterogeneous(*this, d)) {
                 cuEnv.addField(Type::Uint32, "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
                                [d](const auto &cu, size_t) 
                                {
