@@ -428,12 +428,12 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                     
                         // generate the code for processing spike-like events
                         if (s.getArchetype().isSpikeEventRequired()) {
-                            genPresynapticUpdate(groupEnv, modelMerged, s, false);
+                            genPresynapticUpdate(groupEnv, s, modelMerged, false);
                         }
 
                         // generate the code for processing true spike events
                         if (s.getArchetype().isTrueSpikeRequired()) {
-                            genPresynapticUpdate(groupEnv, modelMerged, s, true);
+                            genPresynapticUpdate(groupEnv, s, modelMerged, true);
                         }
                         funcEnv.getStream() << std::endl;
                     }
@@ -498,19 +498,19 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                     const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / " + synEnv["_row_stride"] + ";");
 
                                     // Add presynaptic and synapse index to environment
-                                    synEnv.add("id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit}, {"_col_stride", "_row_stride", "_remap"});
-                                    synEnv.add("id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit}, {"_col_stride", "_remap"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit}, {"_col_stride", "_row_stride", "_remap"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit}, {"_col_stride", "_remap"});
                                 }
                                 else {
                                     // Add initialiser to calculate synaptic index
                                     const size_t idSynInit = groupEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + spike;");
 
                                     // Add presynaptic and synapse index to environment
-                                    synEnv.add(Type::Uint32, "id_pre", "i");
-                                    synEnv.add(Type::Uint32, "id_syn", "idSyn", {idSynInit}, {"num_post"});
+                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit}, {"num_post"});
                                 }
 
-                                synEnv.add(Type::Uint32, "id_post", "spike");
+                                synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
                                 synEnv.add(Type::AddToPre, "addToPre", synEnv["_out_pre"] + "[" + s.getPreISynIndex(1, synEnv["id_pre"]) + "] += $(0)");
             
                                 s.generateSynapseUpdate(*this, synEnv, modelMerged);

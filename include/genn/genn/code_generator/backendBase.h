@@ -195,7 +195,7 @@ public:
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     template<typename T>
-    using GroupHandlerEnv = std::function <void(EnvironmentExternalBase&, const T &)> ;
+    using GroupHandlerEnv = std::function <void(EnvironmentExternalBase&, T &)> ;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
