@@ -200,7 +200,7 @@ public:
     void genMergedCustomUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
     {
         createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                           [&updateGroupName](const CustomUpdateInternal &cg) { return cg.getUpdateGroupName() == updateGroupName(); },
+                           [&updateGroupName](const CustomUpdateInternal &cg) { return cg.getUpdateGroupName() == updateGroupName; },
                            &CustomUpdateInternal::getHashDigest, generateGroup);
     }
 
@@ -210,7 +210,7 @@ public:
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
                            [&updateGroupName](const CustomUpdateWUInternal &cg) 
                            {
-                               return (!cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName()); 
+                               return (!cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName); 
                            },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup);
     }
@@ -221,7 +221,7 @@ public:
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
                            [&updateGroupName](const CustomUpdateWUInternal &cg)
                            {
-                               return (cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName()); 
+                               return (cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName); 
                            },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup);
     }
@@ -232,7 +232,7 @@ public:
         createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
                            [&updateGroupName](const CustomUpdateInternal &cg)
                            {
-                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName()); 
+                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName); 
                            },
                            &CustomUpdateInternal::getHashDigest, generateGroup, true);
     }
@@ -243,7 +243,7 @@ public:
         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
                            [&updateGroupName](const CustomUpdateWUInternal &cg)
                            {
-                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName()); 
+                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName); 
                            },
                            &CustomUpdateWUInternal::getHashDigest, generateGroup, true);
     }
@@ -254,9 +254,9 @@ public:
         createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
                            [&updateGroupName](const CustomConnectivityUpdateInternal &cg)
                            {
-                               return (!cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName()); 
+                               return (!cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName); 
                            },
-                           &CustomConnectivityUpdateInternal::getHashDigest, genereateGroup);
+                           &CustomConnectivityUpdateInternal::getHashDigest, generateGroup);
     }
 
     template<typename G>
@@ -265,7 +265,7 @@ public:
          createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityHostUpdateGroups,
                             [&updateGroupName](const CustomConnectivityUpdateInternal &cg) 
                             { 
-                                return (!cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName()); 
+                                return (!cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName); 
                             },
                             &CustomConnectivityUpdateInternal::getHashDigest, generateGroup, true);
     }
