@@ -515,6 +515,25 @@ void NeuronInitGroupMerged::genInitSpikeTime(const BackendBase &backend, Environ
 //----------------------------------------------------------------------------
 const std::string SynapseInitGroupMerged::name = "SynapseInit";
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with standard archetype hash and var init parameters and derived parameters
+    updateBaseHash(hash);
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getWUInitHashDigest(), hash);
+
+    // Update hash with number of neurons in pre and postsynaptic population
+    updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxConnections(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 void SynapseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     // Create environment for group
@@ -571,6 +590,25 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
 // GeNN::CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseSparseInitGroupMerged::name = "SynapseSparseInit";
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseSparseInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with standard archetype hash and var init parameters and derived parameters
+    updateBaseHash(hash);
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getWUInitHashDigest(), hash);
+
+    // Update hash with number of neurons in pre and postsynaptic population
+    updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxConnections(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
+
+    return hash.get_digest();
+}
 //----------------------------------------------------------------------------
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {

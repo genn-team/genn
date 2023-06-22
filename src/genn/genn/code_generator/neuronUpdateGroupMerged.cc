@@ -380,7 +380,7 @@ bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isDerivedParamHeterogeneous( con
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------
-NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend, 
+NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, 
                                                  const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, typeContext, groups)
 {

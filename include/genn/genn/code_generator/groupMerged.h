@@ -456,8 +456,7 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                      const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    using GroupMerged::GroupMerged;
 
     //------------------------------------------------------------------------
     // Public API
@@ -485,8 +484,7 @@ public:
 class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                         const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    using GroupMerged::GroupMerged;
 
     //------------------------------------------------------------------------
     // Public API

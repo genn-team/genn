@@ -564,7 +564,7 @@ private:
         size_t i = 0;
         for(const auto &p : protoMergedGroups) {
             // Add group to vector
-            mergedGroups.emplace_back(i, m_TypeContext, backend, p.second);
+            mergedGroups.emplace_back(i, m_TypeContext, p.second);
             generateGroup(mergedGroups.back());
 
             // Loop through fields

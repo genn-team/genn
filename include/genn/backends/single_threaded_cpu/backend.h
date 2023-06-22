@@ -219,21 +219,21 @@ private:
 
     //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
-    void genWriteBackReductions(EnvironmentExternal &env, const CustomUpdateGroupMerged &cg, const std::string &idxName) const;
+    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const;
 
     //! Helper to generate code to copy reduced custom weight update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
-    void genWriteBackReductions(EnvironmentExternal &env, const CustomUpdateWUGroupMerged &cg, const std::string &idxName) const;
+    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMerged &cg, const std::string &idxName) const;
 
     template<typename G, typename R>
-    void genWriteBackReductions(EnvironmentExternal &env, const G &cg, const std::string &idxName, R getVarRefIndexFn) const
+    void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
     {
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(v.access), idx) << "] = l" << v.name << ";" << std::endl;
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(v.access), idx) << "] = " << env[v.name] << ";" << std::endl;
             }
         }
 
@@ -244,7 +244,7 @@ private:
             // If variable reference is a reduction target, copy value from register straight back into global memory
             if(modelVarRef.access & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << modelVarRef.name << "[" << getVarRefIndexFn(varRef, idx) << "] = l" << modelVarRef.name << ";" << std::endl;
+                env.getStream() << "group->" << modelVarRef.name << "[" << getVarRefIndexFn(varRef, idx) << "] = " << env[modelVarRef.name] << ";" << std::endl;
             }
         }
     }

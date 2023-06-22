@@ -20,23 +20,6 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
-{
-    using namespace Type;
-
-    if(getArchetype().isDelayRequired()) {
-        addPointerField(Uint32, "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
-    } 
-
-    addPointerField(Uint32, "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
-
-    if(getArchetype().isSpikeEventRequired()) {
-        addPointerField(Uint32, "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
-    }
-}
-//----------------------------------------------------------------------------
 void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const
 {
     if(getArchetype().isSpikeEventRequired()) {
@@ -68,37 +51,6 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(Environmen
 // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
-//----------------------------------------------------------------------------
-NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, typeContext, groups)
-{
-    using namespace Type;
-
-    if(getArchetype().isDelayRequired()) {
-        addPointerField(Uint32, "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
-    } 
-
-    addPointerField(Uint32, "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
-
-    if(getArchetype().isSpikeEventRequired()) {
-        addPointerField(Uint32, "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
-    }
-
-    if(getArchetype().isPrevSpikeTimeRequired()) {
-        addPointerField(Uint32, "spk", backend.getDeviceVarPrefix() + "glbSpk");
-        addPointerField(getTimeType(), "prevST", backend.getDeviceVarPrefix() + "prevST");
-    }
-    if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        addPointerField(Uint32, "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-        addPointerField(getTimeType(), "prevSET", backend.getDeviceVarPrefix() + "prevSET");
-    }
-
-    if(getArchetype().isDelayRequired()) {
-        addField(Uint32, "numNeurons",
-                 [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-    }
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronGroupMergedBase

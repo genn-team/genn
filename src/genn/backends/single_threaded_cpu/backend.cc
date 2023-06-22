@@ -72,33 +72,30 @@ private:
 
 //-----------------------------------------------------------------------
 template<typename G>
-void genKernelIteration(EnvironmentExternal &env, const G &g, size_t numKernelDims, std::function<void(EnvironmentExternal&)>/*BackendBase::Handler*/ handler)
+void genKernelIteration(EnvironmentExternalBase &env, const G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
 {
-    EnvironmentSubstitute varEnv(env);
-
     // Define recursive function to generate nested kernel initialisation loops
     // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
     std::function<void(size_t)> generateRecursive =
-        [&handler, &varEnv, &g, &generateRecursive, numKernelDims]
+        [&handler, &env, &g, &generateRecursive, numKernelDims]
         (size_t depth)
         {
             // Loop through this kernel dimensions
             const std::string idxVar = "k" + std::to_string(depth);
-            varEnv.getStream() << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << g.getKernelSize(depth) << "; " << idxVar << "++)";
+            env.getStream() << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << getKernelSize(g, depth) << "; " << idxVar << "++)";
             {
-                CodeStream::Scope b(varEnv.getStream());
-                EnvironmentSubstitute loopEnv(varEnv);
+                CodeStream::Scope b(env.getStream());
+                EnvironmentGroupMergedField<G> loopEnv(env, g);
 
                 // Add substitution for this kernel index
-                loopEnv.addSubstitution("id_kernel_" + std::to_string(depth), idxVar);
+                loopEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(depth), idxVar);
 
                 // If we've recursed through all dimensions
                 if (depth == (numKernelDims - 1)) {
                     // Generate kernel index and use as "synapse" index
                     // **TODO** rename
-                    assert(false);
-                    //const size_t addSynapse = loopEnv.addInitialiser("const unsigned int kernelInd = " + g.genKernelIndex(loopEnv) + ";");
-                    //loopEnv.addVarSubstitution("id_syn", "kernelInd", addSynapse);
+                    loopEnv.add(Type::Uint32.addConst(), "id_syn", "kernelInd", 
+                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g, loopEnv) + ";")});
 
                     // Call handler
                     handler(loopEnv);
@@ -602,7 +599,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
                             
-                            genCustomUpdateIndexCalculation(groupEnv, c);
+                            genCustomUpdateIndexCalculation(groupEnv);
 
                             if (c.getArchetype().isNeuronReduction()) {
                                 // Initialise reduction targets
@@ -616,7 +613,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
                                     // Generate custom update
                                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
-                                    memberEnv.addSubstitution("id", "i");
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                     c.generateCustomUpdate(*this, memberEnv);
 
                                     // Loop through reduction targets and generate reduction
@@ -684,7 +681,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                 groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
                                 {
                                     // If this synapse group has sparse connectivity, loop through length of this row
-                                    CodeStream::Scope b(synEnv.getStream());
+                                    CodeStream::Scope b(groupEnv.getStream());
                                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                         groupEnv.getStream() << "for(unsigned int s = 0; s < " << groupEnv["_row_length"] << "[i]; s++)";
                                     }
@@ -715,9 +712,9 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                         else {
                                             synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
-                                            const size_t idSynInit = ;
-                                            synEnv.addSubstitution("id_syn", "idSyn", 
-                                                                   {synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + j;")}),
+                                            synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
+                                                       {synEnv.addInitialiser("const unsigned int idSyn = (i * " + synEnv["num_post"] + ") + j;")},
+                                                       {"num_post"});
                                         }
 
                                         // Generate custom update
@@ -806,16 +803,16 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                     groupEnv.add(Type::Uint32, "id_post", "j");
                                 
                                     // Add conditional initialisation code to calculate synapse index
-                                    groupEnv.addSubstitution(Type::Uint32, "id_syn", "idSyn", 
-                                                             {groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["num_post"] + ") + j;")},
-                                                             {"num_post"});
+                                    groupEnv.add(Type::Uint32, "id_syn", "idSyn", 
+                                                 {groupEnv.addInitialiser("const unsigned int idSyn = (i * " + groupEnv["num_post"] + ") + j;")},
+                                                 {"num_post"});
                                 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, synEnv);
+                                    c.generateCustomUpdate(*this, groupEnv);
 
                                     // Update transpose variable
                                     // **YUCK** this is sorta outside scope
-                                    synEnv.getStream() << groupEnv[transposeVarName + "_transpose"] << "[(j * " << groupEnv["num_pre"] << ") + i] = l" << transposeVarName << ";" << std::endl;
+                                    groupEnv.getStream() << groupEnv[transposeVarName + "_transpose"] << "[(j * " << groupEnv["num_pre"] << ") + i] = l" << transposeVarName << ";" << std::endl;
                                 }
                             }
 
@@ -977,7 +974,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// Synapse sparse connectivity" << std::endl;
         modelMerged.genMergedSynapseConnectivityInitGroups(
             *this,
-            [this, &funcEnv, &modelMerged](auto &c)
+            [this, &funcEnv, &modelMerged](auto &s)
             {
                 CodeStream::Scope b(funcEnv.getStream());
                 funcEnv.getStream() << "// merged synapse connectivity init group " << s.getIndex() << std::endl;
@@ -987,7 +984,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
-                    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, c);
+                    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
 
                     // If matrix connectivity is ragged
                     if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1049,13 +1046,13 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                                     addSynapse << "const unsigned int idx = " << "(" + groupEnv["id_pre"] + " * " << groupEnv["_row_stride"] << ") + " << groupEnv["_row_length"] << "[i];" << std::endl;
                                 }
                                 else {
-                                    addSynapse << "const unsigned int idx = " << "(($(0)) * " << groupEnv["_row_stride"] << ") + groupEnv["_row_length"][$(0)];" << std::endl;
+                                    addSynapse << "const unsigned int idx = " << "(($(0)) * " << groupEnv["_row_stride"] << ") + " << groupEnv["_row_length"] << "[$(0)];" << std::endl;
                                 }
                             }
 
                             // If there is a kernel
                             if(!s.getArchetype().getKernelSize().empty()) {
-                                EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(groupEnv, c);
+                                EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(groupEnv, s);
 
                                 // Replace $(id_post) with first 'function' parameter as simulation code is
                                 // going to be, in turn, substituted into procedural connectivity generation code
@@ -1078,7 +1075,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                                 }
 
                                 // Call handler to initialize variables
-                                s.generateKernelInit(*this, addSynapse, modelMerged, kernelInitSubs);
+                                s.generateKernelInit(*this, kernelInitEnv, modelMerged);
                             }
 
                             // If there is row-building code in this snippet
@@ -1114,10 +1111,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
                         // Call appropriate connectivity handler
                         if(!snippet->getRowBuildCode().empty()) {
-                            s.generateSparseRowInit(*this, groupEnv, modelMerged);
+                            s.generateSparseRowInit(*this, groupEnv);
                         }
                         else {
-                            s.generateSparseColumnInit(*this, groupEnv, modelMerged);
+                            s.generateSparseColumnInit(*this, groupEnv);
                         }
                     }
                 }
@@ -1145,7 +1142,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
-                    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, c);
+                    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
 
                     // If postsynaptic learning is required, initially zero column lengths
                     if (!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
@@ -1162,7 +1159,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         if(s.getArchetype().isWUVarInitRequired()) {
                             groupEnv.add(Type::Uint32.addConst(), "row_len", groupEnv["_row_length"] + "[i]",
-                                         {"_row_length"});
+                                         {}, {"_row_length"});
                             s.generateInit(*this, groupEnv, modelMerged);
                         }
 
@@ -1216,7 +1213,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         groupEnv.add(Type::Uint32.addConst(), "row_len", groupEnv["_row_length"] + "[i]",
-                                     {"_row_length"});
+                                     {}, {"_row_length"});
                         c.generateInit(*this, groupEnv, modelMerged);
                     }
                 }
@@ -1246,7 +1243,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         groupEnv.add(Type::Uint32.addConst(), "row_len", groupEnv["_row_length"] + "[i]",
-                                     {"_row_length"});
+                                     {}, {"_row_length"});
                         c.generateInit(*this, groupEnv, modelMerged);
                     }
                 }
@@ -2032,7 +2029,7 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genWriteBackReductions(EnvironmentExternal &env, const CustomUpdateGroupMerged &cg, const std::string &idxName) const
+void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const
 {
     genWriteBackReductions(env, cg, idxName,
                            [&cg](const Models::VarReference &varRef, const std::string &index)
@@ -2043,7 +2040,7 @@ void Backend::genWriteBackReductions(EnvironmentExternal &env, const CustomUpdat
                            });
 }
 //--------------------------------------------------------------------------
-void Backend::genWriteBackReductions(EnvironmentExternal &env, const CustomUpdateWUGroupMerged &cg, const std::string &idxName) const
+void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMerged &cg, const std::string &idxName) const
 {
     genWriteBackReductions(env, cg, idxName,
                            [&cg](const Models::WUVarReference &varRef, const std::string &index)

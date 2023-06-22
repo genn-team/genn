@@ -264,6 +264,8 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public InitGroupMergedBase<GroupMerged<SynapseGroupInternal>, SynapseWUVarAdapter>
 {
 public:
+    using InitGroupMergedBase::InitGroupMergedBase;
+
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, 

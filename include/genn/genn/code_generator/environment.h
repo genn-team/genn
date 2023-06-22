@@ -141,9 +141,15 @@ protected:
 template<typename G, typename F>
 class EnvironmentFieldPolicy
 {
+public:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const G &getGroup() const{ return m_Group; }
+
 protected:
     using Payload = std::tuple<bool, std::string, std::optional<typename G::Field>>;
-    
+
     EnvironmentFieldPolicy(G &group, F &fieldGroup)
     :   m_Group(group), m_FieldGroup(fieldGroup)
     {
@@ -187,8 +193,6 @@ protected:
         }
     }
 
-    const G &getGroup() const{ return m_Group; }
-
 private:
     std::reference_wrapper<F> m_FieldGroup;
     std::reference_wrapper<G> m_Group;
@@ -198,7 +202,7 @@ private:
 // GeNN::CodeGenerator::EnvironmentExternalDynamicBase
 //----------------------------------------------------------------------------
 template<typename P>
-class EnvironmentExternalDynamicBase : public EnvironmentExternalBase, protected P
+class EnvironmentExternalDynamicBase : public EnvironmentExternalBase, public P
 {
 public:
     template<typename... PolicyArgs>
