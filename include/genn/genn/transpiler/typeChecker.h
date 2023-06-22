@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <functional>
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
@@ -32,8 +33,6 @@ public:
     }
 };
 
-typedef std::unordered_map<const Expression::Base*, Type::ResolvedType> ResolvedTypeMap;
-
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
@@ -53,11 +52,17 @@ public:
 };
 
 //---------------------------------------------------------------------------
+// Typedefines
+//---------------------------------------------------------------------------
+typedef std::unordered_map<const Expression::Base*, Type::ResolvedType> ResolvedTypeMap;
+typedef std::function<void(EnvironmentBase&, ErrorHandlerBase&)> StatementHandler;
+
+//---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
 ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                          ErrorHandlerBase &errorHandler);
+                          ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler = nullptr);
 
 ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
                           ErrorHandlerBase &errorHandler);
-}   // namespace MiniParse::GeNN::Transpiler
+}   // namespace GeNN::Transpiler::TypeChecker

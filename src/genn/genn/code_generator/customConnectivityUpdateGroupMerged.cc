@@ -6,6 +6,9 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
+// GeNN transpiler includes
+#include "transpiler/errorHandler.h"
+
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
@@ -102,7 +105,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                        }));
     
     
-    addField(Uint32, "rowStride",
+    /*addField(Uint32, "rowStride",
             [&backend](const auto &cg, size_t) 
             { 
                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
@@ -173,7 +176,7 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                      const auto &varRef = m_SortedDependentVars[g][i];
                      return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
                  });
-    }
+    }*/
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::getHashDigest() const
@@ -206,40 +209,49 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
 {
-    Substitutions updateSubs(&popSubs);
+    // Create new environment to add current source fields to neuron update group 
+    EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
 
-    // Add substitutions for number of pre and postsynaptic neurons
-    updateSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-    updateSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+    // Add fields for number of pre and postsynaptic neurons
+    updateEnv.addField(Type::Uint32.addConst(), "num_pre",
+                       Type::Uint32, "numSrcNeurons", 
+                       [](const auto &cg, size_t) 
+                       { 
+                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                       });
+    updateEnv.addField(Type::Uint32.addConst(), "num_post",
+                       Type::Uint32, "numTrgNeurons", 
+                       [](const auto &cg, size_t) 
+                       { 
+                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                       });
 
-    // Define synapse loop function
-    // **NOTE** index is signed integer so generated code can safely use j-- to process same synapse again
-    // **YUCK** ideally id_post, id_syn, remove_synapse and all synaptic and postsynaptic variable substitutions would only be allowable within this scope but that's not currently possible
-    updateSubs.addFuncSubstitution("for_each_synapse", 1, "for(int j = 0; j < group->rowLength[" + updateSubs["id_pre"] + "]; j++){ const unsigned int idx = rowStartIdx + j; $(0) }");
-
-    updateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + j]");
-    updateSubs.addVarSubstitution("id_syn", "idx");
-
-    // Get variables which will need to be manipulated when adding and removing synapses
+    // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+    updateEnv.addParams(cm->getParamNames(), "", &CustomConnectivityUpdateInternal::getParams, 
+                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous);
+    updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
+                               &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
+    updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    
+    // Get variables which will need to be manipulated when adding and removing synapses
     const auto &ccuVars = cm->getVars();
     const auto &ccuVarRefs = cm->getVarRefs();
     const auto &dependentVars = getSortedArchetypeDependentVars();
 
-    // Determine if any
-    const bool modelBatched = (batchSize > 1);
-    const bool anyBatched = (modelBatched && (std::any_of(getArchetype().getVarReferences().cbegin(), getArchetype().getVarReferences().cend(), 
-                                                          [](const auto &v){ return v.second.isDuplicated(); })
-                                              || std::any_of(dependentVars.cbegin(), dependentVars.cend(),
-                                                             [](const auto &v){ return v.isDuplicated(); })));
-
     // Calculate index of start of row
-    os << "const unsigned int rowStartIdx = " << updateSubs["id_pre"] << " * group->rowStride;" << std::endl;
+    updateEnv.add(Type::Uint32.addConst(), "_row_start_idx", "rowStartIdx",
+                  {updateEnv.addInitialiser("const unsigned int rowStartIdx = " + updateEnv["id_pre"] + " * " + updateEnv["_row_stride"] + ";")},
+                  {"id_pre", "_row_stride"});
 
-    // If any variables are batched
-    if (anyBatched) {
-        os << "const unsigned int synStride = group->numSrcNeurons * group->rowStride;" << std::endl;
-    }
+    updateEnv.add(Type::Uint32.addConst(), "_syn_stride", "synStride",
+                  {updateEnv.addInitialiser("const unsigned int synStride = " + updateEnv["num_pre"] + " * " + updateEnv["_row_stride"] + ";")},
+                  {"num_pre", "_row_stride"});
+
+    std::vector<Type::ResolvedType> addSynapseTypes{Type::Uint32};
+    addSynapseTypes.reserve(1 + ccuVars.size() + ccuVarRefs.size() + dependentVars.size());
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
@@ -248,27 +260,28 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         CodeStream::Scope b(addSynapse);
 
         // Assert that there is space to add synapse
-        backend.genAssert(addSynapse, "group->rowLength[" + updateSubs["id_pre"] + "] < group->rowStride");
+        backend.genAssert(addSynapse, updateEnv["_row_length"] + "[" + updateEnv["id_pre"] + "] < " + updateEnv["_row_stride"]);
 
         // Calculate index to insert synapse
-        addSynapse << "const unsigned newIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "];" << std::endl;
+        addSynapse << "const unsigned newIdx = rowStartIdx + " + updateEnv["_row_length"] + "[" << updateEnv["id_pre"] << "];" << std::endl;
 
         // Set postsynaptic target to parameter 0
-        addSynapse << "group->ind[newIdx] = $(0);" << std::endl;
+        addSynapse << updateEnv["_ind"] + "[newIdx] = $(0);" << std::endl;
  
         // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
         for (size_t i = 0; i < ccuVars.size(); i++) {
             addSynapse << "group->" << ccuVars[i].name << "[newIdx] = $(" << (1 + i) << ");" << std::endl;
+            addSynapseTypes.push_back(ccuVars[i].type.resolve(getTypeContext()));
         }
 
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((batchSize > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
+            if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
-                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
+                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "group->" << ccuVarRefs[i].name << "[(b * synStride) + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
@@ -278,15 +291,17 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             else {
                 addSynapse << "group->" << ccuVarRefs[i].name << "[newIdx] = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
             }
+
+            addSynapseTypes.push_back(ccuVarRefs[i].type.resolve(getTypeContext()));
         }
         
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((batchSize > 1) && dependentVars.at(i).isDuplicated())
+            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated())
             {
                 // Loop through all batches and zero
-                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
+                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "group->_dependentVar" << i << "[(b * synStride) + newIdx] = 0;" << std::endl;
@@ -296,15 +311,17 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             else {
                 addSynapse << "group->_dependentVar" << i << "[newIdx] = 0;" << std::endl;
             }
+
+            addSynapseTypes.push_back(dependentVars.at(i).getVar().type.resolve(getTypeContext()));
         }
 
         // Increment row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
-        addSynapse << "group->rowLength[" << updateSubs["id_pre"] << "]++;" << std::endl;
+        addSynapse << updateEnv["_row_length"]  + "[" << updateEnv["id_pre"] << "]++;" << std::endl;
     }
 
     // Add function substitution with parameters to initialise custom connectivity update variables and variable references
-    updateSubs.addFuncSubstitution("add_synapse", 1 + ccuVars.size() + ccuVarRefs.size(), addSynapseStream.str());
+    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, addSynapseTypes), "add_synapse", addSynapseStream.str());
 
     // Generate code to remove a synapse from this row
     std::stringstream removeSynapseStream;
@@ -313,7 +330,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         CodeStream::Scope b(removeSynapse);
 
         // Calculate index we want to copy synapse from
-        removeSynapse << "const unsigned lastIdx = rowStartIdx + group->rowLength[" << updateSubs["id_pre"] << "] - 1;" << std::endl;
+        removeSynapse << "const unsigned lastIdx = rowStartIdx + " + updateEnv["_row_length"] + "[" << updateEnv["id_pre"] << "] - 1;" << std::endl;
 
         // Copy postsynaptic target from end of row over synapse to be deleted
         removeSynapse << "group->ind[idx] = group->ind[lastIdx];" << std::endl;
@@ -416,11 +433,26 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                        "", "group->");
     updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
 
-    // Apply substitutons to row update code and write out
-    std::string code = cm->getRowUpdateCode();
-    updateSubs.applyCheckUnreplaced(code, "custom connectivity update : merged" + std::to_string(getIndex()));
-    //code = ensureFtype(code, Type::modelMerged.getModel().getPrecision());
-    os << code;
+    // Pretty print code back to environment
+    Transpiler::ErrorHandler errorHandler("Current source injection" + std::to_string(getIndex()));
+    prettyPrintStatements(cm->getRowUpdateCode(), getTypeContext(), updateEnv, errorHandler, 
+                          // Within for_each_synapse loops, define the following types
+                          [](auto &env, auto &errorHandler)
+                          {
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_post", 0}, Type::Uint32.addConst(), errorHandler);
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, Type::Uint32.addConst(), errorHandler);
+                          },
+                          [](auto &env, auto generateBody)
+                          {
+                              env.getStream() << "for(int j = 0; j < " << env["_row_length"] + "[" + env["id_pre"] + "]; j++)";
+                              {
+                                  CodeStream::Scope b(env.getStream());
+                                  env.getStream() << "const unsigned int idx = rowStartIdx + j;" << std::endl;
+                                  //pdateSubs.addVarSubstitution("id_post", "group->ind[rowStartIdx + j]");
+                                  //updateSubs.addVarSubstitution("id_syn", "idx");
+                                  generateBody();
+                              }
+                          });
 }
 
 //----------------------------------------------------------------------------

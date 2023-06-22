@@ -108,7 +108,8 @@ GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
  */
  //--------------------------------------------------------------------------
 GENN_EXPORT std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler);
+    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, 
+    Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseHandler = nullptr);
 
 //--------------------------------------------------------------------------
 /*! \brief This function uses the transpiler to scan, parse and type check expression contained in a code string
@@ -128,7 +129,9 @@ GENN_EXPORT void prettyPrintExpression(const std::string &code, const Type::Type
 /*! \brief This function uses the transpiler to scan, parse, type check and pretty print statametns contained in a code string
  */
  //--------------------------------------------------------------------------
-GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler);
+GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+                                       Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
+                                       Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
 //-------------------------------------------------------------------------
 /*!

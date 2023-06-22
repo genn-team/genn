@@ -19,6 +19,7 @@ class Continue;
 class Do;
 class Expression;
 class For;
+class ForEachSynapse;
 class If;
 class Labelled;
 class Switch;
@@ -40,6 +41,7 @@ public:
     virtual void visit(const Do &doStatement) = 0;
     virtual void visit(const Expression &expression) = 0;
     virtual void visit(const For &forStatement) = 0;
+    virtual void visit(const ForEachSynapse &forEachSynapseStatement) = 0;
     virtual void visit(const If &ifStatement) = 0;
     virtual void visit(const Labelled &labelled) = 0;
     virtual void visit(const Switch &switchStatement) = 0;
@@ -177,6 +179,24 @@ private:
     StatementPtr m_Initialiser;
     ExpressionPtr m_Condition;
     ExpressionPtr m_Increment;
+    StatementPtr m_Body;
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Statement::ForEachSynapse
+//---------------------------------------------------------------------------
+class ForEachSynapse : public Acceptable<ForEachSynapse>
+{
+public:
+    ForEachSynapse(Token forEachSynapse, StatementPtr body)
+    :  m_ForEachSynapse(forEachSynapse), m_Body(std::move(body))
+    {}
+
+    const Token &getForEachSynapse() const { return m_ForEachSynapse; }
+    const Base *getBody() const { return m_Body.get(); }
+
+private:
+    Token m_ForEachSynapse;
     StatementPtr m_Body;
 };
 

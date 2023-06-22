@@ -487,7 +487,8 @@ std::string upgradeCodeString(const std::string &codeString)
 }
 //----------------------------------------------------------------------------
 std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
+    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, 
+    Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseHandler)
 {
     using namespace Transpiler;
 
@@ -501,7 +502,7 @@ std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::Resolv
     auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
 
     // Resolve types
-    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, environment, errorHandler);
+    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, environment, errorHandler, forEachSynapseHandler);
 
     // Move into tuple and eturn
     return std::make_tuple(std::move(updateStatements), std::move(resolvedTypes));
@@ -537,12 +538,14 @@ void prettyPrintExpression(const std::string &code, const Type::TypeContext &typ
     Transpiler::PrettyPrinter::print(std::get<0>(expressionTypes), env, typeContext, std::get<1>(expressionTypes));
 }
  //--------------------------------------------------------------------------
-void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
+void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+                           Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                           Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
      // Scan, parse and type check statements
-    auto statementTypes = scanParseAndTypeCheckStatements(code, typeContext, env, errorHandler);
+    auto statementTypes = scanParseAndTypeCheckStatements(code, typeContext, env, errorHandler, forEachSynapseTypeCheckHandler);
 
     // Pretty print
-    Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes));
+    Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes), forEachSynapsePrettyPrintHandler);
 }
 }   // namespace GeNN::CodeGenerator

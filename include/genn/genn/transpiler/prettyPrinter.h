@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <functional>
 #include <string>
 
 // GeNN includes
@@ -37,11 +38,14 @@ public:
     virtual CodeGenerator::CodeStream &getStream() = 0;
 };
 
+typedef std::function<void(EnvironmentBase&, std::function<void()>)> StatementHandler;
+
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
 void print(const Statement::StatementList &statements, EnvironmentBase &environment, 
-           const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
+           const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+           StatementHandler forEachSynapseHandler = nullptr);
 void print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment, 
            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
 }

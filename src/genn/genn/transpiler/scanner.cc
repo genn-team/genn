@@ -28,6 +28,7 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"else", Token::Type::ELSE},
     {"false", Token::Type::FALSE},
     {"for", Token::Type::FOR},
+    {"for_each_synapse", Token::Type::FOR_EACH_SYNAPSE},
     {"if", Token::Type::IF},
     {"true", Token::Type::TRUE},
     {"while", Token::Type::WHILE},

@@ -176,8 +176,8 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
     Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   Visitor(environment, resolvedTypes, errorHandler)
+            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
+    :   Visitor(environment, resolvedTypes, errorHandler, forEachSynapseHandler)
     {
         for (auto &s : statements) {
             s.get()->accept(*this);
@@ -186,15 +186,15 @@ public:
     
     Visitor(const Expression::Base *expression, EnvironmentInternal &environment, 
             ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   Visitor(environment, resolvedTypes, errorHandler)
+    :   Visitor(environment, resolvedTypes, errorHandler, nullptr)
     {
         expression->accept(*this);
     }
     
 private:
-    Visitor(EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   m_Environment(environment), m_ErrorHandler(errorHandler), 
+    Visitor(EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, 
+            ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
+    :   m_Environment(environment), m_ErrorHandler(errorHandler), m_ForEachSynapseHandler(forEachSynapseHandler),
         m_ResolvedTypes(resolvedTypes), m_InLoop(false), m_InSwitch(false)
     {
     }
@@ -740,6 +740,31 @@ private:
         m_Environment = oldEnvironment;
     }
 
+    virtual void visit(const Statement::ForEachSynapse &forEachSynapseStatement) final
+    {
+        if(!m_ForEachSynapseHandler) {
+            m_ErrorHandler.error(forEachSynapseStatement.getForEachSynapse(), 
+                                 "Not supported in this context");
+            throw TypeCheckError();
+        }
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
+        
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
+
+        // Call handler to define anything required in environment
+        m_ForEachSynapseHandler(m_Environment, m_ErrorHandler);
+
+        m_InLoop = true;
+        forEachSynapseStatement.getBody()->accept(*this);
+        m_InLoop = false;
+
+        // Restore old environment
+        m_Environment = oldEnvironment;
+    }
+
     virtual void visit(const Statement::If &ifStatement) final
     {
         ifStatement.getCondition()->accept(*this);
@@ -830,6 +855,7 @@ private:
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentInternal> m_Environment;
     ErrorHandlerBase &m_ErrorHandler;
+    StatementHandler m_ForEachSynapseHandler;
     ResolvedTypeMap &m_ResolvedTypes;
     std::stack<std::vector<Type::ResolvedType>> m_CallArguments;
     bool m_InLoop;
@@ -856,11 +882,12 @@ Type::ResolvedType EnvironmentBase::getType(const Token &name, ErrorHandlerBase 
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
 ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                                         ErrorHandlerBase &errorHandler)
+                                                         ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, expressionTypes, errorHandler);
+    Visitor visitor(statements, internalEnvironment, expressionTypes, errorHandler, 
+                    forEachSynapseHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------

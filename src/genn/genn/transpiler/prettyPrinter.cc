@@ -123,8 +123,9 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
     Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment,
-            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) 
+            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+            StatementHandler forEachSynapseHandler)
+    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes), m_ForEachSynapseHandler(forEachSynapseHandler)
     {
          for(auto &s : statements) {
             s.get()->accept(*this);
@@ -134,7 +135,7 @@ public:
 
     Visitor(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) 
+    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) , m_ForEachSynapseHandler(nullptr)
     {
         expression.get()->accept(*this);
     }
@@ -402,6 +403,25 @@ private:
         m_Environment = oldEnvironment;
     }
 
+    virtual void visit(const Statement::ForEachSynapse &forEachSynapseStatement) final
+    {
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
+
+        // Create new environment and set to current
+        EnvironmentInternal environment(m_Environment);
+        m_Environment = environment;
+
+        m_ForEachSynapseHandler(m_Environment,
+                                [this, &forEachSynapseStatement]()
+                                {
+                                    forEachSynapseStatement.getBody()->accept(*this);
+                                });
+        // Restore old environment
+        m_Environment = oldEnvironment;
+    }
+
+
     virtual void visit(const Statement::If &ifStatement) final
     {
         m_Environment.get().getStream() << "if(";
@@ -462,6 +482,7 @@ private:
     std::reference_wrapper<EnvironmentBase> m_Environment;
     const Type::TypeContext &m_Context;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
+    StatementHandler m_ForEachSynapseHandler;
     std::stack<std::vector<std::string>> m_CallArguments;
 };
 }   // Anonymous namespace
@@ -470,10 +491,11 @@ private:
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
 void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
+                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+                                            StatementHandler forEachSynapseHandler)
 {
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, context, resolvedTypes);
+    Visitor visitor(statements, internalEnvironment, context, resolvedTypes, forEachSynapseHandler);
 }
 //---------------------------------------------------------------------------
 void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment,

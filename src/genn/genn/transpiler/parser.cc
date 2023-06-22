@@ -631,6 +631,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
     // iteration-statement ::=
     //      "while" "(" expression ")" statement
     //      "do" statement "while" "(" expression ")" ";"
+    //      "for" statement
     //      "for" "(" expression? ";" expression? ";" expression? ")" statement
     //      "for" "(" declaration expression? ";" expression? ")" statement
 
@@ -654,6 +655,12 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after while");
         return std::make_unique<Statement::Do>(std::move(condition), 
                                                std::move(body));
+    }
+    // Otherwise, if this is a for_each_synapse statement
+    else if(parserState.previous().type == Token::Type::FOR_EACH_SYNAPSE) {
+        auto body = parseStatement(parserState);
+        return std::make_unique<Statement::ForEachSynapse>(parserState.previous(),
+                                                           std::move(body));
     }
     // Otherwise, it's a for statement
     else {
@@ -687,7 +694,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         }
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after for clauses");
 
-        Statement::StatementPtr body = parseStatement(parserState);
+        auto body = parseStatement(parserState);
 
         // Return for statement
         // **NOTE** we could "de-sugar" into a while statement but this makes pretty-printing easier
