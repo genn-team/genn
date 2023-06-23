@@ -147,4 +147,73 @@ private:
     //----------------------------------------------------------------------------
     const CustomConnectivityUpdateInternal &m_CU;
 };
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdateVarRefAdapter
+{
+public:
+    CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVarRefs(); }
+
+    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePreVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdatePreVarRefAdapter
+{
+public:
+    CustomConnectivityUpdatePreVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPreVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePostVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdatePostVarRefAdapter
+{
+public:
+    CustomConnectivityUpdatePostVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPostVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
 }   // namespace GeNN
