@@ -49,7 +49,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         // Add substitution
         // **TODO** dependencies on kernel fields
         synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                   {synEnv.addInitialiser("const unsigned int kernelInd = " + sg.getKernelIndex(synEnv) + ";")});
+                   {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg, synEnv) + ";")});
     }
 
     // If weights are individual, substitute variables for values stored in global memory
@@ -291,14 +291,3 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
-//----------------------------------------------------------------------------
-SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, typeContext, groups)
-{
-    addField(Type::Uint32.createPointer(), "denDelayPtr", 
-             [&backend](const SynapseGroupInternal &sg, size_t) 
-             {
-                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
-             });
-}

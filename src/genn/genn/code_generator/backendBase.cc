@@ -35,6 +35,8 @@ bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMerged
 //-----------------------------------------------------------------------
 void BackendBase::genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
 {
+    using LS = LazyString;
+
     // Add size field
     env.addField(Type::Uint32, "size", "size", 
                  [](const auto &c, size_t) { return std::to_string(c.getSize()); });
@@ -42,8 +44,7 @@ void BackendBase::genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<Cu
     // If batching is enabled, calculate batch offset
     if(env.getGroup().getArchetype().isBatched()) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
-                {env.addInitialiser("const unsigned int batchOffset = " + env["size"] + " * batch;")},
-                {"size"});
+                {env.addInitialiser("const unsigned int batchOffset = " + LS(env, "size") + " * batch;")});
     }
             
     // If axonal delays are required
@@ -57,23 +58,19 @@ void BackendBase::genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<Cu
 
         // We should read from delay slot pointed to be spkQuePtr 
         env.add(Type::Uint32.addConst(), "_delay_slot", "delaySlot",
-                {env.addInitialiser("const unsigned int delaySlot = *" + env["_spk_que_ptr"] + ";")},
-                {"_spk_que_ptr"});
+                {env.addInitialiser("const unsigned int delaySlot = *" + LS(env, "_spk_que_ptr") + ";")});
         env.add(Type::Uint32.addConst(), "_delay_offset", "delayOffset",
-                {env.addInitialiser("const unsigned int delayOffset = delaySlot * " + env["size"] + ";")},
-                {"size", "_delay_slot"});
+                {env.addInitialiser("const unsigned int delayOffset = " + LS(env, "_delay_slot") + " * " + LS(env, "size") + ";")});
 
         // If batching is also enabled, calculate offset including delay and batch
         if(env.getGroup().getArchetype().isBatched()) {
             const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
             env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
-                    {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + delaySlot;")},
-                    {"_delay_slot"});
+                    {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + " + LS(env, "_delay_slot") + ";")});
 
             // Calculate current batch offset
             env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                    {env.addInitialiser("const unsigned int batchDelayOffset = batchOffset * " + numDelaySlotsStr + ";")},
-                    {"_batch_offset"});
+                    {env.addInitialiser("const unsigned int batchDelayOffset = " + LS(env, "_batch_offset") + " * " + numDelaySlotsStr + ";")});
         }
     }
 }

@@ -117,8 +117,7 @@ public:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
+    using GroupMerged::GroupMerged;
 
     //------------------------------------------------------------------------
     // Public API
