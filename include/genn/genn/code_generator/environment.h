@@ -13,6 +13,7 @@
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
+#include "code_generator/lazyString.h"
 
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
@@ -36,7 +37,17 @@ class EnvironmentExternalBase : public Transpiler::PrettyPrinter::EnvironmentBas
 {
 public:
     explicit EnvironmentExternalBase(EnvironmentExternalBase &enclosing)
-    :   m_Context(enclosing)
+    :   m_Context(std::make_pair(&enclosing, &enclosing))
+    {
+    }
+
+    explicit EnvironmentExternalBase(Transpiler::PrettyPrinter::EnvironmentBase &enclosing)
+    :   m_Context(std::make_pair(nullptr, &enclosing))
+    {
+    }
+
+    explicit EnvironmentExternalBase(Transpiler::TypeChecker::EnvironmentBase &enclosing)
+    :   m_Context(std::make_pair(&enclosing, nullptr))
     {
     }
 
@@ -83,7 +94,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::variant<std::reference_wrapper<EnvironmentExternalBase>, std::reference_wrapper<CodeStream>> m_Context;
+    std::variant<std::pair<Transpiler::TypeChecker::EnvironmentBase*, Transpiler::PrettyPrinter::EnvironmentBase*>,
+                 std::reference_wrapper<CodeStream>> m_Context;
 };
 
 //----------------------------------------------------------------------------
@@ -94,11 +106,21 @@ class EnvironmentLibrary : public EnvironmentExternalBase
 public:
     using Library = std::unordered_multimap<std::string, std::pair<Type::ResolvedType, std::string>>;
 
-    EnvironmentLibrary(EnvironmentExternalBase &enclosing, const Library &library)
+    explicit EnvironmentLibrary(EnvironmentExternalBase &enclosing, const Library &library)
     :   EnvironmentExternalBase(enclosing), m_Library(library)
     {}
 
-    EnvironmentLibrary(CodeStream &os, const Library &library)
+    explicit EnvironmentLibrary(Transpiler::PrettyPrinter::EnvironmentBase &enclosing, const Library &library)
+    :   EnvironmentExternalBase(enclosing), m_Library(library)
+    {
+    }
+
+    explicit EnvironmentLibrary(Transpiler::TypeChecker::EnvironmentBase &enclosing, const Library &library)
+    :   EnvironmentExternalBase(enclosing), m_Library(library)
+    {
+    }
+
+    explicit EnvironmentLibrary(CodeStream &os, const Library &library)
     :   EnvironmentExternalBase(os), m_Library(library)
     {}
 
@@ -211,6 +233,16 @@ public:
     {}
 
     template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(Transpiler::PrettyPrinter::EnvironmentBase &enclosing, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    {}
+
+    template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(Transpiler::TypeChecker::EnvironmentBase &enclosing, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    {}
+
+    template<typename... PolicyArgs>
     EnvironmentExternalDynamicBase(CodeStream &os, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...)
     {}
@@ -221,7 +253,7 @@ public:
         for(const auto &i : m_Initialisers) {
             // If variable requiring initialiser has been referenced, write out initialiser
             if (i.first) {
-                getContextStream() << i.second << std::endl;
+                getContextStream() << i.second.str() << std::endl;
             }
         }
         
@@ -280,7 +312,7 @@ public:
     }
 
    
-    size_t addInitialiser(const std::string &initialiser)
+    size_t addInitialiser(const LazyString &initialiser)
     {
         m_Initialisers.emplace_back(false, initialiser);
         return (m_Initialisers.size() - 1);
@@ -307,7 +339,7 @@ private:
     CodeStream m_Contents;
 
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, std::vector<std::string>, typename P::Payload>> m_Environment;
-    std::vector<std::pair<bool, std::string>> m_Initialisers;
+    std::vector<std::pair<bool, LazyString>> m_Initialisers;
 };
 
 //----------------------------------------------------------------------------
@@ -594,7 +626,8 @@ public:
                          const auto varRef = A(g).getInitialisers().at(v.name);
                          return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
                      },
-                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
+                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)), 
+                     GroupMergedFieldType::STANDARD, {}, dependents);
         }
     }
 
