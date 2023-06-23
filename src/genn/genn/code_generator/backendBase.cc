@@ -65,7 +65,7 @@ void BackendBase::genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<Cu
 
         // If batching is also enabled, calculate offset including delay and batch
         if(env.getGroup().getArchetype().isBatched()) {
-            const std::string numDelaysSlotStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
+            const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
             env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
                     {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + delaySlot;")},
                     {"_delay_slot"});
