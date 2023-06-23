@@ -22,6 +22,7 @@
 #include "teeStream.h"
 
 // GeNN transpiler includes
+#include "transpiler/prettyPrinter.h"
 #include "transpiler/statement.h"
 #include "transpiler/typeChecker.h"
 
