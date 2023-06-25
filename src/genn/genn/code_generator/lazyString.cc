@@ -34,4 +34,39 @@ std::string LazyString::str() const
     }
     return stream.str();
 }
+//----------------------------------------------------------------------------
+LazyString LazyString::print(const std::string &format, EnvironmentExternalBase &env)
+{
+    // Create regex iterator to iterate over $(XXX) style varibles in format string
+    std::regex regex("\\$\\(([\\w]+)\\)");
+    std::sregex_iterator matchesBegin(format.cbegin(), format.cend(), regex);
+    std::sregex_iterator matchesEnd;
     
+    // If there are no matches, leave format unmodified and return
+    if(matchesBegin == matchesEnd) {
+        return LazyString(format);
+    }
+    // Otherwise
+    else {
+        // Loop through matches to build lazy string payload
+        Payload payload;
+        for(std::sregex_iterator m = matchesBegin;;) {
+            // Copy the non-matched subsequence (m->prefix()) onto payload
+            payload.push_back(std::string{m->prefix().first, m->prefix().second});
+    
+            // Add lazy environment reference for $(XXX) variable to payload
+            payload.push_back(std::make_pair(std::ref(env), (*m)[1]));
+    
+            // If there are no subsequent matches, add the remaining non-matched
+            // characters onto payload, construct lazy string and return
+            if(std::next(m) == matchesEnd) {
+                payload.push_back(std::string{m->suffix().first, m->suffix().second});
+                return LazyString(payload);
+            }
+            // Otherwise go onto next match
+            else {
+                m++;
+            }
+        }
+    }
+}
