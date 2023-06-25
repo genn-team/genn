@@ -520,7 +520,7 @@ protected:
         // If batching is enabled, calculate batch offset
         if(batchSize > 1) {
             env.add(Type::Uint32.addConst(), "_batchOffset", "batchOffset",
-                    {env.addInitialiser("const unsigned int batchOffset = " + LS(env, "num_neurons") + " * batch;")});
+                    {env.addInitialiser(LS::print("const unsigned int batchOffset = $(num_neurons) * batch;", env))});
         }
             
         // If axonal delays are required
