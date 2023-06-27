@@ -45,6 +45,8 @@ public:
     CustomUpdateVarRefAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
     {}
 
+    using RefType = Models::VarReference;
+
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
@@ -100,6 +102,8 @@ class CustomUpdateWUVarRefAdapter
 public:
     CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
     {}
+
+    using RefType = Models::WUVarReference;
 
     //----------------------------------------------------------------------------
     // Public methods

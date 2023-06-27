@@ -358,13 +358,15 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GroupInternal = typename G::GroupInternal;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
-
     using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
+    using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
+
+    template<typename A>
+    using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
 
     template<typename V>
     using GetConnectivityFn = const Snippet::Init<V> &(GroupInternal::*)(void) const;
-
 
     template<typename V>
     using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
@@ -567,8 +569,8 @@ public:
         }
     }
 
-    template<typename A, typename I>
-    void addVars(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "")
+    template<typename A>
+    void addVars(const std::string &arrayPrefix, GetVarIndexFn getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variables
         const A archetypeAdaptor(getGroup().getArchetype());
@@ -577,11 +579,11 @@ public:
             const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
-                     [arrayPrefix, getIndexFn, v](const auto &g, size_t) 
+                     [arrayPrefix, v](const auto &g, size_t) 
                      { 
                          return arrayPrefix + v.name + A(g).getNameSuffix();
                      },
-                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {});
+                     getIndexFn(v.access, v.name));
         }
     }
 
@@ -592,8 +594,8 @@ public:
                    fieldSuffix);
     }
 
-    template<typename A, typename I>
-    void addVarRefs(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "")
+    template<typename A>
+    void addVarRefs(const std::string &arrayPrefix, GetVarRefIndexFn<A> getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variable references
         const A archetypeAdaptor(getGroup().getArchetype());
@@ -608,8 +610,7 @@ public:
                          const auto varRef = A(g).getInitialisers().at(v.name);
                          return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
                      },
-                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)), 
-                     GroupMergedFieldType::STANDARD, {});
+                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
         }
     }
 
@@ -677,8 +678,7 @@ class VarRefCachePolicy
 {
 protected:
     using GroupInternal = typename G::GroupInternal;
-    using Initialiser = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
-    using GetIndexFn = std::function<std::string(const std::string&, const Initialiser&)>;
+    using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&)>;
   
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)

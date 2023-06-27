@@ -13,90 +13,6 @@ using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
-// Anonymous namespace
-//----------------------------------------------------------------------------
-namespace
-{
-template<typename A, typename G>
-void addPrivateVarPointerFields(EnvironmentGroupMergedField<G> &env, const std::string &arrayPrefix, const G &group)
-{
-    // Loop through variable references and add private pointer field 
-    const A archetypeAdaptor(group.getArchetype());
-    for(const auto &v : archetypeAdaptor.getDefs()) {
-        const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
-        env.addField(resolvedType.createPointer(), "_" + v.name, v.name + fieldSuffix,
-                     [arrayPrefix, v](const auto &g, size_t) 
-                     { 
-                         return arrayPrefix + v.name + A(g).getNameSuffix();
-                     });
-    }
-}
-//----------------------------------------------------------------------------
-template<typename A, typename G>
-void addPrivateVarRefPointerFields(EnvironmentGroupMergedField<G> &env, const std::string &arrayPrefix, const G &group)
-{
-    // Loop through variable references and add private pointer field 
-    const A archetypeAdaptor(group.getArchetype());
-    for(const auto &v : archetypeAdaptor.getDefs()) {
-        const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
-        env.addField(resolvedType.createPointer(), "_" + v.name, v.name + fieldSuffix,
-                     [arrayPrefix, v](const auto &g, size_t) 
-                     { 
-                         const auto varRef = A(g).getInitialisers().at(v.name);
-                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
-                     });
-    }
-}
-//----------------------------------------------------------------------------
-template<typename A, typename G, typename I>
-void addPrivateVarRefAccess(EnvironmentGroupMergedField<G> &env, const G &group, unsigned int batchSize, I getIndexFn)
-{
-    // Loop through variable references
-    const A archetypeAdaptor(group.getArchetype());
-    for(const auto &v : archetypeAdaptor.getDefs()) {
-        // If model isn't batched or variable isn't duplicated
-        const auto &varRef = archetypeAdaptor.getInitialisers().at(v.name);
-        if(batchSize == 1 || !varRef.isDuplicated()) {
-            // Add field with qualified type which indexes private pointer field
-            const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
-            const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            env.add(qualifiedType, v.name, "$(_" + v.name + ")[" + getIndexFn(v.access, varRef));
-        }
-    }
-}
-//----------------------------------------------------------------------------
-template<typename A, typename G>
-void addPrivateVarRefAccess(EnvironmentGroupMergedField<G> &env, const G &group, unsigned int batchSize, const std::string &indexSuffix)
-{
-    addPrivateVarRefPointerFields(env, group, batchSize, [&indexSuffix](){ return indexSuffix; });
-}
-//----------------------------------------------------------------------------
-template<typename A, typename G>
-void addPrivateVarAccess(EnvironmentGroupMergedField<G> &env, const G &group, unsigned int batchSize, const std::string &indexSuffix)
-{
-    // Loop through variable references
-    const A archetypeAdaptor(group.getArchetype());
-    for(const auto &v : archetypeAdaptor.getDefs()) {
-        // Add field with qualified type which indexes private pointer field
-        const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
-        const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-        env.add(qualifiedType, v.name, "$(_" + v.name + ")[" + getIndexFn(v.access, varRef));
-    }
-}
-//----------------------------------------------------------------------------
-template<typename V>
-void addTypes(Transpiler::TypeChecker::EnvironmentBase &env, const std::vector<V> &vars, 
-              const Type::TypeContext &typeContext, Transpiler::ErrorHandler::ErrorHandlerBase &errorHandle)
-{
-    for(const auto &v : vars) {
-        const auto resolvedType = v.type.resolve(typeContext);
-        const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-        env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, v.name, 0}, qualifiedType, errorHandler);
-    }
-}
-}   // Anonymous namespace
-
-//----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityUpdateGroupMerged::name = "CustomConnectivityUpdate";
@@ -224,7 +140,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
+void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     // Create new environment to add current source fields to neuron update group 
     EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
@@ -289,10 +205,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add fields and private $(_XXX) substitutions for postsyanptic and synaptic variables and variables references as, 
     // while these can only be accessed by user code inside loop, they can be used directly by add/remove synapse functions
-    addPrivateVarPointerFields<CustomConnectivityUpdateVarAdapter>(updateEnv, backend.getDeviceVarPrefix(), *this);
-    addPrivateVarPointerFields<CustomConnectivityUpdatePostVarAdapter>(updateEnv, backend.getDeviceVarPrefix(), *this);
-    addPrivateVarRefPointerFields<CustomConnectivityUpdateVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix(), *this);
-    addPrivateVarRefPointerFields<CustomConnectivityUpdatePostVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix(), *this);
+    addPrivateVarPointerFields<CustomConnectivityUpdateVarAdapter>(updateEnv, backend.getDeviceVarPrefix());
+    addPrivateVarPointerFields<CustomConnectivityUpdatePostVarAdapter>(updateEnv, backend.getDeviceVarPrefix());
+    addPrivateVarRefPointerFields<CustomConnectivityUpdateVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix());
+    addPrivateVarRefPointerFields<CustomConnectivityUpdatePostVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix());
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
@@ -393,11 +309,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         removeSynapse << "const unsigned lastIdx = $(_row_start_idx) + $(_row_length)[$(id_pre)] - 1;" << std::endl;
 
         // Copy postsynaptic target from end of row over synapse to be deleted
-        removeSynapse << "$(_ind)[idx] = $(_ind)[lastIdx];" << std::endl;
+        removeSynapse << "$(_ind)[$(id_syn)] = $(_ind)[lastIdx];" << std::endl;
 
         // Copy custom connectivity update variables from end of row over synapse to be deleted
         for (size_t i = 0; i < ccuVars.size(); i++) {
-            removeSynapse << "$(_" << ccuVars[i].name << ")[idx] = $(_" << ccuVars[i].name << ")[lastIdx];" << std::endl;
+            removeSynapse << "$(_" << ccuVars[i].name << ")[$(id_syn)] = $(_" << ccuVars[i].name << ")[lastIdx];" << std::endl;
         }
         
         // Loop through variable references
@@ -410,13 +326,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
-                    removeSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + idx] = ";
-                    removeSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + lastIdx];" << std::endl;
+                    removeSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + $(id_syn)] = ";
+                    removeSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + $(id_syn)];" << std::endl;
                 }
             }
             // Otherwise, copy custom connectivity update variable references from end of row over synapse to be deleted
             else {
-                removeSynapse << "$(_" << ccuVarRefs[i].name << ")[idx] = $(_" << ccuVarRefs[i].name << ")[lastIdx];" << std::endl;
+                removeSynapse << "$(_" << ccuVarRefs[i].name << ")[$(id_syn)] = $(_" << ccuVarRefs[i].name << ")[lastIdx];" << std::endl;
             }
         }
         
@@ -428,13 +344,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(removeSynapse);
-                    removeSynapse << "$(_dependent_var_" << i << ")[(b * $(_syn_stride)) + idx] = ";
+                    removeSynapse << "$(_dependent_var_" << i << ")[(b * $(_syn_stride)) + $(id_syn)] = ";
                     removeSynapse << "$(_dependent_var_" << i << ")[(b * $(_syn_stride)) + lastIdx];" << std::endl;
                 }
             }
             // Otherwise, copy dependent variable from end of row over synapse to be deleted
             else {
-                removeSynapse << "$(_dependent_var_" << i << ")[idx] = $(_dependent_var_" << i << ")[lastIdx];" << std::endl;
+                removeSynapse << "$(_dependent_var_" << i << ")[$(id_syn)] = $(_dependent_var_" << i << ")[lastIdx];" << std::endl;
             }
         }
 
@@ -446,27 +362,27 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         removeSynapse << "j--;" << std::endl;
     }
 
-    // Add function substitution with parameters to initialise custom connectivity update variables and variable references
-    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, {}), "remove_synapse", removeSynapseStream.str());
-
     // Pretty print code back to environment
-    Transpiler::ErrorHandler errorHandler("Current source injection" + std::to_string(getIndex()));
+    Transpiler::ErrorHandler errorHandler("Custom connectivity update" + std::to_string(getIndex()));
     prettyPrintStatements(cm->getRowUpdateCode(), getTypeContext(), updateEnv, errorHandler, 
                           // Within for_each_synapse loops, define the following types
                           [this](auto &env, auto &errorHandler)
                           {
+                              // Add type of remove synapse function
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "remove_synapse", 0}, Type::ResolvedType::createFunction(Type::Void, {}), errorHandler);
+
                               // Add typed indices
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_post", 0}, Type::Uint32.addConst(), errorHandler);
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, Type::Uint32.addConst(), errorHandler);
 
                               // Add types for variables and variable references accessible within loop
                               // **TODO** filter
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), getTypeContext(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), getTypeContext(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), getTypeContext(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), getTypeContext(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);
                           },
-                          [&backend, &modelMerged, this](auto &env, auto generateBody)
+                          [&backend, &modelMerged, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
                               EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
                               bodyEnv.getStream() << printSubs("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)", bodyEnv);
@@ -483,9 +399,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                   bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>(backend.getDeviceVarPrefix(), "$(id_post)");
 
                                   // Add postsynaptic and synapse variable references, only exposing those that aren't batched
-                                  addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, *this, modelMerged.getModel().getBatchSize(), "$(id_syn)");
+                                  addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, modelMerged.getModel().getBatchSize(), "$(id_syn)");
                                   addPrivateVarRefAccess<CustomConnectivityUpdatePostVarRefAdapter>(
-                                      bodyEnv, *this, modelMerged.getModel().getBatchSize(), 
+                                      bodyEnv, modelMerged.getModel().getBatchSize(), 
                                       [](VarAccessMode a, const Models::VarReference &varRef)
                                       { 
                                           if(varRef.getDelayNeuronGroup() != nullptr) {
@@ -494,7 +410,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                           else {
                                               return "$(id_post)"; 
                                           }
-                                       });
+                                      });
+
+                                    // Add function substitution with parameters to initialise custom connectivity update variables and variable references
+                                    bodyEnv.add(Type::ResolvedType::createFunction(Type::Void, {}), "remove_synapse", removeSynapseStream.str());
                                     
                                     // Generate body of for_each_synapse loop within this new environment
                                     generateBody(bodyEnv);
@@ -517,66 +436,62 @@ bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std:
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnectivityHostUpdate";
 //----------------------------------------------------------------------------
-/*CustomConnectivityHostUpdateGroupMerged::CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
-                                                                                 const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateGroupMergedBase(index, typeContext, groups)
+void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
-    using namespace Type;
+    CodeStream::Scope b(env.getStream());
 
-    // Add pre and postsynaptic variables
-    const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-    addVars(backend, cm->getPreVars(), &CustomConnectivityUpdateInternal::getPreVarLocation);
-    addVars(backend, cm->getPostVars(), &CustomConnectivityUpdateInternal::getPostVarLocation);
-
-    // Add host extra global parameters
-    for(const auto &e : cm->getExtraGlobalParams()) {
-        const auto resolvedType = e.type.resolve(getTypeContext());
-        addField(resolvedType.createPointer(), e.name,
-                 [e](const auto &g, size_t) { return e.name + g.getName(); },
-                 GroupMergedFieldType::HOST_DYNAMIC);
-
-        if(!backend.getDeviceVarPrefix().empty()) {
-            addField(resolvedType.createPointer(), backend.getDeviceVarPrefix() + e.name,
-                     [e, &backend](const auto &g, size_t)
-                     {
-                         return backend.getDeviceVarPrefix() + e.name + g.getName();
-                     },
-                     GroupMergedFieldType::DYNAMIC);
-        }
-    }
-             
-}*/
-//----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged) const
-{
-    CodeStream::Scope b(os);
-    os << "// merged custom connectivity host update group " << getIndex() << std::endl;
-    os << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+    env.getStream() << "// merged custom connectivity host update group " << getIndex() << std::endl;
+    env.getStream() << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
     {
-        CodeStream::Scope b(os);
+        CodeStream::Scope b(env.getStream());
 
         // Get reference to group
-        os << "const auto *group = &mergedCustomConnectivityHostUpdateGroup" << getIndex() << "[g]; " << std::endl;
+        env.getStream() << "const auto *group = &mergedCustomConnectivityHostUpdateGroup" << getIndex() << "[g]; " << std::endl;
 
-        // Create substitutions
+        // Create matching environment
+        EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> groupEnv(env, *this);
+
+        // Add fields for number of pre and postsynaptic neurons
+        groupEnv.addField(Type::Uint32.addConst(), "num_pre",
+                          Type::Uint32, "numSrcNeurons", 
+                          [](const auto &cg, size_t) 
+                          { 
+                              const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                              return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                          });
+        groupEnv.addField(Type::Uint32.addConst(), "num_post",
+                          Type::Uint32, "numTrgNeurons", 
+                          [](const auto &cg, size_t) 
+                          { 
+                              const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                              return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                          });
+
+
+        // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-        Substitutions subs;
-        subs.addVarSubstitution("rng", "hostRNG");
-        subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-        subs.addVarSubstitution("num_post", "group->numTrgNeurons");
-        subs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
-        subs.addVarNameSubstitution(cm->getPreVars(), "", "group->");
-        subs.addVarNameSubstitution(cm->getPostVars(), "", "group->");
-        subs.addParamValueSubstitution(cm->getParamNames(), getArchetype().getParams(),
-                                       [this](const std::string &p) { return isParamHeterogeneous(p); },
-                                       "", "group->");
-        subs.addVarValueSubstitution(cm->getDerivedParams(), getArchetype().getDerivedParams(),
-                                     [this](const std::string & p) { return isDerivedParamHeterogeneous(p); },
-                                     "", "group->");
+        groupEnv.addParams(cm->getParamNames(), "", &CustomConnectivityUpdateInternal::getParams, 
+                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous);
+        groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
+                                  &CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous);
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
+            // Add pointer field to allow user code to access
             const auto resolvedType = egp.type.resolve(getTypeContext());
+            groupEnv.addField(resolvedType.createPointer(), egp.name, egp.name,
+                              [egp](const auto &g, size_t) { return egp.name + g.getName(); },
+                              "", GroupMergedFieldType::HOST_DYNAMIC);
+
+            // If backend has device variables, also add hidden pointer field with device pointer
+            if(!backend.getDeviceVarPrefix().empty()) {
+                groupEnv.addField(resolvedType.createPointer(), "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
+                                  [egp, &backend](const auto &g, size_t)
+                                  {
+                                      return backend.getDeviceVarPrefix() + egp.name + g.getName();
+                                  },
+                                  "", GroupMergedFieldType::DYNAMIC);
+            }
 
             // Generate code to push this EGP with count specified by $(0)
             std::stringstream pushStream;
@@ -585,7 +500,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
-            subs.addFuncSubstitution("push" + egp.name + "ToDevice", 1, pushStream.str());
+            groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), 
+                         "push" + egp.name + "ToDevice", pushStream.str());
 
             // Generate code to pull this EGP with count specified by $(0)
             std::stringstream pullStream;
@@ -594,19 +510,18 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                                            VarLocation::HOST_DEVICE, "$(0)", "group->");
 
             // Add substitution
-            subs.addFuncSubstitution("pull" + egp.name + "FromDevice", 1, pullStream.str());
+            groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), 
+                         "pull" + egp.name + "FromDevice", pullStream.str());
         }
 
-        addVarPushPullFuncSubs(backend, subs, cm->getPreVars(), "group->numSrcNeurons",
-                               &CustomConnectivityUpdateInternal::getPreVarLocation);
-        addVarPushPullFuncSubs(backend, subs, cm->getPostVars(), "group->numTrgNeurons",
-                               &CustomConnectivityUpdateInternal::getPostVarLocation);
+        // Add pre and postsynaptic variables along with push and pull functions
+        // **TODO** why not pre and post var-references
+        addVars<CustomConnectivityUpdatePreVarAdapter>(groupEnv, "$(num_pre)", backend);
+        addVars<CustomConnectivityUpdatePostVarAdapter>(groupEnv, "$(num_post)", backend);
 
-        // Apply substitutons to row update code and write out
-        std::string code = cm->getHostUpdateCode();
-        subs.applyCheckUnreplaced(code, "custom connectivity host update : merged" + std::to_string(getIndex()));
-        //code = ensureFtype(code, modelMerged.getModel().getPrecision());
-        os << code;
+        // Pretty print code back to environment
+        Transpiler::ErrorHandler errorHandler("Custom connectivity host update" + std::to_string(getIndex()));
+        prettyPrintStatements(cm->getHostUpdateCode(), getTypeContext(), groupEnv, errorHandler);
     }
 }
 //----------------------------------------------------------------------------
@@ -618,63 +533,4 @@ bool CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous(const std::st
 bool CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &name) const
 {
     return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
-                                                                     const Models::Base::VarVec &vars, const std::string &count,
-                                                                     VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(const std::string&) const) const
-{
-    // Loop through variables
-    for(const auto &v : vars) {
-        const auto resolvedType = v.type.resolve(getTypeContext());
-
-        // If var is located on the host
-        const auto loc = std::invoke(getVarLocationFn, getArchetype(), v.name);
-        if (loc & VarLocation::HOST) {
-            // Generate code to push this variable
-            std::stringstream pushStream;
-            CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, resolvedType, v.name,
-                                           loc, count, "group->");
-
-            // Add substitution
-            subs.addFuncSubstitution("push" + v.name + "ToDevice", 0, pushStream.str());
-
-            // Generate code to pull this variable
-            // **YUCK** these EGP functions should probably just be called dynamic or something
-            std::stringstream pullStream;
-            CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, resolvedType, v.name,
-                                           loc, count, "group->");
-
-            // Add substitution
-            subs.addFuncSubstitution("pull" + v.name + "FromDevice", 0, pullStream.str());
-        }
-    }
-}
-//----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::addVars(const BackendBase &backend, const Models::Base::VarVec &vars,
-                                                      VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(const std::string&) const)
-{
-    using namespace Type;
-
-    // Loop through variables
-    for(const auto &v : vars) {
-        // If var is located on the host
-        const auto resolvedType = v.type.resolve(getTypeContext());
-        if (std::invoke(getVarLocationFn, getArchetype(), v.name) & VarLocation::HOST) {
-            addField(resolvedType.createPointer(), v.name,
-                    [v](const auto &g, size_t) { return v.name + g.getName(); },
-                    GroupMergedFieldType::HOST);
-
-            if(!backend.getDeviceVarPrefix().empty())  {
-                // **TODO** I think could use addPointerField
-                addField(resolvedType.createPointer(), backend.getDeviceVarPrefix() + v.name,
-                         [v, &backend](const auto &g, size_t)
-                         {
-                             return backend.getDeviceVarPrefix() + v.name + g.getName();
-                         });
-            }
-        }
-    }
 }

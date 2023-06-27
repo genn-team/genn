@@ -59,6 +59,8 @@ public:
 
     const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -157,6 +159,8 @@ public:
     CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
+    using RefType = Models::WUVarReference;
+
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
@@ -180,6 +184,8 @@ public:
     CustomConnectivityUpdatePreVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
+    using RefType = Models::VarReference;
+
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
@@ -202,6 +208,8 @@ class CustomConnectivityUpdatePostVarRefAdapter
 public:
     CustomConnectivityUpdatePostVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
+
+    using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
     // Public methods
