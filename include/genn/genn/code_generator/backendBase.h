@@ -492,7 +492,6 @@ protected:
     template<typename G>
     void genNeuronIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
     {
-        using LS = LazyString;
         env.addField(Type::Uint32.addConst(), "num_neurons",
                      Type::Uint32, "numNeurons",
                      [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
@@ -520,7 +519,7 @@ protected:
         // If batching is enabled, calculate batch offset
         if(batchSize > 1) {
             env.add(Type::Uint32.addConst(), "_batchOffset", "batchOffset",
-                    {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * batch;", env)});
+                    {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
         }
             
         // If axonal delays are required
@@ -529,33 +528,33 @@ protected:
             const unsigned int numDelaySlots = env.getGroup().getArchetype().getNumDelaySlots();
             const std::string numDelaySlotsStr = std::to_string(numDelaySlots);
             env.add(Type::Uint32.addConst(), "_read_delay_slot", "readDelaySlot",
-                    {env.addInitialiser("const unsigned int readDelaySlot = (*$(_spk_que_ptr) + " + std::to_string(numDelaySlots - 1) + ") % " + numDelaySlotsStr+ ";", env)});
+                    {env.addInitialiser("const unsigned int readDelaySlot = (*$(_spk_que_ptr) + " + std::to_string(numDelaySlots - 1) + ") % " + numDelaySlotsStr+ ";")});
             env.add(Type::Uint32.addConst(), "_read_delay_offset", "readDelayOffset",
-                    {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(num_neurons);", env)});
+                    {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(num_neurons);")});
 
             // And we should WRITE to delay slot pointed to be spkQuePtr
             env.add(Type::Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
-                    {env.addInitialiser("const unsigned int writeDelaySlot = * $(_spk_que_ptr);", env)});
+                    {env.addInitialiser("const unsigned int writeDelaySlot = * $(_spk_que_ptr);")});
             env.add(Type::Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
-                    {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);", env)});
+                    {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
 
             // If batching is also enabled
             if(batchSize > 1) {
                 // Calculate batched delay slots
                 env.add(Type::Uint32.addConst(), "_read_batch_delay_slot", "readBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int readBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_read_delay_slot);", env)});
+                        {env.addInitialiser("const unsigned int readBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_read_delay_slot);")});
                 env.add(Type::Uint32.addConst(), "_write_batch_delay_slot", "writeBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int writeBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_write_delay_slot);", env)});
+                        {env.addInitialiser("const unsigned int writeBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_write_delay_slot);")});
 
                 // Calculate current batch offset
                 env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                        {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";", env)});
+                        {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
 
                 // Calculate further offsets to include delay and batch
                 env.add(Type::Uint32.addConst(), "_read_batch_delay_offset", "readBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);", env)});
+                        {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);")});
                 env.add(Type::Uint32.addConst(), "_write_batch_delay_offset", "writeBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset)+ $(_batch_delay_offset);", env)});
+                        {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset)+ $(_batch_delay_offset);")});
             }
         }
     }
@@ -611,9 +610,9 @@ protected:
         if(batchSize > 1) {
             // Calculate batch offsets into pre and postsynaptic populations
             env.add(Type::Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);", env)});
+                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);")});
             env.add(Type::Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_post) * $(batch);", env)});
+                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_post) * $(batch);")});
         
             // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
             if(areSixtyFourBitSynapseIndicesRequired(env.getGroup())) {
@@ -622,7 +621,7 @@ protected:
             }
             else {
                 env.add(Type::Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
-                        {env.addInitialiser("const unsigned int synBatchOffset = $(_pre_batch_offset) * $(_row_stride);", env)});
+                        {env.addInitialiser("const unsigned int synBatchOffset = $(_pre_batch_offset) * $(_row_stride);")});
             }
         
             // If synapse group has kernel
@@ -640,7 +639,7 @@ protected:
                 kernBatchOffsetInit << "$(batch);" << std::endl;
 
                 env.add(Type::Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
-                        {env.addInitialiser(kernBatchOffsetInit.str(), env)});
+                        {env.addInitialiser(kernBatchOffsetInit.str())});
             }
         }
 
@@ -658,16 +657,16 @@ protected:
                 preDelaySlotInit << "(*$(_src_spk_que_ptr) + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
             }
             env.add(Type::Uint32, "_pre_delay_slot", "preDelaySlot", 
-                    {env.addInitialiser(preDelaySlotInit.str(), env)});
+                    {env.addInitialiser(preDelaySlotInit.str())});
 
             env.add(Type::Uint32, "_pre_delay_offset", "preDelayOffset",
-                    {env.addInitialiser("const unsigned int preDelayOffset = $(_pre_delay_slot) * $(num_pre);", env)});
+                    {env.addInitialiser("const unsigned int preDelayOffset = $(_pre_delay_slot) * $(num_pre);")});
 
             if(batchSize > 1) {
                 env.add(Type::Uint32, "_pre_batch_delay_slot", "preBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int preBatchDelaySlot = $(_pre_delay_slot) + ($(batch) * " + std::to_string(numSrcDelaySlots) + ");", env)});
+                        {env.addInitialiser("const unsigned int preBatchDelaySlot = $(_pre_delay_slot) + ($(batch) * " + std::to_string(numSrcDelaySlots) + ");")});
                 env.add(Type::Uint32, "_pre_batch_delay_offset", "preBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");", env)});
+                        {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
             }
 
             if(env.getGroup().getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() 
@@ -675,11 +674,11 @@ protected:
             {
                 env.add(Type::Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
                         {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
-                                            + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);", env)});
+                                            + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
 
                 if(batchSize > 1) {
                     env.add(Type::Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
-                            {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");", env)});
+                            {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
                 }
             }
         }
@@ -698,26 +697,26 @@ protected:
                 postDelaySlotInit << "(*$(_trg_spk_que_ptr) + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
             }
             env.add(Type::Uint32, "_post_delay_slot", "postDelaySlot", 
-                    {env.addInitialiser(postDelaySlotInit.str(), env)});
+                    {env.addInitialiser(postDelaySlotInit.str())});
 
             env.add(Type::Uint32, "_post_delay_offset", "postDelayOffset",
-                    {env.addInitialiser("const unsigned int postDelayOffset = $(_post_delay_slot) * $(num_post);", env)});
+                    {env.addInitialiser("const unsigned int postDelayOffset = $(_post_delay_slot) * $(num_post);")});
 
             if(batchSize > 1) {
                 env.add(Type::Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + (batch * " + std::to_string(numTrgDelaySlots) + ");", env)});
+                        {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + (batch * " + std::to_string(numTrgDelaySlots) + ");")});
                 env.add(Type::Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");", env)});
+                        {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
             }
 
             if(env.getGroup().getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
                 env.add(Type::Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
                         {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
-                                            + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);", env)});
+                                            + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
 
                 if(batchSize > 1) {
                     env.add(Type::Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
-                            {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");", env)});
+                            {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
                 }
 
             }

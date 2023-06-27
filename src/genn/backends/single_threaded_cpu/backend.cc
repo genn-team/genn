@@ -95,7 +95,7 @@ void genKernelIteration(EnvironmentExternalBase &env, const G &g, size_t numKern
                     // Generate kernel index and use as "synapse" index
                     // **TODO** rename
                     loopEnv.add(Type::Uint32.addConst(), "id_syn", "kernelInd", 
-                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g) + ";", loopEnv)});
+                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g) + ";")});
 
                     // Call handler
                     handler(loopEnv);
@@ -368,8 +368,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
                                 if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     // Add initialiser strings to calculate synaptic and presynaptic index
-                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;", synEnv);
-                                    const size_t idPostInit = synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];", synEnv);
+                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;");
+                                    const size_t idPostInit = synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];");
 
                                     // **TODO** id_syn can be 64-bit
                                     synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
@@ -382,7 +382,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                     // Add initialiser to calculate synaptic index
                                     // **TODO** id_syn can be 64-bit
                                     synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;", synEnv)});
+                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
                                 }
 
                                 // Add correct functions for apply synaptic input
@@ -486,9 +486,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                 if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     // Add initialisers to calculate column and row-major indices
                                     // **TODO** fast divide optimisations
-                                    const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;", synEnv);
-                                    const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];", synEnv);
-                                    const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);", synEnv);
+                                    const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;");
+                                    const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];");
+                                    const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);");
 
                                     // Add presynaptic and synapse index to environment
                                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit});
@@ -498,7 +498,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                     // Add presynaptic and synapse index to environment
                                     synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                                     synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;", synEnv)});
+                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;")});
                                 }
 
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
@@ -696,8 +696,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                         // If connectivity is sparse
                                         if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                             // Add initialisers to calculate synaptic index and thus lookup postsynaptic index
-                                            const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;", synEnv);
-                                            const size_t jInit = synEnv.addInitialiser("const unsigned int j = $(_ind)[idSyn];", synEnv);
+                                            const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;");
+                                            const size_t jInit = synEnv.addInitialiser("const unsigned int j = $(_ind)[idSyn];");
 
                                             // Add substitutions
                                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
@@ -707,7 +707,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                             synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
                                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                                       {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;", synEnv)});
+                                                       {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
                                         }
 
                                         // Generate custom update
@@ -797,7 +797,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                 
                                     // Add conditional initialisation code to calculate synapse index
                                     groupEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                                 {groupEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;", groupEnv)});
+                                                 {groupEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
                                 
                                     // Generate custom update
                                     c.generateCustomUpdate(*this, groupEnv);
@@ -1494,9 +1494,9 @@ void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Hand
         EnvironmentExternal varEnv(env);
         // **TODO** 64-bit
         varEnv.add(Type::Uint32, "id_syn", "idSyn",
-                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;", varEnv)});
+                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
         varEnv.add(Type::Uint32, "id_post", "idPost",
-                   {varEnv.addInitialiser("const unsigned int idPost = $(_ind)[($(id_pre) * $(_row_stride)) + j]", varEnv)});
+                   {varEnv.addInitialiser("const unsigned int idPost = $(_ind)[($(id_pre) * $(_row_stride)) + j]")});
         handler(varEnv);
      }
 }
@@ -1510,7 +1510,7 @@ void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handl
         EnvironmentExternal varEnv(env);
         // **TODO** 64-bit
         varEnv.add(Type::Uint32, "id_syn", "idSyn",
-                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;", varEnv)});
+                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
         varEnv.add(Type::Uint32, "id_post", "j");
         handler(varEnv);
     }
@@ -1716,14 +1716,14 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const ModelSpecMerged &modelMerged, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_evnt";
     const auto *wu = sg.getArchetype().getWUModel();
 
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
         const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
 
         // Loop through Toeplitz matrix diagonals
-        env.getStream() << "for(unsigned int j = 0; j < group->rowStride; j++)";
+        env.getStream() << "for(unsigned int j = 0; j < " << env["_row_stride"] << "; j++)";
         {
             /*CodeStream::Scope b(env.getStream());
 
@@ -1832,10 +1832,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         // Detect spike events or spikes and do the update
         env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
         if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            env.getStream() << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
+            env.getStream() << printSubs("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(pre_delay_slot)]; i++)", env);
         }
         else {
-            env.getStream() << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
+            env.getStream() << printSubs("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)", env);
         }
         {
             CodeStream::Scope b(env.getStream());
@@ -1845,9 +1845,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
 
-            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
+            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(pre_delay_offset) + " : "";
             groupEnv.add(Type::Uint32, "id_pre", "idPre",
-                         {groupEnv.addInitialiser("const unsigned int idPre = group->srcSpk" + eventSuffix + "[" + queueOffset + "i];")});
+                         {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
             // If this is a spike-like event, insert threshold check for this presynaptic neuron
             if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
@@ -1875,9 +1875,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                     // **TODO** 64-bit id_syn
                     synEnv.add(Type::Uint32, "id_syn", "idSyn",
-                               {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;", synEnv)});
+                               {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
                     synEnv.add(Type::Uint32, "id_post", "idPost",
-                               {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];", synEnv)});
+                               {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
                     
                     if(trueSpike) {
                         sg.generateSpikeUpdate(*this, synEnv, modelMerged);
@@ -1898,7 +1898,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Read row word
-                    groupEnv.getStream() << "uint32_t connectivityWord = group->gp[(ipre * rowWords) + w];" << std::endl;
+                    groupEnv.getStream() << "uint32_t connectivityWord = " << groupEnv["_gp"] << "[(ipre * rowWords) + w];" << std::endl;
 
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
@@ -1921,7 +1921,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                         // If we aren't in padding region
                         // **TODO** don't bother checking if there is no padding
-                        groupEnv.getStream() << "if(ipost < group->numTrgNeurons)";
+                        groupEnv.getStream() << "if(ipost < " << groupEnv["num_post"] << ")";
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
@@ -1949,11 +1949,11 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         // **TODO** 64-bit index
                         synEnv.getStream() << printSubs("const uint64_t gid = ($(id_pre) * $(num_post)) + $(id_post);", synEnv) << std::endl;
 
-                        synEnv.getStream() << "if (B(group->gp[gid / 32], gid & 31))" << CodeStream::OB(20);
+                        synEnv.getStream() << "if (B(" << synEnv["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                     }
                     else {
                         synEnv.add(Type::Uint32, "id_syn", "idSyn",
-                                   {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(num_post)) + $(id_post);", synEnv)});
+                                   {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(num_post)) + $(id_post);")});
                     }
 
                    
@@ -1981,12 +1981,12 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
-    const std::string spikeQueueOffset = spikeDelayRequired ? "writeDelayOffset + " : "";
+    const std::string spikeQueueOffset = spikeDelayRequired ? "$(_write_delay_offset) + " : "";
 
-    const std::string suffix = trueSpike ? "" : "Evnt";
-    env.getStream() << "group->spk" << suffix << "[" << spikeQueueOffset << "group->spkCnt" << suffix;
+    const std::string suffix = trueSpike ? "" : "_evnt";
+    env.getStream() << printSubs("$(_spk" + suffix + ")[" + spikeQueueOffset + "$(_spk_cnt" + suffix + ")", env);
     if(spikeDelayRequired) { // WITH DELAY
-        env.getStream() << "[*group->spkQuePtr]++]";
+        env.getStream() << "[*" << env["_spk_que_ptr"] << "]++]";
     }
     else { // NO DELAY
         env.getStream() << "[0]++]";
@@ -1994,19 +1994,17 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     env.getStream() << " = " << env["id"] << ";" << std::endl;
 
     // Reset spike and spike-like-event times
-    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
+    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        env.getStream() << "group->sT[" << queueOffset << env["id"] << "] = " << env["t"] << ";" << std::endl;
+        env.getStream() << printSubs("$(_spk_time)[" + queueOffset + "$(id)] = $(t);", env) << std::endl;
     }
     else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-        env.getStream() << "group->seT[" << queueOffset << env["id"] << "] = " << env["t"] << ";" << std::endl;
+        env.getStream() << printSubs("$(_spk_evnt_time)[" + queueOffset + "$(id)] = $(t);", env) << std::endl;
     }
     
     // If recording is enabled
     if(recordingEnabled) {
-        const std::string recordSuffix = trueSpike ? "" : "Event";
-        env.getStream() << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << env["id"] << " / 32)]";
-        env.getStream() << " |= (1 << (" << env["id"] << " % 32));" << std::endl;
+        env.getStream() << printSubs("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));", env) << std::endl;
     }
 }
 //--------------------------------------------------------------------------

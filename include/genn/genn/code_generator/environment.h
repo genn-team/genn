@@ -297,16 +297,10 @@ public:
         }
     }
 
-   
-    size_t addInitialiser(const LazyString &initialiser)
+    size_t addInitialiser(const std::string &format)
     {
-        m_Initialisers.emplace_back(false, initialiser);
+        m_Initialisers.emplace_back(false, LazyString::print(format, *this));
         return (m_Initialisers.size() - 1);
-    }
-
-    size_t addInitialiser(const std::string &format, EnvironmentExternalBase &env)
-    {
-        return addInitialiser(LazyString::print(format, env));
     }
 
 protected:

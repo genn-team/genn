@@ -46,7 +46,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     if (!sg.getArchetype().getKernelSize().empty()) {
         // Add substitution
         synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                   {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg) + ";", synEnv)});
+                   {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg) + ";")});
     }
 
     // If weights are individual, substitute variables for values stored in global memory

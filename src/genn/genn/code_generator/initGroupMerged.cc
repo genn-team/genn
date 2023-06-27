@@ -555,7 +555,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
         }
         batchStrideInit << ";" << std::endl;
         groupEnv.add(Type::Uint32.addConst(), "_batch_stride", "batchStride",
-                     {groupEnv.addInitialiser(batchStrideInit.str(), groupEnv)});
+                     {groupEnv.addInitialiser(batchStrideInit.str())});
     }
 
     
@@ -641,7 +641,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
     // Add substitution
     // **TODO** dependencies on kernel fields
     groupEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                 {groupEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(*this) + ";", groupEnv)});
+                 {groupEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(*this) + ";")});
 
     // Initialise single (hence empty lambda function) synapse variable
     genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, "$(num_pre) * $(_row_stride)", modelMerged.getModel().getBatchSize(),
@@ -915,7 +915,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
             }
             batchStrideInit << ";" << std::endl;
             groupEnv.add(Type::Uint32.addConst(), "_batch_stride", "batchStride",
-                         {groupEnv.addInitialiser(batchStrideInit.str(), groupEnv)});
+                         {groupEnv.addInitialiser(batchStrideInit.str())});
         }
     }
     else {
