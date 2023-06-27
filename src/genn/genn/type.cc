@@ -80,6 +80,10 @@ std::string ResolvedType::getName() const
                     description += (a.getName() + ",");
                 }
                 return description + ")";
+            },
+            [&qualifier](std::monostate)
+            {
+                return qualifier + "void";
             }},
         detail);
 }
@@ -99,6 +103,10 @@ size_t ResolvedType::getSize(size_t pointerBytes) const
             [](const Type::ResolvedType::Function&)->size_t
             {
                 throw std::runtime_error("Function types do not have size");
+            },
+            [](std::monostate)->size_t
+            {
+                throw std::runtime_error("Void type does not have size");
             }},
             detail);
 }
