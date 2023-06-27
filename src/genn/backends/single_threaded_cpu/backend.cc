@@ -72,7 +72,7 @@ private:
 
 //-----------------------------------------------------------------------
 template<typename G>
-void genKernelIteration(EnvironmentExternalBase &env, const G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
+void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
 {
     // Define recursive function to generate nested kernel initialisation loops
     // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
@@ -690,7 +690,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                                         CodeStream::Scope b(groupEnv.getStream());
 
                                         // Add presynaptic index to substitutions
-                                        EnvironmentGroupMergedField<CustomUpdateGroupMerged> synEnv(groupEnv, c);
+                                        EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, c);
                                         synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                                         
                                         // If connectivity is sparse
