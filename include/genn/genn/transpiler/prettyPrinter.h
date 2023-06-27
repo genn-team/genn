@@ -38,7 +38,7 @@ public:
     virtual CodeGenerator::CodeStream &getStream() = 0;
 };
 
-typedef std::function<void(EnvironmentBase&, std::function<void()>)> StatementHandler;
+typedef std::function<void(EnvironmentBase&, std::function<void(EnvironmentBase&)>)> StatementHandler;
 
 //---------------------------------------------------------------------------
 // Free functions

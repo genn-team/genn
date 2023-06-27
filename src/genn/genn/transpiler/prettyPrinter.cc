@@ -413,8 +413,9 @@ private:
         m_Environment = environment;
 
         m_ForEachSynapseHandler(m_Environment,
-                                [this, &forEachSynapseStatement]()
+                                [this, &forEachSynapseStatement](EnvironmentBase &env)
                                 {
+                                    m_Environment = env;
                                     forEachSynapseStatement.getBody()->accept(*this);
                                 });
         // Restore old environment

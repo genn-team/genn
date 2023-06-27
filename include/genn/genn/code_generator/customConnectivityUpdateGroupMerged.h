@@ -8,31 +8,14 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::CustomConnectivityUpdateGroupMergedBase
+// GeNN::CodeGenerator::CustomConnectivityUpdateGroupMerged
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-class GENN_EXPORT CustomConnectivityUpdateGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
+class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>
 {
 public:
-    CustomConnectivityUpdateGroupMergedBase(size_t index, const Type::TypeContext &typeContext,
-                                            const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
-
-protected:
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &name) const;
-    bool isDerivedParamHeterogeneous(const std::string &name) const;
-};
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::CustomConnectivityUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
-{
-public:
-    CustomConnectivityUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
+    CustomConnectivityUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -62,6 +45,12 @@ public:
 
 private:
     //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(const std::string &name) const;
+    bool isDerivedParamHeterogeneous(const std::string &name) const;
+
+    //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
     //! Sorted vectors of variable names, types and duplication modes which 
@@ -72,11 +61,11 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomConnectivityHostUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public CustomConnectivityUpdateGroupMergedBase
+class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>
 {
 public:
-    CustomConnectivityHostUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext, const BackendBase &backend,
-                                            const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+    using GroupMerged::GroupMerged;
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -100,6 +89,9 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(const std::string &name) const;
+    bool isDerivedParamHeterogeneous(const std::string &name) const;
+
     void addVarPushPullFuncSubs(const BackendBase &backend, Substitutions &subs, 
                                 const Models::Base::VarVec &vars, const std::string &count,
                                 VarLocation(CustomConnectivityUpdateInternal:: *getVarLocationFn)(const std::string&) const) const;
