@@ -260,6 +260,11 @@ bool CustomUpdateWU::isTransposeOperation() const
                        [](const auto &v) { return (v.second.getTransposeSynapseGroup() != nullptr); });
 }
 //----------------------------------------------------------------------------
+const std::vector<unsigned int> &CustomUpdateWU::getKernelSize() const 
+{ 
+    return getSynapseGroup()->getKernelSize(); 
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
 {
     // Superclass

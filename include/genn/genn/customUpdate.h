@@ -297,7 +297,7 @@ protected:
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
-    const std::vector<unsigned int> &getKernelSize() const { return getSynapseGroup()->getKernelSize(); }
+    const std::vector<unsigned int> &getKernelSize() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
