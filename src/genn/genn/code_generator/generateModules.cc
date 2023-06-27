@@ -103,6 +103,11 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     // Create merged model
     ModelSpecMerged modelMerged(model, backend);
     
+    // **TODO** because merged group fields are populated in the same pass 
+    // as code is generated, we will need to ALWAYS generate code but only 
+    // write it if hashes match - this will be less gross once we're doing
+    // runtime compilation
+
     // If force rebuild flag is set or model should be rebuilt
     //const auto hashDigest = modelMerged.getHashDigest(backend);
     MemAlloc mem = MemAlloc::zero();
@@ -129,7 +134,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
         }
 
         // Open file
-        std::ofstream os((outputPath / "model.sha").str());
+        /*std::ofstream os((outputPath / "model.sha").str());
     
         // Write digest as hex with each word seperated by a space
         os << std::hex;
@@ -140,7 +145,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
 
         // Write model memory usage estimates so it can be reloaded if code doesn't need re-generating
         os << std::dec;
-        os << mem << std::endl;
+        os << mem << std::endl;*/
     }
 
     // Show memory usage
