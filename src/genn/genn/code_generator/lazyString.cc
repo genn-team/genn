@@ -26,13 +26,26 @@ std::string LazyString::str() const
                 { 
                     stream << str;
                 },
-                [&stream](const std::pair<std::reference_wrapper<EnvironmentExternalBase>, std::string> &env)
+                [&stream](const EnvRef &envRef)
                 { 
-                    stream << env.first.get()[env.second];
+                    stream << envRef.env.get()[envRef.name];
                 }},
             e);
     }
     return stream.str();
+}
+//----------------------------------------------------------------------------
+LazyString& LazyString::operator += (const LazyString &rhs)
+{
+    // Add RHS's payload to ours
+    m_Payload.insert(m_Payload.end(), rhs.m_Payload.cbegin(), rhs.m_Payload.cend());
+
+    return  *this;
+}
+//----------------------------------------------------------------------------
+LazyString& LazyString::operator += (const std::string &rhs)
+{
+    return operator += (LazyString{rhs});
 }
 //----------------------------------------------------------------------------
 LazyString LazyString::print(const std::string &format, EnvironmentExternalBase &env)
@@ -55,7 +68,7 @@ LazyString LazyString::print(const std::string &format, EnvironmentExternalBase 
             payload.push_back(std::string{m->prefix().first, m->prefix().second});
     
             // Add lazy environment reference for $(XXX) variable to payload
-            payload.push_back(std::make_pair(std::ref(env), (*m)[1]));
+            payload.push_back(EnvRef{std::ref(env), (*m)[1]});
     
             // If there are no subsequent matches, add the remaining non-matched
             // characters onto payload, construct lazy string and return

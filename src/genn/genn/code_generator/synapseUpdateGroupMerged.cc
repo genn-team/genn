@@ -33,23 +33,20 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     synEnv.addVars<SynapseWUPreVarAdapter>(backend.getDeviceVarPrefix(),
                                            [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
                                            { 
-                                               return "[" + sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), synEnv["id_pre"]) + "]";
-                                           }, 
-                                           {"id_pre"});
+                                               return LazyString::print(sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), "id_pre"), synEnv);
+                                           });
      synEnv.addVars<SynapseWUPostVarAdapter>(backend.getDeviceVarPrefix(),
                                              [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
                                              { 
-                                                 return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synEnv["id_post"]) + "]";
-                                             },
-                                             {"id_post"});
+                                                 return LazyString::print(sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), "id_post"), synEnv);
+                                             });
 
     
     // If this synapse group has a kernel
     if (!sg.getArchetype().getKernelSize().empty()) {
         // Add substitution
-        // **TODO** dependencies on kernel fields
         synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
-                   {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg, synEnv) + ";")});
+                   {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg) + ";", synEnv)});
     }
 
     // If weights are individual, substitute variables for values stored in global memory
@@ -57,9 +54,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
                                             [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
                                             { 
-                                                return "[" + sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), synEnv["id_syn"]) + "]";
-                                            },
-                                            {"id_syn"});
+                                                return LazyString::print(sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), "id_syn"), synEnv);
+                                            });
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -108,9 +104,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
                                             [&sg, &synEnv, batchSize](VarAccess a, const std::string&) 
                                             { 
-                                                return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synEnv["id_kernel"]) + "]";
-                                            },
-                                            {"id_kernel"});
+                                                return LazyString::print(sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), "id_kernel"), synEnv);
+                                            });
     }
     // Otherwise, substitute variables for constant values
     else {

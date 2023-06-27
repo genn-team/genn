@@ -548,4 +548,40 @@ void prettyPrintStatements(const std::string &code, const Type::TypeContext &typ
     // Pretty print
     Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes), forEachSynapsePrettyPrintHandler);
 }
+std::string printSubs(const std::string &format, EnvironmentExternalBase &env)
+{
+    // Create regex iterator to iterate over $(XXX) style varibles in format string
+    std::regex regex("\\$\\(([\\w]+)\\)");
+    std::sregex_iterator matchesBegin(format.cbegin(), format.cend(), regex);
+    std::sregex_iterator matchesEnd;
+    
+    // If there are no matches, leave format unmodified and return
+    if(matchesBegin == matchesEnd) {
+        return format;
+    }
+    // Otherwise
+    else {
+        // Loop through matches to build lazy string payload
+        std::string output;
+        for(std::sregex_iterator m = matchesBegin;;) {
+            // Copy the non-matched subsequence (m->prefix()) onto output
+            std::copy(m->prefix().first, m->prefix().second, std::back_inserter(output));
+
+            // Add environment value of $(XXX) to output
+            output += env[(*m)[1]];
+    
+            // If there are no subsequent matches, add the remaining 
+            // non-matched characters onto output and return
+            if(std::next(m) == matchesEnd) {
+                 // Copy the non-matched subsequence (m->prefix()) onto output
+                 std::copy(m->suffix().first, m->suffix().second, std::back_inserter(output));
+                return output;
+            }
+            // Otherwise go onto next match
+            else {
+                m++;
+            }
+        }
+    }
+}
 }   // namespace GeNN::CodeGenerator

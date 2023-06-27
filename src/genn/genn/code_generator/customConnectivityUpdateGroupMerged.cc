@@ -239,28 +239,24 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Add presynaptic variables and variable references
     // **TODO** var references to batched variables should be private
     // **THINK** what about batched pre var references?
-    updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>(backend.getDeviceVarPrefix(), updateEnv["id_pre"], "",
-                                                             {"id_pre"});
+    updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>(backend.getDeviceVarPrefix(), LazyString{updateEnv, "id_pre"}, "");
     updateEnv.addVarRefs<CustomConnectivityUpdatePreVarRefAdapter>(backend.getDeviceVarPrefix(),
                                                                    [&updateEnv](VarAccessMode, const Models::VarReference &v)
                                                                    { 
                                                                       if(v.getDelayNeuronGroup() != nullptr) {
-                                                                          return "[" + updateSubs["_pre_delay_offset"] + " + " + updateSubs["id_pre"] + "]"; 
+                                                                          return LazyString::print("$(_pre_delay_offset) + $(id_pre)", updateEnv); 
                                                                       }
                                                                       else {
-                                                                          return "[" + updateSubs["id_pre"] + "]"; 
+                                                                          return LazyString{updateEnv, "id_pre"}; 
                                                                       }
-                                                                   }, "",
-                                                                   {"id_pre"});
+                                                                   }, "");
 
     // Calculate index of start of row
     updateEnv.add(Type::Uint32.addConst(), "_row_start_idx", "rowStartIdx",
-                  {updateEnv.addInitialiser("const unsigned int rowStartIdx = " + updateEnv["id_pre"] + " * " + updateEnv["_row_stride"] + ";")},
-                  {"id_pre", "_row_stride"});
+                  {updateEnv.addInitialiser("const unsigned int rowStartIdx = $(id_pre) * $(_row_stride);", updateEnv)});
 
     updateEnv.add(Type::Uint32.addConst(), "_syn_stride", "synStride",
-                  {updateEnv.addInitialiser("const unsigned int synStride = " + updateEnv["num_pre"] + " * " + updateEnv["_row_stride"] + ";")},
-                  {"num_pre", "_row_stride"});
+                  {updateEnv.addInitialiser("const unsigned int synStride = $(num_pre) * $(_row_stride);", updateEnv)});
 
     // Get variables which will need to be manipulated when adding and removing synapses
     const auto ccuVars = cm->getVars();
@@ -276,13 +272,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         CodeStream::Scope b(addSynapse);
 
         // Assert that there is space to add synapse
-        backend.genAssert(addSynapse, updateEnv["_row_length"] + "[" + updateEnv["id_pre"] + "] < " + updateEnv["_row_stride"]);
+        backend.genAssert(addSynapse, "$(_row_length)[$(id_pre)] < $(_row_stride)");
 
         // Calculate index to insert synapse
-        addSynapse << "const unsigned newIdx = " + updateEnv["_row_start_idx"] + " + " + updateEnv["_row_length"] + "[" << updateEnv["id_pre"] << "];" << std::endl;
+        addSynapse << "const unsigned newIdx = $(_row_start_idx) + $(_row_length)[$(id_pre)];" << std::endl;
 
         // Set postsynaptic target to parameter 0
-        addSynapse << updateEnv["_ind"] + "[newIdx] = $(0);" << std::endl;
+        addSynapse << "$(_ind)[newIdx] = $(0);" << std::endl;
  
         // Use subsequent parameters to initialise new synapse's custom connectivity update model variables
         for (size_t i = 0; i < ccuVars.size(); i++) {
@@ -300,7 +296,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
-                    addSynapse << "group->" << ccuVarRefs[i].name << "[(b * " << updateEnv["_syn_stride"] << ") + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
+                    addSynapse << "group->" << ccuVarRefs[i].name << "[(b * $(_syn_stride)) + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
                 }
             }
             // Otherwise, write parameter straight into var reference
@@ -320,7 +316,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
-                    addSynapse << "group->_dependentVar" << i << "[(b * " << updateEnv["_syn_stride"] << ") + newIdx] = 0;" << std::endl;
+                    addSynapse << "group->_dependentVar" << i << "[(b * $(_syn_stride)) + newIdx] = 0;" << std::endl;
                 }
             }
             // Otherwise, zero var reference
@@ -333,11 +329,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
         // Increment row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
-        addSynapse << updateEnv["_row_length"]  + "[" << updateEnv["id_pre"] << "]++;" << std::endl;
+        addSynapse << "$(_row_length)[$(id_pre)]++;" << std::endl;
     }
 
     // Add function substitution with parameters to initialise custom connectivity update variables and variable references
-    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, addSynapseTypes), "add_synapse", addSynapseStream.str());
+    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, addSynapseTypes), "add_synapse", LazyString(addSynapseStream.str(), updateEnv));
 
     // Generate code to remove a synapse from this row
     std::stringstream removeSynapseStream;
@@ -346,10 +342,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         CodeStream::Scope b(removeSynapse);
 
         // Calculate index we want to copy synapse from
-        removeSynapse << "const unsigned lastIdx = " + updateEnv["_row_start_idx"] + " + " + updateEnv["_row_length"] + "[" << updateEnv["id_pre"] << "] - 1;" << std::endl;
+        removeSynapse << "const unsigned lastIdx = $(_row_start_idx) + $(_row_length)[$(id_pre)] - 1;" << std::endl;
 
         // Copy postsynaptic target from end of row over synapse to be deleted
-        removeSynapse << updateEnv["_ind"] << "[idx] = " << updateEnv["_ind"] << "[lastIdx];" << std::endl;
+        removeSynapse << "$(_ind)[idx] = $(_ind)[lastIdx];" << std::endl;
 
         // Copy custom connectivity update variables from end of row over synapse to be deleted
         for (size_t i = 0; i < ccuVars.size(); i++) {
@@ -366,8 +362,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
-                    removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * " << updateEnv["_syn_stride"] << ") + idx] = ";
-                    removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * " << updateEnv["_syn_stride"] << ") + lastIdx];" << std::endl;
+                    removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * $(_syn_stride)) + idx] = ";
+                    removeSynapse << "group->" << ccuVarRefs[i].name << "[(b * $(_syn_stride)) + lastIdx];" << std::endl;
                 }
             }
             // Otherwise, copy custom connectivity update variable references from end of row over synapse to be deleted
@@ -384,8 +380,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
                 {
                     CodeStream::Scope b(removeSynapse);
-                    removeSynapse << "group->_dependentVar" << i << "[(b * " << updateEnv["_syn_stride"] << ") + idx] = ";
-                    removeSynapse << "group->_dependentVar" << i << "[(b * " << updateEnv["_syn_stride"] << ") + lastIdx];" << std::endl;
+                    removeSynapse << "group->_dependentVar" << i << "[(b * $(_syn_stride)) + idx] = ";
+                    removeSynapse << "group->_dependentVar" << i << "[(b * $(_syn_stride)) + lastIdx];" << std::endl;
                 }
             }
             // Otherwise, copy dependent variable from end of row over synapse to be deleted
@@ -396,14 +392,14 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
         // Decrement row length
         // **NOTE** this will also effect any forEachSynapse loop currently in operation
-        removeSynapse << updateSubs["_row_length"] << "[" << updateSubs["id_pre"] << "]--;" << std::endl;
+        removeSynapse << "$(_row_length)[$(id_pre)]--;" << std::endl;
 
         // Decrement loop counter so synapse j will get processed
         removeSynapse << "j--;" << std::endl;
     }
 
     // Add function substitution with parameters to initialise custom connectivity update variables and variable references
-    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, {}), "remove_synapse", removeSynapseStream.str());
+    updateEnv.add(Type::ResolvedType::createFunction(Type::Void, {}), "remove_synapse", LazyString{updateEnv, removeSynapseStream.str()});
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Current source injection" + std::to_string(getIndex()));
@@ -419,22 +415,18 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                           [&backend, &modelMerged, this](auto &env, auto generateBody)
                           {
                               EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
-                              bodyEnv.getStream() << "for(int j = 0; j < " << bodyEnv["_row_length"] + "[" + bodyEnv["id_pre"] + "]; j++)";
+                              bodyEnv.getStream() << printSubs("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)", bodyEnv);
                               {
                                   CodeStream::Scope b(bodyEnv.getStream());
 
                                   // Add postsynaptic and synaptic indices
-                                  bodyEnv.add(Type::Uint32.addConst(), "id_post", bodyEnv["_ind"] + "[" + bodyEnv["_row_start_idx"] + " + j]",
-                                              {}, {"_ind", "_row_start_idx"});
+                                  bodyEnv.add(Type::Uint32.addConst(), "id_post", LazyString::print("$(_ind)[$(_row_start_idx) + j]", bodyEnv);
                                   bodyEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
-                                              {bodyEnv.addInitialiser("const unsigned int idx = " + bodyEnv["_row_start_idx"] + " + j;")},
-                                              {"_row_start_idx"});
+                                              {bodyEnv.addInitialiser("const unsigned int idx = $(_row_start_idx) + j;", bodyEnv)});
 
                                   // Add postsynaptic and synaptic variables
-                                  bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>(backend.getDeviceVarPrefix(), bodyEnv["id_syn"], "",
-                                                                                      {"id_syn"});
-                                  bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>(backend.getDeviceVarPrefix(), bodyEnv["id_post"], "",
-                                                                                          {"id_post"});
+                                  bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>(backend.getDeviceVarPrefix(), LazyString{bodyEnv, "id_syn"}, "");
+                                  bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>(backend.getDeviceVarPrefix(), LazyString{bodyEnv, "id_post"}, "");
 
                                   // Add postsynaptic and synaptic var references
                                   // **TODO**

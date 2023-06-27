@@ -18,6 +18,7 @@
 // GeNN code generator includes
 #include "backendBase.h"
 #include "codeStream.h"
+#include "lazyString.h"
 #include "substitutions.h"
 #include "teeStream.h"
 
@@ -134,6 +135,7 @@ GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::Type
                                        Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
+GENN_EXPORT std::string printSubs(const std::string &format, EnvironmentExternalBase &env);
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
@@ -206,7 +208,7 @@ std::string getKernelSize(const G &group, size_t dimensionIndex)
 {
     // If kernel size if heterogeneous in this dimension, return group structure entry
     if (isKernelSizeHeterogeneous(group, dimensionIndex)) {
-        return "group->kernelSize" + std::to_string(dimensionIndex);
+        return "$(_kernel_size_" + std::to_string(dimensionIndex) + ")";
     }
     // Otherwise, return literal
     else {
@@ -215,13 +217,13 @@ std::string getKernelSize(const G &group, size_t dimensionIndex)
 }
 
 template<typename G>
-std::string getKernelIndex(const G &group, EnvironmentExternalBase &env)
+std::string getKernelIndex(const G &group)
 {
     // Loop through kernel dimensions to calculate array index
     const auto &kernelSize = group.getArchetype().getKernelSize();
     std::ostringstream kernelIndex;
     for (size_t i = 0; i < kernelSize.size(); i++) {
-        kernelIndex << "(" << env["id_kernel_" + std::to_string(i)];
+        kernelIndex << "($(id_kernel_" << i << ")";
         // Loop through remainining dimensions of kernel and multiply
         for (size_t j = i + 1; j < kernelSize.size(); j++) {
             kernelIndex << " * " << getKernelSize(group, j);

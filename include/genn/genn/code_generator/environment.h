@@ -46,11 +46,6 @@ public:
     {
     }
 
-    explicit EnvironmentExternalBase(Transpiler::TypeChecker::EnvironmentBase &enclosing)
-    :   m_Context(std::make_pair(&enclosing, nullptr))
-    {
-    }
-
     explicit EnvironmentExternalBase(CodeStream &os)
     :   m_Context(os)
     {
@@ -115,11 +110,6 @@ public:
     {
     }
 
-    explicit EnvironmentLibrary(Transpiler::TypeChecker::EnvironmentBase &enclosing, const Library &library)
-    :   EnvironmentExternalBase(enclosing), m_Library(library)
-    {
-    }
-
     explicit EnvironmentLibrary(CodeStream &os, const Library &library)
     :   EnvironmentExternalBase(os), m_Library(library)
     {}
@@ -145,14 +135,14 @@ private:
 class EnvironmentSubstitutionPolicy
 {
 protected:
-    using Payload = std::string;
+    using Payload = LazyString;
 
-    std::string getNameInternal(const std::string &payload)
+    std::string getNameInternal(const LazyString &payload)
     {
-        return payload;
+        return payload.str();
     }
 
-    void setRequired(std::string&)
+    void setRequired(LazyString&)
     {
     }
 };
@@ -170,7 +160,7 @@ public:
     const G &getGroup() const{ return m_Group; }
 
 protected:
-    using Payload = std::tuple<bool, std::string, std::optional<typename G::Field>>;
+    using Payload = std::tuple<bool, LazyString, std::optional<typename G::Field>>;
 
     EnvironmentFieldPolicy(G &group, F &fieldGroup)
     :   m_Group(group), m_FieldGroup(fieldGroup)
@@ -185,13 +175,21 @@ protected:
     std::string getNameInternal(const Payload &payload)
     {
         // If a field is specified
+        const auto str = std::get<1>(payload).str();
         if(std::get<2>(payload)) {
-            return "group->" + std::get<1>(std::get<2>(payload).value()) + std::get<1>(payload); 
+            // If there is no value specified, access field directly
+            if(str.empty()) {
+                 return "group->" + std::get<1>(std::get<2>(payload).value());
+            }
+            // Otherwise, treat value as index
+            else {
+                return "group->" + std::get<1>(std::get<2>(payload).value()) + "[" + str + "]"; 
+            }
         }
         // Otherwise, use value directly
         else {
-            assert(!std::get<1>(payload).empty());
-            return std::get<1>(payload); 
+            assert(!str.empty());
+            return str; 
         }
     }
 
@@ -238,11 +236,6 @@ public:
     {}
 
     template<typename... PolicyArgs>
-    EnvironmentExternalDynamicBase(Transpiler::TypeChecker::EnvironmentBase &enclosing, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
-    {}
-
-    template<typename... PolicyArgs>
     EnvironmentExternalDynamicBase(CodeStream &os, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...)
     {}
@@ -273,7 +266,7 @@ public:
         }
         // Otherwise, get name from payload
         else {
-            return getNameInternal(std::get<3>(env->second));
+            return getNameInternal(std::get<2>(env->second));
         }
     }
 
@@ -296,15 +289,8 @@ public:
                 m_Initialisers.at(i).first = true;
             }
 
-            // If this identifier relies on any others, get their types
-            // **YUCK**
-            for(const std::string &id : std::get<2>(env->second)) {
-                getTypes(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, id, 0}, 
-                         errorHandler);
-            }
-
             // Perform any type-specific logic to mark this identifier as required
-            setRequired(std::get<3>(env->second));
+            setRequired(std::get<2>(env->second));
 
             // Return type of variables
             return {std::get<0>(env->second)};
@@ -318,15 +304,20 @@ public:
         return (m_Initialisers.size() - 1);
     }
 
+    size_t addInitialiser(const std::string &format, EnvironmentExternalBase &env)
+    {
+        return addInitialiser(LazyString::print(format, env));
+    }
+
 protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    //! Map an identifier to a type (for type-checking), lists of initialisers and dependencies and a payload 
+    //! Map an identifier to a type (for type-checking), lists of initialisers and a payload 
     void addInternal(const GeNN::Type::ResolvedType &type, const std::string &name, const typename P::Payload &payload,
-                     const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+                     const std::vector<size_t> &initialisers = {})
     {
-        if(!m_Environment.try_emplace(name, type, initialisers, dependents, payload).second) {
+        if(!m_Environment.try_emplace(name, type, initialisers, payload).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
@@ -338,7 +329,7 @@ private:
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
 
-    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, std::vector<std::string>, typename P::Payload>> m_Environment;
+    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, typename P::Payload>> m_Environment;
     std::vector<std::pair<bool, LazyString>> m_Initialisers;
 };
 
@@ -356,10 +347,10 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const LazyString &value,
+             const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, value, initialisers, dependents);
+        addInternal(type, name, value, initialisers);
     }
 };
 
@@ -391,29 +382,28 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Map a type and a value to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const LazyString &value,
+             const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, std::make_tuple(false, value, std::nullopt),
-                    initialisers, dependents);
+        addInternal(type, name, std::make_tuple(false, value, std::nullopt), initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+                  const LazyString &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  const std::vector<size_t> &initialisers = {})
     {
          addInternal(type, name, std::make_tuple(false, indexSuffix, std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
-                    initialisers, dependents);
+                    initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
-                  typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {}, const std::vector<std::string> &dependents = {})
+                  typename G::GetFieldValueFunc getFieldValue, const LazyString &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  const std::vector<size_t> &initialisers = {})
     {
-         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers, dependents);
+         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
 
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
@@ -583,8 +573,7 @@ public:
     }
 
     template<typename A, typename I>
-    void addVars(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "",
-                 const std::vector<std::string> &dependents = {})
+    void addVars(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variables
         const A archetypeAdaptor(getGroup().getArchetype());
@@ -597,21 +586,19 @@ public:
                      { 
                          return arrayPrefix + v.name + A(g).getNameSuffix();
                      },
-                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {}, dependents);
+                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, {});
         }
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, const std::string &index, const std::string &fieldSuffix = "",
-                 const std::vector<std::string> &dependents = {})
+    void addVars(const std::string &arrayPrefix, const LazyString &indexSuffix, const std::string &fieldSuffix = "")
     {
-        addVars<A>(arrayPrefix, [&index](VarAccess a, const std::string &) { return index; }, 
-                   fieldSuffix, dependents);
+        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess a, const std::string &) { return indexSuffix; }, 
+                   fieldSuffix);
     }
 
     template<typename A, typename I>
-    void addVarRefs(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "",
-                    const std::vector<std::string> &dependents = {})
+    void addVarRefs(const std::string &arrayPrefix, I getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variable references
         const A archetypeAdaptor(getGroup().getArchetype());
@@ -627,16 +614,15 @@ public:
                          return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
                      },
                      getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)), 
-                     GroupMergedFieldType::STANDARD, {}, dependents);
+                     GroupMergedFieldType::STANDARD, {});
         }
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, const std::string &index, const std::string &fieldSuffix = "",
-                    const std::vector<std::string> &dependents = {})
+    void addVarRefs(const std::string &arrayPrefix, const LazyString &indexSuffix, const std::string &fieldSuffix = "")
     {
-        addVarRefs<A>(arrayPrefix, [&index](VarAccess a, const std::string &) { return index; }, 
-                      fieldSuffix, dependents);
+        addVarRefs<A>(arrayPrefix, [&indexSuffix](VarAccess a, const std::string &) { return indexSuffix; }, 
+                      fieldSuffix);
     }
 
 private:
@@ -661,7 +647,7 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDuplication)>;
+    using GetIndexFn = std::function<LazyString(const std::string&, VarAccessDuplication)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
     :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
@@ -676,12 +662,12 @@ public:
         return A(g).getNameSuffix();
     }
 
-    std::string getReadIndex(G &g, const Models::Base::Var &var)
+    LazyString getReadIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    std::string getWriteIndex(G &g, const Models::Base::Var &var)
+    LazyString getWriteIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
     }
@@ -697,7 +683,7 @@ class VarRefCachePolicy
 protected:
     using GroupInternal = typename G::GroupInternal;
     using Initialiser = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
-    using GetIndexFn = std::function<std::string(const std::string&, const Initialiser&)>;
+    using GetIndexFn = std::function<LazyString(const std::string&, const Initialiser&)>;
   
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
@@ -713,12 +699,12 @@ protected:
         return A(g).getInitialisers().at(var.name).getTargetName();
     }
 
-    std::string getReadIndex(G &g, const Models::Base::VarRef &var)
+    LazyString getReadIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getWriteIndex(G &g, const Models::Base::VarRef &var)
+    LazyString getWriteIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
@@ -792,7 +778,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << getReadIndex(m_Group.get(), v) << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << getReadIndex(m_Group.get(), v).str() << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -804,7 +790,7 @@ public:
         for(const auto &v : referencedDefs) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << getWriteIndex(m_Group.get(), v) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << getWriteIndex(m_Group.get(), v).str() << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }

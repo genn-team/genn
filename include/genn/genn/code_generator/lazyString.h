@@ -36,7 +36,9 @@ public:
     //! Evaluate lazy string
     std::string str() const;
 
+    //----------------------------------------------------------------------------
     // Static API
+    //----------------------------------------------------------------------------
     static LazyString print(const std::string &format, EnvironmentExternalBase &env);
     
 private:
