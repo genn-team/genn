@@ -1745,15 +1745,13 @@ void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &s
     }
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseVariableRowInit(CodeStream &os,  const Substitutions &kernelSubs, Handler handler) const
+void BackendSIMT::genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
-    // Pre and postsynaptic ID should already be provided via parallelism
-    assert(kernelSubs.hasVarSubstitution("id_pre"));
-    assert(kernelSubs.hasVarSubstitution("id_post"));
+    EnvironmentExternal varEnv(env);
 
-    Substitutions varSubs(&kernelSubs);
-    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + " + kernelSubs["id"]);
-    handler(os, varSubs);
+    // **TODO** 64-bit id_syn
+    varEnv.add(Type::Uint32.addConst(), "id_syn", "($(id_pre) * $(_row_stride)) + $(id)");
+    handler(varEnv);
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

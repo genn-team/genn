@@ -187,13 +187,8 @@ public:
     //--------------------------------------------------------------------------
     typedef std::function<void(CodeStream &)> HostHandler;
 
-    typedef std::function<void(CodeStream &, Substitutions&)> Handler;
-
     typedef std::function<void(EnvironmentExternalBase&)> HandlerEnv;
     
-    template<typename T>
-    using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
-
     template<typename T>
     using GroupHandlerEnv = std::function <void(EnvironmentExternalBase&, T &)> ;
     

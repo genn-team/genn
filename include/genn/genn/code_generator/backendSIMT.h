@@ -122,20 +122,20 @@ public:
     //! This function returns the device prefix so it can be used in otherwise platform-independent code.
     virtual std::string getDeviceVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
 
-    virtual void genPopVariableInit(EnvironmentExternal &env, HandlerEnv handler) const final;
-    virtual void genVariableInit(EnvironmentExternal &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
-    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
+    virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final
     {
-        genSynapseVariableRowInit(os, kernelSubs, handler);
+        genSynapseVariableRowInit(env, handler);
     }
 
-    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    virtual void genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final
     {
-        genSynapseVariableRowInit(os, kernelSubs, handler);
+        genSynapseVariableRowInit(env, handler);
     }
     
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
+    virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const final { return true; }
@@ -227,93 +227,6 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T, typename S, typename F>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          S getPaddedSizeFunc, F filter, GroupHandler<T> handler) const
-    {
-        // Loop through groups
-        for(const auto &gMerge : groups) {
-            if(filter(gMerge)) {
-                // Sum padded sizes of each group within merged group
-                const size_t paddedSize = std::accumulate(
-                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                    [getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
-                    {
-                        return (acc + getPaddedSizeFunc(g.get()));
-                    });
-
-                os << "// merged" << gMerge.getIndex() << std::endl;
-
-                // If this is the first  group
-                if(idStart == 0) {
-                    os << "if(id < " << paddedSize << ")";
-                }
-                else {
-                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
-                }
-                {
-                    CodeStream::Scope b(os);
-                    Substitutions popSubs(&kernelSubs);
-
-                    if(gMerge.getGroups().size() == 1) {
-                        os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
-                        os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-
-                        // Use the starting thread ID of the whole merged group as group_start_id
-                        popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
-                    }
-                    else {
-                        // Perform bisect operation to get index of merged struct
-                        os << "unsigned int lo = 0;" << std::endl;
-                        os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                        os << "while(lo < hi)" << std::endl;
-                        {
-                            CodeStream::Scope b(os);
-                            os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
-
-                            os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "hi = mid;" << std::endl;
-                            }
-                            os << "else";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "lo = mid + 1;" << std::endl;
-                            }
-                        }
-
-                        // Use this to get reference to merged group structure
-                        os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
-
-                        // Get group start thread ID and use as group_start_id
-                        os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                        popSubs.addVarSubstitution("group_start_id", "groupStartID");
-
-                        // Use this to calculate local id within group
-                        os << "const unsigned int lid = id - groupStartID;" << std::endl;
-                    }
-                    popSubs.addVarSubstitution("id", "lid");
-
-                    handler(os, gMerge, popSubs);
-
-                    idStart += paddedSize;
-                }
-            }
-        }
-    }
-
-    
-    template<typename T, typename S>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          S getPaddedSizeFunc, GroupHandler<T> handler) const
-    {
-        genParallelGroup(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                         [](const T &) { return true; }, handler);
-    }
-
-    template<typename T, typename S, typename F>
     void genParallelGroup(EnvironmentExternal &env, const std::vector<T> &groups, size_t &idStart,
                           S getPaddedSizeFunc, F filter, GroupHandlerEnv<T> handler) const
     {
@@ -339,51 +252,51 @@ private:
                 }
                 {
                     CodeStream::Scope b(env.getStream());
-                    EnvironmentSubstitute popEnv(env);
 
                     if(gMerge.getGroups().size() == 1) {
-                        popEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        popEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
-                        popEnv.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                        env.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        env.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                        env.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
 
                         // Use the starting thread ID of the whole merged group as group_start_id
-                        popEnv.addSubstitution("group_start_id", std::to_string(idStart));
+                        env.add(Type::Uint32.addConst(), "group_start_id", std::to_string(idStart));
                     }
                     else {
                         // Perform bisect operation to get index of merged struct
-                        popEnv.getStream() << "unsigned int lo = 0;" << std::endl;
-                        popEnv.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                        popEnv.getStream() << "while(lo < hi)" << std::endl;
+                        env.getStream() << "unsigned int lo = 0;" << std::endl;
+                        env.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                        env.getStream() << "while(lo < hi)" << std::endl;
                         {
-                            CodeStream::Scope b(popEnv.getStream());
-                            popEnv.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+                            CodeStream::Scope b(env.getStream());
+                            env.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                            popEnv.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                            env.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
                             {
-                                CodeStream::Scope b(popEnv.getStream());
-                                popEnv.getStream() << "hi = mid;" << std::endl;
+                                CodeStream::Scope b(env.getStream());
+                                env.getStream() << "hi = mid;" << std::endl;
                             }
-                            popEnv.getStream() << "else";
+                            env.getStream() << "else";
                             {
-                                CodeStream::Scope b(popEnv.getStream());
-                                popEnv.getStream() << "lo = mid + 1;" << std::endl;
+                                CodeStream::Scope b(env.getStream());
+                                env.getStream() << "lo = mid + 1;" << std::endl;
                             }
                         }
 
                         // Use this to get reference to merged group structure
-                        popEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        popEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                        env.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        env.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
 
                         // Get group start thread ID and use as group_start_id
-                        popEnv.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                        popEnv.addSubstitution("group_start_id", "groupStartID");
+                        env.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                        env.add(Type::Uint32.addConst(), "group_start_id", "groupStartID");
 
                         // Use this to calculate local id within group
-                        popEnv.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
+                        env.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
                     }
-                    popEnv.addSubstitution("id", "lid");
+                    env.add(Type::Uint32.addConst(), "id", "lid");
 
-                    handler(popEnv, gMerge);
+                    handler(env, gMerge);
 
                     idStart += paddedSize;
                 }
@@ -478,57 +391,57 @@ private:
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with sparse connectivity
     template<typename G>
-    void genSparseSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, 
-                                 bool varInitRequired, GroupHandler<G> handler) const
+    void genSparseSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, const G &g,
+                                 bool varInitRequired, GroupHandlerEnv<G> handler) const
     {
         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
         const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-        os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
+        env.getStream() << "const unsigned int numBlocks = (" << env["num_pre"] << " + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
-        os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
+        env.getStream() << "unsigned int idx = " << env["id"] << ";" << std::endl;
 
         // Loop through blocks
-        os << "for(unsigned int r = 0; r < numBlocks; r++)";
+        env.getStream() << "for(unsigned int r = 0; r < numBlocks; r++)";
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(env.getStream());
 
             // Calculate number of rows to process in this block
-            os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-            os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
-            os << " : " << blockSize << ";" << std::endl;
+            env.getStream() << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
+            env.getStream() << " ? ((" << env["num_pre"] << " - 1) % " << blockSize << ") + 1";
+            env.getStream() << " : " << blockSize << ";" << std::endl;
 
             // Use threads to copy block of sparse structure into shared memory
-            genSharedMemBarrier(os);
-            os << "if (" << getThreadID() << " < numRowsInBlock)";
+            genSharedMemBarrier(env.getStream());
+            env.getStream() << "if (" << getThreadID() << " < numRowsInBlock)";
             {
-                CodeStream::Scope b(os);
-                os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
+                CodeStream::Scope b(env.getStream());
+                env.getStream() << "shRowLength[" << getThreadID() << "] = " << env["_row_length"] << "[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
             }
-            genSharedMemBarrier(os);
+            genSharedMemBarrier(env.getStream());
 
             // Loop through rows
-            os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+            env.getStream() << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
             {
-                CodeStream::Scope b(os);
+                CodeStream::Scope b(env.getStream());
 
                 // If there is a synapse for this thread to initialise
-                os << "if(" << popSubs["id"] << " < shRowLength[i])";
+                env.getStream() << "if(" << env["id"] << " < shRowLength[i])";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(env.getStream());
 
                     // Generate initialisation code
                     if(varInitRequired) {
-                        popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                        popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-                        g.generateInit(*this, os, modelMerged, popSubs);
+                        env.add(Type::Uint32.addConst(), "id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
+                        env.add(Type::Uint32.addConst(), "id_post", "$(_ind)[idx]");
+                        g.generateInit(*this, env, modelMerged);
                     }
                     
                     // Call handler
-                    handler(os, g, popSubs);
+                    handler(env, g);
                 }
 
                 // If matrix is ragged, advance index to next row by adding stride
-                os << "idx += group->rowStride;" << std::endl;
+                env.getStream() << "idx += " << env["_row_stride"] << ";" << std::endl;
             }
         }
     }
@@ -537,7 +450,7 @@ private:
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 
-    void genSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const;
+    void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
