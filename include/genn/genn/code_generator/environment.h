@@ -299,7 +299,7 @@ public:
 
     size_t addInitialiser(const std::string &format)
     {
-        m_Initialisers.emplace_back(false, LazyString::print(format, *this));
+        m_Initialisers.emplace_back(false, LazyString{format, *this});
         return (m_Initialisers.size() - 1);
     }
 
@@ -341,10 +341,10 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const LazyString &value,
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
              const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, value, initialisers);
+        addInternal(type, name, LazyString{value, *this}, initialisers);
     }
 };
 
@@ -376,25 +376,26 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Map a type and a value to an identifier
-    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const LazyString &value,
+    void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
              const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, std::make_tuple(false, value, std::nullopt), initialisers);
+        addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                  const LazyString &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
                   const std::vector<size_t> &initialisers = {})
     {
-         addInternal(type, name, std::make_tuple(false, indexSuffix, std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
+        addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, 
+                                                std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
                     initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
-                  typename G::GetFieldValueFunc getFieldValue, const LazyString &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
+                  typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
                   const std::vector<size_t> &initialisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
@@ -585,7 +586,7 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, const LazyString &indexSuffix, const std::string &fieldSuffix = "")
+    void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, const std::string &fieldSuffix = "")
     {
         addVars<A>(arrayPrefix, [&indexSuffix](VarAccess a, const std::string &) { return indexSuffix; }, 
                    fieldSuffix);
@@ -613,9 +614,9 @@ public:
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, const LazyString &indexSuffix, const std::string &fieldSuffix = "")
+    void addVarRefs(const std::string &arrayPrefix, const std::string &indexSuffix, const std::string &fieldSuffix = "")
     {
-        addVarRefs<A>(arrayPrefix, [&indexSuffix](VarAccess a, const std::string &) { return indexSuffix; }, 
+        addVarRefs<A>(arrayPrefix, [&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
                       fieldSuffix);
     }
 
@@ -641,7 +642,7 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<LazyString(const std::string&, VarAccessDuplication)>;
+    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDuplication)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
     :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
@@ -656,12 +657,12 @@ public:
         return A(g).getNameSuffix();
     }
 
-    LazyString getReadIndex(G &g, const Models::Base::Var &var)
+    std::string getReadIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    LazyString getWriteIndex(G &g, const Models::Base::Var &var)
+    std::string getWriteIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
     }
@@ -677,7 +678,7 @@ class VarRefCachePolicy
 protected:
     using GroupInternal = typename G::GroupInternal;
     using Initialiser = typename std::remove_reference_t<std::invoke_result_t<decltype(&A::getInitialisers), A>>::mapped_type;
-    using GetIndexFn = std::function<LazyString(const std::string&, const Initialiser&)>;
+    using GetIndexFn = std::function<std::string(const std::string&, const Initialiser&)>;
   
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
@@ -693,12 +694,12 @@ protected:
         return A(g).getInitialisers().at(var.name).getTargetName();
     }
 
-    LazyString getReadIndex(G &g, const Models::Base::VarRef &var)
+    std::string getReadIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    LazyString getWriteIndex(G &g, const Models::Base::VarRef &var)
+    std::string getWriteIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
@@ -772,7 +773,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << getReadIndex(m_Group.get(), v).str() << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(getReadIndex(m_Group.get(), v), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -784,7 +785,7 @@ public:
         for(const auto &v : referencedDefs) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << getWriteIndex(m_Group.get(), v).str() << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }

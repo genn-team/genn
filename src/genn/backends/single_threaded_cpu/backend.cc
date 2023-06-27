@@ -386,9 +386,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                 }
 
                                 // Add correct functions for apply synaptic input
-                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", LazyString::print("$(_den_delay)[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)", synEnv));
-                                synEnv.add(Type::AddToPost, "addToPost", LazyString::print("$(_out_post)[" + s.getPostISynIndex(1, "j") + "] += $(0)", synEnv));
-                                synEnv.add(Type::AddToPre, "addToPre", LazyString::print("$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)", synEnv));
+                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
+                                synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + s.getPostISynIndex(1, "j") + "] += $(0)");
+                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
                                 s.generateSynapseUpdate(*this, synEnv, modelMerged);
@@ -502,7 +502,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                 }
 
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
-                                synEnv.add(Type::AddToPre, "addToPre", LazyString::print("$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)", synEnv));
+                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)");
             
                                 s.generateSynapseUpdate(*this, synEnv, modelMerged);
                             }
@@ -1099,7 +1099,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         addSynapse << "while(false)";
 
                         const auto addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + s.getArchetype().getKernelSize().size(), Type::Uint32});
-                        groupEnv.add(addSynapseType, "addSynapse", LazyString::print(addSynapseStream.str(), groupEnv));
+                        groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
 
                         // Call appropriate connectivity handler
                         if(!snippet->getRowBuildCode().empty()) {
@@ -1150,7 +1150,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         // Generate sparse initialisation code
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         if(s.getArchetype().isWUVarInitRequired()) {
-                            groupEnv.add(Type::Uint32.addConst(), "row_len", LazyString::print("$(_row_length)[i]", groupEnv));
+                            groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
                             s.generateInit(*this, groupEnv, modelMerged);
                         }
 
@@ -1203,7 +1203,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
-                        groupEnv.add(Type::Uint32.addConst(), "row_len", LazyString::print("$(_row_length)[i]", groupEnv));
+                        groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
                         c.generateInit(*this, groupEnv, modelMerged);
                     }
                 }
@@ -1232,7 +1232,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
-                        groupEnv.add(Type::Uint32.addConst(), "row_len", LazyString::print("$(_row_length)[i]", groupEnv));
+                        groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
                         c.generateInit(*this, groupEnv, modelMerged);
                     }
                 }
@@ -1861,9 +1861,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             }
 
             // Add correct functions for apply synaptic input
-            groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", LazyString::print("$(_den_delay)[" + sg.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)", groupEnv));
-            groupEnv.add(Type::AddToPost, "addToPost", LazyString::print("$(_out_post)[" + sg.getPostISynIndex(1, "j") + "] += $(0)", groupEnv));
-            groupEnv.add(Type::AddToPre, "addToPre", LazyString::print("$(_out_pre)[" + sg.getPreISynIndex(1, env["id_pre"]) + "] += $(0)", groupEnv));
+            groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
+            groupEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "j") + "] += $(0)");
+            groupEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, env["id_pre"]) + "] += $(0)");
 
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

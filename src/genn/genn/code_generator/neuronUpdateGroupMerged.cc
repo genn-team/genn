@@ -35,15 +35,15 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
     // Define inject current function
-    csEnv.add(Type::ResolvedType::createFunction(Type::Void, {modelMerged.getModel().getPrecision()}), "injectCurrent", 
-              LazyString::print("$(Isyn) += $(0)", csEnv));
+    csEnv.add(Type::ResolvedType::createFunction(Type::Void, {modelMerged.getModel().getPrecision()}), 
+              "injectCurrent", "$(Isyn) += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
-        [&csEnv, &modelMerged, &ng](const std::string&, VarAccessDuplication d)
+        [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
-            return LazyString::print(ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id"), csEnv);
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
         });
 
     // Pretty print code back to environment
@@ -127,9 +127,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
-        [&psmEnv, &modelMerged, &ng](const std::string&, VarAccessDuplication d)
+        [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
-            return LazyString::print(ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id"), psmEnv);
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
         });
 
     // Pretty print code back to environment
@@ -219,11 +219,11 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
-                return LazyString::print(ng.getReadVarIndex(delayed, batchSize, d, "id"), synEnv);
+                return ng.getReadVarIndex(delayed, batchSize, d, "id");
             },
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
-                return LazyString::print(ng.getWriteVarIndex(delayed, batchSize, d, "id"), synEnv);
+                return ng.getWriteVarIndex(delayed, batchSize, d, "id");
             });
 
         /*neuronSubstitutionsInSynapticCode(varEnv, &ng.getArchetype(), "", "_post", "", "", "", dynamicsNotSpike,
@@ -309,13 +309,13 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
-                return LazyString::print(ng.getReadVarIndex(delayed, batchSize, d, "id"), synEnv);
+                return ng.getReadVarIndex(delayed, batchSize, d, "id");
             },
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
-                return LazyString::print(ng.getWriteVarIndex(delayed, batchSize, d, "id"), synEnv);
+                return ng.getWriteVarIndex(delayed, batchSize, d, "id");
             });     
         
         /*neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), "", "_pre", "", "", "", dynamicsNotSpike,
