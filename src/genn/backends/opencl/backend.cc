@@ -277,11 +277,11 @@ void Backend::genPopulationRNGInit(CodeStream&, const std::string&, const std::s
     assert(false);
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+std::string Backend::genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const
 {
     os << "clrngLfsr113Stream localStream;" << std::endl;
     os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &" << globalRNG << ");" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const
@@ -289,7 +289,7 @@ void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globa
     os << "clrngLfsr113CopyOverStreamsToGlobal(1, &" << globalRNG << ", &localStream);" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
 {
     // Make local copy of host stream
     os << "clrngPhilox432Stream localStream;" << std::endl;
@@ -300,7 +300,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const

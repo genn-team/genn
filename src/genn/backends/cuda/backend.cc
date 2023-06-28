@@ -395,23 +395,21 @@ void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG,
     os << "curand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNGPreamble(CodeStream &, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+std::string Backend::genPopulationRNGPreamble(CodeStream &, const std::string &globalRNG) const
 {
-    subs.addVarSubstitution(name, "&" + globalRNG);
+    return "&" + globalRNG;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNGPostamble(CodeStream&, const std::string&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
 {
     // Skipahead RNG
     os << "curandStatePhilox4_32_10_t localRNG = d_rng;" << std::endl;
     os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
-
-    // Add substitution for RNG
-    subs.addVarSubstitution(name, "&localRNG");
+    return "&localRNG";
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
