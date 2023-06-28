@@ -65,6 +65,12 @@ public:
                         Transpiler::ErrorHandlerBase &errorHandler) override;
 
     //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void print(const std::string &format);
+    void printLine(const std::string &format);
+
+    //------------------------------------------------------------------------
     // Operators
     //------------------------------------------------------------------------
     std::string operator[] (const std::string &name)

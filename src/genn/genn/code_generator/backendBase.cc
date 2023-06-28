@@ -73,16 +73,18 @@ void BackendBase::genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<Cu
     }
 }
 //-----------------------------------------------------------------------
-void BackendBase::genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const
+void BackendBase::genCustomConnectivityUpdateIndexCalculation(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
     // If there are delays on presynaptic variable references
-    if(cu.getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        os << "const unsigned int preDelayOffset = (*group->preSpkQuePtr * group->numSrcNeurons);" << std::endl;
+    if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
+                {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
     }
     
     // If there are delays on postsynaptic variable references
-    if(cu.getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        os << "const unsigned int postDelayOffset = (*group->postSpkQuePtr * group->numTrgNeurons);" << std::endl;
+    if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
+                {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
     }
 }
 //----------------------------------------------------------------------------

@@ -163,36 +163,36 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                     if(n.getArchetype().isDelayRequired()) {
                         if(n.getArchetype().isPrevSpikeTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.getStream() << printSubs("for(unsigned int i = 0; i < $(_spk_cnt)[$(_read_delay_slot)]; i++)", groupEnv);
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[$(_read_delay_slot)]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << printSubs("$(_prev_spk_time)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = t - DT;", groupEnv) << std::endl;
+                                groupEnv.printLine("$(_prev_spk_time)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = t - DT;");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.getStream() << printSubs("for(unsigned int i = 0; i < $(_spk_cnt_envt)[$(_read_delay_slot)]; i++)", groupEnv);
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[$(_read_delay_slot)]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << printSubs("$(_prev_spk_evnt_time)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = t - DT;", groupEnv) << std::endl;
+                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = t - DT;");
                             }
                         }
                     }
                     else {
                         if(n.getArchetype().isPrevSpikeTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.getStream() << printSubs("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)", groupEnv);
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << printSubs("$(_prev_spk_time)[$(_spk)[i]] = t - DT;", groupEnv) << std::endl;
+                                groupEnv.printLine("$(_prev_spk_time)[$(_spk)[i]] = t - DT;");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["_spk_cnt_evnt"] << "[0]; i++)";
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)";
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << groupEnv["_prev_spk_evnt_time"] << "[" << groupEnv["_spk_evnt"] << "[i]] = t - DT;" << std::endl;
+                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_spk_evnt)[i]] = t - DT;");
                             }
                         }
                     }
@@ -456,10 +456,10 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
                         // Get number of postsynaptic spikes
                         if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                            groupEnv.getStream() << printSubs("const unsigned int numSpikes = $(_trg_spk_cnt)[$(_post_delay_slot)];", groupEnv) << std::endl;
+                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[$(_post_delay_slot)];");
                         }
                         else {
-                            groupEnv.getStream() << printSubs("const unsigned int numSpikes = $(_trg_spk_cnt)[0];", groupEnv) << std::endl;
+                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[0];");
                         }
 
                         // Loop through postsynaptic spikes
@@ -469,15 +469,15 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
                             // **TODO** prod types
                             const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "$(_post_delay_offset) + " : "";
-                            groupEnv.getStream() << printSubs("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];", groupEnv) << std::endl;
+                            groupEnv.printLine("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];", groupEnv);
 
                             // Loop through column of presynaptic neurons
                             if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                groupEnv.getStream() << printSubs("const unsigned int npre = $(_col_length)[spike];", groupEnv) << std::endl;
+                                groupEnv.printLine("const unsigned int npre = $(_col_length)[spike];");
                                 groupEnv.getStream() << "for (unsigned int i = 0; i < npre; i++)";
                             }
                             else {
-                                groupEnv.getStream() << "for (unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
+                                groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
                             }
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
@@ -804,7 +804,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
                                     // Update transpose variable
                                     // **YUCK** this is sorta outside scope
-                                    groupEnv.getStream() << printSubs("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = l" + transposeVarName + ";", groupEnv) << std::endl;
+                                    groupEnv.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = l" + transposeVarName + ";");
                                 }
                             }
 
@@ -981,11 +981,11 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     // If matrix connectivity is ragged
                     if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // Zero row lengths
-                        funcEnv.getStream() << printSubs("std::fill_n($(_row_length), $(num_pre), 0);", funcEnv) << std::endl;
+                        funcEnv.printLine("std::fill_n($(_row_length), $(num_pre), 0);");
                     }
                     else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        funcEnv.getStream() << printSubs("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);", funcEnv) << std::endl;
-                        funcEnv.getStream() << "std::fill(" << groupEnv["_num_gp"] << ", gpSize, 0);" << std::endl;
+                        funcEnv.printLine("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);");
+                        funcEnv.printLine("std::fill($(_gp), gpSize, 0);");
                     }
                     else {
                         throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
@@ -995,7 +995,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     const auto *snippet = s.getArchetype().getConnectivityInitialiser().getSnippet();
                     if(!snippet->getRowBuildCode().empty()) {
                         // Generate loop through source neurons
-                        groupEnv.getStream() << "for (unsigned int i = 0; i <" << groupEnv["num_pre"] << "; i++)";
+                        groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
 
                         // Configure substitutions
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
@@ -1010,7 +1010,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         assert(!snippet->getColBuildCode().empty());
 
                         // Loop through target neurons
-                        groupEnv.getStream() << "for (unsigned int j = 0; j < " << groupEnv["num_post"] << "; j++)";
+                        groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
 
                         // Configure substitutions
                         groupEnv.add(Type::Uint32.addConst(), "id_post", "j");
@@ -1139,7 +1139,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     // If postsynaptic learning is required, initially zero column lengths
                     if (!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
                         groupEnv.getStream() << "// Zero column lengths" << std::endl;
-                        groupEnv.getStream() << printSubs("std::fill_n($(_col_length), $(num_post), 0);", groupEnv) << std::endl;
+                        groupEnv.printLine("std::fill_n($(_col_length), $(num_post), 0);");
                     }
 
                     groupEnv.getStream() << "// Loop through presynaptic neurons" << std::endl;
@@ -1487,7 +1487,7 @@ void Backend::genVariableInit(EnvironmentExternalBase &env, const std::string &c
 //--------------------------------------------------------------------------
 void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
-    env.getStream() << printSubs("for (unsigned int j = 0; j < $(_row_length)[$(id_pre)]; j++)", env);
+    env.print("for (unsigned int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
     {
         CodeStream::Scope b(env.getStream());
 
@@ -1518,14 +1518,12 @@ void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handl
 //--------------------------------------------------------------------------
 void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
-    assert(false);
-    //genKernelIteration(os, sg, sg.getArchetype().getKernelSize().size(), kernelSubs, handler);
+    genKernelIteration(env, sg, sg.getArchetype().getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
 void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
-    assert(false);
-    //genKernelIteration(os, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), kernelSubs, handler);
+    genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
@@ -1832,10 +1830,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         // Detect spike events or spikes and do the update
         env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
         if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            env.getStream() << printSubs("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(pre_delay_slot)]; i++)", env);
+            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(pre_delay_slot)]; i++)");
         }
         else {
-            env.getStream() << printSubs("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)", env);
+            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
         }
         {
             CodeStream::Scope b(env.getStream());
@@ -1867,7 +1865,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupEnv.getStream() << "const unsigned int npost = " << groupEnv["_row_length"] << "[ipre];" << std::endl;
+                groupEnv.printLine("const unsigned int npost = $(_row_length)[ipre];");
                 groupEnv.getStream() << "for (unsigned int j = 0; j < npost; j++)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -1892,13 +1890,13 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             }
             else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
                 // Determine the number of words in each row
-                groupEnv.getStream() << "const unsigned int rowWords = ((" << env["_num_post"] << " + 32 - 1) / 32);" << std::endl;
+                groupEnv.printLine("const unsigned int rowWords = (($(num_post) + 32 - 1) / 32);");
                 groupEnv.getStream() << "for(unsigned int w = 0; w < rowWords; w++)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Read row word
-                    groupEnv.getStream() << "uint32_t connectivityWord = " << groupEnv["_gp"] << "[(ipre * rowWords) + w];" << std::endl;
+                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[(ipre * rowWords) + w];");
 
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
@@ -1921,7 +1919,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                         // If we aren't in padding region
                         // **TODO** don't bother checking if there is no padding
-                        groupEnv.getStream() << "if(ipost < " << groupEnv["num_post"] << ")";
+                        groupEnv.print("if(ipost < $(num_post))");
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
@@ -1947,7 +1945,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // **TODO** 64-bit index
-                        synEnv.getStream() << printSubs("const uint64_t gid = ($(id_pre) * $(num_post)) + $(id_post);", synEnv) << std::endl;
+                        synEnv.printLine("const uint64_t gid = ($(id_pre) * $(num_post)) + $(id_post);");
 
                         synEnv.getStream() << "if (B(" << synEnv["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                     }
@@ -1984,27 +1982,27 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     const std::string spikeQueueOffset = spikeDelayRequired ? "$(_write_delay_offset) + " : "";
 
     const std::string suffix = trueSpike ? "" : "_evnt";
-    env.getStream() << printSubs("$(_spk" + suffix + ")[" + spikeQueueOffset + "$(_spk_cnt" + suffix + ")", env);
+    env.print("$(_spk" + suffix + ")[" + spikeQueueOffset + "$(_spk_cnt" + suffix + ")");
     if(spikeDelayRequired) { // WITH DELAY
-        env.getStream() << "[*" << env["_spk_que_ptr"] << "]++]";
+        env.print("[*$(_spk_que_ptr)]++]");
     }
     else { // NO DELAY
         env.getStream() << "[0]++]";
     }
-    env.getStream() << " = " << env["id"] << ";" << std::endl;
+    env.printLine(" = $(id);");
 
     // Reset spike and spike-like-event times
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        env.getStream() << printSubs("$(_spk_time)[" + queueOffset + "$(id)] = $(t);", env) << std::endl;
+        env.printLine("$(_spk_time)[" + queueOffset + "$(id)] = $(t);");
     }
     else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-        env.getStream() << printSubs("$(_spk_evnt_time)[" + queueOffset + "$(id)] = $(t);", env) << std::endl;
+        env.printLine("$(_spk_evnt_time)[" + queueOffset + "$(id)] = $(t);");
     }
     
     // If recording is enabled
     if(recordingEnabled) {
-        env.getStream() << printSubs("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));", env) << std::endl;
+        env.printLine("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
     }
 }
 //--------------------------------------------------------------------------

@@ -28,14 +28,14 @@ void genVariableFill(EnvironmentExternalBase &env, const std::string &target, co
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
-        env.getStream() << env[target] << "[" << env[idx] << "] = " << value << ";" << std::endl;
+        env.printLine("$(" + target + ")[$(" + idx + ")] = " + value + ";");
     }
     // Otherwise
     else {
         env.getStream() << "for(unsigned int d = 0; d < " << numValues << "; d++)";
         {
             CodeStream::Scope b(env.getStream());
-            env.getStream() << env[target] << "[(d * " << printSubs(stride, env) << ") + " << env[idx] << "] = " << value << ";" << std::endl;
+            env.printLine("$(" + target + ")[(d * " + stride + ") + $(" + idx + ")] = " + value + ";");
         }
     }
 }

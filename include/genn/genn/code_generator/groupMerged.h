@@ -647,12 +647,12 @@ public:
     
     std::string getPostISynIndex(unsigned int batchSize, const std::string &index) const
     {
-        return ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
+        return ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + index;
     }
 
     std::string getPreISynIndex(unsigned int batchSize, const std::string &index) const
     {
-        return ((batchSize == 1) ? "" : "preBatchOffset + ") + index;
+        return ((batchSize == 1) ? "" : "$(pre_batch_offset) + ") + index;
     }
 
     std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;

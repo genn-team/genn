@@ -183,15 +183,15 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronSpikeQueueUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genSynapseDendriticDelayUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPresynapticUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDynamicsKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
 
     void genCustomUpdateKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                const std::string &updateGroup, size_t &idStart) const;
@@ -202,12 +202,12 @@ protected:
     void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
                                           const std::string &updateGroup, size_t &idStart) const;
 
-    void genCustomConnectivityUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
                                            const std::string &updateGroup, size_t &idStart) const;
 
-    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genInitializeKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
    
-    void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genInitializeSparseKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Helper wrapper around padSize to pad size to a kernel size
@@ -227,7 +227,7 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T, typename S, typename F>
-    void genParallelGroup(EnvironmentExternal &env, const std::vector<T> &groups, size_t &idStart,
+    void genParallelGroup(EnvironmentExternalBase &env, const std::vector<T> &groups, size_t &idStart,
                           S getPaddedSizeFunc, F filter, GroupHandlerEnv<T> handler) const
     {
         // Loop through groups
@@ -289,7 +289,7 @@ private:
 
                         // Get group start thread ID and use as group_start_id
                         env.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                        env.add(Type::Uint32.addConst(), "group_start_id", "groupStartID");
+                        env.add(Type::Uint32.addConst(), "_group_start_id", "groupStartID");
 
                         // Use this to calculate local id within group
                         env.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
@@ -306,7 +306,7 @@ private:
 
     
     template<typename T, typename S>
-    void genParallelGroup(EnvironmentExternal &env, const std::vector<T> &groups, size_t &idStart,
+    void genParallelGroup(EnvironmentExternalBase &env, const std::vector<T> &groups, size_t &idStart,
                           S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
     {
         genParallelGroup(env, groups, idStart, getPaddedSizeFunc,
@@ -315,31 +315,32 @@ private:
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with dense/kernel connectivity
     template<typename G>
-    void genSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, 
+    void genSynapseVarInit(EnvironmentGroupMergedField<G> &env, const ModelSpecMerged &modelMerged, 
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
     {
-        os << "if(" << popSubs["id"] << " < ";
+        env.getStream() << "if(" << env["id"] << " < ";
         
         // If synapse group has kernel weights, check ID against product of kernel dimensions
         if (kernel) {
             // Loop through kernel dimensions and multiply together
-            os << "(";
+            env.getStream() << "(";
             for (size_t i = 0; i < kernelDimensions; i++) {
-                os << g.getKernelSize(i);
+                env.print(getKernelSize(g, i));
                 if (i != (kernelDimensions - 1)) {
-                    os << " * ";
+                    env.getStream() << " * ";
                 }
             }
-            os << ")";
+            env.getStream() << ")";
         }
         // Otherwise, against number of postsynaptic neurons
         else {
-            os << "group->numTrgNeurons";
+            env.getStream() << env["num_post"];
         }
-        os << ")";
+        env.getStream() << ")";
         {
-            CodeStream::Scope b(os);
-            
+            CodeStream::Scope b(env.getStream());
+            EnvironmentGroupMergedField<G> initEnv(env, env.getGroup());
+
             // If an RNG is required for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
@@ -351,41 +352,43 @@ private:
             if (kernel) {
                 // Loop through kernel dimensions to generate seperate indices
                 for (size_t i = 0; i < kernelDimensions; i++) {
-                    os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
+                    std::ostringstream kernelIDInit;
+                    kernelIDInit << "const unsigned int kernelID" << i << " = ($(id)";
 
                     // If this isn't the last dimension
                     if (i < (kernelDimensions - 1)) {
                         // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
-                        os << " / (";
+                        kernelIDInit << " / (";
                         for (size_t j = (kernelDimensions - 1); j > i; j--) {
-                            os << g.getKernelSize(j);
+                            kernelIDInit << getKernelSize(env.getGroup(), j);
 
                             if (j != (i + 1)) {
-                                os << " * ";
+                                kernelIDInit << " * ";
                             }
                         }
-                        os << ")";
+                        kernelIDInit << ")";
                     }
-                    os << ")";
+                    kernelIDInit << ")";
 
                     // If this isn't the first dimension, take modulus of kernel size
                     if (i > 0) {
-                        os << " % " << g.getKernelSize(i);
+                        kernelIDInit << " % " << getKernelSize(env.getGroup(), i);
                     }
 
-                    os << ";" << std::endl;
+                    kernelIDInit << ";" << std::endl;
 
                     // Add substitution
-                    popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
+                    initEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i),
+                                {initEnv.addInitialiser(kernelIDInit.str())});
                 }
             }
             // Otherwise, just substitute postsynaptic index
             else {
-                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                initEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
             }
 
             // Generate init code
-            g.generateInit(*this, os, modelMerged, popSubs);
+            g.generateInit(*this, initEnv, modelMerged);
         }
     }
     
@@ -446,7 +449,7 @@ private:
         }
     }
 
-    void genEmitSpike(const ModelSpecMerged &modelMerged, CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
+    void genEmitSpike(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, const std::string &suffix, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 

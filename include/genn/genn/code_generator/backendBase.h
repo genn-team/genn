@@ -719,7 +719,7 @@ protected:
     }
     void genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
     
-    void genCustomConnectivityUpdateIndexCalculation(CodeStream &os, const CustomConnectivityUpdateGroupMerged &cu) const;
+    void genCustomConnectivityUpdateIndexCalculation(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
     
     //! Get the initial value to start reduction operations from
     std::string getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const;

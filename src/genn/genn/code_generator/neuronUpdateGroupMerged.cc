@@ -87,10 +87,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
 
     // Read into local variable
+    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
     psmEnv.getStream() << "// postsynaptic model " << getIndex() << std::endl;
-    psmEnv.getStream() << "scalar linSyn = " << psmEnv["_out_post"] << "[";
-    psmEnv.getStream() << printSubs(ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id"), psmEnv);
-    psmEnv.getStream() << "];" << std::endl;
+    psmEnv.printLine("scalar linSyn = $(_out_post)[" + idx + "];");
 
     // If dendritic delay is required
     if (getArchetype().isDendriticDelayRequired()) {
@@ -101,10 +100,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                         [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix();});
 
         // Get reference to dendritic delay buffer input for this timestep
-        psmEnv.getStream() << backend.getPointerPrefix() << "scalar *denDelayFront = ";
-        psmEnv.getStream() << "&" << psmEnv["_den_delay"] << "[(*" << psmEnv["_den_delay_ptr"] << " * " << psmEnv["num_neurons"] << ") + ";
-        psmEnv.getStream() << printSubs(ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id"), psmEnv);
-        psmEnv.getStream() << "];" << std::endl;
+        psmEnv.printLine(backend.getPointerPrefix() + "scalar *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
 
         // Add delayed input from buffer into inSyn
         psmEnv.getStream() << "linSyn += *denDelayFront;" << std::endl;
@@ -140,9 +136,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     prettyPrintStatements(psm->getDecayCode(), getTypeContext(), varEnv, decayErrorHandler);
 
     // Write back linSyn
-    varEnv.getStream() << psmEnv["_out_post"] << "[";
-    varEnv.getStream() << printSubs(ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id"), psmEnv);
-    varEnv.getStream() << "] = linSyn;" << std::endl;
+    varEnv.printLine("$(_out_post)[" + ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id") + "] = linSyn;");
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -178,15 +172,11 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
                        [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
 
     // Add reverse insyn variable to 
-    outSynEnv.getStream() << getArchetype().getPreTargetVar() << " += ";
-    outSynEnv.getStream() << outSynEnv["_out_pre"] << "[";
-    outSynEnv.getStream() << printSubs(ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id"), env);
-    outSynEnv.getStream() << "];" << std::endl;
+    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
 
     // Zero it again
-    outSynEnv.getStream() << outSynEnv["_out_pre"] << "[";
-    outSynEnv.getStream() << printSubs(ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id"), env);
-    outSynEnv.getStream() << "] = " << modelMerged.scalarExpr(0.0) << ";" << std::endl;
+    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + modelMerged.scalarExpr(0.0) + ";");
 }
 
 //----------------------------------------------------------------------------
@@ -252,13 +242,9 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
-                env.getStream() << env[v.name] << "[";
-                env.getStream() << printSubs(ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), "id"), env);
-                env.getStream() << "] = ";
-
-                env.getStream() << env[v.name] << "[";
-                env.getStream() << printSubs(ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), "id"), env);
-                env.getStream() << "];" << std::endl;
+                const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "] = ");
+                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "];");
             }
         }
     }
@@ -344,13 +330,9 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
-                env.getStream() << env[v.name] << "[";
-                env.getStream() << printSubs(ng.getWriteVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), "id"), env);
-                env.getStream() << "] = ";
-
-                env.getStream() << env[v.name] << "[";
-                env.getStream() << printSubs(ng.getReadVarIndex(true, modelMerged.getModel().getBatchSize(), getVarAccessDuplication(v.access), "id"), env);
-                env.getStream() << "];" << std::endl;
+                const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "] = ");
+                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "];");
             }
         }
     }

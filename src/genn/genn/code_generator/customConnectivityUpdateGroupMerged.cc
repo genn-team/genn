@@ -385,7 +385,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                           [&backend, &modelMerged, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
                               EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
-                              bodyEnv.getStream() << printSubs("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)", bodyEnv);
+                              bodyEnv.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
                               {
                                   CodeStream::Scope b(bodyEnv.getStream());
 

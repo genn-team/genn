@@ -548,6 +548,7 @@ void prettyPrintStatements(const std::string &code, const Type::TypeContext &typ
     // Pretty print
     Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes), forEachSynapsePrettyPrintHandler);
 }
+//--------------------------------------------------------------------------
 std::string printSubs(const std::string &format, EnvironmentExternalBase &env)
 {
     // Create regex iterator to iterate over $(XXX) style varibles in format string
