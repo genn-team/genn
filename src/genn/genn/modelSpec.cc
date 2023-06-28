@@ -28,7 +28,6 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
-#include "code_generator/substitutions.h"
 
 // ---------------------------------------------------------------------------
 // GeNN::ModelSpec
@@ -287,7 +286,8 @@ void ModelSpec::finalize()
             const auto *wu = sg->getWUModel();
 
             if(!wu->getEventThresholdConditionCode().empty()) {
-                using namespace CodeGenerator;
+                assert(false);
+                /*using namespace CodeGenerator;
 
                 // do an early replacement of weight update model parameters and derived parameters
                 // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
@@ -301,7 +301,7 @@ void ModelSpec::finalize()
                 thresholdSubs.apply(eCode);
 
                 // Add code and name of support code namespace to set	
-                n.second.addSpkEventCondition(eCode, sg);
+                n.second.addSpkEventCondition(eCode, sg);*/
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {

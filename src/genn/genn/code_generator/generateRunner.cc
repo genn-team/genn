@@ -15,7 +15,6 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
-#include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
 #include "code_generator/modelSpecMerged.h"

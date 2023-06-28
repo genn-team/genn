@@ -38,7 +38,6 @@
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
     <ClCompile Include="code_generator\standardLibrary.cc" />
-    <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
@@ -93,7 +92,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\standardLibrary.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\synapseUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />

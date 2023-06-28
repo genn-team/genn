@@ -14,7 +14,6 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/environment.h"
 #include "code_generator/presynapticUpdateStrategySIMT.h"
-#include "code_generator/substitutions.h"
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::Kernel

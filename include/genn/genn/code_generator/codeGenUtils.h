@@ -19,7 +19,6 @@
 #include "backendBase.h"
 #include "codeStream.h"
 #include "lazyString.h"
-#include "substitutions.h"
 #include "teeStream.h"
 
 // GeNN transpiler includes
@@ -136,12 +135,13 @@ GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::Type
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
 GENN_EXPORT std::string printSubs(const std::string &format, EnvironmentExternalBase &env);
+
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-template<typename P, typename D, typename V, typename S>
+/*template<typename P, typename D, typename V, typename S>
 void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
                                        const std::string &delayOffset, const std::string &sourceSuffix, const std::string &destSuffix, 
                                        const std::string &varPrefix, const std::string &varSuffix, bool useLocalNeuronVars,
@@ -186,7 +186,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
 
     // Substitute extra global parameters from neuron model
     substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
-}
+}*/
 
 template<typename G>
 bool isKernelSizeHeterogeneous(const G &group, size_t dimensionIndex)

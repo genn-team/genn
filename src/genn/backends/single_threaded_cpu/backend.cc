@@ -9,7 +9,6 @@
 #include "code_generator/environment.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/standardLibrary.h"
-#include "code_generator/substitutions.h"
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
@@ -189,7 +188,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)";
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
                                 groupEnv.printLine("$(_prev_spk_evnt_time)[$(_spk_evnt)[i]] = t - DT;");

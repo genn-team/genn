@@ -203,7 +203,7 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
-        return (singleBatch ? "$(_post_prev_spike_time_delay_offset) + " : "$(_post_prev_spike_time_batch_delay_offset) + ") + "$(" + index + ")";;
+        return (singleBatch ? "$(_post_prev_spike_time_delay_offset) + " : "$(_post_prev_spike_time_batch_delay_offset) + ") + std::string{"$(" + index + ")"};
     }
     else {
         return (singleBatch ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
