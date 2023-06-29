@@ -78,7 +78,7 @@ public:
     typedef std::map<std::string, MergedEGPDestinations> MergedEGPMap;
 
     template<typename G>
-    using GenerateMergedGroupFn = std::function<void(typename G::GroupInternal &)>;
+    using GenMergedGroupFn = std::function<void(G &)>;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -164,254 +164,39 @@ public:
     //! Get merged custom connectivity update groups where host processing needs to be performed
     const std::vector<CustomConnectivityHostUpdateGroupMerged> &getMergedCustomConnectivityHostUpdateGroups() const { return m_MergedCustomConnectivityHostUpdateGroups; }
 
-    template<typename G>
-    void genMergedNeuronUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getNeuronGroups(), m_MergedNeuronUpdateGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getHashDigest, generateGroup);
-    }
-    
-    template<typename G>
-    void genMergedPresynapticUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                           [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                           &SynapseGroupInternal::getWUHashDigest, generateGroup);
-    }
+    void genMergedNeuronUpdateGroups(const BackendBase &backend, GenMergedGroupFn<NeuronUpdateGroupMerged> generateGroup);
+    void genMergedPresynapticUpdateGroups(const BackendBase &backend, GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+    void genMergedPostsynapticUpdateGroups(const BackendBase &backend, GenMergedGroupFn<PostsynapticUpdateGroupMerged> generateGroup);
+    void genMergedSynapseDynamicsGroups(const BackendBase &backend, GenMergedGroupFn<SynapseDynamicsGroupMerged> generateGroup);
+    void genMergedCustomUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                     GenMergedGroupFn<CustomUpdateGroupMerged> generateGroup);
+    void genMergedCustomUpdateWUGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                       GenMergedGroupFn<CustomUpdateWUGroupMerged> generateGroup);
+    void genMergedCustomUpdateTransposeWUGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                                GenMergedGroupFn<CustomUpdateTransposeWUGroupMerged> generateGroup);
+    void genMergedCustomUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                                  GenMergedGroupFn<CustomUpdateHostReductionGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                                    GenMergedGroupFn<CustomWUUpdateHostReductionGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, 
+                                                 GenMergedGroupFn<CustomConnectivityUpdateGroupMerged> generateGroup);
+    void genMergedCustomConnectivityHostUpdateGroups(BackendBase &backend, const std::string &updateGroupName, 
+                                                     GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup);
+    void genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, GenMergedGroupFn<NeuronSpikeQueueUpdateGroupMerged> generateGroup);
+    void genMergedNeuronPrevSpikeTimeUpdateGroups(const BackendBase &backend, GenMergedGroupFn<NeuronPrevSpikeTimeUpdateGroupMerged> generateGroup);
+    void genMergedSynapseDendriticDelayUpdateGroups(const BackendBase &backend, GenMergedGroupFn<SynapseDendriticDelayUpdateGroupMerged> generateGroup);
+    void genMergedNeuronInitGroups(const BackendBase &backend, GenMergedGroupFn<NeuronInitGroupMerged> generateGroup);
+    void genMergedCustomUpdateInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomUpdateInitGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomWUUpdateInitGroupMerged> generateGroup);
+    void genMergedSynapseInitGroups(const BackendBase &backend, GenMergedGroupFn<SynapseInitGroupMerged> generateGroup);
+    void genMergedSynapseConnectivityInitGroups(const BackendBase &backend, GenMergedGroupFn<SynapseConnectivityInitGroupMerged> generateGroup);
+    void genMergedSynapseSparseInitGroups(const BackendBase &backend, GenMergedGroupFn<SynapseSparseInitGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateSparseInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomWUUpdateSparseInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdatePreInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomConnectivityUpdatePreInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdatePostInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomConnectivityUpdatePostInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdateSparseInitGroups(const BackendBase &backend, GenMergedGroupFn<CustomConnectivityUpdateSparseInitGroupMerged> generateGroup);
+    void genMergedSynapseConnectivityHostInitGroups(const BackendBase &backend, GenMergedGroupFn<SynapseConnectivityHostInitGroupMerged> generateGroup);
 
-    template<typename G>
-    void genMergedPostsynapticUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
-                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
-                           &SynapseGroupInternal::getWUHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseDynamicsGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedSynapseDynamicsGroups,
-                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
-                           &SynapseGroupInternal::getWUHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                           [&updateGroupName](const CustomUpdateInternal &cg) { return cg.getUpdateGroupName() == updateGroupName; },
-                           &CustomUpdateInternal::getHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomUpdateWUGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                           [&updateGroupName](const CustomUpdateWUInternal &cg) 
-                           {
-                               return (!cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName); 
-                           },
-                           &CustomUpdateWUInternal::getHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomUpdateTransposeWUGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
-                           [&updateGroupName](const CustomUpdateWUInternal &cg)
-                           {
-                               return (cg.isTransposeOperation() && cg.getUpdateGroupName() == updateGroupName); 
-                           },
-                           &CustomUpdateWUInternal::getHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                           [&updateGroupName](const CustomUpdateInternal &cg)
-                           {
-                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName); 
-                           },
-                           &CustomUpdateInternal::getHashDigest, generateGroup, true);
-    }
-
-    template<typename G>
-    void genMergedCustomWUUpdateHostReductionGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                           [&updateGroupName](const CustomUpdateWUInternal &cg)
-                           {
-                               return (cg.isBatchReduction() && cg.getUpdateGroupName() == updateGroupName); 
-                           },
-                           &CustomUpdateWUInternal::getHashDigest, generateGroup, true);
-    }
-
-    template<typename G>
-    void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
-                           [&updateGroupName](const CustomConnectivityUpdateInternal &cg)
-                           {
-                               return (!cg.getCustomConnectivityUpdateModel()->getRowUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName); 
-                           },
-                           &CustomConnectivityUpdateInternal::getHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomConnectivityHostUpdateGroups(BackendBase &backend, const std::string &updateGroupName, G generateGroup)
-    {
-         createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityHostUpdateGroups,
-                            [&updateGroupName](const CustomConnectivityUpdateInternal &cg) 
-                            { 
-                                return (!cg.getCustomConnectivityUpdateModel()->getHostUpdateCode().empty() && cg.getUpdateGroupName() == updateGroupName); 
-                            },
-                            &CustomConnectivityUpdateInternal::getHashDigest, generateGroup, true);
-    }
-
-    template<typename G>
-    void genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getSpikeQueueUpdateHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedNeuronPrevSpikeTimeUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
-                           [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
-                           &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseDendriticDelayUpdateGroups(const BackendBase &backend, G generateGroup)
-    {
-        std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
-        for(const auto &n : getModel().getNeuronGroups()) {
-            for(const auto *sg : n.second.getFusedPSMInSyn()) {
-                if(sg->isDendriticDelayRequired()) {
-                    synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
-                }
-            }
-        }
-        createMergedGroups(backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedNeuronInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomUpdateInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomUpdates(), m_MergedCustomUpdateInitGroups,
-                           [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
-                           &CustomUpdateInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomWUUpdateInitGroups(const BackendBase &backend, G generateGroup)
-    {
-         createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateInitGroups,
-                            [](const CustomUpdateWUInternal &cg) 
-                            {
-                                return (((cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE)
-                                         || (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL))
-                                         && cg.isVarInitRequired());
-                            },
-                            &CustomUpdateWUInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseInitGroups(const BackendBase &backend, G generateGroup)
-    {
-         createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedSynapseInitGroups,
-                            [](const SynapseGroupInternal &sg)
-                            {
-                                return (((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-                                         || (sg.getMatrixType() & SynapseMatrixWeight::KERNEL))
-                                         && sg.isWUVarInitRequired());
-                            },
-                            &SynapseGroupInternal::getWUInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseConnectivityInitGroups(const BackendBase &backend, G generateGroup)
-    {
-         createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
-                           [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-                           &SynapseGroupInternal::getConnectivityInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseSparseInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedSynapseSparseInitGroups,
-                           [&backend](const SynapseGroupInternal &sg)
-                           {
-                               return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
-                                       (sg.isWUVarInitRequired()
-                                        || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
-                           },
-                           &SynapseGroupInternal::getWUInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomWUUpdateSparseInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
-                           [](const CustomUpdateWUInternal &cg) 
-                           {
-                               return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); 
-                           },
-                           &CustomUpdateWUInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomConnectivityUpdatePreInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePreInitGroups,
-                           [&backend](const CustomConnectivityUpdateInternal &cg) 
-                           {
-                               return (cg.isPreVarInitRequired() || (backend.isPopulationRNGInitialisedOnDevice() && cg.isRowSimRNGRequired()));     
-                           },
-                           &CustomConnectivityUpdateInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomConnectivityUpdatePostInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePostInitGroups,
-                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isPostVarInitRequired(); },
-                           &CustomConnectivityUpdateInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedCustomConnectivityUpdateSparseInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateSparseInitGroups,
-                           [](const CustomConnectivityUpdateInternal &cg) { return cg.isVarInitRequired(); },
-                           &CustomConnectivityUpdateInternal::getInitHashDigest, generateGroup);
-    }
-
-    template<typename G>
-    void genMergedSynapseConnectivityHostInitGroups(const BackendBase &backend, G generateGroup)
-    {
-        createMergedGroups(backend, getModel().getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
-                           [](const SynapseGroupInternal &sg)
-                           { 
-                               return !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty();
-                           },
-                           &SynapseGroupInternal::getConnectivityHostInitHashDigest, generateGroup, true);
-    }
 
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
@@ -542,14 +327,14 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename D, typename G>
+    template<typename MergedGroup, typename D>
     void createMergedGroups(const BackendBase &backend,
-                            const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                            std::vector<MergedGroup> &mergedGroups, D getHashDigest, G generateGroup, bool host = false)
+                            const std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> &unmergedGroups,
+                            std::vector<MergedGroup> &mergedGroups, D getHashDigest, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
     {
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
-                           std::vector<std::reference_wrapper<const Group>>, 
+                           std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>>, 
                            Utils::SHA1Hash> protoMergedGroups;
 
         // Add unmerged groups to correct vector
@@ -589,13 +374,13 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename F, typename D, typename G>
+    template<typename MergedGroup, typename F, typename D, typename G>
     void createMergedGroups(const BackendBase &backend,
-                            const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                            const std::map<std::string, typename MergedGroup::GroupInternal> &groups, std::vector<MergedGroup> &mergedGroups,
                             F filter, D getHashDigest, G generateGroup, bool host = false)
     {
         // Build temporary vector of references to groups that pass filter
-        std::vector<std::reference_wrapper<const Group>> unmergedGroups;
+        std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> unmergedGroups;
         for(const auto &g : groups) {
             if(filter(g.second)) {
                 unmergedGroups.emplace_back(std::cref(g.second));
