@@ -81,7 +81,7 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
         {
             // Loop through this kernel dimensions
             const std::string idxVar = "k" + std::to_string(depth);
-            env.getStream() << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << printSubs(getKernelSize(g, depth), env) << "; " << idxVar << "++)";
+            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
             {
                 CodeStream::Scope b(env.getStream());
                 EnvironmentGroupMergedField<G> loopEnv(env, g);
@@ -468,7 +468,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
                             // **TODO** prod types
                             const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "$(_post_delay_offset) + " : "";
-                            groupEnv.printLine("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];", groupEnv);
+                            groupEnv.printLine("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];");
 
                             // Loop through column of presynaptic neurons
                             if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -737,7 +737,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(funcEnv, c);
 
-                            genCustomConnectivityUpdateIndexCalculation(funcEnv.getStream(), c);
+                            genCustomConnectivityUpdateIndexCalculation(groupEnv);
                         
                             // Loop through presynaptic neurons
                             funcEnv.getStream() << "for(unsigned int i = 0; i < " << funcEnv["num_pre"] << "; i++)";
@@ -1515,12 +1515,12 @@ void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handl
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const
+void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
     genKernelIteration(env, sg, sg.getArchetype().getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
+void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }

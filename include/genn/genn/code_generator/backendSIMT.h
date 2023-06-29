@@ -182,31 +182,31 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genNeuronUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPresynapticUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genSynapseDynamicsKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
 
-    void genCustomUpdateKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
+    void genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
                                const std::string &updateGroup, size_t &idStart) const;
 
-    void genCustomUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
+    void genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
                                  const std::string &updateGroup, size_t &idStart) const;
     
-    void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, const ModelSpecMerged &modelMerged,
+    void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
                                           const std::string &updateGroup, size_t &idStart) const;
 
-    void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
+    void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                            const std::string &updateGroup, size_t &idStart) const;
 
-    void genInitializeKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
    
-    void genInitializeSparseKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
+    void genInitializeSparseKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Helper wrapper around padSize to pad size to a kernel size
@@ -219,103 +219,126 @@ private:
     //--------------------------------------------------------------------------
     // Type definitions
     //--------------------------------------------------------------------------
-    template<typename T>
-    using GetPaddedGroupSizeFunc = std::function<size_t(const T &)>;
+    template<typename G>
+    using GenMergedGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, std::function<void(G&)>);
 
+    template<typename G>
+    using GenMergedCustomUpdateGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, const std::string &, std::function<void(G&)>);
+    
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    template<typename T, typename S, typename F>
-    void genParallelGroup(EnvironmentExternalBase &env, std::vector<T> &groups, size_t &idStart,
-                          S getPaddedSizeFunc, F filter, GroupHandlerEnv<T> handler) const
+    template<typename T, typename S>
+    void genGroup(EnvironmentExternalBase &env, T &gMerge, size_t &idStart,
+                  S getPaddedSizeFn, GroupHandlerEnv<T> handler) const
     {
-        // Loop through groups
-        for(auto &gMerge : groups) {
-            if(filter(gMerge)) {
-                // Sum padded sizes of each group within merged group
-                const size_t paddedSize = std::accumulate(
-                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                    [getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
-                    {
-                        return (acc + getPaddedSizeFunc(g.get()));
-                    });
+        // Sum padded sizes of each group within merged group
+        const size_t paddedSize = std::accumulate(
+            gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+            [getPaddedSizeFn](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+            {
+                return (acc + getPaddedSizeFn(g.get()));
+            });
 
-                env.getStream() << "// merged" << gMerge.getIndex() << std::endl;
+        env.getStream() << "// merged" << gMerge.getIndex() << std::endl;
 
-                // If this is the first  group
-                if(idStart == 0) {
-                    env.getStream() << "if(id < " << paddedSize << ")";
-                }
-                else {
-                    env.getStream() << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
-                }
-                {
-                    CodeStream::Scope b(env.getStream());
-                    EnvironmentExternal groupEnv(env);
+        // If this is the first  group
+        if(idStart == 0) {
+            env.getStream() << "if(id < " << paddedSize << ")";
+        }
+        else {
+            env.getStream() << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
+        }
+        {
+            CodeStream::Scope b(env.getStream());
+            EnvironmentExternal groupEnv(env);
 
-                    if(gMerge.getGroups().size() == 1) {
-                        groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
-                        groupEnv.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+            if(gMerge.getGroups().size() == 1) {
+                groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                groupEnv.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
 
-                        // Use the starting thread ID of the whole merged group as group_start_id
-                        groupEnv.add(Type::Uint32.addConst(), "group_start_id", std::to_string(idStart));
-                    }
-                    else {
-                        // Perform bisect operation to get index of merged struct
-                        groupEnv.getStream() << "unsigned int lo = 0;" << std::endl;
-                        groupEnv.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                        groupEnv.getStream() << "while(lo < hi)" << std::endl;
-                        {
-                            CodeStream::Scope b(groupEnv.getStream());
-                            groupEnv.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
-
-                            groupEnv.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << "hi = mid;" << std::endl;
-                            }
-                            groupEnv.getStream() << "else";
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.getStream() << "lo = mid + 1;" << std::endl;
-                            }
-                        }
-
-                        // Use this to get reference to merged group structure
-                        groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                        groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
-
-
-                        // Get group start thread ID and use as group_start_id
-                        groupEnv.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                        groupEnv.add(Type::Uint32.addConst(), "_group_start_id", "groupStartID");
-
-                        // Use this to calculate local id within group
-                        groupEnv.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
-                    }
-                    groupEnv.add(Type::Uint32.addConst(), "id", "lid");
-
-                    handler(groupEnv, gMerge);
-
-                    idStart += paddedSize;
-                }
+                // Use the starting thread ID of the whole merged group as group_start_id
+                groupEnv.add(Type::Uint32.addConst(), "group_start_id", std::to_string(idStart));
             }
+            else {
+                // Perform bisect operation to get index of merged struct
+                groupEnv.getStream() << "unsigned int lo = 0;" << std::endl;
+                groupEnv.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                groupEnv.getStream() << "while(lo < hi)" << std::endl;
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+
+                    groupEnv.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+                        groupEnv.getStream() << "hi = mid;" << std::endl;
+                    }
+                    groupEnv.getStream() << "else";
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+                        groupEnv.getStream() << "lo = mid + 1;" << std::endl;
+                    }
+                }
+
+                // Use this to get reference to merged group structure
+                groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
+
+                // Get group start thread ID and use as group_start_id
+                groupEnv.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                groupEnv.add(Type::Uint32.addConst(), "_group_start_id", "groupStartID");
+
+                // Use this to calculate local id within group
+                groupEnv.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
+            }
+            groupEnv.add(Type::Uint32.addConst(), "id", "lid");
+
+            handler(groupEnv, gMerge);
+
+            idStart += paddedSize;
         }
     }
 
-    
+
     template<typename T, typename S>
+    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart, 
+                          GenMergedGroupsFn<T> generateGroupFn,  S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
+    {
+        std::invoke(generateGroupFn, modelMerged, *this,
+                    [this, getPaddedSizeFunc, handler, &env, &idStart](T &g)
+                    {
+                        genGroup(env, g, idStart, getPaddedSizeFunc, handler);
+                    });
+    }
+
+    template<typename T, typename S>
+    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, const std::string &updateGroupName, size_t &idStart, 
+                          GenMergedCustomUpdateGroupsFn<T> generateGroupFn,  S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
+    {
+        std::invoke(generateGroupFn, modelMerged, *this, updateGroupName,
+                    [this, getPaddedSizeFunc, handler, &env, &idStart](T &g)
+                    {
+                        genGroup(env, g, idStart, getPaddedSizeFunc, handler);
+                    });
+    }
+
+    
+
+    
+    /*template<typename T, typename S>
     void genParallelGroup(EnvironmentExternalBase &env, std::vector<T> &groups, size_t &idStart,
                           S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
     {
         genParallelGroup(env, groups, idStart, getPaddedSizeFunc,
                          [](const T &) { return true; }, handler);
-    }
+    }*/
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with dense/kernel connectivity
     template<typename G>
-    void genSynapseVarInit(EnvironmentGroupMergedField<G> &env, const ModelSpecMerged &modelMerged, 
+    void genSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, G &g,
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
     {
         env.getStream() << "if(" << env["id"] << " < ";
@@ -339,13 +362,14 @@ private:
         env.getStream() << ")";
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<G> initEnv(env, env.getGroup());
+            EnvironmentGroupMergedField<G> initEnv(env, g);
 
             // If an RNG is required for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
             if(initRNGRequired) {
-                genGlobalRNGSkipAhead(os, popSubs, "id");
+                initEnv.add(Type::Void, "rng", 
+                            genGlobalRNGSkipAhead(initEnv.getStream(), "id"));
             }
 
             // If synapse group has kernel weights
@@ -360,7 +384,7 @@ private:
                         // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
                         kernelIDInit << " / (";
                         for (size_t j = (kernelDimensions - 1); j > i; j--) {
-                            kernelIDInit << getKernelSize(env.getGroup(), j);
+                            kernelIDInit << getKernelSize(g, j);
 
                             if (j != (i + 1)) {
                                 kernelIDInit << " * ";
@@ -372,7 +396,7 @@ private:
 
                     // If this isn't the first dimension, take modulus of kernel size
                     if (i > 0) {
-                        kernelIDInit << " % " << getKernelSize(env.getGroup(), i);
+                        kernelIDInit << " % " << getKernelSize(g, i);
                     }
 
                     kernelIDInit << ";" << std::endl;
@@ -394,7 +418,7 @@ private:
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with sparse connectivity
     template<typename G>
-    void genSparseSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, const G &g,
+    void genSparseSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, G &g,
                                  bool varInitRequired, GroupHandlerEnv<G> handler) const
     {
         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
@@ -431,12 +455,13 @@ private:
                 env.getStream() << "if(" << env["id"] << " < shRowLength[i])";
                 {
                     CodeStream::Scope b(env.getStream());
-
+                    
                     // Generate initialisation code
                     if(varInitRequired) {
-                        env.add(Type::Uint32.addConst(), "id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                        env.add(Type::Uint32.addConst(), "id_post", "$(_ind)[idx]");
-                        g.generateInit(*this, env, modelMerged);
+                        EnvironmentExternal initEnv(env);
+                        initEnv.add(Type::Uint32.addConst(), "id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
+                        initEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[idx]");
+                        g.generateInit(*this, initEnv, modelMerged);
                     }
                     
                     // Call handler
