@@ -20,23 +20,21 @@ public:
     //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
     {
-        return (isVarInitParamReferenced(varName, paramName) &&
-                this->isParamValueHeterogeneous(paramName, 
-                                                [&varName](const auto &g)
-                                                { 
-                                                    return A(g).getInitialisers().at(varName).getParams(); 
-                                                }));
+        return this->isParamValueHeterogeneous(paramName, 
+                                               [&varName](const auto &g)
+                                               { 
+                                                   return A(g).getInitialisers().at(varName).getParams(); 
+                                               });
     }
 
     //! Should the var init derived parameter be implemented heterogeneously?
     bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
     {
-        return (isVarInitParamReferenced(varName, paramName) &&
-                this->isParamValueHeterogeneous(paramName, 
-                                                [&varName](const auto &g) 
-                                                { 
-                                                    return A(g).getInitialisers().at(varName).getDerivedParams();
-                                                }));
+        return this->isParamValueHeterogeneous(paramName, 
+                                               [&varName](const auto &g) 
+                                               { 
+                                                   return A(g).getInitialisers().at(varName).getDerivedParams();
+                                               });
     }
 protected:
     //----------------------------------------------------------------------------
@@ -45,22 +43,9 @@ protected:
     void updateBaseHash(boost::uuids::detail::sha1 &hash) const
     {
         // Update hash with each group's variable initialisation parameters and derived parameters
-        this->template updateVarInitParamHash<InitGroupMergedBase<B, A>, A>(
-            &InitGroupMergedBase<B, A>::isVarInitParamHeterogeneous, hash);
+        this->template updateVarInitParamHash<A>(hash);
 
-        this->template updateVarInitDerivedParamHash<InitGroupMergedBase<B, A>, A>(
-            &InitGroupMergedBase<B, A>::isVarInitDerivedParamHeterogeneous, hash);
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Private methods
-    //----------------------------------------------------------------------------
-    //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const
-    {
-        const auto *varInitSnippet = A(this->getArchetype()).getInitialisers().at(varName).getSnippet();
-        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
+        this->template updateVarInitDerivedParamHash<A>(hash);
     }
 };
 
@@ -364,9 +349,6 @@ private:
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
     bool isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-     //! Is the connectivity initialization parameter referenced?
-    bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
 };
 
 // ----------------------------------------------------------------------------

@@ -637,22 +637,15 @@ boost::uuids::detail::sha1::digest_type SynapseConnectivityInitGroupMerged::getH
     updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
 
     // Update hash with connectivity parameters and derived parameters
-    updateParamHash<SynapseGroupMergedBase>(
-        &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
-
-    updateParamHash<SynapseGroupMergedBase>(
-        &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
 
     if(!getArchetype().getKernelSize().empty()) {
         updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
 
         // Update hash with each group's variable initialisation parameters and derived parameters
-        updateVarInitParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
-            &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
-        updateVarInitDerivedParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
-            &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
+        updateVarInitParamHash<SynapseWUVarAdapter>(hash);
+        updateVarInitDerivedParamHash<SynapseWUVarAdapter>(hash);
     }   
     return hash.get_digest();
 }
@@ -844,21 +837,12 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
-    return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); }));
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamReferenced(const std::string &paramName) const
-{
-    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 
 // ----------------------------------------------------------------------------

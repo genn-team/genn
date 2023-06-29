@@ -53,10 +53,8 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    updateParamHash<CurrentSource>(&CurrentSource::isParamReferenced, 
-                                   [](const CurrentSourceInternal &g) { return g.getParams(); }, hash);
-    updateParamHash<CurrentSource>(&CurrentSource::isParamReferenced, 
-                                   [](const CurrentSourceInternal &g) { return g.getDerivedParams(); }, hash);
+    updateParamHash([](const CurrentSourceInternal &g) { return g.getParams(); }, hash);
+    updateParamHash([](const CurrentSourceInternal &g) { return g.getDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::CurrentSource::isParamHeterogeneous(const std::string &paramName) const
@@ -141,10 +139,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    updateParamHash<InSynPSM>(&InSynPSM::isParamReferenced, 
-                               [](const SynapseGroupInternal &g) { return g.getPSParams(); }, hash);
-    updateParamHash<InSynPSM>(&InSynPSM::isParamReferenced, 
-                              [](const SynapseGroupInternal &g) { return g.getPSDerivedParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getPSParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getPSDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::InSynPSM::isParamHeterogeneous(const std::string &paramName) const
@@ -252,10 +248,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::InSynWUMPostCode::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    updateParamHash<InSynWUMPostCode>(&InSynWUMPostCode::isParamReferenced, 
-                                      [](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
-    updateParamHash<InSynWUMPostCode>(&InSynWUMPostCode::isParamReferenced, 
-                                      [](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::InSynWUMPostCode::isParamHeterogeneous(const std::string &paramName) const

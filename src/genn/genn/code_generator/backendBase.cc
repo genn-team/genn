@@ -20,7 +20,7 @@ BackendBase::BackendBase(const PreferencesBase &preferences)
 {
 }
 //--------------------------------------------------------------------------
-bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
+bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const
 {
     // Loop through merged groups and calculate maximum number of synapses
     size_t maxSynapses = 0;

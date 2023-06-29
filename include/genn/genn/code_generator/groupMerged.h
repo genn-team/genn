@@ -102,16 +102,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    //! Helper to test whether parameter is referenced in vector of codestrings
-    bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
-    {
-        return std::any_of(codeStrings.begin(), codeStrings.end(),
-                           [&paramName](const std::string &c)
-                           {
-                               return (c.find("$(" + paramName + ")") != std::string::npos);
-                           });
-    }
-
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
     bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
@@ -136,62 +126,53 @@ protected:
         }
     }
 
-    template<typename T, typename V, typename R>
-    void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    template<typename V>
+    void updateParamHash(V getValueFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
         const auto &archetypeParams = getValueFn(getArchetype());
         for(const auto &p : archetypeParams) {
-            // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isParamReferencedFn)(p.first)) {
-                // Loop through groups
-                for(const auto &g : getGroups()) {
-                    // Update hash with parameter value
-                    Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
-                }
+            // Loop through groups
+            for(const auto &g : getGroups()) {
+                // Update hash with parameter value
+                Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
             }
         }
     }
 
-    template<typename T, typename A, typename R>
-    void updateVarInitParamHash(R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename A>
+    void updateVarInitParamHash(boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
         const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getParams()) {
-                // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
-                    // Loop through groups
-                    for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
+                // Loop through groups
+                for(const auto &g : getGroups()) {
+                    const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
 
-                        // Update hash with parameter value
-                        Utils::updateHash(values.at(p.first), hash);
-                    }
+                    // Update hash with parameter value
+                    Utils::updateHash(values.at(p.first), hash);
                 }
             }
         }
     }
 
-    template<typename T, typename A, typename R>
-    void updateVarInitDerivedParamHash(R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    template<typename A>
+    void updateVarInitDerivedParamHash(boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
         const auto &archetypeVarInitialisers = A(getArchetype()).getInitialisers();
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
-                // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
-                    // Loop through groups
-                    for(const auto &g : getGroups()) {
-                        const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
+                // Loop through groups
+                for(const auto &g : getGroups()) {
+                    const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
 
-                        // Update hash with parameter value
-                        Utils::updateHash(values.at(d.first), hash);
-                    }
+                    // Update hash with parameter value
+                    Utils::updateHash(values.at(d.first), hash);
                 }
             }
         }
@@ -492,99 +473,5 @@ protected:
             childGroups.emplace_back(i, typeContext, sortedGroupChildren[i]);
         }
     }
-};
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::SynapseGroupMergedBase
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    //! Should the weight update model parameter be implemented heterogeneously?
-    bool isWUParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the weight update model derived parameter be implemented heterogeneously?
-    bool isWUDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the weight update model variable initialization parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-    
-    //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
-    bool isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
-    bool isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    std::string getPreSlot(unsigned int batchSize) const;
-    std::string getPostSlot(unsigned int batchSize) const;
-
-    std::string getPreVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
-    {
-        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
-    }
-    
-    std::string getPostVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
-    {
-        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
-    }
-
-    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
-    {
-        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDuplication, index);
-    }
-    
-    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
-    {
-        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDuplication, index);
-    }
-
-    std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
-
-    std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-
-    std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    
-    std::string getPostISynIndex(unsigned int batchSize, const std::string &index) const
-    {
-        return ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + index;
-    }
-
-    std::string getPreISynIndex(unsigned int batchSize, const std::string &index) const
-    {
-        return ((batchSize == 1) ? "" : "$(pre_batch_offset) + ") + index;
-    }
-
-    std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    
-protected:
-    using GroupMerged::GroupMerged;
-    
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    boost::uuids::detail::sha1::digest_type getHashDigest(Role role) const;
-
-
-private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
-                            const std::string &index, const std::string &prefix) const;
 };
 }   // namespace GeNN::CodeGenerator

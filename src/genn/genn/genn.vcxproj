@@ -31,7 +31,6 @@
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSupportCode.cc" />
-    <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
     <ClCompile Include="code_generator\lazyString.cc" />
     <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />

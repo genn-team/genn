@@ -39,9 +39,9 @@ template<typename G, typename F = G>
 class EnvironmentGroupMergedField;
 class EnvironmentExternalBase;
 class ModelSpecMerged;
+template<typename G>
+class GroupMerged;
 class NeuronUpdateGroupMerged;
-class Substitutions;
-class SynapseGroupMergedBase;
 class PresynapticUpdateGroupMerged;
 class PostsynapticUpdateGroupMerged;
 class SynapseDynamicsGroupMerged;
@@ -453,7 +453,7 @@ public:
         return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
     }
 
-    bool areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const;
+    bool areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const;
 
     //! Get backend-specific pointer size in bytes
     size_t getPointerBytes() const{ return m_PointerBytes; }

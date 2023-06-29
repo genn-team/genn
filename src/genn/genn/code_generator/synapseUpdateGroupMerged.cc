@@ -166,6 +166,199 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
+// GeNN::CodeGenerator::SynapseGroupMergedBase
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isWUParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg){ return sg.getWUVarInitialisers().at(varName).getParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varName).getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
+{
+    if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+        return  (batchSize == 1) ? "$(_pre_delay_slot)" : "$(_pre_batch_delay_slot)";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "$(batch)";
+    }
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
+{
+    if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+        return  (batchSize == 1) ? "$(_post_delay_slot)" : "$(_post_batch_delay_slot)";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "$(batch)";
+    }
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
+{
+    assert(getArchetype().isDendriticDelayRequired());
+
+    const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
+
+    if(offset.empty()) {
+        return "(*$(_den_delay_ptr) * $(num_post) + " + batchID;
+    }
+    else {
+        return "(((*(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
+    }
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+    return getVarIndex(delay, batchSize, varDuplication, index, "pre");
+}
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+   return getVarIndex(delay, batchSize, varDuplication, index, "post");
+}
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        return (singleBatch ? "$(_pre_prev_spike_time_delay_offset) + " : "$(_pre_prev_spike_time_batch_delay_offset) + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "$(_pre_batch_offset) + ") + std::string{"$(" + index + ")"};
+    }
+}
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        return (singleBatch ? "$(_post_prev_spike_time_delay_offset) + " : "$(_post_prev_spike_time_batch_delay_offset) + ") + std::string{"$(" + index + ")"};
+    }
+    else {
+        return (singleBatch ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
+    }
+}
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "$(_syn_batch_offset)") + std::string{"$(" + index + ")"};
+}
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "$(_kern_batch_offset)") + std::string{"$(" + index + ")"};
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
+                                                const std::string &index, const std::string &prefix) const
+{
+    if (delay) {
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return prefix + ((batchSize == 1) ? "$(_delay_slot)" : "$(_batch_delay_slot)");
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return prefix + "$(_delay_offset) + " + index;
+        }
+        else {
+            return prefix + "$(_batch_delay_offset) + " + index;
+        }
+    }
+    else {
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return (batchSize == 1) ? "0" : "batch";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
+            return index;
+        }
+        else {
+            return prefix + "$(_batch_offset) + " + index;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with number of neurons in pre and postsynaptic population
+    updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxConnections(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
+
+    // Update hash with weight update model parameters and derived parameters
+    updateHash([](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+
+    // If we're updating a hash for a group with procedural connectivity or initialising connectivity
+    if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+    }
+
+    // If we're updating a hash for a group with Toeplitz connectivity
+    if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+        // Update hash with connectivity parameters and derived parameters
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); }, hash);
+
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); }, hash);
+    }
+
+    // If weights are procedural
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL)  {
+        // If synapse group has a kernel, update hash with kernel size
+        if(!getArchetype().getKernelSize().empty()) {
+            updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
+        }
+
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        updateVarInitParamHash<SynapseWUVarAdapter>(hash);
+        updateVarInitDerivedParamHash<SynapseWUVarAdapter>(hash);
+    }
+
+    return hash.get_digest();
+}
+
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
