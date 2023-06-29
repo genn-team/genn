@@ -826,3 +826,42 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 {
     return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
+
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
+//----------------------------------------------------------------------------
+void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const
+{
+    if(getArchetype().isSpikeEventRequired()) {
+        if(getArchetype().isDelayRequired()) {
+            env.getStream() << env["_spk_cnt_evnt"] << "[*" << env["_spk_que_ptr"];
+            if(batchSize > 1) {
+                env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            }
+            env.getStream() << "] = 0; " << std::endl;
+        }
+        else {
+            env.getStream() << env["_spk_cnt_evnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+        }
+    }
+
+    if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
+        env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
+        if(batchSize > 1) {
+            env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+        }
+        env.getStream() << "] = 0; " << std::endl;
+    }
+    else {
+        env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+    }
+}
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
+

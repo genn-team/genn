@@ -127,21 +127,6 @@ protected:
                            });
     }
 
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    /*template<typename P>
-    bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(index) != archetypeValue);
-                           });
-    }*/
-
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
@@ -451,60 +436,6 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
-{
-public:
-    using GroupMerged::GroupMerged;
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
-//----------------------------------------------------------------------------
-// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
-{
-public:
-    using GroupMerged::GroupMerged;
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
-//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
@@ -561,9 +492,6 @@ protected:
             childGroups.emplace_back(i, typeContext, sortedGroupChildren[i]);
         }
     }
-
-    //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
 };
 
 //----------------------------------------------------------------------------
@@ -580,9 +508,6 @@ public:
 
     //! Should the weight update model derived parameter be implemented heterogeneously?
     bool isWUDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the GLOBALG weight update model variable be implemented heterogeneously?
-    bool isWUGlobalVarHeterogeneous(const std::string &varName) const;
 
     //! Should the weight update model variable initialization parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
@@ -601,18 +526,6 @@ public:
 
     //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
     bool isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Is presynaptic neuron parameter heterogeneous?
-    bool isSrcNeuronParamHeterogeneous(const std::string &paramName) const;
-
-    //! Is presynaptic neuron derived parameter heterogeneous?
-    bool isSrcNeuronDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Is postsynaptic neuron parameter heterogeneous?
-    bool isTrgNeuronParamHeterogeneous(const std::string &paramName) const;
-
-    //! Is postsynaptic neuron derived parameter heterogeneous?
-    bool isTrgNeuronDerivedParamHeterogeneous(const std::string &paramName) const;
 
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
@@ -659,24 +572,8 @@ public:
     std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     
 protected:
-    //----------------------------------------------------------------------------
-    // Enumerations
-    //----------------------------------------------------------------------------
-    enum class Role
-    {
-        PresynapticUpdate,
-        PostsynapticUpdate,
-        SynapseDynamics,
-        Init,
-        SparseInit,
-        ConnectivityInit,
-    };
-
-    SynapseGroupMergedBase(size_t index, const Type::TypeContext &typeContext,
-                           Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, typeContext, groups), m_ArchetypeCode(archetypeCode)
-    {}
-
+    using GroupMerged::GroupMerged;
+    
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
@@ -689,31 +586,5 @@ private:
     //------------------------------------------------------------------------
     std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
                             const std::string &index, const std::string &prefix) const;
-    
-    //! Is the weight update model parameter referenced?
-    bool isWUParamReferenced(const std::string &paramName) const;
-
-    //! Is the GLOBALG weight update model variable referenced?
-    bool isWUGlobalVarReferenced(const std::string &varName) const;
-
-    //! Is the weight update model variable initialization parameter referenced?
-    bool isWUVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-
-    //! Is the sparse connectivity initialization parameter referenced?
-    bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
-
-    //! Is the toeplitz connectivity initialization parameter referenced?
-    bool isToeplitzConnectivityInitParamReferenced(const std::string &paramName) const;
-
-    //! Is presynaptic neuron parameter referenced?
-    bool isSrcNeuronParamReferenced(const std::string &paramName) const;
-
-    //! Is postsynaptic neuron parameter referenced?
-    bool isTrgNeuronParamReferenced(const std::string &paramName) const;
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const std::string m_ArchetypeCode;
 };
 }   // namespace GeNN::CodeGenerator

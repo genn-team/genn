@@ -216,4 +216,59 @@ private:
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };
+
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    using GroupMerged::GroupMerged;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    using GroupMerged::GroupMerged;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
 }   // namespace GeNN::CodeGenerator

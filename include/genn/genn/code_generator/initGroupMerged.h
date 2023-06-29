@@ -288,18 +288,12 @@ public:
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const Type::TypeContext &typeContext,
-                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, typeContext, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
-    {}
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::ConnectivityInit);
-    }
+    using GroupMerged::GroupMerged;
+    
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
@@ -320,6 +314,12 @@ public:
     static const std::string name;
 
 private:
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
+
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------

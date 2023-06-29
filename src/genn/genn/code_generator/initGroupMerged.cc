@@ -623,6 +623,40 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Envi
 //----------------------------------------------------------------------------
 const std::string SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseConnectivityInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with archetype connectivity initialisation hash
+    Utils::updateHash(getArchetype().getConnectivityInitHashDigest(), hash);
+
+    // Update hash with number of neurons in pre and postsynaptic population
+    updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxConnections(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
+
+    // Update hash with connectivity parameters and derived parameters
+    updateParamHash<SynapseGroupMergedBase>(
+        &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
+        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
+
+    updateParamHash<SynapseGroupMergedBase>(
+        &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
+        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+
+    if(!getArchetype().getKernelSize().empty()) {
+        updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
+
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        updateVarInitParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
+            &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
+        updateVarInitDerivedParamHash<SynapseGroupMergedBase, SynapseWUVarAdapter>(
+            &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
+    }   
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env)
 {
     genInitConnectivity(backend, env, true);
@@ -649,6 +683,16 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
                                           {
                                               handler(varInitEnv);
                                           });
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns)

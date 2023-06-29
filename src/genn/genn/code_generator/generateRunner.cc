@@ -441,14 +441,14 @@ void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &b
     for(const auto &var : varAdaptor.getDefs()) {
         const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                         resolvedType, var.name + varAdaptor.getFusedSuffix(), varAdaptor.getLoc(var.name),
+                         resolvedType, var.name + varAdaptor.getNameSuffix(), varAdaptor.getLoc(var.name),
                          getSizeFn(group, var), mem);
 
         // Loop through EGPs required to initialize variable
         for(const auto &egp : varAdaptor.getInitialisers().at(var.name).getSnippet()->getExtraGlobalParams()) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                egp.type, egp.name + var.name + varAdaptor.getFusedSuffix(),
+                                egp.type, egp.name + var.name + varAdaptor.getNameSuffix(),
                                 true, VarLocation::HOST_DEVICE);
         }
     }
@@ -734,14 +734,17 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
 
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+        assert(false);
+        //m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+        //                 runnerVarDecl, runnerMergedStructAlloc);
     }
 
     // Loop through merged synapse connectivity host init groups and generate host init code
     // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
     for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        sg.generateInit(backend, runnerMergedStructAlloc, modelMerged);
+        assert(false);
+        //EnvironmentExternal env(runnerMergedStructAlloc);
+        //sg.generateInit(backend, runnerMergedStructAlloc, modelMerged);
     }
 
     // Generate merged neuron initialisation groups
