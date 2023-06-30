@@ -1860,7 +1860,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             // Add correct functions for apply synaptic input
             groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
             groupEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "j") + "] += $(0)");
-            groupEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, env["id_pre"]) + "] += $(0)");
+            groupEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
