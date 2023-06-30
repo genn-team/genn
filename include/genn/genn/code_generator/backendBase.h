@@ -600,6 +600,22 @@ protected:
                      [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
         env.addField(Type::Uint32.createPointer(), "_trg_spk", "trgSpk",
                      [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
+        
+        // Connectivity fields
+        if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            env.addField(Type::Uint32.createPointer(), "_gp", "gp",
+                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "gp" + sg.getName(); });
+        }
+        else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "rowLength" + sg.getName(); });
+            env.addField(env.getGroup().getArchetype().getSparseIndType().createPointer(), "_ind", "ind",
+                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "ind" + sg.getName(); });
+            env.addField(Type::Uint32.createPointer(), "_col_length", "colLength", 
+                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "colLength" + sg.getName(); });
+            env.addField(Type::Uint32.createPointer(), "_remap", "remap", 
+                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "remap" + sg.getName(); });
+        }
 
         // If batching is enabled
         if(batchSize > 1) {
