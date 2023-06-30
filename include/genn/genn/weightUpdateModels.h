@@ -176,7 +176,32 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+    SET_SIM_CODE("addToPost(g);\n");
+};
+
+//----------------------------------------------------------------------------
+// GeNN::WeightUpdateModels::StaticPulseConstantWeight
+//----------------------------------------------------------------------------
+//! Pulse-coupled, static synapse.
+/*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
+    the synaptic conductances are simply added to the postsynaptic input variable.
+    The model has 1 parameter:
+    - g - conductance
+    and no other variables.
+
+    \c sim code is:
+
+    \code
+    "addToPost(g);"
+    \endcode*/
+class StaticPulseConstantWeight : public Base
+{
+public:
+    DECLARE_SNIPPET(StaticPulseConstantWeight);
+
+    SET_PARAM_NAMES({"g"});
+
+    SET_SIM_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -202,7 +227,7 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
+    SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -239,9 +264,9 @@ public:
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_EVENT_CODE("$(addToInSyn, fmax(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
+    SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
 
-    SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
+    SET_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
 };
 
 //----------------------------------------------------------------------------
@@ -311,15 +336,15 @@ public:
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
+        "addToPost(g);\n"
+        "scalar dt = sT_post - t - tauShift; \n"
         "scalar dg = 0;\n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
+        "    dg = slope0 * dt + off1; \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + ($(off1)); \n"
         "else dg = - ($(off2)) ; \n"
         "$(gRaw) += dg; \n"
         "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
