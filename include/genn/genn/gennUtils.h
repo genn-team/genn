@@ -138,6 +138,11 @@ inline void updateHash(const T& value, boost::uuids::detail::sha1& hash)
     hash.process_bytes(&value, sizeof(T));
 }
 
+//! Hash monostate
+inline void updateHash(std::monostate, boost::uuids::detail::sha1&)
+{
+}
+
 //! Hash strings
 inline void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
 {
