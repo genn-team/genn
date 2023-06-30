@@ -280,6 +280,9 @@ public:
     
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend,
                         CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
@@ -292,6 +295,12 @@ public:
     void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants

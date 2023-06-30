@@ -12,7 +12,6 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
 #include "code_generator/modelSpecMerged.h"
-#include "code_generator/substitutions.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace

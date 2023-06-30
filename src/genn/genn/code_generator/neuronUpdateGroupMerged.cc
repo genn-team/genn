@@ -334,10 +334,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::OutSynWUMPreCode::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    updateParamHash<OutSynWUMPreCode>(&OutSynWUMPreCode::isParamReferenced, 
-                                      [](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
-    updateParamHash<OutSynWUMPreCode>(&OutSynWUMPreCode::isParamReferenced, 
-                                      [](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isParamHeterogeneous(const std::string &paramName) const

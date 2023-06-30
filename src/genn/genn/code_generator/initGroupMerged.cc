@@ -678,6 +678,24 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
                                           });
 }
 //----------------------------------------------------------------------------
+bool SynapseConnectivityInitGroupMerged::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, 
+                                     [&varName](const auto &g)
+                                     { 
+                                         return SynapseWUVarAdapter(g).getInitialisers().at(varName).getParams(); 
+                                     });
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityInitGroupMerged::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
+{
+    return isParamValueHeterogeneous(paramName, 
+                                    [&varName](const auto &g) 
+                                    { 
+                                        return SynapseWUVarAdapter(g).getInitialisers().at(varName).getDerivedParams();
+                                    });
+}
+//----------------------------------------------------------------------------
 bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
