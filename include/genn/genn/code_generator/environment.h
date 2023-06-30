@@ -233,17 +233,17 @@ class EnvironmentExternalDynamicBase : public EnvironmentExternalBase, public P
 public:
     template<typename... PolicyArgs>
     EnvironmentExternalDynamicBase(EnvironmentExternalBase &enclosing, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Contents(m_ContentsStream)
     {}
 
     template<typename... PolicyArgs>
     EnvironmentExternalDynamicBase(Transpiler::PrettyPrinter::EnvironmentBase &enclosing, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Contents(m_ContentsStream)
     {}
 
     template<typename... PolicyArgs>
     EnvironmentExternalDynamicBase(CodeStream &os, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...)
+    :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...), m_Contents(m_ContentsStream)
     {}
 
     ~EnvironmentExternalDynamicBase()
@@ -276,7 +276,7 @@ public:
         }
     }
 
-    virtual CodeStream &getStream() final { return  m_Contents; }
+    virtual CodeStream &getStream() final { return m_Contents; }
 
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
