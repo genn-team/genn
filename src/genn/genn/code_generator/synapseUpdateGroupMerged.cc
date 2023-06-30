@@ -230,8 +230,6 @@ std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
 {
-    assert(getArchetype().isDendriticDelayRequired());
-
     const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
 
     if(offset.empty()) {
