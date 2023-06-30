@@ -441,10 +441,10 @@ size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal 
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
-    // procedural connectivity and weights are either GLOBAL, PROCEDURAL or KERNEL
+    // procedural connectivity and there are either no variables or variables are PROCEDURAL or KERNEL
     const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
-            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)
+            && (sg.getWUModel()->getVars().empty() || (matrixType & SynapseMatrixWeight::PROCEDURAL)
                 || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------

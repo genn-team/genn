@@ -563,10 +563,15 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     }
 
     // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
-    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) && (m_MatrixType != SynapseMatrixType::TOEPLITZ_KERNELG)
-       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG)) 
+    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) && (m_MatrixType != SynapseMatrixType::TOEPLITZ)
+       && (m_MatrixType != SynapseMatrixType::SPARSE) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG)) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG, TOEPLITZ_KERNELG or SPARSE_INDIVIDUALG connectivity.");
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG, TOEPLITZ or SPARSE connectivity.");
+    }
+
+    // Check BITMASK connectivity isn't used with models with variables
+    if((m_MatrixType & SynapseMatrixConnectivity::BITMASK) && !m_WUModel->getVars().empty()) {
+        throw std::runtime_error("BITMASK connectivity can only be used with weight update models without variables like StaticPulseConstantWeight.");
     }
 
     // If connectivity is dense and there is connectivity initialiser code, give error
@@ -578,7 +583,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
-    if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
+    if(((m_MatrixType == SynapseMatrixType::SPARSE) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
        m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
                                            [](const auto &v) { return v.second.getSnippet()->requiresKernel(); }))
     {
