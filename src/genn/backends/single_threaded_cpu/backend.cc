@@ -233,6 +233,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
+                    genNeuronIndexCalculation(groupEnv, 1);
 
                     // If spike or spike-like event recording is in use
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -250,7 +251,6 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                         }
                     }
 
-                    genNeuronIndexCalculation(groupEnv, 1);
                     groupEnv.getStream() << std::endl;
 
                     groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_neurons"] << "; i++)";
