@@ -483,7 +483,9 @@ std::string upgradeCodeString(const std::string &codeString)
     // **TODO** old style function call to standard C (these are ambiguous so need to be applied to existing genn functions)
     std::regex variable(R"(\$\(([_a-zA-Z][a-zA-Z0-9]*)\))");
  
-    return std::regex_replace(codeString, variable, "$1");
+    std::string upgraded = std::regex_replace(codeString, variable, "$1");
+
+    return upgraded;
 }
 //----------------------------------------------------------------------------
 std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(

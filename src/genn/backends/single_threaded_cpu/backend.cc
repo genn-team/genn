@@ -140,6 +140,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
         EnvironmentExternal funcEnv(neuronUpdateEnv);
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
         
         Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
@@ -320,6 +322,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
         EnvironmentExternal funcEnv(synapseUpdateEnv);
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
         // Synapse dynamics
         {
@@ -564,7 +568,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
              EnvironmentExternal funcEnv(customUpdateEnv);
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
              funcEnv.add(Type::Uint32.addConst(), "batch", "0");
-
+             funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
             // Loop through host update groups and generate code for those in this custom update group
             for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
@@ -850,6 +855,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
     {
         CodeStream::Scope b(initEnv.getStream());
         EnvironmentExternal funcEnv(initEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
         Timer t(funcEnv.getStream(), "init", model.isTimingEnabled());
 

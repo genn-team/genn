@@ -136,6 +136,14 @@ GENN_EXPORT void prettyPrintStatements(const std::string &code, const Type::Type
 
 GENN_EXPORT std::string printSubs(const std::string &format, EnvironmentExternalBase &env);
 
+
+template<typename T>
+inline std::string writePreciseLiteral(T value, const Type::ResolvedType &type)
+{
+    const auto &numeric = type.getNumeric();
+    return writePreciseString(value, numeric.maxDigits10) + numeric.literalSuffix;
+}
+
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.

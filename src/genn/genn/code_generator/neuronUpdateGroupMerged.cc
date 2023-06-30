@@ -574,7 +574,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     neuronVarEnv.getStream() << "// calculate membrane potential" << std::endl;
 
     Transpiler::ErrorHandler errorHandler("Neuron sim code " + std::to_string(getIndex()));
-    prettyPrintExpression(nm->getSimCode(), getTypeContext(), neuronVarEnv, errorHandler);
+    prettyPrintStatements(nm->getSimCode(), getTypeContext(), neuronVarEnv, errorHandler);
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {

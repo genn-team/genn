@@ -560,7 +560,6 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     
     // write DT macro
     const ModelSpecInternal &model = modelMerged.getModel();
-    definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << model.getTimePrecision().getNumeric().literalSuffix << std::endl;
 
     // Write ranges of scalar and time types
     genTypeRange(definitions, model.getPrecision(), "SCALAR");
