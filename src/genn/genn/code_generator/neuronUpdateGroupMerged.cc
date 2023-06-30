@@ -113,10 +113,10 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
     
     // **TODO** naming convention
-    psmEnv.add(modelMerged.getModel().getPrecision().addConst(), "inSyn", "linSyn");
+    psmEnv.add(modelMerged.getModel().getPrecision(), "inSyn", "linSyn");
         
     // Allow synapse group's PS output var to override what Isyn points to
-    psmEnv.add(modelMerged.getModel().getPrecision().addConst(), "Isyn", getArchetype().getPSTargetVar());
+    psmEnv.add(modelMerged.getModel().getPrecision(), "Isyn", getArchetype().getPSTargetVar());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
