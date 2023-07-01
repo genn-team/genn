@@ -718,16 +718,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronVarEnv.getStream() << "group->sT[";
-                    neuronVarEnv.getStream() << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, neuronVarEnv["id"]);
-                    neuronVarEnv.getStream()  << "] = " << neuronVarEnv["sT"] << ";" << std::endl;
+                    neuronVarEnv.printLine("$(_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "id") + "] = $(sT);");
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronVarEnv.getStream() << "group->prevST[";
-                    neuronVarEnv.getStream() << getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, neuronVarEnv["id"]);
-                    neuronVarEnv.getStream() << "] = " << neuronVarEnv["prev_sT"] << ";" << std::endl;
+                    neuronVarEnv.printLine("$(_prev_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "id") + "] = $(prev_sT);");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
