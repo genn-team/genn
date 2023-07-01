@@ -96,8 +96,7 @@ std::vector<Type::ResolvedType> EnvironmentLibrary::getTypes(const Transpiler::T
 {
     const auto [typeBegin, typeEnd] = m_Library.get().equal_range(name.lexeme);
     if (typeBegin == typeEnd) {
-         errorHandler.error(name, "Undefined identifier");
-         throw TypeChecker::TypeCheckError();
+         return getContextTypes(name, errorHandler);
     }
     else {
         std::vector<Type::ResolvedType> types;
