@@ -48,14 +48,14 @@ void genScalarFill(EnvironmentExternalBase &env, const std::string &target, cons
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
-        env.getStream() << env[target] << "[0] = " << value << ";" << std::endl;
+        env.printLine("$(" + target + ")[0] = " + value + ";");
     }
     // Otherwise
     else {
         env.getStream() << "for(unsigned int d = 0; d < " << numValues << "; d++)";
         {
             CodeStream::Scope b(env.getStream());
-            env.getStream() << env[target] << "[d] = " << value << ";" << std::endl;
+            env.printLine("$(" + target + ")[d] = " + value + ";");
         }
     }
 }
@@ -104,7 +104,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
                         
                         // Fill value across all delay slots and batches
-                        genScalarFill(varInitEnv, "value", "initVal", getVarAccessDuplication(var.access),
+                        genScalarFill(varInitEnv, "_value", "$(value)", getVarAccessDuplication(var.access),
                                       batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
@@ -125,7 +125,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
 
                         // Fill value across all delay slots and batches
-                        genVariableFill(varInitEnv, "value", "initVal", "id", "$(" + count + ")",
+                        genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
                                         getVarAccessDuplication(var.access), batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
@@ -185,7 +185,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
                     prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
 
                     // Fill value across all batches
-                    genVariableFill(varInitEnv, "value", "initVal", "id_syn", stride,
+                    genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
                                     getVarAccessDuplication(var.access), batchSize);
                 });
         }

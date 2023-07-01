@@ -1756,7 +1756,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         }
         // Advance time
         runner << "iT++;" << std::endl;
-        runner << "t = iT*DT;" << std::endl;
+        runner << "t = iT * " << writePreciseLiteral(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
         // Write step time finalize logic to runner
         runner << runnerStepTimeFinaliseStream.str();
