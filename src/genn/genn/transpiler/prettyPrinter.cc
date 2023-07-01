@@ -457,13 +457,17 @@ private:
     {
         m_Environment.get().getStream() << varDeclaration.getType().getName() << " ";
 
-        for(const auto &var : varDeclaration.getInitDeclaratorList()) {
+        const size_t numDeclarators = varDeclaration.getInitDeclaratorList().size();
+        for(size_t i = 0; i < numDeclarators; i++) {
+            const auto &var = varDeclaration.getInitDeclaratorList()[i];
             m_Environment.get().getStream() << m_Environment.get().define(std::get<0>(var).lexeme);
             if(std::get<1>(var)) {
                 m_Environment.get().getStream() << " = ";
                 std::get<1>(var)->accept(*this);
             }
-            m_Environment.get().getStream() << ", ";
+            if(i != (numDeclarators - 1)) {
+                m_Environment.get().getStream() << ", ";
+            }
         }
         m_Environment.get().getStream() << ";";
     }
