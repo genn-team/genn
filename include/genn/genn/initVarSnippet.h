@@ -60,7 +60,7 @@ class Constant : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Constant);
 
-    SET_CODE("$(value) = $(constant);");
+    SET_CODE("value = constant;");
 
     SET_PARAM_NAMES({"constant"});
 };
@@ -73,7 +73,7 @@ class Kernel : public Base
 {
     DECLARE_SNIPPET(InitVarSnippet::Kernel);
 
-    SET_CODE("$(value) = $(kernel)[$(id_kernel)];");
+    SET_CODE("value = kerne)[id_kerneL];");
 
     SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
 };
@@ -92,8 +92,8 @@ public:
     DECLARE_SNIPPET(InitVarSnippet::Uniform);
 
     SET_CODE(
-        "const scalar scale = $(max) - $(min);\n"
-        "$(value) = $(min) + ($(gennrand_uniform) * scale);");
+        "const scalar scale = max - min;\n"
+        "value = min + (gennrand_uniform() * scale);");
 
     SET_PARAM_NAMES({"min", "max"});
 };
@@ -111,7 +111,7 @@ class Normal : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Normal);
 
-    SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
+    SET_CODE("value = mean + (gennrand_normal() * sd);");
 
     SET_PARAM_NAMES({"mean", "sd"});
 };
@@ -136,9 +136,9 @@ public:
         "scalar normal;\n"
         "do\n"
         "{\n"
-        "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
-        "} while (normal > $(max) || normal < $(min));\n"
-        "$(value) = normal;\n");
+        "   normal = mean + (gennrand_normal() * sd);\n"
+        "} while (normal > max || normal < min);\n"
+        "value = normal;\n");
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
 };
@@ -165,9 +165,9 @@ public:
         "scalar normal;\n"
         "do\n"
         "{\n"
-        "   normal = $(meanTimestep) + ($(gennrand_normal) * $(sdTimestep));\n"
-        "} while (normal > $(maxTimestep) || normal < $(minTimestep));\n"
-        "$(value) = rint(normal);\n");
+        "   normal = meanTimestep + (gennrand_normal() * sdTimestep);\n"
+        "} while (normal > maxTimestep || normal < minTimestep);\n"
+        "value = rint(normal);\n");
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
@@ -189,7 +189,7 @@ class Exponential : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Exponential);
 
-    SET_CODE("$(value) = $(lambda) * $(gennrand_exponential);");
+    SET_CODE("value = lambda * gennrand_exponential();");
 
     SET_PARAM_NAMES({"lambda"});
 };
@@ -207,7 +207,7 @@ class Gamma : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Gamma);
 
-    SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
+    SET_CODE("value = b * gennrand_gamma(a);");
 
     SET_PARAM_NAMES({"a", "b"});
 };
@@ -225,7 +225,7 @@ class Binomial : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Binomial);
 
-    SET_CODE("$(value) = $(gennrand_binomial, (unsigned int)$(n), $(p));");
+    SET_CODE("value = gennrand_binomial((unsigned int)n, p);");
 
     SET_PARAM_NAMES({"n", "p"});
 };
