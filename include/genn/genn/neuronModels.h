@@ -222,7 +222,7 @@ public:
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
@@ -446,7 +446,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
@@ -501,7 +501,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
@@ -534,7 +534,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
