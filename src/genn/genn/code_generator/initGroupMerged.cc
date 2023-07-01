@@ -217,7 +217,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     EnvironmentGroupMergedField<InSynPSM, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Add field for InSyn and zero
-    groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost",
+    groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
         [&modelMerged] (EnvironmentExternalBase &varEnv)
@@ -231,7 +231,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     // If dendritic delays are required
     if(getArchetype().isDendriticDelayRequired()) {
         // Add field for dendritic delay buffer and zero
-        groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay",
+        groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
                           [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
         backend.genVariableInit(groupEnv, "num_neurons", "id",
             [&modelMerged, this](EnvironmentExternalBase &varEnv)
@@ -243,7 +243,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
             });
 
         // Add field for dendritic delay pointer and zero
-        groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
+        groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
                           [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
         backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
@@ -262,13 +262,11 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                       NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged)
 {
-    const std::string suffix =  "OutSyn" + std::to_string(getIndex());
-
     // Create environment for group
     EnvironmentGroupMergedField<OutSynPreOutput, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Add 
-    groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre",
+    groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
     backend.genVariableInit(env, "num_neurons", "id",
                             [&modelMerged] (EnvironmentExternalBase &varEnv)
