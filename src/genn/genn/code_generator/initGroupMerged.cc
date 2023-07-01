@@ -473,7 +473,7 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeEnv(env, *this);
         spikeEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + suffix,
-                          [&backend, &suffix](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + suffix + g.getName(); });
+                          [&backend, suffix](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + suffix + g.getName(); });
 
 
         // Generate variable initialisation code
