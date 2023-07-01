@@ -205,12 +205,14 @@ protected:
         if (std::get<2>(payload) && !std::get<0>(payload)) {
             // Extract field from payload
             const auto &field = std::get<2>(payload).value();
+            const auto &group = getGroup();
 
-            // Add to field group using lambda function to potentially map from group to field 
+            // Add to field group using lambda function to potentially map from group to field
+            // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
             m_FieldGroup.get().addField(std::get<0>(field), std::get<1>(field),
-                                        [this, &field](const typename F::GroupInternal &, size_t i)
+                                        [field, &group](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return std::get<2>(field)(getGroup().getGroups().at(i), i);
+                                            return std::get<2>(field)(group.getGroups().at(i), i);
                                         },
                                         std::get<3>(field));
 
@@ -364,7 +366,6 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GroupInternal = typename G::GroupInternal;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
-    using GetVarSuffixFn = const std::string &(GroupInternal::*)(void) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
     using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
 
@@ -411,11 +412,13 @@ public:
 
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
-        addField(getGroup().getScalarType().addConst(), name,
-                 getGroup().getScalarType(), name + fieldSuffix,
-                 [getFieldValue, this](const auto &g, size_t i)
+        // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
+        const auto &scalarType = getGroup().getScalarType();
+        addField(scalarType.addConst(), name,
+                 scalarType, name + fieldSuffix,
+                 [getFieldValue, scalarType](const auto &g, size_t i)
                  {
-                     return getScalarString(getFieldValue(g, i));
+                     return writePreciseLiteral(getFieldValue(g, i), scalarType);
                  });
     }
 
@@ -435,7 +438,8 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(getGroup().getScalarType().addConst(), p, 
-                    getScalarString(std::invoke(getParamValues, getGroup().getArchetype()).at(p)));
+                    writePreciseLiteral(std::invoke(getParamValues, getGroup().getArchetype()).at(p),
+                                        getGroup().getScalarType()));
             }
         }
     }
@@ -456,7 +460,8 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
                 add(getGroup().getScalarType().addConst(), d.name, 
-                    getScalarString(std::invoke(getDerivedParamValues, getGroup().getArchetype()).at(d.name)));
+                    writePreciseLiteral(std::invoke(getDerivedParamValues, getGroup().getArchetype()).at(d.name),
+                                        getGroup().getScalarType()));
             }
         }
     }
@@ -498,7 +503,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(getGroup().getScalarType().addConst(), p, 
-                    getScalarString(connectInit.getParams().at(p)));
+                    writePreciseLiteral(connectInit.getParams().at(p), getGroup().getScalarType()));
             }
         }
     }
@@ -522,7 +527,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(getGroup().getScalarType().addConst(), d.name, 
-                    getScalarString(connectInit.getDerivedParams().at(d.name)));
+                    writePreciseLiteral(connectInit.getDerivedParams().at(d.name), getGroup().getScalarType()));
             }
         }
     }
@@ -545,7 +550,8 @@ public:
                 }
                 // Otherwise, just add a const-qualified scalar to the type environment with archetype value
                 else {
-                    add(getGroup().getScalarType().addConst(), p.first, getScalarString(p.second));
+                    add(getGroup().getScalarType().addConst(), p.first, 
+                        writePreciseLiteral(p.second, getGroup().getScalarType()));
                 }
             }
         }
@@ -569,7 +575,8 @@ public:
                 }
                 // Otherwise, just add a const-qualified scalar to the type environment with archetype value
                 else {
-                    add(getGroup().getScalarType().addConst(), p.first, getScalarString(p.second));
+                    add(getGroup().getScalarType().addConst(), p.first, 
+                        writePreciseLiteral(p.second, getGroup().getScalarType()));
                 }
             }
         }
@@ -629,15 +636,6 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // Private API
-    //------------------------------------------------------------------------
-    std::string getScalarString(double scalar) const
-    {
-        return (Utils::writePreciseString(scalar, getGroup().getScalarType().getNumeric().maxDigits10) 
-                + getGroup().getScalarType().getNumeric().literalSuffix);
-    }
-    
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     //! Environment mapping names to types to fields to pull values from
@@ -659,11 +657,6 @@ public:
     :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {}
 
-    std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var &var)
-    {
-        return A(g).getNameSuffix();
-    }
-
     std::string getReadIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
@@ -672,6 +665,11 @@ public:
     std::string getWriteIndex(G &g, const Models::Base::Var &var)
     {
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
+    }
+
+    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var &var)
+    {
+        return A(g).getNameSuffix();
     }
 
 private:
@@ -695,11 +693,6 @@ protected:
     :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {}
 
-    std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var)
-    {
-        return A(g).getInitialisers().at(var.name).getTargetName();
-    }
-
     std::string getReadIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
@@ -709,6 +702,12 @@ protected:
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
+
+    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var)
+    {
+        return A(g).getInitialisers().at(var.name).getTargetName();
+    }
+
 
 private:
     GetIndexFn m_GetReadIndex;
@@ -764,10 +763,12 @@ public:
             const auto resolvedType = v.type.resolve(m_Context.get());
 
             // Add field to underlying field group
+            const auto &group = m_Group.get();
+            const auto &arrayPrefix = m_ArrayPrefix;
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [this, v](const typename F::GroupInternal &, size_t i)
+                                        [arrayPrefix, v, &group](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return m_ArrayPrefix + v.name + getVarSuffix(m_Group.get().getGroups().at(i), v);
+                                            return arrayPrefix + v.name + getVarSuffix(group.getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
