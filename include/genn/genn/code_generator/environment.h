@@ -274,6 +274,14 @@ public:
         }
         // Otherwise, get name from payload
         else {
+            // If this identifier relies on any initialiser statements, mark these initialisers as required
+            for(size_t i : std::get<1>(env->second)) {
+                m_Initialisers.at(i).first = true;
+            }
+
+            // Perform any type-specific logic to mark this identifier as required
+            setRequired(std::get<2>(env->second));
+
             return getNameInternal(std::get<2>(env->second));
         }
     }
