@@ -129,7 +129,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     // Begin environment with standard library
     EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getFunctions());
 
-    neuronUpdateEnv.getStream() << "void updateNeurons(timepoint t";
+    neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
         neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
     }
@@ -315,7 +315,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     // Begin environment with standard library
     EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getFunctions());
 
-    synapseUpdateEnv.getStream() << "void updateSynapses(timepoint t)";
+    synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
         CodeStream::Scope b(synapseUpdateEnv.getStream());
 

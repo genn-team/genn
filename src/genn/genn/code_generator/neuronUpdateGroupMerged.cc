@@ -502,15 +502,16 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
     
     // Substitute spike times
+    const std::string timePrecision = modelMerged.getModel().getTimePrecision().getName();
     const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id");
     neuronEnv.add(getTimeType().addConst(), "sT", "lsT", 
-                  {neuronEnv.addInitialiser("const timepoint lsT = $(_spk_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_spk_time)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_sT", "lprevST", 
-                  {neuronEnv.addInitialiser("const timepoint lprevST = $(_prev_spk_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevST = $(_prev_spk_time)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "seT", "lseT", 
-                  {neuronEnv.addInitialiser("const timepoint lseT = $(_spk_evnt_time)[" + spikeTimeReadIndex+ "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lseT = $(_spk_evnt_time)[" + spikeTimeReadIndex+ "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_seT", "lprevSET", 
-                  {neuronEnv.addInitialiser("const timepoint lprevSET = $(_prev_spk_evnt_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevSET = $(_prev_spk_evnt_time)[" + spikeTimeReadIndex + "];")});
 
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
