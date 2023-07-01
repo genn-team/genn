@@ -141,7 +141,7 @@ template<typename T>
 inline std::string writePreciseLiteral(T value, const Type::ResolvedType &type)
 {
     const auto &numeric = type.getNumeric();
-    return writePreciseString(value, numeric.maxDigits10) + numeric.literalSuffix;
+    return Utils::writePreciseString(value, numeric.maxDigits10) + numeric.literalSuffix;
 }
 
 //-------------------------------------------------------------------------

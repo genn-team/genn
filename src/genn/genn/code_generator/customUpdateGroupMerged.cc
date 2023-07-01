@@ -259,7 +259,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", 
+        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
             return getVarRefIndex(getVarAccessDuplication(v.getVar().access), 

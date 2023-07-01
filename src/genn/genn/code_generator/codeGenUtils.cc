@@ -479,13 +479,32 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
 //----------------------------------------------------------------------------
 std::string upgradeCodeString(const std::string &codeString)
 {
-    // **TODO** snake-case -> camel case known built in variables e.g id_pre -> idPre
-    // **TODO** old style function call to standard C (these are ambiguous so need to be applied to existing genn functions)
-    std::regex variable(R"(\$\(([_a-zA-Z][a-zA-Z0-9]*)\))");
- 
-    std::string upgraded = std::regex_replace(codeString, variable, "$1");
+    
+    // Build vector of regular expressions to replace old style function calls
+    const std::vector<std::pair<std::regex, std::string>> functionReplacements{
+        {std::regex(R"(\$\(gennrand_uniform\))"), "gennrand_uniform()"},
+        {std::regex(R"(\$\(gennrand_normal\))"), "gennrand_normal()"},
+        {std::regex(R"(\$\(gennrand_exponential\))"), "gennrand_exponential()"},
+        {std::regex(R"(\$\(gennrand_log_normal,(.*)\))"), "gennrand_log_normal($1)"},
+        {std::regex(R"(\$\(gennrand_gamma,(.*)\))"), "gennrand_gamma($1)"},
+        {std::regex(R"(\$\(gennrand_binomial,(.*)\))"), "gennrand_binomial($1)"},
+        {std::regex(R"(\$\(addSynapse,(.*)\))"), "addSynapse($1)"},
+        {std::regex(R"(\$\(endRow\))"), "endRow()"},
+        {std::regex(R"(\$\(endCol\))"), "endCol()"}};
 
-    return upgraded;
+    // Apply sustitutions to upgraded code string
+    std::string upgradedCodeString = codeString;
+    for(const auto &f : functionReplacements) {
+        upgradedCodeString = std::regex_replace(upgradedCodeString, f.first, f.second);
+    }
+    
+    // **TODO** snake-case -> camel case known built in variables e.g id_pre -> idPre
+
+    // Replace old style $(XX) variables with plain XX
+    // **NOTE** this is done after functions as single-parameter function calls and variables were indistinguishable with old syntax
+    const std::regex variable(R"(\$\(([_a-zA-Z][_a-zA-Z0-9]*)\))");
+    upgradedCodeString = std::regex_replace(upgradedCodeString, variable, "$1");
+    return upgradedCodeString;
 }
 //----------------------------------------------------------------------------
 std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(

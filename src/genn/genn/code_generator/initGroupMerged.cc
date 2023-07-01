@@ -219,7 +219,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     // Add field for InSyn and zero
     groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost",
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
-    backend.genVariableInit(env, "num_neurons", "id",
+    backend.genVariableInit(groupEnv, "num_neurons", "id",
         [&modelMerged] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, "_out_post", modelMerged.scalarExpr(0.0), 
@@ -233,7 +233,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         // Add field for dendritic delay buffer and zero
         groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay",
                           [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
-        backend.genVariableInit(env, "num_neurons", "id",
+        backend.genVariableInit(groupEnv, "num_neurons", "id",
             [&modelMerged, this](EnvironmentExternalBase &varEnv)
             {
                 genVariableFill(varEnv, "_den_delay", modelMerged.scalarExpr(0.0),
@@ -245,7 +245,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         // Add field for dendritic delay pointer and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
                           [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
-        backend.genPopVariableInit(env,
+        backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {
                 varEnv.getStream() << "*" << varEnv["_den_delay_ptr"] << " = 0;" << std::endl;
@@ -372,6 +372,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
 
     // Create environment for group
     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, *this);
+    backend.genNeuronIndexCalculation(groupEnv, model.getBatchSize());
 
     // Initialise spike counts
     genInitSpikeCount(backend, groupEnv, false, model.getBatchSize());
@@ -406,31 +407,31 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
         // Add spike queue pointer field and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                           [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
-        backend.genPopVariableInit(env,
+        backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {
-                varEnv.getStream() << "*" << varEnv["_spk_que_ptr"] << " = 0;" << std::endl;
+                varEnv.printLine("*$(_spk_que_ptr) = 0;");
             });
     }
 
     // Initialise neuron variables
-    genInitNeuronVarCode<NeuronVarAdapter>(backend, env, *this, "", "num_neurons", 0, modelMerged.getModel().getBatchSize());
+    genInitNeuronVarCode<NeuronVarAdapter>(backend, groupEnv, *this, "", "num_neurons", 0, modelMerged.getModel().getBatchSize());
 
     // Generate initialisation code for child groups
     for (auto &cs : m_MergedCurrentSourceGroups) {
-        cs.generate(backend, env, *this, modelMerged);
+        cs.generate(backend, groupEnv, *this, modelMerged);
     }
     for(auto &sg : m_MergedInSynPSMGroups) {
-        sg.generate(backend, env, *this, modelMerged);
+        sg.generate(backend, groupEnv, *this, modelMerged);
     }
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
-        sg.generate(backend, env, *this, modelMerged);
+        sg.generate(backend, groupEnv, *this, modelMerged);
     }  
     for (auto &sg : m_MergedOutSynWUMPreVarGroups) {
-        sg.generate(backend, env, *this, modelMerged);
+        sg.generate(backend, groupEnv, *this, modelMerged);
     }
     for (auto &sg : m_MergedInSynWUMPostVarGroups) {
-        sg.generate(backend, env, *this, modelMerged);
+        sg.generate(backend, groupEnv, *this, modelMerged);
     }
 }
 //--------------------------------------------------------------------------
@@ -538,6 +539,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
 {
     // Create environment for group
     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, *this);
+    backend.genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
     // If model is batched and has kernel weights
     const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
@@ -561,7 +563,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
     
     // If we're using non-kernel weights, generate loop over source neurons
     if (!kernel) {
-        groupEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+        groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
         groupEnv.getStream() << CodeStream::OB(1);    
         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
     }
@@ -611,7 +613,10 @@ boost::uuids::detail::sha1::digest_type SynapseSparseInitGroupMerged::getHashDig
 //----------------------------------------------------------------------------
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
-    genInitWUVarCode<SynapseWUVarAdapter>(backend, env, *this, "$(num_pre) * $(_row_stride)", modelMerged.getModel().getBatchSize(),
+    // Create environment for group
+    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, *this);
+    backend.genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+    genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, "$(num_pre) * $(_row_stride)", modelMerged.getModel().getBatchSize(),
                      [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                      {
                          backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
@@ -731,13 +736,14 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
     const auto stateVars = rowNotColumns ? snippet->getRowBuildStateVars() : snippet->getColBuildStateVars();
     const std::string context = rowNotColumns ? "row" : "column";
     for(const auto &a : stateVars) {
-       
-        groupEnv.getStream() << a.type.resolve(getTypeContext()).getName() << " " << a.name << " = ";
+        const auto resolvedType = a.type.resolve(getTypeContext());
+        groupEnv.getStream() << resolvedType.getName() << " _" << a.name << " = ";
 
         Transpiler::ErrorHandler errorHandler("Connectivity init " + context + " build state var" + std::to_string(getIndex()));
         prettyPrintExpression(a.value, getTypeContext(), groupEnv, errorHandler);
         
         groupEnv.getStream() << ";" << std::endl;
+        groupEnv.add(resolvedType, a.name, "_" + a.name);
     }
     groupEnv.getStream() << "while(true)";
     {

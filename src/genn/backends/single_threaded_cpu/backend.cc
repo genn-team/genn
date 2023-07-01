@@ -23,18 +23,18 @@ const EnvironmentLibrary::Library cpuSinglePrecisionFunctions = {
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
-    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "std::lognormal_distribution<float>($(0), $(1))(hostRNG)"}},
-    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {}), "std::gamma_distribution<float>($(0), 1.0f)(hostRNG)"}},
-    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Float, {}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "std::lognormal_distribution<float>($(0), $(1))(hostRNG)"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {Type::Float}), "std::gamma_distribution<float>($(0), 1.0f)(hostRNG)"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Float}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
 };
 
 const EnvironmentLibrary::Library cpuDoublePrecisionFunctions = {
-    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
-    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
-    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
-    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "std::lognormal_distribution<double>($(0), $(1))(hostRNG)"}},
-    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {}), "std::gamma_distribution<double>($(0), 1.0)(hostRNG)"}},
-    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Float, {}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
+    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "standardUniformDistribution(hostRNG)"}},
+    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "standardNormalDistribution(hostRNG)"}},
+    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "standardExponentialDistribution(hostRNG)"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double}), "std::lognormal_distribution<double>($(0), $(1))(hostRNG)"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "std::gamma_distribution<double>($(0), 1.0)(hostRNG)"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
 };
 
 //--------------------------------------------------------------------------
@@ -848,8 +848,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
     std::ostringstream initStream;
     CodeStream init(initStream);
 
-    // Begin environment with standard library
-    EnvironmentLibrary initEnv(init, StandardLibrary::getFunctions());
+    // Begin environment with RNG library and standard library
+    EnvironmentLibrary rngEnv(init, (modelMerged.getModel().getPrecision() == Type::Float) ? cpuSinglePrecisionFunctions : cpuDoublePrecisionFunctions);
+    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getFunctions());
+    
 
     initEnv.getStream() << "void initialize()";
     {
@@ -983,15 +985,16 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
+                    genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
                     // If matrix connectivity is ragged
                     if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // Zero row lengths
-                        funcEnv.printLine("std::fill_n($(_row_length), $(num_pre), 0);");
+                        groupEnv.printLine("std::fill_n($(_row_length), $(num_pre), 0);");
                     }
                     else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        funcEnv.printLine("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);");
-                        funcEnv.printLine("std::fill($(_gp), gpSize, 0);");
+                        groupEnv.printLine("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);");
+                        groupEnv.printLine("std::fill($(_gp), gpSize, 0);");
                     }
                     else {
                         throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");

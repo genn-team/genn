@@ -455,35 +455,6 @@ public:
 
     bool areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const;
 
-    //! Get backend-specific pointer size in bytes
-    size_t getPointerBytes() const{ return m_PointerBytes; }
-
-    const PreferencesBase &getPreferences() const { return m_Preferences; }
-
-    template<typename T>
-    const T &getPreferences() const { return static_cast<const T &>(m_Preferences); }
-
-protected:
-    //--------------------------------------------------------------------------
-    // ReductionTarget
-    //--------------------------------------------------------------------------
-    //! Simple struct to hold reduction targets
-    struct ReductionTarget
-    {
-        std::string name;
-        Type::ResolvedType type;
-        VarAccessMode access;
-        std::string index;
-    };
-
-    //--------------------------------------------------------------------------
-    // Protected API
-    //--------------------------------------------------------------------------
-    void setPointerBytes(size_t pointerBytes) 
-    {
-        m_PointerBytes = pointerBytes;
-    }
-
     template<typename G>
     void genNeuronIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
     {
@@ -737,6 +708,35 @@ protected:
     
     void genCustomConnectivityUpdateIndexCalculation(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
     
+    //! Get backend-specific pointer size in bytes
+    size_t getPointerBytes() const{ return m_PointerBytes; }
+
+    const PreferencesBase &getPreferences() const { return m_Preferences; }
+
+    template<typename T>
+    const T &getPreferences() const { return static_cast<const T &>(m_Preferences); }
+
+protected:
+    //--------------------------------------------------------------------------
+    // ReductionTarget
+    //--------------------------------------------------------------------------
+    //! Simple struct to hold reduction targets
+    struct ReductionTarget
+    {
+        std::string name;
+        Type::ResolvedType type;
+        VarAccessMode access;
+        std::string index;
+    };
+
+    //--------------------------------------------------------------------------
+    // Protected API
+    //--------------------------------------------------------------------------
+    void setPointerBytes(size_t pointerBytes) 
+    {
+        m_PointerBytes = pointerBytes;
+    }
+
     //! Get the initial value to start reduction operations from
     std::string getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const;
 

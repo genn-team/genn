@@ -40,7 +40,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
+        *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
         [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
             return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
@@ -120,7 +120,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
+        *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
         [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
             return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
@@ -202,7 +202,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
+            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "id");
@@ -288,7 +288,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         // Create an environment which caches variables in local variables if they are accessed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), "l", fieldSuffix,
+            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
             [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "id");
@@ -515,34 +515,34 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "l", "",
+        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l",
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getReadVarIndex(delayed, batchSize, d, neuronEnv["id"]) ;
+            return getReadVarIndex(delayed, batchSize, d, "id") ;
         },
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getWriteVarIndex(delayed, batchSize, d, neuronEnv["id"]) ;
+            return getWriteVarIndex(delayed, batchSize, d, "id") ;
         });
 
 
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(neuronVarEnv.getStream());
         sg.generate(backend, neuronVarEnv, *this, modelMerged);
     }
 
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(neuronVarEnv.getStream());
         sg.generate(backend, neuronVarEnv, *this, modelMerged);
     }
  
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(neuronVarEnv.getStream());
         cs.generate(backend, neuronVarEnv, *this, modelMerged);
     }
 
