@@ -250,11 +250,34 @@ public:
 
     ~EnvironmentExternalDynamicBase()
     {
-        // Loop through initialiser
-        for(const auto &i : m_Initialisers) {
-            // If variable requiring initialiser has been referenced, write out initialiser
-            if (i.first) {
-                getContextStream() << i.second.str() << std::endl;
+        // Loop through initialisers
+        std::vector<std::string> initialiserCode(m_Initialisers.size());
+
+        // Because initialisers may refer to other initialisers, 
+        // keep evaluating initialisers until no new ones are founf
+        bool anyReferences;
+        do {
+            // Loop through initialiser
+            anyReferences = false;
+            for(size_t i = 0; i < m_Initialisers.size(); i++) {
+                // If initialiser has been referenced
+                auto &initialiser = m_Initialisers[i];
+                if (initialiser.first) {
+                    // Evaluate lazy string into vector
+                    initialiserCode[i] = initialiser.second.str();
+
+                    // Clear referenced flag and set flag to ensure another iteration occurs
+                    initialiser.first = false;
+                    anyReferences = true;
+                }
+            }
+        } while(anyReferences);
+
+        // Write out generated initialiser code
+        // **NOTE** in order
+        for(const auto &i : initialiserCode) {
+            if(!i.empty()) {
+                getContextStream() << i << std::endl;
             }
         }
         
