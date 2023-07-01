@@ -220,9 +220,9 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
-        [&modelMerged] (EnvironmentExternalBase &varEnv)
+        [&modelMerged, this] (EnvironmentExternalBase &varEnv)
         {
-            genVariableFill(varEnv, "_out_post", modelMerged.scalarExpr(0.0), 
+            genVariableFill(varEnv, "_out_post", writePreciseLiteral(0.0, getScalarType()), 
                             "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
                             modelMerged.getModel().getBatchSize());
 
@@ -236,7 +236,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         backend.genVariableInit(groupEnv, "num_neurons", "id",
             [&modelMerged, this](EnvironmentExternalBase &varEnv)
             {
-                genVariableFill(varEnv, "_den_delay", modelMerged.scalarExpr(0.0),
+                genVariableFill(varEnv, "_den_delay", writePreciseLiteral(0.0, getScalarType()),
                                 "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
                                 modelMerged.getModel().getBatchSize(),
                                 true, getArchetype().getMaxDendriticDelayTimesteps());
@@ -269,9 +269,9 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
     groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
     backend.genVariableInit(env, "num_neurons", "id",
-                            [&modelMerged] (EnvironmentExternalBase &varEnv)
+                            [&modelMerged, this] (EnvironmentExternalBase &varEnv)
                             {
-                                genVariableFill(varEnv, "_out_pre", modelMerged.scalarExpr(0.0),
+                                genVariableFill(varEnv, "_out_pre", writePreciseLiteral(0.0, getScalarType()),
                                                 "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
                                                 modelMerged.getModel().getBatchSize());
                             });

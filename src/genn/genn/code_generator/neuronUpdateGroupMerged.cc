@@ -80,31 +80,30 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     EnvironmentGroupMergedField<InSynPSM, NeuronUpdateGroupMerged> psmEnv(env, *this, ng);
 
     // Add inSyn
-    const auto scalarType = modelMerged.getModel().getPrecision();
-    psmEnv.addField(scalarType.createPointer(), "_out_post", "outPost" + fieldSuffix,
+    psmEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
 
     // Read into local variable
     const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
     psmEnv.getStream() << "// postsynaptic model " << getIndex() << std::endl;
-    psmEnv.printLine("scalar linSyn = $(_out_post)[" + idx + "];");
+    psmEnv.printLine(getScalarType().getName() + " linSyn = $(_out_post)[" + idx + "];");
 
     // If dendritic delay is required
     if (getArchetype().isDendriticDelayRequired()) {
         // Add dendritic delay buffer and pointer into it
-        psmEnv.addField(scalarType.createPointer(), "_den_delay", "denDelay" + fieldSuffix,
+        psmEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
                         [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix();});
         psmEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
                         [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix();});
 
         // Get reference to dendritic delay buffer input for this timestep
-        psmEnv.printLine(backend.getPointerPrefix() + "scalar *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
+        psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
 
         // Add delayed input from buffer into inSyn
         psmEnv.getStream() << "linSyn += *denDelayFront;" << std::endl;
 
         // Zero delay buffer slot
-        psmEnv.getStream() << "*denDelayFront = " << modelMerged.scalarExpr(0.0) << ";" << std::endl;
+        psmEnv.getStream() << "*denDelayFront = " << writePreciseLiteral(0.0, getScalarType()) << ";" << std::endl;
     }
 
     // Add parameters, derived parameters and extra global parameters to environment
@@ -172,7 +171,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
     outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
 
     // Zero it again
-    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + modelMerged.scalarExpr(0.0) + ";");
+    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + writePreciseLiteral(0.0, getScalarType()) + ";");
 }
 
 //----------------------------------------------------------------------------
@@ -487,7 +486,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // Add default input variable
     neuronEnv.add(modelMerged.getModel().getPrecision(), "Isyn", "Isyn",
-                  {neuronEnv.addInitialiser("scalar Isyn = 0;")});
+                  {neuronEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
 
     // **NOTE** arbitrary code in param value to be deprecated
     for (const auto &v : nm->getAdditionalInputVars()) {

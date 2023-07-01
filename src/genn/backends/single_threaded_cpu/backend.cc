@@ -1362,9 +1362,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
     if(isGlobalHostRNGRequired(modelMerged)) {
-        os << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << modelMerged.scalarExpr(0.0) << ", " << modelMerged.scalarExpr(1.0) << ");" << std::endl;
-        os << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << modelMerged.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
         os << std::endl;
     }
     os << std::endl;

@@ -251,9 +251,6 @@ public:
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
 
-    //! Get the string literal that should be used to represent a value in scalar type
-    std::string scalarExpr(double value) const;
-    
     //! Does model have any EGPs?
     bool anyPointerEGPs() const;
 

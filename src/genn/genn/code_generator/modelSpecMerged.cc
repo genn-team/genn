@@ -636,12 +636,6 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-std::string ModelSpecMerged::scalarExpr(double value) const
-{
-    const auto scalarNumeric = m_TypeContext.at("scalar").getNumeric();
-    return Utils::writePreciseString(value, scalarNumeric.maxDigits10) + scalarNumeric.literalSuffix;
-}
-//----------------------------------------------------------------------------
 bool ModelSpecMerged::anyPointerEGPs() const
 {
     // Loop through grouped merged EGPs
