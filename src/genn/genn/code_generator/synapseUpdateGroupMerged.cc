@@ -33,12 +33,12 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     synEnv.addVars<SynapseWUPreVarAdapter>(backend.getDeviceVarPrefix(),
                                            [&sg, batchSize](VarAccess a, const std::string&) 
                                            { 
-                                               return sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), "id_pre");
+                                               return sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_pre)");
                                            });
      synEnv.addVars<SynapseWUPostVarAdapter>(backend.getDeviceVarPrefix(),
                                              [&sg, batchSize](VarAccess a, const std::string&) 
                                              { 
-                                                 return sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), "id_post");
+                                                 return sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_post)");
                                              });
 
     
@@ -54,7 +54,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
                                             [&sg, batchSize](VarAccess a, const std::string&) 
                                             { 
-                                                return sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), "id_syn");
+                                                return sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), "$(id_syn)");
                                             });
     }
     // Otherwise, if weights are procedual
@@ -104,7 +104,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         synEnv.addVars<SynapseWUVarAdapter>(backend.getDeviceVarPrefix(),
                                             [&sg, batchSize](VarAccess a, const std::string&) 
                                             { 
-                                                return sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), "id_kernel");
+                                                return sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), "$(id_kernel)");
                                             });
     }
     // Otherwise, substitute variables for constant values

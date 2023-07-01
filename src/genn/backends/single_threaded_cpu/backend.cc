@@ -389,9 +389,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                 }
 
                                 // Add correct functions for apply synaptic input
-                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
-                                synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + s.getPostISynIndex(1, "j") + "] += $(0)");
-                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)");
+                                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + s.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                                synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + s.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
                                 s.generateSynapseUpdate(*this, synEnv, modelMerged);
@@ -505,7 +505,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
                                 }
 
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
-                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "id_pre") + "] += $(0)");
+                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
             
                                 s.generateSynapseUpdate(*this, synEnv, modelMerged);
                             }
@@ -1867,14 +1867,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 groupEnv.getStream() << CodeStream::OB(10);
             }
 
-            // Add correct functions for apply synaptic input
-            groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
-            groupEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "j") + "] += $(0)");
-            groupEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupEnv.printLine("const unsigned int npost = $(_row_length)[ipre];");
+                groupEnv.printLine("const unsigned int npost = $(_row_length)[$(id_pre)];");
                 groupEnv.getStream() << "for (unsigned int j = 0; j < npost; j++)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -1886,6 +1881,11 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::Uint32, "id_post", "idPost",
                                {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
                     
+                    // Add correct functions for apply synaptic input
+                    synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                    synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+
                     if(trueSpike) {
                         sg.generateSpikeUpdate(*this, synEnv, modelMerged);
                     }
@@ -1910,6 +1910,11 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
                     groupEnv.add(Type::Uint32, "id_post", "ipost");
+                    
+                    // Add correct functions for apply synaptic input
+                    groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    groupEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                    groupEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     // While there any bits left
                     groupEnv.getStream() << "while(connectivityWord != 0)";
@@ -1951,6 +1956,11 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     CodeStream::Scope b(groupEnv.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
                     synEnv.add(Type::Uint32, "id_post", "ipost");
+                    
+                    // Add correct functions for apply synaptic input
+                    synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                    synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // **TODO** 64-bit index
