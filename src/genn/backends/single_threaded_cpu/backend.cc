@@ -167,7 +167,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[$(_read_delay_slot)]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_spk_time)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = t - DT;");
+                                groupEnv.printLine("$(_prev_spk_time)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = t - $(dt);");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -175,7 +175,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[$(_read_delay_slot)]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = t - DT;");
+                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = t - $(dt);");
                             }
                         }
                     }
@@ -185,7 +185,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_spk_time)[$(_spk)[i]] = t - DT;");
+                                groupEnv.printLine("$(_prev_spk_time)[$(_spk)[i]] = t - $(dt);");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -193,7 +193,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                             groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_spk_evnt)[i]] = t - DT;");
+                                groupEnv.printLine("$(_prev_spk_evnt_time)[$(_spk_evnt)[i]] = t - $(dt);");
                             }
                         }
                     }
