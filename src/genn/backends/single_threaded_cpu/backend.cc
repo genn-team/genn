@@ -1144,6 +1144,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
+                    genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
                     // If postsynaptic learning is required, initially zero column lengths
                     if (!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {

@@ -612,9 +612,7 @@ boost::uuids::detail::sha1::digest_type SynapseSparseInitGroupMerged::getHashDig
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, *this);
-    backend.genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
-    genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, "$(num_pre) * $(_row_stride)", modelMerged.getModel().getBatchSize(),
+    genInitWUVarCode<SynapseWUVarAdapter>(backend, env, *this, "$(num_pre) * $(_row_stride)", modelMerged.getModel().getBatchSize(),
                      [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                      {
                          backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
