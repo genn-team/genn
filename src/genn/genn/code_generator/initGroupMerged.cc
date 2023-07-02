@@ -76,8 +76,8 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
-            varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous, fieldSuffix);
-            varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, fieldSuffix);
+            varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name, fieldSuffix);
+            varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name, fieldSuffix);
             varEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name, fieldSuffix);
 
             // Add field for variable itself
@@ -159,8 +159,8 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G> varEnv(env, group);
-            varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous);
-            varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous);
+            varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name);
+            varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name);
             varEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
 
             // Add field for variable itself

@@ -564,51 +564,45 @@ public:
     }
 
     template<typename A>
-    void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &fieldSuffix = "")
+    void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, 
+                          const std::string &varName, const std::string &fieldSuffix = "")
     {
-        // Loop through weight update model variables
-        const A archetypeAdaptor(getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getParams()) {
-                // If parameter is heterogeneous, add scalar field
-                if(std::invoke(isHeterogeneous, getGroup(), v.name, p.first)) {
-                    addScalar(p.first, v.name + fieldSuffix,
-                              [p, v](const auto &g, size_t)
-                              {
-                                  return  A(g).getInitialisers().at(v.name).getParams().at(p.first);
-                              });
-                }
-                // Otherwise, just add a const-qualified scalar to the type environment with archetype value
-                else {
-                    add(getGroup().getScalarType().addConst(), p.first, 
-                        writePreciseLiteral(p.second, getGroup().getScalarType()));
-                }
+        // Loop through parameters
+        for(const auto &p : A(getGroup().getArchetype()).getInitialisers().at(varName).getParams()) {
+            // If parameter is heterogeneous, add scalar field
+            if(std::invoke(isHeterogeneous, getGroup(), varName, p.first)) {
+                addScalar(p.first, varName + fieldSuffix,
+                            [p, varName](const auto &g, size_t)
+                            {
+                                return  A(g).getInitialisers().at(varName).getParams().at(p.first);
+                            });
+            }
+            // Otherwise, just add a const-qualified scalar to the type environment with archetype value
+            else {
+                add(getGroup().getScalarType().addConst(), p.first, 
+                    writePreciseLiteral(p.second, getGroup().getScalarType()));
             }
         }
     }
 
     template<typename A>
-    void addVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &fieldSuffix = "")
+    void addVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, 
+                                 const std::string &varName, const std::string &fieldSuffix = "")
     {
-        // Loop through weight update model variables
-        const A archetypeAdaptor(getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // Loop through parameters
-            for(const auto &p : archetypeAdaptor.getInitialisers().at(v.name).getDerivedParams()) {
-                // If derived parameter is heterogeneous, add scalar field
-                if(std::invoke(isHeterogeneous, getGroup(), v.name, p.first)) {
-                    addScalar(p.first, v.name + fieldSuffix,
-                              [p, v](const auto &g, size_t)
-                              {
-                                  return A(g).getInitialisers().at(v.name).getDerivedParams().at(p.first);
-                              });
-                }
-                // Otherwise, just add a const-qualified scalar to the type environment with archetype value
-                else {
-                    add(getGroup().getScalarType().addConst(), p.first, 
-                        writePreciseLiteral(p.second, getGroup().getScalarType()));
-                }
+        // Loop through derived parameters
+        for(const auto &p : A(getGroup().getArchetype()).getInitialisers().at(varName).getDerivedParams()) {
+            // If derived parameter is heterogeneous, add scalar field
+            if(std::invoke(isHeterogeneous, getGroup(), varName, p.first)) {
+                addScalar(p.first, varName + fieldSuffix,
+                            [p, varName](const auto &g, size_t)
+                            {
+                                return A(g).getInitialisers().at(varName).getDerivedParams().at(p.first);
+                            });
+            }
+            // Otherwise, just add a const-qualified scalar to the type environment with archetype value
+            else {
+                add(getGroup().getScalarType().addConst(), p.first, 
+                    writePreciseLiteral(p.second, getGroup().getScalarType()));
             }
         }
     }
