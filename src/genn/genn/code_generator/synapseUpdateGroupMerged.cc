@@ -236,7 +236,7 @@ std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize,
         return "(*$(_den_delay_ptr) * $(num_post) + " + batchID;
     }
     else {
-        return "(((*(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
+        return "(((*$(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
     }
 }
 //----------------------------------------------------------------------------
