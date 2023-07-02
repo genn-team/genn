@@ -420,6 +420,7 @@ private:
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
+        evaluateType(conditional.getCondition());
         const auto trueType = evaluateType(conditional.getTrue());
         const auto falseType = evaluateType(conditional.getFalse());
         if (trueType.isNumeric() && falseType.isNumeric()) {
