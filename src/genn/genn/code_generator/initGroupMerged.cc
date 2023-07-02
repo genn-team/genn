@@ -201,7 +201,7 @@ void NeuronInitGroupMerged::CurrentSource::generate(const BackendBase &backend, 
 {
     genInitNeuronVarCode<CurrentSourceVarAdapter, NeuronInitGroupMerged>(
         backend, env, *this, ng, "CS" + std::to_string(getIndex()), 
-        "$(num_neurons)", 0, modelMerged.getModel().getBatchSize());
+        "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
 
 
@@ -253,7 +253,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     }
 
     genInitNeuronVarCode<SynapsePSMVarAdapter, NeuronInitGroupMerged>(
-        backend, groupEnv, *this, ng, fieldSuffix, "$(num_neurons)", 0, modelMerged.getModel().getBatchSize());
+        backend, groupEnv, *this, ng, fieldSuffix, "num_neurons", 0, modelMerged.getModel().getBatchSize());
 }
 
 //----------------------------------------------------------------------------
