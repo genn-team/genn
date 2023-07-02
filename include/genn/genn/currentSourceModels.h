@@ -55,7 +55,7 @@ class DC : public Base
 {
     DECLARE_SNIPPET(DC);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
+    SET_INJECTION_CODE("injectCurrent(amp);\n");
 
     SET_PARAM_NAMES({"amp"});
 };
@@ -72,7 +72,7 @@ class GaussianNoise : public Base
 {
     DECLARE_SNIPPET(GaussianNoise);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
+    SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
     SET_PARAM_NAMES({"mean", "sd"} );
 };
@@ -92,16 +92,16 @@ class PoissonExp : public Base
     DECLARE_SNIPPET(PoissonExp);
 
     SET_INJECTION_CODE(
-        "scalar p = 1.0f;\n"
+        "scalar p = 1.0;\n"
         "unsigned int numSpikes = 0;\n"
         "do\n"
         "{\n"
         "    numSpikes++;\n"
-        "    p *= $(gennrand_uniform);\n"
+        "    p *= gennrand_uniform();\n"
         "} while (p > $(ExpMinusLambda));\n"
-        "$(current) += $(Init) * (scalar)(numSpikes - 1);\n"
-        "$(injectCurrent, $(current));\n"
-        "$(current) *= $(ExpDecay);\n");
+        "current += Init * (scalar)(numSpikes - 1);\n"
+        "injectCurrent(current);\n"
+        "current *= ExpDecay;\n");
 
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
