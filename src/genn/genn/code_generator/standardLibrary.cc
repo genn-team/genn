@@ -63,7 +63,7 @@ const auto libraryTypes = initLibraryTypes(
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(exp),
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(expm1),
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(exp2),
-    ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(pow),
+    ADD_TWO_ARG_FLOAT_DOUBLE_FUNC(pow),
     std::make_pair("scalbn", std::make_pair(Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Int32}), "scalbn($(0), $(1))")),
     std::make_pair("scalbn", std::make_pair(Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Int32}), "scalbn($(0), $(1))")),
 
