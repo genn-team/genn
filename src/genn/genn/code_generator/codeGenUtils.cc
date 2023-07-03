@@ -124,30 +124,7 @@ std::string upgradeCodeString(const std::string &codeString)
     return upgradedCodeString;
 }
 //----------------------------------------------------------------------------
-std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, 
-    Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseHandler)
-{
-    using namespace Transpiler;
-
-    // Upgrade code string
-    const std::string upgradedCode = upgradeCodeString(code);
-
-    // Scan code string to convert to tokens
-    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
-
-    // Parse tokens as block item list (function body)
-    auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
-
-    // Resolve types
-    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, environment, errorHandler, forEachSynapseHandler);
-
-    // Move into tuple and eturn
-    return std::make_tuple(std::move(updateStatements), std::move(resolvedTypes));
-}
-//----------------------------------------------------------------------------
-std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler)
+void prettyPrintExpression(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
 {
     using namespace Transpiler;
 
@@ -161,30 +138,32 @@ std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::Resol
     auto expression = Parser::parseExpression(tokens, typeContext, errorHandler);
 
     // Resolve types
-    auto resolvedTypes= TypeChecker::typeCheck(expression.get(), environment, errorHandler);
-
-    // Move into tuple and eturn
-    return std::make_tuple(std::move(expression), std::move(resolvedTypes));
-}
-//----------------------------------------------------------------------------
-void prettyPrintExpression(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
-{
-    // Scan, parse and type check expression
-    auto expressionTypes = scanParseAndTypeCheckExpression(code, typeContext, env, errorHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, errorHandler);
 
     // Pretty print
-    Transpiler::PrettyPrinter::print(std::get<0>(expressionTypes), env, typeContext, std::get<1>(expressionTypes));
+    PrettyPrinter::print(expression, env, typeContext, resolvedTypes);
 }
  //--------------------------------------------------------------------------
 void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
                            Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                            Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
-     // Scan, parse and type check statements
-    auto statementTypes = scanParseAndTypeCheckStatements(code, typeContext, env, errorHandler, forEachSynapseTypeCheckHandler);
+    using namespace Transpiler;
+    
+    // Upgrade code string
+    const std::string upgradedCode = upgradeCodeString(code);
+
+    // Scan code string to convert to tokens
+    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
+
+    // Parse tokens as block item list (function body)
+    auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+
+    // Resolve types
+    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, env, errorHandler, forEachSynapseTypeCheckHandler);
 
     // Pretty print
-    Transpiler::PrettyPrinter::print(std::get<0>(statementTypes), env, typeContext, std::get<1>(statementTypes), forEachSynapsePrettyPrintHandler);
+    PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);
 }
 //--------------------------------------------------------------------------
 std::string printSubs(const std::string &format, EnvironmentExternalBase &env)

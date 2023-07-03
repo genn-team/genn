@@ -64,22 +64,6 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
 GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
 
 //--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to scan, parse and type check statements contained in a code string
- */
- //--------------------------------------------------------------------------
-GENN_EXPORT std::tuple<Transpiler::Statement::StatementList, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckStatements(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, 
-    Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseHandler = nullptr);
-
-//--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to scan, parse and type check expression contained in a code string
- */
- //--------------------------------------------------------------------------
-GENN_EXPORT std::tuple<Transpiler::Expression::ExpressionPtr, Transpiler::TypeChecker::ResolvedTypeMap> scanParseAndTypeCheckExpression(
-    const std::string &code, const Type::TypeContext &typeContext, Transpiler::TypeChecker::EnvironmentBase &environment, Transpiler::ErrorHandlerBase &errorHandler);
-
-
-//--------------------------------------------------------------------------
 /*! \brief This function uses the transpiler to scan, parse, type check and pretty print expression contained in a code string
  */
  //--------------------------------------------------------------------------
