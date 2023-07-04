@@ -191,7 +191,14 @@ public:
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    void initDerivedParams(double dt)
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return getSnippet()->getHashDigest();
+    }
+
+protected:
+    void finalise(double dt)
     {
         auto derivedParams = m_Snippet->getDerivedParams();
 
@@ -200,12 +207,6 @@ public:
             m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
         }
     }
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return getSnippet()->getHashDigest();
-    }
-
 private:
     //----------------------------------------------------------------------------
     // Members

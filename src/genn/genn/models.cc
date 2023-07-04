@@ -34,6 +34,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 
+void VarInit::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
+{
+    Snippet::Init<InitVarSnippet::Base>::finalise(dt);
+
+    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), context, errorContext);
+}
+
 //----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------

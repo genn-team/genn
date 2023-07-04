@@ -136,6 +136,17 @@ public:
         : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
     {
     }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_CodeTokens;
 };
 
 //----------------------------------------------------------------------------

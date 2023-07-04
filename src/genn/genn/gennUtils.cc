@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <regex>
 
 // Standard C includes
 #include <cctype>
@@ -9,6 +10,13 @@
 // GeNN includes
 #include "models.h"
 
+// GeNN transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/scanner.h"
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
 namespace
 {
 const std::unordered_set<std::string> randomFuncs{
@@ -18,13 +26,54 @@ const std::unordered_set<std::string> randomFuncs{
     "gennrand_log_normal",
     "gennrand_gamma",
     "gennrand_binomial"};
+
+std::string upgradeCodeString(const std::string &codeString)
+{
+    // Build vector of regular expressions to replace old style function calls
+    //  **TODO** build from set of random functions
+    const std::vector<std::pair<std::regex, std::string>> functionReplacements{
+        {std::regex(R"(\$\(gennrand_uniform\))"), "gennrand_uniform()"},
+        {std::regex(R"(\$\(gennrand_normal\))"), "gennrand_normal()"},
+        {std::regex(R"(\$\(gennrand_exponential\))"), "gennrand_exponential()"},
+        {std::regex(R"(\$\(gennrand_log_normal,(.*)\))"), "gennrand_log_normal($1)"},
+        {std::regex(R"(\$\(gennrand_gamma,(.*)\))"), "gennrand_gamma($1)"},
+        {std::regex(R"(\$\(gennrand_binomial,(.*)\))"), "gennrand_binomial($1)"},
+        {std::regex(R"(\$\(addSynapse,(.*)\))"), "addSynapse($1)"},
+        {std::regex(R"(\$\(endRow\))"), "endRow()"},
+        {std::regex(R"(\$\(endCol\))"), "endCol()"}};
+
+    // Apply sustitutions to upgraded code string
+    std::string upgradedCodeString = codeString;
+    for(const auto &f : functionReplacements) {
+        upgradedCodeString = std::regex_replace(upgradedCodeString, f.first, f.second);
+    }
+    
+    // **TODO** snake-case -> camel case known built in variables e.g id_pre -> idPre
+
+    // Replace old style $(XX) variables with plain XX
+    // **NOTE** this is done after functions as single-parameter function calls and variables were indistinguishable with old syntax
+    const std::regex variable(R"(\$\(([_a-zA-Z][_a-zA-Z0-9]*)\))");
+    upgradedCodeString = std::regex_replace(upgradedCodeString, variable, "$1");
+    return upgradedCodeString;
 }
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // GeNN::Utils
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
+std::vector<Transpiler::Token> scanCode(const std::string &code, const Type::TypeContext &typeContext,
+                                        const std::string &errorContext)
+{
+    // Upgrade code string
+    const std::string upgradedCode = upgradeCodeString(code);
+
+    // Scan code string and return tokens
+    Transpiler::ErrorHandler errorHandler(errorContext);
+    return Transpiler::Scanner::scanSource(upgradedCode, typeContext, errorHandler);
+}
+//--------------------------------------------------------------------------
 bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens)
 {
     // Return true if any identifier's lexems match identifier name

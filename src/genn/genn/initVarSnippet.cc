@@ -37,6 +37,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 //----------------------------------------------------------------------------
 bool Base::requiresKernel() const
 {
-    return (getCode().find("$(id_kernel)") != std::string::npos);
+    // **TODO** regex followed by optional whitespace and ( would b better
+    return (getCode().find("id_kernel") != std::string::npos);
 }
 }   // namespace GeNN::InitVarSnippet

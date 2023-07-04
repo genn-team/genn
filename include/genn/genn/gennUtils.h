@@ -20,6 +20,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "type.h"
 
 // GeNN code generator includes
 #include "transpiler/token.h"
@@ -35,6 +36,9 @@ class VarInit;
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
+GENN_EXPORT std::vector<Transpiler::Token> scanCode(const std::string &code, const Type::TypeContext &typeContext, 
+                                                    const std::string &errorContext);
+
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
 //--------------------------------------------------------------------------

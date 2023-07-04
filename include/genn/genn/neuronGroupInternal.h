@@ -25,7 +25,7 @@ public:
     using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
-    using NeuronGroup::initDerivedParams;
+    using NeuronGroup::finalise;
     using NeuronGroup::fusePrePostSynapses;
     using NeuronGroup::injectCurrent;
     using NeuronGroup::getFusedPSMInSyn;

@@ -176,15 +176,6 @@ public:
     //! Is spike event recording enabled for this population?
     bool isSpikeEventRecordingEnabled() const { return m_SpikeEventRecordingEnabled; }
 
-    //! Does this neuron group require an RNG to simulate?
-    bool isSimRNGRequired() const;
-
-    //! Does this neuron group require an RNG for it's init code?
-    bool isInitRNGRequired() const;
-
-    //! Does this neuron group require any sort of recording?
-    bool isRecordingEnabled() const;
-
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
@@ -207,7 +198,7 @@ protected:
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
-    void initDerivedParams(double dt);
+    void finalise(double dt, const Type::TypeContext &context);
 
     //! Fuse incoming postsynaptic models
     void fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM);
@@ -228,6 +219,15 @@ protected:
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
+     //! Does this neuron group require an RNG to simulate?
+    bool isSimRNGRequired() const;
+
+    //! Does this neuron group require an RNG for it's init code?
+    bool isInitRNGRequired() const;
+
+    //! Does this neuron group require any sort of recording?
+    bool isRecordingEnabled() const;
+
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_MergedCurrentSourceGroups; }
 
@@ -246,6 +246,15 @@ protected:
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
     std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
+
+    //! Tokens produced by scanner from simc ode
+    const std::vector<Transpiler::Token> &getSimCodeTokens() const { return m_SimCodeTokens; }
+
+    //! Tokens produced by scanner from threshold condition code
+    const std::vector<Transpiler::Token> &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
+    
+    //! Tokens produced by scanner from reset code
+    const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -319,6 +328,15 @@ private:
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
 
+    //! Tokens produced by scanner from simc ode
+    std::vector<Transpiler::Token> m_SimCodeTokens;
+
+    //! Tokens produced by scanner from threshold condition code
+    std::vector<Transpiler::Token> m_ThresholdConditionCodeTokens;
+    
+    //! Tokens produced by scanner from reset code
+    std::vector<Transpiler::Token> m_ResetCodeTokens;
+    
     //! Is spike recording enabled for this population?
     bool m_SpikeRecordingEnabled;
 
