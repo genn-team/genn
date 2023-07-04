@@ -44,19 +44,12 @@ namespace GeNN::Utils
 bool isRNGRequired(const std::string &code)
 {
     // Loop through random functions
+    // **TODO** regex followed by optional whitespace and ( would b better
     for(const auto &r : randomFuncs) {
-        // If this function takes no arguments, return true if
-        // generic function name enclosed in $() markers is found
-        if(r.numArguments == 0) {
-            if(code.find("$(" + r.genericName + ")") != std::string::npos) {
-                return true;
-            }
-        }
-        // Otherwise, return true if generic function name
-        // prefixed by $( and suffixed with comma is found
-        else if(code.find("$(" + r.genericName + ",") != std::string::npos) {
+        if(code.find(r.genericName) != std::string::npos) {
             return true;
         }
+      
     }
     return false;
 

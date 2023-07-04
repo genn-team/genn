@@ -308,17 +308,20 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 bool SynapseGroup::isDendriticDelayRequired() const
 {
     // If addToInSynDelay function is used in sim code, return true
-    if(getWUModel()->getSimCode().find("$(addToInSynDelay") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getSimCode().find("addToPostDelay") != std::string::npos) {
         return true;
     }
 
     // If addToInSynDelay function is used in event code, return true
-    if(getWUModel()->getEventCode().find("$(addToInSynDelay") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getEventCode().find("addToPostDelay") != std::string::npos) {
         return true;
     }
 
-    // If addToInSynDelay function is used in synapse dynamics, return true
-    if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
+    // If addToInSynDelay function is used in synapse dynamics, return tru
+    // **TODO** regex followed by optional whitespace and ( would b bettere
+    if(getWUModel()->getSynapseDynamicsCode().find("addToPostDelay") != std::string::npos) {
         return true;
     }
 
@@ -328,22 +331,26 @@ bool SynapseGroup::isDendriticDelayRequired() const
 bool SynapseGroup::isPresynapticOutputRequired() const
 {
     // If addToPre function is used in sim_code, return true
-    if(getWUModel()->getSimCode().find("$(addToPre") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getSimCode().find("addToPre") != std::string::npos) {
         return true;
     }
 
     // If addToPre function is used in learn_post_code, return true
-    if(getWUModel()->getLearnPostCode().find("$(addToPre") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getLearnPostCode().find("addToPre") != std::string::npos) {
         return true;
     }
 
     // If addToPre function is used in event_code, return true
-    if(getWUModel()->getEventCode().find("$(addToPre") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getEventCode().find("addToPre") != std::string::npos) {
         return true;
     }
 
     // If addToPre function is used in synapse_dynamics, return true
-    if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
+    // **TODO** regex followed by optional whitespace and ( would b better
+    if(getWUModel()->getSynapseDynamicsCode().find("addToPre") != std::string::npos) {
         return true;
     }
 
@@ -395,7 +402,7 @@ bool SynapseGroup::isWUPostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isHostInitRNGRequired() const
 {
-    return (m_SparseConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);
+    return Utils::isRNGRequired(m_SparseConnectivityInitialiser.getSnippet()->getHostInitCode());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
