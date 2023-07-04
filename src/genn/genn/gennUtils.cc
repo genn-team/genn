@@ -11,29 +11,13 @@
 
 namespace
 {
-//--------------------------------------------------------------------------
-// GenericFunction
-//--------------------------------------------------------------------------
-//! Immutable structure for specifying the name and number of
-//! arguments of a generic funcion e.g. gennrand_uniform
-struct GenericFunction
-{
-    //! Generic name used to refer to function in user code
-    const std::string genericName;
-
-    //! Number of function arguments
-    const unsigned int numArguments;
-};
-
-
-GenericFunction randomFuncs[] = {
-    {"gennrand_uniform", 0},
-    {"gennrand_normal", 0},
-    {"gennrand_exponential", 0},
-    {"gennrand_log_normal", 2},
-    {"gennrand_gamma", 1},
-    {"gennrand_binomial", 2}
-};
+const std::unordered_set<std::string> randomFuncs{
+    "gennrand_uniform"
+    "gennrand_normal",
+    "gennrand_exponential",
+    "gennrand_log_normal",
+    "gennrand_gamma",
+    "gennrand_binomial"};
 }
 
 //--------------------------------------------------------------------------
@@ -41,28 +25,33 @@ GenericFunction randomFuncs[] = {
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
-bool isRNGRequired(const std::string &code)
+bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens)
 {
-    // Loop through random functions
-    // **TODO** regex followed by optional whitespace and ( would b better
-    for(const auto &r : randomFuncs) {
-        if(code.find(r.genericName) != std::string::npos) {
-            return true;
-        }
-      
-    }
-    return false;
+    // Return true if any identifier's lexems match identifier name
+    return std::any_of(tokens.cbegin(), tokens.cend(), 
+                       [&identifierName](const auto &t)
+                       { 
+                           return (t.type == Transpiler::Token::Type::IDENTIFIER && t.lexeme == identifierName); 
+                       });
+            
+}
+//--------------------------------------------------------------------------
+bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
+{
+    // Return true if any identifier's lexems are in set of random functions
+    return std::any_of(tokens.cbegin(), tokens.cend(), 
+                       [](const auto &t)
+                       { 
+                           return (t.type == Transpiler::Token::Type::IDENTIFIER && randomFuncs.find(t.lexeme) != randomFuncs.cend()); 
+                       });
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::unordered_map<std::string, std::vector<Transpiler::Token>> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const auto &varInit)
-                       {
-                           return isRNGRequired(varInit.second.getSnippet()->getCode());
-                       });
+                       [](const auto &varInit) { return isRNGRequired(varInit.second); });
 }
 //--------------------------------------------------------------------------
 void validateVarName(const std::string &name, const std::string &description)
