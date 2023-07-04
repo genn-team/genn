@@ -18,6 +18,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
+#include "synapseMatrixType.h"
 #include "type.h"
 #include "varAccess.h"
 #include "variableMode.h"

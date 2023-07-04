@@ -195,7 +195,7 @@ template<typename G>
 class GroupMerged : public ChildGroupMerged<G>
 {
 public:
-    GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    GroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const G>> groups)
     :   ChildGroupMerged<G>(index, typeContext, std::move(groups))
     {}
 
@@ -209,17 +209,17 @@ public:
     const std::string &getMemorySpace() const { return m_MemorySpace; }
 
     //! Get group fields
-    const std::vector<Field> &getFields() const{ return m_Fields; }
+    const std::vector<typename ChildGroupMerged<G>::Field> &getFields() const{ return m_Fields; }
 
     //! Get group fields, sorted into order they will appear in struct
-    std::vector<Field> getSortedFields(const BackendBase &backend) const
+    std::vector<typename ChildGroupMerged<G>::Field> getSortedFields(const BackendBase &backend) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
         const size_t pointerBytes = backend.getPointerBytes();
         std::sort(sortedFields.begin(), sortedFields.end(),
-                  [pointerBytes](const Field &a, const Field &b)
+                  [pointerBytes](const auto &a, const auto &b)
                   {
                       return (std::get<0>(a).getSize(pointerBytes) > std::get<0>(b).getSize(pointerBytes));
                   });
@@ -230,7 +230,7 @@ public:
     //! Generate declaration of struct to hold this merged group
     void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name, bool host = false) const
     {
-        os << "struct Merged" << name << "Group" << getIndex() << std::endl;
+        os << "struct Merged" << name << "Group" << this->getIndex() << std::endl;
         {
             // Loop through fields and write to structure
             CodeStream::Scope b(os);
@@ -291,7 +291,7 @@ public:
 
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
-        return padSize(structSize, largestFieldSize) * getGroups().size();
+        return padSize(structSize, largestFieldSize) * this->getGroups().size();
     }
 
     //! Assign memory spaces to group
@@ -320,9 +320,10 @@ public:
         }
     }
 
-    void addField(const Type::ResolvedType &type, const std::string &name, GetFieldValueFunc getFieldValue, GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
+    void addField(const Type::ResolvedType &type, const std::string &name, typename ChildGroupMerged<G>::GetFieldValueFunc getFieldValue,
+                  GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
-        // Add field to data structure
+        // Add field to data structurChildGroupMergede
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
@@ -341,7 +342,7 @@ protected:
 
         // If this isn't a host merged structure, generate definition for function to push group
         if(!host) {
-            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
+            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
             generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
             definitionsInternalFunc << ");" << std::endl;
         }
@@ -350,7 +351,7 @@ protected:
         for(const auto &f : sortedFields) {
             // If this field is a dynamic pointer
             if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && std::get<0>(f).isPointer()) {
-                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
+                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }
 
@@ -365,23 +366,23 @@ protected:
             generateStruct(definitionsInternal, backend, name, true);
 
             // Declare array of these structs containing individual neuron group pointers etc
-            runnerVarDecl << "Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+            runnerVarDecl << "Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
 
             // Export it
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "]; " << std::endl;
+            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "]; " << std::endl;
         }
 
         // Loop through groups
-        for(size_t groupIndex = 0; groupIndex < getGroups().size(); groupIndex++) {
+        for(size_t groupIndex = 0; groupIndex < this->getGroups().size(); groupIndex++) {
             // If this is a merged group used on the host, directly set array entry
             if(host) {
-                runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
+                runnerMergedStructAlloc << "merged" << name << "Group" << this->getIndex() << "[" << groupIndex << "] = {";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
-                runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
+                runnerMergedStructAlloc << "pushMerged" << name << "Group" << this->getIndex() << "ToDevice(" << groupIndex << ", ";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
@@ -393,10 +394,10 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     void generateStructFieldArguments(CodeStream &os, size_t groupIndex, 
-                                      const std::vector<Field> &sortedFields) const
+                                      const std::vector<typename ChildGroupMerged<G>::Field> &sortedFields) const
     {
         // Get group by index
-        const auto &g = getGroups()[groupIndex];
+        const auto &g = this->getGroups()[groupIndex];
 
         // Loop through fields
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
@@ -413,7 +414,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::string m_MemorySpace;
-    std::vector<Field> m_Fields;
+    std::vector<typename ChildGroupMerged<G>::Field> m_Fields;
 };
 
 //----------------------------------------------------------------------------
@@ -431,14 +432,14 @@ protected:
     template<typename M, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, G getVectorFunc, H getHashDigestFunc) const
     {
-        const std::vector<typename M::GroupInternal*> &archetypeChildren = (getArchetype().*getVectorFunc)();
+        const std::vector<typename M::GroupInternal*> &archetypeChildren = std::invoke(getVectorFunc, getArchetype());
 
         // Resize vector of vectors to hold children for all neuron groups, sorted in a consistent manner
         std::vector<std::vector<std::reference_wrapper<typename M::GroupInternal const>>> sortedGroupChildren;
         sortedGroupChildren.resize(archetypeChildren.size());
 
         // Create temporary vector of children and their digests
-        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, M::GroupInternal*>> childDigests;
+        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, typename M::GroupInternal*>> childDigests;
         childDigests.reserve(archetypeChildren.size());
 
         // Loop through groups
