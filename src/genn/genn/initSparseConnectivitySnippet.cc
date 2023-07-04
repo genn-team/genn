@@ -38,4 +38,28 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
     Utils::validateVecNames(getRowBuildStateVars(), "Row building state variable");
     Utils::validateVecNames(getColBuildStateVars(), "Column building state variable");
 }
+
+//----------------------------------------------------------------------------
+// GeNN::InitSparseConnectivitySnippet::Init
+//----------------------------------------------------------------------------
+void Init::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
+{
+    // Superclass
+    Snippet::Init<Base>::finalise(dt);
+
+    // Scan code tokens
+    m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), context, errorContext + "row build code");
+    m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), context, errorContext + "col build code");
+    m_HostInitCodeTokens = Utils::scanCode(getSnippet()->getHostInitCode(), context, errorContext + "host init code");
+}
+//----------------------------------------------------------------------------
+bool Init::isRNGRequired() const
+{
+    return (Utils::isRNGRequired(m_RowBuildCodeTokens) || Utils::isRNGRequired(m_ColBuildCodeTokens));
+}
+//----------------------------------------------------------------------------
+bool Init::isHostRNGRequired() const
+{
+    return Utils::isRNGRequired(m_HostInitTokens);
+}
 }   // namespace GeNN::InitSparseConnectivitySnippet

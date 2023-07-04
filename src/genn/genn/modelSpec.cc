@@ -211,7 +211,7 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
     }
 }
 // ---------------------------------------------------------------------------
-void ModelSpec::finalize()
+void ModelSpec::finalise()
 {
     // Finalise neuron groups
     const auto typeContext = getTypeContext();
@@ -224,31 +224,9 @@ void ModelSpec::finalize()
         const auto *wu = s.second.getWUModel();
 
         // Initialize derived parameters
-        s.second.initDerivedParams(m_DT);
+        s.second.finalise(m_DT);
 
-        // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
-        if (!wu->getSimCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
-        if (!wu->getEventCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getEventCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getEventCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
-        if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
-        if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
-        }
+        
     }
 
     // CURRENT SOURCES

@@ -201,36 +201,6 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
 
-    //! Does this synapse group require dendritic delay?
-    bool isDendriticDelayRequired() const;
-
-    //! Does this synapse group define presynaptic output?
-    bool isPresynapticOutputRequired() const; 
-
-    //! Does this synapse group require an RNG to generate procedural connectivity?
-    bool isProceduralConnectivityRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's postsynaptic init code?
-    bool isPSInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update init code?
-    bool isWUInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update presynaptic variable init code?
-    bool isWUPreInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update postsynaptic variable init code?
-    bool isWUPostInitRNGRequired() const;
-
-    //! Does this synapse group require a RNG for any sort of initialization
-    bool isHostInitRNGRequired() const;
-
-    //! Is var init code required for any variables in this synapse group's weight update model?
-    bool isWUVarInitRequired() const;
-
-    //! Is sparse connectivity initialisation code required for this synapse group?
-    bool isSparseConnectivityInitRequired() const;
-
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
@@ -254,7 +224,7 @@ protected:
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
     void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
-    void initDerivedParams(double dt);
+    void finalise(double dt, const Type::TypeContext &context);
 
     //! Add reference to custom connectivity update, referencing this synapse group
     void addCustomUpdateReference(CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }
@@ -271,7 +241,17 @@ protected:
     const std::unordered_map<std::string, double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::unordered_map<std::string, double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
-    const SynapseGroupInternal *getWeightSharingMaster() const { return m_WeightSharingMaster; }
+    const std::vector<Transpiler::Token> &getWUSimCodeTokens() const{ return m_WUSimCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUEventCodeTokens() const{ return m_WUEventCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostLearnCodeTokens() const{ return m_WUPostLearnCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUSynapseDynamicsCodeTokens() const{ return m_WUSynapseDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUEventThresholdCodeTokens() const{ return m_WUEventThresholdCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPreSpikeCodeTokens() const{ return m_WUPreSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostSpikeCodeTokens() const{ return m_WUPostSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPreDynamicsCodeTokens() const{ return m_WUPreDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostDynamicsCodeTokens() const{ return m_WUPostDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getPSApplyInputCodeTokens() const{ return m_PSApplyInputCodeTokens; }
+    const std::vector<Transpiler::Token> &getPSDecayCodeTokens() const{ return m_PSDecayCodeTokens; }
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
@@ -312,6 +292,24 @@ protected:
     //! Has the postsynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
     bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
+
+    //! Does this synapse group require dendritic delay?
+    bool isDendriticDelayRequired() const;
+
+    //! Does this synapse group define presynaptic output?
+    bool isPresynapticOutputRequired() const; 
+
+    //! Does this synapse group require an RNG to generate procedural connectivity?
+    bool isProceduralConnectivityRNGRequired() const;
+
+    //! Does this synapse group require an RNG for it's weight update init code?
+    bool isWUInitRNGRequired() const;
+
+    //! Is var init code required for any variables in this synapse group's weight update model?
+    bool isWUVarInitRequired() const;
+
+    //! Is sparse connectivity initialisation code required for this synapse group?
+    bool isSparseConnectivityInitRequired() const;
 
     //! Get the type to use for sparse connectivity indices for synapse group
     const Type::ResolvedType &getSparseIndType() const;
@@ -422,9 +420,6 @@ private:
     //! Pointer to postsynaptic neuron group
     NeuronGroupInternal * const m_TrgNeuronGroup;
 
-    //! Pointer to 'master' weight sharing group if this is a slave
-    const SynapseGroupInternal *m_WeightSharingMaster;
-
     //! Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool m_EventThresholdReTestRequired;
@@ -529,5 +524,32 @@ private:
     //! Custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
+
+    //! Tokens produced by scanner from threshold condition code
+    std::vector<Transpiler::Token> m_WUSimCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUEventCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostLearnCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUSynapseDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUEventThresholdCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPreSpikeCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostSpikeCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPreDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_PSApplyInputCodeTokens;
+
+    std::vector<Transpiler::Token> m_PSDecayCodeTokens;
+
+    //! Tokens produced by scanner from reset code
+    std::vector<Transpiler::Token> m_ResetCodeTokens;
+    
 };
 }   // namespace GeNN

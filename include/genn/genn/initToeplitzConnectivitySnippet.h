@@ -58,7 +58,26 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-using Init = Snippet::Init<InitToeplitzConnectivitySnippet::Base>;
+class Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
+{
+public:
+    using Snippet::Init<InitToeplitzConnectivitySnippet::Base>::Init;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
+
+    bool isRNGRequired() const;
+    
+    const std::vector<Transpiler::Token> &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_DiagonalBuildCodeTokens;
+
+};
 
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::Uninitialised

@@ -661,7 +661,7 @@ protected:
     // Protected methods
     //--------------------------------------------------------------------------
     //! Finalise model
-    void finalize();
+    void finalise();
 
     //--------------------------------------------------------------------------
     // Protected const methods

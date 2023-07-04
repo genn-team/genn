@@ -74,8 +74,26 @@ std::vector<Transpiler::Token> scanCode(const std::string &code, const Type::Typ
     return Transpiler::Scanner::scanSource(upgradedCode, typeContext, errorHandler);
 }
 //--------------------------------------------------------------------------
+bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens)
+{
+    // For easy parsing, there should always be at least one token
+    assert(tokens.size() >= 1);
+
+    // If there's only one token, assert it is actually an EOF and return true
+    if(tokens.size() == 1) {
+        assert(tokens.front().type == Transpiler::Token::Type::END_OF_FILE);
+        return true;
+    }
+    // Otherwise, return false
+    else {
+        return false;
+    }
+}
+//--------------------------------------------------------------------------
 bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens)
 {
+    assert(!tokens.empty());
+
     // Return true if any identifier's lexems match identifier name
     return std::any_of(tokens.cbegin(), tokens.cend(), 
                        [&identifierName](const auto &t)
@@ -87,6 +105,8 @@ bool isIdentifierReferenced(const std::string &identifierName, const std::vector
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
 {
+    assert(!tokens.empty());
+
     // Return true if any identifier's lexems are in set of random functions
     return std::any_of(tokens.cbegin(), tokens.cend(), 
                        [](const auto &t)
@@ -96,7 +116,7 @@ bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::unordered_map<std::string, std::vector<Transpiler::Token>> &varInitialisers)
+bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),

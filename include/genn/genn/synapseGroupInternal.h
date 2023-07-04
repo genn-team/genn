@@ -32,7 +32,6 @@ public:
 
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
-    using SynapseGroup::getWeightSharingMaster;
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
@@ -40,7 +39,7 @@ public:
     using SynapseGroup::setFusedPreOutputSuffix;
     using SynapseGroup::setFusedWUPreVarSuffix;
     using SynapseGroup::setFusedWUPostVarSuffix;
-    using SynapseGroup::initDerivedParams;
+    using SynapseGroup::finalise;
     using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getFusedPSVarSuffix;

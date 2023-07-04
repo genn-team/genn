@@ -22,7 +22,7 @@ public:
     using ModelSpec::getCustomWUUpdates;
     using ModelSpec::getCustomConnectivityUpdates;
 
-    using ModelSpec::finalize;
+    using ModelSpec::finalise;
 
     using ModelSpec::zeroCopyInUse;
     using ModelSpec::isRecordingInUse;

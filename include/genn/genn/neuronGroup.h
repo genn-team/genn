@@ -188,10 +188,10 @@ protected:
     void checkNumDelaySlots(unsigned int requiredDelay);
 
     //! Update which presynaptic variables require queues based on piece of code
-    void updatePreVarQueues(const std::string &code);
+    void updatePreVarQueues(const std::vector<Transpiler::Token> &tokens);
 
     //! Update which postsynaptic variables  require queues based on piece of code
-    void updatePostVarQueues(const std::string &code);
+    void updatePostVarQueues(const std::vector<Transpiler::Token> &tokens);
 
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
@@ -278,7 +278,7 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::string &code, const std::string &suffix);
+    void updateVarQueues(const std::vector<Transpiler::Token> &tokens, const std::string &suffix);
 
     //------------------------------------------------------------------------
     // Members

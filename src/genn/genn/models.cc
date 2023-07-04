@@ -34,11 +34,26 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 
+//----------------------------------------------------------------------------
+// VarInit
+//----------------------------------------------------------------------------
 void VarInit::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
 {
+    // Superclass
     Snippet::Init<InitVarSnippet::Base>::finalise(dt);
 
-    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), context, errorContext);
+    // Scan code tokens
+    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), context, errorContext + "initialisation code");
+}
+//----------------------------------------------------------------------------
+bool VarInit::isRNGRequired() const
+{
+    return Utils::isRNGRequired(m_CodeTokens);
+}
+//----------------------------------------------------------------------------
+bool VarInit::isKernelRequired() const
+{
+    return Utils::isIdentifierReferenced("id_kernel", m_CodeTokens);
 }
 
 //----------------------------------------------------------------------------

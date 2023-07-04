@@ -30,9 +30,6 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues) const;
-
-    //! Does this var init snippet require kernel-based connectivity
-    bool requiresKernel() const;
 };
 
 //----------------------------------------------------------------------------

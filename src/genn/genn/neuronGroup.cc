@@ -223,7 +223,7 @@ bool NeuronGroup::isZeroCopyEnabled() const
 
 //----------------------------------------------------------------------------
 bool NeuronGroup::isRecordingEnabled() const
-
+{
     // Return true if spike recording is enabled
     if(m_SpikeRecordingEnabled) {
         return true;
@@ -265,8 +265,8 @@ bool NeuronGroup::isSimRNGRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroupInternal *sg)
                        {
-                           return (Utils::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
-                                   Utils::isRNGRequired(sg->getPSModel()->getDecayCode()));
+                           return (Utils::isRNGRequired(sg->getPSApplyInputCodeTokens()) ||
+                                   Utils::isRNGRequired(sg->getPSDecayCodeTokens()));
                        });
 }
 //----------------------------------------------------------------------------
@@ -286,14 +286,14 @@ bool NeuronGroup::isInitRNGRequired() const
 
     // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return sg->isWUPostInitRNGRequired(); }))
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUPostVarInitialisers()); }))
     {
         return true;
     }
 
     // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return sg->isWUPreInitRNGRequired(); }))
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUPreVarInitialisers()); }))
     {
         return true;
     }
@@ -301,7 +301,7 @@ bool NeuronGroup::isInitRNGRequired() const
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
+                       [](const SynapseGroupInternal *sg){ return Utils::isRNGRequired(sg->getPSVarInitialisers()); });
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
@@ -325,14 +325,14 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePreVarQueues(const std::string &code)
+void NeuronGroup::updatePreVarQueues(const std::vector<Transpiler::Token> &tokens)
 {
-    updateVarQueues(code, "_pre");
+    updateVarQueues(tokens, "_pre");
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePostVarQueues(const std::string &code)
+void NeuronGroup::updatePostVarQueues(const std::vector<Transpiler::Token> &tokens)
 {
-    updateVarQueues(code, "_post");
+    updateVarQueues(tokens, "_post");
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::finalise(double dt, const Type::TypeContext &context)
@@ -346,7 +346,7 @@ void NeuronGroup::finalise(double dt, const Type::TypeContext &context)
 
     // Finalise variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.finalise(dt, context, "Variable '" + v.first + "' initialisation code");
+        v.second.finalise(dt, context, "Variable '" + v.first + "' ");
     }
 
     // Scan neuron model code strings
@@ -589,13 +589,13 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
+void NeuronGroup::updateVarQueues(const std::vector<Transpiler::Token> &tokens, const std::string &suffix)
 {
     // Loop through variables
     const auto vars = getNeuronModel()->getVars();
     for(size_t i = 0; i < vars.size(); i++) {
         // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(vars[i].name + suffix) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(vars[i].name + suffix, tokens)) {
             m_VarQueueRequired[i] = true;
         }
     }

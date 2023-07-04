@@ -72,7 +72,31 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-using Init = Snippet::Init<InitSparseConnectivitySnippet::Base>;
+class Init : public Snippet::Init<InitSparseConnectivitySnippet::Base>
+{
+public:
+    using Snippet::Init<InitSparseConnectivitySnippet::Base>::Init;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
+
+    bool isRNGRequired() const;
+    bool isHostRNGRequired() const;
+    
+    const std::vector<Transpiler::Token> &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
+    const std::vector<Transpiler::Token> &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
+    const std::vector<Transpiler::Token> &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_RowBuildCodeTokens;
+    std::vector<Transpiler::Token> m_ColBuildCodeTokens;
+    std::vector<Transpiler::Token> m_HostInitCodeTokens;
+};
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Uninitialised

@@ -127,20 +127,18 @@ protected:
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
-    VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params)
-        : Snippet::Init<InitVarSnippet::Base>(snippet, params)
-    {
-    }
-
-    VarInit(double constant)
-        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
-    {
-    }
+    using Snippet::Init<InitVarSnippet::Base>::Init;
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
+
+    bool isRNGRequired() const;
+
+    bool isKernelRequired() const;
+    
+    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
 
 private:
     //------------------------------------------------------------------------
