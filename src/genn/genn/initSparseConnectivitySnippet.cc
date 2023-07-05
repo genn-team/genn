@@ -24,9 +24,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getRowBuildCode(), hash);
-    Utils::updateHash(getRowBuildStateVars(), hash);
     Utils::updateHash(getColBuildCode(), hash);
-    Utils::updateHash(getColBuildStateVars(), hash);
     Utils::updateHash(getHostInitCode(), hash);
     return hash.get_digest();
 }
@@ -35,8 +33,6 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Sparse connectivity initialiser ");
-    Utils::validateVecNames(getRowBuildStateVars(), "Row building state variable");
-    Utils::validateVecNames(getColBuildStateVars(), "Column building state variable");
 }
 
 //----------------------------------------------------------------------------

@@ -713,10 +713,6 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
     // Create environment for group
     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
 
-    // Add substitution for end function 
-    // **TODO** remove
-    groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {}), rowNotColumns ? "endRow" : "endCol", "break;");
-
     // Substitute in parameters and derived parameters for initialising variables
     groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
@@ -724,24 +720,10 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
     groupEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
 
-
-    // Initialise state variables and loop on generated code to initialise sparse connectivity
-    groupEnv.getStream() << "// Build sparse connectivity" << std::endl;
-    const auto stateVars = rowNotColumns ? snippet->getRowBuildStateVars() : snippet->getColBuildStateVars();
     const std::string context = rowNotColumns ? "row" : "column";
-    for(const auto &a : stateVars) {
-        const auto resolvedType = a.type.resolve(getTypeContext());
-        groupEnv.getStream() << resolvedType.getName() << " _" << a.name << " = " << a.value << ";" << std::endl;
-        groupEnv.add(resolvedType, a.name, "_" + a.name);
-    }
-    groupEnv.getStream() << "while(true)";
-    {
-        CodeStream::Scope b(groupEnv.getStream());
-
-        Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
-        prettyPrintStatements(rowNotColumns ? connectInit.getRowBuildCodeTokens() : connectInit.getColBuildCodeTokens(), 
-                              getTypeContext(), groupEnv, errorHandler);
-    }
+    Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
+    prettyPrintStatements(rowNotColumns ? connectInit.getRowBuildCodeTokens() : connectInit.getColBuildCodeTokens(), 
+                            getTypeContext(), groupEnv, errorHandler);
 }
 
 
