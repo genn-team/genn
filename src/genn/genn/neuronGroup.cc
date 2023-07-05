@@ -316,6 +316,14 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     // Validate names
     Utils::validatePopName(name, "Neuron group");
     getNeuronModel()->validate(getParams(), getVarInitialisers(), "Neuron group " + getName());
+
+     // Scan neuron model code strings
+    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getSimCode(), 
+                                      "Neuron group '" + getName() + "' sim code");
+    m_ThresholdConditionCodeTokens = Utils::scanCode(getNeuronModel()->getThresholdConditionCode(),
+                                                     "Neuron group '" + getName() + "' threshold condition code");
+    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getResetCode(),
+                                      "Neuron group '" + getName() + "' reset code");
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
@@ -335,7 +343,7 @@ void NeuronGroup::updatePostVarQueues(const std::vector<Transpiler::Token> &toke
     updateVarQueues(tokens, "_post");
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::finalise(double dt, const Type::TypeContext &context)
+void NeuronGroup::finalise(double dt)
 {
     auto derivedParams = getNeuronModel()->getDerivedParams();
 
@@ -346,16 +354,8 @@ void NeuronGroup::finalise(double dt, const Type::TypeContext &context)
 
     // Finalise variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.finalise(dt, context, "Variable '" + v.first + "' ");
+        v.second.finalise(dt);
     }
-
-    // Scan neuron model code strings
-    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getSimCode(), context, 
-                                      "Neuron group '" + getName() + "' sim code");
-    m_ThresholdConditionCodeTokens = Utils::scanCode(getNeuronModel()->getThresholdConditionCode(), context,
-                                                     "Neuron group '" + getName() + "' threshold condition code");
-    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getResetCode(), context,
-                                      "Neuron group '" + getName() + "' reset code");
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)

@@ -42,15 +42,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 //----------------------------------------------------------------------------
 // GeNN::InitSparseConnectivitySnippet::Init
 //----------------------------------------------------------------------------
-void Init::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
+Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params)
+:   Snippet::Init<Base>(snippet, params)
 {
-    // Superclass
-    Snippet::Init<Base>::finalise(dt);
-
     // Scan code tokens
-    m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), context, errorContext + "row build code");
-    m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), context, errorContext + "col build code");
-    m_HostInitCodeTokens = Utils::scanCode(getSnippet()->getHostInitCode(), context, errorContext + "host init code");
+    m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), "Row build code");
+    m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), "Col build code");
+    m_HostInitCodeTokens = Utils::scanCode(getSnippet()->getHostInitCode(), "Host init code");
 }
 //----------------------------------------------------------------------------
 bool Init::isRNGRequired() const

@@ -332,9 +332,91 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            "Synapse group " + getName() + " weight update model ");
     getPSModel()->validate(getPSParams(), getPSVarInitialisers(), "Synapse group " + getName() + " postsynaptic model ");
 
+     // Scan weight update model code strings
+    m_WUSimCodeTokens = Utils::scanCode(
+        getWUModel()->getSimCode(), "Synapse group '" + getName() + "' weight update model sim code");
+    m_WUEventCodeTokens = Utils::scanCode(
+        getWUModel()->getEventCode(), "Synapse group '" + getName() + "' weight update model event code");
+    m_WUPostLearnCodeTokens = Utils::scanCode(
+        getWUModel()->getLearnPostCode(), "Synapse group '" + getName() + "' weight update model learn post code");
+    m_WUSynapseDynamicsCodeTokens = Utils::scanCode(
+        getWUModel()->getSynapseDynamicsCode(), "Synapse group '" + getName() + "' weight update model synapse dynamics code");
+    m_WUEventThresholdCodeTokens = Utils::scanCode(
+        getWUModel()->getEventThresholdConditionCode(), "Synapse group '" + getName() + "' weight update model event threshold code");
+    m_WUPreSpikeCodeTokens = Utils::scanCode(
+        getWUModel()->getPreSpikeCode(), "Synapse group '" + getName() + "' weight update model pre spike code");
+    m_WUPostSpikeCodeTokens = Utils::scanCode(
+        getWUModel()->getPostSpikeCode(), "Synapse group '" + getName() + "' weight update model post spike code");
+    m_WUPreDynamicsCodeTokens = Utils::scanCode(
+        getWUModel()->getPreDynamicsCode(), "Synapse group '" + getName() + "' weight update model pre dynamics code");
+    m_WUPostDynamicsCodeTokens = Utils::scanCode(
+        getWUModel()->getPostDynamicsCode(), "Synapse group '" + getName() + "' weight update model post dynamics code");
+    
+    // Scan postsynaptic update model code strings
+    m_PSApplyInputCodeTokens = Utils::scanCode(
+        getPSModel()->getApplyInputCode(), "Synapse group '" + getName() + "' postsynaptic update model apply input code");
+    m_PSDecayCodeTokens = Utils::scanCode(
+        getPSModel()->getDecayCode(), "Synapse group '" + getName() + "' postsynaptic update model decay code");
+
+    // If connectivity is procedural
+    if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
+        // If there's a toeplitz initialiser, give an error
+        if(!Utils::areTokensEmpty(m_ToeplitzConnectivityInitialiser.getDiagonalBuildCodeTokens())) {
+            throw std::runtime_error("Cannot use procedural connectivity with toeplitz initialisation snippet");
+        }
+
+        // If there's no row build code, give an error
+        if(Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens())) {
+            throw std::runtime_error("Cannot use procedural connectivity without specifying a connectivity initialisation snippet with row building code");
+        }
+
+        // If there's column build code, give an error
+        if(!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens())) {
+            throw std::runtime_error("Cannot use procedural connectivity with connectivity initialisation snippets with column building code");
+        }
+
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+
+        // If weight update model has code for continuous synapse dynamics, give error
+        // **THINK** this would actually be pretty trivial to implement
+        if (!Utils::areTokensEmpty(m_WUSynapseDynamicsCodeTokens)) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
+        }
+    }
+    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
+    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
+        if(Utils::isRNGRequired(m_WUVarInitialisers)) {
+            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
+        }
+    }
     
     // If synapse group has Toeplitz connectivity
     if(m_MatrixType & SynapseMatrixConnectivity::TOEPLITZ) {
+        // Give an error if there is sparse connectivity initialiser code
+        if(!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens()) 
+           || !Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens())) 
+        {
+            throw std::runtime_error("Cannot use TOEPLITZ connectivity with sparse connectivity initialisation snippet.");
+        }
+
+        // Give an error if there isn't toeplitz connectivity initialiser code
+        if(Utils::areTokensEmpty(m_ToeplitzConnectivityInitialiser.getDiagonalBuildCodeTokens())) {
+            throw std::runtime_error("TOEPLITZ connectivity requires toeplitz connectivity initialisation snippet.");
+        }
+
+        // Give an error if connectivity initialisation snippet uses RNG
+        if(Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getDiagonalBuildCodeTokens())) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot currently access RNG.");
+        }
+
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+
         // If toeplitz initialisation snippet provides a function to calculate kernel size, call it
         auto calcKernelSizeFunc = m_ToeplitzConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
         if(calcKernelSizeFunc) {
@@ -390,16 +472,28 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
     }
 
-     // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
+    // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
     if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) && (m_MatrixType != SynapseMatrixType::TOEPLITZ)
        && (m_MatrixType != SynapseMatrixType::SPARSE) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG)) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG, TOEPLITZ or SPARSE connectivity.");
+        throw std::runtime_error("BITMASK connectivity can only be used with weight update models without variables like StaticPulseConstantWeight.");
     }
 
-    // Check BITMASK connectivity isn't used with models with variables
-    if((m_MatrixType & SynapseMatrixConnectivity::BITMASK) && !m_WUModel->getVars().empty()) {
-        throw std::runtime_error("BITMASK connectivity can only be used with weight update models without variables like StaticPulseConstantWeight.");
+    // If connectivity is dense and there is connectivity initialiser code, give error
+    if((m_MatrixType & SynapseMatrixConnectivity::DENSE) 
+       && (!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens()) 
+           || !Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens()))) 
+    {
+        throw std::runtime_error("Cannot use DENSE connectivity with connectivity initialisation snippet.");
+    }
+
+    // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
+    // check that no variable's initialisation snippets require a kernel
+    if(((m_MatrixType == SynapseMatrixType::SPARSE) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
+       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                                           [](const auto &v) { return v.second.isKernelRequired(); }))
+    {
+        throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
 
     // Check that the source neuron group supports the desired number of delay steps
@@ -423,136 +517,29 @@ void SynapseGroup::finalise(double dt, const Type::TypeContext &context)
 
     // Initialise derived parameters for WU variable initialisers
     for(auto &v : m_WUVarInitialisers) {
-        v.second.finalise(dt, context, 
-                          "Synapse group '" + getName() + "', weight update model variable '" + v.first + "' ");
+        v.second.finalise(dt);
     }
 
     // Initialise derived parameters for PSM variable initialisers
     for(auto &v : m_PSVarInitialisers) {
-        v.second.finalise(dt, context, 
-                          "Synapse group '" + getName() + "', postsynaptic update model variable '" + v.first + "' ");
+        v.second.finalise(dt);
     }
 
     // Initialise derived parameters for WU presynaptic variable initialisers
     for(auto &v : m_WUPreVarInitialisers) {
-        v.second.finalise(dt, context, 
-                          "Synapse group '" + getName() + "' weight update model presynaptic variable '" + v.first + "' ");
+        v.second.finalise(dt);
     }
     
     // Initialise derived parameters for WU postsynaptic variable initialisers
     for(auto &v : m_WUPostVarInitialisers) {
-        v.second.finalise(dt, context, 
-                          "Synapse group '" + getName() + "' weight update model postsynaptic variable '" + v.first + "' ");
+        v.second.finalise(dt);
     }
 
     // Initialise any derived connectivity initialiser parameters
-    m_SparseConnectivityInitialiser.finalise(dt, context, "Synapse group '" + getName() + "'");
-    m_ToeplitzConnectivityInitialiser.finalise(dt, context, "Synapse group '" + getName() + "'");
+    m_SparseConnectivityInitialiser.finalise(dt);
+    m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-    // Scan weight update model code strings
-    m_WUSimCodeTokens = Utils::scanCode(getWUModel()->getSimCode(), context, 
-                                        "Synapse group '" + getName() + "' weight update model sim code");
-    m_WUEventCodeTokens = Utils::scanCode(getWUModel()->getEventCode(), context, 
-                                          " Synapse group '" + getName() + "' weight update model event code");
-    m_WUPostLearnCodeTokens = Utils::scanCode(getWUModel()->getLearnPostCode(), context, 
-                                              "Synapse group '" + getName() + "' weight update model learn post code");
-    m_WUSynapseDynamicsCodeTokens = Utils::scanCode(getWUModel()->getSynapseDynamicsCode(), context, 
-                                                    "Synapse group '" + getName() + "' weight update model synapse dynamics code");
-    m_WUEventThresholdCodeTokens = Utils::scanCode(getWUModel()->getEventThresholdConditionCode(), context, 
-                                                  "Synapse group '" + getName() + "' weight update model event threshold code");
-    m_WUPreSpikeCodeTokens = Utils::scanCode(getWUModel()->getPreSpikeCode(), context, 
-                                             "Synapse group '" + getName() + "' weight update model pre spike code");
-    m_WUPostSpikeCodeTokens = Utils::scanCode(getWUModel()->getPostSpikeCode(), context, 
-                                              "Synapse group '" + getName() + "' weight update model post spike code");
-    m_WUPreDynamicsCodeTokens = Utils::scanCode(getWUModel()->getPreDynamicsCode(), context, 
-                                                "Synapse group '" + getName() + "' weight update model pre dynamics code");
-    m_WUPostDynamicsCodeTokens = Utils::scanCode(getWUModel()->getPostDynamicsCode(), context, 
-                                                 "Synapse group '" + getName() + "' weight update model post dynamics code");
-    
-    // Scan postsynaptic update model code strings
-    m_PSApplyInputCodeTokens = Utils::scanCode(getPSModel()->getApplyInputCode(), context, 
-                                               "Synapse group '" + getName() + "' postsynaptic update model apply input code");
-    m_PSDecayCodeTokens = Utils::scanCode(getPSModel()->getDecayCode(), context, 
-                                          "Synapse group '" + getName() + "' postsynaptic update model decay code");
-
-    // If connectivity is procedural
-    if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
-        // If there's a toeplitz initialiser, give an error
-        if(!Utils::areTokensEmpty(m_ToeplitzConnectivityInitialiser.getDiagonalBuildCodeTokens())) {
-            throw std::runtime_error("Cannot use procedural connectivity with toeplitz initialisation snippet");
-        }
-
-        // If there's no row build code, give an error
-        if(Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens())) {
-            throw std::runtime_error("Cannot use procedural connectivity without specifying a connectivity initialisation snippet with row building code");
-        }
-
-        // If there's column build code, give an error
-        if(!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens())) {
-            throw std::runtime_error("Cannot use procedural connectivity with connectivity initialisation snippets with column building code");
-        }
-
-        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
-            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
-        }
-
-        // If weight update model has code for continuous synapse dynamics, give error
-        // **THINK** this would actually be pretty trivial to implement
-        if (!Utils::areTokensEmpty(m_WUSynapseDynamicsCodeTokens)) {
-            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
-        }
-    }
-    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
-    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
-        if(Utils::isRNGRequired(m_WUVarInitialisers)) {
-            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
-        }
-    }
-    
-    // If synapse group has Toeplitz connectivity
-    if(m_MatrixType & SynapseMatrixConnectivity::TOEPLITZ) {
-        // Give an error if there is sparse connectivity initialiser code
-        if(!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens()) 
-           || !Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens())) 
-        {
-            throw std::runtime_error("Cannot use TOEPLITZ connectivity with sparse connectivity initialisation snippet.");
-        }
-
-        // Give an error if there isn't toeplitz connectivity initialiser code
-        if(Utils::areTokensEmpty(m_ToeplitzConnectivityInitialiser.getDiagonalBuildCodeTokens())) {
-            throw std::runtime_error("TOEPLITZ connectivity requires toeplitz connectivity initialisation snippet.");
-        }
-
-        // Give an error if connectivity initialisation snippet uses RNG
-        if(m_ToeplitzConnectivityInitialiser.isRNGRequired()) {
-            throw std::runtime_error("TOEPLITZ connectivity cannot currently access RNG.");
-        }
-
-        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
-            throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
-        }
-    }
-
-    // If connectivity is dense and there is connectivity initialiser code, give error
-    if((m_MatrixType & SynapseMatrixConnectivity::DENSE) 
-       && (!Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getRowBuildCodeTokens()) 
-           || !Utils::areTokensEmpty(m_SparseConnectivityInitialiser.getColBuildCodeTokens()))) 
-    {
-        throw std::runtime_error("Cannot use DENSE connectivity with connectivity initialisation snippet.");
-    }
-
-    // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
-    // check that no variable's initialisation snippets require a kernel
-    if(((m_MatrixType == SynapseMatrixType::SPARSE) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
-       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                                           [](const auto &v) { return v.second.isKernelRequired(); }))
-    {
-        throw std::runtime_error("Variable initialisation snippets which use id_kernel must be used with a "
-                                 "connectivity initialisation snippet which specifies how kernel size is calculated.");
-    }
-
+   
     // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
     if (!Utils::areTokensEmpty(m_WUSimCodeTokens)) {
         getSrcNeuronGroup()->updatePreVarQueues(m_WUSimCodeTokens);

@@ -72,16 +72,14 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-class Init : public Snippet::Init<InitSparseConnectivitySnippet::Base>
+class Init : public Snippet::Init<Base>
 {
 public:
-    using Snippet::Init<InitSparseConnectivitySnippet::Base>::Init;
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
-
     bool isRNGRequired() const;
     bool isHostRNGRequired() const;
     

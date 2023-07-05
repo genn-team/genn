@@ -198,7 +198,7 @@ protected:
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
-    void finalise(double dt, const Type::TypeContext &context);
+    void finalise(double dt);
 
     //! Fuse incoming postsynaptic models
     void fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM);

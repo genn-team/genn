@@ -197,7 +197,6 @@ public:
         return getSnippet()->getHashDigest();
     }
 
-protected:
     void finalise(double dt)
     {
         auto derivedParams = m_Snippet->getDerivedParams();

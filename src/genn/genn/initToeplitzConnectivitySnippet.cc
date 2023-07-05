@@ -33,15 +33,12 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::Init
 //----------------------------------------------------------------------------
-void Init::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
+Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params)
+:   Snippet::Init<Base>(snippet, params)
 {
-    // Superclass
-    Snippet::Init<Base>::finalise(dt);
-
     // Scan code tokens
     m_DiagonalBuildCodeTokens = Utils::scanCode(getSnippet()->getDiagonalBuildCode(), context, errorContext + "diagonal build code");
 }
-//----------------------------------------------------------------------------
 bool Init::isRNGRequired() const
 {
     return Utils::isRNGRequired(m_DiagonalBuildCodeTokens);

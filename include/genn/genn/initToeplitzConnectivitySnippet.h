@@ -61,13 +61,11 @@ public:
 class Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
-    using Snippet::Init<InitToeplitzConnectivitySnippet::Base>::Init;
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void finalise(double dt, const Type::TypeContext &context, const std::string &errorContext);
-
     bool isRNGRequired() const;
     
     const std::vector<Transpiler::Token> &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }

@@ -37,13 +37,11 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 //----------------------------------------------------------------------------
 // VarInit
 //----------------------------------------------------------------------------
-void VarInit::finalise(double dt, const Type::TypeContext &context, const std::string &errorContext)
+VarInit::VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params)
+:   Snippet::Init<InitVarSnippet::Base>(snippet, params)
 {
-    // Superclass
-    Snippet::Init<InitVarSnippet::Base>::finalise(dt);
-
     // Scan code tokens
-    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), context, errorContext + "initialisation code");
+    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
 }
 //----------------------------------------------------------------------------
 bool VarInit::isRNGRequired() const
