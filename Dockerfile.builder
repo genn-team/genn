@@ -2,10 +2,9 @@ ARG BASE=12.2.0-devel-ubuntu22.04
 FROM nvidia/cuda:${BASE} AS build
 
 LABEL maintainer="J.C.Knight@sussex.ac.uk" \
-    version="4.8.1" \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
-    org.opencontainers.image.title="GeNN Docker image"
+    org.opencontainers.image.title="pyGeNN wheel builder"
 
 ARG PY_VER=3.11
 # Update APT database and upgrade any outdated packages and install Python, pip and swig
