@@ -1036,8 +1036,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                         std::ostringstream addSynapseStream;
                         CodeStream addSynapse(addSynapseStream);
 
-                        // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
-                        addSynapse << "do";
+                        // Create block of code to add synapse
                         {
                             CodeStream::Scope b(addSynapse);
 
@@ -1105,7 +1104,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
                                 }
                             }
                         }
-                        addSynapse << "while(false)";
 
                         const auto addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + s.getArchetype().getKernelSize().size(), Type::Uint32});
                         groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
