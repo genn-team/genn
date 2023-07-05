@@ -219,38 +219,29 @@ void ModelSpec::finalise()
         n.second.finalise(m_DT, typeContext);
     }
 
-    // SYNAPSE groups
+    // Finalise synapse groups
     for(auto &s : m_LocalSynapseGroups) {
-        const auto *wu = s.second.getWUModel();
-
-        // Initialize derived parameters
         s.second.finalise(m_DT);
-
-        
     }
 
-    // CURRENT SOURCES
+    // Finalise current sources
     for(auto &cs : m_LocalCurrentSources) {
-        // Initialize derived parameters
-        cs.second.initDerivedParams(m_DT);
+        cs.second.finalise(m_DT);
     }
 
-    // Custom update groups
+    // Finalise custom update groups
     for(auto &c : m_CustomUpdates) {
-        c.second.finalize(m_BatchSize);
-        c.second.initDerivedParams(m_DT);
+        c.second.finalise(m_DT, m_BatchSize);
     }
 
-    // Custom WUM update groups
+    // Finalise custom WUM update groups
     for(auto &c : m_CustomWUUpdates) {
-        c.second.finalize(m_BatchSize);
-        c.second.initDerivedParams(m_DT);
+        c.second.finalise(m_DT, m_BatchSize);
     }
 
-    // Custom connectivity update groups
+    // Finalize custom connectivity update groups
     for (auto &c : m_CustomConnectivityUpdates) {
-        c.second.finalize(m_BatchSize);
-        c.second.initDerivedParams(m_DT);
+        c.second.finalise(m_BatchSize);
     }
 
     // Merge incoming postsynaptic models

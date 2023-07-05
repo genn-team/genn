@@ -90,9 +90,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
-
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods

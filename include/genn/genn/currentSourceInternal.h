@@ -21,7 +21,7 @@ public:
     }
 
     using CurrentSource::getTrgNeuronGroup;
-    using CurrentSource::initDerivedParams;
+    using CurrentSource::finalise;
     using CurrentSource::getDerivedParams;
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;

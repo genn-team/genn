@@ -28,7 +28,7 @@ public:
     using CustomUpdateBase::isBatched;
     using CustomUpdateBase::getVarLocationHashDigest;
 
-    using CustomUpdate::finalize;
+    using CustomUpdate::finalise;
     using CustomUpdate::getHashDigest;
     using CustomUpdate::getInitHashDigest;
     using CustomUpdate::getDelayNeuronGroup;
@@ -77,7 +77,6 @@ public:
         getSynapseGroup()->addCustomUpdateReference(this);
     }
 
-    using CustomUpdateBase::initDerivedParams;
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
@@ -85,7 +84,7 @@ public:
     using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
     
-    using CustomUpdateWU::finalize;
+    using CustomUpdateWU::finalise;
     using CustomUpdateWU::getHashDigest;
     using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;

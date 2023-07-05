@@ -153,7 +153,7 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
                                                  getPostVarReferences(), "Custom connectivity update " + getName());
 }
 //------------------------------------------------------------------------
-void CustomConnectivityUpdate::initDerivedParams(double dt)
+void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
 {
     // Loop through derived parameters
     auto derivedParams = getCustomConnectivityUpdateModel()->getDerivedParams();
@@ -161,24 +161,21 @@ void CustomConnectivityUpdate::initDerivedParams(double dt)
         m_DerivedParams.emplace(d.name, d.func(getParams(), dt));
     }
 
-    // Initialise derived parameters for synaptic variable initialisers
+    // Finalise derived parameters for synaptic variable initialisers
     for (auto &v : m_VarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
 
-    // Initialise derived parameters for presynaptic variable initialisers
+    // Finalise derived parameters for presynaptic variable initialisers
     for (auto &v : m_PreVarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
 
-    // Initialise derived parameters for postsynaptic variable initialisers
+    // Finalise derived parameters for postsynaptic variable initialisers
     for (auto &v : m_PostVarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
-}
-//------------------------------------------------------------------------
-void CustomConnectivityUpdate::finalize(unsigned int batchSize)
-{
+
     // If model is batched we need to check all variable references 
     // are SHARED as, connectivity itself is always SHARED
     if (batchSize > 1) {
@@ -388,7 +385,7 @@ NeuronGroup *CustomConnectivityUpdate::getVarRefDelayGroup(const std::unordered_
                                                            const std::string &errorContext) const
 {
     // If any variable references have delays
-    // **YUCK** copy and paste from CustomUpdate::finalize
+    // **YUCK** copy and paste from CustomUpdate::finalise
     auto delayRef = std::find_if(varRefs.cbegin(), varRefs.cend(),
                                  [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
     if(delayRef != varRefs.cend()) {

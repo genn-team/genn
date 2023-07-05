@@ -34,7 +34,7 @@ public:
     using CustomConnectivityUpdate::getVarLocationHashDigest;
     using CustomConnectivityUpdate::getSynapseGroup;
     using CustomConnectivityUpdate::getDependentVariables;
-    using CustomConnectivityUpdate::finalize;
+    using CustomConnectivityUpdate::finalise;
     using CustomConnectivityUpdate::getHashDigest;
     using CustomConnectivityUpdate::getInitHashDigest;
     using CustomConnectivityUpdate::getPreDelayNeuronGroup;

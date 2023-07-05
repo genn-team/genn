@@ -32,7 +32,7 @@ bool CustomUpdateBase::isVarInitRequired() const
                        [](const auto &init){ return !init.second.getSnippet()->getCode().empty(); });
 }
 //----------------------------------------------------------------------------
-void CustomUpdateBase::initDerivedParams(double dt)
+void CustomUpdateBase::finalise(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
 
@@ -120,8 +120,11 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::finalize(unsigned int batchSize)
+void CustomUpdate::finalise(double dt, unsigned int batchSize)
 {
+    // Superclass
+    CustomUpdateBase::finalise(dt);
+
     // Check variable reference batching
     checkVarReferenceBatching(m_VarReferences, batchSize);
 
@@ -247,8 +250,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWU::finalize(unsigned int batchSize)
+void CustomUpdateWU::finalise(double dt, unsigned int batchSize)
 {
+    // Superclass
+    CustomUpdateBase::finalise(dt);
+
     // Check variable reference types
     checkVarReferenceBatching(m_VarReferences, batchSize);
 }

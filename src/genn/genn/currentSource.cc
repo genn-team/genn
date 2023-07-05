@@ -45,7 +45,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
 }
 //----------------------------------------------------------------------------
-void CurrentSource::initDerivedParams(double dt)
+void CurrentSource::finalise(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
 

@@ -67,7 +67,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -240,7 +240,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -287,7 +287,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
