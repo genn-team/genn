@@ -198,8 +198,7 @@ private:
             const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
             StatementHandler forEachSynapseHandler)
     :   m_Environment(environment), m_Context(context), m_ErrorHandler(errorHandler), 
-        m_ForEachSynapseHandler(forEachSynapseHandler), m_ResolvedTypes(resolvedTypes), 
-        m_InLoop(false), m_InSwitch(false)
+        m_ForEachSynapseHandler(forEachSynapseHandler), m_ResolvedTypes(resolvedTypes)
     {
     }
 
@@ -677,7 +676,7 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Statement::Break &breakStatement) final
     {
-        if (!m_InLoop && !m_InSwitch) {
+        if (m_ActiveLoopStatements.empty() && m_ActiveSwitchStatements.empty()) {
             m_ErrorHandler.error(breakStatement.getToken(), "Statement not within loop");
             throw TypeCheckError(); 
         }
@@ -702,7 +701,7 @@ private:
 
     virtual void visit(const Statement::Continue &continueStatement) final
     {
-        if (!m_InLoop) {
+        if (m_ActiveLoopStatements.empty()) {
             m_ErrorHandler.error(continueStatement.getToken(), "Statement not within loop");
             throw TypeCheckError();
         }
@@ -710,9 +709,10 @@ private:
 
     virtual void visit(const Statement::Do &doStatement) final
     {
-        m_InLoop = true;
+        m_ActiveLoopStatements.emplace(&doStatement);
         doStatement.getBody()->accept(*this);
-        m_InLoop = false;
+        assert(m_ActiveLoopStatements.top() == &doStatement);
+        m_ActiveLoopStatements.pop();
         doStatement.getCondition()->accept(*this);
     }
 
@@ -743,9 +743,10 @@ private:
             forStatement.getIncrement()->accept(*this);
         }
 
-        m_InLoop = true;
+        m_ActiveLoopStatements.emplace(&forStatement);
         forStatement.getBody()->accept(*this);
-        m_InLoop = false;
+        assert(m_ActiveLoopStatements.top() == &forStatement);
+        m_ActiveLoopStatements.pop();
 
         // Restore old environment
         m_Environment = oldEnvironment;
@@ -768,9 +769,10 @@ private:
         // Call handler to define anything required in environment
         m_ForEachSynapseHandler(m_Environment, m_ErrorHandler);
 
-        m_InLoop = true;
+        m_ActiveLoopStatements.emplace(&forEachSynapseStatement);
         forEachSynapseStatement.getBody()->accept(*this);
-        m_InLoop = false;
+        assert(m_ActiveLoopStatements.top() == &forEachSynapseStatement);
+        m_ActiveLoopStatements.pop();
 
         // Restore old environment
         m_Environment = oldEnvironment;
@@ -787,7 +789,7 @@ private:
 
     virtual void visit(const Statement::Labelled &labelled) final
     {
-        if (!m_InSwitch) {
+        if (m_ActiveSwitchStatements.empty()) {
             m_ErrorHandler.error(labelled.getKeyword(), "Statement not within switch statement");
             throw TypeCheckError();
         }
@@ -813,9 +815,10 @@ private:
             throw TypeCheckError();
         }
 
-        m_InSwitch = true;
+        m_ActiveSwitchStatements.emplace(&switchStatement);
         switchStatement.getBody()->accept(*this);
-        m_InSwitch = false;
+        assert(m_ActiveSwitchStatements.top() == &switchStatement);
+        m_ActiveSwitchStatements.pop();
     }
 
     virtual void visit(const Statement::VarDeclaration &varDeclaration) final
@@ -839,9 +842,11 @@ private:
     virtual void visit(const Statement::While &whileStatement) final
     {
         whileStatement.getCondition()->accept(*this);
-        m_InLoop = true;
+        
+        m_ActiveLoopStatements.emplace(&whileStatement);
         whileStatement.getBody()->accept(*this);
-        m_InLoop = false;
+        assert(m_ActiveLoopStatements.top() == &whileStatement);
+        m_ActiveLoopStatements.pop();
     }
 
 private:
@@ -870,8 +875,8 @@ private:
     StatementHandler m_ForEachSynapseHandler;
     ResolvedTypeMap &m_ResolvedTypes;
     std::stack<std::vector<Type::ResolvedType>> m_CallArguments;
-    bool m_InLoop;
-    bool m_InSwitch;
+    std::stack<const Statement::Base*> m_ActiveLoopStatements;
+    std::stack<const Statement::Base*> m_ActiveSwitchStatements;
 };
 }   // Anonymous namespace
 
