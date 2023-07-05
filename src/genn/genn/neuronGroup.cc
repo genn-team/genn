@@ -322,8 +322,8 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                                       "Neuron group '" + getName() + "' sim code");
     m_ThresholdConditionCodeTokens = Utils::scanCode(getNeuronModel()->getThresholdConditionCode(),
                                                      "Neuron group '" + getName() + "' threshold condition code");
-    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getResetCode(),
-                                      "Neuron group '" + getName() + "' reset code");
+    m_ResetCodeTokens = Utils::scanCode(getNeuronModel()->getResetCode(),
+                                        "Neuron group '" + getName() + "' reset code");
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
