@@ -16,9 +16,12 @@ RUN apt-get update && \
 ENV CUDA_PATH=/usr/local/cuda \
     GENN_PATH=/opt/genn
 
-# Upgrade pip itself and install numpy and jupyter
-RUN python -m pip install --upgrade pip
-    # pip install numpy
+# Set python3 to be the dfault version of python
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
+# Upgrade pip itself and install numpy
+RUN python -m pip install --upgrade pip && \
+    python -m pip install numpy
 
 # Copy GeNN into /opt
 COPY  . ${GENN_PATH}
@@ -33,6 +36,10 @@ RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu
 RUN python setup.py bdist_wheel
 RUN python setup.py bdist_wheel
 
+RUN echo ${GENN_PATH}
 # Copy the wheel to a new image for extraction
 FROM scratch AS output
-COPY --from=build $(GENN_PATH)/dist/*.whl /
+# TODO: Find a workaround for broken variable expansion
+#ARG GENN_PATH
+#COPY --from=build ${GENN_PATH}/dist/*.whl /
+COPY --from=build /opt/genn/dist/*.whl /
