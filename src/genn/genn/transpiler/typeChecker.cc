@@ -451,7 +451,7 @@ private:
 
     virtual void visit(const Expression::Literal &literal) final
     {
-        // Convert number token type to type
+        // Convert literal token type to type
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
             setExpressionType(&literal, Type::Double);
         }
@@ -466,6 +466,9 @@ private:
         }
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
             setExpressionType(&literal, Type::Uint32);
+        }
+        else if(literal.getValue().type == Token::Type::BOOLEAN) {
+            setExpressionType(&literal, Type::Bool);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
             setExpressionType(&literal, Type::Int8.createPointer(Type::Qualifier::CONSTANT));
