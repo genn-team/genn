@@ -16,7 +16,7 @@ RUN apt-get update && \
 ENV CUDA_PATH=/usr/local/cuda \
     GENN_PATH=/opt/genn
 
-# Set python3 to be the dfault version of python
+# Set python3 to be the default version of python
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 # Upgrade pip itself and install numpy and jupyter
