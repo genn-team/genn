@@ -522,7 +522,7 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
                                              const BackendBase &backend, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
@@ -731,20 +731,28 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
 
+    // Generate merged synapse connectivity host init code
+    // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
+    // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
+    // get copied straight into subsequent structures and merged EGP system isn't required
+    std::ostringstream synapseConnectivityHostInitStream;
+    CodeStream synapseConnectivityHostInit(synapseConnectivityHostInitStream);
+    modelMerged.genMergedSynapseConnectivityHostInitGroups(
+        backend, 
+        [&backend, &modelMerged, &synapseConnectivityHostInit](auto &sg)
+        {
+            EnvironmentExternal env(synapseConnectivityHostInit);
+            sg.generateInit(backend, env, modelMerged);
+        });
+
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        assert(false);
-        //m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-        //                 runnerVarDecl, runnerMergedStructAlloc);
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Loop through merged synapse connectivity host init groups and generate host init code
-    // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
-    for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        assert(false);
-        //EnvironmentExternal env(runnerMergedStructAlloc);
-        //sg.generateInit(backend, runnerMergedStructAlloc, modelMerged);
-    }
+    // Now insert host initialisation code
+    runnerMergedStructAlloc << synapseConnectivityHostInitStream.str();
 
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
