@@ -17,36 +17,36 @@ class IAppender;
 // Macros
 //----------------------------------------------------------------------------
 // Shorthand macros for logging to 'GeNN' channel
-#define LOGV_GENN LOGV_(Logging::CHANNEL_GENN)
-#define LOGD_GENN LOGD_(Logging::CHANNEL_GENN)
-#define LOGI_GENN LOGI_(Logging::CHANNEL_GENN)
-#define LOGW_GENN LOGW_(Logging::CHANNEL_GENN)
-#define LOGE_GENN LOGE_(Logging::CHANNEL_GENN)
-#define LOGF_GENN LOGF_(Logging::CHANNEL_GENN)
+#define LOGV_GENN LOGV_(GeNN::Logging::CHANNEL_GENN)
+#define LOGD_GENN LOGD_(GeNN::Logging::CHANNEL_GENN)
+#define LOGI_GENN LOGI_(GeNN::Logging::CHANNEL_GENN)
+#define LOGW_GENN LOGW_(GeNN::Logging::CHANNEL_GENN)
+#define LOGE_GENN LOGE_(GeNN::Logging::CHANNEL_GENN)
+#define LOGF_GENN LOGF_(GeNN::Logging::CHANNEL_GENN)
 
 // Shorthand macros for logging to 'code generator' channel
-#define LOGV_CODE_GEN LOGV_(Logging::CHANNEL_CODE_GEN)
-#define LOGD_CODE_GEN LOGD_(Logging::CHANNEL_CODE_GEN)
-#define LOGI_CODE_GEN LOGI_(Logging::CHANNEL_CODE_GEN)
-#define LOGW_CODE_GEN LOGW_(Logging::CHANNEL_CODE_GEN)
-#define LOGE_CODE_GEN LOGE_(Logging::CHANNEL_CODE_GEN)
-#define LOGF_CODE_GEN LOGF_(Logging::CHANNEL_CODE_GEN)
+#define LOGV_CODE_GEN LOGV_(GeNN::Logging::CHANNEL_CODE_GEN)
+#define LOGD_CODE_GEN LOGD_(GeNN::Logging::CHANNEL_CODE_GEN)
+#define LOGI_CODE_GEN LOGI_(GeNN::Logging::CHANNEL_CODE_GEN)
+#define LOGW_CODE_GEN LOGW_(GeNN::Logging::CHANNEL_CODE_GEN)
+#define LOGE_CODE_GEN LOGE_(GeNN::Logging::CHANNEL_CODE_GEN)
+#define LOGF_CODE_GEN LOGF_(GeNN::Logging::CHANNEL_CODE_GEN)
 
 // Shorthand macros for logging to 'transpiler' channel
-#define LOGV_TRANSPILER LOGV_(Logging::CHANNEL_TRANSPILER)
-#define LOGD_TRANSPILER LOGD_(Logging::CHANNEL_TRANSPILER)
-#define LOGI_TRANSPILER LOGI_(Logging::CHANNEL_TRANSPILER)
-#define LOGW_TRANSPILER LOGW_(Logging::CHANNEL_TRANSPILER)
-#define LOGE_TRANSPILER LOGE_(Logging::CHANNEL_TRANSPILER)
-#define LOGF_TRANSPILER LOGF_(Logging::CHANNEL_TRANSPILER)
+#define LOGV_TRANSPILER LOGV_(GeNN::Logging::CHANNEL_TRANSPILER)
+#define LOGD_TRANSPILER LOGD_(GeNN::Logging::CHANNEL_TRANSPILER)
+#define LOGI_TRANSPILER LOGI_(GeNN::Logging::CHANNEL_TRANSPILER)
+#define LOGW_TRANSPILER LOGW_(GeNN::Logging::CHANNEL_TRANSPILER)
+#define LOGE_TRANSPILER LOGE_(GeNN::Logging::CHANNEL_TRANSPILER)
+#define LOGF_TRANSPILER LOGF_(GeNN::Logging::CHANNEL_TRANSPILER)
 
 // Shorthand macros for logging to 'backend' channel
-#define LOGV_BACKEND LOGV_(Logging::CHANNEL_BACKEND)
-#define LOGD_BACKEND LOGD_(Logging::CHANNEL_BACKEND)
-#define LOGI_BACKEND LOGI_(Logging::CHANNEL_BACKEND)
-#define LOGW_BACKEND LOGW_(Logging::CHANNEL_BACKEND)
-#define LOGE_BACKEND LOGE_(Logging::CHANNEL_BACKEND)
-#define LOGF_BACKEND LOGF_(Logging::CHANNEL_BACKEND)
+#define LOGV_BACKEND LOGV_(GeNN::Logging::CHANNEL_BACKEND)
+#define LOGD_BACKEND LOGD_(GeNN::Logging::CHANNEL_BACKEND)
+#define LOGI_BACKEND LOGI_(GeNN::Logging::CHANNEL_BACKEND)
+#define LOGW_BACKEND LOGW_(GeNN::Logging::CHANNEL_BACKEND)
+#define LOGE_BACKEND LOGE_(GeNN::Logging::CHANNEL_BACKEND)
+#define LOGF_BACKEND LOGF_(GeNN::Logging::CHANNEL_BACKEND)
 
 
 //----------------------------------------------------------------------------
