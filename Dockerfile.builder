@@ -7,17 +7,18 @@ LABEL maintainer="J.C.Knight@sussex.ac.uk" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
     org.opencontainers.image.title="GeNN Docker image"
 
+ARG PY_VER=3.11
 # Update APT database and upgrade any outdated packages and install Python, pip and swig
 RUN apt-get update && \
     apt-get upgrade -y &&\
-    apt-get install -yq --no-install-recommends python3-dev python3-pip swig
+    apt-get install -yq --no-install-recommends python${PY_VER}-dev python{PY_VER}-pip swig
 
 # Set environment variables
 ENV CUDA_PATH=/usr/local/cuda \
     GENN_PATH=/opt/genn
 
 # Set python3 to be the dfault version of python
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VER} 1
 
 # Upgrade pip itself and install numpy
 RUN python -m pip install --upgrade pip && \

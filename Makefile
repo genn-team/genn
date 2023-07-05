@@ -76,6 +76,7 @@ docker-build:
 
 # pygenn-4.8.1-cp311-cp311-linux_x86_64.whl
 BASE := 12.2.0-devel-ubuntu22.04
+PY_VER := 3.11
 .PHONY wheel:
 # wheel:
 # 	@docker build -t genn:builder --build-arg BASE=$(BASE) -f Dockerfile.builder .
@@ -83,5 +84,7 @@ BASE := 12.2.0-devel-ubuntu22.04
 # 	@docker cp output:$(GENN_DIR)/dist/pygenn-*.whl .
 
 wheel:
-	@docker build --build-arg BASE=$(BASE) -f Dockerfile.builder \
+	@docker build -f Dockerfile.builder \
+		--build-arg BASE=$(BASE) \
+		--build-arg PY_VER=$(PY_VER) \
 		--target=output --output type=local,dest=dist/ .
