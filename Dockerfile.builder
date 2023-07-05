@@ -4,7 +4,7 @@ FROM nvidia/cuda:${BASE} AS build
 LABEL maintainer="J.C.Knight@sussex.ac.uk" \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
-    org.opencontainers.image.title="pyGeNN wheel builder"
+    org.opencontainers.image.title="PyGeNN wheel builder"
 
 ARG PY_VER=3.11
 # Update APT database and upgrade any outdated packages and install Python, pip and swig
@@ -36,7 +36,6 @@ RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu
 RUN python setup.py bdist_wheel
 RUN python setup.py bdist_wheel
 
-RUN echo ${GENN_PATH}
 # Copy the wheel to a new image for extraction
 FROM scratch AS output
 # TODO: Find a workaround for broken variable expansion
