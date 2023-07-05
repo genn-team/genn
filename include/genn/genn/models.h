@@ -128,6 +128,7 @@ class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
     VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params);
+    VarInit(double constant);
 
     //------------------------------------------------------------------------
     // Public API

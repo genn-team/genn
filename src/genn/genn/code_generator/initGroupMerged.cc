@@ -70,15 +70,14 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
         // If there is any initialisation code
         const auto resolvedType = var.type.resolve(group.getTypeContext());
         const auto &varInit = adaptor.getInitialisers().at(var.name);
-        const auto *snippet = varInit.getSnippet();
-        if (!snippet->getCode().empty()) {
+        if (!Utils::areTokensEmpty(varInit.getCodeTokens())) {
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
             varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name, fieldSuffix);
             varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name, fieldSuffix);
-            varEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name, fieldSuffix);
+            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name, fieldSuffix);
 
             // Add field for variable itself
             varEnv.addField(resolvedType.createPointer(), "_value", var.name + fieldSuffix,
@@ -91,7 +90,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             if (getVarAccessDuplication(var.access) == VarAccessDuplication::SHARED_NEURON) {
                 backend.genPopVariableInit(
                     varEnv,
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, batchSize, numDelaySlots, snippet]
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -100,8 +99,8 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         varInitEnv.add(resolvedType, "value", "initVal");
                         
                         // Pretty print variable initialisation code
-                        Transpiler::ErrorHandler errorHandler("Variable '" + var.name + "' init code" + std::to_string(group.getIndex()));
-                        prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
+                        Transpiler::ErrorHandler errorHandler("Group '" + group.getArchetype().getName() + "' variable '" + var.name + "' init code");
+                        prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
                         
                         // Fill value across all delay slots and batches
                         genScalarFill(varInitEnv, "_value", "$(value)", getVarAccessDuplication(var.access),
@@ -112,7 +111,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             else {
                 backend.genVariableInit(
                     varEnv, count, "id",
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, batchSize, count, numDelaySlots, snippet]
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -121,8 +120,8 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         varInitEnv.add(resolvedType, "value", "initVal");
                         
                         // Pretty print variable initialisation code
-                        Transpiler::ErrorHandler errorHandler("Variable '" + var.name + "' init code" + std::to_string(group.getIndex()));
-                        prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
+                        Transpiler::ErrorHandler errorHandler("Group '" + group.getArchetype().getName() + "' variable '" + var.name + "' init code");
+                        prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
 
                         // Fill value across all delay slots and batches
                         genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
@@ -150,18 +149,17 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 {
     A adaptor(group.getArchetype());
     for (const auto &var : adaptor.getDefs()) {
-        // If this variable has any initialisation code and doesn't require a kernel
+        // If this variable has any initialisation code and doesn't require a kernel (in this case it will be initialised elsewhere)
         const auto resolvedType = var.type.resolve(group.getTypeContext());
         const auto &varInit = adaptor.getInitialisers().at(var.name);
-        const auto *snippet = varInit.getSnippet();
-        if(!snippet->getCode().empty() && !snippet->requiresKernel()) {
+        if(!Utils::areTokensEmpty(varInit.getCodeTokens()) && !varInit.isKernelRequired()) {
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G> varEnv(env, group);
             varEnv.addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name);
             varEnv.addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name);
-            varEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
 
             // Add field for variable itself
             varEnv.addField(resolvedType.createPointer(), "_value", var.name,
@@ -172,7 +170,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(varEnv,
-                [&group, &resolvedType, &stride, &var, batchSize, snippet]
+                [&group, &resolvedType, &stride, &var, &varInit, batchSize]
                 (EnvironmentExternalBase &env)
                 { 
                     // Generate initial value into temporary variable
@@ -182,7 +180,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
                         
                     // Pretty print variable initialisation code
                     Transpiler::ErrorHandler errorHandler("Variable '" + var.name + "' init code" + std::to_string(group.getIndex()));
-                    prettyPrintStatements(snippet->getCode(), group.getTypeContext(), varInitEnv, errorHandler);
+                    prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
@@ -733,20 +731,16 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
     const std::string context = rowNotColumns ? "row" : "column";
     for(const auto &a : stateVars) {
         const auto resolvedType = a.type.resolve(getTypeContext());
-        groupEnv.getStream() << resolvedType.getName() << " _" << a.name << " = ";
-
-        Transpiler::ErrorHandler errorHandler("Connectivity init " + context + " build state var" + std::to_string(getIndex()));
-        prettyPrintExpression(a.value, getTypeContext(), groupEnv, errorHandler);
-        
-        groupEnv.getStream() << ";" << std::endl;
+        groupEnv.getStream() << resolvedType.getName() << " _" << a.name << " = " << a.value << ";" << std::endl;
         groupEnv.add(resolvedType, a.name, "_" + a.name);
     }
     groupEnv.getStream() << "while(true)";
     {
         CodeStream::Scope b(groupEnv.getStream());
 
-        Transpiler::ErrorHandler errorHandler("Connectivity init " + context + " build" + std::to_string(getIndex()));
-        prettyPrintStatements(rowNotColumns ? snippet->getRowBuildCode() : snippet->getColBuildCode(), getTypeContext(), groupEnv, errorHandler);
+        Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
+        prettyPrintStatements(rowNotColumns ? connectInit.getRowBuildCodeTokens() : connectInit.getColBuildCodeTokens(), 
+                              getTypeContext(), groupEnv, errorHandler);
     }
 }
 
@@ -850,8 +844,8 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "push" + egp.name, pushStream.str());
             }
         }
-        Transpiler::ErrorHandler errorHandler("Connectivity host init" + std::to_string(getIndex()));
-        prettyPrintStatements(connectInit.getSnippet()->getHostInitCode(), getTypeContext(), groupEnv, errorHandler);
+        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' sparse connectivity host init code");
+        prettyPrintStatements(connectInit.getHostInitCodeTokens(), getTypeContext(), groupEnv, errorHandler);
     }
 }
 //----------------------------------------------------------------------------

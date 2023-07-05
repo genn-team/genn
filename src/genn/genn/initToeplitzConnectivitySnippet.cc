@@ -37,8 +37,9 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &p
 :   Snippet::Init<Base>(snippet, params)
 {
     // Scan code tokens
-    m_DiagonalBuildCodeTokens = Utils::scanCode(getSnippet()->getDiagonalBuildCode(), context, errorContext + "diagonal build code");
+    m_DiagonalBuildCodeTokens = Utils::scanCode(getSnippet()->getDiagonalBuildCode(), "Toeplitz connectivity diagonal build code");
 }
+//----------------------------------------------------------------------------
 bool Init::isRNGRequired() const
 {
     return Utils::isRNGRequired(m_DiagonalBuildCodeTokens);

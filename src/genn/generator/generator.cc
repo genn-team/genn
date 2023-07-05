@@ -56,7 +56,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
                       &consoleAppender, &consoleAppender, &consoleAppender);
 
         // Finalize model
-        model.finalize();
+        model.finalise();
 
         // Determine code generation path
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");

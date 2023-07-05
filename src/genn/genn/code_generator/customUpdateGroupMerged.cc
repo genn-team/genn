@@ -83,8 +83,8 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
                                   varEnv["id"]);
         });
 
-    Transpiler::ErrorHandler errorHandler("Custom update code " + std::to_string(getIndex()));
-    prettyPrintExpression(cm->getUpdateCode(), getTypeContext(), varRefEnv, errorHandler);
+    Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
+    prettyPrintExpression(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -266,8 +266,8 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
                                   varEnv["id_syn"]);
         });
 
-    Transpiler::ErrorHandler errorHandler("Custom WU update code " + std::to_string(getIndex()));
-    prettyPrintExpression(cm->getUpdateCode(), getTypeContext(), varRefEnv, errorHandler);
+    Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
+    prettyPrintExpression(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 }
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMerged

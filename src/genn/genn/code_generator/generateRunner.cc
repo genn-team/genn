@@ -1223,7 +1223,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                           runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
 
         // If custom connectivity update group needs per-row RNGs
-        if(c.second.isRowSimRNGRequired()) {
+        if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
             backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                      "rowRNG" + c.first, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), mem);
         }

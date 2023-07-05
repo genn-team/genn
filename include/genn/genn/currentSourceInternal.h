@@ -23,12 +23,11 @@ public:
     using CurrentSource::getTrgNeuronGroup;
     using CurrentSource::finalise;
     using CurrentSource::getDerivedParams;
-    using CurrentSource::isSimRNGRequired;
-    using CurrentSource::isInitRNGRequired;
     using CurrentSource::isZeroCopyEnabled;
     using CurrentSource::getHashDigest;
     using CurrentSource::getInitHashDigest;
     using CurrentSource::getVarLocationHashDigest;
+    using CurrentSource::getInjectionCodeTokens;
 };
 
 //----------------------------------------------------------------------------

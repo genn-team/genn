@@ -216,7 +216,7 @@ void ModelSpec::finalise()
     // Finalise neuron groups
     const auto typeContext = getTypeContext();
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.finalise(m_DT, typeContext);
+        n.second.finalise(m_DT);
     }
 
     // Finalise synapse groups
@@ -241,7 +241,7 @@ void ModelSpec::finalise()
 
     // Finalize custom connectivity update groups
     for (auto &c : m_CustomConnectivityUpdates) {
-        c.second.finalise(m_BatchSize);
+        c.second.finalise(m_DT, m_BatchSize);
     }
 
     // Merge incoming postsynaptic models

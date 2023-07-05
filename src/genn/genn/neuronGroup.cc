@@ -255,7 +255,7 @@ bool NeuronGroup::isSimRNGRequired() const
 
     // Return true if any current sources require an RNG for simulation
     if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
-        [](const CurrentSourceInternal *cs){ return cs->isSimRNGRequired(); }))
+        [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getInjectionCodeTokens()); }))
     {
         return true;
     }
@@ -279,7 +279,7 @@ bool NeuronGroup::isInitRNGRequired() const
 
     // Return true if any current sources require an RNG for initialisation
     if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
-        [](const CurrentSourceInternal *cs){ return cs->isInitRNGRequired(); }))
+        [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getVarInitialisers()); }))
     {
         return true;
     }

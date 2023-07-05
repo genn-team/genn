@@ -224,7 +224,7 @@ protected:
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
     void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
-    void finalise(double dt, const Type::TypeContext &context);
+    void finalise(double dt);
 
     //! Add reference to custom connectivity update, referencing this synapse group
     void addCustomUpdateReference(CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }

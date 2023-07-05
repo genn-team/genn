@@ -44,6 +44,11 @@ VarInit::VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<s
     m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
 }
 //----------------------------------------------------------------------------
+VarInit::VarInit(double constant)
+:   Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
+{
+}
+//----------------------------------------------------------------------------
 bool VarInit::isRNGRequired() const
 {
     return Utils::isRNGRequired(m_CodeTokens);

@@ -119,7 +119,7 @@ bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varIn
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const auto &varInit) { return isRNGRequired(varInit.second); });
+                       [](const auto &varInit) { return isRNGRequired(varInit.second.getCodeTokens()); });
 }
 //--------------------------------------------------------------------------
 void validateVarName(const std::string &name, const std::string &description)

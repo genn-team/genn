@@ -1686,11 +1686,11 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
     if(std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
                    [](const ModelSpec::CustomConnectivityUpdateValueType &c)
                    {
-                       return (c.second.isVarInitRNGRequired()
-                               || c.second.isPreVarInitRNGRequired()
-                               || c.second.isPostVarInitRNGRequired()
-                               || c.second.isRowSimRNGRequired()
-                               || c.second.isHostRNGRequired());
+                       return (Utils::isRNGRequired(c.second.getVarInitialisers())
+                               || Utils::isRNGRequired(c.second.getPreVarInitialisers())
+                               || Utils::isRNGRequired(c.second.getPostVarInitialisers())
+                               || Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())
+                               || Utils::isRNGRequired(c.second.getHostUpdateCodeTokens()));
                    }))
     {
         return true;

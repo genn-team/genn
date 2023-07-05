@@ -21,12 +21,12 @@ public:
     {
     }
 
-    using CustomUpdateBase::initDerivedParams;
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
     using CustomUpdateBase::getVarLocationHashDigest;
+    using CustomUpdateBase::getUpdateCodeTokens;
 
     using CustomUpdate::finalise;
     using CustomUpdate::getHashDigest;
@@ -83,6 +83,7 @@ public:
     using CustomUpdateBase::isBatched;
     using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
+    using CustomUpdateBase::getUpdateCodeTokens;
     
     using CustomUpdateWU::finalise;
     using CustomUpdateWU::getHashDigest;

@@ -500,7 +500,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::finalise(double dt, const Type::TypeContext &context)
+void SynapseGroup::finalise(double dt)
 {
     auto wuDerivedParams = getWUModel()->getDerivedParams();
     auto psDerivedParams = getPSModel()->getDerivedParams();

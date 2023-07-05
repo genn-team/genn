@@ -72,12 +72,6 @@ public:
     //! Is var init code required for any postsynaptic variables in this custom connectivity update group?
     bool isPostVarInitRequired() const;
 
-    //! Is a per-row RNG required for this custom connectivity update group
-    bool isRowSimRNGRequired() const;
-
-    //! Is a host RNG required for this custom connectivity update group
-    bool isHostRNGRequired() const;
-    
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
@@ -97,15 +91,6 @@ protected:
     //------------------------------------------------------------------------
     const std::unordered_map<std::string, double> &getDerivedParams() const { return m_DerivedParams; }
 
-    //! Does this current source group require an RNG for initialising its presynaptic variables
-    bool isPreVarInitRNGRequired() const;
-
-    //! Does this current source group require an RNG for initialising its postsynaptic variables
-    bool isPostVarInitRNGRequired() const;
-
-    //! Does this current source group require an RNG for initialising its synaptic variables
-    bool isVarInitRNGRequired() const;
-
     bool isZeroCopyEnabled() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
@@ -124,6 +109,10 @@ protected:
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
+    const std::vector<Transpiler::Token> getRowUpdateCodeTokens() const{ return m_RowUpdateCodeTokens; }
+
+    const std::vector<Transpiler::Token> getHostUpdateCodeTokens() const{ return m_HostUpdateCodeTokens; }
 
     const NeuronGroup *getPreDelayNeuronGroup() const { return m_PreDelayNeuronGroup; }
     
@@ -164,5 +153,11 @@ private:
     
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;
+
+    //! Tokens produced by scanner from row update code
+    std::vector<Transpiler::Token> m_RowUpdateCodeTokens;
+
+    //! Tokens produced by scanner from host update code
+    std::vector<Transpiler::Token> m_HostUpdateCodeTokens;
 };
 }   // namespace GeNN

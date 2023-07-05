@@ -32,6 +32,23 @@ bool CustomUpdateBase::isVarInitRequired() const
                        [](const auto &init){ return !init.second.getSnippet()->getCode().empty(); });
 }
 //----------------------------------------------------------------------------
+CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+                                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+    m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_Batched(false)
+{
+    // Validate names
+    Utils::validatePopName(name, "Custom update");
+    Utils::validatePopName(updateGroupName, "Custom update group name");
+
+    // Scan custom update model code string
+    m_UpdateCodeTokens = Utils::scanCode(getCustomUpdateModel()->getUpdateCode(), 
+                                         "Custom update '" + getName() + "' update code");
+}
+//----------------------------------------------------------------------------
 void CustomUpdateBase::finalise(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
@@ -43,7 +60,7 @@ void CustomUpdateBase::finalise(double dt)
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
 }
 //----------------------------------------------------------------------------

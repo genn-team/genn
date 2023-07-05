@@ -47,8 +47,8 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
         });
 
     // Pretty print code back to environment
-    Transpiler::ErrorHandler errorHandler("Current source injection" + std::to_string(getIndex()));
-    prettyPrintStatements(cm->getInjectionCode(), getTypeContext(), varEnv, errorHandler);
+    Transpiler::ErrorHandler errorHandler("Current source '" + getArchetype().getName() + "' injection code");
+    prettyPrintStatements(getArchetype().getInjectionCodeTokens(), getTypeContext(), varEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -126,11 +126,11 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
         });
 
     // Pretty print code back to environment
-    Transpiler::ErrorHandler applyInputErrorHandler("Postsynaptic model apply input" + std::to_string(getIndex()));
-    prettyPrintStatements(psm->getApplyInputCode(), getTypeContext(), varEnv, applyInputErrorHandler);
+    Transpiler::ErrorHandler applyInputErrorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic model apply input code");
+    prettyPrintStatements(getArchetype().getPSApplyInputCodeTokens(), getTypeContext(), varEnv, applyInputErrorHandler);
 
-    Transpiler::ErrorHandler decayErrorHandler("Postsynaptic model decay" + std::to_string(getIndex()));
-    prettyPrintStatements(psm->getDecayCode(), getTypeContext(), varEnv, decayErrorHandler);
+    Transpiler::ErrorHandler decayErrorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic model decay code");
+    prettyPrintStatements(getArchetype().getPSDecayCodeTokens(), getTypeContext(), varEnv, decayErrorHandler);
 
     // Write back linSyn
     varEnv.printLine("$(_out_post)[" + ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id") + "] = linSyn;");
@@ -186,8 +186,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
     // If there are any statements to execute here
-    const std::string code = dynamicsNotSpike ? wum->getPostDynamicsCode() : wum->getPostSpikeCode();
-    if(!code.empty()) {
+    const auto &tokens = dynamicsNotSpike ? getArchetype().getWUPostDynamicsCodeTokens() : getArchetype().getWUPostSpikeCodeTokens();
+    if(!Utils::areTokensEmpty(tokens)) {
         // Create new environment to add out syn fields to neuron update group 
         EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
 
@@ -223,8 +223,9 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
                                               return ng.getReadVarIndex(delay, batchSize, varDuplication, subs["id"]); 
                                           });*/
 
-        Transpiler::ErrorHandler errorHandler("Postsynaptic weight update model " + std::to_string(getIndex()));
-        prettyPrintStatements(code, getTypeContext(), varEnv, errorHandler);
+        const std::string context = dynamicsNotSpike ? "dynamics" : "spike";
+        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' weight update model postsynaptic " + context + " code");
+        prettyPrintStatements(tokens, getTypeContext(), varEnv, errorHandler);
     }
 }
 //----------------------------------------------------------------------------
@@ -272,8 +273,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     
     // If there are any statements to execute here
-    const std::string code = dynamicsNotSpike ? wum->getPreDynamicsCode() : wum->getPreSpikeCode();
-    if(!code.empty()) {
+    const auto &tokens = dynamicsNotSpike ? getArchetype().getWUPreDynamicsCodeTokens() : getArchetype().getWUPreSpikeCodeTokens();
+    if(!Utils::areTokensEmpty(tokens)) {
         // Create new environment to add out syn fields to neuron update group 
         EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
 
@@ -309,8 +310,9 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
                                               return ng.getReadVarIndex(delay, batchSize, varDuplication, subs["id"]); 
                                           });*/
 
-        Transpiler::ErrorHandler errorHandler("Presynaptic weight update model " + std::to_string(getIndex()));
-        prettyPrintStatements(code, getTypeContext(), varEnv, errorHandler);
+        const std::string context = dynamicsNotSpike ? "dynamics" : "spike";
+        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' weight update model presynaptic " + context + " code");
+        prettyPrintStatements(tokens, getTypeContext(), varEnv, errorHandler);
     }
 }
 //----------------------------------------------------------------------------
@@ -558,8 +560,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         if (nm->isAutoRefractoryRequired()) {
             neuronVarEnv.getStream() << "const bool oldSpike = (";
 
-            Transpiler::ErrorHandler errorHandler("Neuron threshold condition " + std::to_string(getIndex()));
-            prettyPrintExpression(nm->getThresholdConditionCode(), getTypeContext(), neuronVarEnv, errorHandler);
+            Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' threshold condition code");
+            prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
             
             neuronVarEnv.getStream() << ");" << std::endl;
         }
@@ -573,8 +575,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     neuronVarEnv.getStream() << "// calculate membrane potential" << std::endl;
 
-    Transpiler::ErrorHandler errorHandler("Neuron sim code " + std::to_string(getIndex()));
-    prettyPrintStatements(nm->getSimCode(), getTypeContext(), neuronVarEnv, errorHandler);
+    Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' sim code");
+    prettyPrintStatements(getArchetype().getSimCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
@@ -665,8 +667,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         neuronVarEnv.getStream() << "// test for and register a true spike" << std::endl;
         neuronVarEnv.getStream() << "if ((";
         
-        Transpiler::ErrorHandler errorHandler("Neuron threshold condition " + std::to_string(getIndex()));
-        prettyPrintExpression(nm->getThresholdConditionCode(), getTypeContext(), neuronVarEnv, errorHandler);
+        Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' threshold condition code");
+        prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
             
         neuronVarEnv.getStream() << ")";
         if (nm->isAutoRefractoryRequired()) {
@@ -681,8 +683,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
             if (!nm->getResetCode().empty()) {
                 neuronVarEnv.getStream() << "// spike reset code" << std::endl;
                 
-                Transpiler::ErrorHandler errorHandler("Neuron reset code " + std::to_string(getIndex()));
-                prettyPrintStatements(nm->getResetCode(), getTypeContext(), neuronVarEnv, errorHandler);
+                Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' reset code");
+                prettyPrintStatements(getArchetype().getResetCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
             }
         }
 

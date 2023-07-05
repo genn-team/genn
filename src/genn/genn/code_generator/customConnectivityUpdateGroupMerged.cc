@@ -363,8 +363,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     }
 
     // Pretty print code back to environment
-    Transpiler::ErrorHandler errorHandler("Custom connectivity update" + std::to_string(getIndex()));
-    prettyPrintStatements(cm->getRowUpdateCode(), getTypeContext(), updateEnv, errorHandler, 
+    Transpiler::ErrorHandler errorHandler("Custom connectivity update '" + getArchetype().getName() + "' row update code");
+    prettyPrintStatements(getArchetype().getRowUpdateCodeTokens(), getTypeContext(), updateEnv, errorHandler, 
                           // Within for_each_synapse loops, define the following types
                           [this](auto &env, auto &errorHandler)
                           {
@@ -520,8 +520,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         addVars<CustomConnectivityUpdatePostVarAdapter>(groupEnv, "$(num_post)", backend);
 
         // Pretty print code back to environment
-        Transpiler::ErrorHandler errorHandler("Custom connectivity host update" + std::to_string(getIndex()));
-        prettyPrintStatements(cm->getHostUpdateCode(), getTypeContext(), groupEnv, errorHandler);
+        Transpiler::ErrorHandler errorHandler("Custom connectivity '" + getArchetype().getName() + "' host update code");
+        prettyPrintStatements(getArchetype().getHostUpdateCodeTokens(), getTypeContext(), groupEnv, errorHandler);
     }
 }
 //----------------------------------------------------------------------------

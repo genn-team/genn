@@ -105,7 +105,7 @@ bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) co
     return (std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                         [](const ModelSpec::SynapseGroupValueType &s){ return s.second.getConnectivityInitialiser().isHostRNGRequired(); })
             || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                           [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return c.second.isHostRNGRequired(); }));
+                           [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return Utils::isRNGRequired(c.second.getHostUpdateCodeTokens()); }));
 }
 //--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
@@ -1276,14 +1276,14 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 
                 // Copy global RNG stream to local and use pointer to this for rng
                 const std::string rng = printSubs("$(_rng)[$(id)]", groupEnv);
-                if(cg.getArchetype().isRowSimRNGRequired()) {
+                if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     groupEnv.add(Type::Void, "rng", genPopulationRNGPreamble(groupEnv.getStream(), rng));
                 }
 
                 cg.generateUpdate(*this, groupEnv, modelMerged);
                 
                 // Copy local stream back to local
-                if(cg.getArchetype().isRowSimRNGRequired()) {
+                if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGPostamble(groupEnv.getStream(), rng);
                 }
             }
@@ -1403,7 +1403,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 
                 // If population RNGs are initialised on device and this custom connectivity update 
                 // required one, initialise single RNG using GLOBAL thread id for sequence
-                if(isPopulationRNGInitialisedOnDevice() && cg.getArchetype().isRowSimRNGRequired()) {
+                if(isPopulationRNGInitialisedOnDevice() && Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGInit(groupEnv.getStream(), printSubs("$(_rng)[$(id)]", groupEnv), 
                                          "deviceRNGSeed", "id");
                 }
@@ -1411,7 +1411,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isPreVarInitRNGRequired()) {
+                if(Utils::isRNGRequired(cg.getArchetype().getPreVarInitialisers())) {
                     groupEnv.add(Type::Void, "rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
@@ -1435,7 +1435,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 
                 // If population RNGs are initialised on device and this custom connectivity update 
                 // required one, initialise single RNG using GLOBAL thread id for sequence
-                if(isPopulationRNGInitialisedOnDevice() && cg.getArchetype().isRowSimRNGRequired()) {
+                if(isPopulationRNGInitialisedOnDevice() && Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGInit(groupEnv.getStream(), printSubs("$(_rng)[$(id)]", groupEnv), 
                                          "deviceRNGSeed", "id");
                 }
@@ -1443,7 +1443,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(cg.getArchetype().isPostVarInitRNGRequired()) {
+                if(Utils::isRNGRequired(cg.getArchetype().getPostVarInitialisers())) {
                     groupEnv.add(Type::Void, "rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
@@ -1678,7 +1678,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
             // If this custom update requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
-            if(cg.getArchetype().isVarInitRNGRequired()) {
+            if(Utils::isRNGRequired(cg.getArchetype().getVarInitialisers())) {
                 groupEnv.add(Type::Void, "rng", 
                               genGlobalRNGSkipAhead(groupEnv.getStream(), std::to_string(numInitializeThreads) + " + id"));
             }

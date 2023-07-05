@@ -53,16 +53,7 @@ public:
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-        m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_Batched(false)
-    {
-        // Validate names
-        Utils::validatePopName(name, "Custom update");
-        Utils::validatePopName(updateGroupName, "Custom update group name");
-    }
+                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -91,6 +82,8 @@ protected:
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
+    const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
     template<typename V>
     bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDuplication duplication) const
@@ -162,6 +155,9 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Tokens produced by scanner from update code
+    std::vector<Transpiler::Token> m_UpdateCodeTokens;
 
     //! Is this custom update batched i.e. run in parallel across model batches
     bool m_Batched;

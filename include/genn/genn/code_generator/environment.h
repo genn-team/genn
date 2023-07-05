@@ -403,8 +403,8 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     template<typename A>
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
 
-    template<typename V>
-    using GetConnectivityFn = const Snippet::Init<V> &(GroupInternal::*)(void) const;
+    template<typename I>
+    using GetConnectivityFn = const I &(GroupInternal::*)(void) const;
 
     template<typename V>
     using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
@@ -515,8 +515,8 @@ public:
         }
     }
 
-    template<typename C>
-    void addConnectInitParams(const std::string &fieldSuffix, GetConnectivityFn<C> getConnectivity, 
+    template<typename I>
+    void addConnectInitParams(const std::string &fieldSuffix, GetConnectivityFn<I> getConnectivity, 
                               IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
@@ -539,8 +539,8 @@ public:
         }
     }
 
-    template<typename C>
-    void addConnectInitDerivedParams(const std::string &fieldSuffix,  GetConnectivityFn<C> getConnectivity, 
+    template<typename I>
+    void addConnectInitDerivedParams(const std::string &fieldSuffix,  GetConnectivityFn<I> getConnectivity, 
                                      IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params

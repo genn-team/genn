@@ -25,13 +25,11 @@ public:
         getSynapseGroup()->addCustomUpdateReference(this);
     }
 
-    using CustomConnectivityUpdate::initDerivedParams;
     using CustomConnectivityUpdate::getDerivedParams;
-    using CustomConnectivityUpdate::isPreVarInitRNGRequired;
-    using CustomConnectivityUpdate::isPostVarInitRNGRequired;
-    using CustomConnectivityUpdate::isVarInitRNGRequired;
     using CustomConnectivityUpdate::isZeroCopyEnabled;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
+    using CustomConnectivityUpdate::getRowUpdateCodeTokens;
+    using CustomConnectivityUpdate::getHostUpdateCodeTokens;
     using CustomConnectivityUpdate::getSynapseGroup;
     using CustomConnectivityUpdate::getDependentVariables;
     using CustomConnectivityUpdate::finalise;

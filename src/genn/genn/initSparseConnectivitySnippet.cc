@@ -46,9 +46,9 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &p
 :   Snippet::Init<Base>(snippet, params)
 {
     // Scan code tokens
-    m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), "Row build code");
-    m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), "Col build code");
-    m_HostInitCodeTokens = Utils::scanCode(getSnippet()->getHostInitCode(), "Host init code");
+    m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), "Sparse connectivity row build code");
+    m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), "Sparse connectivity col build code");
+    m_HostInitCodeTokens = Utils::scanCode(getSnippet()->getHostInitCode(), "Sparse connectivity host init code");
 }
 //----------------------------------------------------------------------------
 bool Init::isRNGRequired() const
@@ -58,6 +58,6 @@ bool Init::isRNGRequired() const
 //----------------------------------------------------------------------------
 bool Init::isHostRNGRequired() const
 {
-    return Utils::isRNGRequired(m_HostInitTokens);
+    return Utils::isRNGRequired(m_HostInitCodeTokens);
 }
 }   // namespace GeNN::InitSparseConnectivitySnippet

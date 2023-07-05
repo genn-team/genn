@@ -83,12 +83,6 @@ protected:
 
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    //! Does this current source require an RNG to simulate
-    bool isSimRNGRequired() const;
-
-    //! Does this current source group require an RNG for it's init code
-    bool isInitRNGRequired() const;
-
     bool isZeroCopyEnabled() const;
 
     //! Updates hash with current source
@@ -101,6 +95,8 @@ protected:
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
+    const std::vector<Transpiler::Token> getInjectionCodeTokens() const{ return m_InjectionCodeTokens; }
+    
 private:
     //------------------------------------------------------------------------
     // Members
@@ -119,5 +115,8 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Tokens produced by scanner from injection code
+    std::vector<Transpiler::Token> m_InjectionCodeTokens;
 };
 }   // namespace GeNN

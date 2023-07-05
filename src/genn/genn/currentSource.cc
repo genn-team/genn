@@ -43,6 +43,10 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     // Validate names
     Utils::validatePopName(name, "Current source");
     getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
+
+    // Scan current source model code string
+    m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
+                                            "Current source '" + getName() + "' injection code");
 }
 //----------------------------------------------------------------------------
 void CurrentSource::finalise(double dt)
@@ -56,28 +60,8 @@ void CurrentSource::finalise(double dt)
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
-}
-//----------------------------------------------------------------------------
-bool CurrentSource::isSimRNGRequired() const
-{
-    // Returns true if any parts of the current source code require an RNG
-    if(Utils::isRNGRequired(getCurrentSourceModel()->getInjectionCode())) {
-        return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool CurrentSource::isInitRNGRequired() const
-{
-    // If initialising the neuron variables require an RNG, return true
-    if(Utils::isRNGRequired(getVarInitialisers())) {
-        return true;
-    }
-
-    return false;
 }
 //----------------------------------------------------------------------------
 bool CurrentSource::isZeroCopyEnabled() const

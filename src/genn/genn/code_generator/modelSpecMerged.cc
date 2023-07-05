@@ -299,7 +299,7 @@ void ModelSpecMerged::genMergedCustomConnectivityUpdatePreInitGroups(const Backe
     createMergedGroups(backend, getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePreInitGroups,
                         [&backend](const CustomConnectivityUpdateInternal &cg) 
                         {
-                            return (cg.isPreVarInitRequired() || (backend.isPopulationRNGInitialisedOnDevice() && cg.isRowSimRNGRequired()));     
+                            return (cg.isPreVarInitRequired() || (backend.isPopulationRNGInitialisedOnDevice() && Utils::isRNGRequired(cg.getRowUpdateCodeTokens())));     
                         },
                         &CustomConnectivityUpdateInternal::getInitHashDigest, generateGroup);
 }
