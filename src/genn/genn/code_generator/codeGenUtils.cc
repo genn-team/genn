@@ -31,7 +31,6 @@
 // GeNN transpiler includes
 #include "transpiler/parser.h"
 #include "transpiler/prettyPrinter.h"
-#include "transpiler/scanner.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -124,43 +123,31 @@ std::string upgradeCodeString(const std::string &codeString)
     return upgradedCodeString;
 }
 //----------------------------------------------------------------------------
-void prettyPrintExpression(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
+void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
 {
     using namespace Transpiler;
-
-    // Upgrade code string
-    const std::string upgradedCode = upgradeCodeString(code);
-
-    // Scan code string to convert to tokens
-    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
 
     // Parse tokens as expression
     auto expression = Parser::parseExpression(tokens, typeContext, errorHandler);
 
     // Resolve types
-    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, errorHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, typeContext, errorHandler);
 
     // Pretty print
     PrettyPrinter::print(expression, env, typeContext, resolvedTypes);
 }
  //--------------------------------------------------------------------------
-void prettyPrintStatements(const std::string &code, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
                            Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                            Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
     using namespace Transpiler;
-    
-    // Upgrade code string
-    const std::string upgradedCode = upgradeCodeString(code);
-
-    // Scan code string to convert to tokens
-    const auto tokens = Scanner::scanSource(upgradedCode, typeContext, errorHandler);
 
     // Parse tokens as block item list (function body)
     auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
 
     // Resolve types
-    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, env, errorHandler, forEachSynapseTypeCheckHandler);
+    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, env, typeContext, errorHandler, forEachSynapseTypeCheckHandler);
 
     // Pretty print
     PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);
