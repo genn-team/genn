@@ -230,7 +230,7 @@ std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
 {
-    const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
+    const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + index;
 
     if(offset.empty()) {
         return "(*$(_den_delay_ptr) * $(num_post) + " + batchID;
@@ -258,7 +258,7 @@ std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigne
         return (singleBatch ? "$(_pre_prev_spike_time_delay_offset) + " : "$(_pre_prev_spike_time_batch_delay_offset) + ") + index;
     }
     else {
-        return (singleBatch ? "" : "$(_pre_batch_offset) + ") + std::string{"$(" + index + ")"};
+        return (singleBatch ? "" : "$(_pre_batch_offset) + ") + index;
     }
 }
 //--------------------------------------------------------------------------
@@ -267,23 +267,23 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
-        return (singleBatch ? "$(_post_prev_spike_time_delay_offset) + " : "$(_post_prev_spike_time_batch_delay_offset) + ") + std::string{"$(" + index + ")"};
+        return (singleBatch ? "$(_post_prev_spike_time_delay_offset) + " : "$(_post_prev_spike_time_batch_delay_offset) + ") + index;
     }
     else {
-        return (singleBatch ? "" : "$(_post_batch_offset) + ") + std::string{"$(" + index + ")"};
+        return (singleBatch ? "" : "$(_post_batch_offset) + ") + index;
     }
 }
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    return (singleBatch ? "" : "$(_syn_batch_offset)") + std::string{"$(" + index + ")"};
+    return (singleBatch ? "" : "$(_syn_batch_offset)") + index;
 }
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    return (singleBatch ? "" : "$(_kern_batch_offset)") + std::string{"$(" + index + ")"};
+    return (singleBatch ? "" : "$(_kern_batch_offset)") + index;
 }
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
