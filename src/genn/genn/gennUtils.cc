@@ -63,15 +63,14 @@ std::string upgradeCodeString(const std::string &codeString)
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
-std::vector<Transpiler::Token> scanCode(const std::string &code, const Type::TypeContext &typeContext,
-                                        const std::string &errorContext)
+std::vector<Transpiler::Token> scanCode(const std::string &code, const std::string &errorContext)
 {
     // Upgrade code string
     const std::string upgradedCode = upgradeCodeString(code);
 
     // Scan code string and return tokens
     Transpiler::ErrorHandler errorHandler(errorContext);
-    return Transpiler::Scanner::scanSource(upgradedCode, typeContext, errorHandler);
+    return Transpiler::Scanner::scanSource(upgradedCode, errorHandler);
 }
 //--------------------------------------------------------------------------
 bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens)

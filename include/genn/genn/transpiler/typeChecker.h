@@ -61,8 +61,9 @@ typedef std::function<void(EnvironmentBase&, ErrorHandlerBase&)> StatementHandle
 // Free functions
 //---------------------------------------------------------------------------
 ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                          ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler = nullptr);
+                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+                          StatementHandler forEachSynapseHandler = nullptr);
 
 ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
-                          ErrorHandlerBase &errorHandler);
+                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 }   // namespace GeNN::Transpiler::TypeChecker

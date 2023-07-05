@@ -25,6 +25,36 @@ using namespace GeNN::Transpiler;
 //---------------------------------------------------------------------------
 namespace
 {
+const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
+    {{"char"}, Type::Int8},
+    {{"int8_t"}, Type::Int8},
+    
+    {{"unsigned", "char"}, Type::Uint8},
+    {{"uint8_t"}, Type::Uint8},
+
+    {{"short"}, Type::Int16},
+    {{"short", "int"}, Type::Int16},
+    {{"signed", "short"}, Type::Int16},
+    {{"signed", "short", "int"}, Type::Int16},
+    {{"int16_t"}, Type::Int16},
+    
+    {{"unsigned", "short"}, Type::Uint16},
+    {{"unsigned", "short", "int"}, Type::Uint16},
+    {{"uint16_t"}, Type::Uint8},
+
+    {{"int"}, Type::Int32},
+    {{"signed"}, Type::Int32},
+    {{"signed", "int"}, Type::Int32},
+    {{"int32_t"}, Type::Int32},
+
+    {{"unsigned"}, Type::Uint32},
+    {{"unsigned", "int"}, Type::Uint32},
+    {{"uint32_t"}, Type::Uint32},
+
+    {{"float"}, Type::Float},
+    {{"double"}, Type::Double}};
+
+
 //---------------------------------------------------------------------------
 // ParseError
 //---------------------------------------------------------------------------
@@ -142,6 +172,27 @@ private:
     ErrorHandlerBase &m_ErrorHandler;
 };
 
+// **THINK** could leave unresolved
+Type::ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const Type::TypeContext &context)
+{
+    // If type is numeric, return 
+    const auto type = numericTypeSpecifiers.find(typeSpecifiers);
+    if (type != numericTypeSpecifiers.cend()) {
+        return type->second;
+    }
+    else {
+        // **YUCK** use sets everywhere
+        if (typeSpecifiers.size() == 1) {
+            const auto contextType = context.find(*typeSpecifiers.begin());
+            if (contextType != context.cend()) {
+                return contextType->second;
+            }
+        }
+
+        // **TODO** improve error
+        throw std::runtime_error("Unknown numeric type specifier");
+    }
+}
 
 void synchronise(ParserState &parserState)
 {
@@ -241,8 +292,9 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
     //      constant
     //      "(" expression ")"
     if (parserState.match({Token::Type::FALSE, Token::Type::TRUE, Token::Type::STRING,
-                           Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER,
-                           Token::Type::INT32_NUMBER, Token::Type::UINT32_NUMBER})) {
+                           Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER, 
+                           Token::Type::SCALAR_NUMBER, Token::Type::INT32_NUMBER, 
+                           Token::Type::UINT32_NUMBER})) {
         return std::make_unique<Expression::Literal>(parserState.previous());
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {
@@ -870,6 +922,6 @@ const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens
     };
     
     // Return numeric type
-    return GeNN::Type::getNumericType(typeSpecifiers, context);
+    return getNumericType(typeSpecifiers, context);
 }
 }

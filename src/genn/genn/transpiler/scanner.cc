@@ -51,7 +51,8 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"int16_t", Token::Type::TYPE_SPECIFIER},
     {"uint32_t", Token::Type::TYPE_SPECIFIER},
     {"int32_t", Token::Type::TYPE_SPECIFIER},
-    {"bool", Token::Type::TYPE_SPECIFIER}};
+    {"bool", Token::Type::TYPE_SPECIFIER},
+    {"scalar", Token::Type::TYPE_SPECIFIER}};
 //---------------------------------------------------------------------------
 // ScanState
 //---------------------------------------------------------------------------
@@ -59,8 +60,8 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
 class ScanState
 {
 public:
-    ScanState(std::string_view source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
-        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_Context(context), m_ErrorHandler(errorHandler)
+    ScanState(std::string_view source, ErrorHandlerBase &errorHandler)
+        : m_Start(0), m_Current(0), m_Line(1), m_Source(source), m_ErrorHandler(errorHandler)
     {
     }
 
@@ -123,30 +124,7 @@ public:
     {
         m_ErrorHandler.error(getLine(), message);
     }
-    
-    bool isTypedefIdentifier(std::string_view lexeme) {
-        return (m_Context.find(std::string{lexeme}) != m_Context.cend());
-    }
 
-    Token::Type getScalarTokenType() const
-    {
-        const auto scalarType = m_Context.find("scalar");
-        if (scalarType == m_Context.cend()) {
-            throw std::runtime_error("Cannot scan scalar literals without 'scalar' type being defined in type context");
-        }
-        else {
-            if (scalarType->second == Type::Float) {
-                return Token::Type::FLOAT_NUMBER;
-            }
-            else if (scalarType->second == Type::Double) {
-                return Token::Type::DOUBLE_NUMBER;
-            }
-            else {
-                throw std::runtime_error("Unsupported scalar type '" + scalarType->first + "'");
-            }
-        }
-    }
-    
 private:
     //---------------------------------------------------------------------------
     // Members
@@ -156,7 +134,6 @@ private:
     size_t m_Line;
 
     std::string_view m_Source;
-    const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
 };
 
@@ -245,9 +222,9 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
                 scanState.advance();
             }
-            // Otherwise, emplace literal with whatever type is specified
+            // Otherwise, emplace scalar literal with type to be decoded later
             else {
-                emplaceToken(tokens, scanState.getScalarTokenType(), scanState);
+                emplaceToken(tokens, Token::Type::SCALAR_NUMBER, scanState);
             }
         }
         // Otherwise, emplace integer token 
@@ -286,10 +263,6 @@ void scanIdentifier(ScanState &scanState, std::vector<Token> &tokens)
     const auto k = keywords.find(scanState.getLexeme());
     if(k != keywords.cend()) {
         emplaceToken(tokens, k->second, scanState);
-    }
-    // Otherwise, if identifier is typedef, add type specifier token
-    else if (scanState.isTypedefIdentifier(scanState.getLexeme())) {
-        emplaceToken(tokens, Token::Type::TYPE_SPECIFIER, scanState);
     }
     // Otherwise, add identifier token
     else {
@@ -468,11 +441,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler)
 {
     std::vector<Token> tokens;
 
-    ScanState scanState(source, context, errorHandler);
+    ScanState scanState(source, errorHandler);
 
     // Scan tokens
     while(!scanState.isAtEnd()) {

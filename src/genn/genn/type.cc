@@ -19,35 +19,6 @@ using namespace GeNN;
 // Anonymous namespace
 namespace
 {
-const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
-    {{"char"}, Type::Int8},
-    {{"int8_t"}, Type::Int8},
-    
-    {{"unsigned", "char"}, Type::Uint8},
-    {{"uint8_t"}, Type::Uint8},
-
-    {{"short"}, Type::Int16},
-    {{"short", "int"}, Type::Int16},
-    {{"signed", "short"}, Type::Int16},
-    {{"signed", "short", "int"}, Type::Int16},
-    {{"int16_t"}, Type::Int16},
-    
-    {{"unsigned", "short"}, Type::Uint16},
-    {{"unsigned", "short", "int"}, Type::Uint16},
-    {{"uint16_t"}, Type::Uint8},
-
-    {{"int"}, Type::Int32},
-    {{"signed"}, Type::Int32},
-    {{"signed", "int"}, Type::Int32},
-    {{"int32_t"}, Type::Int32},
-
-    {{"unsigned"}, Type::Uint32},
-    {{"unsigned", "int"}, Type::Uint32},
-    {{"uint32_t"}, Type::Uint32},
-
-    {{"float"}, Type::Float},
-    {{"double"}, Type::Double}};
-//----------------------------------------------------------------------------
 // Mapping of signed integer numericTypeSpecifiers to their unsigned equivalents
 const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
     {Type::Int8, Type::Uint8},
@@ -123,51 +94,23 @@ ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
              },
              [&typeContext](const std::string &name)
              {
-                 return parseNumeric(name, typeContext);
+                 using namespace Transpiler;
+
+                // Scan type
+                SingleLineErrorHandler errorHandler;
+                const auto tokens = Scanner::scanSource(name, errorHandler);
+
+                // Parse type numeric type
+                const auto type = Parser::parseNumericType(tokens, typeContext, errorHandler);
+
+                // If an error was encountered while scanning or parsing, throw exception
+                if (errorHandler.hasError()) {
+                    throw std::runtime_error("Error parsing type '" + std::string{name} + "'");
+                }
+
+                return type;
              }},
         detail);
-}
-//----------------------------------------------------------------------------
-// Free functions
-//----------------------------------------------------------------------------
-ResolvedType parseNumeric(const std::string &typeString, const TypeContext &context)
-{
-    using namespace Transpiler;
-
-    // Scan type
-    SingleLineErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(typeString, context, errorHandler);
-
-    // Parse type numeric type
-    const auto type = Parser::parseNumericType(tokens, context, errorHandler);
-
-    // If an error was encountered while scanning or parsing, throw exception
-    if (errorHandler.hasError()) {
-        throw std::runtime_error("Error parsing type '" + std::string{typeString} + "'");
-    }
-
-    return type;
-}
-//----------------------------------------------------------------------------
-ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const TypeContext &context)
-{
-    // If type is numeric, return 
-    const auto type = numericTypeSpecifiers.find(typeSpecifiers);
-    if (type != numericTypeSpecifiers.cend()) {
-        return type->second;
-    }
-    else {
-        // **YUCK** use sets everywhere
-        if (typeSpecifiers.size() == 1) {
-            const auto contextType = context.find(*typeSpecifiers.begin());
-            if (contextType != context.cend()) {
-                return contextType->second;
-            }
-        }
-
-        // **TODO** improve error
-        throw std::runtime_error("Unknown numeric type specifier");
-    }
 }
 //----------------------------------------------------------------------------
 ResolvedType getPromotedType(const ResolvedType &type)

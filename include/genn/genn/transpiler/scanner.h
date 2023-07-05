@@ -25,6 +25,6 @@ class ErrorHandlerBase;
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Scanner
 {
-std::vector<Token> scanSource(const std::string_view &source, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+std::vector<Token> scanSource(const std::string_view &source, ErrorHandlerBase &errorHandler);
 
 }   // namespace Scanner

@@ -36,8 +36,7 @@ class VarInit;
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
-GENN_EXPORT std::vector<Transpiler::Token> scanCode(const std::string &code, const Type::TypeContext &typeContext, 
-                                                    const std::string &errorContext);
+GENN_EXPORT std::vector<Transpiler::Token> scanCode(const std::string &code, const std::string &errorContext);
 
 GENN_EXPORT bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens);
 

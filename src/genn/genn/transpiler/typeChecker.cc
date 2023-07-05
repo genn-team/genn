@@ -176,8 +176,9 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 {
 public:
     Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
-    :   Visitor(environment, resolvedTypes, errorHandler, forEachSynapseHandler)
+            ResolvedTypeMap &resolvedTypes, const Type::TypeContext &context, 
+            ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
+    :   Visitor(environment, resolvedTypes, context, errorHandler, forEachSynapseHandler)
     {
         for (auto &s : statements) {
             s.get()->accept(*this);
@@ -185,17 +186,20 @@ public:
     }
     
     Visitor(const Expression::Base *expression, EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, ErrorHandlerBase &errorHandler)
-    :   Visitor(environment, resolvedTypes, errorHandler, nullptr)
+            ResolvedTypeMap &resolvedTypes, const Type::TypeContext &context, 
+            ErrorHandlerBase &errorHandler)
+    :   Visitor(environment, resolvedTypes, context, errorHandler, nullptr)
     {
         expression->accept(*this);
     }
     
 private:
     Visitor(EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, 
-            ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
-    :   m_Environment(environment), m_ErrorHandler(errorHandler), m_ForEachSynapseHandler(forEachSynapseHandler),
-        m_ResolvedTypes(resolvedTypes), m_InLoop(false), m_InSwitch(false)
+            const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+            StatementHandler forEachSynapseHandler)
+    :   m_Environment(environment), m_Context(context), m_ErrorHandler(errorHandler), 
+        m_ForEachSynapseHandler(forEachSynapseHandler), m_ResolvedTypes(resolvedTypes), 
+        m_InLoop(false), m_InSwitch(false)
     {
     }
 
@@ -453,6 +457,9 @@ private:
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
             setExpressionType(&literal, Type::Float);
+        }
+        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
+            setExpressionType(&literal, m_Context.at("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
             setExpressionType(&literal, Type::Int32);
@@ -855,6 +862,7 @@ private:
     // Members
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentInternal> m_Environment;
+    const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     StatementHandler m_ForEachSynapseHandler;
     ResolvedTypeMap &m_ResolvedTypes;
@@ -883,20 +891,21 @@ Type::ResolvedType EnvironmentBase::getType(const Token &name, ErrorHandlerBase 
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
 ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
-                                                         ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
+                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler,
+                                                         StatementHandler forEachSynapseHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, expressionTypes, errorHandler, 
-                    forEachSynapseHandler);
+    Visitor visitor(statements, internalEnvironment, expressionTypes, 
+                    context, errorHandler, forEachSynapseHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
 ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
-                                                            ErrorHandlerBase &errorHandler)
+                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
     EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, internalEnvironment, expressionTypes, errorHandler);
+    Visitor visitor(expression, internalEnvironment, expressionTypes, context, errorHandler);
     return expressionTypes;
 }

@@ -353,12 +353,6 @@ inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {
 inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
 
-//! Parse a numeric type
-GENN_EXPORT ResolvedType parseNumeric(const std::string &typeString, const TypeContext &context);
-
-//! Look up numeric type based on set of type specifiers
-GENN_EXPORT ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const TypeContext &context);
-
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 
