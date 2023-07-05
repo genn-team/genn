@@ -76,6 +76,7 @@ docker-build:
 
 # pygenn-4.8.1-cp311-cp311-linux_x86_64.whl
 BASE := 12.2.0-devel-ubuntu22.04
+.PHONY wheel:
 # wheel:
 # 	@docker build -t genn:builder --build-arg BASE=$(BASE) -f Dockerfile.builder .
 # 	@docker create --name output genn:builder
@@ -83,4 +84,4 @@ BASE := 12.2.0-devel-ubuntu22.04
 
 wheel:
 	@docker build --build-arg BASE=$(BASE) -f Dockerfile.builder \
-		--target=output --output type=local,dest=$(pwd)/dist/ .
+		--target=output --output type=local,dest=dist/ .
