@@ -17,8 +17,8 @@ ENV CUDA_PATH=/usr/local/cuda \
     GENN_PATH=/opt/genn
 
 # Upgrade pip itself and install numpy and jupyter
-RUN pip install --upgrade pip && \
-    pip install numpy jupyter matplotlib
+RUN python -m pip install --upgrade pip && \
+    python -m pip install numpy jupyter matplotlib
 
 # Copy GeNN into /opt
 COPY  . ${GENN_PATH}
