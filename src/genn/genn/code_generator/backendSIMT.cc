@@ -103,7 +103,7 @@ bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) co
     // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
     const ModelSpecInternal &model = modelMerged.getModel();
     return (std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                        [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isHostInitRNGRequired()); })
+                        [](const ModelSpec::SynapseGroupValueType &s){ return s.second.getConnectivityInitialiser().isHostRNGRequired(); })
             || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
                            [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return c.second.isHostRNGRequired(); }));
 }
@@ -1462,8 +1462,8 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, sg);
 
             // If there is row-building code in this snippet
-            const auto *snippet = sg.getArchetype().getConnectivityInitialiser().getSnippet();
-            if(!snippet->getRowBuildCode().empty()) {
+            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+            if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                 groupEnv.getStream() << "// only do this for existing presynaptic neurons" << std::endl;
                 groupEnv.print("if($(id) < $(num_pre))");
 
@@ -1475,7 +1475,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             }
             // Otherwise
             else {
-                assert(!snippet->getColBuildCode().empty());
+                assert(!Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
 
                 groupEnv.getStream() << "// only do this for existing postsynaptic neurons" << std::endl;
                 groupEnv.print("if($(id) < $(num_post))");
@@ -1500,7 +1500,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 
                     // Calculate index in data structure of this synapse
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        if(!snippet->getRowBuildCode().empty()) {
+                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                             kernelInit << "const unsigned int idx = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)];" << std::endl;
                         }
                         else {
@@ -1539,7 +1539,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // If matrix is sparse
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // If there is row-building code in this snippet
-                        if(!snippet->getRowBuildCode().empty()) {
+                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                             kernelInit << "$(_ind)[idx] = $(0);" << std::endl;
                             kernelInit << "$(_row_length)[$(id)]++;" << std::endl;
                         }
@@ -1554,7 +1554,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                         const std::string indexType = areSixtyFourBitSynapseIndicesRequired(sg) ? "uint64_t" : "unsigned int";
 
                         // If there is row-building code in this snippet
-                        if(!snippet->getRowBuildCode().empty()) {
+                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                             kernelInit << "const " << indexType << " rowStartGID = $(id) * (" << indexType << ")($_row_stride);" << std::endl;
                             kernelInit << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
@@ -1573,12 +1573,12 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 // If this connectivity requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if(Utils::isRNGRequired(snippet->getRowBuildCode())) {
+                if(connectInit.isRNGRequired()) {
                     groupEnv.add(Type::Void, "rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
                 // If there is row-building code in this snippet
-                if(!snippet->getRowBuildCode().empty()) {
+                if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                     // If this is a sparse matrix, zero row length
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         groupEnv.printLine("$(_row_length)[$(id)] = 0;");

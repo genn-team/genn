@@ -40,6 +40,8 @@ public:
     using NeuronGroup::getFusedOutSynWithPreCode;
     using NeuronGroup::getFusedInSynWithPostVars;
     using NeuronGroup::getFusedOutSynWithPreVars;
+    using NeuronGroup::isSimRNGRequired;
+    using NeuronGroup::isInitRNGRequired;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;

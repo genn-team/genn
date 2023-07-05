@@ -1656,7 +1656,7 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                    [](const ModelSpec::SynapseGroupValueType &s)
                    {
-                       return (s.second.isWUInitRNGRequired() || s.second.isHostInitRNGRequired());
+                       return (s.second.isWUInitRNGRequired() || s.second.getConnectivityInitialiser().isHostRNGRequired());
                    }))
     {
         return true;

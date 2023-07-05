@@ -219,7 +219,7 @@ protected:
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
-     //! Does this neuron group require an RNG to simulate?
+    //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
     //! Does this neuron group require an RNG for it's init code?
