@@ -242,7 +242,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 
         // Add field for dendritic delay pointer and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                          [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+                          [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
         backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {

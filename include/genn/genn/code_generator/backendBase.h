@@ -547,7 +547,7 @@ public:
         env.addField(env.getGroup().getScalarType().createPointer(), "_den_delay", "denDelay",
                      [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
         env.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
                        
         // Presynaptic output fields
         env.addField(env.getGroup().getScalarType().createPointer(), "_out_pre", "outPre",
