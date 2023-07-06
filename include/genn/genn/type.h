@@ -6,13 +6,9 @@
 
 // Standard C++ includes
 #include <limits>
-#include <memory>
 #include <optional>
-#include <set>
 #include <string>
-#include <typeinfo>
 #include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -266,7 +262,7 @@ struct ResolvedType
     template<typename T>
     static ResolvedType createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0})
     {
-        return ResolvedType{Value{name, sizeof(T), Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+        return ResolvedType{Value{name, sizeof(T), Numeric{rank, std::numeric_limits<T>::min(), static_cast<double>(std::numeric_limits<T>::max()),
                                                            std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
                                                            std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
                             qualifiers};
@@ -335,11 +331,13 @@ inline static const ResolvedType Bool = CREATE_NUMERIC(bool, 0, "");
 inline static const ResolvedType Int8 = CREATE_NUMERIC(int8_t, 10, "");
 inline static const ResolvedType Int16 = CREATE_NUMERIC(int16_t, 20, "");
 inline static const ResolvedType Int32 = CREATE_NUMERIC(int32_t, 30, "");
-//DECLARE_NUMERIC_TYPE(Int64, int64_t, 40);
+inline static const ResolvedType Int64 = CREATE_NUMERIC(int64_t, 40, "");
+
 inline static const ResolvedType Uint8 = CREATE_NUMERIC(uint8_t, 10, "u");
 inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, "u");
 inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, "u");
-//DECLARE_NUMERIC_TYPE(Uint64, uint64_t, 40);
+inline static const ResolvedType Uint64 = CREATE_NUMERIC(uint64_t, 40, "u");
+
 inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
 

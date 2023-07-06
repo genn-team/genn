@@ -25,7 +25,7 @@ using namespace GeNN::Transpiler;
 //---------------------------------------------------------------------------
 namespace
 {
-const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
+const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecifiers{
     {{"char"}, Type::Int8},
     {{"int8_t"}, Type::Int8},
     
@@ -50,6 +50,25 @@ const std::map<std::set<std::string>, Type::ResolvedType> numericTypeSpecifiers{
     {{"unsigned"}, Type::Uint32},
     {{"unsigned", "int"}, Type::Uint32},
     {{"uint32_t"}, Type::Uint32},
+
+    // **NOTE** GeNN uses LP64 data model where longs are 64-bit (unlike Windows)
+    {{"long"}, Type::Int64},
+    {{"long", "int"}, Type::Int64},
+    {{"signed", "long"}, Type::Int64},
+    {{"signed", "long", "int"}, Type::Int64},
+    {{"long", "long"}, Type::Int64},
+    {{"long", "long", "int"}, Type::Int64},
+    {{"signed", "long", "long"}, Type::Int64},
+    {{"signed", "long", "long", "int"}, Type::Int64},
+    {{"int64_t"}, Type::Int64},
+
+    // **NOTE** GeNN uses LP64 data model where longs are 64-bit (unlike Windows)
+    {{"unsigned", "long"}, Type::Uint64},
+    {{"unsigned", "long", "int"}, Type::Uint64},
+    {{"unsigned", "long"}, Type::Uint64},
+    {{"unsigned", "long", "long", "int"}, Type::Uint64},
+    {{"uint64_t"}, Type::Uint64},
+    {{"size_t"}, Type::Uint64},
 
     {{"float"}, Type::Float},
     {{"double"}, Type::Double}};
@@ -173,7 +192,7 @@ private:
 };
 
 // **THINK** could leave unresolved
-Type::ResolvedType getNumericType(const std::set<std::string> &typeSpecifiers, const Type::TypeContext &context)
+Type::ResolvedType getNumericType(const std::multiset<std::string> &typeSpecifiers, const Type::TypeContext &context)
 {
     // If type is numeric, return 
     const auto type = numericTypeSpecifiers.find(typeSpecifiers);
@@ -241,7 +260,7 @@ GeNN::Type::ResolvedType parseDeclarationSpecifiers(ParserState &parserState)
 {
     using namespace GeNN::Type;
     
-    std::set<std::string> typeSpecifiers;
+    std::multiset<std::string> typeSpecifiers;
     std::set<std::string> typeQualifiers;
     std::vector<std::set<std::string>> pointerTypeQualifiers;
     
@@ -262,12 +281,17 @@ GeNN::Type::ResolvedType parseDeclarationSpecifiers(ParserState &parserState)
             if(!pointerTypeQualifiers.empty()) {
                 parserState.error(parserState.previous(), "invalid type specifier");
             }
-            else if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
-                parserState.error(parserState.previous(), "duplicate type specifier");
+            else {
+                typeSpecifiers.insert(parserState.previous().lexeme);
             }
         }
     } while(parserState.match({Token::Type::TYPE_QUALIFIER, Token::Type::TYPE_SPECIFIER, Token::Type::STAR}));
 
+    // If no type specifiers are found
+    if(typeSpecifiers.empty()) {
+        parserState.error(parserState.peek(), "missing type specifier");
+        throw ParseError();
+    }
     // Lookup numeric type
     Type::ResolvedType type = getNumericType(typeSpecifiers, parserState.getContext());
 
@@ -914,11 +938,9 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, co
 const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, context, errorHandler);
-    std::set<std::string> typeSpecifiers;
+    std::multiset<std::string> typeSpecifiers;
     while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
-        if(!typeSpecifiers.insert(parserState.previous().lexeme).second) {
-            parserState.error(parserState.previous(), "duplicate type specifier");
-        }
+        typeSpecifiers.insert(parserState.previous().lexeme);
     };
     
     // Return numeric type
