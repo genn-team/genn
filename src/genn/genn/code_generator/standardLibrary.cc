@@ -9,6 +9,8 @@
 
 namespace Type = GeNN::Type;
 
+using namespace GeNN::CodeGenerator;
+
 //---------------------------------------------------------------------------
 // Macros
 //---------------------------------------------------------------------------
@@ -32,7 +34,7 @@ namespace
 template<typename... Args>
 auto initLibraryTypes(Args&&... args)
 {
-    GeNN::CodeGenerator::EnvironmentLibrary::Library map;
+    EnvironmentLibrary::Library map;
     (map.emplace(std::forward<Args>(args)), ...);
     return map;
 }
@@ -111,6 +113,23 @@ const auto libraryTypes = initLibraryTypes(
     std::make_pair("printf", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int8.addQualifier(Type::Qualifier::CONSTANT).createPointer()}, true), "printf($(0), $(@))")));
 }
 
+const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
+    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
+    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "std::lognormal_distribution<float>($(0), $(1))(hostRNG)"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {Type::Float}), "std::gamma_distribution<float>($(0), 1.0f)(hostRNG)"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Float}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
+};
+
+const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "standardUniformDistribution(hostRNG)"}},
+    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "standardNormalDistribution(hostRNG)"}},
+    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "standardExponentialDistribution(hostRNG)"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double}), "std::lognormal_distribution<double>($(0), $(1))(hostRNG)"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "std::gamma_distribution<double>($(0), 1.0)(hostRNG)"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
+};
 
 /*{,
 {"frexp", "frexpf"},    // pointer arguments
@@ -122,8 +141,24 @@ const auto libraryTypes = initLibraryTypes(
 */
 //min, max, printf
 
-
-const GeNN::CodeGenerator::EnvironmentLibrary::Library &GeNN::CodeGenerator::StandardLibrary::getFunctions()
+//---------------------------------------------------------------------------
+// GeNN::CodeGenerator::StandardLibrary::FunctionTypes
+//---------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::StandardLibrary
+{
+const EnvironmentLibrary::Library &getMathsFunctions()
 {
     return libraryTypes;
 }
+
+const EnvironmentLibrary::Library &getHostRNGFunctions(const Type::ResolvedType &precision)
+{
+    if(precision == Type::Float) {
+        return floatRandomFunctions;
+    }
+    else {
+        assert(precision == Type::Double);
+        return doubleRandomFunctions;
+    }
+}
+}   // namespace GeNN::CodeGenerator::StandardLibrary

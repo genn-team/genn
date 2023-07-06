@@ -8,5 +8,9 @@
 //---------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::StandardLibrary
 {
-const EnvironmentLibrary::Library &getFunctions();
+//! Get standard maths functions
+const EnvironmentLibrary::Library &getMathsFunctions();
+
+//! Get std::random based host RNG functions
+const EnvironmentLibrary::Library &getHostRNGFunctions(const Type::ResolvedType &precision);
 }   // namespace GeNN::CodeGenerator::StandardLibrary

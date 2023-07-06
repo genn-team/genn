@@ -19,24 +19,6 @@ using namespace GeNN::Transpiler;
 //--------------------------------------------------------------------------
 namespace
 {
-const EnvironmentLibrary::Library cpuSinglePrecisionFunctions = {
-    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
-    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
-    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
-    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "std::lognormal_distribution<float>($(0), $(1))(hostRNG)"}},
-    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {Type::Float}), "std::gamma_distribution<float>($(0), 1.0f)(hostRNG)"}},
-    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Float}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
-};
-
-const EnvironmentLibrary::Library cpuDoublePrecisionFunctions = {
-    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "standardUniformDistribution(hostRNG)"}},
-    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "standardNormalDistribution(hostRNG)"}},
-    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "standardExponentialDistribution(hostRNG)"}},
-    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double}), "std::lognormal_distribution<double>($(0), $(1))(hostRNG)"}},
-    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "std::gamma_distribution<double>($(0), 1.0)(hostRNG)"}},
-    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
-};
-
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -127,7 +109,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     CodeStream neuronUpdate(neuronUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getFunctions());
+    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
@@ -262,7 +244,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                         groupEnv.add(Type::Uint32, "id", "i");
 
                         // Add RNG libray
-                        EnvironmentLibrary rngEnv(groupEnv, (modelMerged.getModel().getPrecision() == Type::Float) ? cpuSinglePrecisionFunctions : cpuDoublePrecisionFunctions);
+                        EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
 
                         // Generate neuron update
                         n.generateNeuronUpdate(*this, rngEnv, modelMerged,
@@ -313,7 +295,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     CodeStream synapseUpdate(synapseUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getFunctions());
+    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
 
     synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
@@ -557,7 +539,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     CodeStream customUpdate(customUpdateStream);
     
     // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getFunctions());
+    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
@@ -849,8 +831,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
     CodeStream init(initStream);
 
     // Begin environment with RNG library and standard library
-    EnvironmentLibrary rngEnv(init, (modelMerged.getModel().getPrecision() == Type::Float) ? cpuSinglePrecisionFunctions : cpuDoublePrecisionFunctions);
-    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getFunctions());
+    EnvironmentLibrary rngEnv(init, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
+    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
     
 
     initEnv.getStream() << "void initialize()";
