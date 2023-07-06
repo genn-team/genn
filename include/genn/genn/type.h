@@ -350,6 +350,10 @@ inline static const ResolvedType Void = ResolvedType();
 inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
+inline static const ResolvedType AllocatePushPullEGP = ResolvedType::createFunction(Void, {Uint32});
+
+
+inline static const ResolvedType Assert = ResolvedType::createFunction(Void, {Bool});
 
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);

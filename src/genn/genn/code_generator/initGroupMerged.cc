@@ -3,6 +3,7 @@
 // GeNN code generator includes
 #include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
+#include "code_generator/standardLibrary.h"
 
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
@@ -734,18 +735,27 @@ const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnect
 //-------------------------------------------------------------------------
 void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
 {
- 
-    CodeStream::Scope b(env.getStream());
-    env.getStream() << "// merged synapse connectivity host init group " << getIndex() << std::endl;
-    env.getStream() << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+    // Add standard library to environment
+    EnvironmentLibrary envStdLib(env, StandardLibrary::getMathsFunctions());
+
+    // Add host RNG functions to environment
+    EnvironmentLibrary envRandom(envStdLib, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
+
+    // Add standard host assert function to environment
+    EnvironmentExternal envAssert(envRandom);
+    envAssert.add(Type::Assert, "assert", "assert($(0))");
+
+    CodeStream::Scope b(envAssert.getStream());
+    envAssert.getStream() << "// merged synapse connectivity host init group " << getIndex() << std::endl;
+    envAssert.getStream() << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
     {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(envAssert.getStream());
 
         // Get reference to group
-        env.getStream() << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << getIndex() << "[g]; " << std::endl;
+        envAssert.getStream() << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << getIndex() << "[g]; " << std::endl;
         
         // Create environment for group
-        EnvironmentGroupMergedField<SynapseConnectivityHostInitGroupMerged> groupEnv(env, *this);
+        EnvironmentGroupMergedField<SynapseConnectivityHostInitGroupMerged> groupEnv(envAssert, *this);
         const auto &connectInit = getArchetype().getConnectivityInitialiser();
 
         // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
@@ -812,7 +822,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                                                      loc, "$(0)", "group->");
 
                 // Add substitution
-                groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "allocate" + egp.name, allocStream.str());
+                groupEnv.add(Type::AllocatePushPullEGP, "allocate" + egp.name, allocStream.str());
 
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
@@ -823,7 +833,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
 
 
                 // Add substitution
-                groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "push" + egp.name, pushStream.str());
+                groupEnv.add(Type::AllocatePushPullEGP, "push" + egp.name, pushStream.str());
             }
         }
         Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' sparse connectivity host init code");
