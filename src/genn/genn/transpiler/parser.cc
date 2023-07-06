@@ -26,6 +26,8 @@ using namespace GeNN::Transpiler;
 namespace
 {
 const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecifiers{
+    {{"bool"}, Type::Bool},
+
     {{"char"}, Type::Int8},
     {{"int8_t"}, Type::Int8},
     
@@ -208,8 +210,11 @@ Type::ResolvedType getNumericType(const std::multiset<std::string> &typeSpecifie
             }
         }
 
-        // **TODO** improve error
-        throw std::runtime_error("Unknown numeric type specifier");
+        // Generate string representation of type specifier and give error
+        std::ostringstream typeSpecifiersString;
+        std::copy(typeSpecifiers.cbegin(), typeSpecifiers.cend(),
+                  std::ostream_iterator<std::string>(typeSpecifiersString, " "));
+        throw std::runtime_error("Unknown numeric type specifier '" + typeSpecifiersString.str() + "'");
     }
 }
 
