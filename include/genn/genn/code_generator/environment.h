@@ -194,7 +194,6 @@ protected:
         }
         // Otherwise, use value directly
         else {
-            assert(!str.empty());
             return str; 
         }
     }

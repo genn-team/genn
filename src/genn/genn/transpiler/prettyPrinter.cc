@@ -262,8 +262,8 @@ private:
         const auto &type = m_ResolvedTypes.at(&variable);
         std::string name = m_Environment.get().getName(variable.getName().lexeme, type);
 
-        // If identifier is function i.e. name is a function template
-        if (type.isFunction()) {
+        // If identifier is function and name isn't empty i.e. it contains a function template
+        if (type.isFunction() && !name.empty()) {
             // Check that there are call arguments on the stack
             assert(!m_CallArguments.empty());
 
