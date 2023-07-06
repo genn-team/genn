@@ -42,7 +42,7 @@ const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecif
     
     {{"unsigned", "short"}, Type::Uint16},
     {{"unsigned", "short", "int"}, Type::Uint16},
-    {{"uint16_t"}, Type::Uint8},
+    {{"uint16_t"}, Type::Uint16},
 
     {{"int"}, Type::Int32},
     {{"signed"}, Type::Int32},
