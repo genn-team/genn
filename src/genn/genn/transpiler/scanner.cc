@@ -428,11 +428,11 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
                 scanNumber(c, scanState, tokens);
             }
             // Otherwise, scan identifier
-            else if(std::isalpha(c) || c == '_') {
+            else if(std::isalpha(c)) {
                 scanIdentifier(scanState, tokens);
             }
             else {
-                scanState.error("Unexpected character.");
+                scanState.error("Unexpected character '" + std::string{c} + "'.");
             }
         }
     }
