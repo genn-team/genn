@@ -798,7 +798,7 @@ public:
             if(v.access & VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
             }
-            getContextStream() << resolvedType.getName() << " " << m_LocalPrefix << v.name;
+            getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
 
             // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
@@ -817,7 +817,7 @@ public:
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(getWriteIndex(m_Group.get(), v), *this) << "]";
-                getContextStream() << " = " << m_LocalPrefix << v.name << ";" << std::endl;
+                getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
     }
@@ -859,8 +859,8 @@ public:
             // Set flag to indicate that variable has been referenced
             var->second.first = true;
 
-            // Add local prefix to variable name
-            return m_LocalPrefix + name;
+            // Add underscore and local prefix to variable name
+            return "_" + m_LocalPrefix + name;
         }
     }
 

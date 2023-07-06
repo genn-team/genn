@@ -493,8 +493,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** arbitrary code in param value to be deprecated
     for (const auto &v : nm->getAdditionalInputVars()) {
         const auto resolvedType = v.type.resolve(getTypeContext());
-        neuronEnv.add(resolvedType, v.name, v.name,
-                      {neuronEnv.addInitialiser(resolvedType.getName() + " " + v.name + " = " + v.value + ";")});
+        neuronEnv.add(resolvedType, v.name, "_" + v.name,
+                      {neuronEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + v.value + ";")});
     }
 
     // Substitute parameter and derived parameter names
