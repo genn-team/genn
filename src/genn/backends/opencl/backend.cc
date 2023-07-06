@@ -2089,11 +2089,6 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, con
     }
 }
 //--------------------------------------------------------------------------
-const Type::Base *Backend::getMergedGroupSimRNGType() const
-{
-    return CLRRNGLFSR113Stream::getInstance();
-}
-//--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
     if (!(loc & VarLocation::ZERO_COPY)) {

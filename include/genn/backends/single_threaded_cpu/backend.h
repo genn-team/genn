@@ -118,9 +118,6 @@ public:
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
     virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
-    //! When generating merged structures what type to use for simulation RNGs
-    virtual std::optional<Type::ResolvedType> getMergedGroupSimRNGType() const final;
-
     virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
     virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
     virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
@@ -159,7 +156,6 @@ public:
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const final;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
-    virtual bool isPopulationRNGRequired() const final { return false; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const final { return false; }

@@ -111,6 +111,9 @@ public:
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const = 0;
 
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const = 0;
+
     //------------------------------------------------------------------------
     // BackendBase virtuals
     //------------------------------------------------------------------------
@@ -141,7 +144,6 @@ public:
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const final;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
-    virtual bool isPopulationRNGRequired() const final { return true; }
 
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 

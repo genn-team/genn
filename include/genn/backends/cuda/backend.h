@@ -21,7 +21,6 @@
 // GeNN code generator includes
 #include "code_generator/backendSIMT.h"
 #include "code_generator/codeStream.h"
-#include "code_generator/substitutions.h"
 
 // Forward declarations
 namespace filesystem
@@ -133,27 +132,27 @@ public:
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
     //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
-    virtual bool areSharedMemAtomicsSlow() const override;
+    virtual bool areSharedMemAtomicsSlow() const final;
 
     //! Get the prefix to use for shared memory variables
-    virtual std::string getSharedPrefix() const override{ return "__shared__ "; }
+    virtual std::string getSharedPrefix() const final{ return "__shared__ "; }
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID(unsigned int axis = 0) const override;
+    virtual std::string getThreadID(unsigned int axis = 0) const final;
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID(unsigned int axis = 0) const override;
+    virtual std::string getBlockID(unsigned int axis = 0) const final;
 
     //! Get the name of the count-leading-zeros function
-    virtual std::string getCLZ() const override { return "__clz"; }
+    virtual std::string getCLZ() const final { return "__clz"; }
 
     //! Get name of atomic operation
-    virtual std::string getAtomic(const Type::NumericBase *type, const Type::TypeContext &typeContext,
-                                  AtomicOperation op = AtomicOperation::ADD,
-                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;
+    virtual std::string getAtomic(const Type::ResolvedType &type,
+                                  AtomicOperation op = AtomicOperation::ADD, 
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
 
     //! Generate a shared memory barrier
-    virtual void genSharedMemBarrier(CodeStream &os) const override;
+    virtual void genSharedMemBarrier(CodeStream &os) const final;
 
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
     virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
@@ -163,78 +162,82 @@ public:
 
     //! If required, generate a postamble for population RNG
     /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
-    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const override;
+    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const final;
 
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
 
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
+    virtual void genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const final;
 
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
-    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ValueBase *type, const std::string &name, VarLocation loc) const final;
+                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
     
     //! Generate code to instantiate a variable in the provided stream
     virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ValueBase *type, const std::string &name, VarLocation loc) const final;
+                                          const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
 
     //! Generate code to allocate variable with a size known at compile-time
     virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ValueBase *type, const Type::TypeContext &typeContext, const std::string &name, 
+                                       const Type::ResolvedType &type, const std::string &name, 
                                        VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
     
     //! Generate code to allocate variable with a size known at runtime
     virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::Base *type, const std::string &name, VarLocation loc, 
+                                              const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                               const std::string &countVarName = "count", const std::string &prefix = "") const final;
+
 
     //! Generate code to free a variable
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
 
     //! Generate code for pushing a variable with a size known at compile-time to the 'device'
     virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ValueBase *type, const std::string &name, 
+                                 const Type::ResolvedType &type, const std::string &name, 
                                  VarLocation loc, bool autoInitialized, size_t count) const final;
     
     //! Generate code for pulling a variable with a size known at compile-time from the 'device'
     virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ValueBase *type, const std::string &name, 
+                                 const Type::ResolvedType &type, const std::string &name, 
                                  VarLocation loc, size_t count) const final;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ValueBase *type, const std::string &name, 
+                                        const Type::ResolvedType &type, const std::string &name, 
                                         VarLocation loc, unsigned int batchSize) const final;
 
     //! Generate code for pulling a variable's value in the current timestep from the 'device'
     virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ValueBase *type, const std::string &name,
+                                        const Type::ResolvedType &type, const std::string &name, 
                                         VarLocation loc, unsigned int batchSize) const final;
 
     //! Generate code for pushing a variable with a size known at tuntime to the 'device'
     virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::Base *type, const std::string &name, VarLocation loc, 
+                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                         const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::Base *type, const std::string &name, VarLocation loc, 
+                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                         const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
@@ -243,58 +246,59 @@ public:
                                               const std::string &egpName) const final;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type) const override;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const = 0;
 
-    //! When generating merged structures what type to use for simulation RNGs
-    virtual const Type::ValueBase *getMergedGroupSimRNGType() const override;
-    
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                    CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                    const Type::TypeContext &typeContext, MemAlloc &memAlloc) const override;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                  CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                  const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const override;
+    //! Generate a single RNG instance
+    /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
+
+    //! Generate an RNG with a state per population member
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
+                                  CodeStream &allocations, CodeStream &free, 
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
+
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
-                          const std::string &name, bool updateInStepTime) const override;
+                          const std::string &name, bool updateInStepTime) const final;
 
     //! Generate code to return amount of free 'device' memory in bytes
-    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
 
     //! On backends which support it, generate a runtime assert
-    virtual void genAssert(CodeStream &os, const std::string &condition) const override;
+    virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
-    virtual void genMakefilePreamble(std::ostream &os) const override;
-    virtual void genMakefileLinkRule(std::ostream &os) const override;
-    virtual void genMakefileCompileRule(std::ostream &os) const override;
+    virtual void genMakefilePreamble(std::ostream &os) const final;
+    virtual void genMakefileLinkRule(std::ostream &os) const final;
+    virtual void genMakefileCompileRule(std::ostream &os) const final;
 
-    virtual void genMSBuildConfigProperties(std::ostream &os) const override;
-    virtual void genMSBuildImportProps(std::ostream &os) const override;
-    virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
-    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
-    virtual void genMSBuildImportTarget(std::ostream &os) const override;
+    virtual void genMSBuildConfigProperties(std::ostream &os) const final;
+    virtual void genMSBuildImportProps(std::ostream &os) const final;
+    virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
+    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
+    virtual void genMSBuildImportTarget(std::ostream &os) const final;
 
     //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const override;
+    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const final;
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
-    virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
+    virtual bool isPopulationRNGInitialisedOnDevice() const final { return true; }
 
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
-    virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
+    virtual bool isHostReductionRequired() const final { return getPreferences<Preferences>().enableNCCLReductions; }
 
     //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
+    virtual size_t getDeviceMemoryBytes() const final{ return m_ChosenDevice.totalGlobalMem; }
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
-    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
 
-    virtual bool supportsNamespace() const override { return true; };
+    virtual bool supportsNamespace() const final { return true; };
 
     //! Get hash digest of this backends identification and the preferences it has been configured with
-    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 
     //--------------------------------------------------------------------------
     // Public API

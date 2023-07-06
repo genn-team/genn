@@ -16,7 +16,7 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/modelSpecMerged.h"
-#include "code_generator/substitutions.h"
+#include "code_generator/standardLibrary.h"
 
 // CUDA backend includes
 #include "utils.h"
@@ -29,29 +29,29 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<Substitutions::FunctionTemplate> cudaSinglePrecisionFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform($(rng))"},
-    {"gennrand_normal", 0, "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistFloat($(rng), $(0))"},
-    {"gennrand_binomial", 2, "binomialDistFloat($(rng), $(0), $(1))"}
+const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_uniform($(rng))"}},
+    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_normal($(rng))"}},
+    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "exponentialDistFloat($(rng))"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "curand_log_normal_float($(rng), $(0), $(1))"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Float, {Type::Float}), "gammaDistFloat($(rng), $(0))"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Float}), "binomialDistFloat($(rng), $(0), $(1))"}},
 };
-//--------------------------------------------------------------------------
-const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rng))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))"},
-    {"gennrand_binomial", 2, "binomialDistDouble($(rng), $(0), $(1))"} 
+
+const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_uniform_double($(rng))"}},
+    {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_normal_double($(rng))"}},
+    {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "exponentialDistDouble($(rng))"}},
+    {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double}), "curand_log_normal_double($(rng), $(0), $(1))"}},
+    {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "gammaDistDouble($(rng), $(0))"}},
+    {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "binomialDistDouble($(rng), $(0), $(1))"}},
 };
 
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
-const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>();
-const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>();
+const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>("curandState");
+const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>("curandStatePhilox4_32_10_t");
 
 //--------------------------------------------------------------------------
 // Timer
@@ -204,9 +204,15 @@ size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
                            });
 }
 //-----------------------------------------------------------------------
-const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const Type::NumericBase *precision)
+const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision)
 {
-    return (precision->getName() == Type::Double::getInstance()->getName()) ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions;
+    if(precision == Type::Float) {
+        return floatRandomFunctions;
+    }
+    else {
+        assert(precision == Type::Double);
+        return doubleRandomFunctions;
+    }
 }
 //-----------------------------------------------------------------------
 std::string getNCCLReductionType(VarAccessMode mode) 
@@ -223,41 +229,34 @@ std::string getNCCLReductionType(VarAccessMode mode)
     }
 }
 //-----------------------------------------------------------------------
-std::string getNCCLType(const Type::NumericBase *type, const Type::TypeContext &context)
+std::string getNCCLType(const Type::ResolvedType &type)
 {
-    // If type is a numeric typedef, resolve it
-    const auto numericTypedef = dynamic_cast<const Type::NumericTypedef *>(type);
-    if (numericTypedef) {
-        type = numericTypedef->getResolvedType(context);
-    }
+    assert(type.isNumeric());
     
     // Convert GeNN types to NCCL types
-    // **YUCK** Visitor pattern would really help here
-    if(dynamic_cast<const Type::Int8*>(type)) {
+    if(type == Type::Int8) {
         return "ncclInt8";
     }
-    else if(dynamic_cast<const Type::Uint8*>(type)) {
+    else if(type == Type::Uint8) {
         return "ncclUint8";
     }
-    else if(dynamic_cast<const Type::Int32*>(type)) {
+    else if(type == Type::Int32) {
         return "ncclInt32";
     }
-    else if(dynamic_cast<const Type::Int32*>(type)){
+    else if(type == Type::Uint32){
         return "ncclUint32";
     }
     /*else if(type == "half") {
         return "ncclFloat16";
     }*/
-    else if(dynamic_cast<const Type::Float*>(type)){
+    else if(type == Type::Float){
         return "ncclFloat32";
     }
-    else if(dynamic_cast<const Type::Float*>(type)) {
+    else if(type == Type::Double) {
         return "ncclFloat64";
     }
-    else if (dynamic_cast<const Type::NumericTypedef *>(type)) {
-    }
     else {
-        throw std::runtime_error("Data type '" + type->getName() + "' unsupported by NCCL");
+        throw std::runtime_error("Data type '" + type.getName() + "' unsupported by NCCL");
     }
 }
 //-----------------------------------------------------------------------
@@ -363,14 +362,12 @@ std::string Backend::getBlockID(unsigned int axis) const
     }
 }
 //--------------------------------------------------------------------------
-std::string Backend::getAtomic(const Type::NumericBase *type, const Type::TypeContext &typeContext,
-                               AtomicOperation op, AtomicMemSpace) const
+std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation op, AtomicMemSpace) const
 {
     // If operation is an atomic add
-    const std::string typeName = type->getResolvedName(typeContext);
     if(op == AtomicOperation::ADD) {
-        if(((getChosenCUDADevice().major < 2) && (typeName == Type::Float::getInstance()->getName()))
-           || (((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)) && (typeName == Type::Double::getInstance()->getName())))
+        if(((getChosenCUDADevice().major < 2) && (type == Type::Float))
+           || (((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)) && (type == Type::Double)))
         {
             return "atomicAddSW";
         }
@@ -380,7 +377,7 @@ std::string Backend::getAtomic(const Type::NumericBase *type, const Type::TypeCo
     // Otherwise, it's an atomic or
     else {
         assert(op == AtomicOperation::OR);
-        assert(typeName == Type::Uint32::getInstance()->getName() || typeName == Type::Int32::getInstance()->getName());
+        assert(type == Type::Uint32 || type == Type::Int32);
         return "atomicOr";
     }
 }
@@ -412,10 +409,117 @@ std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &se
     return "&localRNG";
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+Type::ResolvedType Backend::getPopulationRNGType() const
+{
+    return CURandState;
+}
+//--------------------------------------------------------------------------
+void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
+    // Generate stream with neuron update code
+    std::ostringstream neuronUpdateStream;
+    CodeStream neuronUpdate(neuronUpdateStream);
+
+    // Begin environment with standard library
+    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+
+    // If any neuron groups require their previous spike times updating
+    size_t idNeuronPrevSpikeTimeUpdate = 0;
+    //if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
+        neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+        {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+            EnvironmentExternal funcEnv(neuronUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+
+            funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            if(model.getBatchSize() > 1) {
+                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+            }
+            else {
+                funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+            }
+
+            genNeuronPrevSpikeTimeUpdateKernel(funcEnv, modelMerged, idNeuronPrevSpikeTimeUpdate);
+        }
+        neuronUpdateEnv.getStream() << std::endl;
+    //}
+
+    // Generate reset kernel to be run before the neuron kernel
+    size_t idNeuronSpikeQueueUpdate = 0;
+    neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
+    {
+        CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+        neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+        genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, idNeuronSpikeQueueUpdate);
+    }
+    neuronUpdateEnv.getStream() << std::endl;
+
+    size_t idStart = 0;
+    neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(model.isRecordingInUse()) {
+        neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
+    }
+    neuronUpdateEnv.getStream() << ")" << std::endl;
+    {
+        CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+        EnvironmentExternal funcEnv(neuronUpdateEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+
+        funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+        if(model.getBatchSize() > 1) {
+            funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
+            funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+        }
+        else {
+            funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+        }
+        genNeuronUpdateKernel(funcEnv, modelMerged, idStart);
+    }
+
+    neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(model.isRecordingInUse()) {
+        neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
+    }
+    neuronUpdateEnv.getStream() << ")";
+    {
+        CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+        if(idNeuronPrevSpikeTimeUpdate > 0) {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
+            genKernelDimensions(neuronUpdateEnv.getStream(), KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
+            neuronUpdateEnv.getStream() << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+        if(idNeuronSpikeQueueUpdate > 0) {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
+            genKernelDimensions(neuronUpdateEnv.getStream(), KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
+            neuronUpdateEnv.getStream() << KernelNames[KernelNeuronSpikeQueueUpdate] << "<<<grid, threads>>>();" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+        if(idStart > 0) {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+            Timer t(neuronUpdateEnv.getStream(), "neuronUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(neuronUpdateEnv.getStream(), KernelNeuronUpdate, idStart, model.getBatchSize());
+            neuronUpdateEnv.getStream() << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
+            if(model.isRecordingInUse()) {
+                neuronUpdateEnv.getStream() << ", recordingTimestep";
+            }
+            neuronUpdateEnv.getStream() << ");" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+    }
+
+    
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
@@ -441,95 +545,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
                                   [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronPrevSpikeTimeUpdate); });
     os << std::endl;
-
-    // If any neuron groups require their previous spike times updating
-    size_t idNeuronPrevSpikeTimeUpdate = 0;
-    if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
-        {
-            CodeStream::Scope b(os);
-
-            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-            os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            if(model.getBatchSize() > 1) {
-                os << "const unsigned int batch = blockIdx.y;" << std::endl;
-            }
-            kernelSubs.addVarSubstitution("t", "t");
-
-            genNeuronPrevSpikeTimeUpdateKernel(os, kernelSubs, modelMerged, idNeuronPrevSpikeTimeUpdate);
-        }
-        os << std::endl;
-    }
-
-    // Generate reset kernel to be run before the neuron kernel
-    size_t idNeuronSpikeQueueUpdate = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
-    {
-        CodeStream::Scope b(os);
-
-        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
-        genNeuronSpikeQueueUpdateKernel(os, modelMerged, idNeuronSpikeQueueUpdate);
-    }
-    os << std::endl;
-
-    size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t";
-    if(model.isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")" << std::endl;
-    {
-        CodeStream::Scope b(os);
-
-        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-        kernelSubs.addVarSubstitution("t", "t");
-
-        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-        if(model.getBatchSize() > 1) {
-            os << "const unsigned int batch = blockIdx.y;" << std::endl;
-            kernelSubs.addVarSubstitution("batch", "batch");
-        }
-        else {
-            kernelSubs.addVarSubstitution("batch", "0");
-        }
-        genNeuronUpdateKernel(os, kernelSubs, modelMerged, idStart);
-    }
-
-    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
-    if(model.isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")";
-    {
-        CodeStream::Scope b(os);
-
-        if(idNeuronPrevSpikeTimeUpdate > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
-            os << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-        if(idNeuronSpikeQueueUpdate > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
-            os << KernelNames[KernelNeuronSpikeQueueUpdate] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-        if(idStart > 0) {
-            CodeStream::Scope b(os);
-
-            Timer t(os, "neuronUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelNeuronUpdate, idStart, model.getBatchSize());
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
-            if(model.isRecordingInUse()) {
-                os << ", recordingTimestep";
-            }
-            os << ");" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-    }
+    os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
@@ -1803,13 +1819,8 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type) con
     return type->getName();
 }
 //--------------------------------------------------------------------------
-const Type::ValueBase *Backend::getMergedGroupSimRNGType() const
-{
-    return CURandState::getInstance();
-}
-//--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, 
-                                 const Type::TypeContext &typeContext, MemAlloc &memAlloc) const
+                                 MemAlloc &memAlloc) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
@@ -1818,14 +1829,14 @@ void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, 
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
-    memAlloc += MemAlloc::device(CURandStatePhilox43210::getInstance()->getSizeBytes(typeContext));
+    memAlloc += MemAlloc::device(CURandStatePhilox43210.getSize(getPointerBytes()));
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                               const Type::TypeContext &typeContext, const std::string &name, size_t count, MemAlloc &memAlloc) const
+                               const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     // Create an array or XORWOW RNGs
-    genArray<CURandState>(definitions, definitionsInternal, runner, allocations, free, typeContext, name, VarLocation::DEVICE, count, memAlloc);
+    genArray(definitions, definitionsInternal, runner, allocations, free, CURandState, name, VarLocation::DEVICE, count, memAlloc);
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

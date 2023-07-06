@@ -322,66 +322,70 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
         {
             CodeStream::Scope b(popEnv.getStream());
 
+            // Create matching environment
+            EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> neuronEnv(popEnv, ng);
+            genNeuronIndexCalculation(neuronEnv, batchSize);
+
             // If neuron group requires delays
             if(ng.getArchetype().isDelayRequired()) {
                 if(batchSize == 1) {
-                    popEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                    neuronEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
                 }
                 else {
-                    popEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr) + (batch *  " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ");");
+                    neuronEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr) + ($(batch) *  " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ");");
                 }
-                popEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
+                neuronEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
 
                 if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                     // If there is a spike for this thread, set previous spike time to time of last timestep
                     // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                    popEnv.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
+                    neuronEnv.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
                     {
-                        CodeStream::Scope b(popEnv.getStream());
-                        popEnv.printLine("$(_prev_spk_time)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        CodeStream::Scope b(neuronEnv.getStream());
+                        neuronEnv.printLine("$(_prev_spk_time)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
                     // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
                     // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                    popEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
+                    neuronEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
                     {
-                        CodeStream::Scope b(popEnv.getStream());
-                        popEnv.printLine("$(_prev_spk_evnt_time)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        CodeStream::Scope b(neuronEnv.getStream());
+                        neuronEnv.printLine("$(_prev_spk_evnt_time)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
                     }
                 }
             }
             // Otherwises
             else {
                 if(batchSize > 1) {
-                    popEnv.printLine("const unsigned int batchOffset = $(num_neurons) * batch;");
+                    neuronEnv.printLine("const unsigned int batchOffset = $(num_neurons) * $(batch);");
                 }
                 if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                     // If there is a spike for this thread, set previous spike time to time of last timestep
-                    popEnv.print("if($(id) < $(_spk_cnt)[" + std::string{(batchSize == 1) ? "0" : "batch"} + "])");
+                    neuronEnv.print("if($(id) < $(_spk_cnt)[$(batch)])");
                     {
-                        CodeStream::Scope b(popEnv.getStream());
-                        popEnv.print("$(_prev_spk_time)[$(_spk)[");
+                        CodeStream::Scope b(neuronEnv.getStream());
+                        neuronEnv.print("$(_prev_spk_time)[$(_spk)[");
                         if(batchSize > 1) {
-                            popEnv.getStream() << "batchOffset + ";
+                            neuronEnv.getStream() << "batchOffset + ";
                         }
-                        popEnv.printLine("$(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(id)]] = $(t) - DT;");
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
                     // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                    popEnv.print("if($(id) < $(_spk_cnt_evnt)[" + std::string{(batchSize == 1) ? "0" : "batch"} + "])");
+                    neuronEnv.print("if($(id) < $(_spk_cnt_evnt)[$(batch)])");
                     {
-                        CodeStream::Scope b(popEnv.getStream());
-                        popEnv.print("$(_prev_spk_evnt_time)[$(_spk_evnt)[");
+                        CodeStream::Scope b(neuronEnv.getStream());
+                        neuronEnv.print("$(_prev_spk_evnt_time)[$(_spk_evnt)[");
                         if(batchSize > 1) {
-                            popEnv.getStream() << "batchOffset + ";
+                            neuronEnv.getStream() << "batchOffset + ";
                         }
-                        popEnv.printLine("$(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(id)]] = $(t) - DT;");
                     }
                 }
             }
-            popEnv.getStream() << std::endl;
+            neuronEnv.getStream() << std::endl;
         });
 
 }
@@ -392,69 +396,81 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
 
     // Loop through local neuron groups
     idStart = 0;
-    for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-        if(idStart == 0) {
-            env.getStream() << "if(id < " << n.getGroups().size() << ")";
-        }
-        else {
-            env.getStream() << "if(id >= " << idStart << " && id < " << idStart + n.getGroups().size() << ")";
-        }
+    modelMerged.genMergedNeuronSpikeQueueUpdateGroups(
+        *this, 
+        [&env, &idStart, batchSize, this](const auto &n)
         {
-            CodeStream::Scope b(env.getStream());
-
-            // Use this to get reference to merged group structure
-            env.getStream() << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
-
-            if(n.getArchetype().isDelayRequired()) { // with delay
-                env.getStream() << "*" << env["_spk_que_ptr"] << " = (*" << env["_spk_que_ptr"] << " + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+            if(idStart == 0) {
+                env.getStream() << "if(id < " << n.getGroups().size() << ")";
             }
+            else {
+                env.getStream() << "if(id >= " << idStart << " && id < " << idStart + n.getGroups().size() << ")";
+            }
+            {
+                CodeStream::Scope b(env.getStream());
 
-            if(batchSize > 1) {
-                env.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                // Use this to get reference to merged group structure
+                env.getStream() << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
+            
+                // Create matching environment
+                EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, batchSize);
+                genNeuronIndexCalculation(neuronEnv, batchSize);
+
+                if(n.getArchetype().isDelayRequired()) { // with delay
+                    neuronEnv.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(n.getArchetype().getNumDelaySlots()) + ";");
+                }
+
+                if(batchSize > 1) {
+                    neuronEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                }
+                n.genMergedGroupSpikeCountReset(neuronEnv, batchSize);
+                if(batchSize > 1) {
+                    neuronEnv.getStream() << CodeStream::CB(1);
+                }
             }
-            n.genMergedGroupSpikeCountReset(env, batchSize);
-            if(batchSize > 1) {
-                env.getStream() << CodeStream::CB(1);
-            }
-        }
-        idStart += n.getGroups().size();
-    }
+            idStart += n.getGroups().size();
+        });
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-    // If any neuron groups emit spike events
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
+    // Generate code to zero shared memory spike event count using thread 1
+    std::ostringstream shSpkCountInitStream;
+    CodeStream shSpkCountInit(shSpkCountInitStream);
+    shSpkCountInit << getSharedPrefix() << "unsigned int shSpkCount;" << std::endl;
+    shSpkCountInit << "if (" << getThreadID() << " == 1)";
     {
-        env.getStream() << getSharedPrefix() << "unsigned int shSpkEvnt[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
-        env.getStream() << getSharedPrefix() << "unsigned int shPosSpkEvnt;" << std::endl;
-        env.getStream() << getSharedPrefix() << "unsigned int shSpkEvntCount;" << std::endl;
-        env.getStream() << std::endl;
-        env.getStream() << "if (" << getThreadID() << " == 1)";
-        {
-            CodeStream::Scope b(env.getStream());
-            env.getStream() << "shSpkEvntCount = 0;" << std::endl;
-        }
-        env.getStream() << std::endl;
+        CodeStream::Scope b(shSpkCountInit);
+        shSpkCountInit << "shSpkCount = 0;" << std::endl;
     }
 
-    // If any neuron groups emit true spikes
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return !n.getArchetype().getNeuronModel()->getThresholdConditionCode().empty(); }))
+    // Generate code to zero shared memory spike event count using thread 1
+    std::ostringstream shSpkEvntCountInitStream;
+    CodeStream shSpkEvntCountInit(shSpkEvntCountInitStream);
+    shSpkEvntCountInit << getSharedPrefix() << "unsigned int shSpkEvntCount;" << std::endl;
+    shSpkEvntCountInit << "if (" << getThreadID() << " == 1)";
     {
-        env.getStream() << getSharedPrefix() << "unsigned int shSpk[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
-        env.getStream() << getSharedPrefix() << "unsigned int shPosSpk;" << std::endl;
-        env.getStream() << getSharedPrefix() << "unsigned int shSpkCount;" << std::endl;
-        env.getStream() << "if (" << getThreadID() << " == 0)";
-        {
-            CodeStream::Scope b(env.getStream());
-            env.getStream() << "shSpkCount = 0;" << std::endl;
-        }
-        env.getStream() << std::endl;
+        CodeStream::Scope b(shSpkEvntCountInit);
+        shSpkEvntCountInit << "shSpkEvntCount = 0;" << std::endl;
     }
+
+    // Add shared memory substitutions so they're only instantiated as required
+    EnvironmentExternal neuronEnv(env);
+    const std::string blockSizeStr = std::to_string(getKernelBlockSize(KernelNeuronUpdate));
+    neuronEnv.add(Type::Void, "_sh_spk", "shSpk",
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpk[" + blockSizeStr + "];")});
+    neuronEnv.add(Type::Void, "_sh_spk_pos", "shSpkPos",
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos;")});
+    neuronEnv.add(Type::Void, "_sh_spk_count", "shSpkCount",
+                  {neuronEnv.addInitialiser(shSpkCountInitStream.str()});
+    neuronEnv.add(Type::Void, "_sh_spk_evnt", "shSpkEvnt",
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvnt[" + blockSizeStr + "];")});
+    neuronEnv.add(Type::Void, "_sh_spk_evnt_pos", "shSpkEvntPos",
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvntPos;")});
+    neuronEnv.add(Type::Void, "_sh_spk_evnt_count", "shSpkEvntCount",
+                  {neuronEnv.addInitialiser(shSpkEvntCountInitStream.str()});
 
     // If any neuron groups record spikes
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
@@ -470,31 +486,29 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         genRecordingSharedMemInit(env.getStream(), "Evnt");
     }
 
-    genSharedMemBarrier(env.getStream());
+    genSharedMemBarrier(neuronEnv.getStream());
 
     // Parallelise over neuron groups
     idStart = 0;
     genParallelGroup<NeuronUpdateGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
+        neuronEnv, modelMerged, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
         [batchSize, &modelMerged, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
         {
-            EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(popEnv, ng);
-            genNeuronIndexCalculation(neuronEnv, batchSize);
-            neuronEnv.getStream() << std::endl;
-
             // Call handler to generate generic neuron code
-            neuronEnv.print("if($(id) < $(num_neurons))");
+            popEnv.print("if($(id) < $(num_neurons))");
             {
-                CodeStream::Scope b(neuronEnv.getStream());
+                CodeStream::Scope b(popEnv.getStream());
+                EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
+                genNeuronIndexCalculation(groupEnv, batchSize);
 
-                // Copy global RNG stream to local and use pointer to this for rng
-                const std::string rng = printSubs("$(_rng)[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]", neuronEnv);
-                if(ng.getArchetype().isSimRNGRequired()) {
-                    neuronEnv.add(Type::Void, "rng", genPopulationRNGPreamble(neuronEnv.getStream(), rng));
-                }
+                // Add population RNG field
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
+                                  ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)"));
+                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
-                ng.generateNeuronUpdate(*this, neuronEnv, modelMerged,
+                ng.generateNeuronUpdate(*this, groupEnv, modelMerged,
                                         // Emit true spikes
                                         [&modelMerged, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
@@ -503,13 +517,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                         // Emit spike-like events
                                         [&modelMerged, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, modelMerged, "Evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
+                                            genEmitSpike(env, modelMerged, "_evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
                                         });
 
                 // Copy local stream back to local
-                if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPostamble(neuronEnv.getStream(), rng);
-                }
+                // **TODO** postamble for OCL
+                //if(ng.getArchetype().isSimRNGRequired()) {
+                //    genPopulationRNGPostamble(neuronEnv.getStream(), rng);
+                //}
             }
 
             genSharedMemBarrier(neuronEnv.getStream());
@@ -1697,8 +1712,8 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
 //--------------------------------------------------------------------------
 void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, const std::string &suffix, bool recordingEnabled) const
 {
-    env.getStream() << "const unsigned int spk" << suffix << "Idx = " << getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Count, 1);" << std::endl;
-    env.getStream() << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << env["id"] << ";" << std::endl;
+    env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
+    env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");
     
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {

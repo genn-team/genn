@@ -268,7 +268,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
             });
     }
 
-     // Generate struct definitions
+    // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
@@ -1449,12 +1449,6 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
 {
     return type.getName();
-}
-//--------------------------------------------------------------------------
-std::optional<Type::ResolvedType> Backend::getMergedGroupSimRNGType() const
-{
-    assert(false);
-    return std::nullopt;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const

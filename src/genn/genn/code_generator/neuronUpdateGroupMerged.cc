@@ -43,7 +43,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
         *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
         [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
-            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "$(id)");
         });
 
     // Pretty print code back to environment
@@ -84,7 +84,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
 
     // Read into local variable
-    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "$(id)");
     psmEnv.getStream() << "// postsynaptic model " << getIndex() << std::endl;
     psmEnv.printLine(getScalarType().getName() + " linSyn = $(_out_post)[" + idx + "];");
 
@@ -122,7 +122,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
         *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
         [&modelMerged, &ng](const std::string&, VarAccessDuplication d)
         {
-            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "id");
+            return ng.getVarIndex(modelMerged.getModel().getBatchSize(), d, "$(id)");
         });
 
     // Pretty print code back to environment
@@ -133,7 +133,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     prettyPrintStatements(getArchetype().getPSDecayCodeTokens(), getTypeContext(), varEnv, decayErrorHandler);
 
     // Write back linSyn
-    varEnv.printLine("$(_out_post)[" + ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id") + "] = linSyn;");
+    varEnv.printLine("$(_out_post)[" + ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "$(id)") + "] = linSyn;");
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -167,7 +167,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
                        [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
 
     // Add reverse insyn variable to 
-    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "id");
+    const std::string idx = ng.getVarIndex(modelMerged.getModel().getBatchSize(), VarAccessDuplication::DUPLICATE, "$(id)");
     outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
 
     // Zero it again
@@ -204,11 +204,11 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
-                return ng.getReadVarIndex(delayed, batchSize, d, "id");
+                return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
             },
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
-                return ng.getWriteVarIndex(delayed, batchSize, d, "id");
+                return ng.getWriteVarIndex(delayed, batchSize, d, "$(id)");
             });
 
         /*neuronSubstitutionsInSynapticCode(varEnv, &ng.getArchetype(), "", "_post", "", "", "", dynamicsNotSpike,
@@ -239,8 +239,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
                 const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "] = ");
-                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "];");
+                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "] = ");
+                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "];");
             }
         }
     }
@@ -291,11 +291,11 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
             [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
-                return ng.getReadVarIndex(delayed, batchSize, d, "id");
+                return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
             },
             [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
-                return ng.getWriteVarIndex(delayed, batchSize, d, "id");
+                return ng.getWriteVarIndex(delayed, batchSize, d, "$(id)");
             });     
         
         /*neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), "", "_pre", "", "", "", dynamicsNotSpike,
@@ -326,8 +326,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
             if(v.access & VarAccessMode::READ_WRITE) {
                 const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "] = ");
-                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "id") + "];");
+                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "] = ");
+                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "];");
             }
         }
     }
@@ -504,7 +504,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     
     // Substitute spike times
     const std::string timePrecision = modelMerged.getModel().getTimePrecision().getName();
-    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "id");
+    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "$(id)");
     neuronEnv.add(getTimeType().addConst(), "sT", "lsT", 
                   {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_spk_time)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_sT", "lprevST", 
@@ -521,12 +521,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getReadVarIndex(delayed, batchSize, d, "id") ;
+            return getReadVarIndex(delayed, batchSize, d, "$(id)") ;
         },
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getWriteVarIndex(delayed, batchSize, d, "id") ;
+            return getWriteVarIndex(delayed, batchSize, d, "$(id)") ;
         });
 
 
@@ -720,12 +720,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "id") + "] = $(sT);");
+                    neuronVarEnv.printLine("$(_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(sT);");
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_prev_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "id") + "] = $(prev_sT);");
+                    neuronVarEnv.printLine("$(_prev_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(prev_sT);");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
@@ -764,10 +764,10 @@ std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
         return (batchSize == 1) ? "0" : "$(batch)";
     }
     else if(varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-        return "$(" + index + ")";
+        return index;
     }
     else {
-        return "$(_batch_offset) + $(" + index + ")";
+        return "$(_batch_offset) " + index;
     }
 }
 //--------------------------------------------------------------------------
@@ -778,10 +778,10 @@ std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int ba
             return (batchSize == 1) ? "$(_read_delay_slot)" : "$(_read_batch_delay_slot)";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-            return "$(_read_delay_offset) + $(" + index + ")";
+            return "$(_read_delay_offset) + " + index;
         }
         else {
-            return "$(_read_batch_delay_offset) + $(" + index + ")";
+            return "$(_read_batch_delay_offset) + " + index;
         }
     }
     else {
@@ -796,10 +796,10 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
             return (batchSize == 1) ? "$(_write_delay_slot)" : "$(_write_batch_delay_slot)";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-            return "$(_write_delay_offset) + $(" + index + ")";
+            return "$(_write_delay_offset) + " + index;
         }
         else {
-            return "$(_write_batch_delay_offset) + $(" + index + ")";
+            return "$(_write_batch_delay_offset) + " + index;
         }
     }
     else {
