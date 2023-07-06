@@ -70,7 +70,11 @@ std::vector<Transpiler::Token> scanCode(const std::string &code, const std::stri
 
     // Scan code string and return tokens
     Transpiler::ErrorHandler errorHandler(errorContext);
-    return Transpiler::Scanner::scanSource(upgradedCode, errorHandler);
+    const auto tokens = Transpiler::Scanner::scanSource(upgradedCode, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Error scanning " + errorContext);
+    }
+    return tokens;
 }
 //--------------------------------------------------------------------------
 bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens)
