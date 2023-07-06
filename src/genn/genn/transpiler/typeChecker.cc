@@ -376,12 +376,6 @@ private:
         // Evaluate type of expression we're casting
         const auto rightType = evaluateType(cast.getExpression());
 
-        // If const is being removed
-        if (!checkForConstRemoval(rightType, cast.getType())) {
-            m_ErrorHandler.error(cast.getClosingParen(), "Invalid operand types '" + cast.getType().getName() + "' and '" + rightType.getName());
-            throw TypeCheckError();
-        }
-
         const auto resultType = std::visit(
             Utils::Overload{
                 // If types are numeric, any cast goes
@@ -395,14 +389,18 @@ private:
                     }
                 },
                 // Otherwise, if we're trying to cast pointer to pointer
-                [&cast](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &castPointer) -> std::optional<Type::ResolvedType>
+                [&cast, &rightType](const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &castPointer) -> std::optional<Type::ResolvedType>
                 {
-                   // Check that value type at the end matches
-                    if (checkPointerTypeAssignement(*rightPointer.valueType, *castPointer.valueType)) {
-                        return cast.getType();
+                    // Check that value type at the end matches
+                    if (!checkPointerTypeAssignement(*rightPointer.valueType, *castPointer.valueType)) {
+                        return std::nullopt;
+                    }
+                    // Check we're not trying to maketype less const
+                    else if(!checkForConstRemoval(rightType, cast.getType())) {
+                        return std::nullopt;
                     }
                     else {
-                        return std::nullopt;
+                        return cast.getType();
                     }
                 },
                 // Otherwise, pointers can't be cast to non-pointers and vice versa
