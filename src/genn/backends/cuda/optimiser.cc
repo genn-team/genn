@@ -460,11 +460,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
-        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
         generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
         generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
         generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
         generateInit(outputPath, modelMerged, backend, dryRunSuffix);
+        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
 
         // Generate support code module if the backend supports namespaces
         if (backend.supportsNamespace()) {
