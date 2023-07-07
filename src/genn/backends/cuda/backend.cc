@@ -481,7 +481,10 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
         else {
             funcEnv.add(Type::Uint32.addConst(), "batch", "0");
         }
-        genNeuronUpdateKernel(funcEnv, modelMerged, idStart);
+
+        // Add RNG functions to environment and generate kernel
+        EnvironmentLibrary rngEnv(funcEnv, getRNGFunctions(model.getPrecision()));
+        genNeuronUpdateKernel(rngEnv, modelMerged, idStart);
     }
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -548,102 +551,85 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
-    // Generate struct definitions
-    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+    // Generate stream with synapse update code
+    std::ostringstream synapseUpdateStream;
+    CodeStream synapseUpdate(synapseUpdateStream);
 
-    // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
-
-    // Generate preamble
-    preambleHandler(os);
-
-    // Generate data structure for accessing merged groups
-    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
-                                  [this](const SynapseGroupInternal &sg)
-                                  {
-                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate);
-                                  });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
-                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
-
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
-                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumSynapseDynamicsThreads(sg), KernelSynapseDynamicsUpdate); });
+    // Begin environment with standard library
+    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
     size_t idSynapseDendricDelayUpdate = 0;
-    if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
+    //if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
+        synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
             CodeStream::Scope b(os);
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genSynapseDendriticDelayUpdateKernel(os, modelMerged, idSynapseDendricDelayUpdate);
+            synapseUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genSynapseDendriticDelayUpdateKernel(synapseUpdateEnv, modelMerged, idSynapseDendricDelayUpdate);
         }
-        os << std::endl;
-    }
+        synapseUpdateEnv.getStream() << std::endl;
+    //}
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
-    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
+    //if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+        synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(synapseUpdateEnv.getStream());
 
-            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-            kernelSubs.addVarSubstitution("t", "t");
+            EnvironmentExternal funcEnv(synapseUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+            funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
-                os << "const unsigned int batch = blockIdx.y;" << std::endl;
-                kernelSubs.addVarSubstitution("batch", "batch");
+                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
             }
             else {
-                kernelSubs.addVarSubstitution("batch", "0");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
-            genPresynapticUpdateKernel(os, kernelSubs, modelMerged, idPresynapticStart);
+
+            // Add RNG functions to environment and generate kernel
+            EnvironmentLibrary rngEnv(funcEnv, getRNGFunctions(model.getPrecision()));
+            genPresynapticUpdateKernel(rngEnv, modelMerged, idPresynapticStart);
         }
-    }
+    //}
 
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
     if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
+        synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(synapseUpdateEnv.getStream());
 
-            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-            kernelSubs.addVarSubstitution("t", "t");
+            EnvironmentExternal funcEnv(synapseUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+            funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
-                os << "const unsigned int batch = blockIdx.y;" << std::endl;
-                kernelSubs.addVarSubstitution("batch", "batch");
+                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
             }
             else {
-                kernelSubs.addVarSubstitution("batch", "0");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
-            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, idPostsynapticStart);
+            genPostsynapticUpdateKernel(funcEnv, modelMerged, idPostsynapticStart);
         }
     }
 
     size_t idSynapseDynamicsStart = 0;
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
+        synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(synapseUpdateEnv.getStream());
 
+            EnvironmentExternal funcEnv(synapseUpdateEnv);
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-            kernelSubs.addVarSubstitution("t", "t");
+            funcEnv.add("t", "t");
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
             if(model.getBatchSize() > 1) {
@@ -657,9 +643,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         }
     }
 
-    os << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
-        CodeStream::Scope b(os);
+        CodeStream::Scope b(synapseUpdateEnv.getStream());
 
         // Launch pre-synapse reset kernel if required
         if(idSynapseDendricDelayUpdate > 0) {
@@ -699,6 +685,37 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
+
+     // Generate struct definitions
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
+    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to push them
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
+
+    // Generate preamble
+    preambleHandler(os);
+
+    // Generate data structure for accessing merged groups
+    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
+                                  [this](const SynapseGroupInternal &sg)
+                                  {
+                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate);
+                                  });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
+                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
+
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
+                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumSynapseDynamicsThreads(sg), KernelSynapseDynamicsUpdate); });
+
+    os << synapseUpdateStream.str();
+
 }
 //--------------------------------------------------------------------------
 void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
