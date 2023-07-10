@@ -98,7 +98,7 @@ class PoissonExp : public Base
         "{\n"
         "    numSpikes++;\n"
         "    p *= gennrand_uniform();\n"
-        "} while (p > $(ExpMinusLambda));\n"
+        "} while (p > ExpMinusLambda);\n"
         "current += Init * (scalar)(numSpikes - 1);\n"
         "injectCurrent(current);\n"
         "current *= ExpDecay;\n");
