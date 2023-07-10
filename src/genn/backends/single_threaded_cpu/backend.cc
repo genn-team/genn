@@ -554,13 +554,13 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                     writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
             // Loop through host update groups and generate code for those in this custom update group
-            for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
-                if (cg.getArchetype().getUpdateGroupName() == g) {
-                    assert(false);
-                    //cg.generateUpdate(*this, os);
-                }
-            }
-
+            modelMerged.genMergedCustomConnectivityHostUpdateGroups(
+                *this, g, 
+                [this, &customUpdateEnv, &modelMerged](auto &c)
+                {
+                    c.generateUpdate(*this, customUpdateEnv, modelMerged);
+                });
+            
             {
                 Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateGroups(
