@@ -60,12 +60,12 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
         }
 
         // If this synapse group can be merged at all
-        if(!(a->*isSynMergableFunc)()) {
+        if(!std::invoke(isSynMergableFunc, a)) {
             continue;
         }
 
         // Get hash digest used for checking compatibility
-        const auto aHashDigest = (a->*getSynMergeHashFunc)();
+        const auto aHashDigest = std::invoke(getSynMergeHashFunc, a);
 
         // Create a name for merged groups
         const std::string mergedTargetName = mergedTargetPrefix + std::to_string(i) + "_" + mergedTargetSuffix;
@@ -74,11 +74,11 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
         bool anyMerged = false;
         for(auto b = syn.begin(); b != syn.end();) {
             // If synapse group b can be merged with others and it's compatible with a
-            if(((*b)->*isSynMergableFunc)() && (aHashDigest == ((*b)->*getSynMergeHashFunc)())) {
+            if(std::invoke(isSynMergableFunc, *b) && (aHashDigest == std::invoke(getSynMergeHashFunc, *b))) {
                 LOGD_GENN << "Merging " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedTargetName << "'";
 
                 // Set b's merge target to our unique name
-                ((*b)->*setSynMergeTargetFunc)(mergedTargetName);
+                std::invoke(setSynMergeTargetFunc, *b, mergedTargetName);
 
                 // Remove from temporary vector
                 b = syn.erase(b);
@@ -95,7 +95,7 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
 
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(anyMerged) {
-            (a->*setSynMergeTargetFunc)(mergedTargetName);
+            std::invoke(setSynMergeTargetFunc, a, mergedTargetName);
         }
     }
 }
