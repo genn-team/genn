@@ -481,6 +481,12 @@ public:
         env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_evnt_time", "prevSET",
                      [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevSET" + g.getName(); });
 
+        env.addField(Type::Uint32.createPointer(), "_record_spk", "recordSpk",
+                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "recordSpk" + g.getName(); }, 
+                     "", GroupMergedFieldType::DYNAMIC);
+        env.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
+                     [this](const auto &g, size_t){ return getDeviceVarPrefix() + "recordSpkEvent" + g.getName(); },
+                     "", GroupMergedFieldType::DYNAMIC);
 
         // If batching is enabled, calculate batch offset
         if(batchSize > 1) {

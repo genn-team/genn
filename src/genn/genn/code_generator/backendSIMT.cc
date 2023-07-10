@@ -636,20 +636,20 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         CodeStream::Scope c(groupEnv.getStream());
                         // If we are recording spikes, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.getStream() << groupEnv["_record_spk"] << "[" << globalIndex << "] = shSpkRecord";
+                            groupEnv.print("$(_record_spk)[" + globalIndex + "] = shSpkRecord");
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                                groupEnv.getStream() << "[" << getThreadID() << "]";
+                                groupEnv.print("[" + getThreadID() + "]");
                             }
-                            groupEnv.getStream() << ";" << std::endl;
+                            groupEnv.printLine(";");
                         }
 
                         // If we are recording spike-like events, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                            groupEnv.getStream() << groupEnv["_record_spk_evnt"] << "[" << globalIndex << "] = shSpkEvntRecord";
+                            groupEnv.print("$(_record_spk_evnt)[" + globalIndex + "] = shSpkEvntRecord");
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                                groupEnv.getStream() << "[" << getThreadID() << "]";
+                                groupEnv.print("[" + getThreadID() + "]");
                             }
-                            groupEnv.getStream() << ";" << std::endl;
+                            groupEnv.printLine(";");
                         }
                     }
                 }

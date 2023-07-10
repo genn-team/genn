@@ -470,22 +470,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
  
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(env, *this);
 
-    // Add field for spike recording
-    neuronEnv.addField(Type::Uint32.createPointer(), "_record_spk", "recordSpk",
-                       [&backend](const auto &ng, size_t) 
-                       { 
-                           return backend.getDeviceVarPrefix() + "recordSpk" + ng.getName(); 
-                       }, 
-                       "", GroupMergedFieldType::DYNAMIC);
-   
-    // Add field for spike event recording
-    neuronEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                       [&backend](const auto &ng, size_t)
-                       {
-                           return backend.getDeviceVarPrefix() + "recordSpkEvent" + ng.getName(); 
-                       },
-                       "", GroupMergedFieldType::DYNAMIC);
-
     // Add default input variable
     neuronEnv.add(modelMerged.getModel().getPrecision(), "Isyn", "Isyn",
                   {neuronEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
