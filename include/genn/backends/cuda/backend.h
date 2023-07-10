@@ -312,6 +312,11 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
+    std::string getNCCLReductionType(VarAccessMode mode) const;
+    std::string getNCCLType(const Type::ResolvedType &type) const;
+    
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
+
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
@@ -345,14 +350,49 @@ private:
         }
     }
 
+    template<typename G>
+    void genNCCLReduction(EnvironmentExternal &env, G &cg) const
+    {
+        CodeStream::Scope b(env.getStream());
+        env.getStream() << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
+        env.getStream() << "for(unsigned int g = 0; g < " << cg.getGroups().size() << "; g++)";
+        {
+            CodeStream::Scope b(env.getStream());
+
+            // Get reference to group
+            env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
+            EnvironmentGroupMergedField groupEnv(env, g);
+
+            // Loop through variables and add pointers if they are reduction targets
+            const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
+            for(const auto &v : cm->getVars()) {
+                if(v.access & VarAccessModeAttribute::REDUCE) {
+                    groupEnv.addField(v.type.resolve(getGroup().getTypeContext()).createPointer(), "_" + v.name, v.name,
+                                      [this, v](const auto &g, size_t) 
+                                      { 
+                                          return getDeviceVarPrefix() + v.name + g.getName();
+                                      });
+                
+                    groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
+                    groupEnv.printLine(", " + getNCCLType(v.type, cg.getTypeContext()) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
+                }
+            }
+
+            // Loop through variable references and add pointers if they are reduction targets
+            for(const auto &v : cm->getVarRefs()) {
+                if(v.access & VarAccessModeAttribute::REDUCE) {
+                    os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                    os << ", " << getNCCLType(v.type, cg.getTypeContext()) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+                }
+            } 
+        }
+    }
 
     //! Get the safe amount of constant cache we can use
     size_t getChosenDeviceSafeConstMemBytes() const
     {
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
-
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
     //--------------------------------------------------------------------------
     // Members

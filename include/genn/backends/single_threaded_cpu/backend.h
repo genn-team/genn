@@ -154,8 +154,8 @@ public:
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const final { return false; }
 
-    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const final;
-    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
+    virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const final { return false; }

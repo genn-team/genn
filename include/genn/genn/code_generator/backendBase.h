@@ -39,6 +39,7 @@ namespace CodeGenerator
 template<typename G, typename F = G>
 class EnvironmentGroupMergedField;
 class EnvironmentExternalBase;
+class ModelSpecInternal;
 class ModelSpecMerged;
 template<typename G>
 class GroupMerged;
@@ -381,10 +382,10 @@ public:
     virtual bool isDeviceScalarRequired() const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
-    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+    virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?
-    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const = 0;
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const = 0;

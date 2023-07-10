@@ -1294,7 +1294,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cstring>" << std::endl;
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
-    if(isGlobalHostRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(model)) {
         os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
@@ -1342,7 +1342,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
-    if(isGlobalHostRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(model)) {
         os << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
         os << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
         os << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
@@ -1612,11 +1612,10 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
-    const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
                    [](const ModelSpec::NeuronGroupValueType &n)
                    {
@@ -1672,7 +1671,7 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
     return false;
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &) const
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecInternal &) const
 {
     return false;
 }
