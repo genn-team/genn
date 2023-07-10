@@ -180,7 +180,7 @@ public:
                                                     GenMergedGroupFn<CustomWUUpdateHostReductionGroupMerged> generateGroup);
     void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, 
                                                  GenMergedGroupFn<CustomConnectivityUpdateGroupMerged> generateGroup);
-    void genMergedCustomConnectivityHostUpdateGroups(BackendBase &backend, const std::string &updateGroupName, 
+    void genMergedCustomConnectivityHostUpdateGroups(const BackendBase &backend, const std::string &updateGroupName, 
                                                      GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup);
     void genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, GenMergedGroupFn<NeuronSpikeQueueUpdateGroupMerged> generateGroup);
     void genMergedNeuronPrevSpikeTimeUpdateGroups(const BackendBase &backend, GenMergedGroupFn<NeuronPrevSpikeTimeUpdateGroupMerged> generateGroup);
