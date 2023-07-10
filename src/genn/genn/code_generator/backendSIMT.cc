@@ -501,7 +501,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             genNeuronIndexCalculation(groupEnv, batchSize);
             
             // Call handler to generate generic neuron code
-            popEnv.print("if($(id) < $(num_neurons))");
+            groupEnv.print("if($(id) < $(num_neurons))");
             {
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
