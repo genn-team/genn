@@ -467,7 +467,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     //if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(synapseUpdateEnv.getStream());
 
             synapseUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
             genSynapseDendriticDelayUpdateKernel(synapseUpdateEnv, modelMerged, memorySpaces, idSynapseDendricDelayUpdate);
@@ -827,8 +827,9 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     std::ostringstream initStream;
     CodeStream init(initStream);
 
-    // Begin environment with standard library
-    EnvironmentLibrary initEnv(init, StandardLibrary::getMathsFunctions());
+    // Begin environment with RNG library and standard library
+    EnvironmentLibrary rngEnv(init, getRNGFunctions(model.getPrecision()));
+    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalDeviceRNGRequired(model)) {

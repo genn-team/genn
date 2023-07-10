@@ -1487,6 +1487,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [&modelMerged, this](EnvironmentExternalBase &env, SynapseConnectivityInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, sg);
+            genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
             // If there is row-building code in this snippet
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
