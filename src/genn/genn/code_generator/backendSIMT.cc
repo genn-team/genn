@@ -474,15 +474,15 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                   {neuronEnv.addInitialiser(shSpkEvntCountInitStream.str())});
 
     // If any neuron groups record spikes
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeRecordingEnabled(); }))
+    if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
+                   [](const auto &n) { return n.second.isSpikeRecordingEnabled(); }))
     {
         genRecordingSharedMemInit(env.getStream(), "");
     }
 
     // If any neuron groups record spike-like events
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRecordingEnabled(); }))
+    if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
+                   [](const auto &n) { return n.second.isSpikeEventRecordingEnabled(); }))
     {
         genRecordingSharedMemInit(env.getStream(), "Evnt");
     }
@@ -664,24 +664,28 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
 {
     // Loop through merged synapse groups
     idStart = 0;
-    for(const auto &n : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
-        env.getStream() << "// merged" << n.getIndex() << std::endl;
-        if(idStart == 0) {
-            env.getStream() << "if(id < " << n.getGroups().size() << ")";
-        }
-        else {
-            env.getStream() << "if(id >= " << idStart << " && id < " << idStart + n.getGroups().size() << ")";
-        }
+    modelMerged.genMergedSynapseDendriticDelayUpdateGroups(
+        *this, memorySpaces,
+        [&env, &idStart, &modelMerged, this](auto &sg)
         {
-            CodeStream::Scope b(env.getStream());
+            env.getStream() << "// merged" << sg.getIndex() << std::endl;
+            if(idStart == 0) {
+                env.getStream() << "if(id < " << sg.getGroups().size() << ")";
+            }
+            else {
+                env.getStream() << "if(id >= " << idStart << " && id < " << idStart + sg.getGroups().size() << ")";
+            }
+            {
+                CodeStream::Scope b(env.getStream());
 
-            // Use this to get reference to merged group structure
-            env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
-
-            env.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(n.getArchetype().getMaxDendriticDelayTimesteps()) + ";");
-        }
-        idStart += n.getGroups().size();
-    }
+                // Use this to get reference to merged group structure
+                env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
+                EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(env, sg);
+                genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+                groupEnv.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(sg.getArchetype().getMaxDendriticDelayTimesteps()) + ";");
+            }
+            idStart += sg.getGroups().size();
+        });
     env.getStream() << std::endl;
 }
 //--------------------------------------------------------------------------
