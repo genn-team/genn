@@ -184,32 +184,39 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                            BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+    void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                         BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+    void genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                               BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
 
-    void genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
-
-    void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                              BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+    void genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                    BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+    void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                     BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+    void genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                  BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
 
     void genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                               const std::string &updateGroup, size_t &idStart) const;
+                               BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                 const std::string &updateGroup, size_t &idStart) const;
+                                 BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
     
     void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                          const std::string &updateGroup, size_t &idStart) const;
+                                          BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                           const std::string &updateGroup, size_t &idStart) const;
+                                           BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 
-    void genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                             BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
    
     void genInitializeSparseKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                   size_t numInitializeThreads, size_t &idStart) const;
+                                   size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
 
     //! Helper wrapper around padSize to pad size to a kernel size
     size_t padKernelSize(size_t size, Kernel kernel) const;
@@ -222,10 +229,10 @@ private:
     // Type definitions
     //--------------------------------------------------------------------------
     template<typename G>
-    using GenMergedGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, std::function<void(G&)>);
+    using GenMergedGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, BackendBase::MemorySpaces&, std::function<void(G&)>);
 
     template<typename G>
-    using GenMergedCustomUpdateGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, const std::string &, std::function<void(G&)>);
+    using GenMergedCustomUpdateGroupsFn = void (ModelSpecMerged::*)(const BackendBase&, BackendBase::MemorySpaces&, const std::string &, std::function<void(G&)>);
     
     //--------------------------------------------------------------------------
     // Private methods
@@ -306,10 +313,10 @@ private:
 
 
     template<typename T, typename S>
-    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart, 
+    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, size_t &idStart, 
                           GenMergedGroupsFn<T> generateGroupFn,  S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
     {
-        std::invoke(generateGroupFn, modelMerged, *this,
+        std::invoke(generateGroupFn, modelMerged, *this, memorySpaces,
                     [this, getPaddedSizeFunc, handler, &env, &idStart](T &g)
                     {
                         genGroup(env, g, idStart, getPaddedSizeFunc, handler);
@@ -317,10 +324,11 @@ private:
     }
 
     template<typename T, typename S>
-    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, const std::string &updateGroupName, size_t &idStart, 
-                          GenMergedCustomUpdateGroupsFn<T> generateGroupFn,  S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
+    void genParallelGroup(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                          const std::string &updateGroupName, size_t &idStart, GenMergedCustomUpdateGroupsFn<T> generateGroupFn,  
+                          S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
     {
-        std::invoke(generateGroupFn, modelMerged, *this, updateGroupName,
+        std::invoke(generateGroupFn, modelMerged, *this, memorySpaces, updateGroupName,
                     [this, getPaddedSizeFunc, handler, &env, &idStart](T &g)
                     {
                         genGroup(env, g, idStart, getPaddedSizeFunc, handler);

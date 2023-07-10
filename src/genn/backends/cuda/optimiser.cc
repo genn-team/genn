@@ -457,14 +457,18 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Create merged model
         ModelSpecMerged modelMerged(model, backend);
 
+        // Get memory spaces available to this backend
+        // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
+
         // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
-        generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateInit(outputPath, modelMerged, backend, dryRunSuffix);
-        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
+        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateInit(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateRunner(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
 
         // Generate support code module if the backend supports namespaces
         if (backend.supportsNamespace()) {

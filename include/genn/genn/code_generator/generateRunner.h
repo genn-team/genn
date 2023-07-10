@@ -26,5 +26,5 @@ class path;
 namespace GeNN::CodeGenerator
 {
 GENN_EXPORT MemAlloc generateRunner(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                                    const BackendBase &backend, const std::string &suffix = "");
+                                    const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
 }

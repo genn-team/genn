@@ -112,13 +112,17 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     //const auto hashDigest = modelMerged.getHashDigest(backend);
     MemAlloc mem = MemAlloc::zero();
     if(true/*forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)*/) {
+        // Get memory spaces available to this backend
+        // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
+
         // Generate modules
         // **NOTE** these are ordered in terms of memory-space priority
-        generateSynapseUpdate(outputPath, modelMerged, backend);
-        generateNeuronUpdate(outputPath, modelMerged, backend);
-        generateCustomUpdate(outputPath, modelMerged, backend);
-        generateInit(outputPath, modelMerged, backend);
-        mem = generateRunner(outputPath, modelMerged, backend);
+        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateInit(outputPath, modelMerged, backend, memorySpaces);
+        mem = generateRunner(outputPath, modelMerged, backend, memorySpaces);
         
         // Generate support code module if the backend supports namespaces
         if(backend.supportsNamespace()) {
@@ -188,8 +192,8 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     return std::make_pair(modules, mem);
 }
 //--------------------------------------------------------------------------
-void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                          const BackendBase &backend, const std::string &suffix)
+void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                          BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
@@ -202,7 +206,7 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     neuronUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genNeuronUpdate(neuronUpdate, modelMerged,
+    backend.genNeuronUpdate(neuronUpdate, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -212,8 +216,8 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         });
 }
 //--------------------------------------------------------------------------
-void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                          const BackendBase &backend, const std::string &suffix)
+void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                          BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
@@ -223,7 +227,7 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     customUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genCustomUpdate(customUpdate, modelMerged,
+    backend.genCustomUpdate(customUpdate, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -235,8 +239,8 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         });
 }
 //--------------------------------------------------------------------------
-void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                           const BackendBase &backend, const std::string &suffix)
+void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                           BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
@@ -249,7 +253,7 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
     synapseUpdate << std::endl;
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(synapseUpdate, modelMerged,
+    backend.genSynapseUpdate(synapseUpdate, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -260,8 +264,8 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
         });
 }
 //--------------------------------------------------------------------------
-void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                  const BackendBase &backend, const std::string &suffix)
+void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                  BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
@@ -269,7 +273,7 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
 
     init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
 
-    backend.genInit(init, modelMerged,
+    backend.genInit(init, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

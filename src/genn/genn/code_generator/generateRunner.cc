@@ -523,7 +523,7 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
 MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                                             const BackendBase &backend, const std::string &suffix)
+                                             const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());
@@ -738,7 +738,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     std::ostringstream synapseConnectivityHostInitStream;
     CodeStream synapseConnectivityHostInit(synapseConnectivityHostInitStream);
     modelMerged.genMergedSynapseConnectivityHostInitGroups(
-        backend, 
+        backend, memorySpaces,
         [&backend, &modelMerged, &synapseConnectivityHostInit](auto &sg)
         {
             EnvironmentExternal env(synapseConnectivityHostInit);

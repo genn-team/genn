@@ -98,7 +98,8 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                              HostHandler preambleHandler) const
 {
     if(modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
@@ -127,7 +128,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
         
         Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &n)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -184,7 +185,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
         // Loop through merged neuron spike queue update groups
         modelMerged.genMergedNeuronSpikeQueueUpdateGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &n)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -205,7 +206,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
         // Loop through merged neuron update groups
         modelMerged.genMergedNeuronUpdateGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &n)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -284,7 +285,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                               HostHandler preambleHandler) const
 {
     if (modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
@@ -311,7 +313,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
         {
             Timer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedSynapseDynamicsGroups(
-                *this,
+                *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
@@ -387,7 +389,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
         {
             Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
-                *this,
+                *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
@@ -422,7 +424,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
         {
             Timer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPostsynapticUpdateGroups(
-                *this,
+                *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
@@ -518,7 +520,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     os << synapseUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                              HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -555,7 +558,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
-                *this, g, 
+                *this, memorySpaces, g, 
                 [this, &customUpdateEnv, &modelMerged](auto &c)
                 {
                     c.generateUpdate(*this, customUpdateEnv, modelMerged);
@@ -564,7 +567,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
             {
                 Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateGroups(
-                    *this, g,
+                    *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
@@ -628,7 +631,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
                 // Loop through merged custom WU update groups
                 modelMerged.genMergedCustomUpdateWUGroups(
-                    *this, g,
+                    *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
@@ -709,7 +712,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                 
                 // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomConnectivityUpdateGroups(
-                    *this, g,
+                    *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
@@ -746,7 +749,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomUpdateTransposeWUGroups(
-                    *this, g,
+                    *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
@@ -819,7 +822,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                      HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -847,7 +851,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Neuron groups" << std::endl;
         modelMerged.genMergedNeuronInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &n)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -865,7 +869,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups" << std::endl;
         modelMerged.genMergedSynapseInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &s)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -883,7 +887,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom update groups" << std::endl;
         modelMerged.genMergedCustomUpdateInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -901,7 +905,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom connectivity presynaptic update groups" << std::endl;
         modelMerged.genMergedCustomConnectivityUpdatePreInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -919,7 +923,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom connectivity postsynaptic update groups" << std::endl;
         modelMerged.genMergedCustomConnectivityUpdatePostInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -937,7 +941,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom WU update groups" << std::endl;
         modelMerged.genMergedCustomWUUpdateInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -955,7 +959,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse sparse connectivity" << std::endl;
         modelMerged.genMergedSynapseConnectivityInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &s)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -1112,7 +1116,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
         modelMerged.genMergedSynapseSparseInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &s)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -1173,7 +1177,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom sparse WU update groups" << std::endl;
         modelMerged.genMergedCustomWUUpdateSparseInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());
@@ -1202,7 +1206,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom connectivity update sparse init groups" << std::endl;
          modelMerged.genMergedCustomConnectivityUpdateSparseInitGroups(
-            *this,
+            *this, memorySpaces,
             [this, &funcEnv, &modelMerged](auto &c)
             {
                 CodeStream::Scope b(funcEnv.getStream());

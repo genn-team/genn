@@ -307,14 +307,15 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                     BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
     // Parallelise over neuron groups
     idStart = 0;
     genParallelGroup<NeuronPrevSpikeTimeUpdateGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedNeuronPrevSpikeTimeUpdateGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronPrevSpikeTimeUpdateGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
         [batchSize, this](EnvironmentExternalBase &popEnv, NeuronPrevSpikeTimeUpdateGroupMerged &ng)
         {
@@ -388,14 +389,15 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                                  BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
     // Loop through local neuron groups
     idStart = 0;
     modelMerged.genMergedNeuronSpikeQueueUpdateGroups(
-        *this, 
+        *this, memorySpaces,
         [&env, &idStart, batchSize, this](auto &n)
         {
             if(idStart == 0) {
@@ -430,7 +432,8 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                        BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
@@ -489,7 +492,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     // Parallelise over neuron groups
     idStart = 0;
     genParallelGroup<NeuronUpdateGroupMerged>(
-        neuronEnv, modelMerged, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
+        neuronEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
         [batchSize, &modelMerged, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
         {
@@ -654,7 +657,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                                       BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     // Loop through merged synapse groups
     idStart = 0;
@@ -679,7 +683,8 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
     env.getStream() << std::endl;
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                             BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     EnvironmentExternal kernelEnv(env);
 
@@ -709,7 +714,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // Parallelise over synapse groups
     idStart = 0;
     genParallelGroup<PresynapticUpdateGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedPresynapticUpdateGroups,
+        kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticUpdateGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg)
         {
@@ -744,7 +749,8 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                              BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     EnvironmentExternal kernelEnv(env);
 
@@ -757,7 +763,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
     // Parallelise over postsynaptic update groups
     idStart = 0;
     genParallelGroup<PostsynapticUpdateGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedPostsynapticUpdateGroups,
+        kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPostsynapticUpdateGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg)
         {
@@ -834,12 +840,13 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
     );
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                           BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     // Parallelise over synapse groups whose weight update models have code for synapse dynamics
     idStart = 0;
     genParallelGroup<SynapseDynamicsGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedSynapseDynamicsGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseDynamicsGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumSynapseDynamicsThreads(sg), KernelSynapseDynamicsUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, SynapseDynamicsGroupMerged &sg)
         {
@@ -897,11 +904,11 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged, 
-                                        const std::string &updateGroup, size_t &idStart) const
+                                        BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<CustomUpdateGroupMerged>(
-        env, modelMerged, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateGroups,
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateGroups,
         [batchSize, this](const CustomUpdateInternal &cu) { return getPaddedNumCustomUpdateThreads(cu, batchSize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg)
         {
@@ -1033,11 +1040,11 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                          const std::string &updateGroup, size_t &idStart) const
+                                          BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<CustomUpdateWUGroupMerged>(
-        env, modelMerged, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateWUGroups,
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateWUGroups,
         [batchSize, this](const CustomUpdateWUInternal &cu) { return getPaddedNumCustomUpdateWUThreads(cu, batchSize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateWUGroupMerged &cg)
         {
@@ -1156,13 +1163,13 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                                   const std::string &updateGroup, size_t &idStart) const
+                                                   BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
 {
     // Generate 2D array
     const size_t blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
     env.getStream() << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
     genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
-        env, modelMerged, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateTransposeWUGroups,
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateTransposeWUGroups,
         [&modelMerged, this](const CustomUpdateWUInternal &cu) { return getPaddedNumCustomUpdateTransposeWUThreads(cu, modelMerged.getModel().getBatchSize()); },
         [blockSize, this](EnvironmentExternalBase &env, CustomUpdateTransposeWUGroupMerged &cg)
         {
@@ -1271,11 +1278,11 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                                    const std::string &updateGroup, size_t &idStart) const
+                                                    BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
 {
     // Parallelise across presynaptic neurons
     genParallelGroup<CustomConnectivityUpdateGroupMerged>(
-        env, modelMerged, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateGroups,
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdateGroupMerged &cg)
         {
@@ -1307,13 +1314,14 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
+                                      BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Local neuron groups" << std::endl;
     idStart = 0;
     genParallelGroup<NeuronInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedNeuronInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronInitGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, NeuronInitGroupMerged &ng)
         {
@@ -1357,7 +1365,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Synapse groups" << std::endl;
     genParallelGroup<SynapseInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedSynapseInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, SynapseInitGroupMerged &sg)
         {
@@ -1370,7 +1378,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Custom update groups" << std::endl;
     genParallelGroup<CustomUpdateInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomUpdateInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomUpdateInitGroups,
         [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomUpdateInitGroupMerged &cg)
         {
@@ -1395,7 +1403,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Custom WU update groups" << std::endl;
     genParallelGroup<CustomWUUpdateInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomWUUpdateInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateInitGroups,
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cg)
         {
@@ -1408,7 +1416,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Custom connectivity presynaptic update groups" << std::endl;
     genParallelGroup<CustomConnectivityUpdatePreInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePreInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePreInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePreInitGroupMerged &cg)
         {
@@ -1440,7 +1448,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Custom connectivity postsynaptic update groups" << std::endl;
     genParallelGroup<CustomConnectivityUpdatePostInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePostInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePostInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePostInitGroupMerged &cg)
         {
@@ -1472,7 +1480,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
     genParallelGroup<SynapseConnectivityInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedSynapseConnectivityInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseConnectivityInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, SynapseConnectivityInitGroupMerged &sg)
         {
@@ -1615,7 +1623,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                            size_t numInitializeThreads, size_t &idStart) const
+                                            size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
     EnvironmentExternal envKernel(env);
     envKernel.add(Type::Void, "_sh_row_length", "shRowLength",
@@ -1623,7 +1631,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
    
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<SynapseSparseInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitializeSparse); },
         [&modelMerged, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
         {
@@ -1664,7 +1672,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<CustomWUUpdateSparseInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomWUUpdateSparseInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateSparseInitGroups,
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
         [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomWUUpdateSparseInitGroupMerged &cg)
         {
@@ -1686,7 +1694,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<CustomConnectivityUpdateSparseInitGroupMerged>(
-        env, modelMerged, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups,
+        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
         [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdateSparseInitGroupMerged &cg)
         {

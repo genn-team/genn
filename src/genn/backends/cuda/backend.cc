@@ -309,7 +309,8 @@ Type::ResolvedType Backend::getPopulationRNGType() const
     return CURandState;
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                              HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -341,7 +342,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
 
-            genNeuronPrevSpikeTimeUpdateKernel(funcEnv, modelMerged, idNeuronPrevSpikeTimeUpdate);
+            genNeuronPrevSpikeTimeUpdateKernel(funcEnv, modelMerged, memorySpaces, idNeuronPrevSpikeTimeUpdate);
         }
         neuronUpdateEnv.getStream() << std::endl;
     }
@@ -354,7 +355,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
         neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, idNeuronSpikeQueueUpdate);
+        genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, memorySpaces, idNeuronSpikeQueueUpdate);
     }
     neuronUpdateEnv.getStream() << std::endl;
 
@@ -381,7 +382,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
         // Add RNG functions to environment and generate kernel
         EnvironmentLibrary rngEnv(funcEnv, getRNGFunctions(model.getPrecision()));
-        genNeuronUpdateKernel(rngEnv, modelMerged, idStart);
+        genNeuronUpdateKernel(rngEnv, modelMerged, memorySpaces, idStart);
     }
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -448,7 +449,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                               HostHandler preambleHandler) const
 {
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
@@ -467,7 +469,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
             CodeStream::Scope b(os);
 
             synapseUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genSynapseDendriticDelayUpdateKernel(synapseUpdateEnv, modelMerged, idSynapseDendricDelayUpdate);
+            genSynapseDendriticDelayUpdateKernel(synapseUpdateEnv, modelMerged, memorySpaces, idSynapseDendricDelayUpdate);
         }
         synapseUpdateEnv.getStream() << std::endl;
     //}
@@ -495,7 +497,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
             // Add RNG functions to environment and generate kernel
             EnvironmentLibrary rngEnv(funcEnv, getRNGFunctions(model.getPrecision()));
-            genPresynapticUpdateKernel(rngEnv, modelMerged, idPresynapticStart);
+            genPresynapticUpdateKernel(rngEnv, modelMerged, memorySpaces, idPresynapticStart);
         }
     }
 
@@ -519,7 +521,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
-            genPostsynapticUpdateKernel(funcEnv, modelMerged, idPostsynapticStart);
+            genPostsynapticUpdateKernel(funcEnv, modelMerged, memorySpaces, idPostsynapticStart);
         }
     }
     
@@ -543,7 +545,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
-            genSynapseDynamicsKernel(funcEnv, modelMerged, idSynapseDynamicsStart);
+            genSynapseDynamicsKernel(funcEnv, modelMerged, memorySpaces, idSynapseDynamicsStart);
         }
     }
 
@@ -622,7 +624,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
 
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                              HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -667,15 +670,15 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
                 funcEnv.getStream() << "// Custom updates" << std::endl;
-                genCustomUpdateKernel(funcEnv, modelMerged, g, idCustomUpdateStart);
+                genCustomUpdateKernel(funcEnv, modelMerged, memorySpaces, g, idCustomUpdateStart);
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
                 funcEnv.getStream() << "// Custom WU updates" << std::endl;
-                genCustomUpdateWUKernel(funcEnv, modelMerged, g, idCustomUpdateStart);
+                genCustomUpdateWUKernel(funcEnv, modelMerged, memorySpaces, g, idCustomUpdateStart);
                 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
                 funcEnv.getStream() << "// Custom connectivity updates" << std::endl;
-                genCustomConnectivityUpdateKernel(funcEnv, modelMerged, g, idCustomUpdateStart);
+                genCustomConnectivityUpdateKernel(funcEnv, modelMerged, memorySpaces, g, idCustomUpdateStart);
             }
         }
 
@@ -694,7 +697,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
                 funcEnv.getStream() << "// Custom WU transpose updates" << std::endl;
-                genCustomTransposeUpdateWUKernel(funcEnv, modelMerged, g, idCustomTransposeUpdateStart);
+                genCustomTransposeUpdateWUKernel(funcEnv, modelMerged, memorySpaces, g, idCustomTransposeUpdateStart);
             }
         }
         customUpdateEnv.getStream() << "void update" << g << "()";
@@ -703,7 +706,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
-                *this, g, 
+                *this, memorySpaces, g, 
                 [this, &customUpdateEnv, &modelMerged](auto &c)
                 {
                     c.generateUpdate(*this, customUpdateEnv, modelMerged);
@@ -733,7 +736,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                 // Loop through custom update host reduction groups and
                 // generate reductions for those in this custom update group
                 modelMerged.genMergedCustomUpdateHostReductionGroups(
-                    *this, g, 
+                    *this, memorySpaces, g, 
                     [this, &customUpdateEnv, &modelMerged](auto &cg)
                     {
                         genNCCLReduction(customUpdateEnv, cg);
@@ -742,7 +745,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
                 // Loop through custom WU update host reduction groups and
                 // generate reductions for those in this custom update group
                 modelMerged.genMergedCustomWUUpdateHostReductionGroups(
-                    *this, g, 
+                    *this, memorySpaces, g,
                     [this, &customUpdateEnv, &modelMerged](auto &cg)
                     {
                         genNCCLReduction(customUpdateEnv, cg);
@@ -809,7 +812,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     os << customUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
+void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                      HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -844,7 +848,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
         CodeStream::Scope b(initEnv.getStream());
 
         initEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(initEnv, modelMerged, idInitStart);
+        genInitializeKernel(initEnv, modelMerged, memorySpaces, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -864,7 +868,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
             CodeStream::Scope b(initEnv.getStream());
 
             initEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(initEnv, modelMerged, numStaticInitThreads, idSparseInitStart);
+            genInitializeSparseKernel(initEnv, modelMerged, numStaticInitThreads, memorySpaces, idSparseInitStart);
         }
     }
 
