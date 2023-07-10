@@ -98,21 +98,19 @@ void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env
     handler(varEnv);
 }
 //--------------------------------------------------------------------------
-bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
+bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
-    const ModelSpecInternal &model = modelMerged.getModel();
     return (std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                         [](const ModelSpec::SynapseGroupValueType &s){ return s.second.getConnectivityInitialiser().isHostRNGRequired(); })
             || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
                            [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return Utils::isRNGRequired(c.second.getHostUpdateCodeTokens()); }));
 }
 //--------------------------------------------------------------------------
-bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
+bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
-    const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
                    [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isInitRNGRequired(); }))
     {
@@ -464,13 +462,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     neuronEnv.add(Type::Void, "_sh_spk_pos", "shSpkPos",
                   {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos;")});
     neuronEnv.add(Type::Void, "_sh_spk_count", "shSpkCount",
-                  {neuronEnv.addInitialiser(shSpkCountInitStream.str()});
+                  {neuronEnv.addInitialiser(shSpkCountInitStream.str())});
     neuronEnv.add(Type::Void, "_sh_spk_evnt", "shSpkEvnt",
                   {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvnt[" + blockSizeStr + "];")});
     neuronEnv.add(Type::Void, "_sh_spk_evnt_pos", "shSpkEvntPos",
                   {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvntPos;")});
     neuronEnv.add(Type::Void, "_sh_spk_evnt_count", "shSpkEvntCount",
-                  {neuronEnv.addInitialiser(shSpkEvntCountInitStream.str()});
+                  {neuronEnv.addInitialiser(shSpkEvntCountInitStream.str())});
 
     // If any neuron groups record spikes
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
@@ -495,13 +493,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
         [batchSize, &modelMerged, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
         {
+            CodeStream::Scope b(popEnv.getStream());
+            EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
+            genNeuronIndexCalculation(groupEnv, batchSize);
+            
             // Call handler to generate generic neuron code
             popEnv.print("if($(id) < $(num_neurons))");
             {
-                CodeStream::Scope b(popEnv.getStream());
-                EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
-                genNeuronIndexCalculation(groupEnv, batchSize);
-
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
                                   [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
@@ -527,52 +525,52 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 //}
             }
 
-            genSharedMemBarrier(neuronEnv.getStream());
+            genSharedMemBarrier(groupEnv.getStream());
 
             if(ng.getArchetype().isSpikeEventRequired()) {
-                neuronEnv.getStream() << "if (" << getThreadID() << " == 1)";
+                groupEnv.getStream() << "if (" << getThreadID() << " == 1)";
                 {
-                    CodeStream::Scope b(neuronEnv.getStream());
-                    neuronEnv.getStream() << "if (shSpkEvntCount > 0)";
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.print("if($(_sh_spk_evnt_count) > 0)");
                     {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.getStream() << "shPosSpkEvnt = " << getAtomic(Type::Uint32) << "(&group->spkCntEvnt";
+                        CodeStream::Scope b(groupEnv.getStream());
+                        groupEnv.print("$(_sh_spk_evnt_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_evnt)");
                         if(ng.getArchetype().isDelayRequired()) {
-                            neuronEnv.getStream() << "[*" << neuronEnv["_spk_que_ptr"];
+                            groupEnv.print("[*$(_spk_que_ptr)");
                             if(batchSize > 1) {
-                                neuronEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                                groupEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
                             }
-                            neuronEnv.getStream() << "], shSpkEvntCount);" << std::endl;
+                            groupEnv.printLine("], $(_sh_spk_evnt_count));");
                         }
                         else {
-                            neuronEnv.getStream() << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkEvntCount);" << std::endl;
+                            groupEnv.printLine("[$(batch)], $(_sh_spk_evnt_count));");
                         }
                     }
                 } 
-                genSharedMemBarrier(neuronEnv.getStream());
+                genSharedMemBarrier(groupEnv.getStream());
             }
 
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                neuronEnv.getStream() << "if(" << getThreadID() << " == 0)";
+                groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
                 {
-                    CodeStream::Scope b(neuronEnv.getStream());
-                    neuronEnv.getStream() << "if (shSpkCount > 0)";
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.print("if ($(_sh_spk_count) > 0)");
                     {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.getStream() << "shPosSpk = " << getAtomic(Type::Uint32) << "(&group->spkCnt";
+                        CodeStream::Scope b(groupEnv.getStream());
+                        groupEnv.getStream() << "shPosSpk = " << getAtomic(Type::Uint32) << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                            neuronEnv.getStream() << "[*" << neuronEnv["_spk_que_ptr"];
+                            groupEnv.getStream() << "[*" << groupEnv["_spk_que_ptr"];
                             if(batchSize > 1) {
-                                neuronEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                                groupEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
                             }
-                            neuronEnv.getStream() << "], shSpkCount);" << std::endl;
+                            groupEnv.getStream() << "], shSpkCount);" << std::endl;
                         }
                         else {
-                            neuronEnv.getStream() << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
+                            groupEnv.getStream() << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
                         }
                     }
                 } 
-                genSharedMemBarrier(neuronEnv.getStream());
+                genSharedMemBarrier(groupEnv.getStream());
             }
 
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");

@@ -142,8 +142,8 @@ public:
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const final { return true; }
 
-    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const final;
-    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
+    virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;
 
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 
