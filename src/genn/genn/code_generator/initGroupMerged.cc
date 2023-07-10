@@ -369,7 +369,6 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
 
     // Create environment for group
     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, *this);
-    backend.genNeuronIndexCalculation(groupEnv, model.getBatchSize());
 
     // Initialise spike counts
     genInitSpikeCount(backend, groupEnv, false, model.getBatchSize());

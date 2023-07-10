@@ -1325,11 +1325,13 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         [&modelMerged, this](EnvironmentExternalBase &env, NeuronInitGroupMerged &ng)
         {
-            env.getStream() << "// only do this for existing neurons" << std::endl;
-            env.print("if($(id) < $(num_neurons))");
+            EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, ng);
+            genNeuronIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+
+            groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+            groupEnv.print("if($(id) < $(num_neurons))");
             {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, ng);
+                CodeStream::Scope b(groupEnv.getStream());
 
                 // If population RNGs are initialised on device and this neuron is going to require one, 
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {

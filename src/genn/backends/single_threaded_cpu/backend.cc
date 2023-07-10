@@ -862,7 +862,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
-                    n.generateInit(*this, funcEnv, modelMerged);
+
+                    EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(funcEnv, n);
+                    genNeuronIndexCalculation(groupEnv, 1);
+                    n.generateInit(*this, groupEnv, modelMerged);
                 }
             });
         
