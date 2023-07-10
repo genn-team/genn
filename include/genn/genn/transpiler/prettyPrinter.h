@@ -36,6 +36,20 @@ public:
     
     //! Get stream to write code within this environment to
     virtual CodeGenerator::CodeStream &getStream() = 0;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void print(const std::string &format);
+    void printLine(const std::string &format);
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    std::string operator[] (const std::string &name)
+    {
+        return getName(name);
+    }
 };
 
 typedef std::function<void(EnvironmentBase&, std::function<void(EnvironmentBase&)>)> StatementHandler;

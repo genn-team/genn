@@ -30,16 +30,6 @@ void EnvironmentExternalBase::define(const Token&, const Type::ResolvedType&, Er
     throw std::runtime_error("Cannot declare variable in external environment");
 }
 //----------------------------------------------------------------------------    
-void EnvironmentExternalBase::print(const std::string &format)
-{
-    getStream() << printSubs(format, *this);
-}
-//----------------------------------------------------------------------------    
-void EnvironmentExternalBase::printLine(const std::string &format)
-{
-    getStream() << printSubs(format, *this) << std::endl;
-}
-//----------------------------------------------------------------------------    
 CodeStream &EnvironmentExternalBase::getContextStream() const
 {
     return std::visit(

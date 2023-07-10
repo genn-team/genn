@@ -18,7 +18,7 @@ using namespace GeNN::CodeGenerator;
 LazyString::LazyString(const std::string &format, EnvironmentExternalBase &env)
 {
     // Create regex iterator to iterate over $(XXX) style varibles in format string
-    // **NOTE** this doesn't match function argument $(0) 
+    // **NOTE** this doesn't match function argument $(0)
     std::regex regex("\\$\\(([a-zA-Z_][\\w]+)\\)");
     std::sregex_iterator matchesBegin(format.cbegin(), format.cend(), regex);
     std::sregex_iterator matchesEnd;

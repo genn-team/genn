@@ -153,10 +153,11 @@ void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const T
     PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);
 }
 //--------------------------------------------------------------------------
-std::string printSubs(const std::string &format, EnvironmentExternalBase &env)
+std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env)
 {
     // Create regex iterator to iterate over $(XXX) style varibles in format string
-    std::regex regex("\\$\\(([\\w]+)\\)");
+    // **NOTE** this doesn't match function argument $(0)
+    std::regex regex("\\$\\(([a-zA-Z_][\\w]+)\\)");
     std::sregex_iterator matchesBegin(format.cbegin(), format.cend(), regex);
     std::sregex_iterator matchesEnd;
     

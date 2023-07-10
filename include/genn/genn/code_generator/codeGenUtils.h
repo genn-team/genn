@@ -77,7 +77,7 @@ GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tok
                                        Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
-GENN_EXPORT std::string printSubs(const std::string &format, EnvironmentExternalBase &env);
+GENN_EXPORT std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env);
 
 
 template<typename T>

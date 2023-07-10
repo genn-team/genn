@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 
 // Transpiler includes
@@ -262,8 +263,8 @@ private:
         const auto &type = m_ResolvedTypes.at(&variable);
         std::string name = m_Environment.get().getName(variable.getName().lexeme, type);
 
-        // If identifier is function and name isn't empty i.e. it contains a function template
-        if (type.isFunction() && !name.empty()) {
+        // If identifier is function i.e. name is a function template
+        if (type.isFunction()) {
             // Check that there are call arguments on the stack
             assert(!m_CallArguments.empty());
 
@@ -313,8 +314,8 @@ private:
             }
         }
         // Print out name
-        // **NOTE** in case of function this will be full pretty-printed call
-        m_Environment.get().getStream() << name;
+        // **NOTE** this will apply any remaining substitutions
+        m_Environment.get().print(name);
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -491,6 +492,19 @@ private:
     std::stack<std::vector<std::string>> m_CallArguments;
 };
 }   // Anonymous namespace
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::PrettyPrinter::EnvironmentBase
+//---------------------------------------------------------------------------
+void EnvironmentBase::print(const std::string &format)
+{
+    getStream() << printSubs(format, *this);
+}
+//----------------------------------------------------------------------------    
+void EnvironmentBase::printLine(const std::string &format)
+{
+    getStream() << printSubs(format, *this) << std::endl;
+}
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
