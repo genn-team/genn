@@ -76,7 +76,7 @@ void BackendSIMT::genVariableInit(EnvironmentExternalBase &env, const std::strin
     handler(env);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, const SynapseInitGroupMerged &sg, HandlerEnv handler) const
+void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
     // Variable should already be provided via parallelism
     //assert(kernelSubs.hasVarSubstitution("id"));
@@ -87,7 +87,7 @@ void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, con
     handler(varEnv);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, const CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
+void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
     // Variable should already be provided via parallelism
     //assert(kernelSubs.hasVarSubstitution("id"));
@@ -396,7 +396,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
     idStart = 0;
     modelMerged.genMergedNeuronSpikeQueueUpdateGroups(
         *this, 
-        [&env, &idStart, batchSize, this](const auto &n)
+        [&env, &idStart, batchSize, this](auto &n)
         {
             if(idStart == 0) {
                 env.getStream() << "if(id < " << n.getGroups().size() << ")";
@@ -411,7 +411,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
                 env.getStream() << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
             
                 // Create matching environment
-                EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, batchSize);
+                EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, n);
                 genNeuronIndexCalculation(neuronEnv, batchSize);
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
@@ -527,6 +527,31 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
             genSharedMemBarrier(groupEnv.getStream());
 
+            // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
+            if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
+                groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.print("if ($(_sh_spk_count) > 0)");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+                        groupEnv.print("$(_sh_spk_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt)");
+                        if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
+                            groupEnv.print("[*$(_spk_que_ptr)");
+                            if(batchSize > 1) {
+                                groupEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
+                            groupEnv.printLine("], $(_sh_spk_count));");
+                        }
+                        else {
+                            groupEnv.printLine("[$(batch)], $(_sh_spk_count));");
+                        }
+                    }
+                } 
+                genSharedMemBarrier(groupEnv.getStream());
+            }
+
+            // Use second thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
             if(ng.getArchetype().isSpikeEventRequired()) {
                 groupEnv.getStream() << "if (" << getThreadID() << " == 1)";
                 {
@@ -550,73 +575,52 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 genSharedMemBarrier(groupEnv.getStream());
             }
 
+            // Copy spikes into block of $(_spk)
+            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
+                const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
+                                                                           batchSize, VarAccessDuplication::DUPLICATE, "");
+                groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.print("if ($(_sh_spk_count) > 0)");
-                    {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.getStream() << "shPosSpk = " << getAtomic(Type::Uint32) << "(&group->spkCnt";
-                        if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                            groupEnv.getStream() << "[*" << groupEnv["_spk_que_ptr"];
-                            if(batchSize > 1) {
-                                groupEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
-                            }
-                            groupEnv.getStream() << "], shSpkCount);" << std::endl;
-                        }
-                        else {
-                            groupEnv.getStream() << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
-                        }
-                    }
-                } 
-                genSharedMemBarrier(groupEnv.getStream());
-            }
 
-            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");
-            if(ng.getArchetype().isSpikeEventRequired()) {
-                neuronEnv.getStream() << "if(" << getThreadID() << " < shSpkEvntCount)";
-                {
-                    CodeStream::Scope b(neuronEnv.getStream());
-                    neuronEnv.getStream() << "const unsigned int n = shSpkEvnt[" << getThreadID() << "];" << std::endl;
+                    groupEnv.printLine("const unsigned int n = $(_sh_spk)[" + getThreadID() + "];");
 
-                    neuronEnv.printLine("$(_spk_evnt)[" + queueOffset + "shPosSpkEvnt + " + getThreadID() + "] = n;");
-                    if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                        neuronEnv.printLine("$(_spk_evnt_time)[" + queueOffset + "n] = t;");
+                    // Create new substition stack and explicitly replace id with 'n' and perform WU var update
+                    EnvironmentExternal wuEnv(groupEnv);
+                    wuEnv.add(Type::Uint32.addConst(), "id", "n");
+                    ng.generateWUVarUpdate(*this, wuEnv, modelMerged);
+
+                    groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
+                    if(ng.getArchetype().isSpikeTimeRequired()) {
+                        groupEnv.printLine("$(_spk_time)[" + queueOffset + "n] = $(t);");
                     }
                 }
             }
 
-            if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
-                                                                           batchSize, VarAccessDuplication::DUPLICATE, "");
-                neuronEnv.getStream() << "if(" << getThreadID() << " < shSpkCount)";
+            // Copy spike-like events into block of $(_spk_evnt)
+            if(ng.getArchetype().isSpikeEventRequired()) {
+                groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_evnt_count))");
                 {
-                    CodeStream::Scope b(neuronEnv.getStream());
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.printLine("const unsigned int n = $(_sh_spk_evnt)[" + getThreadID() + "];");
 
-                    neuronEnv.getStream() << "const unsigned int n = shSpk[" << getThreadID() << "];" << std::endl;
-
-                    // Create new substition stack and explicitly replace id with 'n' and perform WU var update
-                    EnvironmentExternal wuEnv(neuronEnv);
-                    wuEnv.add(Type::Uint32.addConst(), "id", "n");
-                    ng.generateWUVarUpdate(*this, wuEnv, modelMerged);
-
-                    neuronEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "shPosSpk + " + getThreadID() + "] = n;");
-                    if(ng.getArchetype().isSpikeTimeRequired()) {
-                        neuronEnv.printLine("$(_spk_time)[" + queueOffset + "n] = t;");
+                    groupEnv.printLine("$(_spk_evnt)[" + queueOffset + "$(_sh_spk_evnt_pos) + " + getThreadID() + "] = n;");
+                    if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                        groupEnv.printLine("$(_spk_evnt_time)[" + queueOffset + "n] = $(t);");
                     }
                 }
             }
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                neuronEnv.getStream() << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
+                groupEnv.getStream() << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
                 {
-                    CodeStream::Scope b(neuronEnv.getStream());
+                    CodeStream::Scope b(groupEnv.getStream());
 
                     // Calculate number of words which will be used to record this population's spikes in each batch
-                    neuronEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
-                    neuronEnv.printLine("const unsigned int popWordIdx = ($(id) / 32) + " + getThreadID() + ";");
+                    groupEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
+                    groupEnv.printLine("const unsigned int popWordIdx = ($(id) / 32) + " + getThreadID() + ";");
 
                     // Build global index
                     std::string globalIndex = "(recordingTimestep * numRecordingWords * " + std::to_string(batchSize) + ") + popWordIdx";
@@ -624,25 +628,25 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         globalIndex += " + (batch * numRecordingWords)";
                     }
 
-                    neuronEnv.getStream() << "if(popWordIdx < numRecordingWords)";
+                    groupEnv.getStream() << "if(popWordIdx < numRecordingWords)";
                     {
-                        CodeStream::Scope c(neuronEnv.getStream());
+                        CodeStream::Scope c(groupEnv.getStream());
                         // If we are recording spikes, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                            neuronEnv.getStream() << neuronEnv["_record_spk"] << "[" << globalIndex << "] = shSpkRecord";
+                            groupEnv.getStream() << groupEnv["_record_spk"] << "[" << globalIndex << "] = shSpkRecord";
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                                neuronEnv.getStream() << "[" << getThreadID() << "]";
+                                groupEnv.getStream() << "[" << getThreadID() << "]";
                             }
-                            neuronEnv.getStream() << ";" << std::endl;
+                            groupEnv.getStream() << ";" << std::endl;
                         }
 
                         // If we are recording spike-like events, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                            neuronEnv.getStream() << neuronEnv["_record_spk_evnt"] << "[" << globalIndex << "] = shSpkEvntRecord";
+                            groupEnv.getStream() << groupEnv["_record_spk_evnt"] << "[" << globalIndex << "] = shSpkEvntRecord";
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                                neuronEnv.getStream() << "[" << getThreadID() << "]";
+                                groupEnv.getStream() << "[" << getThreadID() << "]";
                             }
-                            neuronEnv.getStream() << ";" << std::endl;
+                            groupEnv.getStream() << ";" << std::endl;
                         }
                     }
                 }

@@ -625,12 +625,12 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         runnerVarDecl << "unsigned long long numRecordingTimesteps = 0;" << std::endl;
     }
     // If backend requires a global device RNG to simulate (or initialize) this model
-    if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
+    if(backend.isGlobalDeviceRNGRequired(model)) {
         backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, 
                                    runnerVarDecl, runnerVarAlloc, runnerVarFree, mem);
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
-    if(backend.isGlobalHostRNGRequired(modelMerged)) {
+    if(backend.isGlobalHostRNGRequired(model)) {
         genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed(), mem);
     }
     allVarStreams << std::endl;

@@ -128,7 +128,7 @@ void genGroupStartIDs(CodeStream &, size_t&, size_t&)
 template<typename T, typename G, typename ...Args>
 void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, 
                       const std::vector<T> &mergedGroups, G getPaddedNumThreads,
-                      Args... args)
+                      Args&&... args)
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
@@ -136,16 +136,16 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
     }
 
     // Generate any remaining groups
-    genGroupStartIDs(os, idStart, totalConstMem, args...);
+    genGroupStartIDs(os, idStart, totalConstMem, std::forward<Args>(args)...);
 }
 //-----------------------------------------------------------------------
 template<typename ...Args>
 void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
-                                   Args... args)
+                                   Args&&... args)
 {
     // Generate group start id arrays
     size_t idStart = 0;
-    genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
+    genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), std::forward<Args>(args)...);
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G>
@@ -323,7 +323,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const auto &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired())}))
+                   [](const auto &ng){ return (ng.second.isPrevSpikeTimeRequired() || ng.second.isPrevSpikeEventTimeRequired()); }))
     {
         neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
         {
@@ -475,7 +475,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); }))
+                   [](const auto &sg){ return (sg.second.isSpikeEventRequired() || sg.second.isTrueSpikeRequired()); }))
     {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
@@ -502,7 +502,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.getWUPostLearnCodeTokens()); }))
+                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.second.getWUPostLearnCodeTokens()); }))
     {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
         {
@@ -526,7 +526,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Hos
     // If any synapse groups require synapse dynamics
     size_t idSynapseDynamicsStart = 0;
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.getWUSynapseDynamicsCodeTokens()); }))
+                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.second.getWUSynapseDynamicsCodeTokens()); }))
     {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
@@ -650,11 +650,11 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
         // Generate kernel
         size_t idCustomUpdateStart = 0;
         if(std::any_of(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                       [&g](const auto &cg) { return (cg.getUpdateGroupName() == g); })
+                       [&g](const auto &cg) { return (cg.second.getUpdateGroupName() == g); })
            || std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                       [&g](const auto &cg) { return (!cg.isTransposeOperation() && cg.getUpdateGroupName() == g); })
+                       [&g](const auto &cg) { return (!cg.second.isTransposeOperation() && cg.second.getUpdateGroupName() == g); })
            || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                          [&g](const auto &cg) { return (!Utils::areTokensEmpty(cg.getRowUpdateCodeTokens()) && cg.getUpdateGroupName() == g); }))
+                          [&g](const auto &cg) { return (!Utils::areTokensEmpty(cg.second.getRowUpdateCodeTokens()) && cg.second.getUpdateGroupName() == g); }))
         {
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
@@ -681,7 +681,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
 
         size_t idCustomTransposeUpdateStart = 0;
         if(std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                       [&g](const auto &cg){ return (cg.isTransposeOperation() && cg.getUpdateGroupName() == g); }))
+                       [&g](const auto &cg){ return (cg.second.isTransposeOperation() && cg.second.getUpdateGroupName() == g); }))
         {
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
@@ -732,19 +732,21 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Host
             if(getPreferences<Preferences>().enableNCCLReductions) {
                 // Loop through custom update host reduction groups and
                 // generate reductions for those in this custom update group
-                for(auto &cg : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
-                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                modelMerged.genMergedCustomUpdateHostReductionGroups(
+                    *this, g, 
+                    [this, &customUpdateEnv, &modelMerged](auto &cg)
+                    {
                         genNCCLReduction(customUpdateEnv, cg);
-                    }
-                }
+                    });
 
-                // Loop through custom update host reduction groups and
+                // Loop through custom WU update host reduction groups and
                 // generate reductions for those in this custom update group
-                for(auto &cg : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
-                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                modelMerged.genMergedCustomWUUpdateHostReductionGroups(
+                    *this, g, 
+                    [this, &customUpdateEnv, &modelMerged](auto &cg)
+                    {
                         genNCCLReduction(customUpdateEnv, cg);
-                    }
-                }
+                    });
             }
 
             // If timing is enabled
@@ -994,7 +996,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, HostHandler 
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
-    const ModelSpecInternal &model = modelMerged.getModel();
     size_t totalConstMem = 0;
     genMergedKernelDataStructures(
         os, totalConstMem,

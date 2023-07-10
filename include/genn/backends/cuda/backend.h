@@ -246,17 +246,17 @@ public:
                                               const std::string &egpName) const final;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const = 0;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
 
     //! Generate an RNG with a state per population member
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocations, CodeStream &free, 
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
@@ -351,7 +351,7 @@ private:
     }
 
     template<typename G>
-    void genNCCLReduction(EnvironmentExternal &env, G &cg) const
+    void genNCCLReduction(EnvironmentExternalBase &env, G &cg) const
     {
         CodeStream::Scope b(env.getStream());
         env.getStream() << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
@@ -361,28 +361,43 @@ private:
 
             // Get reference to group
             env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
-            EnvironmentGroupMergedField groupEnv(env, g);
+            EnvironmentGroupMergedField<G> groupEnv(env, cg);
 
-            // Loop through variables and add pointers if they are reduction targets
+            // Loop through variables
             const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
             for(const auto &v : cm->getVars()) {
+                // If variable is reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {
-                    groupEnv.addField(v.type.resolve(getGroup().getTypeContext()).createPointer(), "_" + v.name, v.name,
+                    // Add pointer field
+                    const auto resolvedType = v.type.resolve(cg.getTypeContext());
+                    groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                                       [this, v](const auto &g, size_t) 
                                       { 
                                           return getDeviceVarPrefix() + v.name + g.getName();
                                       });
-                
+                    
+                    // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
-                    groupEnv.printLine(", " + getNCCLType(v.type, cg.getTypeContext()) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
+                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
                 }
             }
 
-            // Loop through variable references and add pointers if they are reduction targets
+            // Loop through variable references
             for(const auto &v : cm->getVarRefs()) {
+                // If variable reference ios reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {
-                    os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
-                    os << ", " << getNCCLType(v.type, cg.getTypeContext()) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+                    // Add pointer field
+                    const auto resolvedType = v.type.resolve(cg.getTypeContext());
+                    groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+                                      [this, v](const auto &g, size_t) 
+                                      { 
+                                          const auto varRef = g.getVarReferences().at(v.name);
+                                          return getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); ;
+                                      });
+
+                    // Add NCCL reduction
+                    groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
+                    groupEnv.printLine(", " + getNCCLType(v.type.resolve(cg.getTypeContext())) + ", " + getNCCLReductionType(v.access) + ", ncclCommunicator, 0));");
                 }
             } 
         }

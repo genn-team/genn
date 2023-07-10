@@ -31,6 +31,7 @@ namespace GeNN
 {
 class CustomUpdateInternal;
 class CustomUpdateWUInternal;
+class ModelSpecInternal;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 
@@ -39,7 +40,6 @@ namespace CodeGenerator
 template<typename G, typename F = G>
 class EnvironmentGroupMergedField;
 class EnvironmentExternalBase;
-class ModelSpecInternal;
 class ModelSpecMerged;
 template<typename G>
 class GroupMerged;
