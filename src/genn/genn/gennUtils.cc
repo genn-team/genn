@@ -38,6 +38,9 @@ std::string upgradeCodeString(const std::string &codeString)
         {std::regex(R"(\$\(gennrand_log_normal,(.*)\))"), "gennrand_log_normal($1)"},
         {std::regex(R"(\$\(gennrand_gamma,(.*)\))"), "gennrand_gamma($1)"},
         {std::regex(R"(\$\(gennrand_binomial,(.*)\))"), "gennrand_binomial($1)"},
+        {std::regex(R"(\$\(addToPre,(.*)\))"), "addToPre($1)"},
+        {std::regex(R"(\$\(addToInSyn,(.*)\))"), "addToPost($1)"},
+        {std::regex(R"(\$\(addToInSynDelay,(.*),(.*)\))"), "addToPostDelay($1,$2)"},
         {std::regex(R"(\$\(addSynapse,(.*)\))"), "addSynapse($1)"},
         {std::regex(R"(\$\(endRow\))"), "endRow()"},
         {std::regex(R"(\$\(endCol\))"), "endCol()"}};
