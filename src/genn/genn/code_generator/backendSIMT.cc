@@ -354,7 +354,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     }
                 }
             }
-            // Otherwises
+            // Otherwise
             else {
                 if(batchSize > 1) {
                     neuronEnv.printLine("const unsigned int batchOffset = $(num_neurons) * $(batch);");
@@ -364,11 +364,14 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt)[$(batch)])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_spk_time)[$(_spk)[");
-                        if(batchSize > 1) {
-                            neuronEnv.getStream() << "batchOffset + ";
+                        neuronEnv.print("$(_prev_spk_time)[");
+                        if (batchSize == 1) {
+                            neuronEnv.print("$(_spk)[$(id)]");
                         }
-                        neuronEnv.printLine("$(id)]] = $(t) - DT;");
+                        else {
+                            neuronEnv.print("batchOffset + $(_spk)[batchOffset + $(id)]");
+                        }
+                        neuronEnv.printLine("] = $(t) - $(dt);");
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -376,11 +379,14 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt_evnt)[$(batch)])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_spk_evnt_time)[$(_spk_evnt)[");
-                        if(batchSize > 1) {
-                            neuronEnv.getStream() << "batchOffset + ";
+                        neuronEnv.print("$(_prev_spk_evnt_time)[");
+                        if (batchSize == 1) {
+                            neuronEnv.print("$(_spk_evnt)[$(id)]");
                         }
-                        neuronEnv.printLine("$(id)]] = $(t) - DT;");
+                        else {
+                            neuronEnv.print("batchOffset + $(_spk_evnt)[batchOffset + $(id)]");
+                        }
+                        neuronEnv.printLine("] = $(t) - $(dt);");
                     }
                 }
             }
