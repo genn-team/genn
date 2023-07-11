@@ -57,9 +57,9 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 {
     // Define recursive function to generate nested kernel initialisation loops
     // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
-    std::function<void(size_t)> generateRecursive =
-        [&handler, &env, &g, &generateRecursive, numKernelDims]
-        (size_t depth)
+    std::function<void(EnvironmentExternalBase &env, size_t)> generateRecursive =
+        [&handler, &g, &generateRecursive, numKernelDims]
+        (EnvironmentExternalBase &env, size_t depth)
         {
             // Loop through this kernel dimensions
             const std::string idxVar = "k" + std::to_string(depth);
@@ -83,13 +83,13 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
                 }
                 // Otherwise, recurse
                 else {
-                    generateRecursive(depth + 1);
+                    generateRecursive(loopEnv, depth + 1);
                 }
             }
         };
 
     // Generate loops through kernel indices recursively
-    generateRecursive(0);
+    generateRecursive(env, 0);
 }
 }
 
