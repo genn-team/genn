@@ -210,9 +210,11 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
     if (cg.isNeuronReduction()) {
         return padKernelSize(32 * numCopies, KernelCustomUpdate);
     }
+    else if (cg.isPerNeuron()) {
+        return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+    }
     else {
-        const size_t numElements = cg.isPerNeuron() ? cg.getSize() : 1;
-        return numCopies * padKernelSize(numElements, KernelCustomUpdate);
+        return padKernelSize(numCopies, KernelCustomUpdate);
     }
 }
 //--------------------------------------------------------------------------
