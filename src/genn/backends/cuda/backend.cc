@@ -301,7 +301,7 @@ std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &se
     // Skipahead RNG
     os << "curandStatePhilox4_32_10_t localRNG = d_rng;" << std::endl;
     os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
-    return "&localRNG";
+    return "localRNG";
 }
 //--------------------------------------------------------------------------
 Type::ResolvedType Backend::getPopulationRNGType() const
@@ -1033,6 +1033,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
         modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
     os << std::endl;
+
+    os << initStream.str();
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -1599,6 +1601,35 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
+                                               const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
+                                               const std::string &countVarName) const
+{
+    const auto &underlyingType = type.isPointer() ? *type.getPointer().valueType : type;
+    const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
+    const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
+    const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
+    if(getPreferences().automaticCopy) {
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+    }
+    else {
+        if(loc & VarLocation::HOST) {
+            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
+        }
+
+        // If variable is present on device at all
+        if(loc & VarLocation::DEVICE) {
+            if(loc & VarLocation::ZERO_COPY) {
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+            }
+            else {
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+            }
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
     if(getPreferences().automaticCopy) {
@@ -1732,6 +1763,23 @@ void Backend::genVariableDynamicPush(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicPush(CodeStream &os, 
+                                         const Type::ResolvedType &type, const std::string &name,
+                                         VarLocation loc, const std::string &countVarName) const
+{
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        if (type.isPointer()) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_d_" << name << "), *$(_" << name << "), ";
+            os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        else {
+            os << "$(d_" << name << ") = new " << type.getName() << "[" << countVarName << "];" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_d_" << name << "), $(_" << name << "), ";
+            os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableDynamicPull(CodeStream &os, 
                                      const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                      const std::string &countVarName, const std::string &prefix) const
@@ -1748,6 +1796,23 @@ void Backend::genVariableDynamicPull(CodeStream &os,
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << name;
             os << ", " << prefix << "d_" << name;
             os << ", " << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicPull(CodeStream &os, 
+                                         const Type::ResolvedType &type, const std::string &name,
+                                         VarLocation loc, const std::string &countVarName) const
+{
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        if (type.isPointer()) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_" << name << "), *$(_d_" << name << "), ";
+            os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_" << name << "), $(_d_" << name << "), ";
+            os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         
     }
