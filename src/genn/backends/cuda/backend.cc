@@ -863,17 +863,16 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     }
     const size_t numStaticInitThreads = idInitStart;
 
-    /*((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
-                                   (sg.isWUVarInitRequired()
-                                   || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));*/
-    //  (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired();
-    // return cg.isVarInitRequired();
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    //if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-    //               [](const auto &sg){})
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()
-       || !modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().empty()) {
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                   [](const auto &sg){ return ((sg.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
+                                               (sg.second.isWUVarInitRequired() || !Utils::areTokensEmpty(sg.second.getWUPostLearnCodeTokens()))); })
+       || std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                      [](const auto &cg){ return (cg.second.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.second.isVarInitRequired(); })
+       || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                      [](const auto &cg){ return cg.second.isVarInitRequired(); }))
+    {
         initEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(initEnv.getStream());
