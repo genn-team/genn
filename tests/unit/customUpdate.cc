@@ -499,6 +499,7 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
     ASSERT_TRUE(cuInternal->isBatched());
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
+    ASSERT_EQ(cuInternal->getSize(), 10);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
@@ -637,6 +638,31 @@ TEST(CustomUpdates, NeuronBatchReduction)
     }
     catch (const std::runtime_error &) {
     }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, SharedNeuronVariable)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (copy of izhikevich model where a, b, c and d are shared_neuron) to model
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0},
+                         {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
+
+    // Add custom update to sum A and B
+    VarReferences sumVarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    auto *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
+                                          {}, {{"sum", 0.0}}, sumVarReferences);
+
+    // Finalize model
+    model.finalise();
+    
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_FALSE(cuInternal->isNeuronReduction());
+    ASSERT_EQ(cuInternal->getSize(), 1);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, CompareDifferentModel)
