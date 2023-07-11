@@ -883,7 +883,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
-                    s.generateInit(*this, funcEnv, modelMerged);
+                    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
+                    genSynapseIndexCalculation(groupEnv, 1);
+
+                    s.generateInit(*this, groupEnv, modelMerged);
                 }
             });
 

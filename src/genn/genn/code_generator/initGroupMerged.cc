@@ -535,7 +535,6 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
 {
     // Create environment for group
     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, *this);
-    backend.genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
     // If model is batched and has kernel weights
     const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);

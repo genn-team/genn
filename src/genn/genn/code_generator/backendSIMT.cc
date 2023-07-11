@@ -1655,11 +1655,12 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
    
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<SynapseSparseInitGroupMerged>(
-        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
+        envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitializeSparse); },
         [&modelMerged, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, sg);
+            genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
 
             // If this post synapse requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
@@ -1696,7 +1697,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<CustomWUUpdateSparseInitGroupMerged>(
-        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateSparseInitGroups,
+        envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateSparseInitGroups,
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
         [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomWUUpdateSparseInitGroupMerged &cg)
         {
@@ -1718,7 +1719,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<CustomConnectivityUpdateSparseInitGroupMerged>(
-        env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups,
+        envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
         [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdateSparseInitGroupMerged &cg)
         {

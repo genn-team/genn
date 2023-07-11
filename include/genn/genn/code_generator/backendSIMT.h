@@ -433,9 +433,9 @@ private:
     {
         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
         const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-        env.getStream() << "const unsigned int numBlocks = (" << env["num_pre"] << " + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
-
-        env.getStream() << "unsigned int idx = " << env["id"] << ";" << std::endl;
+        const std::string blockSizeStr = std::to_string(blockSize);
+        env.printLine("const unsigned int numBlocks = ($(num_pre) + " + blockSizeStr + " - 1) / " + blockSizeStr + ";");
+        env.printLine("unsigned int idx = $(id);");
 
         // Loop through blocks
         env.getStream() << "for(unsigned int r = 0; r < numBlocks; r++)";
@@ -452,7 +452,7 @@ private:
             env.getStream() << "if (" << getThreadID() << " < numRowsInBlock)";
             {
                 CodeStream::Scope b(env.getStream());
-                env.getStream() << "shRowLength[" << getThreadID() << "] = " << env["_row_length"] << "[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
+                env.printLine("$(_sh_row_length)[" + getThreadID() + "] = $(_row_length)[(r * " + blockSizeStr + ") + " + getThreadID() + "];");
             }
             genSharedMemBarrier(env.getStream());
 
@@ -462,7 +462,7 @@ private:
                 CodeStream::Scope b(env.getStream());
 
                 // If there is a synapse for this thread to initialise
-                env.getStream() << "if(" << env["id"] << " < shRowLength[i])";
+                env.print("if($(id) < $(_sh_row_length)[i])");
                 {
                     CodeStream::Scope b(env.getStream());
                     
@@ -479,7 +479,7 @@ private:
                 }
 
                 // If matrix is ragged, advance index to next row by adding stride
-                env.getStream() << "idx += " << env["_row_stride"] << ";" << std::endl;
+                env.printLine("idx += $(_row_stride);");
             }
         }
     }
