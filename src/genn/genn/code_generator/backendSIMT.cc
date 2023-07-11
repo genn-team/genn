@@ -211,7 +211,8 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
         return padKernelSize(32 * numCopies, KernelCustomUpdate);
     }
     else {
-        return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+        const size_t numElements = cg.isPerNeuron() ? cg.getSize() : 1;
+        return numCopies * padKernelSize(numElements, KernelCustomUpdate);
     }
 }
 //--------------------------------------------------------------------------
@@ -1016,6 +1017,27 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                             groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                         }
                     }
+                }
+            }
+            // Otherwise, if this update isn't per-neuron
+            else if (!cg.getArchetype().isPerNeuron()) {
+                EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
+                if(cg.getArchetype().isBatched()) {
+                    groupEnv.add(Type::Uint32.addConst(), "batch", "$(id)");
+                    groupEnv.add(Type::Uint32.addConst(), "id", "0");
+                }
+                // Otherwise, just substitute "batch" for 0
+                else {
+                    groupEnv.add(Type::Uint32.addConst(), "batch", "0");
+                }
+
+                groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+
+                    genCustomUpdateIndexCalculation(groupEnv);
+                    cg.generateCustomUpdate(*this, groupEnv);
                 }
             }
             // Otherwise

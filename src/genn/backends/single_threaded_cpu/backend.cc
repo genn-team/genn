@@ -590,13 +590,17 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), c);
 
                                 // Loop through group members
-                                groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["size"] << "; i++)";
-                                {
-                                    CodeStream::Scope b(groupEnv.getStream());
-
-                                    // Generate custom update
-                                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                groupEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                if (c.getArchetype().isPerNeuron()) {
+                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
+                                }
+                                else {
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "0");
+                                }
+                                {
+                                    CodeStream::Scope b(memberEnv.getStream());
                                     c.generateCustomUpdate(*this, memberEnv);
 
                                     // Loop through reduction targets and generate reduction

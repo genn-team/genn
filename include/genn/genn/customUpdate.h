@@ -243,6 +243,7 @@ protected:
     //------------------------------------------------------------------------
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
+    bool isPerNeuron() const{ return m_PerNeuron; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -261,6 +262,9 @@ private:
     const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
+
+    //! Is this custom update per-neuron i.e. run in parallel across all neurons
+    bool m_PerNeuron;
 };
 
 //------------------------------------------------------------------------

@@ -112,7 +112,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
                            const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
 {
     // Validate parameters, variables and variable references
     getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
@@ -123,6 +123,32 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Check variable reference types
     Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+
+    // Update is per-neuron if any variables or variable reference targets AREN'T SHARED_NEURON
+    const auto modelVars = getCustomUpdateModel()->getVars();
+    m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                              [](const auto& v) 
+                              {
+                                  return !(v.second.getVar().access & VarAccessDuplication::SHARED_NEURON); 
+                              });
+    m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
+                               [](const Models::Base::Var& v) 
+                               {
+                                   return !(v.access & VarAccessDuplication::SHARED_NEURON); 
+                               });
+
+    // Loop through all variable references
+    for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+        const auto &varRef = m_VarReferences.at(modelVarRef.name);
+
+        // If custom update is per-neuron, check that any variable references to SHARED_NEURON variables are read-only
+        // **NOTE** if custom update isn't per-neuron, it's totally fine to write to SHARED_NEURON variables
+        if(m_PerNeuron && (varRef.getVar().access & VarAccessDuplication::SHARED_NEURON)
+            && (modelVarRef.access == VarAccessMode::READ_WRITE))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
+        }
+    }
 
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
@@ -167,7 +193,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateHash(hash);
 
-    // Update hash with whether delay is required
+    // Update hash with whether custom update is per-neuron and if delay is required
+    Utils::updateHash(isPerNeuron(), hash);
     const bool delayed = (getDelayNeuronGroup() != nullptr);
     Utils::updateHash(delayed, hash);
 
@@ -192,6 +219,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
     // Superclass
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateInitHash(hash);
+    Utils::updateHash(isPerNeuron(), hash);
     return hash.get_digest();
 }
 
