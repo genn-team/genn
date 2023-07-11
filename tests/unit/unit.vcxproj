@@ -15,7 +15,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="binomial.cc" />
-    <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
     <ClCompile Include="customConnectivityUpdate.cc" />
