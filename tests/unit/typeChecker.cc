@@ -4,11 +4,13 @@
 // GeNN includes
 #include "type.h"
 
+// GeNN code generator includes
+#include "code_generator/standardLibrary.h"
+
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/parser.h"
 #include "transpiler/scanner.h"
-#include "transpiler/standardLibrary.h"
 #include "transpiler/typeChecker.h"
 
 using namespace GeNN;
@@ -93,11 +95,43 @@ private:
     std::unordered_map<std::string, Type::ResolvedType> m_Types;
 };
 
+class TestLibraryEnvironment : public TypeChecker::EnvironmentBase
+{
+public:
+    explicit TestLibraryEnvironment(const CodeGenerator::EnvironmentLibrary::Library &library)
+    :   m_Library(library)
+    {}
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual void define(const Token&, const Type::ResolvedType&, ErrorHandlerBase&) final
+    {
+        throw TypeChecker::TypeCheckError();
+    }
+
+    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
+    {
+        const auto [typeBegin, typeEnd] = m_Library.get().equal_range(name.lexeme);
+        if (typeBegin == typeEnd) {
+             throw TypeChecker::TypeCheckError();
+        }
+        else {
+            std::vector<Type::ResolvedType> types;
+            types.reserve(std::distance(typeBegin, typeEnd));
+            std::transform(typeBegin, typeEnd, std::back_inserter(types),
+                           [](const auto &t) { return t.second.first; });
+            return types;
+        }
+    }
+private:
+    std::reference_wrapper<const CodeGenerator::EnvironmentLibrary::Library> m_Library;
+};
+
 void typeCheckStatements(std::string_view code, TypeChecker::EnvironmentBase &typeEnvironment, const Type::TypeContext &typeContext = {})
 {
     // Scan
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
+    const auto tokens = Scanner::scanSource(code, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
  
     // Parse
@@ -105,7 +139,7 @@ void typeCheckStatements(std::string_view code, TypeChecker::EnvironmentBase &ty
     ASSERT_FALSE(errorHandler.hasError());
 
     // Typecheck
-    TypeChecker::typeCheck(statements, typeEnvironment, errorHandler);
+    TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 }
 
@@ -113,7 +147,7 @@ Type::ResolvedType typeCheckExpression(std::string_view code, TypeChecker::Envir
 {
     // Scan
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource(code, typeContext, errorHandler);
+    const auto tokens = Scanner::scanSource(code, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
  
     // Parse
@@ -121,9 +155,9 @@ Type::ResolvedType typeCheckExpression(std::string_view code, TypeChecker::Envir
     EXPECT_FALSE(errorHandler.hasError());
     
     // Typecheck
-    const auto type = TypeChecker::typeCheck(expression.get(), typeEnvironment, errorHandler);
+    const auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeEnvironment, typeContext, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
-    return type;
+    return resolvedTypes.at(expression.get());
 }
 }   // Anonymous namespace
 
@@ -250,7 +284,7 @@ TEST(TypeChecker, Binary)
 TEST(TypeChecker, Call)
 {
     // Too few arguments
-    StandardLibrary::FunctionTypes stdLibraryEnv;
+    TestLibraryEnvironment stdLibraryEnv(CodeGenerator::StandardLibrary::getMathsFunctions());
     EXPECT_THROW({
         typeCheckExpression("sin()", stdLibraryEnv);}, 
         TypeChecker::TypeCheckError);
@@ -345,14 +379,6 @@ TEST(TypeChecker, Cast)
         EXPECT_TRUE(type.hasQualifier(Type::Qualifier::CONSTANT));
         EXPECT_EQ(*type.getPointer().valueType, Type::Int32);    
     }
-
-    // Can't remove value const from numeric
-    // **THINK** why not? it's a copy
-    EXPECT_THROW({
-        TestEnvironment typeEnvironment;
-        typeEnvironment.define(Type::Int32.addQualifier(Type::Qualifier::CONSTANT), "intVal");
-        typeCheckExpression("(int)intVal", typeEnvironment);},
-        TypeChecker::TypeCheckError);
 
     // Can't remove value const from pointer
     EXPECT_THROW({

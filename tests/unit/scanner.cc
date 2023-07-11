@@ -56,7 +56,7 @@ private:
 TEST(Scanner, DecimalInt)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1234 4294967295U -2345 -2147483647", {}, errorHandler);
+    const auto tokens = Scanner::scanSource("1234 4294967295U -2345 -2147483647", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
@@ -77,7 +77,7 @@ TEST(Scanner, DecimalInt)
 TEST(Scanner, HexInt)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("0x1234 0xFFFFFFFFU -0x1234 -0x7FFFFFFF", {}, errorHandler);
+    const auto tokens = Scanner::scanSource("0x1234 0xFFFFFFFFU -0x1234 -0x7FFFFFFF", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
@@ -98,12 +98,12 @@ TEST(Scanner, HexInt)
 TEST(Scanner, DecimalFloat)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", {{"scalar", Type::Float}}, errorHandler);
+    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 9);
-    ASSERT_EQ(tokens[0].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::SCALAR_NUMBER);
+    ASSERT_EQ(tokens[1].type, Token::Type::SCALAR_NUMBER);
     ASSERT_EQ(tokens[2].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[3].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
@@ -123,7 +123,7 @@ TEST(Scanner, DecimalFloat)
 TEST(Scanner, String)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("\"hello world\" \"pre-processor\"", {}, errorHandler);
+    const auto tokens = Scanner::scanSource("\"hello world\" \"pre-processor\"", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 3);

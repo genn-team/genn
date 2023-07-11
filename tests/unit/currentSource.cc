@@ -29,7 +29,7 @@ TEST(CurrentSource, CompareDifferentModel)
                                                                          cs1ParamVals, {});
 
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
@@ -56,7 +56,7 @@ TEST(CurrentSource, CompareDifferentParameters)
                                                                                     cs1ParamVals, {});
 
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
@@ -83,7 +83,7 @@ TEST(CurrentSource, CompareSameParameters)
                                                                                     cs1ParamVals, {});
 
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);

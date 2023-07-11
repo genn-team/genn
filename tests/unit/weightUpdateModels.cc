@@ -16,19 +16,19 @@ class PiecewiseSTDPCopy : public WeightUpdateModels::Base
 {
 public:
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-        "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
+                     "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
+        "addToPost(g);\n"
+        "scalar dt = sT_post - t - tauShift; \n"
         "scalar dg = 0;\n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
+        "    dg = slope0 * dt + off1; \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + ($(off1)); \n"
         "else dg = - ($(off2)) ; \n"
         "$(gRaw) += dg; \n"
         "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");

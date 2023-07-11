@@ -27,13 +27,25 @@ public:
 };
 IMPLEMENT_SNIPPET(StaticPulseBack);
 
+class StaticPulseBackConstantWeight : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(StaticPulseBackConstantWeight);
+
+    SET_PARAM_NAMES({"g"});
+
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "$(addToPre, $(g));\n");
+};
+IMPLEMENT_SNIPPET(StaticPulseBackConstantWeight);
+
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(WeightUpdateModelPost);
 
-    SET_VARS({{"w", "scalar"}});
-    SET_PARAM_NAMES({"p"});
+    SET_PARAM_NAMES({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -46,8 +58,7 @@ class WeightUpdateModelPre : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(WeightUpdateModelPre);
 
-    SET_VARS({{"w", "scalar"}});
-    SET_PARAM_NAMES({"p"});
+    SET_PARAM_NAMES({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -219,20 +230,17 @@ TEST(NeuronGroup, ConstantVarIzhikevich)
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    model.finalize();
+    model.finalise();
 
-    ASSERT_FALSE(ng->isZeroCopyEnabled());
-    ASSERT_FALSE(ng->isSimRNGRequired());
-    ASSERT_FALSE(ng->isInitRNGRequired());
+    auto ngInternal = static_cast<NeuronGroupInternal*>(ng);
+    ASSERT_FALSE(ngInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(ngInternal->isSimRNGRequired());
+    ASSERT_FALSE(ngInternal->isInitRNGRequired());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(model));
 }
 
 TEST(NeuronGroup, UninitialisedVarIzhikevich)
@@ -243,20 +251,17 @@ TEST(NeuronGroup, UninitialisedVarIzhikevich)
     VarValues varVals{{"V", uninitialisedVar()}, {"U", uninitialisedVar()}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    model.finalize();
+    model.finalise();
 
-    ASSERT_FALSE(ng->isZeroCopyEnabled());
-    ASSERT_FALSE(ng->isSimRNGRequired());
-    ASSERT_FALSE(ng->isInitRNGRequired());
+    auto ngInternal = static_cast<NeuronGroupInternal*>(ng);
+    ASSERT_FALSE(ngInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(ngInternal->isSimRNGRequired());
+    ASSERT_FALSE(ngInternal->isInitRNGRequired());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(model));
 }
 
 TEST(NeuronGroup, RandVarIzhikevich)
@@ -268,20 +273,17 @@ TEST(NeuronGroup, RandVarIzhikevich)
     VarValues varVals{{"V", 0.0}, {"U", initVar<InitVarSnippet::Uniform>(dist)}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
-    model.finalize();
+    model.finalise();
 
-    ASSERT_FALSE(ng->isZeroCopyEnabled());
-    ASSERT_FALSE(ng->isSimRNGRequired());
-    ASSERT_TRUE(ng->isInitRNGRequired());
+    auto ngInternal = static_cast<NeuronGroupInternal*>(ng);
+    ASSERT_FALSE(ngInternal->isZeroCopyEnabled());
+    ASSERT_FALSE(ngInternal->isSimRNGRequired());
+    ASSERT_TRUE(ngInternal->isInitRNGRequired());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(model));
 }
 
 TEST(NeuronGroup, Poisson)
@@ -292,20 +294,17 @@ TEST(NeuronGroup, Poisson)
     VarValues varVals{{"timeStepToSpike", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::PoissonNew>("Neurons0", 10, paramVals, varVals);
 
-    model.finalize();
+    model.finalise();
 
-    ASSERT_FALSE(ng->isZeroCopyEnabled());
-    ASSERT_TRUE(ng->isSimRNGRequired());
-    ASSERT_FALSE(ng->isInitRNGRequired());
+    auto ngInternal = static_cast<NeuronGroupInternal*>(ng);
+    ASSERT_FALSE(ngInternal->isZeroCopyEnabled());
+    ASSERT_TRUE(ngInternal->isSimRNGRequired());
+    ASSERT_FALSE(ngInternal->isInitRNGRequired());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(model));
 }
 
 TEST(NeuronGroup, FuseWUMPrePost)
@@ -332,62 +331,62 @@ TEST(NeuronGroup, FuseWUMPrePost)
     
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     
     // Create synapse group with different value for parameter accessed in presynaptic code
     auto *synPreParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynPreParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynPreParam", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParamsPre, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     
     // Create synapse group with different value for parameter accessed in presynaptic code
     auto *synPostParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynPostParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynPostParam", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParamsPost, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     
     // Create synapse group with different value for parameter only accessed in synapse code
     auto *synSynParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynSynParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynSynParam", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParamsSyn, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     
     // Create synapse group with different presynaptic variable initialiser
     auto *synPreVar2 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynPreVar2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynPreVar2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParams, wumVarVals, wumPreVarVals2, wumPostVarVals,
         {}, {});
     
     // Create synapse group with different postsynaptic variable initialiser
     auto *synPostVar2 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynPostVar2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynPostVar2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParams, wumVarVals, wumPreVarVals, wumPostVarVals2,
         {}, {});
     
     // Create synapse group with axonal delay
     auto *synAxonalDelay = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynAxonalDelay", SynapseMatrixType::DENSE_INDIVIDUALG, 10,
+        "SynAxonalDelay", SynapseMatrixType::DENSE, 10,
         "Pre", "Post",
         wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     
     // Create synapse group with backprop delay
     auto *synBackPropDelay = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
-        "SynBackPropDelay", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynBackPropDelay", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
         {}, {});
     synBackPropDelay->setBackPropDelaySteps(10);
     
-    model.finalize();
+    model.finalise();
     
     // Cast synapse groups to internal types
     auto synInternal = static_cast<SynapseGroupInternal*>(syn);
@@ -447,28 +446,28 @@ TEST(NeuronGroup, FusePSM)
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
-        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, {});
     
     // Create second synapse group
     auto *syn2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
-        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, {});
     
     // Create synapse group with different value for PSM parameter
     auto *synParam = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
-        "SynParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynParam", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals2, {});
     
     // Create synapse group with different target variable
     auto *synTarget = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
-        "SynTarget", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynTarget", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, {});
@@ -476,13 +475,13 @@ TEST(NeuronGroup, FusePSM)
     
     // Create synapse group with different max dendritic delay
     auto *synDelay = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
-        "SynDelay", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynDelay", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, {});
     synDelay->setMaxDendriticDelayTimesteps(20);
     
-    model.finalize();
+    model.finalise();
     
     // Cast synapse groups to internal types
     auto synInternal = static_cast<SynapseGroupInternal*>(syn);
@@ -521,27 +520,27 @@ TEST(NeuronGroup, FusePreOutput)
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         {}, {});
     
     // Create second synapse group
     auto *syn2 = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
-        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         {}, {});
 
     // Create synapse group with different target variable
     auto *synTarget = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
-        "SynTarget", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SynTarget", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         {}, {});
     synTarget->setPreTargetVar("Isyn2");
   
-    model.finalize();
+    model.finalise();
     
     // Cast synapse groups to internal types
     auto synInternal = static_cast<SynapseGroupInternal*>(syn);
@@ -569,7 +568,7 @@ TEST(NeuronGroup, CompareNeuronModels)
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramValsA, varVals2);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramValsB, varVals3);
 
-    model.finalize();
+    model.finalise();
 
     // Check that all groups can be merged
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
@@ -622,7 +621,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     auto *ng0 = model.addNeuronPopulation<LIFAdditional>("Neurons0", 10, paramValsA, varVals);
     auto *ng1 = model.addNeuronPopulation<LIFAdditional>("Neurons1", 10, paramValsB, varVals);
 
-    model.finalize();
+    model.finalise();
 
     // Check that all groups can be merged
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
@@ -662,7 +661,7 @@ TEST(NeuronGroup, CompareSimRNG)
     auto *ng0 = model.addNeuronPopulation<NeuronModels::LIF>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<LIFRandom>("Neurons1", 10, paramVals, varVals);
 
-    model.finalize();
+    model.finalise();
 
     // Check that groups cannot be merged
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
@@ -670,8 +669,8 @@ TEST(NeuronGroup, CompareSimRNG)
     ASSERT_NE(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
     ASSERT_NE(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
 
-    ASSERT_TRUE(!ng0->isSimRNGRequired());
-    ASSERT_TRUE(ng1->isSimRNGRequired());
+    ASSERT_TRUE(!ng0Internal->isSimRNGRequired());
+    ASSERT_TRUE(ng1Internal->isSimRNGRequired());
 }
 
 TEST(NeuronGroup, CompareCurrentSources)
@@ -713,7 +712,7 @@ TEST(NeuronGroup, CompareCurrentSources)
     model.addCurrentSource<CurrentSourceModels::DC>("CS9", "Neurons4", cs2ParamVals, {});
 
     // **TODO** heterogeneous params
-    model.finalize();
+    model.finalise();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
@@ -776,62 +775,71 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     auto *ng4 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons4", 10, paramVals, varVals);
 
     // Add incoming synapse groups with Delta and DeltaCurr postsynaptic models to Neurons0
-    VarValues staticPulseVarVals{{"g", 0.1}};
+    ParamValues staticPulseParamVals{{"g", 0.1}};
     ParamValues alphaCurrParamVals{{"tau", 0.5}};
     ParamValues alphaCurrParamVals1{{"tau", 0.75}};
     VarValues alphaCurrVarVals{{"x", 0.0}};
     VarValues alphaCurrVarVals1{{"x", 0.1}};
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons0",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                           "SpikeSource", "Neurons0",
-                                                                           {}, staticPulseVarVals,
-                                                                           alphaCurrParamVals, alphaCurrVarVals);
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons0",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, AlphaCurr>(
+        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons0",
+        staticPulseParamVals, {},
+        alphaCurrParamVals, alphaCurrVarVals);
 
     // Do the same for Neuron1
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons1",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("SG3", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                           "SpikeSource", "Neurons1",
-                                                                           {}, staticPulseVarVals,
-                                                                           alphaCurrParamVals, alphaCurrVarVals);
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons1",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, AlphaCurr>(
+        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons1",
+        staticPulseParamVals, {},
+        alphaCurrParamVals, alphaCurrVarVals);
 
     // Do the same, but with different parameters for Neuron2,
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons2",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("SG5", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                           "SpikeSource", "Neurons2",
-                                                                           {}, staticPulseVarVals,
-                                                                           alphaCurrParamVals1, alphaCurrVarVals1);
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons2",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, AlphaCurr>(
+        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons2",
+        staticPulseParamVals, {},
+        alphaCurrParamVals1, alphaCurrVarVals1);
 
     // Do the same, but in the opposite order for Neuron3
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("SG6", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                           "SpikeSource", "Neurons3",
-                                                                           {}, staticPulseVarVals,
-                                                                           alphaCurrParamVals, alphaCurrVarVals);
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG7", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons3",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, AlphaCurr>(
+        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons3",
+        staticPulseParamVals, {},
+        alphaCurrParamVals, alphaCurrVarVals);
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG7", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons3",
+        staticPulseParamVals, {},
+        {}, {});
 
     // Add two incoming synapse groups with DeltaCurr postsynaptic models sources to Neurons4
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG8", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons4",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG8", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons4",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG9", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SpikeSource", "Neurons4",
+        staticPulseParamVals, {},
+        {}, {});
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG9", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "SpikeSource", "Neurons4",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-
-    model.finalize();
+    model.finalise();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
@@ -896,47 +904,55 @@ TEST(NeuronGroup, ComparePreOutput)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPost2", 10, paramVals, varVals);
 
     // Add two outgoing synapse groups to NeuronsPre0
-    VarValues staticPulseVarVals{{"g", 0.1}};
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre0", "NeuronsPost0",
-                                                                                {}, staticPulseVarVals,
-                                                                                {}, {});
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre0", "NeuronsPost1",
-                                                                               {}, staticPulseVarVals,
-                                                                               {}, {});
+    ParamValues staticPulseParamVals{{"g", 0.1}};
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre0", "NeuronsPost0",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre0", "NeuronsPost1",
+        staticPulseParamVals, {},
+        {}, {});
 
     // Do the same for NeuronsPre1
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre1", "NeuronsPost0",
-                                                                                {}, staticPulseVarVals,
-                                                                                {}, {});
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre1", "NeuronsPost1",
-                                                                               {}, staticPulseVarVals,
-                                                                               {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre1", "NeuronsPost0",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre1", "NeuronsPost1",
+        staticPulseParamVals, {},
+        {}, {});
     
     // Add three outgoing groups to NeuronPre2
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre2", "NeuronsPost0",
-                                                                                {}, staticPulseVarVals,
-                                                                                {}, {});
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre2", "NeuronsPost1",
-                                                                               {}, staticPulseVarVals,
-                                                                               {}, {});
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG6", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre2", "NeuronsPost2",
-                                                                               {}, staticPulseVarVals,
-                                                                               {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre2", "NeuronsPost0",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre2", "NeuronsPost1",
+        staticPulseParamVals, {},
+        {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre2", "NeuronsPost2",
+        staticPulseParamVals, {},
+        {}, {});
 
     // Add one outgoing groups to NeuronPre3
-    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG7", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                               "NeuronsPre3", "NeuronsPost0",
-                                                                                {}, staticPulseVarVals,
-                                                                                {}, {});
+    model.addSynapsePopulation<StaticPulseBackConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG7", SynapseMatrixType::SPARSE, NO_DELAY,
+        "NeuronsPre3", "NeuronsPost0",
+        staticPulseParamVals, {},
+        {}, {});
 
-    model.finalize();
+    model.finalise();
 
     NeuronGroupInternal *ngPre0Internal = static_cast<NeuronGroupInternal *>(ngPre0);
     NeuronGroupInternal *ngPre1Internal = static_cast<NeuronGroupInternal *>(ngPre1);
@@ -976,51 +992,51 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     auto *ng5 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons5", 10, paramVals, varVals);
 
     // Add incoming synapse groups with Delta and DeltaCurr postsynaptic models to Neurons0
-    VarValues staticPulseVarVals{{"g", 0.1}};
-    VarValues testVarVals{{"w", 0.0}};
-    ParamValues testParams{{"p", 1.0}};
-    ParamValues testParams2{{"p", 2.0}};
+    ParamValues staticPulseParamVals{{"g", 0.1}};
+    ParamValues testParams{{"w", 0.0}, {"p", 1.0}};
+    ParamValues testParams2{{"w", 0.0}, {"p", 2.0}};
     VarValues testPreVarVals1{{"s", 0.0}};
     VarValues testPreVarVals2{{"s", 2.0}};
 
     // Connect neuron group 1 to neuron group 0 with pre weight update model
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons1", "Neurons0",
-                                                                                    testParams, testVarVals, testPreVarVals1, {},
+                                                                                    testParams, {}, testPreVarVals1, {},
                                                                                     {}, {});
 
     // Also connect neuron group 2 to neuron group 0 with pre weight update model
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons2", "Neurons0",
-                                                                                    testParams, testVarVals, testPreVarVals1, {},
+                                                                                    testParams, {}, testPreVarVals1, {},
                                                                                     {}, {});
 
     // Also connect neuron group 3 to neuron group 0 with pre weight update model, but different parameters
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons3", "Neurons0",
-                                                                                    testParams2, testVarVals, testPreVarVals1, {},
+                                                                                    testParams2, {}, testPreVarVals1, {},
                                                                                     {}, {});
 
     // Connect neuron group 4 to neuron group 0 with 2*pre weight update model
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons4", "Neurons0",
-                                                                                    testParams, testVarVals, testPreVarVals1, {},
+                                                                                    testParams, {}, testPreVarVals1, {},
                                                                                     {}, {});
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons4", "Neurons0",
-                                                                                    testParams, testVarVals, testPreVarVals1, {},
+                                                                                    testParams, {}, testPreVarVals1, {},
                                                                                     {}, {});
 
     // Connect neuron group 5 to neuron group 0 with pre weight update model and static pulse
-    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPre, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                     "Neurons5", "Neurons0",
-                                                                                    testParams, testVarVals, testPreVarVals2, {},
+                                                                                    testParams, {}, testPreVarVals2, {},
                                                                                     {}, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG6", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "Neurons5", "Neurons0",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-    model.finalize();
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Neurons5", "Neurons0",
+        staticPulseParamVals, {},
+        {}, {});
+    model.finalise();
 
     // Check which groups can be merged together
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
@@ -1078,51 +1094,51 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     auto *ng5 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons5", 10, paramVals, varVals);
 
     // Add incoming synapse groups with Delta and DeltaCurr postsynaptic models to Neurons0
-    VarValues staticPulseVarVals{{"g", 0.1}};
-    VarValues testVarVals{{"w", 0.0}};
-    ParamValues testParams{{"p", 1.0}};
-    ParamValues testParams2{{"p", 2.0}};
+    ParamValues staticPulseParamVals{{"g", 0.1}};
+    ParamValues testParams{{"w", 0.0}, {"p", 1.0}};
+    ParamValues testParams2{{"w", 0.0}, {"p", 2.0}};
     VarValues testPostVarVals1{{"s", 0.0}};
     VarValues testPostVarVals2{{"s", 2.0}};
 
     // Connect neuron group 0 to neuron group 1 with post weight update model
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons1",
-                                                                                     testParams, testVarVals, {}, testPostVarVals1,
+                                                                                     testParams, {}, {}, testPostVarVals1,
                                                                                      {}, {});
 
     // Also connect neuron group 0 to neuron group 2 with post weight update model
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons2",
-                                                                                     testParams, testVarVals, {}, testPostVarVals1,
+                                                                                     testParams, {}, {}, testPostVarVals1,
                                                                                      {}, {});
 
     // Also connect neuron group 0 to neuron group 3 with post weight update model but different parameters
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons3",
-                                                                                     testParams2, testVarVals, {}, testPostVarVals1,
+                                                                                     testParams2, {}, {}, testPostVarVals1,
                                                                                      {}, {});
 
     // Connect neuron group 0 to neuron group 3 with 2*post weight update model
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons4",
-                                                                                     testParams, testVarVals, {}, testPostVarVals1,
+                                                                                     testParams, {}, {}, testPostVarVals1,
                                                                                      {}, {});
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons4",
-                                                                                     testParams, testVarVals, {}, testPostVarVals1,
+                                                                                     testParams, {}, {}, testPostVarVals1,
                                                                                      {}, {});
 
     // Connect neuron group 0 to neuron group 4 with post weight update model and static pulse
-    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+    model.addSynapsePopulation<WeightUpdateModelPost, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE, NO_DELAY,
                                                                                      "Neurons0", "Neurons5",
-                                                                                     testParams, testVarVals, {}, testPostVarVals2,
+                                                                                     testParams, {}, {}, testPostVarVals2,
                                                                                      {}, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("SG6", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                               "Neurons0", "Neurons5",
-                                                                                               {}, staticPulseVarVals,
-                                                                                               {}, {});
-    model.finalize();
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Neurons0", "Neurons5",
+        staticPulseParamVals, {},
+        {}, {});
+    model.finalise();
 
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);

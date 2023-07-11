@@ -52,13 +52,12 @@ public:
     
     SET_VARS({{"a", "scalar"}});
     SET_ROW_UPDATE_CODE(
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(id_post) == ($(id_pre) + 1)) {\n"
-        "       $(remove_synapse);\n"
+        "for_each_synapse{\n"
+        "   if(id_post == (id_pre + 1)) {\n"
+        "       remove_synapse();\n"
         "       break;\n"
         "   }\n"
-        "});\n");
+        "};\n");
 };
 IMPLEMENT_SNIPPET(RemoveSynapse);
 }
@@ -104,7 +103,7 @@ TEST(ModelSpec, PSMZeroCopy)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     SynapseGroup *sg = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>(
-        "Synapse", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
         "Neurons0", "Neurons1",
         {}, {{"g", 1.0}},
         {{"tau", 5.0}}, {{"x", 0.0}});
@@ -123,7 +122,7 @@ TEST(ModelSpec, WUZeroCopy)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     SynapseGroup *sg = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Synapse", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
         "Neurons0", "Neurons1",
         {}, {{"g", 1.0}},
         {}, {});
@@ -157,7 +156,7 @@ TEST(ModelSpec, CustomConnectivityUpdateZeroCopy)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Synapse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Synapse", SynapseMatrixType::SPARSE, NO_DELAY,
         "Neurons0", "Neurons1",
         {}, {{"g", 1.0}, {"d", 1}},
         {}, {});

@@ -11,7 +11,7 @@ using namespace GeNN;
 //--------------------------------------------------------------------------
 class GaussianNoiseCopy : public CurrentSourceModels::Base
 {
-    SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
+    SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
     SET_PARAM_NAMES({"mean", "sd"} );
 };
