@@ -1,12 +1,16 @@
 // Standard C++ includes
 #include <array>
+#include <filesystem>
 #include <functional>
 #include <vector>
+
+#undef DUPLICATE
 
 // Google test includes
 #include "gtest/gtest.h"
 
 // GeNN code generator includes
+#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -25,10 +29,10 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+        "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn *= expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
+    SET_CURRENT_CONVERTER_CODE("x");
 
     SET_PARAM_NAMES({"tau"});
 
@@ -90,7 +94,7 @@ class Sum : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum);
 
-    SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
+    SET_UPDATE_CODE("sum = a + b;\n");
 
     SET_VARS({{"sum", "scalar"}});
     SET_PARAM_NAMES({"b"});
@@ -103,9 +107,7 @@ class OneToOneOff : public InitSparseConnectivitySnippet::Base
 public:
     DECLARE_SNIPPET(OneToOneOff);
 
-    SET_ROW_BUILD_CODE(
-        "$(addSynapse, $(id_pre) + 1);\n"
-        "$(endRow);\n");
+    SET_ROW_BUILD_CODE("addSynapse(id_pre + 1);\n");
 
     SET_MAX_ROW_LENGTH(1);
     SET_MAX_COL_LENGTH(1);
@@ -118,13 +120,12 @@ public:
     DECLARE_SNIPPET(RemoveSynapse);
     
     SET_ROW_UPDATE_CODE(
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(id_post) == ($(id_pre) + 1)) {\n"
-        "       $(remove_synapse);\n"
+        "for_each_synapse {\n"
+        "   if(id_post == (id_pre + 1)) {\n"
+        "       remove_synapse();\n"
         "       break;\n"
         "   }\n"
-        "});\n");
+        "};\n");
 };
 IMPLEMENT_SNIPPET(RemoveSynapse);
 
@@ -137,13 +138,12 @@ public:
     SET_PRE_VARS({{"preThresh", "scalar"}});
     SET_POST_VARS({{"postThresh", "scalar"}});
     SET_ROW_UPDATE_CODE(
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(g) < $(preThresh) || $(g) < $(postThresh)) {\n"
-        "       $(remove_synapse);\n"
+        "for_each_synapse {\n"
+        "   if(g < preThresh || g < postThresh) {\n"
+        "       remove_synapse();\n"
         "       break;\n"
         "   }\n"
-        "});\n");
+        "};\n");
 };
 IMPLEMENT_SNIPPET(RemoveSynapsePrePost);
 
@@ -156,13 +156,12 @@ public:
     SET_PARAM_NAMES({"thresh"});
     
     SET_ROW_UPDATE_CODE(
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(g) < $(thresh)) {\n"
-        "       $(remove_synapse);\n"
+        "for_each_synapse {\n"
+        "   if(g < thresh) {\n"
+        "       remove_synapse();\n"
         "       break;\n"
         "   }\n"
-        "});\n");
+        "};\n");
 };
 IMPLEMENT_SNIPPET(RemoveSynapseParam);
 
@@ -195,11 +194,20 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         // Create suitable backend to build model
         CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
-         // Merge model
-        CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+        // Created merged model
+        CodeGenerator::ModelSpecMerged modelMerged(model, backend);
+
+        // Generate modules
+        // **NOTE** these are ordered in terms of memory-space priority
+        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
+        const filesystem::path outputPath = std::filesystem::temp_directory_path();
+        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
+        generateInit(outputPath, modelMerged, backend, memorySpaces);
 
         // Write hash digests of model to array
-        moduleHash[i] = modelSpecMerged.getHashDigest(backend);
+        moduleHash[i] = modelMerged.getHashDigest(backend);
     }
 
     // Loop through modified models
@@ -320,7 +328,6 @@ TEST(ModelSpecMerged, CompareModelChanges)
         {[](ModelSpecInternal &model) { model.setTiming(true); }, false},
         {[](ModelSpecInternal &model) { model.setPrecision(Type::Double); }, false},
         {[](ModelSpecInternal &model) { model.setTimePrecision(Type::Double); }, false},
-        {[](ModelSpecInternal &model) { model.setBatchSize(10); }, false},
         {[](ModelSpecInternal &model) { model.setSeed(1234); }, false}};
     
     test(modelModifiers, 

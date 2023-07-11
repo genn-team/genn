@@ -1,3 +1,7 @@
+// Standard C++ includes
+#include <filesystem>
+#undef DUPLICATE
+
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -5,6 +9,7 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -72,7 +77,7 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
+        "$(x) = (dt * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
         "$(inSyn)*=$(expDecay);\n");
 
     SET_CURRENT_CONVERTER_CODE("$(x)");
@@ -99,7 +104,7 @@ public:
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
@@ -586,14 +591,15 @@ TEST(NeuronGroup, CompareNeuronModels)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
     
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
-
-    // Find which merged neuron init group is the one with the single population i.e. the one with constant initialisers
-    const size_t constantInitIndex = (modelSpecMerged.getMergedNeuronInitGroups().at(0).getGroups().size() == 1) ? 0 : 1;
-    const auto &constantInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(constantInitIndex);
-    const auto &uniformInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(1 - constantInitIndex);
 
     // Check that only 'd' parameter is heterogeneous in neuron update group
     ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("a"));
@@ -601,13 +607,18 @@ TEST(NeuronGroup, CompareNeuronModels)
     ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("c"));
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("d"));
 
+    // Find which merged neuron init group is the one with the single population i.e. the one with constant initialisers
+    const size_t constantInitIndex = (modelSpecMerged.getMergedNeuronInitGroups().at(0).getGroups().size() == 1) ? 0 : 1;
+    const auto &constantInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(constantInitIndex);
+    const auto &uniformInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(1 - constantInitIndex);
+
     // Check that only 'V' init 'min' parameter is heterogeneous
     ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("V", "constant"));
     ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
     ASSERT_TRUE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "min"));
     ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "max"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "min"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "max"));
+    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
+    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
 }
 
 TEST(NeuronGroup, CompareHeterogeneousParamVarState)
@@ -635,6 +646,12 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
@@ -735,6 +752,11 @@ TEST(NeuronGroup, CompareCurrentSources)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
 
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+
     // Check neurons are merged into two groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
 
@@ -748,11 +770,10 @@ TEST(NeuronGroup, CompareCurrentSources)
     const size_t poissonIndex = (dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(0).getArchetype().getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the ExpDecay and Init derived parameters of the poisson exp current sources are heterogeneous
-    // **NOTE** tauSyn is not heterogeneous because it's not referenced directly
     ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(0).isParamHeterogeneous("amp"));
     ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(1).isParamHeterogeneous("amp"));
     ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("weight"));
-    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("tauSyn"));
+    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("tauSyn"));
     ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("rate"));
     ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(1 - poissonIndex).isParamHeterogeneous("amp"));
     ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("ExpDecay"));
@@ -862,6 +883,12 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
 
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 3);
@@ -879,8 +906,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(0).getArchetype().getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
-    // **NOTE** tau is NOT heterogeneous because it's unused
-    ASSERT_FALSE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isParamHeterogeneous("tau"));
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isParamHeterogeneous("tau"));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("expDecay"));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("init"));
     ASSERT_TRUE(deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(alphaInitIndex).isVarInitParamHeterogeneous("x", "constant"));
@@ -972,6 +998,12 @@ TEST(NeuronGroup, ComparePreOutput)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
 
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+
     // Check neurons are merged into six groups (one for each output group and one for each number of incoming synapses)
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 6);
     ASSERT_EQ(modelSpecMerged.getMergedNeuronInitGroups().size(), 6);
@@ -1060,6 +1092,12 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neuron init and update is merged into three groups (NG0 with no outsyns, NG1, NG2, NG3 and NG5 with 1 outsyn and NG4with 2 outsyns)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
@@ -1161,6 +1199,12 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);

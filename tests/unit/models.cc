@@ -17,10 +17,10 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+        "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn *= expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
+    SET_CURRENT_CONVERTER_CODE("x");
 
     SET_PARAM_NAMES({"tau"});
 
@@ -39,7 +39,7 @@ public:
 
     SET_PARAM_NAMES({"g"});
 
-    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+    SET_SIM_CODE("addToPost(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseUInt);
 
@@ -51,7 +51,7 @@ public:
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "$(addToInSyn, $(g) * $(V_pre));\n");
+        "addToPost(g * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -65,15 +65,15 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
-        "$(preTrace) = ($(preTrace) * exp(-dt / $(tauPlus))) + 1.0;\n");
+        "scalar dt = t - sT_pre;\n"
+        "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_post);\n"
-        "$(postTrace) = ($(postTrace) * exp(-dt / $(tauMinus))) + 1.0;\n");
+        "scalar dt = t - sT_post;\n"
+        "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "$(addToInSyn, $(g) * $(V_pre));\n");
+        "addToPost(g * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(ContPrePost);
 
@@ -87,15 +87,15 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
-        "$(preTrace) = ($(preTrace) * exp(-dt / $(tauPlus))) + 1.0;\n");
+        "scalar dt = t - sT_pre;\n"
+        "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_post);\n"
-        "$(postTrace) = ($(postTrace) * exp(-dt / $(tauMinus))) + 1.0;\n");
+        "scalar dt = t - sT_post;\n"
+        "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "$(addToInSyn, $(g) * $(V_pre));\n");
+        "addToPost(g * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(ContPrePostConstantWeight);
 }

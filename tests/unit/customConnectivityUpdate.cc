@@ -1,3 +1,7 @@
+// Standard C++ includes
+#include <filesystem>
+#undef DUPLICATE
+
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -5,6 +9,7 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -21,7 +26,7 @@ public:
 
     SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("addToInSynDelay(g, d);\n");
+    SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseDendriticDelayReverse);
 
@@ -111,7 +116,7 @@ public:
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToInSyn(g * V_pre);\n");
+        "addToPost(g * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -123,7 +128,7 @@ public:
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToInSyn(g * V_post);\n");
+        "addToPost(g * V_post);\n");
 };
 IMPLEMENT_SNIPPET(ContPost);
 
@@ -358,6 +363,13 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Generate required modules
+    // **NOTE** these are ordered in terms of memory-space priority
+    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
+
 
     // Check correct groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdateGroups().size(), 2);

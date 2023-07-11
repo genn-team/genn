@@ -165,9 +165,9 @@ public:
         "   $(V)=$(c);\n"
         "   $(U)+=$(d);\n"
         "} \n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n"
-        "$(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt; //at two times for numerical stability\n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt;\n"
+        "$(U)+=$(a)*($(b)*$(V)-$(U))*dt;\n"
         "if ($(V) > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
         "  $(V)=30.0; \n"
         "}\n");

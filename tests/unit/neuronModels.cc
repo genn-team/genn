@@ -19,7 +19,7 @@ public:
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
