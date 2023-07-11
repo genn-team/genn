@@ -797,7 +797,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 if(!backend.getDeviceVarPrefix().empty()) {
                     groupEnv.addField(pointerToPointerType, "_" + backend.getDeviceVarPrefix() + egp.name,
                                       backend.getDeviceVarPrefix() + egp.name,
-                                      [egp](const auto &g, size_t) { return "&" + egp.name + g.getName(); },
+                                      [egp, &backend](const auto &g, size_t) { return "&" + backend.getDeviceVarPrefix() + egp.name + g.getName(); },
                                       "", GroupMergedFieldType::DYNAMIC);
                 }
 
