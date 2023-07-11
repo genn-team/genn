@@ -273,14 +273,18 @@ private:
             for (i = 0; i < m_CallArguments.top().size(); i++) {
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
-                const size_t found = name.find(placeholder);
-                if (found != std::string::npos) {
-                    name.replace(found, placeholder.length(), m_CallArguments.top().at(i));
-                }
-                // Otherwise, stop searching
-                else {
+
+                // If placeholder isn't found at all, stop looking for arguments
+                size_t found = name.find(placeholder);
+                if(found == std::string::npos) {
                     break;
                 }
+                
+                // Keep replacing placeholders
+                do {
+                    name.replace(found, placeholder.length(), m_CallArguments.top().at(i));
+                    found = name.find(placeholder, found);
+                } while(found != std::string::npos);
             }
 
             // If all arguments haven't been substituted
