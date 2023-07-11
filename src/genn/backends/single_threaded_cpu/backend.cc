@@ -883,7 +883,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
-                    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
+                    EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
                     genSynapseIndexCalculation(groupEnv, 1);
 
                     s.generateInit(*this, groupEnv, modelMerged);
@@ -1405,6 +1405,18 @@ void Backend::genVariableDynamicAllocation(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
+                                               const Type::ResolvedType &type, const std::string &name, VarLocation, 
+                                               const std::string &countVarName) const
+{
+    if (type.isPointer()) {
+        os << "*$(_" << name <<  ") = new " << type.getPointer().valueType->getValue().name << "[" << countVarName << "];" << std::endl;
+    }
+    else {
+        os << "$(_" << name <<  ") = new " << type.getValue().name << "[" << countVarName << "];" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
 {
     os << "delete[] " << name << ";" << std::endl;
@@ -1441,9 +1453,23 @@ void Backend::genVariableDynamicPush(CodeStream&,
      assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicPush(CodeStream&, 
+                                         const Type::ResolvedType&, const std::string&,
+                                         VarLocation, const std::string&) const
+{
+     assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableDynamicPull(CodeStream&, 
                                      const Type::ResolvedType&, const std::string&,
                                       VarLocation, const std::string&, const std::string&) const
+{
+    assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicPull(CodeStream&, 
+                                         const Type::ResolvedType&, const std::string&,
+                                         VarLocation, const std::string&) const
 {
     assert(!getPreferences().automaticCopy);
 }
