@@ -272,6 +272,11 @@ public:
     virtual void genVariableDynamicAllocation(CodeStream &os, 
                                               const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                               const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
+    
+    //! Generate code to allocate variable with a size known at runtime
+    virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
+                                                  const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
+                                                  const std::string &countVarName) const = 0;
 
     //! Generate code to free a variable
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
@@ -301,10 +306,20 @@ public:
                                         const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                         const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
+    //! Generate code for pushing a variable with a size known at tuntime to the 'device'
+    virtual void genLazyVariableDynamicPush(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const = 0;
+
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genVariableDynamicPull(CodeStream &os, 
                                         const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                         const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
+
+    //! Generate code for pulling a variable with a size known at runtime from the 'device'
+    virtual void genLazyVariableDynamicPull(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const = 0;
 
     //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
     virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 

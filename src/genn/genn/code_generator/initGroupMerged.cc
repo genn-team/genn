@@ -786,11 +786,12 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 const auto pointerToPointerType = pointerType.createPointer();
 
                 // Add field for host pointer
-                // **NOTE** use [0] to dereference on access to obta
-                groupEnv.addField(pointerType, egp.name,
-                                  pointerToPointerType, egp.name,
+                groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
                                   [egp](const auto &g, size_t) { return "&" + egp.name + g.getName(); },
-                                  "0", GroupMergedFieldType::HOST_DYNAMIC);
+                                  "", GroupMergedFieldType::HOST_DYNAMIC);
+
+                // Add substitution for dereferenced access to field
+                groupEnv.add(pointerType, egp.name, "*$(_" + egp.name + ")");
 
                 // If backend requires seperate device variables, add additional (private) field)
                 if(!backend.getDeviceVarPrefix().empty()) {
@@ -816,9 +817,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 std::stringstream allocStream;
                 const auto &pointerToEGP = resolvedType.createPointer();
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genVariableDynamicAllocation(alloc, 
-                                                     pointerToEGP, egp.name,
-                                                     loc, "$(0)", "group->");
+                backend.genLazyVariableDynamicAllocation(alloc, 
+                                                         pointerToEGP, egp.name,
+                                                         loc, "$(0)");
 
                 // Add substitution
                 groupEnv.add(Type::AllocatePushPullEGP, "allocate" + egp.name, allocStream.str());
@@ -826,9 +827,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genVariableDynamicPush(push, 
-                                               pointerToEGP, egp.name,
-                                               loc, "$(0)", "group->");
+                backend.genLazyVariableDynamicPush(push, 
+                                                   pointerToEGP, egp.name,
+                                                   loc, "$(0)");
 
 
                 // Add substitution
