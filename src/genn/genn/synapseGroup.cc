@@ -570,7 +570,7 @@ bool SynapseGroup::canPSBeFused() const
     // If any postsynaptic model variables aren't initialised to constant values, this synapse group's postsynaptic model can't be merged
     // **NOTE** hash check will compare these constant values
     if(std::any_of(getPSVarInitialisers().cbegin(), getPSVarInitialisers().cend(), 
-                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
@@ -578,18 +578,14 @@ bool SynapseGroup::canPSBeFused() const
     // Loop through EGPs
     // **NOTE** this is kind of silly as, if it's not referenced in either of 
     // these code strings, there wouldn't be a lot of point in a PSM EGP existing!
-    const auto psmEGPs = getPSModel()->getExtraGlobalParams();
-    const std::string decayCode = getPSModel()->getDecayCode();
-    const std::string applyInputCode = getPSModel()->getApplyInputCode();
-    for(const auto &egp : psmEGPs) {
+    for(const auto &egp : getPSModel()->getExtraGlobalParams()) {
         // If this EGP is referenced in decay code, return false
-        const std::string egpName = "$(" + egp.name + ")";
-        if(decayCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getPSDecayCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in apply input code, return false
-        if(applyInputCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getPSApplyInputCodeTokens())) {
             return false;
         }
     }
@@ -608,18 +604,14 @@ bool SynapseGroup::canWUMPreUpdateBeFused() const
     }
     
     // Loop through EGPs
-    const auto wumEGPs = getWUModel()->getExtraGlobalParams();
-    const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
-    const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
-    for(const auto &egp : wumEGPs) {
+    for(const auto &egp : getWUModel()->getExtraGlobalParams()) {
         // If this EGP is referenced in presynaptic spike code, return false
-        const std::string egpName = "$(" + egp.name + ")";
-        if(preSpikeCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUPreSpikeCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in presynaptic dynamics code, return false
-        if(preDynamicsCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUPreDynamicsCodeTokens())) {
             return false;
         }
     }
@@ -637,18 +629,14 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     }
     
     // Loop through EGPs
-    const auto wumEGPs = getWUModel()->getExtraGlobalParams();
-    const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
-    const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
-    for(const auto &egp : wumEGPs) {
+    for(const auto &egp : getWUModel()->getExtraGlobalParams()) {
         // If this EGP is referenced in postsynaptic spike code, return false
-        const std::string egpName = "$(" + egp.name + ")";
-        if(postSpikeCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUPostSpikeCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in postsynaptic dynamics code, return false
-        if(postDynamicsCode.find(egpName) != std::string::npos) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUPostDynamicsCodeTokens())) {
             return false;
         }
     }
@@ -849,8 +837,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     // Due to SynapseGroup::canPSBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
     for(const auto &w : getPSVarInitialisers()) {
-        assert(w.getParams().size() == 1);
-        Utils::updateHash(w.getParams().at(0), hash);
+        assert(w.second.getParams().size() == 1);
+        Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
     
     return hash.get_digest();

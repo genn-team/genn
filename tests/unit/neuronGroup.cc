@@ -1,6 +1,5 @@
 // Standard C++ includes
 #include <filesystem>
-#undef DUPLICATE
 
 // Google test includes
 #include "gtest/gtest.h"
@@ -520,49 +519,49 @@ TEST(NeuronGroup, FuseVarPSM)
     ModelSpecInternal model;
     model.setMergePostsynapticModels(true);
     
-    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
-    LIFAdditional::VarValues varVals(0.0, 0.0);
-    AlphaCurr::ParamValues psmParamVals(5.0);
-    AlphaCurr::VarValues psmVarValsConst1(0.0);
-    AlphaCurr::VarValues psmVarValsConst2(1.0);
-    AlphaCurr::VarValues psmVarValsRand(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
-    WeightUpdateModels::StaticPulseDendriticDelay::VarValues wumVarVals(0.1, 10);
-    
+    ParamValues paramVals{{"C", 0.25}, {"TauM", 10.0}, {"Vrest", 0.0}, {"Vreset", 0.0}, {"Vthresh", 20.0}, {"Ioffset", 0.0}, {"TauRefrac", 5.0}};
+    VarValues varVals{{"V", 0.0}, {"RefracTime", 0.0}};
+    ParamValues psmParamVals{{"tau", 5.0}};
+    VarValues psmVarValsConst1{{"x", 0.0}};
+    VarValues psmVarValsConst2{{"x", 1.0}}; 
+    VarValues psmVarValsRand{{"x", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})}}; 
+    VarValues wumVarVals{{"g", 0.1}, {"d", 10}};
+
     // Add two neuron groups to model
     auto *pre = model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
 
     // Create baseline synapse group
     auto *syn1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
-        "Syn1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, psmVarValsConst1);
     
     // Create second synapse group with same model and constant initialisers
     auto *syn2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
-        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, psmVarValsConst1);
 
    // Create third synapse group with same model and different constant initialisers
     auto *syn3 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
-        "Syn3", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn3", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, psmVarValsConst2);
     
      // Create fourth synapse group with same model and random variable initialisers
     auto *syn4 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, AlphaCurr>(
-        "Syn4", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Syn4", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, psmVarValsRand);
     
     
     // **TODO** third safe group with different variable initialisers
-    model.finalize();
+    model.finalise();
     
     // Cast neuron groups to internal types
     auto preInternal = static_cast<NeuronGroupInternal*>(pre);

@@ -1,6 +1,5 @@
 // Standard C++ includes
 #include <filesystem>
-#undef DUPLICATE
 
 // Google test includes
 #include "gtest/gtest.h"

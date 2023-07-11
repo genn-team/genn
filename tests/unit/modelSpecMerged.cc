@@ -4,8 +4,6 @@
 #include <functional>
 #include <vector>
 
-#undef DUPLICATE
-
 // Google test includes
 #include "gtest/gtest.h"
 
