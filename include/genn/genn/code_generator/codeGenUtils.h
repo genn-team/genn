@@ -58,12 +58,6 @@ GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, co
 GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
 //--------------------------------------------------------------------------
-/*! \brief This function automatically replaces old style $(variable) variable references and $(function, arg1, arg2) syntax with new form.
- */
- //--------------------------------------------------------------------------
-GENN_EXPORT std::string upgradeCodeString(const std::string &codeString);
-
-//--------------------------------------------------------------------------
 /*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing an expression
  */
  //--------------------------------------------------------------------------
