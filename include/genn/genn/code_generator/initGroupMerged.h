@@ -301,6 +301,12 @@ public:
 
     //! Should the var init derived parameter be implemented heterogeneously?
     bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -308,12 +314,6 @@ public:
     static const std::string name;
 
 private:
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------

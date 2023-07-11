@@ -194,6 +194,12 @@ public:
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
+    
+    //! Should the parameter be implemented heterogeneously?
+    bool isParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the derived parameter be implemented heterogeneously?
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -201,12 +207,6 @@ public:
     static const std::string name;
 
 private:
-     //! Should the parameter be implemented heterogeneously?
-    bool isParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the derived parameter be implemented heterogeneously?
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
