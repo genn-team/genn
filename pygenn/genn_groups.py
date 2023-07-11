@@ -216,9 +216,13 @@ class GroupMixin(object):
                 # Determine how many copies of this variable are present
                 num_copies = (1 if v.access & VarAccessDuplication.SHARED
                               else self._model.batch_size)
-
+                
+                # Determine size of this variable
+                var_size = (1 if v.access & VarAccessDuplication.SHARED_NEURON
+                            else size)
+                            
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(v.name, size * num_copies,
+                var_data.view = self._assign_ext_ptr_array(v.name, var_size * num_copies,
                                                            var_data.type)
 
                 # If there is more than one copy, reshape view to 2D
@@ -816,8 +820,8 @@ class CustomUpdateMixin(GroupMixin):
                 # If variable is located on host
                 var_loc = self.get_var_location(v.name) 
                 if var_loc & VarLocation.HOST:
-                    # **TODO** WHAT IS HAPPENING HERE?
                     # Determine how many copies of this variable are present
+                    # **YUCK** this isn't quite right - really should look at is_batched()
                     #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
                     #              else self._model.batch_size)
                     num_copies = 1
