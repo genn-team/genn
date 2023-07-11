@@ -48,6 +48,7 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
+import sys
 from textwrap import dedent
 from warnings import warn
 from weakref import proxy
@@ -78,23 +79,6 @@ from . import (current_source_models, custom_update_models,
                init_toeplitz_connectivity_snippets, init_var_snippets,
                neuron_models, postsynaptic_models, weight_update_models)
 
-# Loop through backends in preferential order
-backend_modules = OrderedDict()
-for b in ["cuda", "single_threaded_cpu", "opencl"]:
-    # Try and import
-    try:
-        m = import_module("." + b + "_backend", "pygenn")
-    # Ignore failed imports - likely due to non-supported backends
-    except ImportError as ex:
-        pass
-    # Raise any other errors
-    except:
-        raise
-    # Otherwise add to (ordered) dictionary
-    else:
-        backend_modules[b] = m
-
-
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
 CustomUpdate.__bases__ += (CustomUpdateMixin,)
@@ -119,6 +103,30 @@ if system() == "Windows":
     # check_call's env kwarg does not effect finding the executable
     # **NOTE** shutil.which would be nicer, but isn't in Python < 3.3
     _msbuild = find_executable("msbuild",  _msvc_env["PATH"])
+
+    # If Python version is newer than 3.8 and CUDA path is in environment
+    if sys.version_info >= (3, 8) and "CUDA_PATH" in environ:
+        # Add CUDA bin directory to DLL search directories
+        from os import add_dll_directory
+        add_dll_directory(path.join(environ["CUDA_PATH"], "bin"))
+
+
+# Loop through backends in preferential order
+backend_modules = OrderedDict()
+for b in ["cuda", "single_threaded_cpu", "opencl"]:
+    # Try and import
+    try:
+        m = import_module("." + b + "_backend", "pygenn")
+    # Ignore failed imports - likely due to non-supported backends
+    except ImportError as ex:
+        pass
+    # Raise any other errors
+    except:
+        raise
+    # Otherwise add to (ordered) dictionary
+    else:
+        backend_modules[b] = m
+
 
 GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
 
