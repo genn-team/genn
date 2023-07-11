@@ -161,7 +161,7 @@ public:
     
     bool isDuplicated() const
     {
-        return m_IsBatched() && (m_Var.access & VarAccessDuplication::DUPLICATE); 
+        return m_IsBatched() && !(m_Var.access & VarAccessDuplication::SHARED); 
     }
 
     bool operator < (const VarReferenceBase &other) const
