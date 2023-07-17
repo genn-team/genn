@@ -19,20 +19,12 @@
 #include "code_generator/backendBase.h"
 #include "code_generator/codeGenUtils.h"
 
-// GeNN transpiler includes
-#include "transpiler/statement.h"
-#include "transpiler/typeChecker.h"
-
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
 class CodeStream;
 }
 
-namespace GeNN::Transpiler::TypeChecker
-{
-class EnvironmentBase;
-}
 
 //------------------------------------------------------------------------
 // GeNN::CodeGenerator::GroupMergedFieldType
