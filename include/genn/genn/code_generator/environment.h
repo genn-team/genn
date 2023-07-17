@@ -288,9 +288,9 @@ public:
             }
 
             // Perform any type-specific logic to mark this identifier as required
-            setRequired(std::get<2>(env->second));
+            this->setRequired(std::get<2>(env->second));
 
-            return getNameInternal(std::get<2>(env->second));
+            return this->getNameInternal(std::get<2>(env->second));
         }
     }
 
@@ -314,7 +314,7 @@ public:
             }
 
             // Perform any type-specific logic to mark this identifier as required
-            setRequired(std::get<2>(env->second));
+            this->setRequired(std::get<2>(env->second));
 
             // Return type of variables
             return {std::get<0>(env->second)};

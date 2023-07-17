@@ -461,7 +461,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public InitGroupM
                                                                                           CustomConnectivityUpdatePreVarAdapter>
 {
 public:
-    InitGroupMergedBase::InitGroupMergedBase;
+    using InitGroupMergedBase::InitGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
