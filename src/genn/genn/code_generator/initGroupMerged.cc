@@ -1,7 +1,6 @@
 #include "code_generator/initGroupMerged.h"
 
 // GeNN code generator includes
-#include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/standardLibrary.h"
 

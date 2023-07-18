@@ -5,7 +5,6 @@
 
 // GeNN code generator includes
 #include "code_generator/environment.h"
-#include "code_generator/groupMergedTypeEnvironment.h"
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN transpiler includes
