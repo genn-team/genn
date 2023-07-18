@@ -23,4 +23,34 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getVarRefs(), hash);
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void Base::validate(const std::unordered_map<std::string, double> &paramValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
+                    const std::string &description) const
+{
+     // Superclass
+    Models::Base::validate(paramValues, varValues, description);
+
+    const auto varRefs = getVarRefs();
+    Utils::validateVecNames(getVarRefs(), "Variable reference");
+
+    // Validate variable reference initialisers
+    Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+}
+//----------------------------------------------------------------------------
+void Base::validate(const std::unordered_map<std::string, double> &paramValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
+                    const std::string &description) const
+{
+     // Superclass
+    Models::Base::validate(paramValues, varValues, description);
+
+    const auto varRefs = getVarRefs();
+    Utils::validateVecNames(getVarRefs(), "Variable reference");
+
+    // Validate variable reference initialisers
+    Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+}
 }   // namespace GeNN::CustomUpdateModels

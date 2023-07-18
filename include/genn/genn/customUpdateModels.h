@@ -36,21 +36,15 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    template<typename R>
     void validate(const std::unordered_map<std::string, double> &paramValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, R> &varRefTargets,
-                  const std::string &description) const
-    {
-        // Superclass
-        Models::Base::validate(paramValues, varValues, description);
+                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
+                  const std::string &description) const;
 
-        const auto varRefs = getVarRefs();
-        Utils::validateVecNames(getVarRefs(), "Variable reference");
-
-        // Validate variable reference initialisers
-        Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
-    }
+    void validate(const std::unordered_map<std::string, double> &paramValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
+                  const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
