@@ -791,7 +791,7 @@ public:
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
                                         [arrayPrefix, v, &group, this](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return arrayPrefix + v.name + getVarSuffix(group.getGroups().at(i), v);
+                                            return arrayPrefix + v.name + this->getVarSuffix(group.getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
