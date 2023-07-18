@@ -61,7 +61,7 @@ from six import iteritems, itervalues, string_types
 from .genn import (generate_code, init_logging, CurrentSource,
                    CurrentSourceModelBase, CustomUpdate, 
                    CustomUpdateModelBase, CustomUpdateWU, DerivedParam, 
-                   EGP, InitSparseConnectivitySnippetBase,
+                   EGP, EGPRef, InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
                    ParamVal, PlogSeverity, PostsynapticModelBase,
@@ -1107,7 +1107,8 @@ def create_custom_custom_update_class(class_name, param_names=None,
                                       derived_params=None,
                                       var_refs=None,
                                       update_code=None,
-                                      extra_global_params=None):
+                                      extra_global_params=None,
+                                      extra_global_param_refs=None,):
     """This helper function creates a custom CustomUpdate class.
     See also:
     create_custom_neuron_class
@@ -1117,7 +1118,7 @@ def create_custom_custom_update_class(class_name, param_names=None,
     create_custom_sparse_connect_init_snippet_class
 
     Args:
-    class_name          --  name of the new class
+    class_name              --  name of the new class
 
     Keyword args:
     param_names         --  list of strings with param names of the model
@@ -1131,6 +1132,9 @@ def create_custom_custom_update_class(class_name, param_names=None,
     update_code         --  string with the current injection code
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
+    extra_global_param_refs --  list of pairs of strings with names and types of
+                                extra global parameter references
+    
     """
     body = {}
 
@@ -1139,6 +1143,10 @@ def create_custom_custom_update_class(class_name, param_names=None,
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
+
+    if extra_global_param_refs is not None:
+        body["get_extra_global_param_refs"] =\
+            lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
     return create_custom_model_class(
         class_name, CustomUpdateModelBase, param_names,
