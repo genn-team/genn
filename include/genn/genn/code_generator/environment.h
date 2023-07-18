@@ -376,7 +376,7 @@ public:
 // GeNN::CodeGenerator::EnvironmentGroupMergedField
 //----------------------------------------------------------------------------
 //! External environment, for substituting 
-template<typename G, typename F = G>
+template<typename G, typename F>
 class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>
 {
     using GroupInternal = typename G::GroupInternal;
