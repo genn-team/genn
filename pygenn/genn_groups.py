@@ -275,6 +275,25 @@ class GroupMixin(object):
         for var_name, var_data in iteritems(var_dict):
             self._load_egp(var_data.extra_global_params, var_name)
 
+    def _unload_vars(self, var_dict=None):
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables and clear views
+        for v in itervalues(var_dict):
+            v.view = None
+            for e in itervalues(v.extra_global_params):
+                e.view = None
+
+    def _unload_egps(self, egp_dict=None):
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Loop through extra global params and clear views
+        for e in itervalues(egp_dict):
+            e.view = None
 
 class NeuronGroupMixin(GroupMixin):
 
@@ -287,8 +306,10 @@ class NeuronGroupMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(NeuronGroupMixin, self)._init_group(model)
-        self.spike_que_ptr = [0]
-        
+        self.spike_que_ptr = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
+
         self.vars, self.extra_global_params = prepare_model(
             self.neuron_model, self, var_space)
 
@@ -338,6 +359,14 @@ class NeuronGroupMixin(GroupMixin):
 
         # Load neuron extra global params
         self._load_egp()
+
+    def unload(self):
+        self.spike_que_ptr = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
+
+        self._unload_vars()
+        self._unload_egps()
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
@@ -730,7 +759,20 @@ class SynapseGroupMixin(GroupMixin):
         snippet = self.sparse_connectivity_initialiser.snippet
         return (len(snippet.get_row_build_code()) > 0 
                 or len(snippet.get_col_build_code()) > 0)
-    
+
+    def unload(self):
+        self._ind = None
+        self._row_lengths = None
+        self.in_syn = None
+
+        self._unload_vars()
+        self._unload_vars(self.pre_vars)
+        self._unload_vars(self.post_vars)
+        self._unload_vars(self.psm_vars)
+        self._unload_egps()
+        self._unload_egps(self.psm_extra_global_params)
+        self._unload_egps(self.connectivity_extra_global_params)
+
     def _init_wum_var(self, var_data, num_copies):
         # If initialisation is required
         if var_data.init_required:
@@ -794,6 +836,10 @@ class CurrentSourceMixin(GroupMixin):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
+
 class CustomUpdateMixin(GroupMixin):
     """Class representing a custom update"""
     def _init_group(self, model, var_space):
@@ -854,6 +900,10 @@ class CustomUpdateMixin(GroupMixin):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
 
     @property
     def _custom_wu_update(self):
