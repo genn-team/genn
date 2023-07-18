@@ -328,15 +328,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
                 else { // DENSE
                     synEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
                 }
-                /*synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
-                           backend.getAtomic(model.getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
-            
-                synEnv.add(Type::AddToPost, "addToPost",
-                           backend.getAtomic(model.getPrecision()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
-            
-
-                synEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
-                */
+       
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
                            backend.getAtomic(model.getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");

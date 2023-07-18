@@ -677,20 +677,17 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    std::string getReadIndex(G&, const Models::Base::Var &var)
+    std::string getReadIndex(G&, const Models::Base::Var &var) const
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    std::string getWriteIndex(G&, const Models::Base::Var &var)
+    std::string getWriteIndex(G&, const Models::Base::Var &var) const
     {
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    //------------------------------------------------------------------------
-    // Static API
-    //------------------------------------------------------------------------
-    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var&)
+    std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var&) const
     {
         return A(g).getNameSuffix();
     }
@@ -725,20 +722,17 @@ protected:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    std::string getReadIndex(G &g, const Models::Base::VarRef &var)
+    std::string getReadIndex(G &g, const Models::Base::VarRef &var) const
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getWriteIndex(G &g, const Models::Base::VarRef &var)
+    std::string getWriteIndex(G &g, const Models::Base::VarRef &var) const
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    //------------------------------------------------------------------------
-    // Static API
-    //------------------------------------------------------------------------
-    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var)
+    std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var) const
     {
         return A(g).getInitialisers().at(var.name).getTargetName();
     }
@@ -795,9 +789,9 @@ public:
             const auto &group = m_Group.get();
             const auto &arrayPrefix = m_ArrayPrefix;
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [arrayPrefix, v, &group](const typename F::GroupInternal &, size_t i)
+                                        [arrayPrefix, v, &group, this](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return arrayPrefix + v.name + P::getVarSuffix(group.getGroups().at(i), v);
+                                            return arrayPrefix + v.name + getVarSuffix(group.getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
