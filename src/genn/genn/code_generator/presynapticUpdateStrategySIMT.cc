@@ -317,10 +317,11 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
                            {synEnv.addInitialiser( "const unsigned int synAddress = ($(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    synEnv.getStream() << "const unsigned int npost = " << synEnv["_sh_row_length"] << "[j];" << std::endl;
+                    synEnv.printLine("const unsigned int npost = $(_sh_row_length)[j];");
 
-                    synEnv.getStream() << "if (" << synEnv["id"] << " < npost)" << CodeStream::OB(140);
-                    synEnv.getStream() << "const unsigned int ipost = " << synEnv["_ind"] << "[synAddress];" << std::endl;
+                    synEnv.print("if ($(id) < npost)");
+                    synEnv.getStream() << CodeStream::OB(140);
+                    synEnv.printLine("const unsigned int ipost = $(_ind)[$(id_syn)];");
 
                     synEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
                 }
