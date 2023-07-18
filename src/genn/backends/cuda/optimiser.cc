@@ -455,7 +455,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         Backend backend(blockSize, preferences, deviceID);
 
         // Create merged model
-        ModelSpecMerged modelMerged(model, backend);
+        ModelSpecMerged modelMerged(model);
 
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
@@ -481,7 +481,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Calculate module's hash digest
             // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
             // this will call into Python code it would require whole Python interface to be made thread-safe
-            const auto hashDigest = (modelMerged.*m.getArchetypeHashDigest)();
+            const auto hashDigest = std::invoke(m.getArchetypeHashDigest, modelMerged);
 
             // Launch thread to analyse kernels in this module (if required)
             threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),

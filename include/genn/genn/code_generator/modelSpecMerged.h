@@ -32,7 +32,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT ModelSpecMerged
 {
 public:
-    ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
+    ModelSpecMerged(const ModelSpecInternal &model)
     :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
         m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
         m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode"), m_TypeContext{{"scalar", model.getPrecision()}, {"timepoint", model.getTimePrecision()}}

@@ -101,7 +101,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     filesystem::create_directory(outputPath);
 
     // Create merged model
-    ModelSpecMerged modelMerged(model, backend);
+    ModelSpecMerged modelMerged(model);
     
     // **TODO** because merged group fields are populated in the same pass 
     // as code is generated, we will need to ALWAYS generate code but only 
