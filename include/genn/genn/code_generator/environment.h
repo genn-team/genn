@@ -207,8 +207,11 @@ protected:
     }
 
 private:
-    std::reference_wrapper<F> m_FieldGroup;
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
     std::reference_wrapper<G> m_Group;
+    std::reference_wrapper<F> m_FieldGroup;
 };
 
 //----------------------------------------------------------------------------
@@ -395,7 +398,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
 
 public:
-    using EnvironmentExternalDynamicBase::EnvironmentExternalDynamicBase;
+    using EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>::EnvironmentExternalDynamicBase;
 
     //------------------------------------------------------------------------
     // Public API
@@ -404,7 +407,7 @@ public:
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
              const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
+        this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -413,9 +416,9 @@ public:
                   const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
                   const std::vector<size_t> &initialisers = {})
     {
-        addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, 
-                                                std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
-                    initialisers);
+        this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, 
+                                                      std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
+                          initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -429,7 +432,7 @@ public:
     void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
     {
         // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
-        const auto &scalarType = getGroup().getScalarType();
+        const auto &scalarType = this->getGroup().getScalarType();
         addField(scalarType.addConst(), name,
                  scalarType, name + fieldSuffix,
                  [getFieldValue, scalarType](const auto &g, size_t i)
@@ -444,7 +447,7 @@ public:
         // Loop through params
         for(const auto &p : paramNames) {
             // If parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, getGroup(), p)) {
+            if (std::invoke(isHeterogeneous, this->getGroup(), p)) {
                 addScalar(p, fieldSuffix,
                           [p, getParamValues](const auto &g, size_t)
                           {
@@ -453,9 +456,9 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(getGroup().getScalarType().addConst(), p, 
-                    writePreciseLiteral(std::invoke(getParamValues, getGroup().getArchetype()).at(p),
-                                        getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), p, 
+                    writePreciseLiteral(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p),
+                                        this->getGroup().getScalarType()));
             }
         }
     }
@@ -466,7 +469,7 @@ public:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             // If derived parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, getGroup(), d.name)) {
+            if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
                 addScalar(d.name, fieldSuffix,
                           [d, getDerivedParamValues](const auto &g, size_t)
                           {
@@ -475,9 +478,9 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(getGroup().getScalarType().addConst(), d.name, 
-                    writePreciseLiteral(std::invoke(getDerivedParamValues, getGroup().getArchetype()).at(d.name),
-                                        getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), d.name, 
+                    writePreciseLiteral(std::invoke(getDerivedParamValues, this->getGroup().getArchetype()).at(d.name),
+                                        this->getGroup().getScalarType()));
             }
         }
     }
@@ -487,7 +490,7 @@ public:
     {
         // Loop through EGPs
         for(const auto &e : egps) {
-            const auto resolvedType = e.type.resolve(getGroup().getTypeContext());
+            const auto resolvedType = e.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
@@ -505,11 +508,11 @@ public:
                               IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
-        const auto &connectInit = std::invoke(getConnectivity, getGroup().getArchetype());
+        const auto &connectInit = std::invoke(getConnectivity, this->getGroup().getArchetype());
         const auto *snippet = connectInit.getSnippet();
         for(const auto &p : snippet->getParamNames()) {
             // If parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, getGroup(), p)) {
+            if (std::invoke(isHeterogeneous, this->getGroup(), p)) {
                 addScalar(p, fieldSuffix,
                           [p, getConnectivity](const auto &g, size_t)
                           {
@@ -518,8 +521,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(getGroup().getScalarType().addConst(), p, 
-                    writePreciseLiteral(connectInit.getParams().at(p), getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), p, 
+                    writePreciseLiteral(connectInit.getParams().at(p), this->getGroup().getScalarType()));
             }
         }
     }
@@ -529,11 +532,11 @@ public:
                                      IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
-        const auto &connectInit = std::invoke(getConnectivity, getGroup().getArchetype());
+        const auto &connectInit = std::invoke(getConnectivity, this->getGroup().getArchetype());
         const auto *snippet = connectInit.getSnippet();
         for(const auto &d : snippet->getDerivedParams()) {
             // If parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, getGroup(), d.name)) {
+            if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
                 addScalar(d.name, fieldSuffix,
                           [d, getConnectivity](const auto &g, size_t)
                           {
@@ -542,8 +545,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(getGroup().getScalarType().addConst(), d.name, 
-                    writePreciseLiteral(connectInit.getDerivedParams().at(d.name), getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), d.name, 
+                    writePreciseLiteral(connectInit.getDerivedParams().at(d.name), this->getGroup().getScalarType()));
             }
         }
     }
@@ -553,9 +556,9 @@ public:
                           const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through parameters
-        for(const auto &p : A(getGroup().getArchetype()).getInitialisers().at(varName).getParams()) {
+        for(const auto &p : A(this->getGroup().getArchetype()).getInitialisers().at(varName).getParams()) {
             // If parameter is heterogeneous, add scalar field
-            if(std::invoke(isHeterogeneous, getGroup(), varName, p.first)) {
+            if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.first)) {
                 addScalar(p.first, varName + fieldSuffix,
                             [p, varName](const auto &g, size_t)
                             {
@@ -564,8 +567,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(getGroup().getScalarType().addConst(), p.first, 
-                    writePreciseLiteral(p.second, getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), p.first, 
+                    writePreciseLiteral(p.second, this->getGroup().getScalarType()));
             }
         }
     }
@@ -575,9 +578,9 @@ public:
                                  const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through derived parameters
-        for(const auto &p : A(getGroup().getArchetype()).getInitialisers().at(varName).getDerivedParams()) {
+        for(const auto &p : A(this->getGroup().getArchetype()).getInitialisers().at(varName).getDerivedParams()) {
             // If derived parameter is heterogeneous, add scalar field
-            if(std::invoke(isHeterogeneous, getGroup(), varName, p.first)) {
+            if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.first)) {
                 addScalar(p.first, varName + fieldSuffix,
                             [p, varName](const auto &g, size_t)
                             {
@@ -586,8 +589,8 @@ public:
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
-                add(getGroup().getScalarType().addConst(), p.first, 
-                    writePreciseLiteral(p.second, getGroup().getScalarType()));
+                add(this->getGroup().getScalarType().addConst(), p.first, 
+                    writePreciseLiteral(p.second, this->getGroup().getScalarType()));
             }
         }
     }
@@ -596,9 +599,9 @@ public:
     void addVars(const std::string &arrayPrefix, GetVarIndexFn getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variables
-        const A archetypeAdaptor(getGroup().getArchetype());
+        const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
-            const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
@@ -621,10 +624,10 @@ public:
     void addVarRefs(const std::string &arrayPrefix, GetVarRefIndexFn<A> getIndexFn, const std::string &fieldSuffix = "")
     {
         // Loop through variable references
-        const A archetypeAdaptor(getGroup().getArchetype());
+        const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If variable access is read-only, qualify type with const
-            const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
@@ -652,6 +655,10 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
+//------------------------------------------------------------------------
+// GeNN::CodeGenerator::VarCachePolicy
+//------------------------------------------------------------------------
+//! Policy for use with EnvironmentLocalCacheBase for caching state variables
 template<typename A, typename G>
 class VarCachePolicy
 {
@@ -667,33 +674,45 @@ public:
     :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {}
 
-    std::string getReadIndex(G &g, const Models::Base::Var &var)
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::string getReadIndex(G&, const Models::Base::Var &var)
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    std::string getWriteIndex(G &g, const Models::Base::Var &var)
+    std::string getWriteIndex(G&, const Models::Base::Var &var)
     {
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var &var)
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
+    static std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var&)
     {
         return A(g).getNameSuffix();
     }
 
 private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;
 };
 
+//------------------------------------------------------------------------
+// GeNN::CodeGenerator::VarRefCachePolicy
+//------------------------------------------------------------------------
+//! Policy for use with EnvironmentLocalCacheBase for caching variable references
 template<typename A, typename G>
 class VarRefCachePolicy
 {
 protected:
     using GroupInternal = typename G::GroupInternal;
     using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&)>;
-  
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
     :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
@@ -702,7 +721,10 @@ protected:
     VarRefCachePolicy(GetIndexFn getIndex)
     :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
     {}
-
+    
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
     std::string getReadIndex(G &g, const Models::Base::VarRef &var)
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
@@ -713,13 +735,18 @@ protected:
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
     static std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var)
     {
         return A(g).getInitialisers().at(var.name).getTargetName();
     }
 
-
 private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;
 };
@@ -748,14 +775,6 @@ public:
                        [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
     }
 
-    /*template<typename... PolicyArgs>
-    EnvironmentLocalCacheBase(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
-                              PolicyArgs&&... policyArgs)
-    :   EnvironmentLocalVarCache(group, group, context, enclosing, arrayPrefix, fieldSuffix, localPrefix, std::forward<PolicyArgs>(policyArgs)...)
-    {}*/
-   
-
     EnvironmentLocalCacheBase(const EnvironmentLocalCacheBase&) = delete;
 
     ~EnvironmentLocalCacheBase()
@@ -778,7 +797,7 @@ public:
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
                                         [arrayPrefix, v, &group](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return arrayPrefix + v.name + getVarSuffix(group.getGroups().at(i), v);
+                                            return arrayPrefix + v.name + P::getVarSuffix(group.getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
@@ -790,7 +809,7 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(getReadIndex(m_Group.get(), v), *this) << "]";
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -802,7 +821,7 @@ public:
         for(const auto &v : referencedDefs) {
             // If variables are read-write
             if(v.access & VarAccessMode::READ_WRITE) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(getWriteIndex(m_Group.get(), v), *this) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }

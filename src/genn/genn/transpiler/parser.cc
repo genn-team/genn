@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <set>
