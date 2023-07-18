@@ -469,7 +469,7 @@ class GeNNModel(ModelSpecInternal):
         return c_source
     
     def add_custom_update(self, cu_name, group_name, custom_update_model,
-                          param_space, var_space, var_ref_space):
+                          param_space, var_space, var_ref_space, egp_ref_space={}):
         """Add a current source to the GeNN model
 
         Args:
@@ -487,6 +487,8 @@ class GeNNModel(ModelSpecInternal):
                                    CustomUpdateModel class
         var_ref_space           -- dict with variable references for the
                                    CustomUpdateModel class
+        egp_ref_space           -- dict with extra global parameter references 
+                                   for the CustomUpdateModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -501,7 +503,7 @@ class GeNNModel(ModelSpecInternal):
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            param_space, var_init, var_ref_space)
+            param_space, var_init, var_ref_space, egp_ref_space)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, var_space)
