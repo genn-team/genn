@@ -9,7 +9,6 @@
 
 // GeNN includes
 #include "initVarSnippet.h"
-#include "snippet.h"
 #include "type.h"
 #include "varAccess.h"
 
@@ -112,38 +111,9 @@ protected:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
    
-};
-
-
-//----------------------------------------------------------------------------
-// GeNN::Models::VarInit
-//----------------------------------------------------------------------------
-//! Class used to bind together everything required to initialise a variable:
-//! 1. A pointer to a variable initialisation snippet
-//! 2. The parameters required to control the variable initialisation snippet
-class VarInit : public Snippet::Init<InitVarSnippet::Base>
-{
-public:
-    VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params);
-    VarInit(double constant);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    bool isRNGRequired() const;
-
-    bool isKernelRequired() const;
-    
-    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::vector<Transpiler::Token> m_CodeTokens;
 };
 
 //----------------------------------------------------------------------------

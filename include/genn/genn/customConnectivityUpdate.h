@@ -46,9 +46,9 @@ public:
     const CustomConnectivityUpdateModels::Base *getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
 
     const std::unordered_map<std::string, double> &getParams() const { return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const { return m_VarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
 
     const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
     const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
@@ -75,8 +75,8 @@ public:
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
-                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                             const std::unordered_map<std::string, Models::VarInit> &preVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &postVarInitialisers,
+                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                             const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                              const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation);
@@ -135,9 +135,9 @@ private:
     const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
-    std::unordered_map<std::string, Models::VarInit> m_PreVarInitialisers;
-    std::unordered_map<std::string, Models::VarInit> m_PostVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;

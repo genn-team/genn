@@ -21,7 +21,7 @@ void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                    const std::unordered_map<std::string, Models::VarInit> &varValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::string &description) const
 {
     // Superclass
@@ -32,33 +32,6 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 
     // Validate variable initialisers
     Utils::validateInitialisers(vars, varValues, "variable", description);
-}
-
-//----------------------------------------------------------------------------
-// VarInit
-//----------------------------------------------------------------------------
-VarInit::VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params)
-:   Snippet::Init<InitVarSnippet::Base>(snippet, params)
-{
-    // Scan code tokens
-    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
-}
-//----------------------------------------------------------------------------
-VarInit::VarInit(double constant)
-:   Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
-{
-    // Scan code tokens
-    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
-}
-//----------------------------------------------------------------------------
-bool VarInit::isRNGRequired() const
-{
-    return Utils::isRNGRequired(m_CodeTokens);
-}
-//----------------------------------------------------------------------------
-bool VarInit::isKernelRequired() const
-{
-    return Utils::isIdentifierReferenced("id_kernel", m_CodeTokens);
 }
 
 //----------------------------------------------------------------------------

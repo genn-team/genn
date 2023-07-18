@@ -1,5 +1,8 @@
 #include "currentSourceModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN;
 
 namespace GeNN::CurrentSourceModels
@@ -23,7 +26,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                    const std::unordered_map<std::string, Models::VarInit> &varValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::string &description) const
 {
     // Superclass

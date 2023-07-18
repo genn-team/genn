@@ -20,16 +20,11 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "initVarSnippet.h"
 #include "type.h"
 
 // GeNN code generator includes
 #include "transpiler/token.h"
-
-// Forward declarations
-namespace GeNN::Models
-{
-class VarInit;
-}
 
 //--------------------------------------------------------------------------
 // GeNN::Utils
@@ -53,7 +48,7 @@ GENN_EXPORT bool isRNGRequired(const std::vector<Transpiler::Token> &tokens);
 //--------------------------------------------------------------------------
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
 //--------------------------------------------------------------------------
-GENN_EXPORT bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers);
+GENN_EXPORT bool isRNGRequired(const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers);
 
 //--------------------------------------------------------------------------
 //! \brief Is the variable name valid? GeNN variable names must obey C variable naming rules

@@ -1,5 +1,8 @@
 #include "weightUpdateModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN;
 
 namespace GeNN::WeightUpdateModels
@@ -43,9 +46,9 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                    const std::unordered_map<std::string, Models::VarInit> &varValues,
-                    const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                    const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                     const std::string &description) const
 {
     // Superclass

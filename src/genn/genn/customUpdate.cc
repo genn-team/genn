@@ -33,7 +33,7 @@ bool CustomUpdateBase::isVarInitRequired() const
 }
 //----------------------------------------------------------------------------
 CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
     m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
@@ -109,7 +109,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                           const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
+                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
@@ -228,7 +228,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                               const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
+                               const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))

@@ -13,8 +13,8 @@ class SynapseGroupInternal : public SynapseGroup
 {
 public:
     SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
-                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
+                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
@@ -109,7 +109,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_SG.getPSModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
 
@@ -161,7 +161,7 @@ public:
     
     Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getName(); }
 private:
@@ -187,7 +187,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
 
@@ -216,7 +216,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
 

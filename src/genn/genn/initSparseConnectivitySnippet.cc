@@ -1,5 +1,8 @@
 #include "initSparseConnectivitySnippet.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN;
 
 namespace GeNN::InitSparseConnectivitySnippet

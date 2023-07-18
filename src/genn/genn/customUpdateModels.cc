@@ -1,5 +1,8 @@
 #include "customUpdateModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN;
 
 namespace GeNN::CustomUpdateModels

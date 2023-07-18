@@ -1,5 +1,8 @@
 #include "initToeplitzConnectivitySnippet.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 using namespace GeNN;
 
 namespace GeNN::InitToeplitzConnectivitySnippet

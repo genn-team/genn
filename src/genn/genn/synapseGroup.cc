@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------
 namespace
 {
-std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, GeNN::Models::VarInit> &varInitialisers)
+std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, GeNN::InitVarSnippet::Init> &varInitialisers)
 {
     // Reserve initial values to match initialisers
     std::unordered_map<std::string, double> initVals;
@@ -306,8 +306,8 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,

@@ -38,7 +38,7 @@ public:
     //! Validate names of parameters etc
     template<typename R>
     void validate(const std::unordered_map<std::string, double> &paramValues,
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, R> &varRefTargets,
                   const std::string &description) const
     {

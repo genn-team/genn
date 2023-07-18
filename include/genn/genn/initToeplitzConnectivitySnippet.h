@@ -13,6 +13,9 @@
 #include "binomial.h"
 #include "snippet.h"
 
+// GeNN transpiler includes
+#include "transpiler/token.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------

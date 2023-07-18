@@ -12,7 +12,6 @@
 
 // GeNN includes
 #include "gennExport.h"
-#include "gennUtils.h"
 #include "type.h"
 
 //----------------------------------------------------------------------------
@@ -74,14 +73,10 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
-        ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v) : name(n), type(t), value(v)
-        {}
-        ParamVal(const std::string &n, const Type::ResolvedType &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
-        {}
-        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
-        {}
-        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
-        {}
+        ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v);
+        ParamVal(const std::string &n, const Type::ResolvedType &t, double v);
+        ParamVal(const std::string &n, const std::string &t, const std::string &v);
+        ParamVal(const std::string &n, const std::string &t, double v);
 
         bool operator == (const ParamVal &other) const
         {
@@ -105,7 +100,6 @@ public:
         std::string name;
         std::function<double(const std::unordered_map<std::string, double>&, double)> func;
     };
-
 
     //----------------------------------------------------------------------------
     // Typedefines

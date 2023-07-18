@@ -39,7 +39,7 @@ public:
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -52,7 +52,7 @@ public:
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                      VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -148,7 +148,7 @@ private:
     const CustomUpdateModels::Base *m_CustomUpdateModel;
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
@@ -179,7 +179,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
@@ -230,7 +230,7 @@ public:
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                 const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
+                 const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -281,7 +281,7 @@ public:
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                   const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
+                   const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------

@@ -12,7 +12,7 @@ class CurrentSourceInternal : public CurrentSource
 {
 public:
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                          const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                          const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                           const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 
                           VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, targetNeuronGroup, 
@@ -46,7 +46,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string&) const{ return false; }
 

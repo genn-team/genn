@@ -6,15 +6,18 @@
 
 // Standard C++ includes
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
 
+// Boost includes
+#include <sha1.hpp>
+
 // GeNN includes
 #include "gennExport.h"
-#include "gennUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros

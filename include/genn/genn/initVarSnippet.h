@@ -3,6 +3,9 @@
 // GeNN includes
 #include "snippet.h"
 
+// GeNN transpiler includes
+#include "transpiler/token.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
@@ -32,6 +35,35 @@ public:
     void validate(const std::unordered_map<std::string, double> &paramValues) const;
 };
 
+
+//----------------------------------------------------------------------------
+// GeNN::InitVarSnippet::Init
+//----------------------------------------------------------------------------
+//! Class used to bind together everything required to initialise a variable:
+//! 1. A pointer to a variable initialisation snippet
+//! 2. The parameters required to control the variable initialisation snippet
+class Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(double constant);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    bool isRNGRequired() const;
+
+    bool isKernelRequired() const;
+    
+    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_CodeTokens;
+};
+
 //----------------------------------------------------------------------------
 // GeNN::InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
@@ -50,7 +82,7 @@ public:
  *
     - \c value - The value to intialise the variable to
 
-    \note This snippet type is seldom used directly - Models::VarInit
+    \note This snippet type is seldom used directly - InitVarSnippet::Init
     has an implicit constructor that, internally, creates one of these snippets*/
 class Constant : public Base
 {

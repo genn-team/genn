@@ -1,5 +1,8 @@
 #include "customConnectivityUpdateModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 //----------------------------------------------------------------------------
 // GeNN::CustomConnectivityUpdateModels::Base
 //----------------------------------------------------------------------------
@@ -25,9 +28,9 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                    const std::unordered_map<std::string, Models::VarInit> &varValues,
-                    const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                    const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                     const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
                     const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
                     const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,

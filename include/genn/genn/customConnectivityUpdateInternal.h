@@ -14,8 +14,8 @@ class CustomConnectivityUpdateInternal : public CustomConnectivityUpdate
 public:
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
-                                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                                     const std::unordered_map<std::string, Models::VarInit> &preVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &postVarInitialisers,
+                                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                      const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                                      const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                                      VarLocation defaultExtraGlobalParamLocation)
@@ -55,7 +55,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
@@ -82,7 +82,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
@@ -111,7 +111,7 @@ public:
 
     Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 

@@ -44,7 +44,7 @@ Part of the code generation and generated code sections.
 namespace GeNN
 {
 using ParamValues = std::unordered_map<std::string, double>;
-using VarValues = std::unordered_map<std::string, Models::VarInit>;
+using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
 
@@ -67,28 +67,28 @@ enum class TimePrecision
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
     \param params   parameters for snippet wrapped in ParamValues object.
-    \return         Models::VarInit object for use within model's VarValues*/
+    \return         InitVarSnippet::Init object for use within model's VarValues*/
 template<typename S>
-inline Models::VarInit initVar(const ParamValues &params)
+inline InitVarSnippet::Init initVar(const ParamValues &params)
 {
-    return Models::VarInit(S::getInstance(), params);
+    return InitVarSnippet::Init(S::getInstance(), params);
 }
 
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
-    \return         Models::VarInit object for use within model's VarValues*/
+    \return         InitVarSnippet::Init object for use within model's VarValues*/
 template<typename S>
-inline Models::VarInit initVar()
+inline InitVarSnippet::Init initVar()
 {
-    return Models::VarInit(S::getInstance(), {});
+    return InitVarSnippet::Init(S::getInstance(), {});
 }
 
 //! Mark a variable as uninitialised
 /*! This means that the backend will not generate any automatic initialization code, but will instead
     copy the variable from host to device during ``initializeSparse`` function */
-inline Models::VarInit uninitialisedVar()
+inline InitVarSnippet::Init uninitialisedVar()
 {
-    return Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+    return InitVarSnippet::Init(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
 //! Initialise connectivity using a sparse connectivity snippet

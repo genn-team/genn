@@ -12,7 +12,7 @@ class NeuronGroupInternal : public NeuronGroup
 {
 public:
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                        const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                        const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   NeuronGroup(name, numNeurons, neuronModel, params, varInitialisers,
                     defaultVarLocation, defaultExtraGlobalParamLocation)
@@ -70,7 +70,7 @@ public:
     
     Models::Base::VarVec getDefs() const{ return m_NG.getNeuronModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string &varName) const{ return m_NG.isVarQueueRequired(varName); }
 
