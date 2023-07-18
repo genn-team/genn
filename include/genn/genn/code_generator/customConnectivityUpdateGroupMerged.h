@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <tuple>
 
+// GeNN includes
+#include "customConnectivityUpdateInternal.h"
+
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/environment.h"

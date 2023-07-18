@@ -1,5 +1,11 @@
 #pragma once
 
+// GeNN includes
+#include "customConnectivityUpdateInternal.h"
+#include "currentSourceInternal.h"
+#include "customUpdateInternal.h"
+#include "synapseGroupInternal.h"
+
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 

@@ -383,6 +383,8 @@ template<typename G, typename F>
 class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>
 {
     using GroupInternal = typename G::GroupInternal;
+    
+    using GetFieldDoubleValueFunc = std::function<double(const GroupInternal &, size_t)>;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
@@ -429,7 +431,7 @@ public:
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
 
-    void addScalar(const std::string &name, const std::string &fieldSuffix, typename G::GetFieldDoubleValueFunc getFieldValue)
+    void addScalar(const std::string &name, const std::string &fieldSuffix, GetFieldDoubleValueFunc getFieldValue)
     {
         // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
         const auto &scalarType = this->getGroup().getScalarType();

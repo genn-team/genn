@@ -8,11 +8,7 @@
 
 // GeNN includes
 #include "gennExport.h"
-#include "currentSourceInternal.h"
-#include "customConnectivityUpdateInternal.h"
-#include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
-#include "synapseGroupInternal.h"
 #include "type.h"
 
 // GeNN code generator includes
@@ -63,7 +59,6 @@ public:
     //------------------------------------------------------------------------
     typedef G GroupInternal;
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
-    typedef std::function<double(const G &, size_t)> GetFieldDoubleValueFunc;
     typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
     ChildGroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
@@ -424,7 +419,7 @@ protected:
     template<typename M, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<M> &childGroups, const Type::TypeContext &typeContext, G getVectorFunc, H getHashDigestFunc) const
     {
-        const std::vector<typename M::GroupInternal*> &archetypeChildren = std::invoke(getVectorFunc, getArchetype());
+        const auto &archetypeChildren = std::invoke(getVectorFunc, getArchetype());
 
         // Resize vector of vectors to hold children for all neuron groups, sorted in a consistent manner
         std::vector<std::vector<std::reference_wrapper<typename M::GroupInternal const>>> sortedGroupChildren;
@@ -437,7 +432,7 @@ protected:
         // Loop through groups
         for(const auto &g : getGroups()) {
             // Get group children
-            const std::vector<typename M::GroupInternal*> &groupChildren = (g.get().*getVectorFunc)();
+            const auto &groupChildren = std::invoke(getVectorFunc, g.get());
             assert(groupChildren.size() == archetypeChildren.size());
 
             // Loop through children and add them and their digests to vector
