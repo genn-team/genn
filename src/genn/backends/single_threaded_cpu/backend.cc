@@ -142,7 +142,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     
                     // Create matching environment
                     EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(funcEnv, n);
-                    genNeuronIndexCalculation(groupEnv, 1);
+                    buildStandardEnvironment(groupEnv, 1);
 
                     if(n.getArchetype().isDelayRequired()) {
                         if(n.getArchetype().isPrevSpikeTimeRequired()) {
@@ -197,7 +197,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> groupEnv(funcEnv, n);
-                    genNeuronIndexCalculation(groupEnv, 1);
+                    buildStandardEnvironment(groupEnv, 1);
 
                     // Generate spike count reset
                     n.genMergedGroupSpikeCountReset(groupEnv, 1);
@@ -218,7 +218,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
-                    genNeuronIndexCalculation(groupEnv, 1);
+                    buildStandardEnvironment(groupEnv, 1);
 
                     // If spike or spike-like event recording is in use
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -327,9 +327,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
                         // Create matching environment
                         EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(funcEnv, s);
-
-                        // **TODO** rename as it does more!
-                        genSynapseIndexCalculation(groupEnv, 1);
+                        buildStandardEnvironment(groupEnv, 1);
 
                         // Loop through presynaptic neurons
                         groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
@@ -403,8 +401,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         
                         // Create matching environment
                         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
-
-                        genSynapseIndexCalculation(groupEnv, 1);
+                        buildStandardEnvironment(groupEnv, 1);
                     
                         // generate the code for processing spike-like events
                         if (s.getArchetype().isSpikeEventRequired()) {
@@ -438,8 +435,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
                         // Create matching environment
                         EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> groupEnv(funcEnv, s);
-
-                        genSynapseIndexCalculation(groupEnv, 1);
+                        buildStandardEnvironment(groupEnv, 1);
 
                         // Get number of postsynaptic spikes
                         if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
@@ -582,7 +578,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
                             
-                            genCustomUpdateIndexCalculation(groupEnv);
+                            buildStandardEnvironment(groupEnv);
 
                             if (c.getArchetype().isNeuronReduction()) {
                                 // Initialise reduction targets
@@ -731,7 +727,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(funcEnv, c);
 
-                            genCustomConnectivityUpdateIndexCalculation(groupEnv);
+                            buildStandardEnvironment(groupEnv);
                         
                             // Loop through presynaptic neurons
                             funcEnv.getStream() << "for(unsigned int i = 0; i < " << funcEnv["num_pre"] << "; i++)";
@@ -868,7 +864,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(funcEnv, n);
-                    genNeuronIndexCalculation(groupEnv, 1);
+                    buildStandardEnvironment(groupEnv, 1);
                     n.generateInit(*this, groupEnv, modelMerged);
                 }
             });
@@ -888,7 +884,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
-                    genSynapseIndexCalculation(groupEnv, 1);
+                    buildStandardEnvironment(groupEnv, 1);
 
                     s.generateInit(*this, groupEnv, modelMerged);
                 }
@@ -981,7 +977,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
-                    genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+                    buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
                     // If matrix connectivity is ragged
                     if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1138,7 +1134,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
-                    genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+                    buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
                     // If postsynaptic learning is required, initially zero column lengths
                     if (!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {

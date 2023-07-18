@@ -44,9 +44,12 @@ class ModelSpecMerged;
 template<typename G>
 class GroupMerged;
 class NeuronUpdateGroupMerged;
+class NeuronPrevSpikeTimeUpdateGroupMerged;
+class NeuronSpikeQueueUpdateGroupMerged;
 class PresynapticUpdateGroupMerged;
 class PostsynapticUpdateGroupMerged;
 class SynapseDynamicsGroupMerged;
+class SynapseDendriticDelayUpdateGroupMerged;
 class CustomConnectivityUpdateGroupMerged;
 class CustomUpdateGroupMerged;
 class CustomUpdateWUGroupMerged;
@@ -470,265 +473,21 @@ public:
 
     bool areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const;
 
-    template<typename G>
-    void genNeuronIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
-    {
-        env.addField(Type::Uint32.addConst(), "num_neurons",
-                     Type::Uint32, "numNeurons",
-                     [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-        env.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getName(); });
-        env.addField(Type::Uint32.createPointer(), "_spk", "spk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getName(); });
-        env.addField(Type::Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getName(); });
-        env.addField(Type::Uint32.createPointer(), "_spk_evnt", "spkEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getName(); });
-        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
+    void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
 
-        env.addField(env.getGroup().getTimeType().createPointer(), "_spk_time", "sT",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "sT" + g.getName(); });
-        env.addField(env.getGroup().getTimeType().createPointer(), "_spk_evnt_time", "seT",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "seT" + g.getName(); });
-        env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_time", "prevST", 
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevST" + g.getName(); });
-        env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_evnt_time", "prevSET",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "prevSET" + g.getName(); });
+    void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> &env, unsigned int batchSize) const;
 
-        env.addField(Type::Uint32.createPointer(), "_record_spk", "recordSpk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "recordSpk" + g.getName(); }, 
-                     "", GroupMergedFieldType::DYNAMIC);
-        env.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                     [this](const auto &g, size_t){ return getDeviceVarPrefix() + "recordSpkEvent" + g.getName(); },
-                     "", GroupMergedFieldType::DYNAMIC);
-
-        // If batching is enabled, calculate batch offset
-        if(batchSize > 1) {
-            env.add(Type::Uint32.addConst(), "_batchOffset", "batchOffset",
-                    {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
-        }
-            
-        // If axonal delays are required
-        if(env.getGroup().getArchetype().isDelayRequired()) {
-            // We should READ from delay slot before spkQuePtr
-            const unsigned int numDelaySlots = env.getGroup().getArchetype().getNumDelaySlots();
-            const std::string numDelaySlotsStr = std::to_string(numDelaySlots);
-            env.add(Type::Uint32.addConst(), "_read_delay_slot", "readDelaySlot",
-                    {env.addInitialiser("const unsigned int readDelaySlot = (*$(_spk_que_ptr) + " + std::to_string(numDelaySlots - 1) + ") % " + numDelaySlotsStr+ ";")});
-            env.add(Type::Uint32.addConst(), "_read_delay_offset", "readDelayOffset",
-                    {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(num_neurons);")});
-
-            // And we should WRITE to delay slot pointed to be spkQuePtr
-            env.add(Type::Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
-                    {env.addInitialiser("const unsigned int writeDelaySlot = * $(_spk_que_ptr);")});
-            env.add(Type::Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
-                    {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
-
-            // If batching is also enabled
-            if(batchSize > 1) {
-                // Calculate batched delay slots
-                env.add(Type::Uint32.addConst(), "_read_batch_delay_slot", "readBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int readBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_read_delay_slot);")});
-                env.add(Type::Uint32.addConst(), "_write_batch_delay_slot", "writeBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int writeBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_write_delay_slot);")});
-
-                // Calculate current batch offset
-                env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                        {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
-
-                // Calculate further offsets to include delay and batch
-                env.add(Type::Uint32.addConst(), "_read_batch_delay_offset", "readBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);")});
-                env.add(Type::Uint32.addConst(), "_write_batch_delay_offset", "writeBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset)+ $(_batch_delay_offset);")});
-            }
-        }
-    }
-
-    template<typename G>
-    void genSynapseIndexCalculation(EnvironmentGroupMergedField<G> &env, unsigned int batchSize) const
-    {
-        // Synapse group fields 
-        env.addField(Type::Uint32.addConst(), "num_pre",
-                     Type::Uint32, "numSrcNeurons", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-        env.addField(Type::Uint32.addConst(), "num_post",
-                     Type::Uint32, "numTrgNeurons", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-        env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                     [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(getSynapticMatrixRowStride(sg)); });
-        env.addField(Type::Uint32, "_col_stride", "colStride", 
-                     [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
-                        
-        // Postsynaptic model fields         
-        env.addField(env.getGroup().getScalarType().createPointer(), "_out_post", "outPost",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
-        env.addField(env.getGroup().getScalarType().createPointer(), "_den_delay", "denDelay",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
-        env.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
-                       
-        // Presynaptic output fields
-        env.addField(env.getGroup().getScalarType().createPointer(), "_out_pre", "outPre",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
-                        
-        // Source neuron fields
-        env.addField(Type::Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getSrcNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_src_spk", "srcSpk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_src_spk_evnt_cnt", "srcSpkCntEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
-
-        // Target neuron fields
-        env.addField(Type::Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
-                     [this](const auto &g, size_t) { return getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
-        env.addField(Type::Uint32.createPointer(), "_trg_spk", "trgSpk",
-                     [this](const auto &g, size_t) { return getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
-        
-        // Connectivity fields
-        if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            env.addField(Type::Uint32.createPointer(), "_gp", "gp",
-                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "gp" + sg.getName(); });
-        }
-        else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "rowLength" + sg.getName(); });
-            env.addField(env.getGroup().getArchetype().getSparseIndType().createPointer(), "_ind", "ind",
-                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "ind" + sg.getName(); });
-            env.addField(Type::Uint32.createPointer(), "_col_length", "colLength", 
-                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "colLength" + sg.getName(); });
-            env.addField(Type::Uint32.createPointer(), "_remap", "remap", 
-                         [this](const auto &sg, size_t) { return getDeviceVarPrefix() + "remap" + sg.getName(); });
-        }
-
-        // If batching is enabled
-        if(batchSize > 1) {
-            // Calculate batch offsets into pre and postsynaptic populations
-            env.add(Type::Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);")});
-            env.add(Type::Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
-                    {env.addInitialiser("const unsigned int preBatchOffset = $(num_post) * $(batch);")});
-        
-            // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
-            if(areSixtyFourBitSynapseIndicesRequired(env.getGroup())) {
-                assert(false);
-                //os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
-            }
-            else {
-                env.add(Type::Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
-                        {env.addInitialiser("const unsigned int synBatchOffset = $(_pre_batch_offset) * $(_row_stride);")});
-            }
-        
-            // If synapse group has kernel
-            const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
-            if(!kernelSize.empty()) {
-                // Loop through kernel dimensions and multiply together
-                // **TODO** extract list of kernel size variables referenced
-                std::ostringstream kernBatchOffsetInit;
-                kernBatchOffsetInit << "const unsigned int kernBatchOffset = ";
-                for(size_t i = 0; i < kernelSize.size(); i++) {
-                    kernBatchOffsetInit << getKernelSize(env.getGroup(), i) << " * ";
-                }
-            
-                // And finally by batch
-                kernBatchOffsetInit << "$(batch);" << std::endl;
-
-                env.add(Type::Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
-                        {env.addInitialiser(kernBatchOffsetInit.str())});
-            }
-        }
-
-        // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-        if(env.getGroup().getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            const unsigned int numDelaySteps = env.getGroup().getArchetype().getDelaySteps();
-            const unsigned int numSrcDelaySlots = env.getGroup().getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-
-            std::ostringstream preDelaySlotInit;
-            preDelaySlotInit << "const unsigned int preDelaySlot = ";
-            if(numDelaySteps == 0) {
-                preDelaySlotInit << "*$(_src_spk_que_ptr);" << std::endl;
-            }
-            else {
-                preDelaySlotInit << "(*$(_src_spk_que_ptr) + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
-            }
-            env.add(Type::Uint32, "_pre_delay_slot", "preDelaySlot", 
-                    {env.addInitialiser(preDelaySlotInit.str())});
-
-            env.add(Type::Uint32, "_pre_delay_offset", "preDelayOffset",
-                    {env.addInitialiser("const unsigned int preDelayOffset = $(_pre_delay_slot) * $(num_pre);")});
-
-            if(batchSize > 1) {
-                env.add(Type::Uint32, "_pre_batch_delay_slot", "preBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int preBatchDelaySlot = $(_pre_delay_slot) + ($(batch) * " + std::to_string(numSrcDelaySlots) + ");")});
-                env.add(Type::Uint32, "_pre_batch_delay_offset", "preBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
-            }
-
-            if(env.getGroup().getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() 
-               || env.getGroup().getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) 
-            {
-                env.add(Type::Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
-                        {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
-                                            + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
-
-                if(batchSize > 1) {
-                    env.add(Type::Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
-                            {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
-                }
-            }
-        }
-
-        // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-        if(env.getGroup().getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-            const unsigned int numBackPropDelaySteps = env.getGroup().getArchetype().getBackPropDelaySteps();
-            const unsigned int numTrgDelaySlots = env.getGroup().getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-
-            std::ostringstream postDelaySlotInit;
-            postDelaySlotInit << "const unsigned int postDelaySlot = ";
-            if(numBackPropDelaySteps == 0) {
-                postDelaySlotInit << "*$(_trg_spk_que_ptr);" << std::endl;
-            }
-            else {
-                postDelaySlotInit << "(*$(_trg_spk_que_ptr) + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
-            }
-            env.add(Type::Uint32, "_post_delay_slot", "postDelaySlot", 
-                    {env.addInitialiser(postDelaySlotInit.str())});
-
-            env.add(Type::Uint32, "_post_delay_offset", "postDelayOffset",
-                    {env.addInitialiser("const unsigned int postDelayOffset = $(_post_delay_slot) * $(num_post);")});
-
-            if(batchSize > 1) {
-                env.add(Type::Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
-                        {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + (batch * " + std::to_string(numTrgDelaySlots) + ");")});
-                env.add(Type::Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
-            }
-
-            if(env.getGroup().getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-                env.add(Type::Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
-                        {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
-                                            + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
-
-                if(batchSize > 1) {
-                    env.add(Type::Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
-                            {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
-                }
-
-            }
-        }
-    }
-    void genCustomUpdateIndexCalculation(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
-    
-    void genCustomConnectivityUpdateIndexCalculation(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
-    
     //! Get backend-specific pointer size in bytes
     size_t getPointerBytes() const{ return m_PointerBytes; }
 

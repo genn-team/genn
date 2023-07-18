@@ -326,7 +326,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
 
             // Create matching environment
             EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> neuronEnv(popEnv, ng);
-            genNeuronIndexCalculation(neuronEnv, batchSize);
+            buildStandardEnvironment(neuronEnv, batchSize);
 
             // If neuron group requires delays
             if(ng.getArchetype().isDelayRequired()) {
@@ -423,7 +423,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
             
                 // Create matching environment
                 EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, n);
-                genNeuronIndexCalculation(neuronEnv, batchSize);
+                buildStandardEnvironment(neuronEnv, batchSize);
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     neuronEnv.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(n.getArchetype().getNumDelaySlots()) + ";");
@@ -507,7 +507,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         {
             CodeStream::Scope b(popEnv.getStream());
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
-            genNeuronIndexCalculation(groupEnv, batchSize);
+            buildStandardEnvironment(groupEnv, batchSize);
             
             // Call handler to generate generic neuron code
             groupEnv.print("if($(id) < $(num_neurons))");
@@ -690,7 +690,7 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
                 // Use this to get reference to merged group structure
                 env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
                 EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(env, sg);
-                genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+                buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
                 groupEnv.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(sg.getArchetype().getMaxDendriticDelayTimesteps()) + ";");
             }
             idStart += sg.getGroups().size();
@@ -740,7 +740,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
 
             // Generate index calculation code
-            genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             // Generate preamble
             presynapticUpdateStrategy->genPreamble(groupEnv, modelMerged, sg, *this);
@@ -786,7 +786,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
 
             // Generate index calculation code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-            genSynapseIndexCalculation(groupEnv, batchSize);
+            buildStandardEnvironment(groupEnv, batchSize);
 
             groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[" + sg.getPostSlot(batchSize) + "];");
             
@@ -869,7 +869,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
 
             // Generate index calculation code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-            genSynapseIndexCalculation(groupEnv, batchSize);
+            buildStandardEnvironment(groupEnv, batchSize);
 
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupEnv.print("if ($(id) < ($(num_pre) * $(_row_stride)))");
@@ -948,7 +948,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                         CodeStream::Scope b(groupEnv.getStream());
                         groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
 
-                        genCustomUpdateIndexCalculation(groupEnv);
+                        buildStandardEnvironment(groupEnv);
                         
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(*this, groupEnv);
@@ -978,7 +978,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     groupEnv.getStream() << "const unsigned int batch = " << env["id"] << " / 32;" << std::endl;
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
 
-                    genCustomUpdateIndexCalculation(groupEnv);
+                    buildStandardEnvironment(groupEnv);
 
                     // Initialise reduction targets
                     const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), cg);
@@ -1038,7 +1038,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
-                    genCustomUpdateIndexCalculation(groupEnv);
+                    buildStandardEnvironment(groupEnv);
                     cg.generateCustomUpdate(*this, groupEnv);
                 }
             }
@@ -1068,7 +1068,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
-                    genCustomUpdateIndexCalculation(groupEnv);
+                    buildStandardEnvironment(groupEnv);
                     cg.generateCustomUpdate(*this, groupEnv);
                 }
             }
@@ -1324,7 +1324,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
         {
             EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(env, cg);
             
-            genCustomConnectivityUpdateIndexCalculation(groupEnv);
+            buildStandardEnvironment(groupEnv);
 
             groupEnv.getStream() << "// only do this for existing presynaptic neurons" << std::endl;
             groupEnv.print("if($(id) < $(num_pre))");
@@ -1362,7 +1362,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [&modelMerged, this](EnvironmentExternalBase &env, NeuronInitGroupMerged &ng)
         {
             EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, ng);
-            genNeuronIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
             groupEnv.print("if($(id) < $(num_neurons))");
@@ -1538,7 +1538,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [&modelMerged, this](EnvironmentExternalBase &env, SynapseConnectivityInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, sg);
-            genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             // If there is row-building code in this snippet
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
@@ -1690,7 +1690,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
         [&modelMerged, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, sg);
-            genSynapseIndexCalculation(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             // If this post synapse requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
