@@ -74,8 +74,8 @@ size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, co
     return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPreamble(EnvironmentExternalBase&, const ModelSpecMerged&, 
-                          PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+void PreSpan::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+                          const BackendSIMT&) const
 {
 }
 //----------------------------------------------------------------------------
@@ -86,7 +86,6 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mod
     const ModelSpecInternal &model = modelMerged.getModel();
     const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
-    const auto *wu = sg.getArchetype().getWUModel();
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
 
     if(numThreadsPerSpike > 1) {
@@ -180,7 +179,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mod
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged&, 
+void PreSpan::genPostamble(EnvironmentExternalBase &, const ModelSpecMerged&, 
                            PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
 }
@@ -217,8 +216,8 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBas
             && !(sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ));
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                           PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                           const BackendSIMT &backend) const
 {
     // If data structure is dense, we can accumulate output directly into register
     if(shouldAccumulateInRegister(sg)) {
@@ -251,7 +250,6 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
     env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
-    const auto *wu = sg.getArchetype().getWUModel();
     env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
         CodeStream::Scope b(env.getStream());
@@ -453,19 +451,18 @@ size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupM
     return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, const ModelSpecMerged&, 
-                                    PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+                                    const BackendSIMT&) const
 {
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                  PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
+                                  PresynapticUpdateGroupMerged &sg, const BackendSIMT&, bool trueSpike) const
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
     const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
-    const auto *wu = sg.getArchetype().getWUModel();
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
 
     if(numThreadsPerSpike > 1) {
@@ -641,8 +638,8 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
             && !sg.isDendriticDelayRequired());
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &, 
-                                  PresynapticUpdateGroupMerged &, const BackendSIMT &backend) const
+void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &, 
+                                  const BackendSIMT &backend) const
 {
     // Loop through bits written by this thread
     for(size_t i = 0; i < 32; i++) {
@@ -674,7 +671,6 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, const ModelSpecMer
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
 
-    const auto *wu = sg.getArchetype().getWUModel();
     env.printLine("const unsigned int rowWords =  ($(num_post) + 32 - 1) / 32;");
     env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
@@ -813,8 +809,8 @@ bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const Prefer
     return (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ);
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &, 
-                                   PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                   const BackendSIMT &backend) const
 {
     if(isSmallSharedMemoryPop(sg, backend)) {
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
@@ -835,14 +831,14 @@ size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMe
 void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
                                  PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
 {
-    const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
+    assert(false);
+    /*const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
 
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
     const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
-    assert(false);
-    /*
+    
     // Create substitution stack for generating Toeplitz connectivity code
     Substitutions connSubs(&popSubs);
     connSubs.addVarSubstitution("id_diag", connSubs["id"]);

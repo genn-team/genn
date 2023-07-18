@@ -32,34 +32,11 @@
 #include "transpiler/parser.h"
 #include "transpiler/prettyPrinter.h"
 
-//--------------------------------------------------------------------------
-// Anonymous namespace
-//--------------------------------------------------------------------------
-namespace
-{
-std::string trimWhitespace(const std::string& str)
-{
-    const std::string whitespace = " \t\r\n";
-    
-    // If string is all whitespace, return empty
-    const auto strBegin = str.find_first_not_of(whitespace);
-    if (strBegin == std::string::npos) {
-        return ""; 
-    }
-
-    const auto strEnd = str.find_last_not_of(whitespace);
-    const auto strRange = strEnd - strBegin + 1;
-
-    return str.substr(strBegin, strRange);
-}
-}    // Anonymous namespace
-
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-//----------------------------------------------------------------------------
 void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix)
 {
     const auto &numeric = type.getNumeric();

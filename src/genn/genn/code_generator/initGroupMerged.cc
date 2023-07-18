@@ -1168,7 +1168,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged&)
 {
     // Create environment for group
     EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(env, *this);

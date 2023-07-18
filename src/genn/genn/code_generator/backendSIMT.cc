@@ -76,7 +76,7 @@ void BackendSIMT::genVariableInit(EnvironmentExternalBase &env, const std::strin
     handler(env);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
+void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged&, HandlerEnv handler) const
 {
     // Variable should already be provided via parallelism
     //assert(kernelSubs.hasVarSubstitution("id"));
@@ -87,7 +87,7 @@ void BackendSIMT::genKernelSynapseVariableInit(EnvironmentExternalBase &env, Syn
     handler(varEnv);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
+void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &, HandlerEnv handler) const
 {
     // Variable should already be provided via parallelism
     //assert(kernelSubs.hasVarSubstitution("id"));
@@ -522,14 +522,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                 ng.generateNeuronUpdate(*this, groupEnv, modelMerged,
                                         // Emit true spikes
-                                        [&modelMerged, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
+                                        [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, modelMerged, "", ng.getArchetype().isSpikeRecordingEnabled());
+                                            genEmitSpike(env, "", ng.getArchetype().isSpikeRecordingEnabled());
                                         },
                                         // Emit spike-like events
-                                        [&modelMerged, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
+                                        [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, modelMerged, "_evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
+                                            genEmitSpike(env, "_evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
                                         });
 
                 // Copy local stream back to local
@@ -743,7 +743,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             // Generate preamble
-            presynapticUpdateStrategy->genPreamble(groupEnv, modelMerged, sg, *this);
+            presynapticUpdateStrategy->genPreamble(groupEnv, sg, *this);
 
             // If spike events should be processed
             if(sg.getArchetype().isSpikeEventRequired()) {
@@ -1744,7 +1744,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
                 groupEnv, modelMerged, cg, true,
-                [](EnvironmentExternalBase &env, CustomWUUpdateSparseInitGroupMerged&){});
+                [](EnvironmentExternalBase&, CustomWUUpdateSparseInitGroupMerged&){});
         });
 
     // Initialise weight update variables for synapse groups with sparse connectivity
@@ -1775,7 +1775,7 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, const std::string &suffix, bool recordingEnabled) const
+void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, bool recordingEnabled) const
 {
     env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
     env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");

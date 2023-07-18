@@ -38,8 +38,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
@@ -71,8 +71,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
@@ -104,8 +104,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
@@ -145,8 +145,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
@@ -178,8 +178,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
@@ -211,8 +211,8 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                             PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
     virtual void genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 

@@ -402,7 +402,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                   addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, modelMerged.getModel().getBatchSize(), "$(id_syn)");
                                   addPrivateVarRefAccess<CustomConnectivityUpdatePostVarRefAdapter>(
                                       bodyEnv, modelMerged.getModel().getBatchSize(), 
-                                      [](VarAccessMode a, const Models::VarReference &varRef)
+                                      [](VarAccessMode, const Models::VarReference &varRef)
                                       { 
                                           if(varRef.getDelayNeuronGroup() != nullptr) {
                                               return "$(_post_delay_offset) + $(id_post)"; 
@@ -436,7 +436,7 @@ bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std:
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnectivityHostUpdate";
 //----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged&)
 {
     CodeStream::Scope b(env.getStream());
 

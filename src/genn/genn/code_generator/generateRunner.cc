@@ -93,7 +93,7 @@ void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
     runnerVarDecl << type.getValue().name << " " << name << " = " << value << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void genHostDeviceScalar(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar, 
+void genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar, 
                          CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree,
                          const Type::ResolvedType &type, const std::string &name, const std::string &hostValue, MemAlloc &mem)
 {
@@ -250,11 +250,10 @@ void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, C
     }
 }
 //-------------------------------------------------------------------------
-void genVariable(const ModelSpecMerged &modelMerged, const BackendBase &backend,
-                 CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternal, 
-                 CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &push, CodeStream &pull, 
-                 const Type::ResolvedType &type, const std::string &name,
-                 VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
+void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc, 
+                 CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, 
+                 CodeStream &free, CodeStream &push, CodeStream &pull, const Type::ResolvedType &type, 
+                 const std::string &name, VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
                  std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
@@ -416,7 +415,7 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
         const auto *varInitSnippet = varAdaptor.getInitialisers().at(var.name).getSnippet();
         const bool autoInitialized = !varInitSnippet->getCode().empty();
         const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
-        genVariable(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+        genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                     runnerPushFunc, runnerPullFunc, resolvedType, var.name + group.getName(), varAdaptor.getLoc(var.name),
                     autoInitialized, getSizeFn(group, var), mem, statePushPullFunctions);
 
@@ -995,7 +994,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            genHostDeviceScalar(modelMerged, backend, definitionsVar, definitionsInternalVar, 
+            genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, 
                                 runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 Type::Uint32, "spkQuePtr" + n.first, "0", mem);
         }
@@ -1084,7 +1083,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
-            genVariable(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc, resolvedType, var.name + n.first,
                         n.second.getVarLocation(var.name), autoInitialized, count, mem, neuronStatePushPullFunctions);
 
@@ -1260,7 +1259,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  model.getPrecision(), "denDelay" + sg->getFusedPSVarSuffix(), 
                                  sg->getDendriticDelayLocation(), (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
-                genHostDeviceScalar(modelMerged, backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                     Type::Uint32, "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
@@ -1399,7 +1398,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getTypeContext());
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
-                    genVariable(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                    genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
                                 autoInitialized, size * getNumVarCopies(wuVar.access, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
@@ -1408,7 +1407,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                      const size_t size = s.second.getKernelSizeFlattened() * getNumVarCopies(wuVar.access, batchSize);
                      
                      // Generate variable
-                     genVariable(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
                                  autoInitialized, size, mem, synapseGroupStatePushPullFunctions);
                 }

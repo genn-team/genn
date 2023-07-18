@@ -44,7 +44,7 @@ public:
     }
 
     //! Generate support code
-    void gen(CodeStream &os, const Type::ResolvedType &scalarType, const bool supportsNamespace = true) const
+    void gen(CodeStream &os, const Type::ResolvedType &, const bool supportsNamespace = true) const
     {
         // Loop through support code
         for(const auto &s : m_SupportCode) {

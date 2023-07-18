@@ -616,7 +616,7 @@ public:
     template<typename A>
     void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, const std::string &fieldSuffix = "")
     {
-        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess a, const std::string &) { return indexSuffix; }, 
+        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
                    fieldSuffix);
     }
 
