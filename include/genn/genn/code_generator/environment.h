@@ -383,6 +383,7 @@ template<typename G, typename F>
 class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>
 {
     using GroupInternal = typename G::GroupInternal;
+    using GroupExternal = typename GroupInternal::GroupExternal;
     
     using GetFieldDoubleValueFunc = std::function<double(const GroupInternal &, size_t)>;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
@@ -394,10 +395,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
 
     template<typename I>
-    using GetConnectivityFn = const I &(GroupInternal::*)(void) const;
-
-    template<typename V>
-    using GetVarReferencesFn = const std::unordered_map<std::string, V> &(GroupInternal::*)(void) const;
+    using GetConnectivityFn = const I &(GroupExternal::*)(void) const;
 
 public:
     using EnvironmentExternalDynamicBase<EnvironmentFieldPolicy<G, F>>::EnvironmentExternalDynamicBase;

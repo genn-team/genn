@@ -11,6 +11,8 @@ namespace GeNN
 class CurrentSourceInternal : public CurrentSource
 {
 public:
+    using GroupExternal = CurrentSource;
+
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                           const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                           const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 

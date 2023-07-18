@@ -11,6 +11,8 @@ namespace GeNN
 class NeuronGroupInternal : public NeuronGroup
 {
 public:
+    using GroupExternal = NeuronGroup;
+
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                         const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)

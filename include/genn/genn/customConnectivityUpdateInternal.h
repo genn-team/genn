@@ -12,6 +12,8 @@ namespace GeNN
 class CustomConnectivityUpdateInternal : public CustomConnectivityUpdate
 {
 public:
+    using GroupExternal = CustomConnectivityUpdate;
+
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
                                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
