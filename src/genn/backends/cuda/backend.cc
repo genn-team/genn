@@ -713,9 +713,9 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
                 *this, memorySpaces, g, 
-                [this, &customUpdateEnv, &modelMerged](auto &c)
+                [this, &customUpdateEnv](auto &c)
                 {
-                    c.generateUpdate(*this, customUpdateEnv, modelMerged);
+                    c.generateUpdate(*this, customUpdateEnv);
                 });
 
             // Launch custom update kernel if required

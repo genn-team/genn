@@ -334,21 +334,10 @@ private:
                         genGroup(env, g, idStart, getPaddedSizeFunc, handler);
                     });
     }
-
-    
-
-    
-    /*template<typename T, typename S>
-    void genParallelGroup(EnvironmentExternalBase &env, std::vector<T> &groups, size_t &idStart,
-                          S getPaddedSizeFunc, GroupHandlerEnv<T> handler) const
-    {
-        genParallelGroup(env, groups, idStart, getPaddedSizeFunc,
-                         [](const T &) { return true; }, handler);
-    }*/
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with dense/kernel connectivity
     template<typename G>
-    void genSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, G &g,
+    void genSynapseVarInit(EnvironmentExternalBase &env, unsigned int batchSize, G &g,
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
     {
         env.getStream() << "if(" << env["id"] << " < ";
@@ -422,13 +411,13 @@ private:
             }
 
             // Generate init code
-            g.generateInit(*this, initEnv, modelMerged);
+            g.generateInit(*this, initEnv, batchSize);
         }
     }
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with sparse connectivity
     template<typename G>
-    void genSparseSynapseVarInit(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, G &g,
+    void genSparseSynapseVarInit(EnvironmentExternalBase &env, unsigned int batchSize, G &g,
                                  bool varInitRequired, GroupHandlerEnv<G> handler) const
     {
         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
@@ -471,7 +460,7 @@ private:
                         EnvironmentExternal initEnv(env);
                         initEnv.add(Type::Uint32.addConst(), "id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
                         initEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[idx]");
-                        g.generateInit(*this, initEnv, modelMerged);
+                        g.generateInit(*this, initEnv, batchSize);
                     }
                     
                     // Call handler

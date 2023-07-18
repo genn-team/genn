@@ -248,12 +248,12 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
 
                         // Generate neuron update
-                        n.generateNeuronUpdate(*this, rngEnv, modelMerged,
+                        n.generateNeuronUpdate(*this, rngEnv, 1,
                                                // Emit true spikes
-                                               [&modelMerged, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
+                                               [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
                                                {
                                                    // Insert code to update WU vars
-                                                   ng.generateWUVarUpdate(*this, env, modelMerged);
+                                                   ng.generateWUVarUpdate(*this, env, 1);
 
                                                    // Insert code to emit true spikes
                                                    genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
@@ -376,7 +376,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, synEnv, modelMerged);
+                                s.generateSynapseUpdate(*this, synEnv, 1);
                             }
                         }
                     }
@@ -487,7 +487,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
             
-                                s.generateSynapseUpdate(*this, synEnv, modelMerged);
+                                s.generateSynapseUpdate(*this, synEnv, 1);
                             }
                         }
                         groupEnv.getStream() << std::endl;
@@ -557,7 +557,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 *this, memorySpaces, g, 
                 [this, &customUpdateEnv, &modelMerged](auto &c)
                 {
-                    c.generateUpdate(*this, customUpdateEnv, modelMerged);
+                    c.generateUpdate(*this, customUpdateEnv);
                 });
             
             {
@@ -865,7 +865,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
-                    n.generateInit(*this, groupEnv, modelMerged);
+                    n.generateInit(*this, groupEnv, 1);
                 }
             });
         
@@ -886,7 +886,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, 1);
 
-                    s.generateInit(*this, groupEnv, modelMerged);
+                    s.generateInit(*this, groupEnv, 1);
                 }
             });
 
@@ -904,7 +904,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, modelMerged);
+                    c.generateInit(*this, funcEnv, 1);
                 }
             });
         
@@ -922,7 +922,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, modelMerged);
+                    c.generateInit(*this, funcEnv, 1);
                 }
             });
         
@@ -940,7 +940,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, modelMerged);
+                    c.generateInit(*this, funcEnv, 1);
                 }
             });
 
@@ -958,7 +958,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, modelMerged);
+                    c.generateInit(*this, funcEnv, 1);
                 }
             });
 
@@ -1067,7 +1067,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                 }
 
                                 // Call handler to initialize variables
-                                s.generateKernelInit(*this, kernelInitEnv, modelMerged);
+                                s.generateKernelInit(*this, kernelInitEnv, 1);
                             }
 
                             // If there is row-building code in this snippet
@@ -1151,28 +1151,28 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         if(s.getArchetype().isWUVarInitRequired()) {
                             groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
-                            s.generateInit(*this, groupEnv, modelMerged);
+                            s.generateInit(*this, groupEnv, 1);
                         }
 
                         // If postsynaptic learning is required
                         if(!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                            groupEnv.getStream() << "// Loop through synapses in corresponding matrix row" << std::endl;
-                            groupEnv.getStream() << "for(unsigned int j = 0; j < " << groupEnv["_row_length"] << "[i]; j++)" << std::endl;
+                            groupEnv.printLine("// Loop through synapses in corresponding matrix row");
+                            groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
                                 // If postsynaptic learning is required, calculate column length and remapping
                                 if(!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                                    groupEnv.getStream() << "// Calculate index of this synapse in the row-major matrix" << std::endl;
-                                    groupEnv.getStream() << "const unsigned int rowMajorIndex = (i * " << groupEnv["_row_stride"] << ") + j;" << std::endl;
-                                    groupEnv.getStream() << "// Using this, lookup postsynaptic target" << std::endl;
-                                    groupEnv.getStream() << "const unsigned int postIndex = " << groupEnv["_ind"] << "[rowMajorIndex];" << std::endl;
-                                    groupEnv.getStream() << "// From this calculate index of this synapse in the column-major matrix" << std::endl;
-                                    groupEnv.getStream() << "const unsigned int colMajorIndex = (postIndex * " << groupEnv["_col_stride"] << ") + " << groupEnv["_col_length"] << "[postIndex];" << std::endl;
-                                    groupEnv.getStream() << "// Increment column length corresponding to this postsynaptic neuron" << std::endl;
-                                    groupEnv.getStream() << groupEnv["_col_length"] << "[postIndex]++;" << std::endl;
-                                    groupEnv.getStream() << "// Add remapping entry" << std::endl;
-                                    groupEnv.getStream() << groupEnv["_remap"] << "p[colMajorIndex] = rowMajorIndex;" << std::endl;
+                                    groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
+                                    groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+                                    groupEnv.printLine("// Using this, lookup postsynaptic target");
+                                    groupEnv.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+                                    groupEnv.printLine("// From this calculate index of this synapse in the column-major matrix)");
+                                    groupEnv.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+                                    groupEnv.printLine("// Increment column length corresponding to this postsynaptic neuron");
+                                    groupEnv.printLine("$(_col_length)[postIndex]++;");
+                                    groupEnv.printLine("// Add remapping entry");
+                                    groupEnv.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
                                 }
                             }
                         }
@@ -1204,7 +1204,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
-                        c.generateInit(*this, groupEnv, modelMerged);
+                        c.generateInit(*this, groupEnv, 1);
                     }
                 }
             });
@@ -1233,7 +1233,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         // Generate initialisation code  
                         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                         groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
-                        c.generateInit(*this, groupEnv, modelMerged);
+                        c.generateInit(*this, groupEnv, 1);
                     }
                 }
             });
@@ -1871,7 +1871,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 groupEnv.getStream() << "if(";
 
                 // Generate weight update threshold condition
-                sg.generateSpikeEventThreshold(*this, groupEnv, modelMerged);
+                sg.generateSpikeEventThreshold(*this, groupEnv, 1);
 
                 groupEnv.getStream() << ")";
                 groupEnv.getStream() << CodeStream::OB(10);
@@ -1897,10 +1897,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, modelMerged);
+                        sg.generateSpikeUpdate(*this, synEnv, 1);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, modelMerged);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1);
                     }
                 }
             }
@@ -1947,10 +1947,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, modelMerged);
+                                sg.generateSpikeUpdate(*this, groupEnv, 1);
                             }
                             else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, modelMerged);
+                                sg.generateSpikeEventUpdate(*this, groupEnv, 1);
                             }
                         }
 
@@ -1985,10 +1985,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                    
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, modelMerged);
+                        sg.generateSpikeUpdate(*this, synEnv, 1);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, modelMerged);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1);
                     }
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {

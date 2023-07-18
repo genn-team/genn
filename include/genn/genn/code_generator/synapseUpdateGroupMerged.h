@@ -116,9 +116,9 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
-    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
-    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
 
@@ -145,7 +145,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -170,7 +170,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants

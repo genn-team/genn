@@ -140,7 +140,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create new environment to add current source fields to neuron update group 
     EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
@@ -183,7 +183,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
-        if(modelMerged.getModel().getBatchSize() == 1 || !varRef.isDuplicated()) {
+        if(batchSize == 1 || !varRef.isDuplicated()) {
             // Determine index
             const std::string index = (varRef.getDelayNeuronGroup() != nullptr) ? "$(_pre_delay_offset) + $(id_pre)" : "$(id_pre)";
             
@@ -253,11 +253,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
+            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
             {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
-                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + newIdx] = _" << ccuVarRefs[i].name << "Val;" << std::endl;
@@ -274,10 +274,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated())
+            if (batchSize > 1 && dependentVars.at(i).isDuplicated())
             {
                 // Loop through all batches and zero
-                addSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     addSynapse << "$(_dependent_var_" << i << ")[(b * $(_syn_stride)) + newIdx] = 0;" << std::endl;
@@ -319,11 +319,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) 
-                && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated())
+            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated())
             {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
-                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(addSynapse);
                     removeSynapse << "$(_" << ccuVarRefs[i].name << ")[(b * $(_syn_stride)) + $(id_syn)] = ";
@@ -339,9 +338,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if ((modelMerged.getModel().getBatchSize() > 1) && dependentVars.at(i).isDuplicated()) {
+            if (batchSize > 1 && dependentVars.at(i).isDuplicated()) {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
-                removeSynapse << "for(int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(removeSynapse);
                     removeSynapse << "$(_dependent_var_" << i << ")[(b * $(_syn_stride)) + $(id_syn)] = ";
@@ -382,7 +381,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);
                           },
-                          [&backend, &modelMerged, &removeSynapseStream, this](auto &env, auto generateBody)
+                          [batchSize, &backend, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
                               EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
                               bodyEnv.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
@@ -399,9 +398,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                   bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>(backend.getDeviceVarPrefix(), "$(id_post)");
 
                                   // Add postsynaptic and synapse variable references, only exposing those that aren't batched
-                                  addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, modelMerged.getModel().getBatchSize(), "$(id_syn)");
+                                  addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, batchSize, "$(id_syn)");
                                   addPrivateVarRefAccess<CustomConnectivityUpdatePostVarRefAdapter>(
-                                      bodyEnv, modelMerged.getModel().getBatchSize(), 
+                                      bodyEnv, batchSize, 
                                       [](VarAccessMode, const Models::VarReference &varRef)
                                       { 
                                           if(varRef.getDelayNeuronGroup() != nullptr) {
@@ -436,7 +435,7 @@ bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std:
 //----------------------------------------------------------------------------
 const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnectivityHostUpdate";
 //----------------------------------------------------------------------------
-void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged&)
+void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
 {
     CodeStream::Scope b(env.getStream());
 

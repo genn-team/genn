@@ -16,10 +16,8 @@ namespace
 {
 template<typename G>
 void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
-                               G &sg, const ModelSpecMerged &modelMerged, bool backendSupportsNamespace)
+                               G &sg, unsigned int batchSize, bool backendSupportsNamespace)
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-    const unsigned int batchSize = model.getBatchSize();
     const auto *wu = sg.getArchetype().getWUModel();
 
     EnvironmentGroupMergedField<G> synEnv(env, sg);
@@ -365,7 +363,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
 
@@ -394,16 +392,16 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     prettyPrintStatements(getArchetype().getWUEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUEventCodeTokens(), "event code",
-                              *this, modelMerged, backend.supportsNamespace());
+                              *this, batchSize, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUSimCodeTokens(), "sim code",
-                              *this, modelMerged, backend.supportsNamespace());
+                              *this, batchSize, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, EnvironmentExternalBase &env)
@@ -449,14 +447,14 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     /*if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
         os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
     }*/
 
     applySynapseSubstitutions(backend, env, getArchetype().getWUPostLearnCodeTokens(), "learn post code",
-                              *this, modelMerged, backend.supportsNamespace());
+                              *this, batchSize, backend.supportsNamespace());
 }
 
 //----------------------------------------------------------------------------
@@ -464,14 +462,14 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged)
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     /*if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
         os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
     }*/
 
     applySynapseSubstitutions(backend, env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics",
-                              *this, modelMerged, backend.supportsNamespace());
+                              *this, batchSize, backend.supportsNamespace());
 }
 
 

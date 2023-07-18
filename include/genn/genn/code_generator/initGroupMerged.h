@@ -74,7 +74,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
     
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const
@@ -98,7 +98,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const
@@ -121,7 +121,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const
@@ -160,7 +160,7 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronInitGroupMerged &ng, const ModelSpecMerged &modelMerged);
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
         
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const
@@ -188,7 +188,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
@@ -241,7 +241,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -268,7 +268,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -300,7 +300,7 @@ public:
 
     void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
@@ -348,7 +348,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -389,7 +389,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -421,7 +421,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -452,7 +452,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -483,7 +483,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -514,7 +514,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -545,7 +545,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged);
+    void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants

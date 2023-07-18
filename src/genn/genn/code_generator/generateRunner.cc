@@ -741,7 +741,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         [&backend, &modelMerged, &synapseConnectivityHostInit](auto &sg)
         {
             EnvironmentExternal env(synapseConnectivityHostInit);
-            sg.generateInit(backend, env, modelMerged);
+            sg.generateInit(backend, env);
         });
 
     // Loop through merged synapse connectivity host initialisation groups

@@ -18,13 +18,13 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
     return std::accumulate(
         groups.cbegin(), groups.cend(), size_t{0},
         [getNumThreads](size_t acc, const T &n)
-    {
-        return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
-                               [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
         {
-            return acc + getNumThreads(g.get());
+            return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
+                                   [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+            {
+                return acc + getNumThreads(g.get());
+            });
         });
-    });
 }
 }   // Anonymous namespace
 
@@ -520,7 +520,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                   ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)"));
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
-                ng.generateNeuronUpdate(*this, groupEnv, modelMerged,
+                ng.generateNeuronUpdate(*this, groupEnv, batchSize,
                                         // Emit true spikes
                                         [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
@@ -603,7 +603,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     EnvironmentExternal wuEnv(groupEnv);
                     wuEnv.add(Type::Uint32.addConst(), "id", "n");
-                    ng.generateWUVarUpdate(*this, wuEnv, modelMerged);
+                    ng.generateWUVarUpdate(*this, wuEnv, batchSize);
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
                     if(ng.getArchetype().isSpikeTimeRequired()) {
@@ -740,7 +740,8 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
 
             // Generate index calculation code
-            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            buildStandardEnvironment(groupEnv, batchSize);
 
             // Generate preamble
             presynapticUpdateStrategy->genPreamble(groupEnv, sg, *this);
@@ -748,19 +749,19 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             // If spike events should be processed
             if(sg.getArchetype().isSpikeEventRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, modelMerged, sg, *this, false);
+                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, false);
             }
 
             // If true spikes should be processed
             if(sg.getArchetype().isTrueSpikeRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, modelMerged, sg, *this, true);
+                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, true);
             }
 
             groupEnv.getStream() << std::endl;
 
             // Generate pre-amble
-            presynapticUpdateStrategy->genPostamble(groupEnv, modelMerged, sg, *this);
+            presynapticUpdateStrategy->genPostamble(groupEnv, sg, *this, batchSize);
         });
 }
 //--------------------------------------------------------------------------
@@ -843,7 +844,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
 
                         synEnv.add(Type::AddToPre, "addToPre", getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
-                        sg.generateSynapseUpdate(*this, synEnv, modelMerged);
+                        sg.generateSynapseUpdate(*this, synEnv, batchSize);
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             synEnv.getStream() << CodeStream::CB(1540);
@@ -909,7 +910,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 synEnv.add(Type::AddToPre, "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
-                sg.generateSynapseUpdate(*this, synEnv, modelMerged);
+                sg.generateSynapseUpdate(*this, synEnv, batchSize);
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(1);
@@ -1340,7 +1341,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                     groupEnv.add(Type::Void, "rng", genPopulationRNGPreamble(groupEnv.getStream(), rng));
                 }
 
-                cg.generateUpdate(*this, groupEnv, modelMerged);
+                cg.generateUpdate(*this, groupEnv, modelMerged.getModel().getBatchSize());
                 
                 // Copy local stream back to local
                 if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
@@ -1356,13 +1357,14 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// ------------------------------------------------------------------------" << std::endl;
     env.getStream() << "// Local neuron groups" << std::endl;
     idStart = 0;
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<NeuronInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronInitGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, NeuronInitGroupMerged &ng)
+        [&modelMerged, batchSize, this](EnvironmentExternalBase &env, NeuronInitGroupMerged &ng)
         {
             EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, ng);
-            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, batchSize);
 
             groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
             groupEnv.print("if($(id) < $(num_neurons))");
@@ -1370,6 +1372,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 CodeStream::Scope b(groupEnv.getStream());
 
                 // If population RNGs are initialised on device and this neuron is going to require one, 
+                
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
                     // Add field for RNG
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> rngInitEnv(groupEnv, ng);
@@ -1377,13 +1380,13 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
 
                     // If batch size is 1, initialise single RNG using GLOBAL thread id for sequence
-                    if(modelMerged.getModel().getBatchSize() == 1) {
+                    if(batchSize == 1) {
                         genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv), 
                                              "deviceRNGSeed", "id");
                     }
                     // Otherwise, loop through batches and initialise independent RNGs using GLOBAL thread id as basis of sequence
                     else {
-                        env.getStream() << "for(unsigned int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                        env.getStream() << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
                         {
                             CodeStream::Scope b(rngInitEnv.getStream());
                             genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[(b * $(num_neurons)) + $(id)]", rngInitEnv), 
@@ -1400,7 +1403,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     groupEnv.add(Type::Void, "_rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
-                ng.generateInit(*this, groupEnv, modelMerged);
+                ng.generateInit(*this, groupEnv, batchSize);
             }
         });
     env.getStream() << std::endl;
@@ -1410,9 +1413,9 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     genParallelGroup<SynapseInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, SynapseInitGroupMerged &sg)
+        [batchSize, this](EnvironmentExternalBase &env, SynapseInitGroupMerged &sg)
         {
-            genSynapseVarInit(env, modelMerged, sg, sg.getArchetype().isWUInitRNGRequired(), 
+            genSynapseVarInit(env, batchSize, sg, sg.getArchetype().isWUInitRNGRequired(), 
                               (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL), 
                               sg.getArchetype().getKernelSize().size());
         });
@@ -1423,7 +1426,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     genParallelGroup<CustomUpdateInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomUpdateInitGroups,
         [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, CustomUpdateInitGroupMerged &cg)
+        [batchSize, this](EnvironmentExternalBase &env, CustomUpdateInitGroupMerged &cg)
         {
             env.getStream() << "// only do this for existing variables" << std::endl;
             env.print("if($(id) < $(size))");
@@ -1438,7 +1441,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     groupEnv.add(Type::Void, "_rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
-                cg.generateInit(*this, groupEnv, modelMerged);
+                cg.generateInit(*this, groupEnv, batchSize);
             }
         });
     env.getStream() << std::endl;
@@ -1448,10 +1451,10 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     genParallelGroup<CustomWUUpdateInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateInitGroups,
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cg)
+        [batchSize, this](EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cg)
         {
             const SynapseGroup *sg = cg.getArchetype().getSynapseGroup();
-            genSynapseVarInit(env, modelMerged, cg, cg.getArchetype().isInitRNGRequired(), 
+            genSynapseVarInit(env, batchSize, cg, cg.getArchetype().isInitRNGRequired(), 
                               (sg->getMatrixType() & SynapseMatrixWeight::KERNEL), sg->getKernelSize().size());
         });
     env.getStream() << std::endl;
@@ -1461,7 +1464,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     genParallelGroup<CustomConnectivityUpdatePreInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePreInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePreInitGroupMerged &cg)
+        [batchSize, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePreInitGroupMerged &cg)
         {
             env.getStream() << "// only do this for existing variables" << std::endl;
             env.print("if($(id) < $(size))");
@@ -1488,7 +1491,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     groupEnv.add(Type::Void, "_rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
-                cg.generateInit(*this, groupEnv, modelMerged);
+                cg.generateInit(*this, groupEnv, batchSize);
             }
         });
     env.getStream() << std::endl;
@@ -1498,7 +1501,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     genParallelGroup<CustomConnectivityUpdatePostInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdatePostInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePostInitGroupMerged &cg)
+        [batchSize, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePostInitGroupMerged &cg)
         {
             env.getStream() << "// only do this for existing variables" << std::endl;
             env.print("if($(id) < $(size))");
@@ -1525,7 +1528,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     groupEnv.add(Type::Void, "_rng", genGlobalRNGSkipAhead(groupEnv.getStream(), "id"));
                 }
 
-                cg.generateInit(*this, groupEnv, modelMerged);
+                cg.generateInit(*this, groupEnv, batchSize);
             }
         });
     env.getStream() << std::endl;
@@ -1684,13 +1687,14 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                   {envKernel.addInitialiser(getSharedPrefix() + "unsigned int shRowLength[" + std::to_string(getKernelBlockSize(KernelInitializeSparse)) + "];")});
    
     // Initialise weight update variables for synapse groups with sparse connectivity
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<SynapseSparseInitGroupMerged>(
         envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitializeSparse); },
-        [&modelMerged, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
+        [batchSize, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, sg);
-            buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
+            buildStandardEnvironment(groupEnv, batchSize);
 
             // If this post synapse requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id
@@ -1702,7 +1706,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<SynapseSparseInitGroupMerged>(
-                groupEnv, modelMerged, sg, sg.getArchetype().isWUVarInitRequired(), 
+                groupEnv, batchSize, sg, sg.getArchetype().isWUVarInitRequired(), 
                 [this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
                 {
                     // If postsynaptic learning is required
@@ -1729,7 +1733,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
     genParallelGroup<CustomWUUpdateSparseInitGroupMerged>(
         envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomWUUpdateSparseInitGroups,
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
-        [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomWUUpdateSparseInitGroupMerged &cg)
+        [batchSize, numInitializeThreads, this](EnvironmentExternalBase &env, CustomWUUpdateSparseInitGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(env, cg);
 
@@ -1743,7 +1747,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
             
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
-                groupEnv, modelMerged, cg, true,
+                groupEnv, batchSize, cg, true,
                 [](EnvironmentExternalBase&, CustomWUUpdateSparseInitGroupMerged&){});
         });
 
@@ -1751,7 +1755,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
     genParallelGroup<CustomConnectivityUpdateSparseInitGroupMerged>(
         envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
-        [numInitializeThreads, &modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityUpdateSparseInitGroupMerged &cg)
+        [batchSize, numInitializeThreads, this](EnvironmentExternalBase &env, CustomConnectivityUpdateSparseInitGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(env, cg);
 
@@ -1765,7 +1769,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
             
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<CustomConnectivityUpdateSparseInitGroupMerged>(
-                groupEnv, modelMerged, cg, true,
+                groupEnv, batchSize, cg, true,
                 [](EnvironmentExternalBase&, CustomConnectivityUpdateSparseInitGroupMerged&){});
         });
 }

@@ -10,8 +10,7 @@
 #include "code_generator/backendSIMT.h"
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
-#include "code_generator/groupMerged.h"
-#include "code_generator/modelSpecMerged.h"
+#include "code_generator/synapseUpdateGroupMerged.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -79,12 +78,10 @@ void PreSpan::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged
 {
 }
 //----------------------------------------------------------------------------
-void PreSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                        PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
+void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                        const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const ModelSpecInternal &model = modelMerged.getModel();
-    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
 
@@ -152,16 +149,16 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mod
             synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress");
 
             synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
-                       backend.getAtomic(model.getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
+                       backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
             synEnv.add(Type::AddToPost, "addToPost",
-                       backend.getAtomic(model.getPrecision()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
+                       backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             synEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
             
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, synEnv, modelMerged);
+                sg.generateSpikeUpdate(backend, synEnv, batchSize);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, synEnv, modelMerged);
+                sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
             }
             
         }
@@ -173,14 +170,13 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mod
         // Should this be in the Postamble?
         if(sg.getArchetype().isPresynapticOutputRequired()) {
             // write lrevInSyn to global memory if not 0
-            env.getStream() << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&" + env["_out_pre"] + "[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+            env.getStream() << "if(lrevInSyn != 0.0) " << backend.getAtomic(sg.getScalarType()) + "(&" + env["_out_pre"] + "[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
         }
         
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPostamble(EnvironmentExternalBase &, const ModelSpecMerged&, 
-                           PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+void PreSpan::genPostamble(EnvironmentExternalBase &, PresynapticUpdateGroupMerged&, const BackendSIMT&, unsigned int) const
 {
 }
 
@@ -239,12 +235,10 @@ size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                         PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
+void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                         const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const ModelSpecInternal &model = modelMerged.getModel();
-    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
 
     env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
@@ -331,7 +325,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
        
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
-                           backend.getAtomic(model.getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                           backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 
                 // If we should accumulate in register, add parameter to register
                 if(shouldAccumulateInRegister(sg)) {
@@ -345,19 +339,19 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
                 // Otherwise, use global memory atomic
                 else {
                     synEnv.add(Type::AddToPost, "addToPost",
-                               backend.getAtomic(model.getPrecision()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
+                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                 }
 
                 if(sg.getArchetype().isPresynapticOutputRequired()) {
                     synEnv.add(Type::AddToPre, "addToPre",
-                               backend.getAtomic(model.getPrecision()) + "(&$(_out_pre)([" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)([" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 }
                 
                 if(trueSpike) {
-                    sg.generateSpikeUpdate(backend, synEnv, modelMerged);
+                    sg.generateSpikeUpdate(backend, synEnv, batchSize);
                 }
                 else {
-                    sg.generateSpikeEventUpdate(backend, synEnv, modelMerged);
+                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -375,12 +369,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &mo
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                            PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                            const BackendSIMT &backend, unsigned int batchSize) const
 {
     // If we should accumulate output directly into register
-    const ModelSpecInternal &model = modelMerged.getModel();
-    const unsigned int batchSize = model.getBatchSize();
     if(shouldAccumulateInRegister(sg)) {
         env.getStream() << "// only do this for existing neurons" << std::endl;
         env.print("if ($(id) < $(num_post))");
@@ -388,7 +380,7 @@ void PostSpan::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged 
             CodeStream::Scope b(env.getStream());
             const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id)") + "]", env);
             if(sg.getArchetype().isPSModelFused()) {
-                env.getStream() << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << ", linSyn);" << std::endl;
             }
             else {
                 env.getStream() << inSyn << " += linSyn;" << std::endl;
@@ -402,7 +394,7 @@ void PostSpan::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged 
         {
             CodeGenerator::CodeStream::Scope b(env.getStream());
             const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, backend.getThreadID()) + "]", env);
-            env.getStream() << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << "], shLg[" << backend.getThreadID() << "]); " << std::endl;
+            env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << "], shLg[" << backend.getThreadID() << "]); " << std::endl;
         }
     }
 }
@@ -449,12 +441,10 @@ void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateG
 {
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                  PresynapticUpdateGroupMerged &sg, const BackendSIMT&, bool trueSpike) const
+void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                  const BackendSIMT&, unsigned int batchSize, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const ModelSpecInternal &model = modelMerged.getModel();
-    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
 
@@ -602,8 +592,8 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, const ModelSpecM
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPostamble(EnvironmentExternalBase&, const ModelSpecMerged&, 
-                                     PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+void PreSpanProcedural::genPostamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+                                     const BackendSIMT&, unsigned int) const
 {
 }
 
@@ -650,11 +640,10 @@ size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMer
     return 32;
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
+void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
 
     // Get blocksize
@@ -736,13 +725,13 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, const ModelSpecMer
                     synEnv.add(Type::AddToPost, "addToPost",
                        "shLg[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
                     synEnv.add(Type::AddToPre, "addToPre",
-                               backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(backend, synEnv, modelMerged);
+                        sg.generateSpikeUpdate(backend, synEnv, batchSize);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(backend, synEnv, modelMerged);
+                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
                     }
 
                     synEnv.getStream() << "ibit++;" << std::endl;
@@ -757,8 +746,8 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, const ModelSpecMer
     }
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                   PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                   const BackendSIMT &backend, unsigned int batchSize) const
 {
     backend.genSharedMemBarrier(env.getStream());
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
@@ -773,9 +762,9 @@ void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, const ModelSpec
         env.print("for(;shIdx < endShIdx && glbIdx < $(num_post); shIdx++, glbIdx += 32)");
         {
             CodeStream::Scope b(env.getStream());
-            const std::string inSyn = "$(_out_post)[" + sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), "glbIdx") +"]";
+            const std::string inSyn = "$(_out_post)[" + sg.getPostISynIndex(batchSize, "glbIdx") +"]";
             if(sg.getArchetype().isPSModelFused()) {
-                env.printLine(backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&" + inSyn + ", shLg[shIdx]);");
+                env.printLine(backend.getAtomic(sg.getScalarType()) + "(&" + inSyn + ", shLg[shIdx]);");
             }
             else {
                 env.printLine(inSyn + " += shLg[shIdx];");
@@ -821,8 +810,8 @@ size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMe
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                 PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, bool trueSpike) const
+void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                 const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
 {
     assert(false);
     /*const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
@@ -963,8 +952,8 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, const ModelSpecMe
     }*/
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                    PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                    const BackendSIMT &backend, unsigned int batchSize) const
 {
     // If we should accumulate into shared memory
     if(isSmallSharedMemoryPop(sg, backend)) {
@@ -972,8 +961,8 @@ void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, const ModelSpe
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
         {
             CodeGenerator::CodeStream::Scope b(env.getStream());
-            const std::string idx = sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), backend.getThreadID());
-            env.printLine(backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_post)[" + idx + "], shLg[" + backend.getThreadID() + "]);");
+            const std::string idx = sg.getPostISynIndex(batchSize, backend.getThreadID());
+            env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + idx + "], shLg[" + backend.getThreadID() + "]);");
         }
     }
 }
