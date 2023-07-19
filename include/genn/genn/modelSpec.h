@@ -49,22 +49,6 @@ using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
 using EGPReferences = std::unordered_map<std::string, Models::EGPReference>;
 
-//! Floating point precision to use for "scalar" type variables models
-enum class ScalarPrecision
-{
-    FLOAT,
-    DOUBLE,
-    LONG_DOUBLE,
-};
-
-//! Precision to use for variables which store time
-enum class TimePrecision
-{
-    DEFAULT,    //!< Time uses default model precision
-    FLOAT,      //!< Time uses single precision - not suitable for long simulations
-    DOUBLE,     //!< Time uses double precision - may reduce performance
-};
-
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
     \param params   parameters for snippet wrapped in ParamValues object.

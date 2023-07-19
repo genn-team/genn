@@ -69,9 +69,7 @@ class PyInitSparseConnectivitySnippetBase : public PySnippet<InitSparseConnectiv
     using Base = InitSparseConnectivitySnippet::Base;
 public:
     virtual std::string getRowBuildCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_row_build_code", getRowBuildCode); }
-    virtual ParamValVec getRowBuildStateVars() const override { PYBIND11_OVERRIDE_NAME(Snippet::Base::ParamValVec, Base, "get_row_build_state_vars", getRowBuildStateVars); }
     virtual std::string getColBuildCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_col_build_code", getColBuildCode); }
-    virtual ParamValVec getColBuildStateVars() const override { PYBIND11_OVERRIDE_NAME(Snippet::Base::ParamValVec, Base, "get_col_build_state_vars", getColBuildStateVars); }
     virtual std::string getHostInitCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_host_init_code", getHostInitCode); }
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override { PYBIND11_OVERRIDE_NAME(CalcMaxLengthFunc, Base, "get_calc_max_row_length_func", getCalcMaxRowLengthFunc); }
     virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override { PYBIND11_OVERRIDE_NAME(CalcMaxLengthFunc, Base, "get_calc_max_col_length_func", getCalcMaxColLengthFunc); }
@@ -210,10 +208,11 @@ CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::Ba
     return output.second;
 }
 
-void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel)
+void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, plog::Severity transpilerLevel)
 {
     auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;
-    Logging::init(gennLevel, codeGeneratorLevel, consoleAppender, consoleAppender);
+    Logging::init(gennLevel, codeGeneratorLevel, transpilerLevel,
+                  consoleAppender, consoleAppender, consoleAppender);
 }
 }
 
@@ -242,22 +241,18 @@ PYBIND11_MODULE(genn, m)
         .value("TOEPLITZ", SynapseMatrixConnectivity::TOEPLITZ);
 
     pybind11::enum_<SynapseMatrixWeight>(m, "SynapseMatrixWeight")
-        .value("GLOBAL", SynapseMatrixWeight::GLOBAL)
         .value("INDIVIDUAL", SynapseMatrixWeight::INDIVIDUAL)
         .value("PROCEDURAL", SynapseMatrixWeight::PROCEDURAL)
         .value("KERNEL", SynapseMatrixWeight::KERNEL);
 
     pybind11::enum_<SynapseMatrixType>(m, "SynapseMatrixType")
-        .value("DENSE_GLOBALG", SynapseMatrixType::DENSE_GLOBALG)
-        .value("DENSE_INDIVIDUALG", SynapseMatrixType::DENSE_INDIVIDUALG)
+        .value("DENSE", SynapseMatrixType::DENSE)
         .value("DENSE_PROCEDURALG", SynapseMatrixType::DENSE_PROCEDURALG)
-        .value("BITMASK_GLOBALG", SynapseMatrixType::BITMASK_GLOBALG)
-        .value("SPARSE_GLOBALG", SynapseMatrixType::SPARSE_GLOBALG)
-        .value("SPARSE_INDIVIDUALG", SynapseMatrixType::SPARSE_INDIVIDUALG)
-        .value("PROCEDURAL_GLOBALG", SynapseMatrixType::PROCEDURAL_GLOBALG)
-        .value("PROCEDURAL_PROCEDURALG", SynapseMatrixType::PROCEDURAL_PROCEDURALG)
+        .value("BITMASK", SynapseMatrixType::BITMASK)
+        .value("SPARSE", SynapseMatrixType::SPARSE)
+        .value("PROCEDURAL", SynapseMatrixType::PROCEDURAL)
         .value("PROCEDURAL_KERNELG", SynapseMatrixType::PROCEDURAL_KERNELG)
-        .value("TOEPLITZ_KERNELG", SynapseMatrixType::TOEPLITZ_KERNELG)
+        .value("TOEPLITZ", SynapseMatrixType::TOEPLITZ)
 
         .def("__and__", [](SynapseMatrixType a, SynapseMatrixConnectivity b){ return a & b; }, 
              pybind11::is_operator())
@@ -284,15 +279,19 @@ PYBIND11_MODULE(genn, m)
     //! Flags defining how variables should be duplicated across multiple batches
     pybind11::enum_<VarAccessDuplication>(m, "VarAccessDuplication")
         .value("DUPLICATE", VarAccessDuplication::DUPLICATE)
-        .value("SHARED", VarAccessDuplication::SHARED);
+        .value("SHARED", VarAccessDuplication::SHARED)
+        .value("SHARED_NEURON", VarAccessDuplication::SHARED_NEURON);
 
     //! Supported combinations of VarAccessMode and VarAccessDuplication
     pybind11::enum_<VarAccess>(m, "VarAccess")
         .value("READ_WRITE", VarAccess::READ_WRITE)
         .value("READ_ONLY", VarAccess::READ_ONLY)
+        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON)
         .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
         .value("REDUCE_BATCH_SUM", VarAccess::REDUCE_BATCH_SUM)
         .value("REDUCE_BATCH_MAX", VarAccess::REDUCE_BATCH_MAX)
+        .value("REDUCE_NEURON_SUM", VarAccess::REDUCE_NEURON_SUM)
+        .value("REDUCE_NEURON_MAX", VarAccess::REDUCE_NEURON_MAX)
 
         .def("__and__", [](VarAccess a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator())
@@ -316,33 +315,27 @@ PYBIND11_MODULE(genn, m)
     pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
         .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
         .value("PRESYNAPTIC", SynapseGroup::SpanType::PRESYNAPTIC);
-    
-    //! Precision to use for scalar type variables 
-    pybind11::enum_<ScalarPrecision>(m, "ScalarPrecision")
-        .value("FLOAT", ScalarPrecision::FLOAT)
-        .value("DOUBLE", ScalarPrecision::DOUBLE)
-        .value("LONG_DOUBLE", ScalarPrecision::LONG_DOUBLE);
 
-    //! Precision to use for variables which store time
-    pybind11::enum_<TimePrecision>(m, "TimePrecision")
-        .value("DEFAULT", TimePrecision::DEFAULT)
-        .value("FLOAT", TimePrecision::FLOAT)
-        .value("DOUBLE", TimePrecision::DOUBLE);
-    
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
     m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
     m.def("init_logging", &initLogging);
-    m.def("create_var_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
-    m.def("create_var_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
-    m.def("create_var_ref", pybind11::overload_cast<const CustomUpdate*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
     m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move);
-    m.def("create_wu_var_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&, const SynapseGroup*, const std::string&>(&createWUVarRef), 
+    m.def("create_wu_var_ref", pybind11::overload_cast<SynapseGroup*, const std::string&, SynapseGroup*, const std::string&>(&createWUVarRef),
           "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", pybind11::return_value_policy::move);
-    m.def("create_wu_var_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
+    m.def("create_wu_var_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_psm_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
+    m.def("create_wu_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
@@ -380,12 +373,12 @@ PYBIND11_MODULE(genn, m)
         .def("add_custom_update",  
              static_cast<CustomUpdate* (ModelSpecInternal::*)(
                 const std::string&, const std::string&, const CustomUpdateModels::Base*, 
-                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCustomUpdate), 
+                const ParamValues&, const VarValues&, const VarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
             pybind11::return_value_policy::reference)
         .def("add_custom_update",  
              static_cast<CustomUpdateWU* (ModelSpecInternal::*)(
                 const std::string&, const std::string&, const CustomUpdateModels::Base*, 
-                const ParamValues&, const VarValues&, const WUVarReferences&)>(&ModelSpecInternal::addCustomUpdate), 
+                const ParamValues&, const VarValues&, const WUVarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
             pybind11::return_value_policy::reference)
         .def("add_neuron_population",  
              static_cast<NeuronGroup* (ModelSpecInternal::*)(
@@ -407,7 +400,7 @@ PYBIND11_MODULE(genn, m)
                 const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
             pybind11::return_value_policy::reference)
 
-        .def("finalize", &ModelSpecInternal::finalize);
+        .def("finalise", &ModelSpecInternal::finalise);
 
     //------------------------------------------------------------------------
     // genn.CurrentSource
@@ -573,14 +566,12 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<InitSparseConnectivitySnippet::Base, Snippet::Base, PyInitSparseConnectivitySnippetBase>(m, "InitSparseConnectivitySnippetBase")
         .def(pybind11::init<>())
         .def("get_row_build_code", &InitSparseConnectivitySnippet::Base::getRowBuildCode)
-        .def("get_row_build_state_vars", &InitSparseConnectivitySnippet::Base::getRowBuildStateVars)
         .def("get_col_build_code", &InitSparseConnectivitySnippet::Base::getColBuildCode)
-        .def("get_col_build_state_vars", &InitSparseConnectivitySnippet::Base::getColBuildStateVars)
         .def("get_host_init_code", &InitSparseConnectivitySnippet::Base::getHostInitCode)
         .def("get_calc_max_row_length_func", &InitSparseConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
         .def("get_calc_max_col_length_func", &InitSparseConnectivitySnippet::Base::getCalcMaxColLengthFunc)
         .def("get_calc_kernel_size_func", &InitSparseConnectivitySnippet::Base::getCalcKernelSizeFunc);
-    
+
     //------------------------------------------------------------------------
     // genn.InitToeplitzConnectivitySnippetBase
     //------------------------------------------------------------------------
@@ -590,7 +581,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_diagonal_build_state_vars", &InitToeplitzConnectivitySnippet::Base::getDiagonalBuildStateVars)
         .def("get_calc_max_row_length_func", &InitToeplitzConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
         .def("get_calc_kernel_size_func", &InitToeplitzConnectivitySnippet::Base::getCalcKernelSizeFunc);
-    
+
     //------------------------------------------------------------------------
     // genn.InitVarSnippetBaseBase
     //------------------------------------------------------------------------
@@ -598,7 +589,7 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_code", &InitVarSnippet::Base::getCode);
-    
+
     //------------------------------------------------------------------------
     // genn.Var
     //------------------------------------------------------------------------
@@ -608,7 +599,7 @@ PYBIND11_MODULE(genn, m)
         .def_readonly("name", &Models::Base::Var::name)
         .def_readonly("type", &Models::Base::Var::type)
         .def_readonly("access", &Models::Base::Var::access);
-    
+
     //------------------------------------------------------------------------
     // genn.VarRef
     //------------------------------------------------------------------------
@@ -618,7 +609,15 @@ PYBIND11_MODULE(genn, m)
         .def_readonly("name", &Models::Base::VarRef::name)
         .def_readonly("type", &Models::Base::VarRef::type)
         .def_readonly("access", &Models::Base::VarRef::access);
-        
+
+    //------------------------------------------------------------------------
+    // genn.EGPRef
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::Base::EGPRef>(m, "EGPRef")
+        .def(pybind11::init<const std::string&, const std::string&>())
+        .def_readonly("name", &Models::Base::EGPRef::name)
+        .def_readonly("type", &Models::Base::EGPRef::type);
+
     //------------------------------------------------------------------------
     // genn.ModelBase
     //------------------------------------------------------------------------
@@ -709,10 +708,10 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.VarInit
     //------------------------------------------------------------------------
-    pybind11::class_<Models::VarInit>(m, "VarInit")
+    pybind11::class_<InitVarSnippet::Init>(m, "VarInit")
         .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
         .def(pybind11::init<double>())
-        .def_property_readonly("snippet", &Models::VarInit::getSnippet, pybind11::return_value_policy::reference);
+        .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.WUVarReference

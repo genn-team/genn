@@ -65,9 +65,9 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
                    ParamVal, PlogSeverity, PostsynapticModelBase,
-                   ScalarPrecision, SparseConnectivityInit, SynapseGroup,
-                   SynapseMatrixType, TimePrecision, ToeplitzConnectivityInit,
-                   Var, VarInit, VarLocation, VarRef, WeightUpdateModelBase)
+                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
+                   ToeplitzConnectivityInit, Var, VarInit, VarLocation,
+                   VarRef, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
@@ -128,8 +128,6 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
         backend_modules[b] = m
 
 
-GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
-
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
     This class helps to define, build and run a GeNN model from python
@@ -147,7 +145,7 @@ class GeNNModel(ModelSpecInternal):
                                or "long double"). defaults to float.
         model_name          -- string name of the model. Defaults to "GeNNModel".
         backend             -- string specifying name of backend module to use
-                               Defaults to None to pick 'best' backend for your system
+                               Defaults to one to pick 'best' backend for your system
         time_precision      -- string time precision as string ("float", "double"
                                or "long double"). defaults to float.
         genn_log_level      -- Log level for GeNN
