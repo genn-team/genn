@@ -85,7 +85,7 @@ public:
     //---------------------------------------------------------------------------
     // EnvironmentBase virtuals
     //---------------------------------------------------------------------------
-    virtual std::string define(const std::string &name) final
+    virtual std::string define(const std::string&) final
     {
         throw std::runtime_error("Cannot declare variable in call environment");
     }

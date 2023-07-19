@@ -55,7 +55,7 @@ bool checkForConstRemoval(const Type::ResolvedType &rightType, const Type::Resol
     return std::visit(
         Utils::Overload{
             // If both are value types
-            [](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue)
+            [](const Type::ResolvedType::Value&, const Type::ResolvedType::Value&)
             {
                 return true;
             },
@@ -113,7 +113,7 @@ bool checkImplicitConversion(const Type::ResolvedType &rightType, const Type::Re
                 }
             },
             // Otherwise, if left is pointer and right is numeric, 
-            [op](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer &leftPointer) 
+            [op](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer&)
             {
                 assert(rightValue.numeric);
                 if (op == Token::Type::PLUS_EQUAL || op == Token::Type::MINUS_EQUAL) {
@@ -293,8 +293,9 @@ private:
                         }
                     },
                     // Otherwise, if both operands are pointers
+                    // **TODO** don't pointer types need to be the same?
                     [&binary, &leftType, &rightType, opType, this]
-                    (const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Pointer &leftPointer) -> std::optional<Type::ResolvedType>
+                    (const Type::ResolvedType::Pointer&, const Type::ResolvedType::Pointer&) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is minus and pointer types match
                         if (opType == Token::Type::MINUS && leftType == rightType) {
@@ -307,7 +308,7 @@ private:
                     },
                     // Otherwise, if right is numeric and left is pointer
                     [&binary, &leftType, &rightType, opType, this]
-                    (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer &leftPointer) -> std::optional<Type::ResolvedType>
+                    (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer&) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is valid and numeric type is integer
                         // P + n or P - n
@@ -320,7 +321,7 @@ private:
                     },
                     // Otherwise, if right is pointer and left is numeric
                     [&binary, &rightType, opType, this]
-                    (const Type::ResolvedType::Pointer &rightPointer, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
+                    (const Type::ResolvedType::Pointer&, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
                         // n + P
                         if (opType == Token::Type::PLUS && leftValue.numeric->isIntegral) {
@@ -543,7 +544,7 @@ private:
                         const auto argConversionRank = std::visit(
                             Utils::Overload{
                                 // If types are numeric, any cast goes
-                                [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value &aValue) -> std::optional<int>
+                                [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value&) -> std::optional<int>
                                 {
                                     // If names are identical, match is exact
                                     // **TODO** we don't care about qualifiers
