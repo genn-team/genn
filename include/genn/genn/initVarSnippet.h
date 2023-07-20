@@ -42,7 +42,7 @@ public:
 //! Class used to bind together everything required to initialise a variable:
 //! 1. A pointer to a variable initialisation snippet
 //! 2. The parameters required to control the variable initialisation snippet
-class Init : public Snippet::Init<Base>
+class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
     Init(const Base *snippet, const std::unordered_map<std::string, double> &params);

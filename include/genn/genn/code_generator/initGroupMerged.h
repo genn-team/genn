@@ -15,7 +15,7 @@
 namespace GeNN::CodeGenerator
 {
 template<typename B, typename A>
-class GENN_EXPORT InitGroupMergedBase : public B
+class InitGroupMergedBase : public B
 {
 public:
     using B::B;

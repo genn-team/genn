@@ -248,6 +248,7 @@ public:
 
     bool operator < (const WUVarReference &other) const
     {
+        //**TODO** could be expressed in terms of tuple <
         const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
         const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
         if (hasTranspose && otherHasTranspose) {

@@ -71,7 +71,7 @@ public:
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
-    struct ParamVal
+    struct GENN_EXPORT ParamVal
     {
         ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v);
         ParamVal(const std::string &n, const Type::ResolvedType &t, double v);

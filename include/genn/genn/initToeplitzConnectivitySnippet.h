@@ -61,7 +61,7 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-class Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
+class GENN_EXPORT Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
     Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
