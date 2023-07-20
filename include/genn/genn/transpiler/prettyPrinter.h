@@ -5,6 +5,7 @@
 #include <string>
 
 // GeNN includes
+#include "gennExport.h"
 #include "type.h"
 
 // Transpiler includes
@@ -22,7 +23,7 @@ class CodeStream;
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::PrettyPrinter
 {
-class EnvironmentBase
+class GENN_EXPORT EnvironmentBase
 {
 public:
     //------------------------------------------------------------------------

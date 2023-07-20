@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "gennExport.h"
+
 // Code generator includes
 #include "code_generator/environment.h"
 
@@ -9,8 +12,8 @@
 namespace GeNN::CodeGenerator::StandardLibrary
 {
 //! Get standard maths functions
-const EnvironmentLibrary::Library &getMathsFunctions();
+GENN_EXPORT const EnvironmentLibrary::Library &getMathsFunctions();
 
 //! Get std::random based host RNG functions
-const EnvironmentLibrary::Library &getHostRNGFunctions(const Type::ResolvedType &precision);
+GENN_EXPORT const EnvironmentLibrary::Library &getHostRNGFunctions(const Type::ResolvedType &precision);
 }   // namespace GeNN::CodeGenerator::StandardLibrary

@@ -68,7 +68,7 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-class Init : public Snippet::Init<Base>
+class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
     Init(const Base *snippet, const std::unordered_map<std::string, double> &params);

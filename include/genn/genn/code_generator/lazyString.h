@@ -5,6 +5,9 @@
 #include <variant>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
@@ -17,7 +20,7 @@ class EnvironmentExternalBase;
 //! Lazily-evaluated string class - constructed from a format string containing $(XX) references to variables in environment
 namespace GeNN::CodeGenerator
 {
-class LazyString
+class GENN_EXPORT LazyString
 {
 public:
     LazyString(const std::string &format, EnvironmentExternalBase &env);

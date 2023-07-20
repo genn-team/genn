@@ -54,8 +54,8 @@ struct Token
     {
     }
 
-    const Type type;
-    const std::string lexeme;
-    const size_t line;
+    Type type;
+    std::string lexeme;
+    size_t line;
 };
 }   // namespace GeNN::Transpiler

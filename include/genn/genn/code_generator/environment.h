@@ -6,6 +6,7 @@
 #include <variant>
 
 // GeNN includes
+#include "gennExport.h"
 #include "gennUtils.h"
 #include "varAccess.h"
 #include "type.h"
@@ -33,7 +34,7 @@ struct Token;
 //! Base class for external environments i.e. those defines OUTSIDE of transpiled code by code generator
 namespace GeNN::CodeGenerator
 {
-class EnvironmentExternalBase : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
+class GENN_EXPORT EnvironmentExternalBase : public Transpiler::PrettyPrinter::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
 {
 public:
     explicit EnvironmentExternalBase(EnvironmentExternalBase &enclosing)
@@ -88,7 +89,7 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::EnvironmentLibrary
 //----------------------------------------------------------------------------
-class EnvironmentLibrary : public EnvironmentExternalBase
+class GENN_EXPORT EnvironmentLibrary : public EnvironmentExternalBase
 {
 public:
     using Library = std::unordered_multimap<std::string, std::pair<Type::ResolvedType, std::string>>;

@@ -8,6 +8,7 @@
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
 #include "type.h"
 
 // Transpiler includes
@@ -36,7 +37,7 @@ public:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
-class EnvironmentBase
+class GENN_EXPORT EnvironmentBase
 {
 public:
     //------------------------------------------------------------------------

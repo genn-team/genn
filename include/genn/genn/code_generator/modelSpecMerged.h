@@ -38,6 +38,8 @@ public:
         m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode"), m_TypeContext{{"scalar", model.getPrecision()}, {"timepoint", model.getTimePrecision()}}
     {
     }
+    ModelSpecMerged(const ModelSpecMerged&) = delete;
+    ModelSpecMerged &operator=(const ModelSpecMerged &) = delete;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::ModelSpecMerged::EGPField

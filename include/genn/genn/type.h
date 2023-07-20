@@ -47,7 +47,7 @@ inline Qualifier operator | (Qualifier a, Qualifier b)
 //----------------------------------------------------------------------------
 // GeNN::Type::ResolvedType
 //----------------------------------------------------------------------------
-struct ResolvedType
+struct GENN_EXPORT ResolvedType
 {
     //------------------------------------------------------------------------
     // Numeric
@@ -289,7 +289,7 @@ typedef std::unordered_map<std::string, ResolvedType> TypeContext;
 //----------------------------------------------------------------------------
 // UnresolvedType
 //----------------------------------------------------------------------------
-struct UnresolvedType
+struct GENN_EXPORT UnresolvedType
 {
     UnresolvedType(const ResolvedType &type)
     :   detail(type)
