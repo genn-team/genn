@@ -94,21 +94,7 @@ ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
              },
              [&typeContext](const std::string &name)
              {
-                 using namespace Transpiler;
-
-                // Scan type
-                SingleLineErrorHandler errorHandler;
-                const auto tokens = Scanner::scanSource(name, errorHandler);
-
-                // Parse type numeric type
-                const auto type = Parser::parseNumericType(tokens, typeContext, errorHandler);
-
-                // If an error was encountered while scanning or parsing, throw exception
-                if (errorHandler.hasError()) {
-                    throw std::runtime_error("Error parsing type '" + std::string{name} + "'");
-                }
-
-                return type;
+                return Utils::parseNumericType(name, typeContext);
              }},
         detail);
 }

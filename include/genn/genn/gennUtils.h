@@ -31,43 +31,36 @@
 //--------------------------------------------------------------------------
 namespace GeNN::Utils
 {
+//! Helper to scan a multi-line code string, giving meaningful errors with the specified context string
 GENN_EXPORT std::vector<Transpiler::Token> scanCode(const std::string &code, const std::string &errorContext);
 
+//! Helper to scan a type specifier string e.g "unsigned int" and parse it into a resolved type 
+GENN_EXPORT Type::ResolvedType parseNumericType(const std::string &type, const Type::TypeContext &typeContext);
+
+//! Is this sequence of tokens empty?
+/*! For ease of parsing and as an extra check that we have scanned SOMETHING, 
+    empty token sequences should have a single EOF token */
 GENN_EXPORT bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens);
 
-//--------------------------------------------------------------------------
-//! \brief Does the code string contain any functions requiring random number generator
-//--------------------------------------------------------------------------
+//! Checks whether the sequence of token references a given identifier
 GENN_EXPORT bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens);
 
-//--------------------------------------------------------------------------
-//! \brief Does the code string contain any functions requiring random number generator
-//--------------------------------------------------------------------------
+//! Checks whether the sequence of token includes an RNG function identifier
 GENN_EXPORT bool isRNGRequired(const std::vector<Transpiler::Token> &tokens);
 
-//--------------------------------------------------------------------------
-//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
-//--------------------------------------------------------------------------
+//! Checks whether any of the variable initialisers in the vector require an RNG for initialisation
 GENN_EXPORT bool isRNGRequired(const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers);
 
-//--------------------------------------------------------------------------
-//! \brief Is the variable name valid? GeNN variable names must obey C variable naming rules
-//--------------------------------------------------------------------------
+//! Checks variable name is valid? GeNN variable names must obey C variable naming rules
 GENN_EXPORT void validateVarName(const std::string &name, const std::string &description);
 
-//--------------------------------------------------------------------------
-//! \brief Is the population name valid? GeNN population names obey C variable naming rules but can start with a number
-//--------------------------------------------------------------------------
+//! Checks whether population name is valid? GeNN population names obey C variable naming rules but can start with a number
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
 
-//--------------------------------------------------------------------------
-//! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
-//--------------------------------------------------------------------------
+//! Checks that all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
 GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
 
-//--------------------------------------------------------------------------
-//! \brief Are initialisers provided for all of the the item names in the vector?
-//--------------------------------------------------------------------------
+//! Checks that initialisers provided for all of the the item names in the vector?
 template<typename T, typename V>
 void validateInitialisers(const std::vector<T> &vec, const std::unordered_map<std::string, V> &values, 
                           const std::string &type, const std::string description)
@@ -86,9 +79,7 @@ void validateInitialisers(const std::vector<T> &vec, const std::unordered_map<st
     }
 }
 
-//--------------------------------------------------------------------------
-//! \brief Are the 'name' fields of all structs in vector valid? GeNN variables and population names must obey C variable naming rules
-//--------------------------------------------------------------------------
+//! Checks whether the 'name' fields of all structs in vector valid? GeNN variables and population names must obey C variable naming rules
 template<typename T>
 void validateVecNames(const std::vector<T> &vec, const std::string &description)
 {
@@ -97,9 +88,7 @@ void validateVecNames(const std::vector<T> &vec, const std::string &description)
     }
 }
 
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
-//--------------------------------------------------------------------------
+//! Write a floating point value to a stream - setting the precision so no digits are lost
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
 void writePreciseString(std::ostream &os, T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
 {
@@ -124,9 +113,7 @@ void writePreciseString(std::ostream &os, T value, int maxDigits10 = std::numeri
     os << std::setprecision(previousPrecision);
 }
 
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
-//--------------------------------------------------------------------------
+//! Write a floating point value to a string - setting the precision so no digits are lost
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
 inline std::string writePreciseString(T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
 {

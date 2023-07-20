@@ -9,6 +9,7 @@
 
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
+#include "transpiler/parser.h"
 #include "transpiler/scanner.h"
 
 //--------------------------------------------------------------------------
@@ -65,6 +66,8 @@ namespace GeNN::Utils
 {
 std::vector<Transpiler::Token> scanCode(const std::string &code, const std::string &errorContext)
 {
+    using namespace Transpiler;
+
     // Upgrade code string
     const std::string upgradedCode = upgradeCodeString(code);
 
@@ -75,6 +78,25 @@ std::vector<Transpiler::Token> scanCode(const std::string &code, const std::stri
         throw std::runtime_error("Error scanning " + errorContext);
     }
     return tokens;
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType parseNumericType(const std::string &type, const Type::TypeContext &typeContext)
+{
+    using namespace Transpiler;
+
+    // Scan type
+    SingleLineErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource(type, errorHandler);
+
+    // Parse type numeric type
+    const auto resolvedType = Parser::parseNumericType(tokens, typeContext, errorHandler);
+
+    // If an error was encountered while scanning or parsing, throw exception
+    if (errorHandler.hasError()) {
+        throw std::runtime_error("Error parsing type '" + std::string{type} + "'");
+    }
+
+    return resolvedType;
 }
 //--------------------------------------------------------------------------
 bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens)

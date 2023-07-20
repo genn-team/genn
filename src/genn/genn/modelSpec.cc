@@ -29,6 +29,9 @@
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 
+// GeNN transpiler includes
+#include "transpiler/parser.h"
+
 // ---------------------------------------------------------------------------
 // GeNN::ModelSpec
 // ---------------------------------------------------------------------------
@@ -59,6 +62,13 @@ void ModelSpec::setPrecision(const Type::ResolvedType &precision)
     }
 }
 // ---------------------------------------------------------------------------
+void ModelSpec::setPrecision(const std::string &precision)
+{
+    // Parse type string and set precision
+    // **NOTE** no type context as that would be circular!
+    setPrecision(Utils::parseNumericType(precision, {}));
+}
+// ---------------------------------------------------------------------------
 void ModelSpec::setTimePrecision(const Type::ResolvedType &timePrecision)
 { 
     if (!timePrecision.isNumeric()) {
@@ -70,6 +80,13 @@ void ModelSpec::setTimePrecision(const Type::ResolvedType &timePrecision)
         }
         m_TimePrecision = timePrecision; 
     }
+}
+// ---------------------------------------------------------------------------
+void ModelSpec::setTimePrecision(const std::string &timePrecision)
+{
+    // Parse type string and set time precision
+    // **NOTE** no type context as that would be circular!
+    setTimePrecision(Utils::parseNumericType(timePrecision, {}));
 }
 // ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const
