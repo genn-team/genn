@@ -1427,11 +1427,11 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         if(!s.second.isPSModelFused()) {
             // Add code to push and pull inSyn
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
-                                backend.getPreferences().automaticCopy, "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                backend.getPreferences().automaticCopy, "outPost" + s.second.getName(), synapseGroupStatePushPullFunctions,
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
-                                                                model.getPrecision(), "inSyn" + s.second.getName(), 
+                                                                model.getPrecision(), "outPost" + s.second.getName(), 
                                                                 s.second.getInSynLocation(), true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
                                 });
 
