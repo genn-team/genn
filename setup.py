@@ -68,7 +68,7 @@ extension_kwargs = {
 # If this is Windows, turn off warnings about dll-interface being required 
 # for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
 if WIN:
-    extension_kwargs["extra_compile_args"].extend(["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+    extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
 
 # Extend these kwargs for extensions which link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
