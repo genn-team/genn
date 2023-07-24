@@ -347,7 +347,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property("name", &ModelSpecInternal::getName, &ModelSpecInternal::setName)
         .def_property("precision", &ModelSpecInternal::getPrecision, &ModelSpecInternal::setPrecision)
-        .def_property("time_precision", &ModelSpecInternal::getTimePrecision, &ModelSpecInternal::setTimePrecision))
+        .def_property("time_precision", &ModelSpecInternal::getTimePrecision, &ModelSpecInternal::setTimePrecision)
         .def_property("dt", &ModelSpecInternal::getDT, &ModelSpecInternal::setDT)
         .def_property("timing_enabled", &ModelSpecInternal::isTimingEnabled, &ModelSpecInternal::setTiming)
         .def_property("batch_size", &ModelSpecInternal::getBatchSize, &ModelSpecInternal::setBatchSize)
