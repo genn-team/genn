@@ -49,44 +49,36 @@ ModelSpec::~ModelSpec()
 {
 }
 // ---------------------------------------------------------------------------
-void ModelSpec::setPrecision(const Type::ResolvedType &precision)
+void ModelSpec::setPrecision(const Type::UnresolvedType &precision)
 {
-    if (!precision.isNumeric()) {
+    // Resolve type
+    // **NOTE** no type context as that would be circular!
+    const auto resolved = precision.resolve({});
+    if (!resolved.isNumeric()) {
         throw std::runtime_error("Only numeric types can be used for precision");
     }
     else {
-        if (precision.getNumeric().isIntegral) {
+        if (resolved.getNumeric().isIntegral) {
             throw std::runtime_error("Only floating point types can be used for precision");
         }
-        m_Precision = precision;
+        m_Precision = resolved;
     }
 }
 // ---------------------------------------------------------------------------
-void ModelSpec::setPrecision(const std::string &precision)
-{
-    // Parse type string and set precision
-    // **NOTE** no type context as that would be circular!
-    setPrecision(Utils::parseNumericType(precision, {}));
-}
-// ---------------------------------------------------------------------------
-void ModelSpec::setTimePrecision(const Type::ResolvedType &timePrecision)
+void ModelSpec::setTimePrecision(const Type::UnresolvedType &timePrecision)
 { 
-    if (!timePrecision.isNumeric()) {
+    // Resolve type
+    // **NOTE** no type context as that would be circular!
+    const auto resolved = timePrecision.resolve({});
+    if (!resolved.isNumeric()) {
         throw std::runtime_error("Only numeric types can be used for timeprecision");
     }
     else {
-        if (timePrecision.getNumeric().isIntegral) {
+        if (resolved.getNumeric().isIntegral) {
             throw std::runtime_error("Only floating point types can be used for time precision");
         }
-        m_TimePrecision = timePrecision; 
+        m_TimePrecision = resolved; 
     }
-}
-// ---------------------------------------------------------------------------
-void ModelSpec::setTimePrecision(const std::string &timePrecision)
-{
-    // Parse type string and set time precision
-    // **NOTE** no type context as that would be circular!
-    setTimePrecision(Utils::parseNumericType(timePrecision, {}));
 }
 // ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const

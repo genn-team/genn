@@ -347,7 +347,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property("name", &ModelSpecInternal::getName, &ModelSpecInternal::setName)
         .def_property("precision", &ModelSpecInternal::getPrecision, &ModelSpecInternal::setPrecision)
-        .def_property("time_precision", &ModelSpecInternal::getTimePrecision, &ModelSpecInternal::setTimePrecision)
+        .def_property("time_precision", &ModelSpecInternal::getTimePrecision, &ModelSpecInternal::setTimePrecision))
         .def_property("dt", &ModelSpecInternal::getDT, &ModelSpecInternal::setDT)
         .def_property("timing_enabled", &ModelSpecInternal::isTimingEnabled, &ModelSpecInternal::setTiming)
         .def_property("batch_size", &ModelSpecInternal::getBatchSize, &ModelSpecInternal::setBatchSize)
@@ -527,6 +527,22 @@ PYBIND11_MODULE(genn, m)
         .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
     
     //------------------------------------------------------------------------
+    // genn.ResolvedType
+    //------------------------------------------------------------------------
+    pybind11::class_<Type::ResolvedType>(m, "ResolvedType")
+        .def("__eq__", 
+             [](const Type::ResolvedType &a, Type::ResolvedType b) { return a == b; });
+
+    //------------------------------------------------------------------------
+    // genn.UnresolvedType
+    //------------------------------------------------------------------------
+    pybind11::class_<Type::UnresolvedType>(m, "UnresolvedType")
+        .def(pybind11::init<const std::string&>())
+        .def(pybind11::init<const Type::ResolvedType&>())
+        .def("__eq__", 
+             [](const Type::UnresolvedType &a, Type::UnresolvedType b) { return a == b; });
+
+    //------------------------------------------------------------------------
     // genn.DerivedParam
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::DerivedParam>(m, "DerivedParam")
@@ -583,7 +599,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_calc_kernel_size_func", &InitToeplitzConnectivitySnippet::Base::getCalcKernelSizeFunc);
 
     //------------------------------------------------------------------------
-    // genn.InitVarSnippetBaseBase
+    // genn.InitVarSnippetBase
     //------------------------------------------------------------------------
     pybind11::class_<InitVarSnippet::Base, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBase")
         .def(pybind11::init<>())

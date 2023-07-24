@@ -77,7 +77,7 @@ from .model_preprocessor import get_snippet, get_var_init
 from . import (current_source_models, custom_update_models,
                init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
-               neuron_models, postsynaptic_models, weight_update_models)
+               neuron_models, postsynaptic_models, types, weight_update_models)
 
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
@@ -137,52 +137,45 @@ class GeNNModel(ModelSpecInternal):
                  backend=None, time_precision=None,
                  genn_log_level=PlogSeverity.WARNING,
                  code_gen_log_level=PlogSeverity.WARNING,
+                 transpiler_log_level=PlogSeverity.WARNING,
                  backend_log_level=PlogSeverity.WARNING,
                  **preference_kwargs):
         """Init GeNNModel
         Keyword args:
-        precision           -- string precision as string ("float", "double"
-                               or "long double"). defaults to float.
-        model_name          -- string name of the model. Defaults to "GeNNModel".
-        backend             -- string specifying name of backend module to use
-                               Defaults to one to pick 'best' backend for your system
-        time_precision      -- string time precision as string ("float", "double"
-                               or "long double"). defaults to float.
-        genn_log_level      -- Log level for GeNN
-        code_gen_log_level  -- Log level for GeNN code-generator
-        backend_log_level   -- Log level for backend
-        preference_kwargs   -- Additional keyword arguments to set in backend preferences structure
+        precision               -- string precision as string ("float" or "double"). 
+        model_name              -- string name of the model. Defaults to "GeNNModel".
+        backend                 -- string specifying name of backend module to use
+                                   Defaults to one to pick 'best' backend for your system
+        time_precision          -- string time precision as string ("float" or "double")
+        genn_log_level          -- Log level for GeNN
+        code_gen_log_level      -- Log level for GeNN code-generator
+        transpiler_log_level    -- Log level for GeNN transpiler
+        backend_log_level       -- Log level for backend
+        preference_kwargs       -- Additional keyword arguments to set in backend preferences structure
         """
         # Superclass
         super(GeNNModel, self).__init__()
+
+        # Set precision
+        self.precision = precision
         
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        time_precision = precision if time_precision is None else time_precision
-        if time_precision == "float":
+        self.time_precision = (precision if time_precision is None
+                               else time_precision)
+        print(self.time_precision, types.Float)
+        if self.time_precision == types.Float:
             self._slm = SharedLibraryModelFloat()
-            self.time_precision = TimePrecision.FLOAT
-        elif time_precision == "double":
+        elif self.time_precision == types.Double:
             self._slm = SharedLibraryModelDouble()
-            self.time_precision = TimePrecision.DOUBLE
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
                 "but '{1}' was given".format(self._time_precision))
 
-        # Set scalar type from precision
-        if precision == "float":
-            self.precision = ScalarPrecision.FLOAT
-        elif precision == "double":
-            self.precision = ScalarPrecision.DOUBLE
-        else:
-            raise ValueError(
-                "Supported precisions are float and double, "
-                "but '{1}' was given".format(precision))
-
         # Initialise GeNN logging
-        init_logging(genn_log_level, code_gen_log_level)
+        init_logging(genn_log_level, code_gen_log_level, transpiler_log_level)
         
         self._built = False
         self._loaded = False
@@ -199,7 +192,8 @@ class GeNNModel(ModelSpecInternal):
         self.current_sources = {}
         self.custom_updates = {}
         
-        # Build dictionary containing conversions between GeNN C++ types and numpy types
+        # Build dictionary containing conversions 
+        # between GeNN C++ types and numpy types
         self.genn_types = {
             "float":            np.float32,
             "double":           np.float64,
@@ -220,7 +214,7 @@ class GeNNModel(ModelSpecInternal):
             "bool":             np.bool8}
 
         # Add "scalar" type to genn_types - pointing at float or double as appropriate
-        if precision == "float":
+        if self.precision == types.Float:
             self.genn_types["scalar"] = self.genn_types["float"]
         else:
             self.genn_types["scalar"] = self.genn_types["double"]

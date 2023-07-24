@@ -253,16 +253,10 @@ public:
     void setName(const std::string &name){ m_Name = name; }
 
     //! Set numerical precision for scalar type
-    void setPrecision(const Type::ResolvedType &precision);
-
-    //! Set numerical precision for floating point
-    void setPrecision(const std::string &precision);
+    void setPrecision(const Type::UnresolvedType &precision);
 
     //! Set numerical precision for time type
-    void setTimePrecision(const Type::ResolvedType &timePrecision);
-
-     //! Set numerical precision for time type
-    void setTimePrecision(const std::string &timePrecision);
+    void setTimePrecision(const Type::UnresolvedType &timePrecision);
 
     //! Set the integration step size of the model
     void setDT(double dt){ m_DT = dt; }
