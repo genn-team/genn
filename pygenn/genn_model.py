@@ -1380,9 +1380,7 @@ def create_sparse_connect_init_snippet(class_name,
                                        param_names=None,
                                        derived_params=None,
                                        row_build_code=None,
-                                       row_build_state_vars=None,
-                                       rol_build_code=None,
-                                       col_build_state_vars=None,
+                                       col_build_code=None,
                                        calc_max_row_len_func=None,
                                        calc_max_col_len_func=None,
                                        calc_kernel_size_func=None,
@@ -1406,13 +1404,8 @@ def create_sparse_connect_init_snippet(class_name,
                                 second MUST be an instance of the class which
                                 inherits from pygenn.genn_wrapper.DerivedParamFunc
     row_build_code          --  string with row building initialization code
-    row_build_state_vars    --  list of tuples of state variables, their types
-                                and their initial values to use across
-                                row building loop
     col_build_code          --  string with column building initialization code
-    col_build_state_vars    --  list of tuples of state variables, their types
-                                and their initial values to use across
-                                column building loop
+
     calc_max_row_len_func   --  instance of class inheriting from
                                 CalcMaxLengthFunc used to calculate maximum
                                 row length of synaptic matrix
@@ -1430,19 +1423,9 @@ def create_sparse_connect_init_snippet(class_name,
     if row_build_code is not None:
         body["get_row_build_code"] = lambda self: dedent(row_build_code)
 
-    if row_build_state_vars is not None:
-        body["get_row_build_state_vars"] = \
-            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
-                                         for r in row_build_state_vars])
-
     if col_build_code is not None:
         body["get_col_build_code"] = lambda self: dedent(col_build_code)
 
-    if col_build_state_vars is not None:
-        body["get_col_build_state_vars"] = \
-            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
-                                         for r in col_build_state_vars])
- 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
             lambda self: make_cmlf(calc_max_row_len_func)
@@ -1450,6 +1433,7 @@ def create_sparse_connect_init_snippet(class_name,
     if calc_max_col_len_func is not None:
         body["get_calc_max_col_length_func"] = \
             lambda self: make_cmlf(calc_max_col_len_func)
+
     if calc_kernel_size_func is not None:
         body["get_calc_kernel_size_func"] = \
             lambda self: make_cksf(calc_kernel_size_func)
