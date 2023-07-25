@@ -816,7 +816,7 @@ class CurrentSourceMixin(GroupMixin):
 class CustomUpdateMixin(GroupMixin):
     """Class representing a custom update"""
     def _init_group(self, model, var_space):
-        """Init NeuronGroup
+        """Init CustomUpdate
 
         Args:
         name    -- string name of the group
@@ -891,3 +891,66 @@ class CustomUpdateMixin(GroupMixin):
         # Return Python synapse group reference from 
         # first (arbitrarily) variable reference
         return next(itervalues(self.var_references)).synapse_group
+
+class CustomConnectivityUpdateMixin(GroupMixin):
+    """Class representing a custom connectivity update"""
+    def _init_group(self, model, var_space, pre_var_space, post_var_space):
+        """Init CustomConnectivityUpdateGroup
+
+        Args:
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
+        """
+        super(CustomConnectivityUpdateMixin, self)._init_group(model)
+        self.vars, self.extra_global_params = prepare_model(
+            self.model, self, var_space)
+        self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
+                                            pre_var_space[vnt.name], self)
+                         for vnt in self.model.get_pre_vars()}
+        self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
+                                             post_var_space[vnt.name], self)
+                          for vnt in self.model.get_post_vars()}
+
+    def load(self):
+        # Loop through state variables
+        for v in self.model.get_vars():
+            # Get corresponding data from dictionary
+            var_data = self.vars[v.name]
+
+            # If variable is located on host
+            var_loc = self.get_var_location(v.name) 
+            if var_loc & VarLocation.HOST:
+                # Get view
+                size = self._synapse_group.weight_update_var_size
+                resolved_type = var_data.type.resolve(self._model.type_context)
+                var_data.view = self._assign_ext_ptr_array(
+                    v.name, size, resolved_type)
+
+                # Initialise variable if necessary
+                self._synapse_group._init_wum_var(var_data, 1)
+
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, v.name)
+  
+        # Load pre and postsynaptic variables
+        self._load_vars(self.model.get_pre_vars(), self.src.size,
+                        self.pre_vars, self.get_pre_var_location)
+        self._load_vars(self.model.get_post_vars(), self.trg.size,
+                        self.post_vars, self.get_post_var_location)
+
+        # Load custom update extra global parameters
+        self._load_egp()
+
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+        
+        # Load any egps used for pre and postsynaptic variable initialisation
+        self._load_var_init_egps(self.pre_vars)
+        self._load_var_init_egps(self.post_vars)
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_vars(self.pre_vars)
+        self._unload_vars(self.post_vars)
+        self._unload_egps()

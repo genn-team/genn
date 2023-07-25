@@ -10,6 +10,8 @@
 // GeNN includes
 #include "currentSource.h"
 #include "currentSourceModels.h"
+#include "customConnectivityUpdate.h"
+#include "customConnectivityUpdateModels.h"
 #include "customUpdate.h"
 #include "customUpdateModels.h"
 #include "initSparseConnectivitySnippet.h"
@@ -110,6 +112,25 @@ class PyCurrentSourceModelBase : public PyModel<CurrentSourceModels::Base>
     using Base = CurrentSourceModels::Base;
 public:
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
+};
+
+//----------------------------------------------------------------------------
+// PyCustomConnectivityUpdateModelBase
+//----------------------------------------------------------------------------
+// 'Trampoline' class for custom connectivity update models
+class PyCustomConnectivityUpdateModelBase : public PyModel<CustomConnectivityUpdateModels::Base> 
+{
+    using Base = CustomConnectivityUpdateModels::Base;
+public:
+    virtual VarVec getPreVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_pre_vars", getPreVars); }
+    virtual VarVec getPostVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_post_vars", getPostVars); }
+    
+    virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
+    virtual VarRefVec getPreVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_pre_var_refs", getPreVarRefs); }
+    virtual VarRefVec getPostVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_post_var_refs", getPostVarRefs); }
+    
+    virtual std::string getRowUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_row_update_code", getRowUpdateCode); }
+    virtual std::string getHostUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_host_update_code", getHostUpdateCode); }
 };
 
 //----------------------------------------------------------------------------
@@ -371,6 +392,12 @@ PYBIND11_MODULE(genn, m)
                 const std::string&, const CurrentSourceModels::Base*, const std::string&, 
                 const ParamValues&, const VarValues&)>(&ModelSpecInternal::addCurrentSource), 
             pybind11::return_value_policy::reference)
+        .def("add_custom_connectivity_update",  
+             static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
+                const std::string&, const std::string&, const std::string&, const CustomConnectivityUpdateModels::Base*, 
+                const ParamValues&, const VarValues&, const VarValues&, const VarValues&, 
+                const WUVarReferences&, const VarReferences&, const VarReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
+            pybind11::return_value_policy::reference)
         .def("add_custom_update",  
              static_cast<CustomUpdate* (ModelSpecInternal::*)(
                 const std::string&, const std::string&, const CustomUpdateModels::Base*, 
@@ -422,6 +449,40 @@ PYBIND11_MODULE(genn, m)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
     
     //------------------------------------------------------------------------
+    // genn.CustomConnectivityUpdate
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomConnectivityUpdate>(m, "CustomConnectivityUpdate", pybind11::dynamic_attr())
+        //--------------------------------------------------------------------
+        // Properties
+        //--------------------------------------------------------------------
+        .def_property_readonly("name", &CustomConnectivityUpdate::getName)
+        .def_property_readonly("update_group_name", &CustomConnectivityUpdate::getUpdateGroupName)
+        .def_property_readonly("model", &CustomConnectivityUpdate::getCustomConnectivityUpdateModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("params", &CustomConnectivityUpdate::getParams)
+        
+        .def_property_readonly("var_initialisers", &CustomConnectivityUpdate::getVarInitialisers)
+        .def_property_readonly("pre_var_initialisers", &CustomConnectivityUpdate::getPreVarInitialisers)
+        .def_property_readonly("post_var_initialisers", &CustomConnectivityUpdate::getPostVarInitialisers)
+
+        .def_property_readonly("var_references", &CustomConnectivityUpdate::getVarReferences)
+        .def_property_readonly("pre_var_references", &CustomConnectivityUpdate::getPreVarReferences)
+        .def_property_readonly("post_var_references", &CustomConnectivityUpdate::getPostVarReferences)
+        
+        // **NOTE** we use the 'publicist' pattern to expose some protected properties
+        .def_property_readonly("_synapse_group", &CustomConnectivityUpdateInternal::getSynapseGroup)
+
+        //--------------------------------------------------------------------
+        // Methods
+        //--------------------------------------------------------------------
+        .def("set_var_location", &CustomConnectivityUpdate::setVarLocation)
+        .def("set_pre_var_location", &CustomConnectivityUpdate::setPreVarLocation)
+        .def("set_post_var_location", &CustomConnectivityUpdate::setPostVarLocation)
+        .def("get_var_location", &CustomConnectivityUpdate::getVarLocation)
+        .def("get_pre_var_location", &CustomConnectivityUpdate::getPreVarLocation)
+        .def("get_post_var_location", &CustomConnectivityUpdate::getPostVarLocation);
+
+
+    //------------------------------------------------------------------------
     // genn.CustomUpdateBase
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdateBase>(m, "CustomUpdateBase")
@@ -438,7 +499,7 @@ PYBIND11_MODULE(genn, m)
         // Methods
         //--------------------------------------------------------------------
         .def("set_var_location", &CustomUpdateBase::setVarLocation)
-        .def("get_var_location", pybind11::overload_cast<const std::string&>(&CustomUpdateBase::getVarLocation, pybind11::const_));
+        .def("get_var_location", &CustomUpdateBase::getVarLocation);
     
     //------------------------------------------------------------------------
     // genn.CustomUpdate
@@ -448,7 +509,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomUpdate::getVarReferences);
 
     //------------------------------------------------------------------------
-    // genn.CustomUpdate
+    // genn.CustomUpdateWU
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdateWU, CustomUpdateBase>(m, "CustomUpdateWU", pybind11::dynamic_attr())
         .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences);
@@ -509,7 +570,7 @@ PYBIND11_MODULE(genn, m)
         .def_property("num_threads_per_spike",&SynapseGroup::getNumThreadsPerSpike, &SynapseGroup::setNumThreadsPerSpike)
         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
         .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
-        // **NOTE** we use the 'publicist' pattern to expose some protected properties
+         // **NOTE** we use the 'publicist' pattern to expose some protected properties
         .def_property_readonly("_ps_model_fused", &SynapseGroupInternal::isPSModelFused)
         .def_property_readonly("_wu_pre_model_fused", &SynapseGroupInternal::isWUPreModelFused)
         .def_property_readonly("_wu_post_model_fused", &SynapseGroupInternal::isWUPostModelFused)
@@ -662,6 +723,22 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_injection_code", &CurrentSourceModels::Base::getInjectionCode);
+
+    //------------------------------------------------------------------------
+    // genn.CustomConnectivityUpdateModelBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomConnectivityUpdateModels::Base, Models::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
+        .def(pybind11::init<>())
+
+        .def("get_pre_vars", &CustomConnectivityUpdateModels::Base::getPreVars)
+        .def("get_post_vars", &CustomConnectivityUpdateModels::Base::getPostVars)
+        
+        .def("get_var_refs", &CustomConnectivityUpdateModels::Base::getVarRefs)
+        .def("get_pre_var_refs", &CustomConnectivityUpdateModels::Base::getPreVarRefs)
+        .def("get_post_var_refs", &CustomConnectivityUpdateModels::Base::getPostVarRefs)
+        
+        .def("get_row_update_code", &CustomConnectivityUpdateModels::Base::getRowUpdateCode)
+        .def("get_host_update_code", &CustomConnectivityUpdateModels::Base::getHostUpdateCode);
     
     //------------------------------------------------------------------------
     // genn.CustomUpdateModelBase
