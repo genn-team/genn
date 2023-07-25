@@ -862,7 +862,7 @@ def create_neuron_model(class_name, param_names=None,
     create_postsynaptic_model
     create_weight_update_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init_snippet
 
     Args:
@@ -927,7 +927,7 @@ def create_postsynaptic_model(class_name, param_names=None,
     create_neuron_model
     create_weight_update_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init_snippet
 
     Args:
@@ -989,7 +989,7 @@ def create_weight_update_model(class_name, param_names=None,
     create_neuron_model
     create_postsynaptic_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init_snippet
 
     Args:
@@ -1133,7 +1133,7 @@ def create_current_source_model(class_name, param_names=None,
     create_neuron_model
     create_weight_update_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init_snippet
 
     Args:
@@ -1172,7 +1172,7 @@ def create_custom_update_model(class_name, param_names=None,
     create_neuron_model
     create_weight_update_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init
 
     Args:
@@ -1227,8 +1227,7 @@ def create_custom_connectivity_update_model(class_name,
     create_neuron_model
     create_weight_update_model
     create_current_source_model
-    create_init_var_snippet
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init
 
     Args:
@@ -1294,7 +1293,7 @@ def create_model(class_name, base, param_names, var_name_types,
     create_weight_update_model
     create_postsynaptic_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
     create_sparse_connect_init_snippet
 
     Args:
@@ -1341,7 +1340,7 @@ def create_model(class_name, base, param_names, var_name_types,
     return type(class_name, (base,), body)()
 
 
-def create_init_var_snippet(class_name, param_names=None,
+def create_var_init_snippet(class_name, param_names=None,
                             derived_params=None,
                             var_init_code=None, 
                             extra_global_params=None):
@@ -1392,7 +1391,7 @@ def create_sparse_connect_init_snippet(class_name,
     create_weight_update_model
     create_postsynaptic_model
     create_current_source_model
-    create_init_var_snippet
+    create_var_init_snippet
 
     Args:
     class_name              --  name of the new class
