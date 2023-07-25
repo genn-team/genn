@@ -66,8 +66,8 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
                    ParamVal, PlogSeverity, PostsynapticModelBase,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   ToeplitzConnectivityInit, Var, VarInit, VarLocation,
-                   VarRef, WeightUpdateModelBase)
+                   ToeplitzConnectivityInit, UnresolvedType, Var, VarInit, 
+                   VarLocation, VarRef, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
@@ -157,14 +157,14 @@ class GeNNModel(ModelSpecInternal):
         super(GeNNModel, self).__init__()
 
         # Set precision
-        self.precision = precision
+        self.precision = UnresolvedType(precision)
         
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        self.time_precision = (precision if time_precision is None
-                               else time_precision)
-        print(self.time_precision, types.Float)
+        self.time_precision = UnresolvedType(self.precision 
+                                             if time_precision is None
+                                             else time_precision)
         if self.time_precision == types.Float:
             self._slm = SharedLibraryModelFloat()
         elif self.time_precision == types.Double:
@@ -521,7 +521,7 @@ class GeNNModel(ModelSpecInternal):
         share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
-        self.finalize()
+        self.finalise()
 
         # Create suitable preferences object for backend
         preferences = self._backend_module.Preferences()
