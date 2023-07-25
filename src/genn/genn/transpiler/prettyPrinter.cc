@@ -236,6 +236,10 @@ private:
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
             m_Environment.get().getStream() << "u";
         }
+        // Otherwise, if literal is a scalar, return literal suffix of scalar type fro context
+        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
+            m_Environment.get().getStream() << m_Context.at("scalar").getNumeric().literalSuffix;
+        }
     }
 
     virtual void visit(const Expression::Logical &logical) final
