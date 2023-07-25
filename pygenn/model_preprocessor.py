@@ -148,8 +148,7 @@ class Variable(object):
             # they must be loaded at simulate time
             try:
                 iter(values)
-                self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type])
+                self.values = np.asarray(values)
                 self.init_required = True
                 self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
@@ -190,8 +189,7 @@ class ExtraGlobalParameter(object):
             # Try and iterate values
             try:
                 iter(values)
-                self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type])
+                self.values = np.asarray(values)
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "
