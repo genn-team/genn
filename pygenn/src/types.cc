@@ -24,7 +24,7 @@ PYBIND11_MODULE(types, m)
     m.attr("Int64") = pybind11::cast(Int64);
     
     m.attr("Uint8") = pybind11::cast(Uint8);
-    m.attr("Uit16") = pybind11::cast(Uint16);
+    m.attr("Uint16") = pybind11::cast(Uint16);
     m.attr("Uint32") = pybind11::cast(Uint32);
     m.attr("Uint64") = pybind11::cast(Uint64);
     
