@@ -159,9 +159,6 @@ public:
     //! Get location of neuron model state variable by name
     VarLocation getVarLocation(const std::string &varName) const;
 
-    //! Get location of neuron model state variable by index
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
-
     //! Get location of neuron model extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;

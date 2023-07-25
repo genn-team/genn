@@ -46,9 +46,6 @@ public:
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
 
-    //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
-
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
