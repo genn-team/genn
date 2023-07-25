@@ -361,6 +361,7 @@ PYBIND11_MODULE(genn, m)
 
         .def_property_readonly("num_neurons", &ModelSpecInternal::getNumNeurons)
         .def_property_readonly("recording_in_use", &ModelSpecInternal::isRecordingInUse)
+        .def_property_readonly("type_context", &ModelSpecInternal::getTypeContext)
     
         //--------------------------------------------------------------------
         // Methods
@@ -530,6 +531,19 @@ PYBIND11_MODULE(genn, m)
     // genn.ResolvedType
     //------------------------------------------------------------------------
     pybind11::class_<Type::ResolvedType>(m, "ResolvedType")
+        .def("__hash__",
+             [](const Type::ResolvedType &a)
+             {
+                 // Calculate hash digest
+                 boost::uuids::detail::sha1 shaHash;
+                 Type::updateHash(a, shaHash);
+                 const auto shaDigest = shaHash.get_digest();
+                
+                 // Return size-t worth of hash
+                 size_t hash;
+                 memcpy(&hash, &shaDigest[0], sizeof(size_t));
+                 return hash;
+             })
         .def("__eq__", 
              [](const Type::ResolvedType &a, Type::ResolvedType b) { return a == b; });
 
@@ -539,6 +553,7 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<Type::UnresolvedType>(m, "UnresolvedType")
         .def(pybind11::init<const std::string&>())
         .def(pybind11::init<const Type::ResolvedType&>())
+        .def("resolve", &Type::UnresolvedType::resolve)
         .def("__eq__", 
              [](const Type::UnresolvedType &a, Type::UnresolvedType b) { return a == b; });
 
