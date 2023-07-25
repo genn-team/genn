@@ -114,7 +114,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
         
     // Allow synapse group's PS output var to override what Isyn points to
-    psmEnv.add(getScalarType(), "Isyn", getArchetype().getPSTargetVar());
+    if(getArchetype().getPSTargetVar() != "Isyn") {
+        psmEnv.add(getScalarType(), "Isyn", "$(" + getArchetype().getPSTargetVar() + ")");
+    }
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
