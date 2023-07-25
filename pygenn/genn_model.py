@@ -195,29 +195,17 @@ class GeNNModel(ModelSpecInternal):
         # Build dictionary containing conversions 
         # between GeNN C++ types and numpy types
         self.genn_types = {
-            "float":            np.float32,
-            "double":           np.float64,
-            "int":              np.int32,
-            "unsigned int":     np.uint32,
-            "short":            np.int16,
-            "unsigned short":   np.uint16,
-            "char":             np.int8,
-            "unsigned char":    np.uint8,
-            "uint64_t":         np.uint64,
-            "int64_t":          np.int64,
-            "uint32_t":         np.uint32,
-            "int32_t":          np.int32,
-            "uint16_t":         np.uint16,
-            "int16_t":          np.int16,
-            "uint8_t":          np.uint8,
-            "int8_t":           np.int8,
-            "bool":             np.bool8}
-
-        # Add "scalar" type to genn_types - pointing at float or double as appropriate
-        if self.precision == types.Float:
-            self.genn_types["scalar"] = self.genn_types["float"]
-        else:
-            self.genn_types["scalar"] = self.genn_types["double"]
+            types.Float:    np.float32,
+            types.Double:   np.float64,
+            types.Uint32:   np.int64,
+            types.Int32:    np.uint64,
+            types.Int32:    np.int32,
+            types.Uint32:   np.uint32,
+            types.Int16:    np.int16,
+            types.Uint16:   np.uint16,
+            types.Int8:     np.int8,
+            types.Uint8:    np.uint8,
+            types.Bool:     np.bool8}
 
     @property
     def backend_name(self):

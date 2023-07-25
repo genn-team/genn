@@ -13,7 +13,7 @@ from warnings import warn
 from weakref import proxy
 import numpy as np
 
-from . import neuron_models
+from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDuplication, VarLocation)
 from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
@@ -90,11 +90,7 @@ class GroupMixin(object):
         Args:
         var_name    --  string a fully qualified name of the variable to assign
         var_size    --  int the size of the variable
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
+        var_type    --  ResolvedType object
 
         Returns numpy array of type var_type
 
@@ -103,10 +99,7 @@ class GroupMixin(object):
 
         internal_var_name = var_name + self.name
 
-        if var_type == "scalar":
-            var_type = self._model.precision
-
-        # Get numpy data type corresponding to type string
+        # Get numpy data type corresponding to type
         dtype = self._model.genn_types[var_type]
         
         # Calculate bytes
@@ -123,11 +116,7 @@ class GroupMixin(object):
 
         Args:
         var_name    --  string a fully qualified name of the variable to assign
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
+        var_type    --  ResolvedType object
 
         Returns numpy array of type var_type
 
@@ -136,10 +125,7 @@ class GroupMixin(object):
 
         internal_var_name = var_name + self.name
 
-        if var_type == "scalar":
-            var_type = self._model.precision
-
-        # Get numpy data type corresponding to type string
+        # Get numpy data type corresponding to type
         dtype = self._model.genn_types[var_type]
         
         # Get dtype view of array memoryview
@@ -162,11 +148,6 @@ class GroupMixin(object):
         # Retrieve EGP from dictionary
         egp = egp_dict[egp_name]
 
-        # If EGP is scalar, give error
-        if egp.is_scalar:
-            raise Exception("Only pointer-type extra global parameters "
-                            "need to be pushed")
-
         self._model._slm.push_extra_global_param_to_device(self.name, egp_name,
                                                            len(egp.values))
 
@@ -183,11 +164,6 @@ class GroupMixin(object):
 
         # Retrieve EGP from dictionary
         egp = egp_dict[egp_name]
-
-        # If EGP is scalar, give error
-        if egp.is_scalar:
-            raise Exception("Only pointer-type extra global parameters "
-                            "need to be pulled")
 
         self._model._slm.pull_extra_global_param_from_device(self.name, egp_name,
                                                              len(egp.values))
@@ -222,8 +198,9 @@ class GroupMixin(object):
                             else size)
                             
                 # Get view
+                resolved_type = var_data.type.resolve(self._model.type_context)
                 var_data.view = self._assign_ext_ptr_array(v.name, var_size * num_copies,
-                                                           var_data.type)
+                                                           resolved_type)
 
                 # If there is more than one copy, reshape view to 2D
                 if num_copies > 1:
@@ -243,13 +220,8 @@ class GroupMixin(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.is_scalar:
-                # Assign view
-                egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
-                                                            egp_data.type)
-                # Copy values
-                egp_data.view[:] = egp_data.values
-            elif egp_data.values is not None:
+            resolved_type = egp_data.type.resolve(self._model.type_context)
+            if egp_data.values is not None:
                 # Allocate memory
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
@@ -257,7 +229,7 @@ class GroupMixin(object):
                 # Assign view
                 egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
                                                            len(egp_data.values), 
-                                                           egp_data.type)
+                                                           resolved_type)
 
                 # Copy values
                 egp_data.view[:] = egp_data.values
@@ -338,7 +310,7 @@ class NeuronGroupMixin(GroupMixin):
 
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array(
-                "recordSpk", recording_words, "uint32_t")
+                "recordSpk", recording_words, types.Uint32)
 
         # If spike-event recording is enabled
         if self.spike_event_recording_enabled:
@@ -348,7 +320,7 @@ class NeuronGroupMixin(GroupMixin):
 
             # Assign pointer to recording data
             self._spike_event_recording_data = self._assign_ext_ptr_array(
-                "recordSpkEvent", recording_words, "uint32_t")
+                "recordSpkEvent", recording_words, types.Uint32)
 
         if self.num_delay_slots > 1:
             self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
@@ -602,11 +574,11 @@ class SynapseGroupMixin(GroupMixin):
     
     def pull_in_syn_from_device(self):
         """Pull synaptic input current from device"""
-        self.pull_var_from_device("inSyn")
+        self.pull_var_from_device("outPost")
 
     def push_in_syn_to_device(self):
         """Push synaptic input current to device"""
-        self.push_var_to_device("inSyn")
+        self.push_var_to_device("outPost")
         
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
@@ -640,7 +612,7 @@ class SynapseGroupMixin(GroupMixin):
                                                      self._sparse_ind_type)
                     row_length = self._assign_ext_ptr_array("rowLength",
                                                             self.src.size,
-                                                            "unsigned int")
+                                                            types.Uint32)
                     # add pointers to the object
                     self._ind = ind
                     self._row_lengths = row_length
@@ -687,9 +659,10 @@ class SynapseGroupMixin(GroupMixin):
                     num_copies = (1 if (v.access & VarAccessDuplication.SHARED) != 0
                                     else self._model.batch_size)
                     # Get view
+                    resolved_type = var_data.type.resolve(self._model.type_context)
                     var_data.view = self._assign_ext_ptr_array(
                         v.name, self.weight_update_var_size * num_copies, 
-                        var_data.type)
+                        resolved_type)
 
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:
@@ -726,13 +699,13 @@ class SynapseGroupMixin(GroupMixin):
             # If it's inSyn is accessible on the host
             if self.in_syn_location & VarLocation.HOST:
                 # Get view
-                self.in_syn = self._assign_ext_ptr_array(
-                    "inSyn", self.trg.size * self._model.batch_size,
-                    "scalar")
+                self.out_post = self._assign_ext_ptr_array(
+                    "outPost", self.trg.size * self._model.batch_size,
+                    self._model.precision)
 
                 # Reshape to expose batches
-                self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
-                                                       self.trg.size))
+                self.out_post = np.reshape(self.out_post, (self._model.batch_size,
+                                                           self.trg.size))
 
         # Load extra global parameters
         self._load_egp()
@@ -876,8 +849,9 @@ class CustomUpdateMixin(GroupMixin):
 
                     # Get view
                     size = self._synapse_group.weight_update_var_size * num_copies
+                    resolved_type = var_data.type.resolve(self._model.type_context)
                     var_data.view = self._assign_ext_ptr_array(
-                        v.name, size, var_data.type)
+                        v.name, size, resolved_type)
 
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:

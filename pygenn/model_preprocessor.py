@@ -172,13 +172,7 @@ class ExtraGlobalParameter(object):
         Keyword args:
         values          --  iterable
         """
-        if variable_type[-1] == "*":
-            self.is_scalar = False
-            self.type = variable_type[:-1]
-        else:
-            self.is_scalar = True
-            self.type = variable_type
-
+        self.type = variable_type
         self.group = group if type(group) in ProxyTypes else proxy(group)
         self.name = variable_name
         self.view = None
@@ -192,12 +186,6 @@ class ExtraGlobalParameter(object):
         """
         if values is None:
             self.values = None
-        elif self.is_scalar:
-            if isinstance(values, Number):
-                self.values = values
-            else:
-                raise ValueError("scalar extra global variables can only be "
-                                 "initialised with a number")
         else:
             # Try and iterate values
             try:
