@@ -50,8 +50,8 @@ custom_connectivity_update_model = create_custom_connectivity_update_model(
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_sim_rng(backend, precision):
-    model = GeNNModel(precision, "test_sim_rng", backend=backend)
+def test_rng_sim(backend, precision):
+    model = GeNNModel(precision, "test_rng_sim", backend=backend)
     
     # Add neuron and current source populations
     var_init = {"uniform": 0.0, "normal": 0.0}
