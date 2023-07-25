@@ -894,7 +894,8 @@ class CustomUpdateMixin(GroupMixin):
 
 class CustomConnectivityUpdateMixin(GroupMixin):
     """Class representing a custom connectivity update"""
-    def _init_group(self, model, var_space, pre_var_space, post_var_space):
+    def _init_group(self, model, var_space, pre_var_space, 
+                    post_var_space, synapse_group):
         """Init CustomConnectivityUpdateGroup
 
         Args:
@@ -902,6 +903,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomConnectivityUpdateMixin, self)._init_group(model)
+        self.synapse_group = synapse_group
         self.vars, self.extra_global_params = prepare_model(
             self.model, self, var_space)
         self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
@@ -933,9 +935,11 @@ class CustomConnectivityUpdateMixin(GroupMixin):
             self._load_egp(var_data.extra_global_params, v.name)
   
         # Load pre and postsynaptic variables
-        self._load_vars(self.model.get_pre_vars(), self.src.size,
+        self._load_vars(self.model.get_pre_vars(), 
+                        self.synapse_group.src.size,
                         self.pre_vars, self.get_pre_var_location)
-        self._load_vars(self.model.get_post_vars(), self.trg.size,
+        self._load_vars(self.model.get_post_vars(), 
+                        self.synapse_group.trg.size,
                         self.post_vars, self.get_post_var_location)
 
         # Load custom update extra global parameters

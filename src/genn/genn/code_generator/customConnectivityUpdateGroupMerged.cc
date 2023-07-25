@@ -5,6 +5,7 @@
 
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
+#include "code_generator/standardLibrary.h"
 
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
@@ -437,18 +438,19 @@ const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnect
 //----------------------------------------------------------------------------
 void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
 {
-    CodeStream::Scope b(env.getStream());
+    EnvironmentLibrary rngEnv(env, StandardLibrary::getHostRNGFunctions(getScalarType()));
+    CodeStream::Scope b(rngEnv.getStream());
 
-    env.getStream() << "// merged custom connectivity host update group " << getIndex() << std::endl;
-    env.getStream() << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+    rngEnv.getStream() << "// merged custom connectivity host update group " << getIndex() << std::endl;
+    rngEnv.getStream() << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
     {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(rngEnv.getStream());
 
         // Get reference to group
-        env.getStream() << "const auto *group = &mergedCustomConnectivityHostUpdateGroup" << getIndex() << "[g]; " << std::endl;
+        rngEnv.getStream() << "const auto *group = &mergedCustomConnectivityHostUpdateGroup" << getIndex() << "[g]; " << std::endl;
 
         // Create matching environment
-        EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> groupEnv(env, *this);
+        EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> groupEnv(rngEnv, *this);
 
         // Add fields for number of pre and postsynaptic neurons
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",

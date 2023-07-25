@@ -467,9 +467,6 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomConnectivityUpdate::getVarReferences)
         .def_property_readonly("pre_var_references", &CustomConnectivityUpdate::getPreVarReferences)
         .def_property_readonly("post_var_references", &CustomConnectivityUpdate::getPostVarReferences)
-        
-        // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_synapse_group", &CustomConnectivityUpdateInternal::getSynapseGroup)
 
         //--------------------------------------------------------------------
         // Methods

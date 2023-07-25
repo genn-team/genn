@@ -1,7 +1,7 @@
 import os
 import sys
 from copy import deepcopy
-from platform import system
+from platform import system, uname
 from shutil import copytree, rmtree
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
@@ -25,6 +25,12 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 # Are we on Linux? 
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
+
+# Are we on WSL?
+if sys.version_info < (3, 3):
+    WSL = "microsoft" in uname()[2]
+else:
+    WSL = "microsoft" in uname().release
 
 # Determine correct suffix for GeNN libraries
 if WIN:
@@ -87,20 +93,25 @@ backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    cuda_library_dirs = []
     if MACOS:
-        cuda_library_dir = os.path.join(cuda_path, "lib")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dir = os.path.join(cuda_path, "lib", "x64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
     else:
-        cuda_library_dir = os.path.join(cuda_path, "lib64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
+
+    # If we're running on WSL, add additional library path so libcuda can be found
+    if WSL:
+        cuda_library_dirs.append("/usr/lib/wsl/lib")
 
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("cuda", "cuda",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dir],
-                      "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if MACOS else []}))
+                      "library_dirs": cuda_library_dirs,
+                      "extra_link_args": ["-Wl,-rpath," + cuda_library_dirs[0]] if MACOS else []}))
 
 # If OpenCL was found, add backend configuration
 if opencl_installed:

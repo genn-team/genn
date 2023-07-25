@@ -577,7 +577,6 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
-                            
                             buildStandardEnvironment(groupEnv);
 
                             if (c.getArchetype().isNeuronReduction()) {
@@ -724,21 +723,22 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Get reference to group
                             funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                             
-                            // Create matching environment
-                            EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(funcEnv, c);
+                            // Add host RNG functions
+                            EnvironmentLibrary rngEnv(funcEnv, StandardLibrary::getHostRNGFunctions(c.getScalarType()));
 
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(rngEnv, c);
                             buildStandardEnvironment(groupEnv);
-                        
+           
                             // Loop through presynaptic neurons
-                            funcEnv.getStream() << "for(unsigned int i = 0; i < " << funcEnv["num_pre"] << "; i++)";
+                            groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
                             {
-                                CodeStream::Scope b(funcEnv.getStream());
+                                CodeStream::Scope b(groupEnv.getStream());
                             
                                 // Configure substitutions
                                 groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
         
-                                assert(false);
-                                //c.generateUpdate(*this, cuEnv, model.getBatchSize());
+                                c.generateUpdate(*this, groupEnv, 1);
                             }
                         }
                     });

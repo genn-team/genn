@@ -547,13 +547,15 @@ class GeNNModel(ModelSpecInternal):
         post_var_init = get_var_init(post_var_space)
 
         # Use superclass to add population
+        syn_group = self._validate_synapse_group(syn_group, "syn_group")
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
-            cu_name, group_name, custom_connectivity_update_model,
+            cu_name, group_name, syn_group.name, custom_connectivity_update_model,
             param_space, var_init, pre_var_init, post_var_init,
             var_ref_space, pre_var_ref_space, post_var_ref_space)
 
         # Setup back-reference, store group in dictionary and return
-        c_update._init_group(self, var_space, pre_var_space, post_var_space)
+        c_update._init_group(self, var_space, pre_var_space, 
+                             post_var_space, syn_group)
         self.custom_connectivity_updates[cu_name] = c_update
         return c_update
         
@@ -1148,16 +1150,14 @@ def create_current_source_model(class_name, param_names=None,
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
     """
-    if not isinstance(custom_body, dict) and custom_body is not None:
-        raise ValueError("custom_body must be an instance of dict or None")
-
     body = {}
 
     if injection_code is not None:
         body["get_injection_code"] = lambda self: dedent(injection_code)
 
     return create_model(class_name, CurrentSourceModelBase, param_names,
-                        var_name_types, derived_params, body)
+                        var_name_types, derived_params, 
+                        extra_global_params, body)
 
 
 def create_custom_update_model(class_name, param_names=None,
@@ -1261,31 +1261,22 @@ def create_custom_connectivity_update_model(class_name,
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: VarVector([Var(*vn)
-                                    for vn in pre_var_name_types])
+            lambda self: [Var(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: VarVector([Var(*vn)
-                                    for vn in post_var_name_types])
+            lambda self: [Var(*vn) for vn in post_var_name_types]
 
     if var_refs is not None:
-        body["get_var_refs"] = \
-            lambda self: VarRefVector([VarRef(*v)
-                                       for v in var_refs])
+        body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
 
     if pre_var_refs is not None:
         body["get_pre_var_refs"] = \
-            lambda self: VarRefVector([VarRef(*v)
-                                       for v in pre_var_refs])
+            lambda self: [VarRef(*v) for v in pre_var_refs]
 
     if post_var_refs is not None:
         body["get_post_var_refs"] = \
-            lambda self: VarRefVector([VarRef(*v)
-                                       for v in post_var_refs])
-
-    if custom_body is not None:
-        body.update(custom_body)
+            lambda self: [VarRef(*v) for v in post_var_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
                         param_names, var_name_types, derived_params, 

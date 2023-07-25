@@ -380,6 +380,22 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
+    // Add fields for number of pre and postsynaptic neurons
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                 });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                 });
+
     // If there are delays on presynaptic variable references
     if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
         env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",

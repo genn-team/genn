@@ -172,6 +172,7 @@ public:
 
     //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &var) const;
+
     //! Get location of weight update model presynaptic state variable by name
     VarLocation getWUPreVarLocation(const std::string &var) const;
 
