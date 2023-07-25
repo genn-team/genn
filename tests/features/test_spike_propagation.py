@@ -7,7 +7,8 @@ from pygenn import GeNNModel
 from pygenn.genn import VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
-                    init_sparse_connectivity)
+                    create_var_init_snippet,
+                    init_sparse_connectivity, init_var)
 
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
@@ -21,9 +22,13 @@ decoder_model = create_sparse_connect_init_snippet(
     }
     """)
 
-pre_cont_neuron_model = create_neuron_model(
-    "pre_cont_neuron",
-    var_name_types=[("x", "scalar", VarAccess.READ_ONLY)])
+decoder_dense_model = create_var_init_snippet(
+    "decoder_dense",
+    var_init_code=
+    """
+    const unsigned int jValue = (1 << id_post);
+    value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
+    """)
 
 post_neuron_model = create_neuron_model(
     "post_neuron",
@@ -33,12 +38,11 @@ post_neuron_model = create_neuron_model(
     """,
     var_name_types=[("x", "scalar")])
 
-# decode_matrix_conn_gen_globalg_ragged, decode_matrix_conn_gen_globalg_bitmask,
-# decode_matrix_conn_gen_globalg_bitmask_optimised, decode_matrix_conn_gen_individualg_ragged
+
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_spike_propagation_snippet(backend, precision):
-    model = GeNNModel(precision, "test_spike_propagation", backend=backend)
+    model = GeNNModel(precision, "test_spike_propagation_snippet", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -79,6 +83,16 @@ def test_spike_propagation_snippet(backend, precision):
         "DeltaCurr", {}, {},
         init_sparse_connectivity(decoder_model, {}))
     
+    # Create one output neuron pop with bitmask decoder population
+    dense_n_pop = model.add_neuron_population(
+        "PostDenseNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "PostDenseSynapse", "DENSE", 0,
+        ss_pop, dense_n_pop,
+        "StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}, {}, {},
+        "DeltaCurr", {}, {})
+    
     # Build model and load
     model.build()
     model.load()
@@ -86,7 +100,7 @@ def test_spike_propagation_snippet(backend, precision):
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
     output_populations = [sparse_constant_weight_n_pop, 
-                          sparse_n_pop, bitmask_n_pop]
+                          sparse_n_pop, bitmask_n_pop, dense_n_pop]
     while model.timestep < 16:
         model.step_time()
         
@@ -102,13 +116,6 @@ def test_spike_propagation_snippet(backend, precision):
             output_value = np.sum(output_place_values[output_binary])
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-    print("BEEP")
-
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_cont_propagation_snippet(backend, precision):
-    model = GeNNModel(precision, "test_cont_propagation", backend=backend)
-    
 
 if __name__ == '__main__':
     test_spike_propagation_snippet("single_threaded_cpu", types.Float)
