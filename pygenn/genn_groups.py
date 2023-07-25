@@ -468,7 +468,7 @@ class SynapseGroupMixin(GroupMixin):
         elif self.matrix_type & SynapseMatrixConnectivity.KERNEL:
             return np.copy(var_view)
         elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = self.max_row_length
+            max_rl = self.max_connections
             row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
 
             # Create range containing the index where each row starts in ind
@@ -557,7 +557,7 @@ class SynapseGroupMixin(GroupMixin):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind[i * self.max_row_length: (i * self.max_row_length) + r]
+                    self._ind[i * self.max_connections: (i * self.max_connections) + r]
                         for i, r in enumerate(self._row_lengths)])
 
         else:
@@ -566,7 +566,7 @@ class SynapseGroupMixin(GroupMixin):
 
     def pull_connectivity_from_device(self):
         """Wrapper around GeNNModel.pull_connectivity_from_device"""
-        self._model._slmpull_connectivity_from_device(self.name)
+        self._model._slm.pull_connectivity_from_device(self.name)
 
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
@@ -624,7 +624,7 @@ class SynapseGroupMixin(GroupMixin):
 
                         # Create (x)range containing the index where each row starts in ind
                         row_start_idx = xrange(0, self.weight_update_var_size,
-                                               self.max_row_length)
+                                               self.max_connections)
 
                         # Loop through ragged matrix rows
                         syn = 0
@@ -762,7 +762,7 @@ class SynapseGroupMixin(GroupMixin):
                 # Create (x)range containing the index
                 # where each row starts in ind
                 row_start_idx = xrange(0, self.weight_update_var_size,
-                                       self.max_row_length)
+                                       self.max_connections)
 
                 # Loop through ragged matrix rows
                 syn = 0
