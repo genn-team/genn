@@ -696,7 +696,7 @@ protected:
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    Type::TypeContext getTypeContext() const;
+    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
 
     //! Get std::map containing local named NeuronGroup objects in model
     const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
@@ -753,6 +753,8 @@ private:
 
     //! Type of floating point variables (float, double, ...; default: float)
     Type::ResolvedType m_Precision;
+
+    Type::TypeContext m_TypeContext;
 
     //! Type of floating point variables used to store time
     std::optional<Type::ResolvedType> m_TimePrecision;

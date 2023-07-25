@@ -35,7 +35,7 @@ public:
     ModelSpecMerged(const ModelSpecInternal &model)
     :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
         m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
-        m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode"), m_TypeContext{{"scalar", model.getPrecision()}, {"timepoint", model.getTimePrecision()}}
+        m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
     {
     }
     ModelSpecMerged(const ModelSpecMerged&) = delete;
@@ -92,9 +92,6 @@ public:
     //--------------------------------------------------------------------------
     //! Get underlying, unmerged model
     const ModelSpecInternal &getModel() const{ return m_Model; }
-    
-    //! Get type context used to resolve all types used in model
-    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
 
     //! Get merged neuron groups which require updating
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
@@ -350,7 +347,7 @@ private:
     }
 
     template<typename MergedGroup, typename D>
-    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
                             const std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> &unmergedGroups,
                             std::vector<MergedGroup> &mergedGroups, D getHashDigest, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
     {
@@ -371,7 +368,7 @@ private:
         size_t i = 0;
         for(const auto &p : protoMergedGroups) {
             // Construct new merged group object
-            mergedGroups.emplace_back(i, m_TypeContext, p.second);
+            mergedGroups.emplace_back(i, m_Model.getTypeContext(), p.second);
             
             // Call generate function
             generateGroup(mergedGroups.back());
@@ -404,7 +401,7 @@ private:
     }
 
     template<typename MergedGroup, typename F, typename D, typename G>
-    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
                             const std::map<std::string, typename MergedGroup::GroupInternal> &groups, std::vector<MergedGroup> &mergedGroups,
                             F filter, D getHashDigest, G generateGroup, bool host = false)
     {
@@ -417,8 +414,8 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(backend, memorySpaces, unmergedGroups, mergedGroups, 
-                           getHashDigest, generateGroup, host);
+        createMergedGroups(backend, memorySpaces, unmergedGroups,
+                           mergedGroups, getHashDigest, generateGroup, host);
     }
 
     //--------------------------------------------------------------------------
@@ -519,8 +516,5 @@ private:
 
     //! Map containing mapping of original extra global param names to their locations within merged groups
     MergedEGPMap m_MergedEGPs;
-    
-    //! Type context used to resolve all types used in model
-    Type::TypeContext m_TypeContext;
 };
 }   // namespace GeNN::CodeGenerator

@@ -273,7 +273,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                          CodeStream &extraGlobalParam, const Type::UnresolvedType &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Resolved type
-    const auto resolvedType = type.resolve(modelMerged.getTypeContext());
+    const auto resolvedType = type.resolve(modelMerged.getModel().getTypeContext());
 
     // Generate variables
     backend.genVariableDefinition(definitionsVar, definitionsInternalVar, resolvedType, name, loc);
@@ -414,7 +414,7 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
     for(const auto &var : varAdaptor.getDefs()) {
         const auto *varInitSnippet = varAdaptor.getInitialisers().at(var.name).getSnippet();
         const bool autoInitialized = !varInitSnippet->getCode().empty();
-        const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                     runnerPushFunc, runnerPullFunc, resolvedType, var.name + group.getName(), varAdaptor.getLoc(var.name),
                     autoInitialized, getSizeFn(group, var), mem, statePushPullFunctions);
@@ -438,7 +438,7 @@ void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &b
     // Loop through variables
     const V varAdaptor(group);
     for(const auto &var : varAdaptor.getDefs()) {
-        const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                          resolvedType, var.name + varAdaptor.getNameSuffix(), varAdaptor.getLoc(var.name),
                          getSizeFn(group, var), mem);
@@ -462,7 +462,7 @@ void genRunnerFusedVarPushPull(const ModelSpecMerged &modelMerged, const Backend
     const V varAdaptor(group);
     for(const auto &var : varAdaptor.getDefs()) {
         const bool autoInitialized = !varAdaptor.getInitialisers().at(var.name).getSnippet()->getCode().empty();
-        const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getLoc(var.name),
                             backend.getPreferences().automaticCopy, var.name + group.getName(), groupStatePushPullFunctions,
                             [&]()
@@ -1082,7 +1082,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
             const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
-            const auto resolvedType = var.type.resolve(modelMerged.getTypeContext());
+            const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc, resolvedType, var.name + n.first,
                         n.second.getVarLocation(var.name), autoInitialized, count, mem, neuronStatePushPullFunctions);
@@ -1395,7 +1395,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             for(const auto &wuVar : wu->getVars()) {
                 const auto *varInitSnippet = s.second.getWUVarInitialisers().at(wuVar.name).getSnippet();
                 const bool autoInitialized = !varInitSnippet->getCode().empty();
-                const auto resolvedType = wuVar.type.resolve(modelMerged.getTypeContext());
+                const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,

@@ -222,8 +222,10 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
 // ---------------------------------------------------------------------------
 void ModelSpec::finalise()
 {
+    // Build type context
+    m_TypeContext = {{"scalar", getPrecision()}, {"timepoint", getTimePrecision()}};
+
     // Finalise neuron groups
-    const auto typeContext = getTypeContext();
     for(auto &n : m_LocalNeuronGroups) {
         n.second.finalise(m_DT);
     }
@@ -361,11 +363,6 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
     Utils::updateHash(getSeed(), hash);
 
     return hash.get_digest();
-}
-// ---------------------------------------------------------------------------
-Type::TypeContext ModelSpec::getTypeContext() const
-{
-    return Type::TypeContext{{"scalar", getPrecision()}, {"timepoint", getTimePrecision()}};
 }
 // ---------------------------------------------------------------------------
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
