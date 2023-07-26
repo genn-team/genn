@@ -752,8 +752,8 @@ class SynapseGroupMixin(GroupMixin):
             # If connectivity is dense,
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
-            if ((self.matrix_type & SynapseMatrixWeight.DENSE) or 
-                    (self.matrix_type & SynapseMatrixWeight.KERNEL)):
+            if ((self.matrix_type & SynapseMatrixConnectivity.DENSE) or
+                (self.matrix_type & SynapseMatrixWeight.KERNEL)):
                 var_data.view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
