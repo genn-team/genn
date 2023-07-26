@@ -1335,18 +1335,19 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 // Configure substitutions
                 groupEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
                 
-                // Copy global RNG stream to local and use pointer to this for rng
-                const std::string rng = printSubs("$(_rng)[$(id)]", groupEnv);
-                if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
-                    groupEnv.add(Type::Void, "rng", genPopulationRNGPreamble(groupEnv.getStream(), rng));
-                }
+                // Add population RNG field
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
+                                  "$(id)");
+                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
+
 
                 cg.generateUpdate(*this, groupEnv, modelMerged.getModel().getBatchSize());
                 
                 // Copy local stream back to local
-                if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
+                /*if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGPostamble(groupEnv.getStream(), rng);
-                }
+                }*/
             }
         });
 }
@@ -1744,7 +1745,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 groupEnv.add(Type::Void, "_rng", 
                              genGlobalRNGSkipAhead(groupEnv.getStream(), std::to_string(numInitializeThreads) + " + id"));
             }
-            
+
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
                 groupEnv, batchSize, cg, true,

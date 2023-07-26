@@ -683,7 +683,10 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
                 funcEnv.getStream() << "// Custom connectivity updates" << std::endl;
-                genCustomConnectivityUpdateKernel(funcEnv, modelMerged, memorySpaces, g, idCustomUpdateStart);
+
+                // Add RNG functions to environment and generate kernel
+                EnvironmentLibrary rngEnv(funcEnv, getRNGFunctions(model.getPrecision()));
+                genCustomConnectivityUpdateKernel(rngEnv, modelMerged, memorySpaces, g, idCustomUpdateStart);
             }
         }
 
