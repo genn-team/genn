@@ -76,9 +76,9 @@ docker-build:
 
 BASE := 12.2.0-devel-ubuntu22.04
 PY_VER := 3.11
-.PHONY wheel:
-wheel:
-	@docker build -f Dockerfile.builder \
+.PHONY ubuntu_wheel:
+ubuntu_wheel:
+	@docker build -f Dockerfile.ubuntu_builder \
 		--build-arg BASE=$(BASE) \
 		--build-arg PY_VER=$(PY_VER) \
 		--target=output --output type=local,dest=dist/ .
