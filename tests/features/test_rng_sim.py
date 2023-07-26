@@ -109,4 +109,4 @@ def test_rng_sim(backend, precision):
 
 
 if __name__ == '__main__':
-    test_sim_rng("single_threaded_cpu", types.Double)
+    test_rng_sim("single_threaded_cpu", types.Double)
