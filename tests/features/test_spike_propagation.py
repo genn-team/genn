@@ -122,7 +122,7 @@ def test_spike_propagation(backend, precision):
         "DeltaCurr", {}, {},
         init_sparse_connectivity(decoder_model, {}))
 
-    # Create one output neuron pop with bitmask decoder population
+    # Create one output neuron pop with dense decoder population
     dense_n_pop = model.add_neuron_population(
         "PostDenseNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
@@ -132,7 +132,7 @@ def test_spike_propagation(backend, precision):
         "StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}, {}, {},
         "DeltaCurr", {}, {})
 
-    # Create one output neuron pop with bitmask decoder population
+    # Create one output neuron pop with dense decoder population
     manual_dense_n_pop = model.add_neuron_population(
         "ManualPostDenseNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
@@ -168,5 +168,59 @@ def test_spike_propagation(backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_spike_propagation_den_delay(backend, precision):
+    model = GeNNModel(precision, "test_spike_propagation_den_delay", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to generate one-hot pattern to decode
+    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSourceArray",
+                                         {}, {"startSpike": np.arange(10), "endSpike": np.arange(1, 11)})
+    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(10.0))
+
+    # Create one output neuron pop with dense decoder population
+    delay = np.arange(9, -1, -1)
+    dense_n_pop = model.add_neuron_population(
+        "PostDenseNeuron", 1, post_neuron_model,
+        {}, {"x": 0.0})
+    dense_s_pop = model.add_synapse_population(
+        "PostDenseSynapse", "DENSE", 0,
+        ss_pop, dense_n_pop,
+        "StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}, {}, {},
+        "DeltaCurr", {}, {})
+    dense_s_pop.max_dendritic_delay_timesteps = 10
+
+    # Create one output neuron pop with sparse decoder population
+    sparse_n_pop = model.add_neuron_population(
+        "PostSparseNeuron", 1, post_neuron_model,
+        {}, {"x": 0.0})
+    sparse_s_pop = model.add_synapse_population(
+        "PostSparseSynapse", "SPARSE", 0,
+        ss_pop, sparse_n_pop,
+        "StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}, {}, {},
+        "DeltaCurr", {}, {})
+    sparse_s_pop.max_dendritic_delay_timesteps = 10
+    sparse_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate for 11 timesteps
+    output_populations = [dense_n_pop, sparse_n_pop]
+    while model.timestep < 11:
+        model.step_time()
+
+        # Loop through output populations
+        correct = 10.0 if model.timestep == 11 else 0.0
+        for pop in output_populations:
+            # Pull state variable
+            pop.pull_var_from_device("x")
+
+            # If not close to correct value, error
+            if not np.isclose(pop.vars["x"].view[0], correct):
+                assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view[0]} rather than {correct})"
+
 if __name__ == '__main__':
-    test_spike_propagation("single_threaded_cpu", types.Float)
+    test_spike_propagation_den_delay("single_threaded_cpu", types.Float)
