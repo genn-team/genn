@@ -1586,7 +1586,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                             kernelInit << "const unsigned int idx = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)];" << std::endl;
                         }
                         else {
-                            kernelInit << "const unsigned int idx = (($(0)) * $(_row_stride))) + $(_row_length)[$(0)];" << std::endl;
+                            kernelInit << "const unsigned int idx = (($(0)) * $(_row_stride)) + $(_row_length)[$(0)];" << std::endl;
                         }
                     }
 
