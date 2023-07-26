@@ -291,33 +291,25 @@ private:
                 } while(found != std::string::npos);
             }
 
-            // If all arguments haven't been substituted
-            if (i != m_CallArguments.top().size()) {
-                // If function is variadic
-                if (type.getFunction().variadic) {
-                    // If variadic placeholder is found
-                    const std::string variadicPlaceholder = "$(@)";
-                    const size_t found = name.find(variadicPlaceholder);
-                    if (found != std::string::npos) {
-                        // Concatenate together all remaining arguments
-                        std::ostringstream variadicArgumentsStream;
-                        std::copy(m_CallArguments.top().cbegin() + i, m_CallArguments.top().cend(),
-                                  std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
+            // If function is variadic
+            if (type.getFunction().variadic) {
+                // If variadic placeholder is found
+                const std::string variadicPlaceholder = "$(@)";
+                const size_t found = name.find(variadicPlaceholder);
+                if (found != std::string::npos) {
+                    // Concatenate together all remaining arguments
+                    std::ostringstream variadicArgumentsStream;
+                    std::copy(m_CallArguments.top().cbegin() + i, m_CallArguments.top().cend(),
+                                std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
 
-                        // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
-                        std::string variadicArguments = variadicArgumentsStream.str();
-                        name.replace(found, variadicPlaceholder.length(),
-                                     variadicArguments.substr(0, variadicArguments.length() - 2));
-                    }
-                    else {
-                        throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
-                                                 "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
-                    }
+                    // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
+                    std::string variadicArguments = variadicArgumentsStream.str();
+                    name.replace(found, variadicPlaceholder.length(),
+                                    variadicArguments.substr(0, variadicArguments.length() - 2));
                 }
-                // Otherwise, give error
                 else {
-                    throw std::runtime_error("Function template for '" + variable.getName().lexeme + "' (" + name + ") has "
-                                             "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call");
+                    throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
+                                                "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
                 }
             }
         }
