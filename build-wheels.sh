@@ -24,8 +24,8 @@ for PYBIN in /opt/python/*/bin; do
     make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
     make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
     # RUN python3 setup.py develop
-    "${PYBIN}" setup.py bdist_wheel
-    "${PYBIN}" setup.py bdist_wheel
+    "${PYBIN}/python" setup.py bdist_wheel
+    "${PYBIN}/python" setup.py bdist_wheel
 done
 
 # Bundle external shared libraries into the wheels
