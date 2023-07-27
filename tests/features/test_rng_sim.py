@@ -56,7 +56,7 @@ def test_rng_sim(backend, precision):
     # Add neuron and current source populations
     var_init = {"uniform": 0.0, "normal": 0.0}
     n_pop = model.add_neuron_population("Neurons", 1000, neuron_model, 
-                                             {}, var_init)
+                                        {}, var_init)
     cs_pop = model.add_current_source("CurrentSource", 
                                       current_source_model, n_pop,
                                       {}, var_init)
