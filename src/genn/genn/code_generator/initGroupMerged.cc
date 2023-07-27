@@ -764,7 +764,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                                   [egp](const auto &g, size_t) { return "&" + egp.name + g.getName(); },
                                   "", GroupMergedFieldType::HOST_DYNAMIC);
 
-                // Add substitution for dereferenced access to field
+                // Add substitution for direct access to field
                 groupEnv.add(pointerType, egp.name, "*$(_" + egp.name + ")");
 
                 // If backend requires seperate device variables, add additional (private) field)
@@ -789,10 +789,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Generate code to allocate this EGP with count specified by $(0)
                 // **NOTE** we generate these with a pointer type as the fields are pointer to pointer
                 std::stringstream allocStream;
-                const auto &pointerToEGP = resolvedType.createPointer();
                 CodeGenerator::CodeStream alloc(allocStream);
                 backend.genLazyVariableDynamicAllocation(alloc, 
-                                                         pointerToEGP, egp.name,
+                                                         pointerType, egp.name,
                                                          loc, "$(0)");
 
                 // Add substitution
@@ -802,7 +801,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
                 backend.genLazyVariableDynamicPush(push, 
-                                                   pointerToEGP, egp.name,
+                                                   pointerType, egp.name,
                                                    loc, "$(0)");
 
 

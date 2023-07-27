@@ -1337,7 +1337,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
+                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); },
                                   "$(id)");
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
 
@@ -1488,7 +1488,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // Add field for RNG
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> rngInitEnv(groupEnv, cg);
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
+                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); });
 
                     genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv), 
                                          "deviceRNGSeed", "id");
@@ -1521,18 +1521,6 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             groupEnv.print("if($(id) < $(size))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
-
-                // If population RNGs are initialised on device and this custom connectivity update
-                // required one, initialise single RNG using GLOBAL thread id for sequence
-                if(isPopulationRNGInitialisedOnDevice() && Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
-                    // Add field for RNG
-                    EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> rngInitEnv(groupEnv, cg);
-                    rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
-
-                    genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv),
-                                         "deviceRNGSeed", "id");
-                }
 
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id

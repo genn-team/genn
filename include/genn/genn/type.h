@@ -355,6 +355,7 @@ inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {
 inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
 inline static const ResolvedType AllocatePushPullEGP = ResolvedType::createFunction(Void, {Uint32});
+inline static const ResolvedType PushPull = ResolvedType::createFunction(Void, {});
 
 
 inline static const ResolvedType Assert = ResolvedType::createFunction(Void, {Bool});

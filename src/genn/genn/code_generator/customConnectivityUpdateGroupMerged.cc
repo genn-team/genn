@@ -478,41 +478,46 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
-            // Add pointer field to allow user code to access
-            const auto resolvedType = egp.type.resolve(getTypeContext());
-            groupEnv.addField(resolvedType.createPointer(), egp.name, egp.name,
-                              [egp](const auto &g, size_t) { return egp.name + g.getName(); },
-                              "", GroupMergedFieldType::HOST_DYNAMIC);
+            // If EGP is located on the host
+            const auto loc = VarLocation::HOST_DEVICE;//getArchetype().getExtraGlobalParamLocation(egp.name);
+            if(loc & VarLocation::HOST) {
+                // Add pointer field to allow user code to access
+                const auto resolvedType = egp.type.resolve(getTypeContext());
+                assert(!resolvedType.isPointer());
+                const auto pointerType = resolvedType.createPointer();
 
-            // If backend has device variables, also add hidden pointer field with device pointer
-            if(!backend.getDeviceVarPrefix().empty()) {
-                groupEnv.addField(resolvedType.createPointer(), "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
-                                  [egp, &backend](const auto &g, size_t)
-                                  {
-                                      return backend.getDeviceVarPrefix() + egp.name + g.getName();
-                                  },
-                                  "", GroupMergedFieldType::DYNAMIC);
+                // Add field for host pointer
+                groupEnv.addField(pointerType, egp.name, egp.name,
+                                  [egp](const auto &g, size_t) { return egp.name + g.getName(); },
+                                  "", GroupMergedFieldType::HOST_DYNAMIC);
+
+                // Add substitution for direct access to field
+                groupEnv.add(pointerType, egp.name, "$(_" + egp.name + ")");
+
+                // If backend has device variables, also add hidden pointer field with device pointer
+                if(!backend.getDeviceVarPrefix().empty()) {
+                    groupEnv.addField(pointerType, "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
+                                      [egp, &backend](const auto &g, size_t)
+                                      {
+                                          return backend.getDeviceVarPrefix() + egp.name + g.getName();
+                                      },
+                                      "", GroupMergedFieldType::DYNAMIC);
+                }
+
+                // Generate code to push this EGP with count specified by $(0)
+                std::stringstream pushStream;
+                CodeStream push(pushStream);
+                backend.genLazyVariableDynamicPush(push, resolvedType, egp.name, loc, "$(0)");
+
+                // Generate code to pull this EGP with count specified by $(0)
+                std::stringstream pullStream;
+                CodeStream pull(pullStream);
+                backend.genLazyVariableDynamicPull(pull, resolvedType, egp.name, loc, "$(0)");
+
+                // Add substitutions
+                groupEnv.add(Type::AllocatePushPullEGP, "push" + egp.name, pushStream.str());
+                groupEnv.add(Type::AllocatePushPullEGP, "pull" + egp.name, pullStream.str());
             }
-
-            // Generate code to push this EGP with count specified by $(0)
-            std::stringstream pushStream;
-            CodeStream push(pushStream);
-            backend.genVariableDynamicPush(push, resolvedType, egp.name,
-                                           VarLocation::HOST_DEVICE, "$(0)", "group->");
-
-            // Add substitution
-            groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), 
-                         "push" + egp.name + "ToDevice", pushStream.str());
-
-            // Generate code to pull this EGP with count specified by $(0)
-            std::stringstream pullStream;
-            CodeStream pull(pullStream);
-            backend.genVariableDynamicPull(pull, resolvedType, egp.name,
-                                           VarLocation::HOST_DEVICE, "$(0)", "group->");
-
-            // Add substitution
-            groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), 
-                         "pull" + egp.name + "FromDevice", pullStream.str());
         }
 
         // Add pre and postsynaptic variables along with push and pull functions

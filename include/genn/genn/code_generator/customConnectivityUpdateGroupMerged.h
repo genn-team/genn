@@ -187,16 +187,20 @@ private:
             if (loc & VarLocation::HOST) {
                 // Add pointer field to allow user code to access
                 const auto resolvedType = v.type.resolve(getTypeContext());
-                env.addField(resolvedType.createPointer(), v.name, v.name,
+                const auto pointerType = resolvedType.createPointer();
+                env.addField(pointerType, "_" + v.name, v.name,
                              [v](const auto &g, size_t) 
                              { 
                                  return  v.name + g.getName();
                              },
                              "", GroupMergedFieldType::HOST);
 
+                // Add substitution for direct access to field
+                env.add(pointerType, v.name, "$(_" + v.name + ")");
+
                 // If backend has device variables, also add hidden pointer field with device pointer
                 if(!backend.getDeviceVarPrefix().empty())  {
-                    env.addField(resolvedType.createPointer(), "_" + backend.getDeviceVarPrefix() + v.name, backend.getDeviceVarPrefix() + v.name,
+                    env.addField(pointerType, "_" + backend.getDeviceVarPrefix() + v.name, backend.getDeviceVarPrefix() + v.name,
                                  [v, &backend](const auto &g, size_t)
                                  {
                                      return backend.getDeviceVarPrefix() + v.name + g.getName();
@@ -206,22 +210,20 @@ private:
                 // Generate code to push this variable
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genVariableDynamicPush(push, resolvedType, v.name,
-                                               loc, count, "group->");
+                backend.genLazyVariableDynamicPush(push, resolvedType, v.name,
+                                                   loc, count);
 
                 // Add substitution
-                env.add(Type::ResolvedType::createFunction(Type::Void, {}), 
-                        "push" + v.name + "ToDevice", pushStream.str());
+                env.add(Type::PushPull, "push" + v.name + "ToDevice", pushStream.str());
 
                 // Generate code to pull this variable
                 std::stringstream pullStream;
                 CodeStream pull(pullStream);
-                backend.genVariableDynamicPull(pull, resolvedType, v.name,
-                                               loc, count, "group->");
+                backend.genLazyVariableDynamicPush(pull, resolvedType, v.name,
+                                                   loc, count);
 
                 // Add substitution
-                env.add(Type::ResolvedType::createFunction(Type::Void, {}), 
-                        "pull" + v.name + "FromDevice", pullStream.str());
+                env.add(Type::PushPull, "pull" + v.name + "FromDevice", pullStream.str());
             }
         }
     }
