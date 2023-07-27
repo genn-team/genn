@@ -82,3 +82,9 @@ ubuntu_wheel:
 		--build-arg BASE=$(BASE) \
 		--build-arg PY_VER=$(PY_VER) \
 		--target=output --output type=local,dest=dist/ .
+
+CUDA := 12.2
+wheel:
+	@docker build -f Dockerfile.builder \
+		--build-arg CUDA=$(CUDA) \
+		--target=output --output type=local,dest=dist/ .
