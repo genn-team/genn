@@ -238,12 +238,12 @@ public:
                                         const Type::ResolvedType &type, const std::string &name, 
                                         VarLocation loc, unsigned int batchSize) const final;
 
-    //! Generate code for pushing a variable with a size known at tuntime to the 'device'
+    //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genVariableDynamicPush(CodeStream &os, 
                                         const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                         const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
-    //! Generate code for pushing a variable with a size known at tuntime to the 'device'
+    //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName) const final;
