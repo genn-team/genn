@@ -1757,7 +1757,6 @@ void Backend::genVariableDynamicPush(CodeStream &os,
             os << ", " << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
-            os << prefix << name << " = new " << type.getName() << "[" << countVarName << "];" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << "d_" << name;
             os << ", " << prefix << name;
             os << ", " << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1775,7 +1774,6 @@ void Backend::genLazyVariableDynamicPush(CodeStream &os,
             os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
-            os << "$(d_" << name << ") = new " << type.getName() << "[" << countVarName << "];" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_d_" << name << "), $(_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
