@@ -1206,9 +1206,9 @@ def create_custom_update_model(class_name, param_names=None,
         body["get_extra_global_param_refs"] =\
             lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
-    return create_custom_model_class(
-        class_name, CustomUpdateModelBase, param_names,
-        var_name_types, derived_params, extra_global_params, body)
+    return create_model(class_name, CustomUpdateModelBase, param_names,
+                        var_name_types, derived_params,
+                        extra_global_params, body)
 
 def create_custom_connectivity_update_model(class_name, 
                                             param_names=None,
