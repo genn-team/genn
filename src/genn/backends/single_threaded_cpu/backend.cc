@@ -1314,14 +1314,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
-
-     // If a global RNG is required, define standard host distributions as recreating them each call is slow
-    if(isGlobalHostRNGRequired(model)) {
-        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
-        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
-        os << std::endl;
-    }
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -1361,16 +1353,6 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-
-    // If a global RNG is required, implement standard host distributions as recreating them each call is slow
-    if(isGlobalHostRNGRequired(model)) {
-        os << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
-        os << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
-        os << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
-        os << std::endl;
-    }
-    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const

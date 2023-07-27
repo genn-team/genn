@@ -371,37 +371,6 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
     }
 }
 //-------------------------------------------------------------------------
-void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
-                      CodeStream &runnerVarAlloc, unsigned int seed, MemAlloc &mem)
-{
-    definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
-    runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
-
-    // If no seed is specified, use system randomness to generate seed sequence
-    CodeStream::Scope b(runnerVarAlloc);
-    if(seed == 0) {
-        runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
-        runnerVarAlloc << "std::random_device seedSource;" << std::endl;
-        runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
-        {
-            CodeStream::Scope b(runnerVarAlloc);
-            runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
-        }
-        runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
-    }
-    // Otherwise, create a seed sequence from model seed
-    // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
-    else {
-        runnerVarAlloc << "std::seed_seq seeds{" << seed << "};" << std::endl;
-    }
-
-    // Seed RNG from seed sequence
-    runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
-
-    // Add size of Mersenne Twister to memory tracker
-    mem += MemAlloc::host(sizeof(std::mt19937));
-}
-//-------------------------------------------------------------------------
 template<typename V, typename G, typename S>
 void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
                    CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
@@ -630,7 +599,43 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
     if(backend.isGlobalHostRNGRequired(model)) {
-        genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed(), mem);
+        // Define standard RNG
+        definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
+        runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
+
+        // Define standard host distributions as recreating them each call is slow
+        definitionsVar << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
+        definitionsVar << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
+        definitionsVar << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
+        definitionsVar << std::endl;
+        runnerVarDecl << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << std::endl;
+
+        // If no seed is specified, use system randomness to generate seed sequence
+        CodeStream::Scope b(runnerVarAlloc);
+        if(model.getSeed() == 0) {
+            runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
+            runnerVarAlloc << "std::random_device seedSource;" << std::endl;
+            runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
+            {
+                CodeStream::Scope b(runnerVarAlloc);
+                runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
+            }
+            runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+        }
+        // Otherwise, create a seed sequence from model seed
+        // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+        else {
+            runnerVarAlloc << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
+        }
+
+        // Seed RNG from seed sequence
+        runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
+
+        // Add size of Mersenne Twister to memory tracker
+        mem += MemAlloc::host(sizeof(std::mt19937));
     }
     allVarStreams << std::endl;
 
