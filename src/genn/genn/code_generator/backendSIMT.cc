@@ -272,11 +272,11 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
 {
     // If there's row building code, return number of source neurons i.e. rows
-    if(!sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
+    if(!Utils::areTokensEmpty(sg.getConnectivityInitialiser().getRowBuildCodeTokens())) {
         return sg.getSrcNeuronGroup()->getNumNeurons();
     }
     // Otherwise, if there's column building code, return number of target neurons i.e. columns
-    else if(!sg.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
+    else if(!Utils::areTokensEmpty(sg.getConnectivityInitialiser().getColBuildCodeTokens())) {
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
     // Otherwise, give an error
@@ -542,7 +542,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             genSharedMemBarrier(groupEnv.getStream());
 
             // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
-            if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
+            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
                 groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -591,7 +591,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
             // Copy spikes into block of $(_spk)
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");
-            if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
+            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
                 const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
                                                                            batchSize, VarAccessDuplication::DUPLICATE, "");
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
@@ -1711,7 +1711,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 [this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
                 {
                     // If postsynaptic learning is required
-                    if(!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
+                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUPostLearnCodeTokens())) {
                         CodeStream::Scope b(env.getStream());
 
                         // Extract index of synapse's postsynaptic target
