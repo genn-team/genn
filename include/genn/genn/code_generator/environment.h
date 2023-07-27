@@ -707,9 +707,9 @@ public:
         return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
     }
 
-    std::string getVarSuffix(const GroupInternal &g, const Models::Base::Var&) const
+    std::string getTargetName(const GroupInternal &g, const Models::Base::Var &var) const
     {
-        return A(g).getNameSuffix();
+        return var.name + A(g).getNameSuffix();
     }
 
 private:
@@ -752,9 +752,10 @@ protected:
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getVarSuffix(const GroupInternal &g, const Models::Base::VarRef &var) const
+    std::string getTargetName(const GroupInternal &g, const Models::Base::VarRef &var) const
     {
-        return A(g).getInitialisers().at(var.name).getTargetName();
+        const auto &initialiser = A(g).getInitialisers().at(var.name);
+        return initialiser.getVar().name + initialiser.getTargetName();
     }
 
 private:
@@ -811,7 +812,7 @@ public:
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
                                         [arrayPrefix, v, &group, this](const typename F::GroupInternal &, size_t i)
                                         {
-                                            return arrayPrefix + v.name + this->getVarSuffix(group.getGroups().at(i), v);
+                                            return arrayPrefix + this->getTargetName(group.getGroups().at(i), v);
                                         });
 
             if(v.access & VarAccessMode::READ_ONLY) {
