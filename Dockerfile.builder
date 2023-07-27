@@ -40,7 +40,7 @@ WORKDIR ${GENN_PATH}
 # PLAT=manylinux2014_x86_64
 # docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh
 
-RUN build-wheels.sh
+RUN ./build-wheels.sh
 
 # Copy the wheel to a new image for extraction
 FROM scratch AS output
