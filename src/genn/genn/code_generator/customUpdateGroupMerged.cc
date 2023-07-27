@@ -75,7 +75,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
-    prettyPrintExpression(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
+    prettyPrintStatements(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -207,7 +207,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
-    prettyPrintExpression(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
+    prettyPrintStatements(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 }
 
 // ----------------------------------------------------------------------------
