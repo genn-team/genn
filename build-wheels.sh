@@ -18,6 +18,10 @@ function repair_wheel {
 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
+    # Exclude Python 3.12
+    if [[ "$PYBIN" == *"cp312"* ]]; then
+        continue
+    fi
     # "${PYBIN}/pip" install -r /io/dev-requirements.txt
     "${PYBIN}/pip" install numpy swig
     # "${PYBIN}/pip" wheel /opt/genn/ --no-deps -w dist/
