@@ -84,7 +84,8 @@ ubuntu_wheel:
 		--target=output --output type=local,dest=dist/ .
 
 CUDA := 12.2
-wheel:
+.PHONY wheels:
+wheels:
 	@docker build -f Dockerfile.builder \
 		--build-arg CUDA=$(CUDA) \
 		--target=output --output type=local,dest=dist/ .
