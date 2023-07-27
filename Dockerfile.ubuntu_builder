@@ -3,7 +3,7 @@
 ARG BASE=12.2.0-devel-ubuntu22.04
 FROM nvidia/cuda:${BASE} AS build
 
-LABEL maintainer="J.C.Knight@sussex.ac.uk" \
+LABEL maintainer="B.D.Evans@sussex.ac.uk" \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
     org.opencontainers.image.title="PyGeNN wheel builder"
