@@ -838,7 +838,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     // Begin environment with RNG library and standard library
     EnvironmentLibrary rngEnv(init, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
     EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
-    
+
 
     initEnv.getStream() << "void initialize()";
     {
@@ -869,7 +869,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     n.generateInit(*this, groupEnv, 1);
                 }
             });
-        
+
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups" << std::endl;
         modelMerged.genMergedSynapseInitGroups(
@@ -884,9 +884,9 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+
                     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, 1);
-
                     s.generateInit(*this, groupEnv, 1);
                 }
             });
@@ -905,13 +905,13 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    
+
                     EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
                     c.generateInit(*this, groupEnv, 1);
                 }
             });
-        
+
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom connectivity presynaptic update groups" << std::endl;
         modelMerged.genMergedCustomConnectivityUpdatePreInitGroups(
@@ -932,7 +932,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     c.generateInit(*this, groupEnv, 1);
                 }
             });
-        
+
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Custom connectivity postsynaptic update groups" << std::endl;
         modelMerged.genMergedCustomConnectivityUpdatePostInitGroups(
@@ -949,7 +949,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
-                    c.generateInit(*this, funcEnv, 1);
+                    c.generateInit(*this, groupEnv, 1);
                 }
             });
 

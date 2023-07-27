@@ -1490,7 +1490,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
                                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
 
-                    genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", groupEnv), 
+                    genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv), 
                                          "deviceRNGSeed", "id");
                 }
 
@@ -1522,7 +1522,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             {
                 CodeStream::Scope b(groupEnv.getStream());
 
-                // If population RNGs are initialised on device and this custom connectivity update 
+                // If population RNGs are initialised on device and this custom connectivity update
                 // required one, initialise single RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     // Add field for RNG
@@ -1530,7 +1530,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
                                         [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
 
-                    genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", groupEnv), 
+                    genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv),
                                          "deviceRNGSeed", "id");
                 }
 
