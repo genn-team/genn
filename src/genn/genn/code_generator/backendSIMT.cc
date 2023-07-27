@@ -929,15 +929,16 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
-            
+            EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
             // If update is a batch reduction
             if(cg.getArchetype().isBatchReduction()) {
-                env.getStream() << "// only do this for existing neurons" << std::endl;
-                env.getStream() << "if(" << env["id"] << " < group->size)";
+                groupEnv.printLine("// only do this for existing neurons");
+                groupEnv.print("if($(id) < $(size)");
                 {
-                    CodeStream::Scope b(env.getStream());
-                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
-
+                    CodeStream::Scope b(groupEnv.getStream());
+                    
                     // Initialise reduction targets
                     const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), cg, groupEnv["id"]);
 
@@ -949,8 +950,6 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                         CodeStream::Scope b(groupEnv.getStream());
                         groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
 
-                        buildStandardEnvironment(groupEnv);
-                        
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(*this, groupEnv);
 
@@ -968,18 +967,15 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             }
             // Otherwise, if this is a neuron reduction
             else if (cg.getArchetype().isNeuronReduction()) {
-                env.getStream() << "// only do this for existing neurons" << std::endl;
-                env.getStream() << "if(" << env["id"] << " < " << (32 * batchSize) << ")";
+                groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                groupEnv.getStream() << "if(" << env["id"] << " < " << (32 * batchSize) << ")";
                 {
-                    CodeStream::Scope b(env.getStream());
-                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
+                    CodeStream::Scope b(groupEnv.getStream());
 
                     // Split ID into lane and batch
-                    groupEnv.getStream() << "const unsigned int lane = " << env["id"] << " % 32;" << std::endl;
-                    groupEnv.getStream() << "const unsigned int batch = " << env["id"] << " / 32;" << std::endl;
+                    groupEnv.printLine("const unsigned int lane = $(id) % 32;");
+                    groupEnv.printLine("const unsigned int batch = $(id) / 32;");
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
-
-                    buildStandardEnvironment(groupEnv);
 
                     // Initialise reduction targets
                     const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), cg);
@@ -987,7 +983,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     // Loop through warps of data
                     // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
                     // if this isn't the case (TF uses a threshold of 1024), we should do something smarter
-                    groupEnv.getStream() << "for(unsigned int idx = lane; idx < " << groupEnv["size"] << "; idx += 32)";
+                    groupEnv.print("for(unsigned int idx = lane; idx < $(size); idx += 32)");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
@@ -1024,7 +1020,6 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             }
             // Otherwise, if this update isn't per-neuron
             else if (!cg.getArchetype().isPerNeuron()) {
-                EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
                 if(cg.getArchetype().isBatched()) {
                     groupEnv.add(Type::Uint32.addConst(), "batch", "$(id)");
                     groupEnv.add(Type::Uint32.addConst(), "id", "0");
@@ -1038,15 +1033,11 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-
-                    buildStandardEnvironment(groupEnv);
                     cg.generateCustomUpdate(*this, groupEnv);
                 }
             }
             // Otherwise
             else {
-                EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
-
                 if(cg.getArchetype().isBatched()) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
@@ -1068,8 +1059,6 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 groupEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-
-                    buildStandardEnvironment(groupEnv);
                     cg.generateCustomUpdate(*this, groupEnv);
                 }
             }
@@ -1088,24 +1077,26 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             const SynapseGroupInternal *sg = cg.getArchetype().getSynapseGroup();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
+            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
             // Calculate size of each batch to update
             if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                 // Loop through kernel dimensions and multiply together
-                env.getStream() << "const unsigned int size = ";
+                groupEnv.getStream() << "const unsigned int size = ";
                 for (size_t i = 0; i < sg->getKernelSize().size(); i++) {
-                    env.print(getKernelSize(cg, i));
+                    groupEnv.print(getKernelSize(cg, i));
                     if (i != (sg->getKernelSize().size() - 1)) {
-                        env.getStream() << " * ";
+                        groupEnv.getStream() << " * ";
                     }
                 }
-                env.getStream() << ";" << std::endl;
+                groupEnv.getStream() << ";" << std::endl;
             }
             else {
-                env.printLine("const unsigned int size = $(num_pre) * $(_row_stride);");
+                groupEnv.printLine("const unsigned int size = $(num_pre) * $(_row_stride);");
             }
 
             // If update isn't a batch reduction
-            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(env, cg);
             if(!cg.getArchetype().isBatchReduction()) {
                 // If it's batched
                 if(cg.getArchetype().isBatched()) {
@@ -1129,7 +1120,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             }
 
             // if this isn't a padding thread
-            groupEnv.getStream() << "if (" << groupEnv["id"] << " < size)";
+            groupEnv.print("if ($(id) < size)");
             {
                 CodeStream::Scope b(groupEnv.getStream());
                 EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, cg);
@@ -1573,23 +1564,23 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 CodeStream::Scope b(groupEnv.getStream());
 
                 // Create new stream to generate addSynapse function which initializes all kernel variables
-                std::ostringstream kernelInitStream;
-                CodeStream kernelInit(kernelInitStream);
+                std::ostringstream addSynapseStream;
+                CodeStream addSynapse(addSynapseStream);
 
                 // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
-                kernelInit << "do";
+                addSynapse << "do";
                 {
-                    CodeStream::Scope b(kernelInit);
+                    CodeStream::Scope b(addSynapse);
 
                     // Calculate index in data structure of this synapse
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    /*if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            kernelInit << "const unsigned int idx = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)];" << std::endl;
+                            addSynapse << "const unsigned int idx = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)];" << std::endl;
                         }
                         else {
-                            kernelInit << "const unsigned int idx = (($(0)) * $(_row_stride)) + $(_row_length)[$(0)];" << std::endl;
+                            addSynapse << "const unsigned int idx = (($(0)) * $(_row_stride)) + $(_row_length)[$(0)];" << std::endl;
                         }
-                    }
+                    }*/
 
                     // If there is a kernel
                     if(!sg.getArchetype().getKernelSize().empty()) {
@@ -1623,12 +1614,12 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // If there is row-building code in this snippet
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            kernelInit << "$(_ind)[idx] = $(0);" << std::endl;
-                            kernelInit << "$(_row_length)[$(id)]++;" << std::endl;
+                            addSynapse << "$(_ind)[($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)]] = $(0);" << std::endl;
+                            addSynapse << "$(_row_length)[$(id)]++;" << std::endl;
                         }
                         // Otherwise
                         else {
-                            kernelInit << "$(_ind)[(($(0)) * $(_row_stride)) + " << getAtomic(Type::Uint32) << +"(&$(_row_length)[$(0)], 1)] = $(id_post);";
+                            addSynapse << "$(_ind)[(($(0)) * $(_row_stride)) + " << getAtomic(Type::Uint32) << +"(&$(_row_length)[$(0)], 1)] = $(id_post);";
                         }
                     }
                     // Otherwise, if it's bitmask
@@ -1638,20 +1629,20 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 
                         // If there is row-building code in this snippet
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            kernelInit << "const " << indexType << " rowStartGID = $(id) * (" << indexType << ")($_row_stride);" << std::endl;
-                            kernelInit << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
+                            addSynapse << "const " << indexType << " rowStartGID = $(id) * (" << indexType << ")($_row_stride);" << std::endl;
+                            addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
                         // Otherwise
                         else {
-                            kernelInit << "const " << indexType << " colStartGID = $(id);" << std::endl;
-                            kernelInit << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(colStartGID + (($(0)) * $(_row_stride))) / 32], 0x80000000 >> ((colStartGID + (($(0)) * $(_row_stride))) & 31));" << std::endl;
+                            addSynapse << "const " << indexType << " colStartGID = $(id);" << std::endl;
+                            addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(colStartGID + (($(0)) * $(_row_stride))) / 32], 0x80000000 >> ((colStartGID + (($(0)) * $(_row_stride))) & 31));" << std::endl;
                         }
                     }
                 }
-                kernelInit << "while(false)";
+                addSynapse << "while(false)";
 
-                groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "addSynapse", //1 + (unsigned int)sg.getArchetype().getKernelSize().size(),
-                             kernelInitStream.str());
+                groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "addSynapse", 
+                             addSynapseStream.str());
 
                 // If this connectivity requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id

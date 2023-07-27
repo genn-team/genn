@@ -49,16 +49,6 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
 
-    cuEnv.addField(Type::Uint32.addConst(), "size",
-                   Type::Uint32, "size",
-                   [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
-    
-    // If some variables are delayed, add delay pointer
-    if(getArchetype().getDelayNeuronGroup() != nullptr) {
-        cuEnv.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                       [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getDelayNeuronGroup()->getName(); });
-    }
-
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
@@ -71,7 +61,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
-            return getVarIndex(d, cuEnv["id"]);
+            return getVarIndex(d, "$(id)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -81,7 +71,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
                                   getVarAccessDuplication(v.getVar().access), 
-                                  varEnv["id"]);
+                                  "$(id)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -92,7 +82,7 @@ std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplica
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
     if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-        return getArchetype().isBatched() ? "batch" : "0";
+        return getArchetype().isBatched() ? "$(batch)" : "0";
     }
     else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
         assert(!index.empty());
@@ -100,7 +90,7 @@ std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplica
     }
     else {
         assert(!index.empty());
-        return "batchOffset + " + index;
+        return "$(_batch_offset) + " + index;
     }
 }
 //----------------------------------------------------------------------------
@@ -109,15 +99,15 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplica
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
         if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return getArchetype().isBatched() ? "batchDelaySlot" : "delaySlot";
+            return getArchetype().isBatched() ? "$(_batch_delay_slot)" : "$(_delay_slot)";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
             assert(!index.empty());
-            return "delayOffset + " + index;
+            return "$(_delay_offset) + " + index;
         }
         else {
             assert(!index.empty());
-            return "batchDelayOffset + " + index;
+            return "$(_batch_delay_offset) + " + index;
         }
     }
     else {
@@ -178,13 +168,13 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
 }
 //----------------------------------------------------------------------------
 void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env)
@@ -192,60 +182,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
 
-    // If underlying synapse group has kernel weights
-    if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        // Loop through kernel size dimensions
-        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(*this, d)) {
-                cuEnv.addField(Type::Uint32, "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                               [d](const auto &cu, size_t) 
-                               {
-                                   return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
-                               });
-            }
-        }
-    }
-    // Otherwise
-    else {
-        cuEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
-                       [&backend](const auto &cg, size_t) 
-                       {
-                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                           return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-                       });
-    
-        cuEnv.addField(Type::Uint32, "num_pre", "numSrcNeurons",
-                       [](const auto &cg, size_t) 
-                       {
-                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-                       });
-
-        cuEnv.addField(Type::Uint32, "num_post", "numTrgNeurons",
-                       [](const auto &cg, size_t)
-                       { 
-                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                           return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-                       });
-
-        // If synapse group has sparse connectivity
-        if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            cuEnv.addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "_ind", "ind", 
-                           [&backend](const auto &cg, size_t) 
-                           { 
-                               return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
-                           });
-
-            cuEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                           [&backend](const auto &cg, size_t) 
-                           { 
-                               return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                           });
-        }
-    }
-
-     // Substitute parameter and derived parameter names
+    // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
@@ -257,7 +194,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
-            return getVarIndex(d, cuEnv["id_syn"]);
+            return getVarIndex(d, "$(id_syn)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -272,6 +209,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
     prettyPrintExpression(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 }
+
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
