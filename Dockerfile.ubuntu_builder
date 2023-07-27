@@ -9,10 +9,10 @@ LABEL maintainer="B.D.Evans@sussex.ac.uk" \
     org.opencontainers.image.title="PyGeNN wheel builder"
 
 ARG PY_VER=3.11
-# Update APT database and upgrade any outdated packages and install Python, pip and swig
+# Update APT database and upgrade any outdated packages and install Python and pip
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -yq --no-install-recommends python${PY_VER}-dev python3-pip swig
+    apt-get install -yq --no-install-recommends python${PY_VER}-dev python3-pip
 
 # Set environment variables
 ENV CUDA_PATH=/usr/local/cuda \
@@ -21,9 +21,9 @@ ENV CUDA_PATH=/usr/local/cuda \
 # Set python3 to be the default version of python
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python${PY_VER} 1
 
-# Upgrade pip itself and install numpy
+# Upgrade pip itself and install numpy and swig
 RUN python -m pip install --upgrade pip && \
-    python -m pip install numpy
+    python -m pip install numpy swig
 
 # Copy GeNN into /opt
 COPY . ${GENN_PATH}
