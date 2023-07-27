@@ -1020,14 +1020,9 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             }
             // Otherwise, if this update isn't per-neuron
             else if (!cg.getArchetype().isPerNeuron()) {
-                if(cg.getArchetype().isBatched()) {
-                    groupEnv.add(Type::Uint32.addConst(), "batch", "$(id)");
-                    groupEnv.add(Type::Uint32.addConst(), "id", "0");
-                }
-                // Otherwise, just substitute "batch" for 0
-                else {
-                    groupEnv.add(Type::Uint32.addConst(), "batch", "0");
-                }
+                // Use local ID for batch and always use zero for ID
+                groupEnv.add(Type::Uint32.addConst(), "batch", "lid");
+                groupEnv.add(Type::Uint32.addConst(), "id", "0");
 
                 groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
                 groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
@@ -1046,9 +1041,9 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(id) % paddedSize;")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = lid % paddedSize;")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(id) / paddedSize;")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = lid / paddedSize;")});
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {

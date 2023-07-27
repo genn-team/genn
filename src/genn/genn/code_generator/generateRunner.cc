@@ -1085,7 +1085,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             const auto *varInitSnippet = n.second.getVarInitialisers().at(var.name).getSnippet();
             const unsigned int numCopies = getNumVarCopies(var.access, batchSize);
             const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
-            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
+            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * numElements;
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 

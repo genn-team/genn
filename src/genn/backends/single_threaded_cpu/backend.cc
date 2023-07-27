@@ -612,16 +612,22 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             }
                             else {
                                 // Loop through group members
-                                groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["size"] << "; i++)";
+                                EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                if (c.getArchetype().isPerNeuron()) {
+                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
+                                }
+                                else {
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "0");
+                                }
                                 {
-                                    CodeStream::Scope b(groupEnv.getStream());
+                                    CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
-                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                     c.generateCustomUpdate(*this, memberEnv);
 
                                     // Write back reductions
+                                    // **NOTE** this is just to handle batch reductions with batch size 1
                                     genWriteBackReductions(memberEnv, c, "id");
                                 }
                             }
