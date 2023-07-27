@@ -644,6 +644,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(funcEnv, c);
+                            buildStandardEnvironment(groupEnv);
 
                             // **TODO** add fields
                             const SynapseGroupInternal *sg = c.getArchetype().getSynapseGroup();
@@ -660,16 +661,16 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             }
                             else {
                                 // Loop through presynaptic neurons
-                                groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
+                                groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
                                 {
                                     // If this synapse group has sparse connectivity, loop through length of this row
                                     CodeStream::Scope b(groupEnv.getStream());
                                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                        groupEnv.getStream() << "for(unsigned int s = 0; s < " << groupEnv["_row_length"] << "[i]; s++)";
+                                        groupEnv.print("for(unsigned int s = 0; s < $(_row_length)[i]; s++)");
                                     }
                                     // Otherwise, if it's dense, loop through each postsynaptic neuron
                                     else if (sg->getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                                        groupEnv.getStream() << "for (unsigned int j = 0; j < " << groupEnv["size"] << "; j++)";
+                                        groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
                                     }
                                     else {
                                         throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for custom updates");
@@ -904,7 +905,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, 1);
+                    
+                    EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+                    c.generateInit(*this, groupEnv, 1);
                 }
             });
         
@@ -922,7 +926,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, 1);
+
+                    EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+                    c.generateInit(*this, groupEnv, 1);
                 }
             });
         
@@ -940,6 +947,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
                     c.generateInit(*this, funcEnv, 1);
                 }
             });
@@ -958,7 +967,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
-                    c.generateInit(*this, funcEnv, 1);
+
+                    EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+                    c.generateInit(*this, groupEnv, 1);
                 }
             });
 

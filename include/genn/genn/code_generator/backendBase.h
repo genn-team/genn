@@ -59,6 +59,8 @@ class CustomUpdateInitGroupMerged;
 class CustomWUUpdateInitGroupMerged;
 class CustomWUUpdateSparseInitGroupMerged;
 class SynapseConnectivityInitGroupMerged;
+class CustomConnectivityUpdatePreInitGroupMerged;
+class CustomConnectivityUpdatePostInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
 }
@@ -481,10 +483,15 @@ public:
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
 
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> &env, unsigned int batchSize) const;
 

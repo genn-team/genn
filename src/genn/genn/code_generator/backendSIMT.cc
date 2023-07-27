@@ -1416,7 +1416,9 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, SynapseInitGroupMerged &sg)
         {
-            genSynapseVarInit(env, batchSize, sg, sg.getArchetype().isWUInitRNGRequired(), 
+            EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, sg);
+            buildStandardEnvironment(groupEnv, 1);
+            genSynapseVarInit(groupEnv, batchSize, sg, sg.getArchetype().isWUInitRNGRequired(), 
                               (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL), 
                               sg.getArchetype().getKernelSize().size());
         });
@@ -1429,11 +1431,13 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateInitGroupMerged &cg)
         {
-            env.getStream() << "// only do this for existing variables" << std::endl;
-            env.print("if($(id) < $(size))");
+            EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
+            groupEnv.getStream() << "// only do this for existing variables" << std::endl;
+            groupEnv.print("if($(id) < $(size))");
             {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, cg);
+                CodeStream::Scope b(groupEnv.getStream());
 
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
@@ -1454,8 +1458,10 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cg)
         {
+            EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
             const SynapseGroup *sg = cg.getArchetype().getSynapseGroup();
-            genSynapseVarInit(env, batchSize, cg, cg.getArchetype().isInitRNGRequired(), 
+            genSynapseVarInit(groupEnv, batchSize, cg, cg.getArchetype().isInitRNGRequired(), 
                               (sg->getMatrixType() & SynapseMatrixWeight::KERNEL), sg->getKernelSize().size());
         });
     env.getStream() << std::endl;
@@ -1467,11 +1473,14 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePreInitGroupMerged &cg)
         {
-            env.getStream() << "// only do this for existing variables" << std::endl;
-            env.print("if($(id) < $(size))");
+            // Create environment
+            EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+            
+            groupEnv.getStream() << "// only do this for existing variables" << std::endl;
+            groupEnv.print("if($(id) < $(size))");
             {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(env, cg);
+                CodeStream::Scope b(groupEnv.getStream());
 
                 // If population RNGs are initialised on device and this custom connectivity update 
                 // required one, initialise single RNG using GLOBAL thread id for sequence
@@ -1504,11 +1513,14 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomConnectivityUpdatePostInitGroupMerged &cg)
         {
-            env.getStream() << "// only do this for existing variables" << std::endl;
-            env.print("if($(id) < $(size))");
+            // Create environment
+            EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
+            groupEnv.getStream() << "// only do this for existing variables" << std::endl;
+            groupEnv.print("if($(id) < $(size))");
             {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(env, cg);
+                CodeStream::Scope b(groupEnv.getStream());
 
                 // If population RNGs are initialised on device and this custom connectivity update 
                 // required one, initialise single RNG using GLOBAL thread id for sequence

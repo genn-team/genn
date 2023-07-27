@@ -340,7 +340,7 @@ private:
     void genSynapseVarInit(EnvironmentExternalBase &env, unsigned int batchSize, G &g,
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
     {
-        env.getStream() << "if(" << env["id"] << " < ";
+        env.print("if($(id) < ");
         
         // If synapse group has kernel weights, check ID against product of kernel dimensions
         if (kernel) {
@@ -356,7 +356,7 @@ private:
         }
         // Otherwise, against number of postsynaptic neurons
         else {
-            env.getStream() << env["num_post"];
+            env.print("$(num_post)");
         }
         env.getStream() << ")";
         {

@@ -5,6 +5,7 @@
 #include "logging.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/groupMerged.h"
 #include "code_generator/customConnectivityUpdateGroupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
@@ -279,7 +280,101 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         }
     }
 }
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+{
+    // Add size field
+    env.addField(Type::Uint32, "size", "size", 
+                 [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    
+    // If batching is enabled, calculate batch offset
+    if(env.getGroup().getArchetype().isBatched()) {
+        env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
+                {env.addInitialiser("const unsigned int batchOffset = $(size) * batch;")});
+    }
+            
+    // If axonal delays are required
+    if(env.getGroup().getArchetype().getDelayNeuronGroup() != nullptr) {
+        // Add spike queue pointer field
+        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr", 
+                     [&backend](const auto &cg, size_t) 
+                     { 
+                         return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                     });
+
+        // We should read from delay slot pointed to be spkQuePtr 
+        env.add(Type::Uint32.addConst(), "_delay_slot", "delaySlot",
+                {env.addInitialiser("const unsigned int delaySlot = * $(_spk_que_ptr);")});
+        env.add(Type::Uint32.addConst(), "_delay_offset", "delayOffset",
+                {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(size);")});
+
+        // If batching is also enabled, calculate offset including delay and batch
+        if(env.getGroup().getArchetype().isBatched()) {
+            const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
+            env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
+                    {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_delay_slot);")});
+
+            // Calculate current batch offset
+            env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
+                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
+        }
+    }
 }
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+{
+    // If synapse group has kernel
+    const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
+    if(!kernelSize.empty()) {
+        if(env.getGroup().getArchetype().isBatched()) {
+            // Loop through kernel dimensions and multiply together
+            std::ostringstream kernBatchOffsetInit;
+            kernBatchOffsetInit << "const unsigned int kernBatchOffset = ";
+            for(size_t i = 0; i < kernelSize.size(); i++) {
+                kernBatchOffsetInit << getKernelSize(env.getGroup(), i) << " * ";
+            }
+            
+            // And finally by batch
+            kernBatchOffsetInit << "$(batch);" << std::endl;
+
+            env.add(Type::Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
+                    {env.addInitialiser(kernBatchOffsetInit.str())});
+        }
+    }
+
+    // Synapse group fields 
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    
+    // Connectivity fields
+    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+    }
+    else if(sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for (size_t d = 0; d < sg->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                             [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+            }
+        }
+    }
+}
+}   // Anonymous namespace
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
@@ -340,42 +435,12 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDe
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
 {
-    // Add size field
-    env.addField(Type::Uint32, "size", "size", 
-                 [](const auto &c, size_t) { return std::to_string(c.getSize()); });
-    
-    // If batching is enabled, calculate batch offset
-    if(env.getGroup().getArchetype().isBatched()) {
-        env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
-                {env.addInitialiser("const unsigned int batchOffset = $(size) * batch;")});
-    }
-            
-    // If axonal delays are required
-    if(env.getGroup().getArchetype().getDelayNeuronGroup() != nullptr) {
-        // Add spike queue pointer field
-        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr", 
-                     [this](const auto &cg, size_t) 
-                     { 
-                         return getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
-                     });
-
-        // We should read from delay slot pointed to be spkQuePtr 
-        env.add(Type::Uint32.addConst(), "_delay_slot", "delaySlot",
-                {env.addInitialiser("const unsigned int delaySlot = * $(_spk_que_ptr);")});
-        env.add(Type::Uint32.addConst(), "_delay_offset", "delayOffset",
-                {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(size);")});
-
-        // If batching is also enabled, calculate offset including delay and batch
-        if(env.getGroup().getArchetype().isBatched()) {
-            const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
-            env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
-                    {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_delay_slot);")});
-
-            // Calculate current batch offset
-            env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
-        }
-    }
+    buildStandardCustomUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+{
+    buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
@@ -417,6 +482,37 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronIni
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env) const
+{
+    buildStandardCustomUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env) const
+{
+    buildStandardCustomUpdateWUEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
+{
+    env.addField(Type::Uint32.addConst(), "size", 
+                 Type::Uint32, "size",
+                 [](const auto &c, size_t) 
+                 { 
+                     return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+                 });
+
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const
+{
+    env.addField(Type::Uint32.addConst(), "size", 
+                 Type::Uint32, "size",
+                 [](const auto &c, size_t) 
+                 { 
+                     return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); 
+                 });
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const

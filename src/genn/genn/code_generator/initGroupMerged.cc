@@ -530,27 +530,8 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
     // Create environment for group
     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, *this);
 
-    // If model is batched and has kernel weights
-    const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
-    if (kernel && batchSize > 1) {
-        // Loop through kernel dimensions and multiply together to calculate batch stride
-        std::ostringstream batchStrideInit;
-        batchStrideInit << "const unsigned int batchStride = ";
-        const auto &kernelSize = getArchetype().getKernelSize();
-        for (size_t i = 0; i < kernelSize.size(); i++) {
-            batchStrideInit << getKernelSize(*this, i);
-
-            if (i != (kernelSize.size() - 1)) {
-                batchStrideInit << " * ";
-            }
-        }
-        batchStrideInit << ";" << std::endl;
-        groupEnv.add(Type::Uint32.addConst(), "_batch_stride", "batchStride",
-                     {groupEnv.addInitialiser(batchStrideInit.str())});
-    }
-
-    
     // If we're using non-kernel weights, generate loop over source neurons
+    const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
     if (!kernel) {
         groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
         groupEnv.getStream() << CodeStream::OB(1);    
@@ -558,7 +539,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
     }
 
     // Generate initialisation code
-    const std::string stride = kernel ? "$(_batch_stride)" : "$(num_pre) * $(_row_stride)";
+    const std::string stride = kernel ? "$(_kern_batch_offset)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, stride, batchSize,
                                           [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                                           {
@@ -918,51 +899,14 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
     EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(env, *this);
 
     const bool kernel = (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL);
-    if(kernel) {
-        // Loop through kernel size dimensions
-        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(*this, d)) {
-                groupEnv.addField(Type::Uint32, "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                                  [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
-            }
-        }
-
-        if(batchSize > 1) {
-            // Loop through kernel dimensions and multiply together to calculate batch stride
-            std::ostringstream batchStrideInit;
-            batchStrideInit << "const unsigned int batchStride = ";
-            const auto &kernelSize = getArchetype().getSynapseGroup()->getKernelSize();
-            for (size_t i = 0; i < kernelSize.size(); i++) {
-                batchStrideInit << getKernelSize(*this, i);
-
-                if (i != (kernelSize.size() - 1)) {
-                    batchStrideInit << " * ";
-                }
-            }
-            batchStrideInit << ";" << std::endl;
-            groupEnv.add(Type::Uint32.addConst(), "_batch_stride", "batchStride",
-                         {groupEnv.addInitialiser(batchStrideInit.str())});
-        }
-    }
-    else {
-        groupEnv.addField(Type::Uint32.addConst(), "num_pre",
-                          Type::Uint32, "numSrcNeurons", 
-                          [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-        groupEnv.addField(Type::Uint32.addConst(), "num_post",
-                          Type::Uint32, "numTrgNeurons", 
-                          [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
-        groupEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
-                          [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-      
-
-        groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
+    if(!kernel) {
+        groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
         groupEnv.getStream() << CodeStream::OB(3);
         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
     }
  
     // Loop through rows
-    const std::string stride = kernel ? "$(_batch_stride)" : "$(num_pre) * $(_row_stride)";
+    const std::string stride = kernel ? "$(_kern_batch_offset)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
         backend, groupEnv, *this, stride, getArchetype().isBatched() ? batchSize : 1,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
@@ -1075,18 +1019,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerg
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
-     // Create environment for group
-     EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(env, *this);
-
-     groupEnv.addField(Type::Uint32.addConst(), "size", 
-                       Type::Uint32, "size",
-                       [](const auto &c, size_t) 
-                       { 
-                           return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
-                       });
-
-    // Initialise presynaptic custom connectivity update variables
-    genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, groupEnv, *this, "", "size", 0, batchSize);
+    genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, env, *this, "", "size", 0, batchSize);
 }
 
 // ----------------------------------------------------------------------------
@@ -1115,18 +1048,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMer
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
-    // Create environment for group
-    EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(env, *this);
-
-    groupEnv.addField(Type::Uint32.addConst(), "size", 
-                      Type::Uint32, "size",
-                      [](const auto &c, size_t) 
-                      { 
-                          return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); 
-                      });
-
     // Initialise presynaptic custom connectivity update variables
-    genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, groupEnv, *this, "", "size", 0, batchSize);
+    genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, env, *this, "", "size", 0, batchSize);
 }
 
 // ----------------------------------------------------------------------------
