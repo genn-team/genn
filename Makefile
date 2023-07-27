@@ -89,3 +89,8 @@ wheels:
 	@docker build -f Dockerfile.builder \
 		--build-arg CUDA=$(CUDA) \
 		--target=output --output type=local,dest=dist/ .
+
+# TODO: Consider build with docker run instead of docker build
+# See: https://github.com/pypa/python-manylinux-demo
+# PLAT=manylinux2014_x86_64
+# docker run --rm -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/travis/build-wheels.sh

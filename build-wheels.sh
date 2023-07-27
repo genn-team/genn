@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e -u -x
 
+# Adapted from: https://github.com/pypa/python-manylinux-demo/blob/master/travis/build-wheels.sh
+
 PLAT=manylinux2014_x86_64
 
 function repair_wheel {
@@ -27,7 +29,6 @@ for PYBIN in /opt/python/*/bin; do
     # "${PYBIN}/pip" wheel /opt/genn/ --no-deps -w dist/
     make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
     make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
-    # RUN python3 setup.py develop
     "${PYBIN}/python" setup.py bdist_wheel
     "${PYBIN}/python" setup.py bdist_wheel
 done
