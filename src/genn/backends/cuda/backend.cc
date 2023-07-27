@@ -463,8 +463,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
     size_t idSynapseDendricDelayUpdate = 0;
-    //**TODO** slightly tricky check to do on models
-    //if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                   [](const auto &sg){ return sg.second.isDendriticDelayRequired(); }))
+    {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -473,7 +474,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
             genSynapseDendriticDelayUpdateKernel(synapseUpdateEnv, modelMerged, memorySpaces, idSynapseDendricDelayUpdate);
         }
         synapseUpdateEnv.getStream() << std::endl;
-    //}
+    }
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
