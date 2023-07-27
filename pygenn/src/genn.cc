@@ -819,6 +819,11 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
+    // genn.VarReference
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::VarReference>(m, "VarReference");
+
+    //------------------------------------------------------------------------
     // genn.WUVarReference
     //------------------------------------------------------------------------
     pybind11::class_<Models::WUVarReference>(m, "WUVarReference")
