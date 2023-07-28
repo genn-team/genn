@@ -21,7 +21,7 @@ function repair_wheel {
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     # Exclude Python 3.12
-    if [[ "$PYBIN" == *"cp312"* ]]; then
+    if [[ "$PYBIN" == *"cp312"* || "$PYBIN" == *"pypy"* ]]; then
         continue
     fi
     # "${PYBIN}/pip" install -r /io/dev-requirements.txt
