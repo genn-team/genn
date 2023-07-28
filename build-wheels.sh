@@ -23,15 +23,14 @@ make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p 
 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
-    # Exclude Python 3.12
-    if [[ "$PYBIN" == *"cp312"* || "$PYBIN" == *"pypy"* ]]; then
-        continue
+    # Only build for the following versions of cPython (exclude pypy, EOL and beta versions)
+    if [[ "$PYBIN" == *"cp38"* || "$PYBIN" == *"cp39"* || "$PYBIN" == *"cp310"* || "$PYBIN" == *"cp311"* ]]; then
+        # "${PYBIN}/pip" install -r /io/dev-requirements.txt
+        "${PYBIN}/pip" install numpy swig
+        # "${PYBIN}/pip" wheel /opt/genn/ --no-deps -w dist/
+        "${PYBIN}/python" setup.py bdist_wheel
+        "${PYBIN}/python" setup.py bdist_wheel
     fi
-    # "${PYBIN}/pip" install -r /io/dev-requirements.txt
-    "${PYBIN}/pip" install numpy swig
-    # "${PYBIN}/pip" wheel /opt/genn/ --no-deps -w dist/
-    "${PYBIN}/python" setup.py bdist_wheel
-    "${PYBIN}/python" setup.py bdist_wheel
 done
 
 # Bundle external shared libraries into the wheels
