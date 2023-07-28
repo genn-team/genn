@@ -1,4 +1,4 @@
-ARG BASE=11.5.0-devel-ubuntu20.04
+ARG BASE=12.2.0-devel-ubuntu22.04
 FROM nvidia/cuda:${BASE}
 
 LABEL maintainer="J.C.Knight@sussex.ac.uk" \
