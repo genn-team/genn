@@ -1,8 +1,10 @@
 // Standard C++ includes
 #if defined(__GNUC__) && __GNUC__ < 8
     #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
     #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 // Google test includes
@@ -812,7 +814,7 @@ TEST(CustomUpdates, CompareDifferentModel)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -858,7 +860,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -939,7 +941,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
 
     // Generate modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1033,7 +1035,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1091,7 +1093,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1158,7 +1160,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 

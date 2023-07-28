@@ -1,8 +1,10 @@
 // Standard C++ includes
 #if defined(__GNUC__) && __GNUC__ < 8
     #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
     #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 // Google test includes
@@ -399,7 +401,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
@@ -459,7 +461,7 @@ TEST(SynapseGroup, CompareWUDifferentParams)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
@@ -571,7 +573,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
@@ -723,7 +725,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
@@ -871,7 +873,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
@@ -938,7 +940,7 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});

@@ -1,8 +1,10 @@
 // Standard C++ includes
 #if defined(__GNUC__) && __GNUC__ < 8
     #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
     #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 // Google test includes
@@ -674,7 +676,7 @@ TEST(NeuronGroup, CompareNeuronModels)
     
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -730,7 +732,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -835,7 +837,7 @@ TEST(NeuronGroup, CompareCurrentSources)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neurons are merged into two groups
@@ -966,7 +968,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1081,7 +1083,7 @@ TEST(NeuronGroup, ComparePreOutput)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1176,7 +1178,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
@@ -1283,7 +1285,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = std::filesystem::temp_directory_path();
+    const filesystem::path outputPath = fs::temp_directory_path().string();
     generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
     generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 

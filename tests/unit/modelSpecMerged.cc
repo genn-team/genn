@@ -4,8 +4,10 @@
 #include <vector>
 #if defined(__GNUC__) && __GNUC__ < 8
     #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
     #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 // Google test includes
@@ -202,7 +204,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         // Generate modules
         // **NOTE** these are ordered in terms of memory-space priority
         auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
-        const filesystem::path outputPath = std::filesystem::temp_directory_path();
+        const filesystem::path outputPath = fs::temp_directory_path().string();
         generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
