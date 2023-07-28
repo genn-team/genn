@@ -97,7 +97,7 @@ wheels:
 SUPPORTED_CUDA = 12.2 12.0 11.8 11.7 10.2
 all_wheels:
 	for cuda in $(SUPPORTED_CUDA); do \
-		@docker build -f Dockerfile.builder \
+		docker build -f Dockerfile.builder \
 			--build-arg CUDA=$$cuda \
 			--build-arg GENN_VER=$(GENN_VER) \
 			--target=output --output type=local,dest=dist/ .; \
