@@ -1,6 +1,9 @@
 // Standard C++ includes
-#include <filesystem>
-#undef DUPLICATE
+#if defined(__GNUC__) && __GNUC__ < 8
+    #include <experimental/filesystem>
+#else
+    #include <filesystem>
+#endif
 
 // Google test includes
 #include "gtest/gtest.h"

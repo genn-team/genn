@@ -1,8 +1,12 @@
 // Standard C++ includes
 #include <array>
-#include <filesystem>
 #include <functional>
 #include <vector>
+#if defined(__GNUC__) && __GNUC__ < 8
+    #include <experimental/filesystem>
+#else
+    #include <filesystem>
+#endif
 
 // Google test includes
 #include "gtest/gtest.h"
