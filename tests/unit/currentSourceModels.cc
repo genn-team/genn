@@ -66,10 +66,10 @@ TEST(CurrentSourceModels, ValidateVarValues)
 {
     const std::unordered_map<std::string, double> paramVals{{"weight", 1.0}, {"tauSyn", 5.0}, {"rate", 10.0}};
     
-    const std::unordered_map<std::string, Models::VarInit> varValsCorrect{{"current", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMisSpelled{{"currents", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMissing{};
-    const std::unordered_map<std::string, Models::VarInit> varValsExtra{{"current", 0.0}, {"power", 1.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"current", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"currents", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"current", 0.0}, {"power", 1.0}};
 
     CurrentSourceModels::PoissonExp::getInstance()->validate(paramVals, varValsCorrect, "Current source");
 
