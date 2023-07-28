@@ -17,6 +17,11 @@ neuron_model = create_neuron_model(
     "neuron",
     var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
+current_source_model = create_current_source_model(
+    "current_source",
+    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+
 set_time_custom_update_model = create_custom_update_model(
     "set_time_custom_update",
      update_code=
@@ -74,14 +79,19 @@ def test_custom_update(backend, precision):
     # Create a variety of models to attach custom updates to
     n_pop = model.add_neuron_population("Neurons", 100, neuron_model, 
                                         {}, {"X": 0.0, "XShared": 0.0})
-    
+    cs = model.add_current_source("CurrentSource", current_source_model, n_pop,
+                                  {}, {"X": 0.0, "XShared": 0.0})
     
     # Create set time custom updates
     cu_n = model.add_custom_update("NeuronSetTime", "Test", set_time_custom_update_model,
                                    {}, {"V": 0.0}, {"R": create_var_ref(n_pop, "X")})
     cu_n_shared = model.add_custom_update("NeuronSharedSetTime", "Test", set_time_shared_custom_update_model,
                                           {}, {}, {"R": create_var_ref(n_pop, "XShared")})
-                                   
+    cu_cs = model.add_custom_update("CurrentSourceSetTime", "Test", set_time_custom_update_model,
+                                    {}, {"V": 0.0}, {"R": create_var_ref(cs, "X")})
+    cu_cs_shared = model.add_custom_update("CurrentSourceSharedSetTime", "Test", set_time_shared_custom_update_model,
+                                           {}, {}, {"R": create_var_ref(cs, "XShared")})
+                     
     
     # Build model and load
     model.build()
@@ -91,7 +101,10 @@ def test_custom_update(backend, precision):
     samples = [
         (n_pop, "X", (100,)),
         (cu_n, "V", (100,)),
-        (n_pop, "XShared", (1,))]
+        (n_pop, "XShared", (1,)),
+        (cs, "X", (100,)),
+        (cu_cs, "V", (100,)),
+        (cs, "XShared", (1,))]
     while model.timestep < 20:
         # Every 10 timesteps, trigger custom update
         if (model.timestep % 10) == 0:
