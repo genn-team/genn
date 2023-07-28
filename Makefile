@@ -93,6 +93,16 @@ wheels:
 		--build-arg GENN_VER=$(GENN_VER) \
 		--target=output --output type=local,dest=dist/ .
 
+# Build wheels for all supported CUDA versions: https://github.com/ameli/manylinux-cuda
+SUPPORTED_CUDA = 12.2 12.0 11.8 11.7 10.2
+all_wheels:
+	for cuda in $(SUPPORTED_CUDA); do \
+		@docker build -f Dockerfile.builder \
+			--build-arg CUDA=$$cuda \
+			--build-arg GENN_VER=$(GENN_VER) \
+			--target=output --output type=local,dest=dist/ .; \
+	done
+
 # TODO: Consider build with docker run instead of docker build
 # See: https://github.com/pypa/python-manylinux-demo
 # PLAT=manylinux2014_x86_64
