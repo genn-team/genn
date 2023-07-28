@@ -18,6 +18,9 @@ function repair_wheel {
 # # Install a system package required by our library
 # yum install -y atlas-devel
 
+# make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
+make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
+
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     # Exclude Python 3.12
@@ -27,8 +30,6 @@ for PYBIN in /opt/python/*/bin; do
     # "${PYBIN}/pip" install -r /io/dev-requirements.txt
     "${PYBIN}/pip" install numpy swig
     # "${PYBIN}/pip" wheel /opt/genn/ --no-deps -w dist/
-    # make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
-    make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
     "${PYBIN}/python" setup.py bdist_wheel
     "${PYBIN}/python" setup.py bdist_wheel
 done
