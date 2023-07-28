@@ -345,13 +345,13 @@ TEST(CustomUpdates, EGPReferenceTypeChecks)
     VarReferences scaleVarReferences2{{"a", createVarRef(pop2, "V")}, {"b", createVarRef(pop2, "U")}};
     EGPReferences scaleEGPReferences2{{"c", createEGPRef(egpScale, "c")}};
     model.addCustomUpdate<EGPRefScale>("Scale2", "CustomUpdate",
-                                       EGPRefScale::ParamValues{}, EGPRefScale::VarValues{}, scaleVarReferences2, scaleEGPReferences2);
+                                       ParamValues{}, VarValues{}, scaleVarReferences2, scaleEGPReferences2);
     try {
         // Add scaling custom update with EGP ref sharing "c" EGP
         VarReferences scaleVarReferences3{{"a", createVarRef(pop3, "V")}, {"b", createVarRef(pop3, "U")}};
         EGPReferences scaleEGPReferences3{{"c", createEGPRef(egpScale, "c")}};
         model.addCustomUpdate<EGPRefScaleInt>("Scale3", "CustomUpdate",
-                                              EGPRefScaleInt::ParamValues{}, EGPRefScaleInt::VarValues{}, scaleVarReferences3, scaleEGPReferences3);
+                                              ParamValues{}, VarValues{}, scaleVarReferences3, scaleEGPReferences3);
         FAIL();
     }
     catch(const std::runtime_error &) {
