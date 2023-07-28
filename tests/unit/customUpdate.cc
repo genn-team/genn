@@ -100,7 +100,7 @@ IMPLEMENT_SNIPPET(Copy);
 
 class EGPScale : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(EGPScale, 0, 0, 2);
+    DECLARE_SNIPPET(EGPScale);
 
     SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
 
@@ -108,11 +108,11 @@ class EGPScale : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(EGPScale);
+IMPLEMENT_SNIPPET(EGPScale);
 
 class EGPRefScale : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF(EGPRefScale, 0, 0, 2, 1);
+    DECLARE_SNIPPET(EGPRefScale);
 
     SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
 
@@ -120,11 +120,11 @@ class EGPRefScale : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(EGPRefScale);
+IMPLEMENT_SNIPPET(EGPRefScale);
 
 class EGPRefScaleInt : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF(EGPRefScaleInt, 0, 0, 2, 1);
+    DECLARE_SNIPPET(EGPRefScaleInt);
 
     SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
 
@@ -132,7 +132,7 @@ class EGPRefScaleInt : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(EGPRefScaleInt);
+IMPLEMENT_SNIPPET(EGPRefScaleInt);
 
 class Cont : public WeightUpdateModels::Base
 {
@@ -328,26 +328,26 @@ TEST(CustomUpdates, EGPReferenceTypeChecks)
     ModelSpecInternal model;
 
     // Add three neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pop1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop1", 10, paramVals, varVals);
     auto *pop2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop2", 10, paramVals, varVals);
     auto *pop3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop3", 10, paramVals, varVals);
-    
+
     // Add scaling custom update with EGP
-    EGPScale::VarReferences scaleVarReferences1(createVarRef(pop1, "V"), createVarRef(pop1, "U"));
+    VarReferences scaleVarReferences1{{"a", createVarRef(pop1, "V")}, {"b", createVarRef(pop1, "U")}};
     auto *egpScale = model.addCustomUpdate<EGPScale>("Scale1", "CustomUpdate",
                                                      {}, {}, scaleVarReferences1);
 
     // Add scaling custom update with EGP ref sharing "c" EGP
-    EGPRefScale::VarReferences scaleVarReferences2(createVarRef(pop2, "V"), createVarRef(pop2, "U"));
-    EGPRefScale::EGPReferences scaleEGPReferences2(createEGPRef(egpScale, "c"));
+    VarReferences scaleVarReferences2{{"a", createVarRef(pop2, "V")}, {"b", createVarRef(pop2, "U")}};
+    EGPReferences scaleEGPReferences2{{"c", createEGPRef(egpScale, "c")}};
     model.addCustomUpdate<EGPRefScale>("Scale2", "CustomUpdate",
                                        EGPRefScale::ParamValues{}, EGPRefScale::VarValues{}, scaleVarReferences2, scaleEGPReferences2);
     try {
         // Add scaling custom update with EGP ref sharing "c" EGP
-        EGPRefScaleInt::VarReferences scaleVarReferences3(createVarRef(pop3, "V"), createVarRef(pop3, "U"));
-        EGPRefScaleInt::EGPReferences scaleEGPReferences3(createEGPRef(egpScale, "c"));
+        VarReferences scaleVarReferences3{{"a", createVarRef(pop3, "V")}, {"b", createVarRef(pop3, "U")}};
+        EGPReferences scaleEGPReferences3{{"c", createEGPRef(egpScale, "c")}};
         model.addCustomUpdate<EGPRefScaleInt>("Scale3", "CustomUpdate",
                                               EGPRefScaleInt::ParamValues{}, EGPRefScaleInt::VarValues{}, scaleVarReferences3, scaleEGPReferences3);
         FAIL();
@@ -357,6 +357,7 @@ TEST(CustomUpdates, EGPReferenceTypeChecks)
 
     model.finalize();
 }
+//--------------------------------------------------------------------------
 TEST(CustomUpdates, VarSizeChecks)
 {
     ModelSpecInternal model;
