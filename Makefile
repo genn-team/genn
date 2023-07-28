@@ -70,9 +70,10 @@ clean:
 	@rm -f $(LIBGENN)
 	@rm -f $(BACKEND_LIBS)
 
+GENN_VER := $(shell cat version.txt)
 .PHONY docker-build:
 docker-build:
-	@docker build -t genn:latest .
+	@docker build --build-arg GENN_VER=$(GENN_VER) -t genn:latest .
 
 BASE := 12.2.0-devel-ubuntu22.04
 PY_VER := 3.11
@@ -81,6 +82,7 @@ ubuntu_wheel:
 	@docker build -f Dockerfile.ubuntu_builder \
 		--build-arg BASE=$(BASE) \
 		--build-arg PY_VER=$(PY_VER) \
+		--build-arg GENN_VER=$(GENN_VER) \
 		--target=output --output type=local,dest=dist/ .
 
 CUDA := 12.2
@@ -88,6 +90,7 @@ CUDA := 12.2
 wheels:
 	@docker build -f Dockerfile.builder \
 		--build-arg CUDA=$(CUDA) \
+		--build-arg GENN_VER=$(GENN_VER) \
 		--target=output --output type=local,dest=dist/ .
 
 # TODO: Consider build with docker run instead of docker build

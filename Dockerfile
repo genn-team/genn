@@ -1,8 +1,9 @@
 ARG BASE=12.2.0-devel-ubuntu22.04
 FROM nvidia/cuda:${BASE}
 
+ARG GENN_VER
 LABEL maintainer="J.C.Knight@sussex.ac.uk" \
-    version="4.8.0" \
+    version=${GENN_VER} \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
     org.opencontainers.image.title="GeNN Docker image"

@@ -3,10 +3,13 @@
 ARG CUDA=12.2
 FROM sameli/manylinux2014_x86_64_cuda_${CUDA} AS build
 
+ARG GENN_VER
 LABEL maintainer="B.D.Evans@sussex.ac.uk" \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
-    org.opencontainers.image.title="PyGeNN wheel builder"
+    org.opencontainers.image.title="PyGeNN wheel builder" \
+    org.opencontainers.image.cuda=${CUDA} \
+    org.opencontainers.image.genn=${GENN_VER}
 
 # Set environment variables
 ENV CUDA_PATH=/usr/local/cuda \

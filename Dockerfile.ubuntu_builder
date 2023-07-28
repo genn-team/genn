@@ -3,12 +3,16 @@
 ARG BASE=12.2.0-devel-ubuntu22.04
 FROM nvidia/cuda:${BASE} AS build
 
+ARG PY_VER=3.11
+ARG GENN_VER
 LABEL maintainer="B.D.Evans@sussex.ac.uk" \
     org.opencontainers.image.documentation="https://genn-team.github.io/" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
-    org.opencontainers.image.title="PyGeNN wheel builder"
+    org.opencontainers.image.title="PyGeNN wheel builder" \
+    org.opencontainers.image.cuda=${BASE} \
+    org.opencontainers.image.python=${PY_VER} \
+    org.opencontainers.image.genn=${GENN_VER}
 
-ARG PY_VER=3.11
 # Update APT database and upgrade any outdated packages and install Python and pip
 RUN apt-get update && \
     apt-get upgrade -y && \
