@@ -395,7 +395,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -455,7 +455,7 @@ TEST(SynapseGroup, CompareWUDifferentParams)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -567,7 +567,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -719,7 +719,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -867,7 +867,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -934,7 +934,7 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority

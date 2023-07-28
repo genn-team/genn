@@ -670,7 +670,7 @@ TEST(NeuronGroup, CompareNeuronModels)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
     
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -726,7 +726,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -831,7 +831,7 @@ TEST(NeuronGroup, CompareCurrentSources)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -962,7 +962,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1077,7 +1077,7 @@ TEST(NeuronGroup, ComparePreOutput)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1172,7 +1172,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1279,7 +1279,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority

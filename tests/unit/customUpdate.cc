@@ -807,7 +807,7 @@ TEST(CustomUpdates, CompareDifferentModel)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -853,7 +853,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -934,7 +934,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1028,7 +1028,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1086,7 +1086,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
@@ -1153,7 +1153,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
