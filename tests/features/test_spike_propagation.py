@@ -301,8 +301,8 @@ def test_reverse(backend, precision):
         model.step_time()
         
         pre_n_pop.pull_var_from_device("x")
-        print(pre_n_pop.vars["x"].view)
+        assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
 
 if __name__ == '__main__':
-    test_reverse("single_threaded_cpu", types.Float)
+    test_forward("cuda", types.Float)
     
