@@ -4,7 +4,7 @@ from pygenn import types
 
 from pygenn import GeNNModel
 
-from pygenn.genn import VarAccess
+from pygenn.genn import SpanType, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
@@ -119,6 +119,19 @@ def test_forward(backend, precision):
         "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity(decoder_model, {}))
+    
+    # Create one output neuron pop with constant weight 
+    # sparse decoder population and presynaptic parallelism
+    sparse_constant_weight_pre_n_pop = model.add_neuron_population(
+        "PostSparseConstantWeightPreSpanNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    sparse_constant_weight_pre_s_pop = model.add_synapse_population(
+        "SparseConstantWeightPreSpanSynapse", "SPARSE", 0,
+        ss_pop, sparse_constant_weight_pre_n_pop,
+        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(decoder_model, {}))
+    sparse_constant_weight_pre_s_pop.span_type = SpanType.PRESYNAPTIC
 
     # Create one output neuron pop with constant weight sparse decoder population
     manual_sparse_constant_weight_n_pop = model.add_neuron_population(
@@ -142,7 +155,20 @@ def test_forward(backend, precision):
         "StaticPulse", {}, {"g": 1.0}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity(decoder_model, {}))
-
+    
+    # Create one output neuron pop with sparse 
+    # decoder population and presynaptic parallelism
+    sparse_pre_n_pop = model.add_neuron_population(
+        "PostSparsePreSpanNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    sparse_pre_s_pop = model.add_synapse_population(
+        "SparsePreSpanSynapse", "SPARSE", 0,
+        ss_pop, sparse_pre_n_pop,
+        "StaticPulse", {}, {"g": 1.0}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(decoder_model, {}))
+    sparse_pre_s_pop.span_type = SpanType.PRESYNAPTIC
+    
     # Create one output neuron pop with sparse decoder population
     manual_sparse_n_pop = model.add_neuron_population(
         "ManualPostSparseNeuron", 4, post_neuron_model,
@@ -193,8 +219,9 @@ def test_forward(backend, precision):
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
     output_populations = [sparse_constant_weight_n_pop,
+                          sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
-                          sparse_n_pop, manual_sparse_n_pop,
+                          sparse_n_pop, sparse_pre_n_pop, manual_sparse_n_pop,
                           bitmask_n_pop, dense_n_pop, manual_dense_n_pop]
     while model.timestep < 16:
         model.step_time()
@@ -391,7 +418,7 @@ def test_reverse_post(backend, precision):
             output_value = np.sum(output_place_values[output_binary])
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-        
+
 if __name__ == '__main__':
-    test_reverse_post("cuda", types.Float)
+    test_forward("cuda", types.Float)
     
