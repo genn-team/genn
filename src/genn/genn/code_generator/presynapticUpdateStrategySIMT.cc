@@ -12,35 +12,30 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
 
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
+
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
 namespace
 {
-bool isSmallSharedMemoryPop(const GeNN::CodeGenerator::PresynapticUpdateGroupMerged &sg,
-                            const GeNN::CodeGenerator::BackendSIMT &backend)
+bool isSmallSharedMemoryPop(const SynapseGroupInternal &sg,
+                            const BackendSIMT &backend)
 {
     // If shared memory atomics are slow
-    const size_t blockSize = backend.getKernelBlockSize(GeNN::CodeGenerator::KernelPresynapticUpdate);
+    const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
     if(backend.areSharedMemAtomicsSlow()) {
         return false;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.getArchetype().isDendriticDelayRequired()) {
+    else if(sg.isDendriticDelayRequired()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if all neuron groups targetted
     // by synapse groups within merged group are small enough that input to then can be stored in a shared memory array
-    else if(std::all_of(sg.getGroups().cbegin(), sg.getGroups().cend(),
-                        [blockSize](const GeNN::SynapseGroupInternal &sg)
-                        {
-                            return (sg.getTrgNeuronGroup()->getNumNeurons() <= blockSize);
-                        }))
-    {
-        return true;
-    }
     else {
-        return false;
+        return (sg.getTrgNeuronGroup()->getNumNeurons() <= blockSize);
     }
 }
 }   // Anonymous namespace
@@ -68,7 +63,7 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase
             && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
-size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PreSpan::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
 {
     return 0;
 }
@@ -94,7 +89,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     }
 
     if(sg.getArchetype().isPresynapticOutputRequired()) {
-        env.getStream() << "scalar lrevInSyn= 0.0;" << std::endl;
+        env.getStream() << sg.getScalarType().getName() << " lrevInSyn = 0.0;" << std::endl;
     }
     
     env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
@@ -139,19 +134,17 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         {
             CodeStream::Scope b(env.getStream());
 
-            // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
-            env.printLine("const unsigned int ipost = $(_ind)[synAddress];");
-
             // Create substitution stack for presynaptic simulation code
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
             synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd");
-            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
+            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
+                       {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
             synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress");
 
             synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
-                       backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
+                       backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
             synEnv.add(Type::AddToPost, "addToPost",
-                       backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
+                       backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
             synEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
             
             if(trueSpike) {
@@ -170,7 +163,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         // Should this be in the Postamble?
         if(sg.getArchetype().isPresynapticOutputRequired()) {
             // write lrevInSyn to global memory if not 0
-            env.getStream() << "if(lrevInSyn != 0.0) " << backend.getAtomic(sg.getScalarType()) + "(&" + env["_out_pre"] + "[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+            env.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);");
         }
         
     }
@@ -215,21 +208,24 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBas
 void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                            const BackendSIMT &backend) const
 {
-    // If data structure is dense, we can accumulate output directly into register
-    if(shouldAccumulateInRegister(sg)) {
-        env.getStream() << "scalar linSyn = 0;" << std::endl;
-    }
-    else if(isSmallSharedMemoryPop(sg, backend)) {
-        env.getStream() << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
-        {
-            CodeGenerator::CodeStream::Scope b(env.getStream());
-            env.getStream() << "shLg[" << backend.getThreadID() << "] = 0;" << std::endl;
+    // If synapse group provides any postsynaptic output
+    if(sg.getArchetype().isPostsynapticOutputRequired()) {
+        // If data structure is dense, we can accumulate output directly into register
+        if(shouldAccumulateInRegister(sg)) {
+            env.getStream() << sg.getScalarType().getName() << " linSyn = 0;" << std::endl;
         }
-        backend.genSharedMemBarrier(env.getStream());
+        else if(isSmallSharedMemoryPop(sg.getArchetype(), backend)) {
+            env.print("if(" + backend.getThreadID() + " < $(num_post))");
+            {
+                CodeGenerator::CodeStream::Scope b(env.getStream());
+                env.printLine("$(_sh_out_post)[" + backend.getThreadID() + "] = 0;");
+            }
+            backend.genSharedMemBarrier(env.getStream());
+        }
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PostSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
@@ -315,9 +311,8 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 
                     synEnv.print("if ($(id) < npost)");
                     synEnv.getStream() << CodeStream::OB(140);
-                    synEnv.printLine("const unsigned int ipost = $(_ind)[$(id_syn)];");
-
-                    synEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
+                    synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
+                               {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[$(id_syn)];")});
                 }
                 else { // DENSE
                     synEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
@@ -333,8 +328,8 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 }
                 // Otherwise, if we should use shared memory, add to shared memory
                 // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                else if(isSmallSharedMemoryPop(sg, backend)) {
-                    synEnv.add(Type::AddToPost, "addToPost", "shLg[$(id_post)] += $(0)");
+                else if(isSmallSharedMemoryPop(sg.getArchetype(), backend)) {
+                    synEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += $(0)");
                 }
                 // Otherwise, use global memory atomic
                 else {
@@ -344,7 +339,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 
                 if(sg.getArchetype().isPresynapticOutputRequired()) {
                     synEnv.add(Type::AddToPre, "addToPre",
-                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)([" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 }
                 
                 if(trueSpike) {
@@ -372,29 +367,30 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                             const BackendSIMT &backend, unsigned int batchSize) const
 {
-    // If we should accumulate output directly into register
-    if(shouldAccumulateInRegister(sg)) {
-        env.getStream() << "// only do this for existing neurons" << std::endl;
-        env.print("if ($(id) < $(num_post))");
-        {
-            CodeStream::Scope b(env.getStream());
-            const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id)") + "]", env);
-            if(sg.getArchetype().isPSModelFused()) {
-                env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << ", linSyn);" << std::endl;
-            }
-            else {
-                env.getStream() << inSyn << " += linSyn;" << std::endl;
+    if(sg.getArchetype().isPostsynapticOutputRequired()) {
+        // If we should accumulate output directly into register
+        if(shouldAccumulateInRegister(sg)) {
+            env.getStream() << "// only do this for existing neurons" << std::endl;
+            env.print("if ($(id) < $(num_post))");
+            {
+                CodeStream::Scope b(env.getStream());
+                const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id)") + "]", env);
+                if(sg.getArchetype().isPSModelFused()) {
+                    env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                }
+                else {
+                    env.getStream() << inSyn << " += linSyn;" << std::endl;
+                }
             }
         }
-    }
-    // Otherwise, if we should accumulate into shared memory
-    else if(isSmallSharedMemoryPop(sg, backend)) {
-        backend.genSharedMemBarrier(env.getStream());
-        env.getStream() << "if(" << backend.getThreadID() << " < " << env["num_post"] << ")";
-        {
-            CodeGenerator::CodeStream::Scope b(env.getStream());
-            const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, backend.getThreadID()) + "]", env);
-            env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << "], shLg[" << backend.getThreadID() << "]); " << std::endl;
+        // Otherwise, if we should accumulate into shared memory and synapse group provides any postsynaptic output
+        else if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
+            backend.genSharedMemBarrier(env.getStream());
+            env.print("if(" + backend.getThreadID() + " < $(num_post))");
+            {
+                CodeGenerator::CodeStream::Scope b(env.getStream());
+                env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, backend.getThreadID()) + "], $(_sh_out_post)[" + backend.getThreadID() + "]);");
+            }
         }
     }
 }
@@ -431,7 +427,7 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const Prefe
                 || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
-size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PreSpanProcedural::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
 {
     return 0;
 }
@@ -621,20 +617,22 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
             && !sg.isDendriticDelayRequired());
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &, 
+void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                   const BackendSIMT &backend) const
 {
-    // Loop through bits written by this thread
-    for(size_t i = 0; i < 32; i++) {
-        // Zero entries in this thread's shared memory array
-        // **NOTE** this is ordered to prevent bank conflicts
-        const std::string index = std::to_string(i * backend.getKernelBlockSize(KernelPresynapticUpdate)) + " + " + backend.getThreadID();
-        env.getStream() << "shLg[" << index << "] = 0;" << std::endl;
+    // If synapse group provides any postsynaptic output
+    if(sg.getArchetype().isPostsynapticOutputRequired()) {
+        // Loop through bits written by this thread
+        for(size_t i = 0; i < 32; i++) {
+            // Zero entries in this thread's shared memory array
+            // **NOTE** this is ordered to prevent bank conflicts
+            env.printLine("$(_sh_out_post)[" + std::to_string(i * backend.getKernelBlockSize(KernelPresynapticUpdate)) + " + " + backend.getThreadID() + "] = 0;");
+        }
+        backend.genSharedMemBarrier(env.getStream());
     }
-    backend.genSharedMemBarrier(env.getStream());
 }
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PostSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
 {
     // Each thread sums up the input to 32 postsynaptic neurons
     return 32;
@@ -715,15 +713,13 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     // Add to bit index
                     synEnv.getStream() << "ibit += numLZ;" << std::endl;
 
-                    // Calculate postsynaptic index
-                    synEnv.printLine("const unsigned int ipost = ibit + ($(id) * 32);");
-
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
-                    synEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
+                    synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
+                               {synEnv.addInitialiser("const unsigned int ipost = ibit + ($(id) * 32);")});
 
 
                     synEnv.add(Type::AddToPost, "addToPost",
-                       "shLg[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
+                        "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
                     synEnv.add(Type::AddToPre, "addToPre",
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
@@ -749,25 +745,28 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
 void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                    const BackendSIMT &backend, unsigned int batchSize) const
 {
-    backend.genSharedMemBarrier(env.getStream());
-    const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
+    // If synapse group provides any postsynaptic output
+    if(sg.getArchetype().isPostsynapticOutputRequired()) {
+        backend.genSharedMemBarrier(env.getStream());
+        const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
 
-    // Use first 32 threads in each block to write shared memory back to global memory
-    env.getStream() << "if (" << backend.getThreadID() << " < 32)";
-    {
-        CodeStream::Scope b(env.getStream());
-        env.printLine("unsigned int glbIdx = ((" + backend.getBlockID() + " - ($(_group_start_id) / " + std::to_string(blockSize) + ")) * " + std::to_string(32 * blockSize) + ") + " + backend.getThreadID() + ";");
-        env.getStream() << "unsigned int shIdx = " << backend.getThreadID() << " * " << blockSize << ";" << std::endl;
-        env.getStream() << "const unsigned int endShIdx = shIdx + 32;" << std::endl;
-        env.print("for(;shIdx < endShIdx && glbIdx < $(num_post); shIdx++, glbIdx += 32)");
+        // Use first 32 threads in each block to write shared memory back to global memory
+        env.getStream() << "if (" << backend.getThreadID() << " < 32)";
         {
             CodeStream::Scope b(env.getStream());
-            const std::string inSyn = "$(_out_post)[" + sg.getPostISynIndex(batchSize, "glbIdx") +"]";
-            if(sg.getArchetype().isPSModelFused()) {
-                env.printLine(backend.getAtomic(sg.getScalarType()) + "(&" + inSyn + ", shLg[shIdx]);");
-            }
-            else {
-                env.printLine(inSyn + " += shLg[shIdx];");
+            env.printLine("unsigned int glbIdx = ((" + backend.getBlockID() + " - ($(_group_start_id) / " + std::to_string(blockSize) + ")) * " + std::to_string(32 * blockSize) + ") + " + backend.getThreadID() + ";");
+            env.getStream() << "unsigned int shIdx = " << backend.getThreadID() << " * " << blockSize << ";" << std::endl;
+            env.getStream() << "const unsigned int endShIdx = shIdx + 32;" << std::endl;
+            env.print("for(;shIdx < endShIdx && glbIdx < $(num_post); shIdx++, glbIdx += 32)");
+            {
+                CodeStream::Scope b(env.getStream());
+                const std::string inSyn = "$(_out_post)[" + sg.getPostISynIndex(batchSize, "glbIdx") +"]";
+                if(sg.getArchetype().isPSModelFused()) {
+                    env.printLine(backend.getAtomic(sg.getScalarType()) + "(&" + inSyn + ", $(_sh_out_post)[shIdx]);");
+                }
+                else {
+                    env.printLine(inSyn + " += $(_sh_out_post)[shIdx];");
+                }
             }
         }
     }
@@ -794,17 +793,17 @@ bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const Prefer
 void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                    const BackendSIMT &backend) const
 {
-    if(isSmallSharedMemoryPop(sg, backend)) {
+    if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
         {
             CodeGenerator::CodeStream::Scope b(env.getStream());
-            env.getStream() << "shLg[" << backend.getThreadID() << "] = 0;" << std::endl;
+            env.printLine("$(_sh_out_post)[" + backend.getThreadID() + "] = 0;");
         }
         backend.genSharedMemBarrier(env.getStream());
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PostSpanToeplitz::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
@@ -955,14 +954,14 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                     const BackendSIMT &backend, unsigned int batchSize) const
 {
-    // If we should accumulate into shared memory
-    if(isSmallSharedMemoryPop(sg, backend)) {
+    // If we should accumulate into shared memory and synapse group provides postsynaptic output
+    if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
         backend.genSharedMemBarrier(env.getStream());
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
         {
             CodeGenerator::CodeStream::Scope b(env.getStream());
             const std::string idx = sg.getPostISynIndex(batchSize, backend.getThreadID());
-            env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + idx + "], shLg[" + backend.getThreadID() + "]);");
+            env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + idx + "], $(_sh_out_post)[" + backend.getThreadID() + "]);");
         }
     }
 }

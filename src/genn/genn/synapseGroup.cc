@@ -645,17 +645,17 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isDendriticDelayRequired() const
 {
-    // If addToInSynDelay function is used in sim code, return true
+    // If addToPostDelay function is used in sim code, return true
     if(Utils::isIdentifierReferenced("addToPostDelay", getWUSimCodeTokens())) {
         return true;
     }
 
-    // If addToInSynDelay function is used in event code, return true
+    // If addToPostDelay function is used in event code, return true
     if(Utils::isIdentifierReferenced("addToPostDelay", getWUEventCodeTokens())) {
         return true;
     }
 
-    // If addToInSynDelay function is used in synapse dynamics, return tru
+    // If addToPostDelay function is used in synapse dynamics, return tru
     if(Utils::isIdentifierReferenced("addToPostDelay", getWUSynapseDynamicsCodeTokens())) {
         return true;
     }
@@ -686,6 +686,31 @@ bool SynapseGroup::isPresynapticOutputRequired() const
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPostsynapticOutputRequired() const
+{
+    if(isDendriticDelayRequired()) {
+        return true;
+    }
+    else {
+        // If addToPost function is used in sim code, return true
+        if(Utils::isIdentifierReferenced("addToPost", getWUSimCodeTokens())) {
+            return true;
+        }
+
+        // If addToPost function is used in event code, return true
+        if(Utils::isIdentifierReferenced("addToPost", getWUEventCodeTokens())) {
+            return true;
+        }
+
+        // If addToPost function is used in synapse dynamics, return tru
+        if(Utils::isIdentifierReferenced("addToPost", getWUSynapseDynamicsCodeTokens())) {
+            return true;
+        }
+
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const

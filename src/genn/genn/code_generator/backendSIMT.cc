@@ -703,17 +703,22 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
 {
     EnvironmentExternal kernelEnv(env);
 
-    // We need shLg if any synapse groups accumulate into shared memory
+    // We need shOutPost if any synapse groups accumulate into shared memory
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
-    for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
-        maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                         getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
+    for(const auto &s : modelMerged.getModel().getSynapseGroups()) {
+        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+            maxSharedMemPerThread = std::max(maxSharedMemPerThread,
+                                              getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
+        }
     }
 
     // If any shared memory is required, declare array
     if(maxSharedMemPerThread > 0) {
-        kernelEnv.getStream() << getSharedPrefix() <<" scalar shLg[" << maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate) << "];" << std::endl;
+        const std::string scalarName = modelMerged.getModel().getPrecision().getName();
+        const std::string maxSharedPerBlockStr = std::to_string(maxSharedMemPerThread * getKernelBlockSize(KernelPresynapticUpdate));
+        kernelEnv.add(Type::Void, "_sh_out_post", "shOutPost",
+                      {kernelEnv.addInitialiser(getSharedPrefix() +" " + scalarName + " shOutPost[" + maxSharedPerBlockStr + "];")});
     }
 
     // Shared memory for row length

@@ -297,8 +297,11 @@ protected:
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
-    //! Does this synapse group define presynaptic output?
+    //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
+
+    //! Does this synapse group provide postsynaptic output?
+    bool isPostsynapticOutputRequired() const; 
 
     //! Does this synapse group require an RNG to generate procedural connectivity?
     bool isProceduralConnectivityRNGRequired() const;
