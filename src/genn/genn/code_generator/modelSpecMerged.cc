@@ -209,7 +209,7 @@ void ModelSpecMerged::genMergedSynapseSparseInitGroups(const BackendBase &backen
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                    (sg.isWUVarInitRequired()
-                                   || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
+                                   || (backend.isPostsynapticRemapRequired() && !Utils::areTokensEmpty(sg.getWUPostLearnCodeTokens()))));
                        },
                        &SynapseGroupInternal::getWUInitHashDigest, generateGroup);
 }
@@ -258,7 +258,7 @@ void ModelSpecMerged::genMergedSynapseConnectivityHostInitGroups(const BackendBa
     createMergedGroups(backend, memorySpaces, getModel().getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
                        [](const SynapseGroupInternal &sg)
                        { 
-                           return !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty();
+                           return !Utils::areTokensEmpty(sg.getConnectivityInitialiser().getHostInitCodeTokens());
                        },
                        &SynapseGroupInternal::getConnectivityHostInitHashDigest, generateGroup, true);
 }

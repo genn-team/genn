@@ -810,7 +810,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
                     groupEnv.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        groupEnv.getStream() << "shColLength[" << getThreadID() << "] = group->colLength[spk];" << std::endl;
+                        groupEnv.printLine("$(_sh_col_length)[" + getThreadID() + "] = $(_col_length)[spk];");
                     }
                 }
 
@@ -1681,7 +1681,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<SynapseSparseInitGroupMerged>(
         envKernel, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedSynapseSparseInitGroups,
-        [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitializeSparse); },
+        [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getMaxConnections(), KernelInitializeSparse); },
         [batchSize, numInitializeThreads, this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(env, sg);
