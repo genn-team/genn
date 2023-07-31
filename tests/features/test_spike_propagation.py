@@ -31,8 +31,16 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
-pre_reverse_neuron_model = create_neuron_model(
+pre_reverse_model = create_neuron_model(
     "pre_reverse",
+    var_name_types=[("x", "scalar")],
+    sim_code=
+    """
+    x = Isyn;
+    """)
+    
+pre_reverse_spike_source_model = create_neuron_model(
+    "pre_reverse_spike_source",
     var_name_types=[("startSpike", "unsigned int"), 
                     ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
                     ("x", "scalar")],
@@ -61,6 +69,14 @@ post_neuron_model = create_neuron_model(
 static_pulse_reverse_model = create_weight_update_model(
     "static_pulse_reverse",
     sim_code=
+    """
+    $(addToPre, $(g));
+    """,
+    var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+
+static_pulse_reverse_post_model = create_weight_update_model(
+    "static_pulse_reverse_post",
+    learn_post_code=
     """
     $(addToPre, $(g));
     """,
@@ -259,7 +275,7 @@ def test_reverse(backend, precision):
     # Create spike source array with extra x variable 
     # to generate one-hot pattern to decode
     pre_n_pop = model.add_neuron_population(
-        "SpikeSource", 16, pre_reverse_neuron_model,
+        "SpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
     pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
     
@@ -303,6 +319,79 @@ def test_reverse(backend, precision):
         pre_n_pop.pull_var_from_device("x")
         assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_reverse_post(backend, precision):
+    model = GeNNModel(precision, "test_reverse_post", backend=backend)
+    model.dt = 1.0
+
+    # Add presynaptic populations to sum reverse input
+    sparse_pre_n_pop = model.add_neuron_population(
+        "SparsePost", 4, pre_reverse_model,
+        {}, {"x": 0.0})
+    dense_pre_n_pop = model.add_neuron_population(
+        "DensePost", 4, pre_reverse_model,
+        {}, {"x": 0.0})
+        
+    # Create spike source array to generate one-hot pattern to decode
+    post_n_pop = model.add_neuron_population(
+        "SpikeSource", 16, "SpikeSourceArray",
+        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
+    post_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+
+    # Build sparse connectivity
+    pre_inds = []
+    post_inds = []
+    for j in range(16):
+        for i in range(4):
+            i_value = 1 << i
+            if ((j + 1) & i_value) != 0:
+                pre_inds.append(i)
+                post_inds.append(j)
+
+    pre_inds = np.asarray(pre_inds)
+    post_inds = np.asarray(post_inds)
+
+    # Use to build dense matrix
+    dense = np.zeros((4, 16))
+    dense[pre_inds,post_inds] = 1.0
+
+    # Add connectivity
+    sparse_s_pop = model.add_synapse_population(
+        "SparseSynapse", "SPARSE", 0,
+        sparse_pre_n_pop, post_n_pop,
+        static_pulse_reverse_post_model, {}, {"g": 1.0}, {}, {},
+        "DeltaCurr", {}, {})
+    sparse_s_pop.set_sparse_connections(pre_inds, post_inds)
+    model.add_synapse_population(
+        "DenseSynapse", "DENSE", 0,
+        dense_pre_n_pop, post_n_pop,
+        static_pulse_reverse_post_model, {}, {"g": dense.flatten()}, {}, {},
+        "DeltaCurr", {}, {})
+        
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 16 timesteps
+    output_place_values = 2 ** np.arange(4)
+    output_populations = [sparse_pre_n_pop, dense_pre_n_pop]
+    while model.timestep < 16:
+        model.step_time()
+        
+        # Loop through output populations
+        for pop in output_populations:
+            # Pull state variable
+            pop.pull_var_from_device("x")
+
+            # Convert to binary mask
+            output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
+
+            # Sum up active place values
+            output_value = np.sum(output_place_values[output_binary])
+            if output_value != (model.timestep - 1):
+                assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
+        
 if __name__ == '__main__':
-    test_forward("cuda", types.Float)
+    test_reverse_post("cuda", types.Float)
     
