@@ -824,19 +824,18 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
-                        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            groupEnv.print("if ($(id) < $(_sh_col_length)[j])");
-                            groupEnv.getStream() << CodeStream::OB(1540);
-                        }
-
                         EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            synEnv.print("if ($(id) < $(_sh_col_length)[j])");
+                            synEnv.getStream() << CodeStream::OB(1540);
+
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
                                        {synEnv.addInitialiser("const unsigned int synAddress = $(_remap)[($(_sh_spk)[j] * $(_col_stride)) + $(id)];")});
 
                             // **OPTIMIZE** we can do a fast constant divide optimization here
                             synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                       {synEnv.addInitialiser("const unsigned int idPre = $(synEnv) / $(_row_stride);")});
+                                       {synEnv.addInitialiser("const unsigned int idPre = $(id_syn) / $(_row_stride);")});
                         }
                         else {
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
