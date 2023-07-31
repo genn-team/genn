@@ -1125,7 +1125,6 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, cg);
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                    synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
                     synEnv.add(Type::Uint32.addConst(), "id_kernel", "$(id)");
                 }
                 else {
