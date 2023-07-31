@@ -780,7 +780,7 @@ class GeNNModel(ModelSpecInternal):
         else:
             raise ValueError("'%s' must be a SynapseGroup or string" % context)
 
-def init_var(init_var_snippet, param_space):
+def init_var(init_var_snippet, param_space={}):
     """This helper function creates a VarInit object
     to easily initialise a variable using a snippet.
 
@@ -799,7 +799,7 @@ def init_var(init_var_snippet, param_space):
     return VarInit(init_var_snippet, param_space)
 
 
-def init_sparse_connectivity(init_sparse_connect_snippet, param_space):
+def init_sparse_connectivity(init_sparse_connect_snippet, param_space={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
@@ -818,7 +818,7 @@ def init_sparse_connectivity(init_sparse_connect_snippet, param_space):
     return SparseConnectivityInit(init_sparse_connect_snippet, param_space)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
-def init_connectivity(init_sparse_connect_snippet, param_space):
+def init_connectivity(init_sparse_connect_snippet, param_space={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
@@ -832,7 +832,7 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
     """
     return init_sparse_connectivity(init_sparse_connect_snippet, param_space)
 
-def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
+def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space={}):
     """This helper function creates a InitToeplitzConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
