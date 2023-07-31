@@ -273,13 +273,26 @@ def test_forward_den_delay(backend, precision):
         "DeltaCurr", {}, {})
     sparse_s_pop.max_dendritic_delay_timesteps = 10
     sparse_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
+    
+    # Create one output neuron pop with sparse decoder population and presynaptic parallelism
+    sparse_pre_n_pop = model.add_neuron_population(
+        "PostSparsePreSpanNeuron", 1, post_neuron_model,
+        {}, {"x": 0.0})
+    sparse_pre_s_pop = model.add_synapse_population(
+        "PostSparsePreSpanSynapse", "SPARSE", 0,
+        ss_pop, sparse_pre_n_pop,
+        "StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}, {}, {},
+        "DeltaCurr", {}, {})
+    sparse_pre_s_pop.max_dendritic_delay_timesteps = 10
+    sparse_pre_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
+    sparse_pre_s_pop.span_type = SpanType.PRESYNAPTIC
 
     # Build model and load
     model.build()
     model.load()
 
     # Simulate for 11 timesteps
-    output_populations = [dense_n_pop, sparse_n_pop]
+    output_populations = [dense_n_pop, sparse_n_pop, sparse_pre_n_pop]
     while model.timestep < 11:
         model.step_time()
 
@@ -420,5 +433,5 @@ def test_reverse_post(backend, precision):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 if __name__ == '__main__':
-    test_forward("cuda", types.Float)
+    test_forward_den_delay("cuda", types.Float)
     
