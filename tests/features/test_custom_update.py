@@ -15,7 +15,8 @@ from pygenn import (create_current_source_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
-                    init_sparse_connectivity)
+                    init_sparse_connectivity,
+                    init_toeplitz_connectivity)
 
 neuron_model = create_neuron_model(
     "neuron",
@@ -34,6 +35,12 @@ weight_update_model = create_weight_update_model(
 postsynaptic_update_model = create_postsynaptic_model(
     "postsynaptic_update",
     var_name_types=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+custom_update_model = create_custom_update_model(
+    "custom_update",
+    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+    var_refs=[("R", "scalar")])
+
 
 set_time_custom_update_model = create_custom_update_model(
     "set_time_custom_update",
@@ -107,35 +114,63 @@ def test_custom_update(backend, precision):
         weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
         "DeltaCurr", {}, {},
         init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
-        
+    
+    conv_params = {"conv_kh": 3, "conv_kw": 3,
+                   "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
+                   "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
+    kernel_s_pop = model.add_synapse_population(
+        "ToeplitzSynapses", "TOEPLITZ", 0,
+        ss_pop, n_pop,
+        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_params))
+    
+    cu = model.add_custom_update(
+        "CustomUpdate", "Test", custom_update_model,
+         {}, {"X": 0.0}, {"R": create_var_ref(n_pop, "X")})
+    dense_cu = model.add_custom_update(
+        "DenseCustomUpdate", "Test", custom_update_model,
+         {}, {"X": 0.0}, {"R": create_wu_var_ref(dense_s_pop, "X")})
+    sparse_cu = model.add_custom_update(
+        "SparseCustomUpdate", "Test", custom_update_model,
+         {}, {"X": 0.0}, {"R": create_wu_var_ref(sparse_s_pop, "X")})
+ 
     # Create set time custom updates
-    cu_n = model.add_custom_update("NeuronSetTime", "Test", set_time_custom_update_model,
-                                   {}, {"V": 0.0}, {"R": create_var_ref(n_pop, "X")})
+    set_time_n = model.add_custom_update("NeuronSetTime", "Test", set_time_custom_update_model,
+                                         {}, {"V": 0.0}, {"R": create_var_ref(n_pop, "X")})
     model.add_custom_update("NeuronSharedSetTime", "Test", set_time_shared_custom_update_model,
                             {}, {}, {"R": create_var_ref(n_pop, "XShared")})
-    cu_cs = model.add_custom_update("CurrentSourceSetTime", "Test", set_time_custom_update_model,
-                                    {}, {"V": 0.0}, {"R": create_var_ref(cs, "X")})
+    set_time_cs = model.add_custom_update("CurrentSourceSetTime", "Test", set_time_custom_update_model,
+                                          {}, {"V": 0.0}, {"R": create_var_ref(cs, "X")})
     model.add_custom_update("CurrentSourceSharedSetTime", "Test", set_time_shared_custom_update_model,
                             {}, {}, {"R": create_var_ref(cs, "XShared")})
-    cu_psm_dense = model.add_custom_update("PSMDenseSetTime", "Test", set_time_custom_update_model,
-                                           {}, {"V": 0.0}, {"R": create_psm_var_ref(dense_s_pop, "psmX")})
+    set_time_psm_dense = model.add_custom_update("PSMDenseSetTime", "Test", set_time_custom_update_model,
+                                                 {}, {"V": 0.0}, {"R": create_psm_var_ref(dense_s_pop, "psmX")})
     model.add_custom_update("PSMDenseSharedSetTime", "Test", set_time_shared_custom_update_model,
                             {}, {}, {"R": create_psm_var_ref(dense_s_pop, "psmXShared")})
-    cu_wu_pre_dense = model.add_custom_update("WUPreDenseSetTime", "Test", set_time_custom_update_model,
-                                              {}, {"V": 0.0}, {"R": create_wu_pre_var_ref(dense_s_pop, "preX")})
+    set_time_wu_pre_dense = model.add_custom_update("WUPreDenseSetTime", "Test", set_time_custom_update_model,
+                                                    {}, {"V": 0.0}, {"R": create_wu_pre_var_ref(dense_s_pop, "preX")})
     model.add_custom_update("WUPreDenseSharedSetTime", "Test", set_time_shared_custom_update_model,
                             {}, {}, {"R": create_wu_pre_var_ref(dense_s_pop, "preXShared")})
-    cu_wu_post_dense = model.add_custom_update("WUPostDenseSetTime", "Test", set_time_custom_update_model,
-                                               {}, {"V": 0.0}, {"R": create_wu_post_var_ref(dense_s_pop, "postX")})
+    set_time_wu_post_dense = model.add_custom_update("WUPostDenseSetTime", "Test", set_time_custom_update_model,
+                                                     {}, {"V": 0.0}, {"R": create_wu_post_var_ref(dense_s_pop, "postX")})
     model.add_custom_update("WUPostDenseSharedSetTime", "Test", set_time_shared_custom_update_model,
                             {}, {}, {"R": create_wu_post_var_ref(dense_s_pop, "postXShared")})
+    set_time_cu = model.add_custom_update("CUSetTime", "Test", set_time_custom_update_model,
+                                          {}, {"V": 0.0}, {"R": create_var_ref(cu, "X")})
 
     # Create set time custom updates on synapse variables
-    cu_wu_dense = model.add_custom_update("WUDenseSetTime", "Test", set_time_custom_update_model,
-                                          {}, {"V": 0.0}, {"R": create_wu_var_ref(dense_s_pop, "X")})
-    cu_wu_sparse = model.add_custom_update("WUSparseSetTime", "Test", set_time_custom_update_model,
-                                           {}, {"V": 0.0}, {"R": create_wu_var_ref(sparse_s_pop, "X")})
-                                          
+    set_time_wu_dense = model.add_custom_update("WUDenseSetTime", "Test", set_time_custom_update_model,
+                                                {}, {"V": 0.0}, {"R": create_wu_var_ref(dense_s_pop, "X")})
+    set_time_wu_sparse = model.add_custom_update("WUSparseSetTime", "Test", set_time_custom_update_model,
+                                                 {}, {"V": 0.0}, {"R": create_wu_var_ref(sparse_s_pop, "X")})
+    set_time_wu_kernel = model.add_custom_update("WUKernelSetTime", "Test", set_time_custom_update_model,
+                                                 {}, {"V": 0.0}, {"R": create_wu_var_ref(kernel_s_pop, "X")})
+    set_time_cu_dense = model.add_custom_update("CUDenseSetTime", "Test", set_time_custom_update_model,
+                                                {}, {"V": 0.0}, {"R": create_wu_var_ref(dense_cu, "X")})
+    set_time_cu_sparse = model.add_custom_update("CUSparseSetTime", "Test", set_time_custom_update_model,
+                                                 {}, {"V": 0.0}, {"R": create_wu_var_ref(sparse_cu, "X")})
+
     # Build model and load
     model.build()
     model.load()
@@ -143,24 +178,32 @@ def test_custom_update(backend, precision):
     # Simulate 20 timesteps
     samples = [
         (n_pop, "X", n_pop.vars, (100,)),
-        (cu_n, "V", cu_n.vars, (100,)),
+        (set_time_n, "V", set_time_n.vars, (100,)),
         (n_pop, "XShared", n_pop.vars, (1,)),
         (cs, "X", cs.vars, (100,)),
-        (cu_cs, "V", cu_cs.vars, (100,)),
+        (set_time_cs, "V", set_time_cs.vars, (100,)),
         (cs, "XShared", cs.vars, (1,)),
         (dense_s_pop, "psmX", dense_s_pop.psm_vars, (100,)),
-        (cu_psm_dense, "V", cu_psm_dense.vars, (100,)),
+        (set_time_psm_dense, "V", set_time_psm_dense.vars, (100,)),
         (dense_s_pop, "psmXShared", dense_s_pop.psm_vars, (1,)),
         (dense_s_pop, "preX", dense_s_pop.pre_vars, (10,)),
-        (cu_wu_pre_dense, "V", cu_wu_pre_dense.vars, (10,)),
+        (set_time_wu_pre_dense, "V", set_time_wu_pre_dense.vars, (10,)),
         (dense_s_pop, "preXShared", dense_s_pop.pre_vars, (1,)),
         (dense_s_pop, "postX", dense_s_pop.post_vars, (100,)),
-        (cu_wu_post_dense, "V", cu_wu_post_dense.vars, (100,)),
+        (set_time_wu_post_dense, "V", set_time_wu_post_dense.vars, (100,)),
         (dense_s_pop, "postXShared", dense_s_pop.post_vars, (1,)),
+        (cu, "X", cu.vars, (100,)),
+        (set_time_cu, "V", set_time_cu.vars, (100,)),
         (dense_s_pop, "X", dense_s_pop.vars, (10 * 100,)),
-        (cu_wu_dense, "V", cu_wu_dense.vars, (10 * 100,)),
+        (set_time_wu_dense, "V", set_time_wu_dense.vars, (10 * 100,)),
         (sparse_s_pop, "X", sparse_s_pop.vars, (10 * 10,)),
-        (cu_wu_sparse, "V", cu_wu_sparse.vars, (10 * 10,))]
+        (set_time_wu_sparse, "V", set_time_wu_sparse.vars, (10 * 10,)),
+        (kernel_s_pop, "X", kernel_s_pop.vars, (3 * 3,)),
+        (set_time_wu_kernel, "V", set_time_wu_kernel.vars, (3 * 3,)),
+        (dense_cu, "X", dense_cu.vars, (10 * 100,)),
+        (set_time_cu_dense, "V", set_time_cu_dense.vars, (10 * 100,)),
+        (sparse_cu, "X", sparse_cu.vars, (10 * 10,)),
+        (set_time_cu_sparse, "V", set_time_cu_sparse.vars, (10 * 10,))]
     while model.timestep < 20:
         # Every 10 timesteps, trigger custom update
         if (model.timestep % 10) == 0:
@@ -180,6 +223,7 @@ def test_custom_update(backend, precision):
             # If values don't match, give error
             elif not np.all(np.isclose(view, correct)):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
+    print("DONE")
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])

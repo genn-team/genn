@@ -848,7 +848,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
     init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
                                                 InitToeplitzConnectivitySnippetBase,
                                                 init_toeplitz_connectivity_snippets)
-    return InitToeplitzConnectivitySnippet(init_toeplitz_connect_snippet, param_space)
+    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, param_space)
 
 def create_neuron_model(class_name, param_names=None,
                         var_name_types=None, derived_params=None,
