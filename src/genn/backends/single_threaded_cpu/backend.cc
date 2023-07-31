@@ -1740,7 +1740,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
 
         // Loop through Toeplitz matrix diagonals
-        env.getStream() << "for(unsigned int j = 0; j < " << env["_row_stride"] << "; j++)";
+        env.print("for(unsigned int j = 0; j < $(row_stride); j++)");
         {
             /*CodeStream::Scope b(env.getStream());
 
@@ -1961,7 +1961,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             }
             // Otherwise (DENSE or BITMASK)
             else {
-                groupEnv.getStream() << "for (unsigned int ipost = 0; ipost < group->numTrgNeurons; ipost++)";
+                groupEnv.print("for (unsigned int ipost = 0; ipost < $(num_post); ipost++)");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
