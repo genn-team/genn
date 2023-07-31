@@ -494,6 +494,11 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUU
     buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env) const
+{
+    buildStandardCustomUpdateWUEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
 {
     env.addField(Type::Uint32.addConst(), "size", 

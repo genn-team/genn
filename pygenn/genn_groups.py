@@ -830,9 +830,10 @@ class CustomUpdateMixin(GroupMixin):
     def load(self):
         # If this is a custom weight update
         if self._custom_wu_update:
-            # Assert that population has individual synapse variables
-            assert (self._synapse_group.has_individual_synapse_vars or
-                    self._synapse_group.has_kernel_synapse_vars)
+            # Assert that population doesn't have procedural connectivity
+            assert not (self._synapse_group.matrix_type 
+                        & SynapseMatrixConnectivity.PROCEDURAL)
+
             # Loop through state variables
             for v in self.custom_update_model.get_vars():
                 # Get corresponding data from dictionary

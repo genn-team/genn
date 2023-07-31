@@ -106,7 +106,7 @@ def test_custom_update(backend, precision):
         ss_pop, n_pop,
         weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
         "DeltaCurr", {}, {},
-        init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
+        init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
         
     # Create set time custom updates
     cu_n = model.add_custom_update("NeuronSetTime", "Test", set_time_custom_update_model,
@@ -157,7 +157,10 @@ def test_custom_update(backend, precision):
         (dense_s_pop, "postX", dense_s_pop.post_vars, (100,)),
         (cu_wu_post_dense, "V", cu_wu_post_dense.vars, (100,)),
         (dense_s_pop, "postXShared", dense_s_pop.post_vars, (1,)),
-        (cu_wu_dense, "X", cu_wu_dense.vars, (100 * 10,))]
+        (dense_s_pop, "X", dense_s_pop.vars, (10 * 100,)),
+        (cu_wu_dense, "V", cu_wu_dense.vars, (10 * 100,)),
+        (sparse_s_pop, "X", sparse_s_pop.vars, (10 * 10,)),
+        (cu_wu_sparse, "V", cu_wu_sparse.vars, (10 * 10,))]
     while model.timestep < 20:
         # Every 10 timesteps, trigger custom update
         if (model.timestep % 10) == 0:
@@ -177,7 +180,6 @@ def test_custom_update(backend, precision):
             # If values don't match, give error
             elif not np.all(np.isclose(view, correct)):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
-    print("DONE")
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -192,4 +194,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_update("single_threaded_cpu", types.Float)
+    test_custom_update("cuda", types.Float)

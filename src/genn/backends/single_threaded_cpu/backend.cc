@@ -1213,7 +1213,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
-
+                    buildStandardEnvironment(groupEnv);
                     groupEnv.getStream() << "// Loop through presynaptic neurons" << std::endl;
                     groupEnv.getStream() << "for (unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)" << std::endl;
                     {
