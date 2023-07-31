@@ -264,7 +264,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
     // Add 
     groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
-    backend.genVariableInit(env, "num_neurons", "id",
+    backend.genVariableInit(groupEnv, "num_neurons", "id",
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {
                                 genVariableFill(varEnv, "_out_pre", writePreciseLiteral(0.0, getScalarType()),
