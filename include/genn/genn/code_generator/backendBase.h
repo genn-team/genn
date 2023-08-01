@@ -61,6 +61,7 @@ class CustomWUUpdateSparseInitGroupMerged;
 class SynapseConnectivityInitGroupMerged;
 class CustomConnectivityUpdatePreInitGroupMerged;
 class CustomConnectivityUpdatePostInitGroupMerged;
+class CustomConnectivityUpdateSparseInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
 }
@@ -495,6 +496,7 @@ public:
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> &env, unsigned int batchSize) const;
 
     //! Get backend-specific pointer size in bytes

@@ -373,6 +373,49 @@ void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, Environm
         }
     }
 }
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+{
+    // Add fields for number of pre and postsynaptic neurons
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                 });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                 });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    
+    // Connectivity fields
+    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+    }
+
+    // If there are delays on presynaptic variable references
+    if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
+                {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
+    }
+    
+    // If there are delays on postsynaptic variable references
+    if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
+                {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -450,44 +493,7 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
-    // Add fields for number of pre and postsynaptic neurons
-    env.addField(Type::Uint32.addConst(), "num_pre",
-                 Type::Uint32, "numSrcNeurons", 
-                 [](const auto &cg, size_t) 
-                 { 
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
-                 });
-    env.addField(Type::Uint32.addConst(), "num_post",
-                 Type::Uint32, "numTrgNeurons", 
-                 [](const auto &cg, size_t) 
-                 { 
-                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
-                 });
-    env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [this](const auto &cg, size_t) { return std::to_string(getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-    
-    // Connectivity fields
-    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
-    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                     [this](const auto &cg, size_t) { return getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
-        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
-                     [this](const auto &cg, size_t) { return getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
-    }
-
-    // If there are delays on presynaptic variable references
-    if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
-                {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
-    }
-    
-    // If there are delays on postsynaptic variable references
-    if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
-                {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
-    }
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const
@@ -539,6 +545,11 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> &env, unsigned int batchSize) const

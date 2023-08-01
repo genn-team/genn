@@ -1213,6 +1213,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
+
                     groupEnv.printLine("// Loop through presynaptic neurons");
                     groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
                     {
@@ -1241,6 +1242,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
 
                     groupEnv.printLine("// Loop through presynaptic neurons");
                     groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
