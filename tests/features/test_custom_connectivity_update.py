@@ -59,7 +59,7 @@ remove_synapse_model = create_custom_connectivity_update_model(
     for_each_synapse {
         if(id_post == id_pre) {
             remove_synapse();
-            break;\n"
+            break;
         }
     }
     """)
@@ -120,7 +120,6 @@ add_synapse_model = create_custom_connectivity_update_model(
     const scalar weight = (id_pre * 64) + id_pre;
     const unsigned int delay = (id_pre * 64) + id_pre;
     add_synapse(id_pre, weight, delay, weight);
-    }
     """)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
@@ -151,8 +150,8 @@ def test_custom_connectivity_update(backend, precision):
     add_synapse_ccu = model.add_custom_connectivity_update(
         "AddSynapse", "AddSynapse", s_pop_1,
         add_synapse_model,
-        {}, {}, {}, {}, {},
-        {"g": create_wu_var_ref(s_pop_1, "g"), "d": create_wu_var_ref(s_pop_1, "d"), "a": create_wu_var_ref(remove_synapse_ccu, "a")}, {}, {})    
+        {}, {}, {}, {},
+        {"g": create_wu_var_ref(s_pop_1, "g"), "d": create_wu_var_ref(s_pop_1, "d"), "a": create_wu_var_ref(remove_synapse_ccu, "a")}, {}, {})
 
     # Build model and load
     model.build()
