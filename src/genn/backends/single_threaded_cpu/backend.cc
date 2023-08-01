@@ -1037,8 +1037,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         groupEnv.add(Type::Uint32.addConst(), "id_pre_begin", "0");
                         groupEnv.add(Type::Uint32.addConst(), "id_thread", "0");
                         groupEnv.add(Type::Uint32.addConst(), "num_threads", "1");
-                        //popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-                        //popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
                     }
                     {
                         CodeStream::Scope b(groupEnv.getStream());
@@ -1517,7 +1515,7 @@ void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Hand
         varEnv.add(Type::Uint32, "id_syn", "idSyn",
                    {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
         varEnv.add(Type::Uint32, "id_post", "idPost",
-                   {varEnv.addInitialiser("const unsigned int idPost = $(_ind)[($(id_pre) * $(_row_stride)) + j]")});
+                   {varEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
         handler(varEnv);
      }
 }
