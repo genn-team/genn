@@ -16,11 +16,11 @@ from pygenn import (create_current_source_model,
                     init_var)
 
 # How to initialise various sorts of variable
-var_init = {"uniform": ("scalar", init_var("Uniform", {"min": 0.0, "max": 1.0}), stats.uniform.cdf, []), 
-            "normal": ("scalar", init_var("Normal", {"mean": 0.0, "sd": 1.0}), stats.norm.cdf, []), 
-            "exponential": ("scalar", init_var("Exponential", {"lambda": 1.0}), stats.expon.cdf, []), 
-            "gamma": ("scalar", init_var("Gamma", {"a": 4.0, "b": 1.0}), stats.gamma.cdf, [4.0]), 
-            "binomial": ("unsigned int", init_var("Binomial", {"n": 20, "p": 0.5}), stats.binom.cdf, [20, 0.5])}
+var_init = {"uniform": ("scalar", init_var("Uniform", {"min": 0.0, "max": 1.0}), stats.uniform, []), 
+            "normal": ("scalar", init_var("Normal", {"mean": 0.0, "sd": 1.0}), stats.norm, []), 
+            "exponential": ("scalar", init_var("Exponential", {"lambda": 1.0}), stats.expon, []), 
+            "gamma": ("scalar", init_var("Gamma", {"a": 4.0, "b": 1.0}), stats.gamma, [4.0]), 
+            "binomial": ("unsigned int", init_var("Binomial", {"n": 20, "p": 0.5}), stats.binom, [20, 0.5])}
         
 def create_vars(prefix=""):
     return [(prefix + v, type) for v, (type, _, _, _) in var_init.items()]
@@ -176,21 +176,51 @@ def test_init(backend, precision):
     model.build()
     model.load()
     
+    """
+    After considerable thought as to why these fail:
+     * Each distribution is tested in 12 different contexts
+     * This test is run using 5 different RNGs (OpenCL, CUDA, MSVC standard library, Clang standard library, GCC standard library)
+     = 60 permutations
+     We want the probability that one or more of the 60 tests fail simply by chance 
+     to be less than 2%; for significance level a the probability that none of the 
+     tests fail is (1-a)^60 which we want to be 0.98, i.e. 98% of the time the test 
+    passes if the algorithm is correct. Hence, a= 1- 0.98^(1/60) = 0.00034
+    """
+    confidence_interval = 0.00034
+    
     # Loop through populations
     pops = [(n_pop, "", n_pop.vars), (cs, "", cs.vars), (dense_s_pop, "", dense_s_pop.vars),
             (dense_s_pop, "pre_", dense_s_pop.pre_vars), (dense_s_pop, "post_", dense_s_pop.post_vars),
             (dense_s_pop, "psm_", dense_s_pop.psm_vars),]
     for pop, prefix, vars in pops:
         # Loop through variables
-        for var_name, (_, _, cdf, args) in var_init.items():
+        for var_name, (_, _, dist, args) in var_init.items():
             # Pull var from devices
             pop.pull_var_from_device(prefix + var_name)
 
-            # Check p-value exceed 95% confidence internal
-            p = stats.kstest(vars[prefix + var_name].view[:], cdf, args).pvalue
-            if p < 0.05:
-                print(f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})")
+            # If distribution is discrete
+            view = vars[prefix + var_name].view
+            if isinstance(dist, stats.rv_discrete):
+                # Determine frequencies of observations
+                f_obs = np.bincount(view)
+                
+                # Determine minimum length of frequency histograms
+                # and calculate for expected and observed
+                # **THOMAS** what's the best approach for this?
+                f_exp = np.asarray(
+                    [int(round(len(view) * dist.pmf(k, *args)))
+                     for k in range(len(f_obs))])
+                
+                # Perform chi-squared test with variable initialisation
+                p = stats.chisquare(f_obs, f_exp).pvalue
+            # Otherwise, perform Kolmogorov-Smirnov test against CDF
+            else:
+                p = stats.kstest(view, dist.cdf, args).pvalue
+
+            # Check p-value exceed our confidence internal
+            if p < confidence_interval:
+                assert False, f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})"
 
 
 if __name__ == '__main__':
-    test_init("single_threaded_cpu", types.Double)
+    test_init("single_threaded_cpu", types.Float)
