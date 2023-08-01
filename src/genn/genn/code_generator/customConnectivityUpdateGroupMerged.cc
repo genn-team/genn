@@ -146,22 +146,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Create new environment to add current source fields to neuron update group 
     EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
 
-    // Add fields for number of pre and postsynaptic neurons
-    updateEnv.addField(Type::Uint32.addConst(), "num_pre",
-                       Type::Uint32, "numSrcNeurons", 
-                       [](const auto &cg, size_t) 
-                       { 
-                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
-                       });
-    updateEnv.addField(Type::Uint32.addConst(), "num_post",
-                       Type::Uint32, "numTrgNeurons", 
-                       [](const auto &cg, size_t) 
-                       { 
-                           const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                           return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
-                       });
-
     // Calculate index of start of row
     updateEnv.add(Type::Uint32.addConst(), "_row_start_idx", "rowStartIdx",
                   {updateEnv.addInitialiser("const unsigned int rowStartIdx = $(id_pre) * $(_row_stride);")});

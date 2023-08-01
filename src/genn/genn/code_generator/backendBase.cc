@@ -465,6 +465,17 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                      return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
                  });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [this](const auto &cg, size_t) { return std::to_string(getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    
+    // Connectivity fields
+    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                     [this](const auto &cg, size_t) { return getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                     [this](const auto &cg, size_t) { return getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+    }
 
     // If there are delays on presynaptic variable references
     if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
