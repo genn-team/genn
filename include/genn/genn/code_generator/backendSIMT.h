@@ -367,7 +367,7 @@ private:
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
             if(initRNGRequired) {
-                initEnv.add(Type::Void, "rng", 
+                initEnv.add(Type::Void, "_rng", 
                             genGlobalRNGSkipAhead(initEnv.getStream(), "id"));
             }
 
