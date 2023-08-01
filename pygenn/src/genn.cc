@@ -348,9 +348,12 @@ PYBIND11_MODULE(genn, m)
     m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move);
+    m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move);
+    m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_var_ref", pybind11::overload_cast<SynapseGroup*, const std::string&, SynapseGroup*, const std::string&>(&createWUVarRef),
           "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", pybind11::return_value_policy::move);
     m.def("create_wu_var_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
+    m.def("create_wu_var_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
     m.def("create_egp_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_egp_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
