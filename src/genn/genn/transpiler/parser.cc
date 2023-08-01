@@ -828,7 +828,8 @@ Statement::StatementPtr parseStatement(ParserState &parserState)
     else if(parserState.match({Token::Type::IF, Token::Type::SWITCH})) {
         return parseSelectionStatement(parserState);
     }
-    else if(parserState.match({Token::Type::FOR, Token::Type::WHILE, Token::Type::DO})) {
+    else if(parserState.match({Token::Type::FOR, Token::Type::FOR_EACH_SYNAPSE, 
+                              Token::Type::WHILE, Token::Type::DO})) {
         return parseIterationStatement(parserState);
     }
     else if(parserState.match({Token::Type::CONTINUE, Token::Type::BREAK})) {
