@@ -58,7 +58,7 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
 
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
-        env.add(Uint32.addConst(), "_batchOffset", "batchOffset",
+        env.add(Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
     }
             
@@ -439,6 +439,11 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+{
+    buildStandardCustomUpdateWUEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
 {
     buildStandardCustomUpdateWUEnvironment(*this, env);
 }

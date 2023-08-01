@@ -67,7 +67,8 @@ public:
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
 protected:
-    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env,
+                                  BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose);
 };
 
 // ----------------------------------------------------------------------------
@@ -92,7 +93,7 @@ public:
 
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
     {
-        generateCustomUpdateBase(backend, env);
+        generateCustomUpdateBase(backend, env, [](auto &env, const auto&){});
     }
 
     //----------------------------------------------------------------------------
@@ -121,14 +122,19 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                              BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose)
+    {
+       generateCustomUpdateBase(backend, env, genTranspose);
+    }
+
+    std::string addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-
 
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateHostReductionGroupMergedBase

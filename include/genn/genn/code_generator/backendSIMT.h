@@ -260,52 +260,59 @@ private:
         }
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentExternal groupEnv(env);
 
             if(gMerge.getGroups().size() == 1) {
+                EnvironmentExternal groupEnv(env);
                 groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                 groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
-                groupEnv.getStream() << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                groupEnv.add(Type::Uint32.addConst(), "id", "lid",
+                             {groupEnv.addInitialiser("const unsigned int lid = id - " + std::to_string(idStart) + ";")});
 
                 // Use the starting thread ID of the whole merged group as group_start_id
-                groupEnv.add(Type::Uint32.addConst(), "group_start_id", std::to_string(idStart));
+                groupEnv.add(Type::Uint32.addConst(), "_group_start_id", std::to_string(idStart));
+                
+                // Launch handler
+                handler(groupEnv, gMerge);
             }
             else {
                 // Perform bisect operation to get index of merged struct
-                groupEnv.getStream() << "unsigned int lo = 0;" << std::endl;
-                groupEnv.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                groupEnv.getStream() << "while(lo < hi)" << std::endl;
+                env.getStream() << "unsigned int lo = 0;" << std::endl;
+                env.getStream() << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                env.getStream() << "while(lo < hi)" << std::endl;
                 {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+                    CodeStream::Scope b(env.getStream());
+                    env.getStream() << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                    groupEnv.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                    env.getStream() << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.getStream() << "hi = mid;" << std::endl;
+                        CodeStream::Scope b(env.getStream());
+                        env.getStream() << "hi = mid;" << std::endl;
                     }
-                    groupEnv.getStream() << "else";
+                    env.getStream() << "else";
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.getStream() << "lo = mid + 1;" << std::endl;
+                        CodeStream::Scope b(env.getStream());
+                        env.getStream() << "lo = mid + 1;" << std::endl;
                     }
                 }
 
                 // Use this to get reference to merged group structure
-                groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
-
+                env.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                env.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                 // Get group start thread ID and use as group_start_id
-                groupEnv.getStream() << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                groupEnv.add(Type::Uint32.addConst(), "_group_start_id", "groupStartID");
+                EnvironmentExternal groupEnv(env);
+                groupEnv.add(Type::Uint32.addConst(), "_group_start_id", "groupStartID",
+                             {groupEnv.addInitialiser("const unsigned int groupStartID = d_merged" + T::name + "GroupStartID" + std::to_string(gMerge.getIndex()) + "[lo - 1];")});
 
                 // Use this to calculate local id within group
-                groupEnv.getStream() << "const unsigned int lid = id - groupStartID;" << std::endl;
+                groupEnv.add(Type::Uint32.addConst(), "id", "lid",
+                             {groupEnv.addInitialiser("const unsigned int lid = id - $(_group_start_id);")});
+                
+                // Launch handler
+                handler(groupEnv, gMerge);
             }
-            groupEnv.add(Type::Uint32.addConst(), "id", "lid");
 
-            handler(groupEnv, gMerge);
+           
 
             idStart += paddedSize;
         }

@@ -177,7 +177,8 @@ std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication v
     return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env)
+void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                             BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose)
 {
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
@@ -208,6 +209,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
     prettyPrintStatements(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
+
+    // Generate transpose logic
+    genTranspose(varRefEnv, *this);
 }
 
 // ----------------------------------------------------------------------------
@@ -220,28 +224,26 @@ const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------
 const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
 // ----------------------------------------------------------------------------
-void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env)
 {
-    // Add parameters, derived parameters and EGPs to environment
-    EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> cuEnv(env, *this);
-
     // Loop through variable references
     const auto varRefs = getArchetype().getCustomUpdateModel()->getVarRefs();
     for(const auto &v : varRefs) {
-        const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
-
         // If variable has a transpose, add field with transpose suffix, pointing to transpose var
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
-            cuEnv.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
+            const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
+            env.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
                            [&backend, v](const auto &g, size_t)
                            {
                                const auto varRef = g.getVarReferences().at(v.name);
                                return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
                            });
+
+            // Return name of transpose variable
+            return v.name;
         }
     }
-
-    generateCustomUpdateBase(backend, cuEnv);
+    throw std::runtime_error("No transpose variable found");
 }
 
 // ----------------------------------------------------------------------------

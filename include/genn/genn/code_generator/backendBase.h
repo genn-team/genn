@@ -484,6 +484,7 @@ public:
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
 
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const;

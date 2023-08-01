@@ -223,22 +223,22 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     // If spike or spike-like event recording is in use
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
                         // Calculate number of words which will be used to record this population's spikes
-                        groupEnv.getStream() << "const unsigned int numRecordingWords = (" << groupEnv["num_neurons"] << " + 31) / 32;" << std::endl;
+                        groupEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
 
                         // Zero spike recording buffer
                         if(n.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.getStream() << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                            groupEnv.printLine("std::fill_n(&$(_record_spk)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
                         }
 
                         // Zero spike-like-event recording buffer
                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                            groupEnv.getStream() << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                            groupEnv.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
                         }
                     }
 
                     groupEnv.getStream() << std::endl;
 
-                    groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_neurons"] << "; i++)";
+                    groupEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
@@ -330,16 +330,16 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         buildStandardEnvironment(groupEnv, 1);
 
                         // Loop through presynaptic neurons
-                        groupEnv.getStream() << "for(unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)";
+                        groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
                         {
                             // If this synapse group has sparse connectivity, loop through length of this row
                             CodeStream::Scope b(groupEnv.getStream());
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                groupEnv.getStream() << "for(unsigned int s = 0; s < " << groupEnv["_row_length"] << "[i]; s++)";
+                                groupEnv.print("for(unsigned int s = 0; s < $(_row_length)[i]; s++)");
                             }
                             // Otherwise, if it's dense, loop through each postsynaptic neuron
                             else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                                groupEnv.getStream() << "for (unsigned int j = 0; j < " << groupEnv["num_post"] << "; j++)";
+                                groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
                             }
                             else {
                                 throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for synapse dynamics");
@@ -770,37 +770,38 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
+                            buildStandardEnvironment(groupEnv);
 
-                            // Get index of variable being transposed
-                            const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
-                                                                         std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
-                                                                                      [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
-                            const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+                            // Add field for transpose field and get its name
+                            const std::string transposeVarName = c.addTransposeField(*this, groupEnv);
 
                             // Loop through presynaptic neurons
-                            groupEnv.getStream() << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                            groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
                                 // Loop through each postsynaptic neuron
-                                groupEnv.getStream() << "for (unsigned int j = 0; j < " << funcEnv["groupEnv"] << "; j++)";
+                                groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
                                 {
                                     CodeStream::Scope b(groupEnv.getStream());
+                                    EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(groupEnv, c);
 
                                     // Add pre and postsynaptic indices to environment
-                                    groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
-                                    groupEnv.add(Type::Uint32.addConst(), "id_post", "j");
+                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "j");
                                 
                                     // Add conditional initialisation code to calculate synapse index
-                                    groupEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                                 {groupEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
+                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
                                 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, groupEnv);
-
-                                    // Update transpose variable
-                                    // **YUCK** this is sorta outside scope
-                                    groupEnv.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = l" + transposeVarName + ";");
+                                    c.generateCustomUpdate(
+                                        *this, synEnv,
+                                        [&transposeVarName, this](auto &env, const auto&)
+                                        {        
+                                            // Update transpose variable
+                                            env.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = $(" + transposeVarName + ");");
+                                        });
                                 }
                             }
 
@@ -1160,8 +1161,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         groupEnv.printLine("std::fill_n($(_col_length), $(num_post), 0);");
                     }
 
-                    groupEnv.getStream() << "// Loop through presynaptic neurons" << std::endl;
-                    groupEnv.getStream() << "for (unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)" << std::endl;
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
@@ -1214,8 +1215,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
-                    groupEnv.getStream() << "// Loop through presynaptic neurons" << std::endl;
-                    groupEnv.getStream() << "for (unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)" << std::endl;
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
@@ -1243,8 +1244,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
 
-                    groupEnv.getStream() << "// Loop through presynaptic neurons" << std::endl;
-                    groupEnv.getStream() << "for (unsigned int i = 0; i < " << groupEnv["num_pre"] << "; i++)" << std::endl;
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 

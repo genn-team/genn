@@ -59,7 +59,7 @@ class Transpose : public Base
 {
     DECLARE_SNIPPET(Transpose);
 
-    SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_WRITE}});
+    SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_ONLY}});
 };
 }   // GeNN::CustomUpdateModels
 

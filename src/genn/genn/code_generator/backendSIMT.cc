@@ -1200,12 +1200,10 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
         [blockSize, this](EnvironmentExternalBase &env, CustomUpdateTransposeWUGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
 
-            // Get index of variable being transposed
-            const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
-                                                         std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
-                                                                      [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
-            const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+            // Add field for transpose field and get its name
+            const std::string transposeVarName = cg.addTransposeField(*this, groupEnv);
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
             groupEnv.getStream() << "const unsigned int numXBlocks = (" << groupEnv["num_post"] << " + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
@@ -1246,16 +1244,16 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                 groupEnv.getStream() << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
                 groupEnv.getStream() << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                groupEnv.getStream() << "// If thread isn't off the 'right' edge of the input matrix" << std::endl;
-                groupEnv.getStream() << "if(x < " << groupEnv["num_post"] << ")";
+                groupEnv.printLine("// If thread isn't off the 'right' edge of the input matrix");
+                groupEnv.print("if(x < $(num_post))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     groupEnv.getStream() << "// Loop through input rows " << std::endl;
                     groupEnv.getStream() << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
                         CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.getStream() << "// If thread isn't off the 'bottom' edge of the input matrix" << std::endl;
-                        groupEnv.getStream() << "if((y + j) < " << groupEnv["num_pre"] << ")";
+                        groupEnv.printLine("// If thread isn't off the 'bottom' edge of the input matrix");
+                        groupEnv.print("if((y + j) < $(num_pre))");
                         {
                             CodeStream::Scope b(groupEnv.getStream());
                             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(groupEnv, cg);
@@ -1264,38 +1262,41 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                             synEnv.add(Type::Uint32.addConst(), "id_post", "x");
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
                                        {synEnv.addInitialiser("const unsigned int idx = ((y + j) * $(num_post)) + x;")});
-                            cg.generateCustomUpdate(*this, synEnv);
-
-                            // Write forward weight to shared memory
-                            synEnv.getStream() << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
+                            cg.generateCustomUpdate(
+                                *this, synEnv,
+                                [&transposeVarName, this](auto &env, const auto&)
+                                {        
+                                    // Write forward weight to shared memory
+                                    env.printLine("shTile[" + getThreadID(1) + " + j][" + getThreadID(0) + "] = $(" + transposeVarName + ");");
+                                });
                         }
                     }
                 }
             }
-            genSharedMemBarrier(env.getStream());
+            genSharedMemBarrier(groupEnv.getStream());
             {
                 CodeStream::Scope b(groupEnv.getStream());
                 groupEnv.getStream() << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
                 groupEnv.getStream() << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
                 groupEnv.getStream() << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                groupEnv.getStream() << "// If thread isn't off the 'bottom' edge of the output matrix" << std::endl;
-                groupEnv.getStream() << "if(x < " << groupEnv["num_pre"] << ")";
+                groupEnv.printLine("// If thread isn't off the 'bottom' edge of the output matrix");
+                groupEnv.print("if(x < $(num_pre))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     groupEnv.getStream() << "// Loop through output rows" << std::endl;
                     groupEnv.getStream() <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
                         CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.getStream() << "// If thread isn't off the 'right' edge of the output matrix" << std::endl;
-                        groupEnv.getStream() << "if((y + j) < group" << groupEnv["num_post"] << ")";
+                        groupEnv.printLine("// If thread isn't off the 'right' edge of the output matrix");
+                        groupEnv.print("if((y + j) < $(num_post))");
                         {
                             CodeStream::Scope b(groupEnv.getStream());
-                            groupEnv.getStream() << "group->" << transposeVarName << "Transpose[";
+                            groupEnv.print("$(" + transposeVarName + "_transpose)[");
                             if(cg.getArchetype().isBatched()) {
-                                groupEnv.getStream() << "batchOffset + ";
+                                groupEnv.print("$(_batch_offset) + ");
                             }
-                            groupEnv.getStream() << "((y + j) * " << groupEnv["num_pre"] << ") + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
+                            groupEnv.printLine("((y + j) * $(num_pre)) + x] = shTile[" + getThreadID(0) + "][" + getThreadID(1) + " + j];");
                         }
                     }
                 }

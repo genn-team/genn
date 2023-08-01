@@ -16,7 +16,8 @@ from pygenn import (create_current_source_model,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
                     init_sparse_connectivity,
-                    init_toeplitz_connectivity)
+                    init_toeplitz_connectivity,
+                    init_var)
 
 neuron_model = create_neuron_model(
     "neuron",
@@ -225,6 +226,49 @@ def test_custom_update(backend, precision):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
     print("DONE")
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_transpose(backend, precision):
+    model = GeNNModel(precision, "test_custom_update_transpose", backend=backend)
+    model.dt = 1.0
+    
+    # Create pre and postsynaptic populations
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
+    
+    # Create forward and transpose synapse populations between populations
+    forward_s_pop = model.add_synapse_population(
+        "ForwardSynapses", "DENSE", 0,
+        pre_n_pop, post_n_pop,
+        "StaticPulse", {}, {"g": init_var("Normal", {"mean": 0.0, "sd": 1.0})}, {}, {},
+        "DeltaCurr", {}, {})
+    transpose_s_pop = model.add_synapse_population(
+        "TransposeSynapses", "DENSE", 0,
+        post_n_pop, pre_n_pop,
+        "StaticPulse", {}, {"g": 0.0}, {}, {},
+        "DeltaCurr", {}, {})
+    
+    # Create custom update to calculate transpose
+    transpose_cu = model.add_custom_update(
+        "Transpose", "Transpose", "Transpose",
+        {}, {}, {"variable": create_wu_var_ref(forward_s_pop, "g", transpose_s_pop, "g")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Run custom update to calculate transpose
+    model.custom_update("Transpose")
+    
+    # Pull forward and transpose weights from device
+    forward_s_pop.pull_var_from_device("g")
+    transpose_s_pop.pull_var_from_device("g")
+    
+    # Reshape matrices to square and check transpose
+    forward_g = np.reshape(forward_s_pop.vars["g"].view, (100, 100))
+    transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (100, 100))
+    assert np.allclose(forward_g, np.transpose(transpose_g))
+
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_batch(backend, precision):
@@ -238,4 +282,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_update("cuda", types.Float)
+    test_custom_update_transpose("cuda", types.Float)
