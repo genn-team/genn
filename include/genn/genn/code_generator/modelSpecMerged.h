@@ -32,12 +32,7 @@ namespace GeNN::CodeGenerator
 class GENN_EXPORT ModelSpecMerged
 {
 public:
-    ModelSpecMerged(const ModelSpecInternal &model)
-    :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
-        m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
-        m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
-    {
-    }
+    ModelSpecMerged(const BackendBase &backend, const ModelSpecInternal &model);
     ModelSpecMerged(const ModelSpecMerged&) = delete;
     ModelSpecMerged &operator=(const ModelSpecMerged &) = delete;
 
@@ -347,9 +342,8 @@ private:
     }
 
     template<typename MergedGroup, typename D>
-    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
-                            const std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> &unmergedGroups,
-                            std::vector<MergedGroup> &mergedGroups, D getHashDigest, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    void createMergedGroups(const std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> &unmergedGroups,
+                            std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
@@ -362,48 +356,19 @@ private:
         }
 
         // Reserve final merged groups vector
-        mergedGroups.reserve(mergedGroups.size() + protoMergedGroups.size());
+        assert(mergedGroups.empty());
+        mergedGroups.reserve(protoMergedGroups.size());
 
-        // Loop through resultant merged groups
+        // Construct merged groups
         size_t i = 0;
-        for(const auto &p : protoMergedGroups) {
-            // Construct new merged group object
-            mergedGroups.emplace_back(i, m_Model.getTypeContext(), p.second);
-            
-            // Call generate function
-            generateGroup(mergedGroups.back());
-
-            // Assign memory spaces
-            mergedGroups.back().assignMemorySpaces(backend, memorySpaces);
-
-            // Loop through fields
-            for(const auto &f : mergedGroups.back().getFields()) {
-                // If field is dynamic, add record to merged EGPS
-                if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
-                    // Loop through groups within newly-created merged group
-                    for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
-                        const auto &g = mergedGroups.back().getGroups()[groupIndex];
-
-                        // Add reference to this group's variable to data structure
-                        // **NOTE** this works fine with EGP references because the function to
-                        // get their value will just return the name of the referenced EGP
-                        assert(std::get<0>(f).isPointer());
-                        m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
-                            std::piecewise_construct,
-                            std::forward_as_tuple(MergedGroup::name),
-                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
-                    }
-                }
-            }
-
-            i++;
+        for(auto &p : protoMergedGroups) {
+            mergedGroups.emplace_back(i++, m_Model.getTypeContext(), p.second);
         }
     }
 
-    template<typename MergedGroup, typename F, typename D, typename G>
-    void createMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
-                            const std::map<std::string, typename MergedGroup::GroupInternal> &groups, std::vector<MergedGroup> &mergedGroups,
-                            F filter, D getHashDigest, G generateGroup, bool host = false)
+    template<typename MergedGroup, typename F, typename D>
+    void createMergedGroups(const std::map<std::string, typename MergedGroup::GroupInternal> &groups, 
+                            std::vector<MergedGroup> &mergedGroups, F filter, D getHashDigest)
     {
         // Build temporary vector of references to groups that pass filter
         std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> unmergedGroups;
@@ -414,8 +379,61 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(backend, memorySpaces, unmergedGroups,
-                           mergedGroups, getHashDigest, generateGroup, host);
+        createMergedGroups(unmergedGroups, mergedGroups, getHashDigest);
+    }
+
+    template<typename MergedGroup>
+    void genMergedGroup(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                        MergedGroup &mergedGroup, size_t i, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Call generate function
+        generateGroup(mergedGroup);
+
+        // Assign memory spaces
+        mergedGroup.assignMemorySpaces(backend, memorySpaces);
+
+        // Loop through fields
+        for(const auto &f : mergedGroup.getFields()) {
+            // If field is dynamic, add record to merged EGPS
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+                // Loop through groups within newly-created merged group
+                for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
+                    const auto &g = mergedGroup.getGroups()[groupIndex];
+
+                    // Add reference to this group's variable to data structure
+                    // **NOTE** this works fine with EGP references because the function to
+                    // get their value will just return the name of the referenced EGP
+                    assert(std::get<0>(f).isPointer());
+                    m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(MergedGroup::name),
+                        std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
+                }
+            }
+        }
+    }
+
+    template<typename MergedGroup>
+    void genMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                         std::vector<MergedGroup> &mergedGroups, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Loop through merged groups and generate
+        for(size_t i = 0; i < mergedGroups.size(); i++) {
+            genMergedGroup(backend, memorySpaces, mergedGroups[i], i, generateGroup, host);
+        }
+    }
+
+    template<typename MergedGroup>
+    void genMergedCustomUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                                     std::vector<MergedGroup> &mergedGroups, const std::string &updateGroupName,
+                                     GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Loop through merged groups and generate if they are in specified update group
+        for(size_t i = 0; i < mergedGroups.size(); i++) {
+            if(mergedGroups[i].getArchetype().getUpdateGroupName() == updateGroupName) {
+                genMergedGroup(backend, memorySpaces, mergedGroups[i], i, generateGroup, host);
+            }
+        }
     }
 
     //--------------------------------------------------------------------------

@@ -455,7 +455,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         Backend backend(blockSize, preferences, deviceID);
 
         // Create merged model
-        ModelSpecMerged modelMerged(model);
+        ModelSpecMerged modelMerged(backend, model);
 
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
