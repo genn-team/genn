@@ -924,13 +924,13 @@ class CustomConnectivityUpdateMixin(GroupMixin):
             var_loc = self.get_var_location(v.name) 
             if var_loc & VarLocation.HOST:
                 # Get view
-                size = self._synapse_group.weight_update_var_size
+                size = self.synapse_group.weight_update_var_size
                 resolved_type = var_data.type.resolve(self._model.type_context)
                 var_data.view = self._assign_ext_ptr_array(
                     v.name, size, resolved_type)
 
                 # Initialise variable if necessary
-                self._synapse_group._init_wum_var(var_data, 1)
+                self.synapse_group._init_wum_var(var_data, 1)
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
