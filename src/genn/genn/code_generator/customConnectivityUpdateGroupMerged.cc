@@ -368,10 +368,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                           },
                           [batchSize, &backend, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
-                              EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
-                              bodyEnv.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
+                              env.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
                               {
-                                  CodeStream::Scope b(bodyEnv.getStream());
+                                  CodeStream::Scope b(env.getStream());
+                                  EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
 
                                   // Add postsynaptic and synaptic indices
                                   bodyEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[$(_row_start_idx) + j]");
