@@ -465,7 +465,7 @@ class SynapseGroupMixin(GroupMixin):
 
         if self.matrix_type & SynapseMatrixConnectivity.DENSE:
             return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixConnectivity.KERNEL:
+        elif self.matrix_type & SynapseMatrixWeight.KERNEL:
             return np.copy(var_view)
         elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             max_rl = self.max_connections
