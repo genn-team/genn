@@ -5,6 +5,8 @@ from pygenn import types
 from pygenn import GeNNModel
 from pygenn.genn import VarAccess, VarAccessMode
 
+from bitarray import bitarray
+from bitarray.util import hex2ba
 from pygenn import (create_custom_connectivity_update_model,
                     create_neuron_model,
                     create_weight_update_model,
@@ -122,6 +124,45 @@ add_synapse_model = create_custom_connectivity_update_model(
     add_synapse(id_pre, weight, delay, weight);
     """)
 
+def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[]):
+    sg.pull_connectivity_from_device()
+
+    # Pull all variables from device and get numpy array of values
+    var_values = []
+    for pop, var_name, _ in var_checks:
+        pop.pull_var_from_device(var_name)
+        var_values.append(pop.get_var_values(var_name))
+
+    pre_inds = sg.get_sparse_pre_inds()
+    post_inds = sg.get_sparse_post_inds()
+
+    # Loop through rows
+    row_lengths = np.bincount(pre_inds, minlength=sg.src.size)
+    for i in range(sg.src.size):
+        # Check row lengths
+        assert row_lengths[i] == get_row_length_fn(i)
+
+        # Build mask of row
+        row_mask = (pre_inds == i)
+        row_inds = post_inds[row_mask]
+
+        # Build bitarray of row connectivity
+        # **YUCK** converting to list
+        row_bits = bitarray(sg.trg.size)
+        row_bits.setall(0)
+        row_bits[list(row_inds)] = 1
+        
+        # Check connectivity
+        assert row_bits == get_connectivity_fn(i)
+
+        # Loop through variables and check values match chosen pattern
+        for (pop, var_name, transpose), val in zip(var_checks, var_values):
+            correct = ((row_inds * 64.0) + i if transpose 
+                       else (i * 64.0) + row_inds)
+            assert np.allclose(val[row_mask], correct)
+
+
+
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_connectivity_update(backend, precision):
@@ -156,6 +197,36 @@ def test_custom_connectivity_update(backend, precision):
     # Build model and load
     model.build()
     model.load()
+
+    # Check initial connectivity
+    # **TODO** check a variable on remove_synapse_ccu
+    _check_connectivity(s_pop_1, 
+                        lambda i: 64 - i,
+                        lambda i: hex2ba("FFFFFFFFFFFFFFFF") >> i,
+                        [(s_pop_1, "g", False), 
+                         (s_pop_1, "d", True)])
+    
+    # Run custom update to remove synapses on diagonal
+    model.custom_update("RemoveSynapse")
+
+    # Check resultant connectivity
+    # **TODO** check a variable on remove_synapse_ccu
+    _check_connectivity(s_pop_1, 
+                        lambda i: 0 if i > 63 else (63 - i),
+                        lambda i: hex2ba("7FFFFFFFFFFFFFFF") >> i,
+                        [(s_pop_1, "g", False), 
+                         (s_pop_1, "d", True)])
+    
+    # Run custom update to add diagonal synapses back again
+    model.custom_update("AddSynapse")
+
+    # Check resultant connectivity
+    # **TODO** check a variable on remove_synapse_ccu
+    _check_connectivity(s_pop_1, 
+                        lambda i: 64 - i,
+                        lambda i: hex2ba("FFFFFFFFFFFFFFFF") >> i,
+                        [(s_pop_1, "g", False), 
+                         (s_pop_1, "d", True)])
 
 if __name__ == '__main__':
     test_custom_connectivity_update("single_threaded_cpu", types.Float)
