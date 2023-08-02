@@ -390,7 +390,7 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                  [](const auto &cg, size_t) 
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons());
                  });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
                  [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
