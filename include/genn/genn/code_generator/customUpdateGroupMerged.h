@@ -93,7 +93,7 @@ public:
 
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
     {
-        generateCustomUpdateBase(backend, env, [](auto &env, const auto&){});
+        generateCustomUpdateBase(backend, env, [](auto&, const auto&){});
     }
 
     //----------------------------------------------------------------------------
