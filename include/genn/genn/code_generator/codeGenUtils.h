@@ -31,6 +31,10 @@ namespace GeNN::CodeGenerator
 {
 class EnvironmentExternalBase;
 }
+namespace GeNN::Transpiler
+{
+class ErrorHandler;
+}
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator
@@ -61,14 +65,15 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
 /*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing an expression
  */
  //--------------------------------------------------------------------------
-GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler);
+GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                                       EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler);
 
 //--------------------------------------------------------------------------
 /*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing a statemebt
  */
  //--------------------------------------------------------------------------
 GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
-                                       Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
+                                       Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
 GENN_EXPORT std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env);

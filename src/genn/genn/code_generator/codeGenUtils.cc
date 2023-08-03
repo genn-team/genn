@@ -29,6 +29,7 @@
 #include "code_generator/groupMerged.h"
 
 // GeNN transpiler includes
+#include "transpiler/errorHandler.h"
 #include "transpiler/parser.h"
 #include "transpiler/prettyPrinter.h"
 
@@ -70,31 +71,44 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
     return newCode;
 }
 //----------------------------------------------------------------------------
-void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, Transpiler::ErrorHandlerBase &errorHandler)
+void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                           EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
 {
     using namespace Transpiler;
 
     // Parse tokens as expression
     auto expression = Parser::parseExpression(tokens, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Parse error " + errorHandler.getContext());
+    }
 
     // Resolve types
     auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Type check error " + errorHandler.getContext());
+    }
 
     // Pretty print
     PrettyPrinter::print(expression, env, typeContext, resolvedTypes);
 }
  //--------------------------------------------------------------------------
 void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
-                           Transpiler::ErrorHandlerBase &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                           Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                            Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
     using namespace Transpiler;
 
     // Parse tokens as block item list (function body)
     auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Parse error " + errorHandler.getContext());
+    }
 
     // Resolve types
-    auto resolvedTypes= TypeChecker::typeCheck(updateStatements, env, typeContext, errorHandler, forEachSynapseTypeCheckHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, env, typeContext, errorHandler, forEachSynapseTypeCheckHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Type check error " + errorHandler.getContext());
+    }
 
     // Pretty print
     PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);

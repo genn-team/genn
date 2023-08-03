@@ -41,6 +41,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     bool hasError() const { return m_Error; }
+    const std::string &getContext() const{ return m_Context; }
 
 private:
     //------------------------------------------------------------------------
