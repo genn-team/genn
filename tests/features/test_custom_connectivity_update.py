@@ -66,32 +66,34 @@ remove_synapse_model = create_custom_connectivity_update_model(
     }
     """)
 
-"""
-class RemoveSynapseHostEGPUpdate : public CustomConnectivityUpdateModels::Base
-{
-public:
-    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostEGPUpdate, 0, 0, 0, 0, 0, 0, 0);
+remove_synapse_host_egp_model = create_custom_connectivity_update_model(
+    "remove_synapse_host_egp",
+    extra_global_params=[("d", "uint32_t*")],
+    row_update_code=
+    """
+    const unsigned int wordsPerRow = (num_post + 31) / 32;
+    for_each_synapse {
+        if(d[(wordsPerRow * id_pre) + (id_post / 32)] & (1 << (id_post % 32))) {
+            remove_synapse();
+            break;
+        }
+    }
+    """,
+    host_update_code=
+    """
+    const unsigned int wordsPerRow = (num_post + 31) / 32;
+    for(unsigned int i = 0; i < wordsPerRow * num_pre; i++) {
+        d[i] = 0;
+    }
     
-    SET_EXTRA_GLOBAL_PARAMS({{"d", "uint32_t*"}});
-    SET_ROW_UPDATE_CODE(
-        "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(d)[(wordsPerRow * $(id_pre)) + ($(id_post) / 32)] & (1 << ($(id_post) % 32))) {\n"
-        "       $(remove_synapse);\n"
-        "   }\n"
-        "});\n");
-    SET_HOST_UPDATE_CODE(
-        "const unsigned int wordsPerRow = ($(num_post) + 31) / 32;\n"
-        "memset($(d), 0, wordsPerRow * $(num_pre) * sizeof(uint32_t));\n"
-        "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
-        "   uint32_t *dRow = &$(d)[wordsPerRow * i];\n"
-        "   dRow[i / 32] |= (1 << (i % 32));\n"
-        "}\n"
-        "$(pushdToDevice, wordsPerRow * $(num_pre));\n");
-};
-IMPLEMENT_MODEL(RemoveSynapseHostEGPUpdate);
-
+    for(unsigned int i = 0; i < num_pre; i++) {
+        uint32_t *dRow = &d[wordsPerRow * i];
+        dRow[i / 32] |= (1 << (i % 32));
+    }
+    pushdToDevice(wordsPerRow * num_pre);
+    """)
+    
+"""
 class RemoveSynapseHostVarUpdate : public CustomConnectivityUpdateModels::Base
 {
 public:
@@ -172,7 +174,7 @@ def test_custom_connectivity_update(backend, precision):
     # Create pre and postsynaptic populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 64, "SpikeSource", {}, {}); 
     post_n_pop = model.add_neuron_population("PostNeurons", 64, "SpikeSource", {}, {}); 
-    
+
     # Create synapse groups
     s_pop_1 = model.add_synapse_population(
         "Syn1", "SPARSE", 0,
@@ -180,13 +182,29 @@ def test_custom_connectivity_update(backend, precision):
         weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity(triangle_connect_init_snippet))
-    
+
+    s_pop_2 = model.add_synapse_population(
+        "Syn2", "SPARSE", 0,
+        pre_n_pop, post_n_pop,
+        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(triangle_connect_init_snippet))
+
     # Create custom connectivity updates
     remove_synapse_ccu = model.add_custom_connectivity_update(
         "RemoveSynapse", "RemoveSynapse", s_pop_1,
         remove_synapse_model,
         {}, {"a": init_var(weight_init_snippet)}, {}, {}, 
         {}, {}, {})
+    
+    remove_synapse_host_egp_ccu = model.add_custom_connectivity_update(
+        "RemoveSynapseHostEGP", "RemoveSynapse", s_pop_2,
+        remove_synapse_host_egp_model,
+        {}, {}, {}, {}, 
+        {}, {}, {})
+    num_words = post_n_pop.size * ((pre_n_pop.size + 31) // 32)
+    remove_synapse_host_egp_ccu.extra_global_params["d"].set_values(
+        np.empty(num_words, dtype=np.uint32))
 
     add_synapse_ccu = model.add_custom_connectivity_update(
         "AddSynapse", "AddSynapse", s_pop_1,
@@ -197,26 +215,26 @@ def test_custom_connectivity_update(backend, precision):
     # Build model and load
     model.build()
     model.load()
-
-    # Check initial connectivity
+    
     # **TODO** check a variable on remove_synapse_ccu
-    _check_connectivity(s_pop_1, 
-                        lambda i: 64 - i,
-                        lambda i: hex2ba("FFFFFFFFFFFFFFFF") >> i,
-                        [(s_pop_1, "g", False), 
-                         (s_pop_1, "d", True)])
+    samples = {s_pop_1: [(s_pop_1, "g", False), (s_pop_1, "d", True)],
+               s_pop_2: [(s_pop_2, "g", False), (s_pop_2, "d", True)]}
+                
+    # Check initial connectivity
+    for pop, var_checks in samples.items():
+        _check_connectivity(pop, lambda i: 64 - i,
+                            lambda i: hex2ba("FFFFFFFFFFFFFFFF") >> i,
+                            var_checks)
     
     # Run custom update to remove synapses on diagonal
     model.custom_update("RemoveSynapse")
 
     # Check resultant connectivity
-    # **TODO** check a variable on remove_synapse_ccu
-    _check_connectivity(s_pop_1, 
-                        lambda i: 0 if i > 63 else (63 - i),
-                        lambda i: hex2ba("7FFFFFFFFFFFFFFF") >> i,
-                        [(s_pop_1, "g", False), 
-                         (s_pop_1, "d", True)])
-    
+    for pop, var_checks in samples.items():
+        _check_connectivity(pop, lambda i: 0 if i > 63 else (63 - i),
+                            lambda i: hex2ba("7FFFFFFFFFFFFFFF") >> i,
+                            var_checks)
+
     # Run custom update to add diagonal synapses back again
     model.custom_update("AddSynapse")
 
