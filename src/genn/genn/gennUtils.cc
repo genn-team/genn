@@ -88,7 +88,7 @@ Type::ResolvedType parseNumericType(const std::string &type, const Type::TypeCon
     SingleLineErrorHandler errorHandler;
     const auto tokens = Scanner::scanSource(type, errorHandler);
     if(errorHandler.hasError()) {
-        throw std::runtime_error("Error scanning type '" + std::string{type} + "'");
+        throw std::runtime_error("Error scanning numeric type '" + std::string{type} + "'");
     }
 
     // Parse type numeric type
@@ -96,7 +96,7 @@ Type::ResolvedType parseNumericType(const std::string &type, const Type::TypeCon
 
     // If an error was encountered while scanning or parsing, throw exception
     if (errorHandler.hasError()) {
-        throw std::runtime_error("Error parsing type '" + std::string{type} + "'");
+        throw std::runtime_error("Error parsing numeric type '" + std::string{type} + "'");
     }
 
     return resolvedType;
