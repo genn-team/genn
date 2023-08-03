@@ -960,31 +960,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 // ----------------------------------------------------------------------------
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
-    // Create environment for group
-    EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(env, *this);
-
-    /* addField(Uint32, "rowStride",
-             [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-
-    addField(Uint32, "numSrcNeurons",
-             [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    addField(Uint32, "numTrgNeurons",
-             [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
-
-    addField(Uint32.createPointer(), "rowLength", 
-             [&backend](const auto &cg, size_t) 
-             { 
-                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
-             });
-    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
-             [&backend](const auto &cg, size_t) 
-             { 
-                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return backend.getDeviceVarPrefix() + "ind" + sg->getName();
-             });*/
-
-    genInitWUVarCode<CustomUpdateVarAdapter>(backend, groupEnv, *this, "$(num_pre) * $(_row_stride)",
+    genInitWUVarCode<CustomUpdateVarAdapter>(backend, env, *this, "$(num_pre) * $(_row_stride)",
                                              getArchetype().isBatched() ? batchSize : 1,
                                              [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                                              {
@@ -1087,32 +1063,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
-    // Create environment for group
-    EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(env, *this);
-
-    groupEnv.addField(Type::Uint32.addConst(), "num_pre",
-                      Type::Uint32, "numSrcNeurons", 
-                      [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    groupEnv.addField(Type::Uint32.addConst(), "num_post",
-                      Type::Uint32, "numTrgNeurons", 
-                      [](const auto &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
-    groupEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
-                      [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
-                        
-    groupEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                      [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
-                      {
-                          return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName();
-                      });
-    groupEnv.addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "_ind", "ind",
-                      [&backend](const auto &cg, size_t)
-                      {
-                          return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName();
-                      });
-
     // Initialise custom connectivity update variables
     genInitWUVarCode<CustomConnectivityUpdateVarAdapter>(
-        backend, groupEnv, *this, "$(num_pre) * $(_row_stride", 1,
+        backend, env, *this, "$(num_pre) * $(_row_stride", 1,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler);
