@@ -933,11 +933,22 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
-            EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(env, cg);
-            buildStandardEnvironment(groupEnv);
+
+            // **YUCK** add an environment with a hidden copy of ID so we 
+            // can overwrite ID deeper in here without losing access to original
+            EnvironmentExternal idEnv(env);
+            idEnv.add(Type::Uint32.addConst(), "_id", "$(id)");
+
+            EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(idEnv, cg);
 
             // If update is a batch reduction
             if(cg.getArchetype().isBatchReduction()) {
+                // **YUCK** add size here as it's needed for if statement but 
+                // other bits of standard environment requires batch to be calculated
+                groupEnv.addField(Type::Uint32.addConst(), "size",
+                                  Type::Uint32, "size", 
+                                  [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+
                 groupEnv.printLine("// only do this for existing neurons");
                 groupEnv.print("if($(id) < $(size)");
                 {
@@ -952,16 +963,18 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     groupEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
                     {
                         CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                        EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
+                        batchEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                        buildStandardEnvironment(batchEnv, false);
 
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, groupEnv,
+                            *this, batchEnv,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
                                 for(const auto &r : reductionTargets) {
-                                    env.getStream() << getReductionOperation("_lr" + r.name, "_l" + r.name, r.access, r.type) << ";" << std::endl;
+                                    env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
                                 }
                             });
 
@@ -970,7 +983,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
+                        groupEnv.printLine("group->" + r.name + "[" + r.index + "] = _lr" + r.name + ";");
                     }
                 }
             }
@@ -986,22 +999,25 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     groupEnv.printLine("const unsigned int batch = $(id) / 32;");
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
 
+                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
+                    buildStandardEnvironment(batchEnv);
+
                     // Initialise reduction targets
-                    const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), cg);
+                    const auto reductionTargets = genInitReductionTargets(batchEnv.getStream(), cg);
 
                     // Loop through warps of data
                     // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
-                    // if this isn't the case (TF uses a threshold of 1024), we should do something smarter
-                    groupEnv.print("for(unsigned int idx = lane; idx < $(size); idx += 32)");
+                    // if this isn't thsizee case (TF uses a threshold of 1024), we should do something smarter
+                    batchEnv.print("for(unsigned int idx = lane; idx < $(size); idx += 32)");
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
+                        CodeStream::Scope b(batchEnv.getStream());
 
                         // Re-substitute id with loop index
-                        groupEnv.add(Type::Uint32.addConst(), "id", "idx");
+                        batchEnv.add(Type::Uint32.addConst(), "id", "idx");
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, groupEnv,
+                            *this, batchEnv,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1015,17 +1031,17 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     // **YUCK** CUDA-specific
                     for (unsigned int i = 16; i > 0; i /= 2) {
                         for (const auto &r : reductionTargets) {
-                            groupEnv.printLine(getReductionOperation("_lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, _lr" + r.name + ", " + std::to_string(i) + ")",
+                            batchEnv.printLine(getReductionOperation("_lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, _lr" + r.name + ", " + std::to_string(i) + ")",
                                                                      r.access, r.type) + ";");
                         }
                     }
 
                     // In first lane, loop through reduction targets and write reduced value back to memory
-                    groupEnv.getStream() << "if(lane == 0)";
+                    batchEnv.getStream() << "if(lane == 0)";
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
+                        CodeStream::Scope b(batchEnv.getStream());
                         for (const auto &r : reductionTargets) {
-                            groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
+                            batchEnv.printLine("group->" + r.name + "[" + r.index + "] = _lr" + r.name + ";");
                         }
                     }
                 }
@@ -1033,18 +1049,27 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             // Otherwise, if this update isn't per-neuron
             else if (!cg.getArchetype().isPerNeuron()) {
                 // Use local ID for batch and always use zero for ID
-                groupEnv.add(Type::Uint32.addConst(), "batch", "lid");
+                groupEnv.add(Type::Uint32.addConst(), "batch", "$(_id)");
                 groupEnv.add(Type::Uint32.addConst(), "id", "0");
 
                 groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
                 groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    cg.generateCustomUpdate(*this, groupEnv, [](auto&, auto&){});
+                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
+                    buildStandardEnvironment(batchEnv);
+
+                    cg.generateCustomUpdate(*this, batchEnv, [](auto&, auto&){});
                 }
             }
             // Otherwise
             else {
+                // **YUCK** add size here as it's needed for calculation of paddedSize
+                // but other bits of standard environment requires batch to be calculated
+                groupEnv.addField(Type::Uint32.addConst(), "size",
+                                  Type::Uint32, "size", 
+                                  [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+
                 if(cg.getArchetype().isBatched()) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
@@ -1053,20 +1078,23 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = lid % paddedSize;")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(_id) % paddedSize;")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = lid / paddedSize;")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(_id) / paddedSize;")});
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
                     groupEnv.add(Type::Uint32.addConst(), "batch", "0");
                 }
 
-                groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
-                groupEnv.print("if($(id) < $(size))");
+                EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
+                buildStandardEnvironment(batchEnv, false);
+                
+                batchEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                batchEnv.print("if($(id) < $(size))");
                 {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    cg.generateCustomUpdate(*this, groupEnv, [](auto&, auto&){});
+                    CodeStream::Scope b(batchEnv.getStream());
+                    cg.generateCustomUpdate(*this, batchEnv, [](auto&, auto&){});
                 }
             }
         });
@@ -1085,9 +1113,9 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(env, cg);
-            buildStandardEnvironment(groupEnv);
 
             // Calculate size of each batch to update
+            // **TODO** why isn't this in standard environment?
             if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                 // Loop through kernel dimensions and multiply together
                 groupEnv.getStream() << "const unsigned int size = ";
@@ -1117,6 +1145,8 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                                  {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(id) % paddedSize;")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
                                  {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(id) / paddedSize;")});
+
+                    // **TODO** why isn't this in standard environment?
                     groupEnv.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
                                  {groupEnv.addInitialiser("const unsigned int batchOffset = size * $(batch);")});
                 }
@@ -1126,11 +1156,14 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 }
             }
 
+            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> batchEnv(groupEnv, cg);
+            buildStandardEnvironment(batchEnv);
+
             // if this isn't a padding thread
-            groupEnv.print("if ($(id) < size)");
+            batchEnv.print("if ($(id) < size)");
             {
-                CodeStream::Scope b(groupEnv.getStream());
-                EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, cg);
+                CodeStream::Scope b(batchEnv.getStream());
+                EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(batchEnv, cg);
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                     synEnv.add(Type::Uint32.addConst(), "id_kernel", "$(id)");
@@ -1191,7 +1224,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        synEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                        synEnv.printLine("group->" + r.name + "[" + r.index + "] = lr" + r.name + ";");
                     }
                 }
 
@@ -1214,7 +1247,6 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
         [blockSize, this](EnvironmentExternalBase &env, CustomUpdateTransposeWUGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(env, cg);
-            buildStandardEnvironment(groupEnv);
 
             // Add field for transpose field and get its name
             const std::string transposeVarName = cg.addTransposeField(*this, groupEnv);
@@ -1246,6 +1278,8 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                 groupEnv.getStream() << "const unsigned int block = " << getBlockID(0) << " - blockStart;" << std::endl;
                 groupEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
+
+            buildStandardEnvironment(groupEnv);
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here

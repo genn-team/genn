@@ -82,9 +82,9 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
         if(batchSize > 1) {
             // Calculate batched delay slots
             env.add(Uint32.addConst(), "_read_batch_delay_slot", "readBatchDelaySlot",
-                    {env.addInitialiser("const unsigned int readBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_read_delay_slot);")});
+                    {env.addInitialiser("const unsigned int readBatchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_read_delay_slot);")});
             env.add(Uint32.addConst(), "_write_batch_delay_slot", "writeBatchDelaySlot",
-                    {env.addInitialiser("const unsigned int writeBatchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_write_delay_slot);")});
+                    {env.addInitialiser("const unsigned int writeBatchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_write_delay_slot);")});
 
             // Calculate current batch offset
             env.add(Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
@@ -262,7 +262,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 
         if(batchSize > 1) {
             env.add(Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
-                    {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + (batch * " + std::to_string(numTrgDelaySlots) + ");")});
+                    {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + ($(batch) * " + std::to_string(numTrgDelaySlots) + ");")});
             env.add(Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
                     {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
@@ -282,16 +282,19 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, bool addSize = true)
 {
     // Add size field
-    env.addField(Type::Uint32, "size", "size", 
-                 [](const auto &c, size_t) { return std::to_string(c.getSize()); });
-    
+    if(addSize) {
+        env.addField(Type::Uint32.addConst(), "size",
+                    Type::Uint32, "size", 
+                    [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+    }
+
     // If batching is enabled, calculate batch offset
     if(env.getGroup().getArchetype().isBatched()) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
-                {env.addInitialiser("const unsigned int batchOffset = $(size) * batch;")});
+                {env.addInitialiser("const unsigned int batchOffset = $(size) * $(batch);")});
     }
             
     // If axonal delays are required
@@ -313,7 +316,7 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
         if(env.getGroup().getArchetype().isBatched()) {
             const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
             env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
-                    {env.addInitialiser("const unsigned int batchDelaySlot = (batch * " + numDelaySlotsStr + ") + $(_delay_slot);")});
+                    {env.addInitialiser("const unsigned int batchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_delay_slot);")});
 
             // Calculate current batch offset
             env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
@@ -476,9 +479,9 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDe
     buildStandardSynapseEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, bool addSize) const
 {
-    buildStandardCustomUpdateEnvironment(*this, env);
+    buildStandardCustomUpdateEnvironment(*this, env, addSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const

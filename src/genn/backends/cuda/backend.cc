@@ -335,8 +335,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
             if(model.getBatchSize() > 1) {
-                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
-                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                            {funcEnv.addInitialiser("const unsigned int batch = blockIdx.y;")});
             }
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
@@ -374,8 +374,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     writePreciseLiteral(model.getDT(), model.getTimePrecision()));
         funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
         if(model.getBatchSize() > 1) {
-            funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
-            funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+            funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                        {funcEnv.addInitialiser("const unsigned int batch = blockIdx.y;")});
         }
         else {
             funcEnv.add(Type::Uint32.addConst(), "batch", "0");
@@ -491,8 +491,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
-                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
-                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                            {funcEnv.addInitialiser("const unsigned int batch = blockIdx.y;")});
             }
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
@@ -519,8 +519,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
-                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
-                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                            {funcEnv.addInitialiser("const unsigned int batch = blockIdx.y;")});
             }
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");
@@ -544,8 +544,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
-                funcEnv.getStream() << "const unsigned int batch = blockIdx.y;" << std::endl;
-                funcEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                            {funcEnv.addInitialiser("const unsigned int batch = blockIdx.y;")});
             }
             else {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "0");

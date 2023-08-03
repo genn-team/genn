@@ -603,7 +603,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                                 // Write back reductions
                                 for (const auto &r : reductionTargets) {
-                                    groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
+                                    groupEnv.printLine("group->" + r.name + "[" + r.index + "] = _lr" + r.name + ";");
                                 }
                             }
                             else {
