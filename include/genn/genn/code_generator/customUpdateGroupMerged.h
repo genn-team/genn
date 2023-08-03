@@ -29,7 +29,8 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                              BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
@@ -63,12 +64,12 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                              BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
+
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
-protected:
-    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env,
-                                  BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose);
 };
 
 // ----------------------------------------------------------------------------
@@ -89,11 +90,6 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
-    {
-        generateCustomUpdateBase(backend, env, [](auto&, const auto&){});
     }
 
     //----------------------------------------------------------------------------
@@ -120,12 +116,6 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
-                              BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose)
-    {
-       generateCustomUpdateBase(backend, env, genTranspose);
     }
 
     std::string addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);

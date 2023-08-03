@@ -44,7 +44,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                   BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
@@ -76,6 +77,9 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
     prettyPrintStatements(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
+
+    // Generate postamble for e.g. reduction logic
+    genPostamble(varRefEnv, *this);
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
@@ -165,20 +169,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
-{
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
-}
-//----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
-{
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
-}
-//----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &backend, EnvironmentExternalBase &env,
-                                                             BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genTranspose)
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                         BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
@@ -210,8 +202,20 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdateBase(const BackendBase &
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
     prettyPrintStatements(getArchetype().getUpdateCodeTokens(), getTypeContext(), varRefEnv, errorHandler);
 
-    // Generate transpose logic
-    genTranspose(varRefEnv, *this);
+    // Generate postamble for e.g. reduction or transpose logic
+    genPostamble(varRefEnv, *this);
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
 }
 
 // ----------------------------------------------------------------------------

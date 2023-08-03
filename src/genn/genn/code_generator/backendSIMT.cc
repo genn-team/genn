@@ -955,17 +955,22 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                         groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
 
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, groupEnv);
+                        cg.generateCustomUpdate(
+                            *this, groupEnv,
+                            [&reductionTargets, this](auto &env, const auto&)
+                            {
+                                // Loop through reduction targets and generate reduction
+                                for(const auto &r : reductionTargets) {
+                                    env.getStream() << getReductionOperation("_lr" + r.name, "_l" + r.name, r.access, r.type) << ";" << std::endl;
+                                }
+                            });
 
-                        // Loop through reduction targets and generate reduction
-                        for(const auto &r : reductionTargets) {
-                            groupEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
-                        }
+                        
                     }
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                        groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
                     }
                 }
             }
@@ -995,20 +1000,23 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                         groupEnv.add(Type::Uint32.addConst(), "id", "idx");
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
-                        cg.generateCustomUpdate(*this, groupEnv);
-
-                        // Loop through reduction targets and generate reduction
-                        for (const auto &r : reductionTargets) {
-                            groupEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
-                        }
+                        cg.generateCustomUpdate(
+                            *this, groupEnv,
+                            [&reductionTargets, this](auto &env, const auto&)
+                            {
+                                // Loop through reduction targets and generate reduction
+                                for(const auto &r : reductionTargets) {
+                                    env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
+                                }
+                            });
                     }
 
                     // Perform warp reduction into first lane
                     // **YUCK** CUDA-specific
                     for (unsigned int i = 16; i > 0; i /= 2) {
                         for (const auto &r : reductionTargets) {
-                            groupEnv.getStream() << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
-                                                                          r.access, r.type) << ";" << std::endl;
+                            groupEnv.printLine(getReductionOperation("_lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, _lr" + r.name + ", " + std::to_string(i) + ")",
+                                                                     r.access, r.type) + ";");
                         }
                     }
 
@@ -1017,7 +1025,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     {
                         CodeStream::Scope b(groupEnv.getStream());
                         for (const auto &r : reductionTargets) {
-                            groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                            groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
                         }
                     }
                 }
@@ -1032,7 +1040,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << (cg.getArchetype().isBatched() ? batchSize : 1) << ")";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    cg.generateCustomUpdate(*this, groupEnv);
+                    cg.generateCustomUpdate(*this, groupEnv, [](auto&, auto&){});
                 }
             }
             // Otherwise
@@ -1058,7 +1066,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 groupEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    cg.generateCustomUpdate(*this, groupEnv);
+                    cg.generateCustomUpdate(*this, groupEnv, [](auto&, auto&){});
                 }
             }
         });
@@ -1163,15 +1171,21 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     synEnv.add(Type::Uint32.addConst(), "batch", "batch");
                 }
 
-                cg.generateCustomUpdate(*this, synEnv);
+                cg.generateCustomUpdate(
+                    *this, synEnv,
+                    [&reductionTargets, this](auto &env, auto &cg)
+                    {
+                         // If this is a reduction
+                        if(cg.getArchetype().isBatchReduction()) {
+                            // Loop through reduction targets and generate reduction
+                            for(const auto &r : reductionTargets) {
+                                env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
+                            }
+                        }
+                    });
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
-                    // Loop through reduction targets and generate reduction
-                    for(const auto &r : reductionTargets) {
-                        synEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
-                    }
-
                     // End for loop through batches
                     synEnv.getStream() << CodeStream::CB(1);
 

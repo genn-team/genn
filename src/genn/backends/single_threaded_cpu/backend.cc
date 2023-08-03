@@ -581,33 +581,29 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                             if (c.getArchetype().isNeuronReduction()) {
                                 // Initialise reduction targets
-                                // **TODO** these should be provided with some sort of caching mechanism
                                 const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), c);
 
                                 // Loop through group members
                                 groupEnv.print("for(unsigned int i = 0; i < $(size); i++)");
-                                EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
-                                if (c.getArchetype().isPerNeuron()) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
-                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
-                                }
-                                else {
-                                    memberEnv.add(Type::Uint32.addConst(), "id", "0");
-                                }
                                 {
-                                    CodeStream::Scope b(memberEnv.getStream());
-                                    c.generateCustomUpdate(*this, memberEnv);
+                                    CodeStream::Scope b(groupEnv.getStream());
+                                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
 
-                                    // Loop through reduction targets and generate reduction
-                                    // **TODO** reduction should be automatically implemented by transpiler 
-                                    for (const auto &r : reductionTargets) {
-                                        memberEnv.getStream() << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
-                                    }
+                                    c.generateCustomUpdate(
+                                        *this, memberEnv,
+                                        [&reductionTargets, this](auto &env, const auto&)
+                                        {        
+                                            // Loop through reduction targets and generate reduction
+                                            for (const auto &r : reductionTargets) {
+                                                env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
+                                            }
+                                        });
                                 }
 
                                 // Write back reductions
                                 for (const auto &r : reductionTargets) {
-                                    groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                                    groupEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
                                 }
                             }
                             else {
@@ -624,11 +620,14 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, memberEnv);
-
-                                    // Write back reductions
-                                    // **NOTE** this is just to handle batch reductions with batch size 1
-                                    genWriteBackReductions(memberEnv, c, "id");
+                                    c.generateCustomUpdate(
+                                        *this, memberEnv,
+                                        [this](auto &env, auto &c)
+                                        {        
+                                            // Write back reductions
+                                            // **NOTE** this is just to handle batch reductions with batch size 1
+                                            genWriteBackReductions(env, c, "id");
+                                        });
                                 }
                             }
                         }
@@ -659,7 +658,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                    [&c, this](EnvironmentExternalBase &env)
                                                    {
                                                        // Call custom update handler
-                                                       c.generateCustomUpdate(*this, env);
+                                                       c.generateCustomUpdate(*this, env, [](auto&, auto&){});
 
                                                        // Write back reductions
                                                        genWriteBackReductions(env, c, "id_syn");
@@ -706,7 +705,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         }
 
                                         // Generate custom update
-                                        c.generateCustomUpdate(*this, synEnv);
+                                        c.generateCustomUpdate(*this, synEnv, [](auto&, auto&){});
 
                                         // Write back reductions
                                         genWriteBackReductions(synEnv, c, "id_syn");
@@ -1358,7 +1357,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
 {
 }
 //--------------------------------------------------------------------------
