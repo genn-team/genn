@@ -87,7 +87,7 @@ remove_synapse_host_egp_model = create_custom_connectivity_update_model(
     }
     
     for(unsigned int i = 0; i < num_pre; i++) {
-        uint32_t *dRow = &d[wordsPerRow * i];
+        uint32_t *dRow = d + (wordsPerRow * i);
         dRow[i / 32] |= (1 << (i % 32));
     }
     pushdToDevice(wordsPerRow * num_pre);
