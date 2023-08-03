@@ -276,8 +276,8 @@ def test_custom_update_transpose(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda", "single_threaded_cpu"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_neuron_reduce_batch_one(backend, precision):
-    model = GeNNModel(precision, "test_custom_neuron_reduce_batch_one", backend=backend)
+def test_custom_neuron_reduce(backend, precision):
+    model = GeNNModel(precision, "test_custom_neuron_reduce", backend=backend)
     model.dt = 1.0
     
     # Create a neuron model with two state variables
@@ -316,9 +316,48 @@ def test_custom_neuron_reduce_batch_one(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_neuron_reduce_batch(backend, precision):
+    model = GeNNModel(precision, "test_custom_neuron_reduce_batch", backend=backend)
+    model.dt = 1.0
+    model.batch_size = 5
+    
+    # Create a neuron model with two state variables
+    x = np.random.uniform(high=100.0, size=(5, 50))
+    n_pop = model.add_neuron_population("Neurons", 50, reduction_neuron_model, {}, {"X": x, "Y": 0.0})
+
+    # Create softmax custom update
+    softmax_1_cu = model.add_custom_update("Softmax1", "Softmax1", softmax_1_custom_update_model,
+                                           {}, {"MaxX": 0.0}, {"X": create_var_ref(n_pop, "X")})
+    softmax_2_cu = model.add_custom_update("Softmax2", "Softmax2", softmax_2_custom_update_model,
+                                           {}, {"SumExpX": 0.0}, {"X": create_var_ref(n_pop, "X"),
+                                                                  "MaxX": create_var_ref(softmax_1_cu, "MaxX")})
+    softmax_3_cu = model.add_custom_update("Softmax3", "Softmax3", softmax_3_custom_update_model,
+                                           {}, {}, {"X": create_var_ref(n_pop, "X"),
+                                                    "MaxX": create_var_ref(softmax_1_cu, "MaxX"),
+                                                    "SumExpX": create_var_ref(softmax_2_cu, "SumExpX"),
+                                                    "Y": create_var_ref(n_pop, "Y")})
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Launch sequence of softmax update
+    model.custom_update("Softmax1")
+    model.custom_update("Softmax2")
+    model.custom_update("Softmax3")
+
+    # Download X and Y 
+    n_pop.pull_var_from_device("Y")
+
+    # Compare Y to softmax calculated with SciPy
+    assert np.allclose(softmax(x, axis=1), 
+                       n_pop.vars["Y"].view)
+
+@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_batch(backend, precision):
     pass
 
 
 if __name__ == '__main__':
-    test_custom_neuron_reduce_batch_one("cuda", types.Float)
+    test_custom_neuron_reduce_batch("cuda", types.Float)
