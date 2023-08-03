@@ -631,6 +631,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::EGP>(m, "EGP")
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, Type::ResolvedType&>())
         .def_readonly("name", &Snippet::Base::EGP::name)
         .def_readonly("type", &Snippet::Base::EGP::type);
     
@@ -688,6 +689,8 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<Models::Base::Var>(m, "Var")
         .def(pybind11::init<const std::string&, const std::string&, VarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, VarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::Var::name)
         .def_readonly("type", &Models::Base::Var::type)
         .def_readonly("access", &Models::Base::Var::access);
@@ -698,6 +701,8 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<Models::Base::VarRef>(m, "VarRef")
         .def(pybind11::init<const std::string&, const std::string&, VarAccessMode>())
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, VarAccessMode>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::VarRef::name)
         .def_readonly("type", &Models::Base::VarRef::type)
         .def_readonly("access", &Models::Base::VarRef::access);
@@ -707,6 +712,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base::EGPRef>(m, "EGPRef")
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::EGPRef::name)
         .def_readonly("type", &Models::Base::EGPRef::type);
 
