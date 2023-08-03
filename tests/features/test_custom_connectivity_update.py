@@ -30,6 +30,7 @@ weight_update_model = create_weight_update_model(
                     ("d", "unsigned int", VarAccess.READ_ONLY)])
 
 
+# Snippet to initialise variable to hold its column-major index
 weight_init_snippet = create_var_init_snippet(
     "weight_init",
     var_init_code=
@@ -37,6 +38,7 @@ weight_init_snippet = create_var_init_snippet(
     value = (id_pre * 64) + id_post;
     """)
 
+# Snippet to initialise variable to hold its row-major index
 delay_init_snippet = create_var_init_snippet(
     "delay_init",
     var_init_code=
@@ -44,6 +46,8 @@ delay_init_snippet = create_var_init_snippet(
     value = (id_post * 64) + id_pre;
     """)
 
+# Snippet to configure 'triangle' sparse connectivity where presynaptic neurons
+# are connected to all postsynaptic neurons with the same or higher ID
 triangle_connect_init_snippet = create_sparse_connect_init_snippet(
     "triangle_connect_init",
     row_build_code=
@@ -53,6 +57,7 @@ triangle_connect_init_snippet = create_sparse_connect_init_snippet(
     }
     """)
 
+# Custom connectivity update which removes synapses on diagonal
 remove_synapse_model = create_custom_connectivity_update_model(
     "remove_synapse",
     var_name_types=[("a", "scalar")],
@@ -66,6 +71,8 @@ remove_synapse_model = create_custom_connectivity_update_model(
     }
     """)
 
+# Custom connectivity update which removes synapses 
+# based on bitset EGP configured in host code
 remove_synapse_host_egp_model = create_custom_connectivity_update_model(
     "remove_synapse_host_egp",
     extra_global_params=[("d", "uint32_t*")],
@@ -92,30 +99,30 @@ remove_synapse_host_egp_model = create_custom_connectivity_update_model(
     }
     pushdToDevice(wordsPerRow * num_pre);
     """)
-    
-"""
-class RemoveSynapseHostVarUpdate : public CustomConnectivityUpdateModels::Base
-{
-public:
-    DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(RemoveSynapseHostVarUpdate, 0, 0, 1, 0, 0, 0, 0);
-    
-    SET_PRE_VARS({{"postInd", "unsigned int"}});
-    SET_ROW_UPDATE_CODE(
-        "$(for_each_synapse,\n"
-        "{\n"
-        "   if($(postInd) == $(id_post)) {\n"
-        "       $(remove_synapse);\n"
-        "       break;\n"
-        "   }\n"
-        "});\n");
-    SET_HOST_UPDATE_CODE(
-        "for(unsigned int i = 0; i < $(num_pre); i++) {\n"
-        "   $(postInd)[i] = i;\n"
-        "}\n"
-        "$(pushpostIndToDevice);\n");
-};
-IMPLEMENT_MODEL(RemoveSynapseHostVarUpdate);
-"""
+
+# Custom connectivity update which removes one synapse per row 
+# based on presynaptic variable set in host code
+remove_synapse_host_pre_var_model = create_custom_connectivity_update_model(
+    "remove_synapse_host_pre_var",
+    pre_var_name_types=[("postInd", "unsigned int")],
+    row_update_code=
+    """
+    for_each_synapse {
+        if(id_post == postInd) {
+            remove_synapse();
+            break;
+        }
+    }
+    """,
+    host_update_code=
+    """
+    for(unsigned int i = 0; i < num_pre; i++) {
+        postInd[i] = i;
+    }
+    pushpostIndToDevice();
+    """)
+
+# Custom connectivity update which adds a synapse on diagonal to each row
 add_synapse_model = create_custom_connectivity_update_model(
     "add_synapse",
     var_refs=[("g", "scalar"), ("d", "unsigned int"), ("a", "scalar")],
@@ -189,6 +196,14 @@ def test_custom_connectivity_update(backend, precision):
         weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity(triangle_connect_init_snippet))
+    
+    s_pop_3 = model.add_synapse_population(
+        "Syn3", "SPARSE", 0,
+        pre_n_pop, post_n_pop,
+        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(triangle_connect_init_snippet))
+
 
     # Create custom connectivity updates
     remove_synapse_ccu = model.add_custom_connectivity_update(
@@ -205,6 +220,12 @@ def test_custom_connectivity_update(backend, precision):
     num_words = post_n_pop.size * ((pre_n_pop.size + 31) // 32)
     remove_synapse_host_egp_ccu.extra_global_params["d"].set_values(
         np.empty(num_words, dtype=np.uint32))
+    
+    remove_synapse_host_pre_var_ccu = model.add_custom_connectivity_update(
+        "RemoveSynapseHostPreVar", "RemoveSynapse", s_pop_3,
+        remove_synapse_host_pre_var_model,
+        {}, {}, {"postInd": 0}, {}, 
+        {}, {}, {})
 
     add_synapse_ccu = model.add_custom_connectivity_update(
         "AddSynapse", "AddSynapse", s_pop_1,
@@ -218,7 +239,8 @@ def test_custom_connectivity_update(backend, precision):
     
     # **TODO** check a variable on remove_synapse_ccu
     samples = {s_pop_1: [(s_pop_1, "g", False), (s_pop_1, "d", True)],
-               s_pop_2: [(s_pop_2, "g", False), (s_pop_2, "d", True)]}
+               s_pop_2: [(s_pop_2, "g", False), (s_pop_2, "d", True)],
+               s_pop_3: [(s_pop_3, "g", False), (s_pop_3, "d", True)]}
                 
     # Check initial connectivity
     for pop, var_checks in samples.items():
