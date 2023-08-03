@@ -24,6 +24,7 @@ make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p 
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     # Only build for the following versions of cPython (exclude pypy, EOL and beta versions)
+    # https://devguide.python.org/versions/
     if [[ "$PYBIN" == *"cp38"* || "$PYBIN" == *"cp39"* || "$PYBIN" == *"cp310"* || "$PYBIN" == *"cp311"* ]]; then
         # "${PYBIN}/pip" install -r /io/dev-requirements.txt
         "${PYBIN}/pip" install numpy swig
