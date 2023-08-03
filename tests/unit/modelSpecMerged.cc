@@ -199,7 +199,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
         // Created merged model
-        CodeGenerator::ModelSpecMerged modelMerged(model);
+        CodeGenerator::ModelSpecMerged modelMerged(backend, model);
 
         // Generate modules
         // **NOTE** these are ordered in terms of memory-space priority

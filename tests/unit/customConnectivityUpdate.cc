@@ -367,7 +367,7 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
     CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate required modules
     // **NOTE** these are ordered in terms of memory-space priority
