@@ -91,7 +91,7 @@ wheels:
 	@docker build -f Dockerfile.builder \
 		--build-arg CUDA=$(CUDA) \
 		--build-arg GENN_VER=$(GENN_VER) \
-		--target=output --output type=local,dest=dist/ .
+		--target=output --output type=local,dest=dist/$(CUDA)/ .
 
 # Build wheels for all supported CUDA versions: https://github.com/ameli/manylinux-cuda
 SUPPORTED_CUDA = 12.2 12.0 11.8 11.7 10.2
@@ -101,7 +101,7 @@ all_wheels:
 		docker build -f Dockerfile.builder \
 			--build-arg CUDA=$$cuda \
 			--build-arg GENN_VER=$(GENN_VER) \
-			--target=output --output type=local,dest=dist/ .; \
+			--target=output --output type=local,dest=dist/$$cuda/ .; \
 	done
 
 # TODO: Consider build with docker run instead of docker build
