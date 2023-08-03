@@ -28,6 +28,14 @@ neuron_model = create_neuron_model(
     "neuron",
     var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
+static_pulse_duplicate_model = create_weight_update_model(
+    "static_pulse_duplicate",
+    var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+    sim_code=
+    """
+    addToPost(g);
+    """)
+
 current_source_model = create_current_source_model(
     "current_source",
     var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
@@ -46,7 +54,6 @@ custom_update_model = create_custom_update_model(
     "custom_update",
     var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
     var_refs=[("R", "scalar")])
-
 
 set_time_custom_update_model = create_custom_update_model(
     "set_time_custom_update",
@@ -273,6 +280,51 @@ def test_custom_update_transpose(backend, precision):
     transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (100, 100))
     assert np.allclose(forward_g, np.transpose(transpose_g))
 
+@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_transpose_batch(backend, precision):
+    model = GeNNModel(precision, "test_custom_update_transpose_batch", backend=backend)
+    model.dt = 1.0
+    model.batch_size = 5
+
+    # Create pre and postsynaptic populations
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
+    
+    # Create forward and transpose synapse populations between populations
+    g = np.random.normal(size=(5, 100 * 100))
+    forward_s_pop = model.add_synapse_population(
+        "ForwardSynapses", "DENSE", 0,
+        pre_n_pop, post_n_pop,
+        static_pulse_duplicate_model, {}, {"g": g}, {}, {},
+        "DeltaCurr", {}, {})
+    transpose_s_pop = model.add_synapse_population(
+        "TransposeSynapses", "DENSE", 0,
+        post_n_pop, pre_n_pop,
+        static_pulse_duplicate_model, {}, {"g": 0.0}, {}, {},
+        "DeltaCurr", {}, {})
+    
+    # Create custom update to calculate transpose
+    transpose_cu = model.add_custom_update(
+        "Transpose", "Transpose", "Transpose",
+        {}, {}, {"variable": create_wu_var_ref(forward_s_pop, "g", transpose_s_pop, "g")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Run custom update to calculate transpose
+    model.custom_update("Transpose")
+    
+    # Pull forward and transpose weights from device
+    forward_s_pop.pull_var_from_device("g")
+    transpose_s_pop.pull_var_from_device("g")
+    
+    # Reshape matrices to square and check transpose
+    forward_g = np.reshape(forward_s_pop.vars["g"].view, (5, 100, 100))
+    transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (5, 100, 100))
+    assert np.allclose(forward_g, np.transpose(transpose_g, axes=(0, 2, 1)))
+
 @pytest.mark.parametrize("backend", ["cuda", "single_threaded_cpu"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_neuron_reduce(backend, precision):
@@ -359,4 +411,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_update("single_threaded_cpu", types.Float)
+    test_custom_update_transpose_batch("cuda", types.Float)
