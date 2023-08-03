@@ -229,7 +229,6 @@ def test_custom_update(backend, precision):
             # If values don't match, give error
             elif not np.all(np.isclose(view, correct)):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
-    print("DONE")
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -276,7 +275,7 @@ def test_custom_update_transpose(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda", "single_threaded_cpu"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_neuron_reduce(backend, precision):
+def test_custom_update_neuron_reduce(backend, precision):
     model = GeNNModel(precision, "test_custom_neuron_reduce", backend=backend)
     model.dt = 1.0
     
@@ -316,7 +315,7 @@ def test_custom_neuron_reduce(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_neuron_reduce_batch(backend, precision):
+def test_custom_update_neuron_reduce_batch(backend, precision):
     model = GeNNModel(precision, "test_custom_neuron_reduce_batch", backend=backend)
     model.dt = 1.0
     model.batch_size = 5
@@ -360,4 +359,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_neuron_reduce_batch("cuda", types.Float)
+    test_custom_update("single_threaded_cpu", types.Float)
