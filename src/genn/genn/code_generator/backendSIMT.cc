@@ -1113,9 +1113,20 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(env, cg);
+            
+            // **YUCK** add num_pre and _row_stride here as they're needed for calculating  
+            // size but other bits of standard environment requires batch to be calculated
+            groupEnv.addField(Type::Uint32.addConst(), "num_pre",
+                              Type::Uint32, "numSrcNeurons", 
+                              [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+            groupEnv.addField(Type::Uint32.addConst(), "num_post",
+                              Type::Uint32, "numTrgNeurons", 
+                              [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+            groupEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
+                              [this](const auto &cg, size_t) { return std::to_string(getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
 
             // Calculate size of each batch to update
-            // **TODO** why isn't this in standard environment?
+            // **NOTE** this isn't in standard environment because other backends don't need this
             if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                 // Loop through kernel dimensions and multiply together
                 groupEnv.getStream() << "const unsigned int size = ";
@@ -1135,7 +1146,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             if(!cg.getArchetype().isBatchReduction()) {
                 // If it's batched
                 if(cg.getArchetype().isBatched()) {
-                   // Split ID into intra-batch ID and batch
+                    // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
                     const std::string blockSizeStr = std::to_string(blockSize);
                     const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * ((size + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
@@ -1157,7 +1168,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             }
 
             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> batchEnv(groupEnv, cg);
-            buildStandardEnvironment(batchEnv);
+            buildStandardEnvironment(batchEnv, false);
 
             // if this isn't a padding thread
             batchEnv.print("if ($(id) < size)");
@@ -1248,8 +1259,16 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
         {
             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(env, cg);
 
-            // Add field for transpose field and get its name
-            const std::string transposeVarName = cg.addTransposeField(*this, groupEnv);
+            // **YUCK** add num_pre and _row_stride here as they're needed for calculating  
+            // size but other bits of standard environment requires batch to be calculated
+            groupEnv.addField(Type::Uint32.addConst(), "num_pre",
+                              Type::Uint32, "numSrcNeurons", 
+                              [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+            groupEnv.addField(Type::Uint32.addConst(), "num_post",
+                              Type::Uint32, "numTrgNeurons", 
+                              [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+            groupEnv.addField(Type::Uint32, "_row_stride", "rowStride", 
+                              [this](const auto &cg, size_t) { return std::to_string(getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
             groupEnv.getStream() << "const unsigned int numXBlocks = (" << groupEnv["num_post"] << " + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
@@ -1279,7 +1298,10 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                 groupEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
 
-            buildStandardEnvironment(groupEnv);
+            buildStandardEnvironment(groupEnv, false);
+
+            // Add field for transpose field and get its name
+            const std::string transposeVarName = cg.addTransposeField(*this, groupEnv);
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here

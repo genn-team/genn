@@ -326,7 +326,7 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, bool addSize = true)
 {
     // If synapse group has kernel
     const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
@@ -348,14 +348,16 @@ void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, Environm
     }
 
     // Synapse group fields 
-    env.addField(Type::Uint32.addConst(), "num_pre",
-                 Type::Uint32, "numSrcNeurons", 
-                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-    env.addField(Type::Uint32.addConst(), "num_post",
-                 Type::Uint32, "numTrgNeurons", 
-                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
-    env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    if(addSize) {
+        env.addField(Type::Uint32.addConst(), "num_pre",
+                     Type::Uint32, "numSrcNeurons", 
+                     [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+        env.addField(Type::Uint32.addConst(), "num_post",
+                     Type::Uint32, "numTrgNeurons", 
+                     [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+        env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                     [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    }
     
     // Connectivity fields
     auto *sg = env.getGroup().getArchetype().getSynapseGroup();
@@ -484,14 +486,14 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
     buildStandardCustomUpdateEnvironment(*this, env, addSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, bool addSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, addSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, bool addSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, addSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
