@@ -73,8 +73,8 @@ from .shared_library_model import (SharedLibraryModelDouble,
                                    SharedLibraryModelFloat)
                                    
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
-                          CustomUpdateMixin, NeuronGroupMixin,
-                          SynapseGroupMixin)
+                          CustomUpdateMixin, CustomUpdateWUMixin,
+                          NeuronGroupMixin, SynapseGroupMixin)
 from .model_preprocessor import get_snippet, get_var_init
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
@@ -85,7 +85,7 @@ from . import (current_source_models, custom_connectivity_update_models,
 CurrentSource.__bases__ += (CurrentSourceMixin,)
 CustomConnectivityUpdate.__bases__ += (CustomConnectivityUpdateMixin,)
 CustomUpdate.__bases__ += (CustomUpdateMixin,)
-CustomUpdateWU.__bases__ += (CustomUpdateMixin,)
+CustomUpdateWU.__bases__ += (CustomUpdateWUMixin,)
 NeuronGroup.__bases__ += (NeuronGroupMixin,)
 SynapseGroup.__bases__ += (SynapseGroupMixin,)
 

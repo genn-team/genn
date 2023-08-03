@@ -461,26 +461,7 @@ class SynapseGroupMixin(GroupMixin):
             raise Exception("Matrix format not supported")
 
     def get_var_values(self, var_name):
-        var_view = self.vars[var_name].view
-
-        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixWeight.KERNEL:
-            return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = self.max_connections
-            row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
-
-            # Create range containing the index where each row starts in ind
-            row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
-
-            # Build list of subviews representing each row
-            rows = [var_view[i:i + r] for i, r in zip(row_start_idx, row_ls)]
-
-            # Stack all rows together into single array
-            return np.hstack(rows)
-        else:
-            raise Exception("Matrix format not supported")
+        return self._get_view_values(self.vars[var_name].view)
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
@@ -745,7 +726,27 @@ class SynapseGroupMixin(GroupMixin):
         self._unload_egps()
         self._unload_egps(self.psm_extra_global_params)
         self._unload_egps(self.connectivity_extra_global_params)
+    
+    def _get_view_values(self, var_view):
+        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
+            return np.copy(var_view)
+        elif self.matrix_type & SynapseMatrixWeight.KERNEL:
+            return np.copy(var_view)
+        elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
+            max_rl = self.max_connections
+            row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
 
+            # Create range containing the index where each row starts in ind
+            row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
+
+            # Build list of subviews representing each row
+            rows = [var_view[i:i + r] for i, r in zip(row_start_idx, row_ls)]
+
+            # Stack all rows together into single array
+            return np.hstack(rows)
+        else:
+            raise Exception("Matrix format not supported")
+            
     def _init_wum_var(self, var_data, num_copies):
         # If initialisation is required
         if var_data.init_required:
@@ -813,6 +814,7 @@ class CurrentSourceMixin(GroupMixin):
         self._unload_vars()
         self._unload_egps()
 
+
 class CustomUpdateMixin(GroupMixin):
     """Class representing a custom update"""
     def _init_group(self, model, var_space):
@@ -825,52 +827,75 @@ class CustomUpdateMixin(GroupMixin):
         super(CustomUpdateMixin, self)._init_group(model)
         self.vars, self.extra_global_params = prepare_model(
             self.custom_update_model, self, var_space)
-    
+ 
+    def load(self):
+        self._load_vars(self.custom_update_model.get_vars(),
+                        size=self.size)
+        self._load_egp()
+ 
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
+
+
+class CustomUpdateWUMixin(GroupMixin):
+    """Class representing a custom weight update"""
+    def _init_group(self, model, var_space):
+        """Init CustomUpdateWUMixin
+
+        Args:
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
+        """
+        super(CustomUpdateWUMixin, self)._init_group(model)
+        self.vars, self.extra_global_params = prepare_model(
+            self.custom_update_model, self, var_space)
 
     def load(self):
-        # If this is a custom weight update
-        if self._custom_wu_update:
-            # Assert that population doesn't have procedural connectivity
-            assert not (self._synapse_group.matrix_type 
-                        & SynapseMatrixConnectivity.PROCEDURAL)
+        # Assert that population doesn't have procedural connectivity
+        assert not (self.synapse_group.matrix_type 
+                    & SynapseMatrixConnectivity.PROCEDURAL)
 
-            # Loop through state variables
-            for v in self.custom_update_model.get_vars():
-                # Get corresponding data from dictionary
-                var_data = self.vars[v.name]
+        # Loop through state variables
+        for v in self.custom_update_model.get_vars():
+            # Get corresponding data from dictionary
+            var_data = self.vars[v.name]
 
-                # If variable is located on host
-                var_loc = self.get_var_location(v.name) 
-                if var_loc & VarLocation.HOST:
-                    # Determine how many copies of this variable are present
-                    # **YUCK** this isn't quite right - really should look at is_batched()
-                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                    #              else self._model.batch_size)
-                    num_copies = 1
+            # If variable is located on host
+            var_loc = self.get_var_location(v.name) 
+            if var_loc & VarLocation.HOST:
+                # Determine how many copies of this variable are present
+                # **YUCK** this isn't quite right - really should look at is_batched()
+                #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                #              else self._model.batch_size)
+                num_copies = 1
 
-                    # Get view
-                    size = self._synapse_group.weight_update_var_size * num_copies
-                    resolved_type = var_data.type.resolve(self._model.type_context)
-                    var_data.view = self._assign_ext_ptr_array(
-                        v.name, size, resolved_type)
+                # Get view
+                size = self.synapse_group.weight_update_var_size * num_copies
+                resolved_type = var_data.type.resolve(self._model.type_context)
+                var_data.view = self._assign_ext_ptr_array(
+                    v.name, size, resolved_type)
 
-                    # If there is more than one copy, reshape view to 2D
-                    if num_copies > 1:
-                        var_data.view = np.reshape(var_data.view, 
-                                                   (num_copies, -1))
+                # If there is more than one copy, reshape view to 2D
+                if num_copies > 1:
+                    var_data.view = np.reshape(var_data.view, 
+                                               (num_copies, -1))
 
-                    # Initialise variable if necessary
-                    self._synapse_group._init_wum_var(var_data, num_copies)
+                # Initialise variable if necessary
+                self.synapse_group._init_wum_var(var_data, num_copies)
 
-                # Load any var initialisation egps associated with this variable
-                self._load_egp(var_data.extra_global_params, v.name)
-        # Otherwise, load variables 
-        else:
-            self._load_vars(self.custom_update_model.get_vars(),
-                            size=self.size)
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, v.name)
 
         # Load custom update extra global parameters
         self._load_egp()
+    
+    def get_var_values(self, var_name):
+        return self.synapse_group._get_view_values(self.vars[var_name].view)
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
@@ -881,17 +906,12 @@ class CustomUpdateMixin(GroupMixin):
         self._unload_egps()
 
     @property
-    def _custom_wu_update(self):
-        return isinstance(self, CustomUpdateWU)
-
-    @property
-    def _synapse_group(self):
+    def synapse_group(self):
         """Get SynapseGroup associated with custom weight update"""
-        assert self._custom_wu_update
-
         # Return Python synapse group reference from 
         # first (arbitrarily) variable reference
         return next(itervalues(self.var_references)).synapse_group
+
 
 class CustomConnectivityUpdateMixin(GroupMixin):
     """Class representing a custom connectivity update"""
@@ -913,6 +933,9 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
                                              post_var_space[vnt.name], self)
                           for vnt in self.model.get_post_vars()}
+    
+    def get_var_values(self, var_name):
+        return self.synapse_group._get_view_values(self.vars[var_name].view)
 
     def load(self):
         # Loop through state variables
