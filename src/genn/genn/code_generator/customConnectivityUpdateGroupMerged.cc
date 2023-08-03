@@ -422,6 +422,7 @@ const std::string CustomConnectivityHostUpdateGroupMerged::name = "CustomConnect
 //----------------------------------------------------------------------------
 void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
 {
+    // **THINK** would some additional standard library functions like memset be useful?
     EnvironmentLibrary rngEnv(env, StandardLibrary::getHostRNGFunctions(getScalarType()));
     CodeStream::Scope b(rngEnv.getStream());
 
@@ -471,11 +472,12 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 const auto pointerType = resolvedType.createPointer();
 
                 // Add field for host pointer
-                groupEnv.addField(pointerType, egp.name, egp.name,
+                groupEnv.addField(pointerType, "_" + egp.name, egp.name,
                                   [egp](const auto &g, size_t) { return egp.name + g.getName(); },
                                   "", GroupMergedFieldType::HOST_DYNAMIC);
 
                 // Add substitution for direct access to field
+                // **NOTE** we don't just directly expose the field as genLazyVariableDynamicXXX functions expect underscoring
                 groupEnv.add(pointerType, egp.name, "$(_" + egp.name + ")");
 
                 // If backend has device variables, also add hidden pointer field with device pointer
@@ -499,8 +501,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 backend.genLazyVariableDynamicPull(pull, resolvedType, egp.name, loc, "$(0)");
 
                 // Add substitutions
-                groupEnv.add(Type::AllocatePushPullEGP, "push" + egp.name, pushStream.str());
-                groupEnv.add(Type::AllocatePushPullEGP, "pull" + egp.name, pullStream.str());
+                groupEnv.add(Type::AllocatePushPullEGP, "push" + egp.name + "ToDevice", pushStream.str());
+                groupEnv.add(Type::AllocatePushPullEGP, "pull" + egp.name + "FromDevice", pullStream.str());
             }
         }
 

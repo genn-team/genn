@@ -219,7 +219,7 @@ private:
                 // Generate code to pull this variable
                 std::stringstream pullStream;
                 CodeStream pull(pullStream);
-                backend.genLazyVariableDynamicPush(pull, resolvedType, v.name,
+                backend.genLazyVariableDynamicPull(pull, resolvedType, v.name,
                                                    loc, count);
 
                 // Add substitution
