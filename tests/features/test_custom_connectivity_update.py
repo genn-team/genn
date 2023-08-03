@@ -237,8 +237,7 @@ def test_custom_connectivity_update(backend, precision):
     model.build()
     model.load()
     
-    # **TODO** check a variable on remove_synapse_ccu
-    samples = {s_pop_1: [(s_pop_1, "g", False), (s_pop_1, "d", True)],
+    samples = {s_pop_1: [(s_pop_1, "g", False), (s_pop_1, "d", True), (remove_synapse_ccu, "a", False)],
                s_pop_2: [(s_pop_2, "g", False), (s_pop_2, "d", True)],
                s_pop_3: [(s_pop_3, "g", False), (s_pop_3, "d", True)]}
                 
