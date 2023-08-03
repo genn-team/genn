@@ -5,10 +5,36 @@
 #include "logging.h"
 
 //----------------------------------------------------------------------------
-// GeNN::Snippet::Base::ParamVal
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+std::string handleLegacyStringType(const std::string &type) {
+    // If type string ends in *
+    if(!type.empty() && type.back() == '*') {
+        return type.substr(0, type.length() - 1);
+    }
+    // Otherwise, throw exception
+    else {
+        throw std::runtime_error("GeNN no longer supports non-array extra global parameters. "
+                                 "Dynamic parameters provide the same functionality");
+    }
+}
+}
+
+//----------------------------------------------------------------------------
+// GeNN::Snippet::Base::EGP
 //----------------------------------------------------------------------------
 namespace GeNN::Snippet
 {
+Base::EGP::EGP(const std::string &n, const std::string &t) 
+: name(n), type(handleLegacyStringType(t))
+{
+}
+
+//----------------------------------------------------------------------------
+// GeNN::Snippet::Base::ParamVal
+//----------------------------------------------------------------------------
  Base::ParamVal::ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v) 
 :   name(n), type(t), value(v)
 {}

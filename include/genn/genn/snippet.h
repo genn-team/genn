@@ -54,12 +54,11 @@ public:
     // Structs
     //----------------------------------------------------------------------------
     //! An extra global parameter has a name and a type
-    struct EGP
+    struct GENN_EXPORT EGP
     {
         EGP(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
         {}
-        EGP(const std::string &n, const std::string &t) : name(n), type(t)
-        {}
+        EGP(const std::string &n, const std::string &t);
         
         bool operator == (const EGP &other) const
         {
@@ -90,7 +89,7 @@ public:
     };
 
     //! A derived parameter has a name and a function for obtaining its value
-    struct DerivedParam
+    struct GENN_EXPORT DerivedParam
     {
         bool operator == (const DerivedParam &other) const
         {
