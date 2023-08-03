@@ -21,6 +21,7 @@
 
 using namespace GeNN;
 using namespace GeNN::Transpiler;
+using namespace GeNN::Transpiler::Parser;
 
 //---------------------------------------------------------------------------
 // Anonymous namespace
@@ -76,14 +77,6 @@ const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecif
 
     {{"float"}, Type::Float},
     {{"double"}, Type::Double}};
-
-
-//---------------------------------------------------------------------------
-// ParseError
-//---------------------------------------------------------------------------
-class ParseError
-{
-};
 
 //---------------------------------------------------------------------------
 // ParserState
@@ -922,10 +915,18 @@ namespace GeNN::Transpiler::Parser
 {
 Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
+    // Parse expression
     ParserState parserState(tokens, context, errorHandler);
 
     try {
-        return parseExpression(parserState);
+        auto expression = parseExpression(parserState);
+    
+        // If there are more tokens, raise error
+        if(!parserState.isAtEnd()) {
+            parserState.error(parserState.peek(), "Unexpected token after expression");
+        }
+    
+        return expression;
     }
     catch(ParseError &) {
         return nullptr;
@@ -945,11 +946,17 @@ Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, co
 //---------------------------------------------------------------------------
 const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
+    // Parse type specifiers
     ParserState parserState(tokens, context, errorHandler);
     std::multiset<std::string> typeSpecifiers;
     while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
         typeSpecifiers.insert(parserState.previous().lexeme);
     };
+
+    // If there are more tokens, raise error
+    if(!parserState.isAtEnd()) {
+        parserState.error(parserState.peek(), "Unexpected token after type");
+    }
     
     // Return numeric type
     return getNumericType(typeSpecifiers, context);

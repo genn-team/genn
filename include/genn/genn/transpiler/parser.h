@@ -20,10 +20,18 @@ class ErrorHandlerBase;
 }
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::Parser
+// GeNN::Transpiler::ParseError
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
+class ParseError : public std::runtime_error
+{
+public:
+    ParseError() : std::runtime_error("")
+    {
+    }
+};
+
 //! Parse expression from tokens
 Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
