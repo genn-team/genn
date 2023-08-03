@@ -26,6 +26,7 @@
     <ClCompile Include="modelSpecMerged.cc" />
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
+    <ClCompile Include="parser.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="scanner.cc" />
     <ClCompile Include="synapseGroup.cc" />
