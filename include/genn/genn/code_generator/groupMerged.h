@@ -276,9 +276,16 @@ public:
             largestFieldSize = std::max(fieldSize, largestFieldSize);
         }
 
-        // Add total size of array of merged structures to merged struct data
+        // If, for whatever reason, structure is empty it take up one byte
+        // **NOTE** this is because, in C++, no object can have the same address as another therefore non-zero size is required
+        if(structSize == 0) {
+            return this->getGroups().size();
+        }
+        // Otherwise, add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
-        return padSize(structSize, largestFieldSize) * this->getGroups().size();
+        else {
+            return padSize(structSize, largestFieldSize) * this->getGroups().size();
+        }
     }
 
     //! Assign memory spaces to group
