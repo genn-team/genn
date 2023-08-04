@@ -59,8 +59,8 @@ set_time_custom_update_model = create_custom_update_model(
     "set_time_custom_update",
      update_code=
      """
-     V = t;
-     R = t;
+     V = (batch * 1000.0) + t;
+     R = (batch * 1000.0) + t;
      """,
      var_name_types=[("V", "scalar")],
      var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
@@ -69,7 +69,7 @@ set_time_shared_custom_update_model = create_custom_update_model(
     "set_time_custom_update",
      update_code=
      """
-     R = t;
+     R = (batch * 1000.0) + t;
      """,
      var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
  
@@ -237,62 +237,21 @@ def test_custom_update(backend, precision):
             elif not np.all(np.isclose(view, correct)):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_transpose(backend, precision):
+def test_custom_update_transpose(backend, precision, batch_size):
     model = GeNNModel(precision, "test_custom_update_transpose", backend=backend)
     model.dt = 1.0
+    model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
     post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
     
     # Create forward and transpose synapse populations between populations
-    forward_s_pop = model.add_synapse_population(
-        "ForwardSynapses", "DENSE", 0,
-        pre_n_pop, post_n_pop,
-        "StaticPulse", {}, {"g": init_var("Normal", {"mean": 0.0, "sd": 1.0})}, {}, {},
-        "DeltaCurr", {}, {})
-    transpose_s_pop = model.add_synapse_population(
-        "TransposeSynapses", "DENSE", 0,
-        post_n_pop, pre_n_pop,
-        "StaticPulse", {}, {"g": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
-    
-    # Create custom update to calculate transpose
-    transpose_cu = model.add_custom_update(
-        "Transpose", "Transpose", "Transpose",
-        {}, {}, {"variable": create_wu_var_ref(forward_s_pop, "g", transpose_s_pop, "g")})
-    
-    # Build model and load
-    model.build()
-    model.load()
-    
-    # Run custom update to calculate transpose
-    model.custom_update("Transpose")
-    
-    # Pull forward and transpose weights from device
-    forward_s_pop.pull_var_from_device("g")
-    transpose_s_pop.pull_var_from_device("g")
-    
-    # Reshape matrices to square and check transpose
-    forward_g = np.reshape(forward_s_pop.vars["g"].view, (100, 100))
-    transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (100, 100))
-    assert np.allclose(forward_g, np.transpose(transpose_g))
-
-@pytest.mark.parametrize("backend", ["cuda"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_transpose_batch(backend, precision):
-    model = GeNNModel(precision, "test_custom_update_transpose_batch", backend=backend)
-    model.dt = 1.0
-    model.batch_size = 5
-
-    # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
-    post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
-    
-    # Create forward and transpose synapse populations between populations
-    g = np.random.normal(size=(5, 100 * 100))
+    g = (np.random.normal(size=(batch_size, 100 * 100)) if batch_size > 1 
+         else np.random.normal(size=(100 * 100)))
     forward_s_pop = model.add_synapse_population(
         "ForwardSynapses", "DENSE", 0,
         pre_n_pop, post_n_pop,
@@ -321,19 +280,22 @@ def test_custom_update_transpose_batch(backend, precision):
     transpose_s_pop.pull_var_from_device("g")
     
     # Reshape matrices to square and check transpose
-    forward_g = np.reshape(forward_s_pop.vars["g"].view, (5, 100, 100))
-    transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (5, 100, 100))
+    forward_g = np.reshape(forward_s_pop.vars["g"].view, (batch_size, 100, 100))
+    transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (batch_size, 100, 100))
     assert np.allclose(forward_g, np.transpose(transpose_g, axes=(0, 2, 1)))
 
-@pytest.mark.parametrize("backend", ["cuda", "single_threaded_cpu"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_neuron_reduce(backend, precision):
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
+def test_custom_update_neuron_reduce(backend, precision, batch_size):
     model = GeNNModel(precision, "test_custom_neuron_reduce", backend=backend)
     model.dt = 1.0
-    
+    model.batch_size = batch_size
+
     # Create a neuron model with two state variables
+    x = (np.random.uniform(high=100.0, size=(5, 50)) if batch_size > 1
+         else np.random.uniform(high=100.0, size=(50)))
     n_pop = model.add_neuron_population("Neurons", 50, reduction_neuron_model, 
-                                        {}, {"X": init_var("Uniform", {"min": 0.0, "max": 100.0}), "Y": 0.0})
+                                        {}, {"X": x, "Y": 0.0})
 
     # Create softmax custom update
     softmax_1_cu = model.add_custom_update("Softmax1", "Softmax1", softmax_1_custom_update_model,
@@ -341,52 +303,11 @@ def test_custom_update_neuron_reduce(backend, precision):
     softmax_2_cu = model.add_custom_update("Softmax2", "Softmax2", softmax_2_custom_update_model,
                                            {}, {"SumExpX": 0.0}, {"X": create_var_ref(n_pop, "X"),
                                                                   "MaxX": create_var_ref(softmax_1_cu, "MaxX")})
-    softmax_3_cu = model.add_custom_update("Softmax3", "Softmax3", softmax_3_custom_update_model,
-                                           {}, {}, {"X": create_var_ref(n_pop, "X"),
-                                                    "MaxX": create_var_ref(softmax_1_cu, "MaxX"),
-                                                    "SumExpX": create_var_ref(softmax_2_cu, "SumExpX"),
-                                                    "Y": create_var_ref(n_pop, "Y")})
-
-    # Build model and load
-    model.build()
-    model.load()
-
-    # Launch sequence of softmax update
-    model.custom_update("Softmax1")
-    model.custom_update("Softmax2")
-    model.custom_update("Softmax3")
-
-    # Download X and Y 
-    n_pop.pull_var_from_device("X")
-    n_pop.pull_var_from_device("Y")
-
-    # Compare Y to softmax calculated with SciPy
-    assert np.allclose(softmax(n_pop.vars["X"].view), 
-                       n_pop.vars["Y"].view)
-
-
-@pytest.mark.parametrize("backend", ["cuda"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_neuron_reduce_batch(backend, precision):
-    model = GeNNModel(precision, "test_custom_neuron_reduce_batch", backend=backend)
-    model.dt = 1.0
-    model.batch_size = 5
-    
-    # Create a neuron model with two state variables
-    x = np.random.uniform(high=100.0, size=(5, 50))
-    n_pop = model.add_neuron_population("Neurons", 50, reduction_neuron_model, {}, {"X": x, "Y": 0.0})
-
-    # Create softmax custom update
-    softmax_1_cu = model.add_custom_update("Softmax1", "Softmax1", softmax_1_custom_update_model,
-                                           {}, {"MaxX": 0.0}, {"X": create_var_ref(n_pop, "X")})
-    softmax_2_cu = model.add_custom_update("Softmax2", "Softmax2", softmax_2_custom_update_model,
-                                           {}, {"SumExpX": 0.0}, {"X": create_var_ref(n_pop, "X"),
-                                                                  "MaxX": create_var_ref(softmax_1_cu, "MaxX")})
-    softmax_3_cu = model.add_custom_update("Softmax3", "Softmax3", softmax_3_custom_update_model,
-                                           {}, {}, {"X": create_var_ref(n_pop, "X"),
-                                                    "MaxX": create_var_ref(softmax_1_cu, "MaxX"),
-                                                    "SumExpX": create_var_ref(softmax_2_cu, "SumExpX"),
-                                                    "Y": create_var_ref(n_pop, "Y")})
+    model.add_custom_update("Softmax3", "Softmax3", softmax_3_custom_update_model,
+                            {}, {}, {"X": create_var_ref(n_pop, "X"),
+                                    "MaxX": create_var_ref(softmax_1_cu, "MaxX"),
+                                    "SumExpX": create_var_ref(softmax_2_cu, "SumExpX"),
+                                    "Y": create_var_ref(n_pop, "Y")})
 
     # Build model and load
     model.build()
@@ -401,8 +322,11 @@ def test_custom_update_neuron_reduce_batch(backend, precision):
     n_pop.pull_var_from_device("Y")
 
     # Compare Y to softmax calculated with SciPy
-    assert np.allclose(softmax(x, axis=1), 
-                       n_pop.vars["Y"].view)
+    if batch_size == 1:
+        assert np.allclose(softmax(x), n_pop.vars["Y"].view)
+    else:
+        assert np.allclose(softmax(x, axis=1), n_pop.vars["Y"].view)
+
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -411,4 +335,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_update_transpose_batch("cuda", types.Float)
+    test_custom_update_neuron_reduce("cuda", types.Float, 1)
