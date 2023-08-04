@@ -103,11 +103,13 @@ softmax_3_custom_update_model = create_custom_update_model(
               ("SumExpX", "scalar", VarAccessMode.READ_ONLY),
               ("Y", "scalar", VarAccessMode.READ_WRITE)])
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update(backend, precision):
+def test_custom_update(backend, precision, batch_size):
     model = GeNNModel(precision, "test_custom_update", backend=backend)
     model.dt = 1.0
+    model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
     ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
@@ -224,11 +226,17 @@ def test_custom_update(backend, precision):
         model.step_time()
 
         # Loop through populations
-        correct = 10 * ((model.timestep - 1) // 10)
+        correct = [(1000 * b)  + (10 * ((model.timestep - 1) // 10)) 
+                   for b in range(batch_size)]
+        correct = np.reshape(correct, (batch_size, 1))
         for pop, var_name, vars, shape in samples:
             # Pull variable from device
             pop.pull_var_from_device(var_name)
             
+            # Add batch size axis to shape
+            if batch_size != 1:
+                shape = (batch_size,) + shape
+
             # If shape of view doesn't match, give error
             view = vars[var_name].view
             if view.shape != shape:
@@ -335,4 +343,4 @@ def test_custom_update_batch(backend, precision):
 
 
 if __name__ == '__main__':
-    test_custom_update_neuron_reduce("cuda", types.Float, 1)
+    test_custom_update("cuda", types.Float, 5)
