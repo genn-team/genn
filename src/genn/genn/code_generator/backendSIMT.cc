@@ -1423,7 +1423,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
         [batchSize, this](EnvironmentExternalBase &env, SynapseInitGroupMerged &sg)
         {
             EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, sg);
-            buildStandardEnvironment(groupEnv, 1);
+            buildStandardEnvironment(groupEnv, batchSize);
             genSynapseVarInit(groupEnv, batchSize, sg, sg.getArchetype().isWUInitRNGRequired(), 
                               (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL), 
                               sg.getArchetype().getKernelSize().size());
