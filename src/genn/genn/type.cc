@@ -118,18 +118,20 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
     // If either type is double, common type is double
     assert(a.isNumeric());
     assert(b.isNumeric());
-    if(a == Double || b == Double) {
+    const auto unqualifiedA = a.removeQualifiers();
+    const auto unqualifiedB = b.removeQualifiers();
+    if(unqualifiedA == Double || unqualifiedB == Double) {
         return Double;
     }
     // Otherwise, if either type is float, common type is float
-    if(a == Float || b == Float) {
+    if(unqualifiedA == Float || unqualifiedB == Float) {
         return Float;
     }
     // Otherwise, must be an integer type
     else {
         // Promote both numeric types
-        const ResolvedType aPromoted = getPromotedType(a);
-        const ResolvedType bPromoted = getPromotedType(b);
+        const ResolvedType aPromoted = getPromotedType(unqualifiedA);
+        const ResolvedType bPromoted = getPromotedType(unqualifiedB);
 
         // If both promoted operands have the same type, then no further conversion is needed.
         if(aPromoted == bPromoted) {

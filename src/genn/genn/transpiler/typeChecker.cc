@@ -546,19 +546,20 @@ private:
                                 // If types are numeric, any cast goes
                                 [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value&) -> std::optional<int>
                                 {
-                                    // If names are identical, match is exact
-                                    // **TODO** we don't care about qualifiers
-                                    if(*c == *a) {
+                                    // If types are identical, match is exact
+                                    const auto unqualifiedA = a->removeQualifiers();
+                                    const auto unqualifiedC = c->removeQualifiers();
+                                    if(unqualifiedC == unqualifiedA) {
                                         return 0;
                                     }
                                     // Integer promotion
-                                    else if(*a == Type::Int32 && cValue.numeric->isIntegral
+                                    else if(unqualifiedA == Type::Int32 && cValue.numeric->isIntegral
                                             && cValue.numeric->rank < Type::Int32.getNumeric().rank)
                                     {
                                         return 1;
                                     }
                                     // Float promotion
-                                    else if(*a == Type::Double && *c == Type::Float) {
+                                    else if(unqualifiedA == Type::Double && unqualifiedC == Type::Float) {
                                         return 1;
                                     }
                                     // Otherwise, numeric conversion
