@@ -22,6 +22,64 @@ using namespace GeNN::CodeGenerator;
 namespace
 {
 template<typename G>
+void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
+{
+    // Add size field
+    env.addField(Type::Uint32.addConst(), "size",
+                Type::Uint32, "size", 
+                [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+}
+//--------------------------------------------------------------------------
+template<typename G>
+void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+{
+    // Synapse group fields 
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+
+    // If underlying synapse group has kernel connectivity
+    const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
+        std::ostringstream kernSizeInit;
+        kernSizeInit << "const unsigned int kernSize = ";
+        const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
+        for (size_t d = 0; d < sg->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                             [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+            }
+
+            // Multiply size by dimension
+            kernSizeInit << getKernelSize(env.getGroup(), d);
+            if (d != (sg->getKernelSize().size() - 1)) {
+                kernSizeInit << " * ";
+            }
+        }
+
+        // Add size field
+        kernSizeInit << ";";
+        env.add(Type::Uint32.addConst(), "_size", "size",
+                {env.addInitialiser(kernSizeInit.str())});
+    }
+    // Otherwise, calculate size as normal
+    else {
+        // **TODO** 64-bit synapse indices
+        env.add(Type::Uint32.addConst(), "_size", "size",
+                {env.addInitialiser("const unsigned int size = $(num_pre) * $(_row_stride);")});
+    }
+
+}
+//--------------------------------------------------------------------------
+template<typename G>
 void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     using namespace Type;
@@ -282,15 +340,8 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, bool addSize = true)
+void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
-    // Add size field
-    if(addSize) {
-        env.addField(Type::Uint32.addConst(), "size",
-                    Type::Uint32, "size", 
-                    [](const auto &c, size_t) { return std::to_string(c.getSize()); });
-    }
-
     // If batching is enabled, calculate batch offset
     if(env.getGroup().getArchetype().isBatched()) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
@@ -326,37 +377,12 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, bool addSize = true)
+void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
-    // If synapse group has kernel
-    const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
-    if(!kernelSize.empty()) {
-        if(env.getGroup().getArchetype().isBatched()) {
-            // Loop through kernel dimensions and multiply together
-            std::ostringstream kernBatchOffsetInit;
-            kernBatchOffsetInit << "const unsigned int kernBatchOffset = ";
-            for(size_t i = 0; i < kernelSize.size(); i++) {
-                kernBatchOffsetInit << getKernelSize(env.getGroup(), i) << " * ";
-            }
-            
-            // And finally by batch
-            kernBatchOffsetInit << "$(batch);" << std::endl;
-
-            env.add(Type::Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
-                    {env.addInitialiser(kernBatchOffsetInit.str())});
-        }
-    }
-
-    // Synapse group fields 
-    if(addSize) {
-        env.addField(Type::Uint32.addConst(), "num_pre",
-                     Type::Uint32, "numSrcNeurons", 
-                     [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
-        env.addField(Type::Uint32.addConst(), "num_post",
-                     Type::Uint32, "numTrgNeurons", 
-                     [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
-        env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                     [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+    // Add batch offset if group is batched
+    if(env.getGroup().getArchetype().isBatched()) {
+        env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
+                {env.addInitialiser("const unsigned int batchOffset = $(_size) * $(batch);")});
     }
     
     // Connectivity fields
@@ -366,16 +392,6 @@ void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, Environm
                      [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
         env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
                      [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
-    }
-    else if(sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        // Loop through kernel size dimensions
-        for (size_t d = 0; d < sg->getKernelSize().size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                             [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
-            }
-        }
     }
 }
 //--------------------------------------------------------------------------
@@ -446,6 +462,21 @@ bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const GroupMerged<Synaps
     return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }
 //-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
+{
+    buildCustomUpdateSizeEnvironment(env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const
 {
     buildStandardNeuronEnvironment(*this, env, batchSize);
@@ -481,19 +512,19 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDe
     buildStandardSynapseEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, bool addSize) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
 {
-    buildStandardCustomUpdateEnvironment(*this, env, addSize);
+    buildStandardCustomUpdateEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, bool addSize) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env, addSize);
+    buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, bool addSize) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env, addSize);
+    buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
@@ -513,16 +544,19 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseIn
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env) const
 {
+    buildCustomUpdateSizeEnvironment(env);
     buildStandardCustomUpdateEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env) const
 {
+    buildCustomUpdateWUSizeEnvironment(*this, env);
     buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env) const
 {
+    buildCustomUpdateWUSizeEnvironment(*this, env);
     buildStandardCustomUpdateWUEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------

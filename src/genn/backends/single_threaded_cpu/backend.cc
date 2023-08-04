@@ -577,6 +577,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
                             buildStandardEnvironment(groupEnv);
 
                             if (c.getArchetype().isNeuronReduction()) {
@@ -649,6 +650,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
                             buildStandardEnvironment(groupEnv);
 
                             // **TODO** add fields
@@ -769,6 +771,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
                             buildStandardEnvironment(groupEnv);
 
                             // Add field for transpose field and get its name
