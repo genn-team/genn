@@ -20,7 +20,7 @@ using namespace GeNN::CodeGenerator;
     m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
 {
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronUpdateGroups,
-                       [](const NeuronGroupInternal &){ return true; },
+                       [](const NeuronGroupInternal&){ return true; },
                        &NeuronGroupInternal::getHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticUpdateGroups,
@@ -36,7 +36,7 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                       [](const CustomUpdateInternal &cg) { return true; },
+                       [](const CustomUpdateInternal&) { return true; },
                        &CustomUpdateInternal::getHashDigest);
 
     createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
@@ -64,7 +64,7 @@ using namespace GeNN::CodeGenerator;
                        &CustomConnectivityUpdateInternal::getHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                       [](const NeuronGroupInternal &){ return true; },
+                       [](const NeuronGroupInternal&){ return true; },
                        &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
@@ -83,7 +83,7 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal &){ return true; },
+                       [](const NeuronGroupInternal&){ return true; },
                        &NeuronGroupInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateInitGroups,
