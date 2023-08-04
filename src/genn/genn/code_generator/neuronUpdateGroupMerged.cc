@@ -745,7 +745,7 @@ std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
         return index;
     }
     else {
-        return "$(_batch_offset) " + index;
+        return "$(_batch_offset) + " + index;
     }
 }
 //--------------------------------------------------------------------------

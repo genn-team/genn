@@ -279,13 +279,13 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
 std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    return (singleBatch ? "" : "$(_syn_batch_offset)") + index;
+    return (singleBatch ? "" : "$(_syn_batch_offset) + ") + index;
 }
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
-    return (singleBatch ? "" : "$(_kern_batch_offset)") + index;
+    return (singleBatch ? "" : "$(_kern_batch_offset) + ") + index;
 }
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
@@ -293,24 +293,24 @@ std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSi
 {
     if (delay) {
         if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return prefix + ((batchSize == 1) ? "$(_delay_slot)" : "$(_batch_delay_slot)");
+            return ((batchSize == 1) ? "$(_" + prefix + "_delay_slot)" : "$(_" + prefix + "_batch_delay_slot)");
         }
         else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-            return prefix + "$(_delay_offset) + " + index;
+            return "$(_" + prefix + "_delay_offset) + " + index;
         }
         else {
-            return prefix + "$(_batch_delay_offset) + " + index;
+            return "$(_" + prefix + "_batch_delay_offset) + " + index;
         }
     }
     else {
         if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return (batchSize == 1) ? "0" : "batch";
+            return (batchSize == 1) ? "0" : "$(batch)";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
             return index;
         }
         else {
-            return prefix + "$(_batch_offset) + " + index;
+            return "$(_" + prefix + "_batch_offset) + " + index;
         }
     }
 }

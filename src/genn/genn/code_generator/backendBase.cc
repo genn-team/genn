@@ -49,7 +49,7 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
         // Loop through kernel size dimensions
         // **TODO** automatic heterogeneity detection on all fields would make this much nicer
         std::ostringstream kernSizeInit;
-        kernSizeInit << "const unsigned int kernSize = ";
+        kernSizeInit << "const unsigned int size = ";
         const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
         for (size_t d = 0; d < sg->getKernelSize().size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
@@ -228,7 +228,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         env.add(Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
                 {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);")});
         env.add(Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
-                {env.addInitialiser("const unsigned int preBatchOffset = $(num_post) * $(batch);")});
+                {env.addInitialiser("const unsigned int postBatchOffset = $(num_post) * $(batch);")});
         
         // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
         if(backend.areSixtyFourBitSynapseIndicesRequired(env.getGroup())) {

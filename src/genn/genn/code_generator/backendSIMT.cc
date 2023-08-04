@@ -359,9 +359,6 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
             }
             // Otherwise
             else {
-                if(batchSize > 1) {
-                    neuronEnv.printLine("const unsigned int batchOffset = $(num_neurons) * $(batch);");
-                }
                 if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                     // If there is a spike for this thread, set previous spike time to time of last timestep
                     neuronEnv.print("if($(id) < $(_spk_cnt)[$(batch)])");
@@ -372,7 +369,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                             neuronEnv.print("$(_spk)[$(id)]");
                         }
                         else {
-                            neuronEnv.print("batchOffset + $(_spk)[batchOffset + $(id)]");
+                            neuronEnv.print("$(_batch_offset) + $(_spk)[$(_batch_offset) + $(id)]");
                         }
                         neuronEnv.printLine("] = $(t) - $(dt);");
                     }
@@ -387,7 +384,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                             neuronEnv.print("$(_spk_evnt)[$(id)]");
                         }
                         else {
-                            neuronEnv.print("batchOffset + $(_spk_evnt)[batchOffset + $(id)]");
+                            neuronEnv.print("$(_batch_offset) + $(_spk_evnt)[$(_batch_offset) + $(id)]");
                         }
                         neuronEnv.printLine("] = $(t) - $(dt);");
                     }
@@ -1133,7 +1130,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             buildStandardEnvironment(batchEnv);
 
             // if this isn't a padding thread
-            batchEnv.print("if ($(id) < size)");
+            batchEnv.print("if ($(id) < $(_size))");
             {
                 CodeStream::Scope b(batchEnv.getStream());
                 EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(batchEnv, cg);
@@ -1238,9 +1235,6 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                 groupEnv.getStream() << "const unsigned int block = batchBlock % numBlocks;" << std::endl;
                 groupEnv.getStream() << "const unsigned int batch = batchBlock / numBlocks;" << std::endl;
 
-                // Finally, calculate batch offset into arrays etc
-                groupEnv.printLine("const unsigned int batchOffset = batch * $(num_pre) * $(num_post);");
-
                 // Add batch to substitutions
                 groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
             }
@@ -1250,35 +1244,36 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                 groupEnv.add(Type::Uint32.addConst(), "batch", "0");
             }
 
-            buildStandardEnvironment(groupEnv);
+            EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> batchEnv(groupEnv, cg);
+            buildStandardEnvironment(batchEnv);
 
             // Add field for transpose field and get its name
-            const std::string transposeVarName = cg.addTransposeField(*this, groupEnv);
+            const std::string transposeVarName = cg.addTransposeField(*this, batchEnv);
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here
-            groupEnv.getStream() << "const unsigned int blockX = (block % numXBlocks);" << std::endl;
-            groupEnv.getStream() << "const unsigned int blockY = (block / numXBlocks);" << std::endl;
+            batchEnv.getStream() << "const unsigned int blockX = (block % numXBlocks);" << std::endl;
+            batchEnv.getStream() << "const unsigned int blockY = (block / numXBlocks);" << std::endl;
 
             {
-                CodeStream::Scope b(groupEnv.getStream());
-                groupEnv.getStream() << "// Calculate coordinate of thread in input matrix" << std::endl;
-                groupEnv.getStream() << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
-                groupEnv.getStream() << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
+                CodeStream::Scope b(batchEnv.getStream());
+                batchEnv.getStream() << "// Calculate coordinate of thread in input matrix" << std::endl;
+                batchEnv.getStream() << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                batchEnv.getStream() << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                groupEnv.printLine("// If thread isn't off the 'right' edge of the input matrix");
-                groupEnv.print("if(x < $(num_post))");
+                batchEnv.printLine("// If thread isn't off the 'right' edge of the input matrix");
+                batchEnv.print("if(x < $(num_post))");
                 {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.getStream() << "// Loop through input rows " << std::endl;
-                    groupEnv.getStream() << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
+                    CodeStream::Scope b(batchEnv.getStream());
+                    batchEnv.getStream() << "// Loop through input rows " << std::endl;
+                    batchEnv.getStream() << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.printLine("// If thread isn't off the 'bottom' edge of the input matrix");
-                        groupEnv.print("if((y + j) < $(num_pre))");
+                        CodeStream::Scope b(batchEnv.getStream());
+                        batchEnv.printLine("// If thread isn't off the 'bottom' edge of the input matrix");
+                        batchEnv.print("if((y + j) < $(num_pre))");
                         {
-                            CodeStream::Scope b(groupEnv.getStream());
-                            EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(groupEnv, cg);
+                            CodeStream::Scope b(batchEnv.getStream());
+                            EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(batchEnv, cg);
 
                             synEnv.add(Type::Uint32.addConst(), "id_pre", "y");
                             synEnv.add(Type::Uint32.addConst(), "id_post", "x");
@@ -1295,30 +1290,30 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                     }
                 }
             }
-            genSharedMemBarrier(groupEnv.getStream());
+            genSharedMemBarrier(batchEnv.getStream());
             {
-                CodeStream::Scope b(groupEnv.getStream());
-                groupEnv.getStream() << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
-                groupEnv.getStream() << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
-                groupEnv.getStream() << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
+                CodeStream::Scope b(batchEnv.getStream());
+                batchEnv.getStream() << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
+                batchEnv.getStream() << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                batchEnv.getStream() << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
-                groupEnv.printLine("// If thread isn't off the 'bottom' edge of the output matrix");
-                groupEnv.print("if(x < $(num_pre))");
+                batchEnv.printLine("// If thread isn't off the 'bottom' edge of the output matrix");
+                batchEnv.print("if(x < $(num_pre))");
                 {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.getStream() << "// Loop through output rows" << std::endl;
-                    groupEnv.getStream() <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
+                    CodeStream::Scope b(batchEnv.getStream());
+                    batchEnv.getStream() << "// Loop through output rows" << std::endl;
+                    batchEnv.getStream() <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.printLine("// If thread isn't off the 'right' edge of the output matrix");
-                        groupEnv.print("if((y + j) < $(num_post))");
+                        CodeStream::Scope b(batchEnv.getStream());
+                        batchEnv.printLine("// If thread isn't off the 'right' edge of the output matrix");
+                        batchEnv.print("if((y + j) < $(num_post))");
                         {
-                            CodeStream::Scope b(groupEnv.getStream());
-                            groupEnv.print("$(" + transposeVarName + "_transpose)[");
+                            CodeStream::Scope b(batchEnv.getStream());
+                            batchEnv.print("$(" + transposeVarName + "_transpose)[");
                             if(cg.getArchetype().isBatched()) {
-                                groupEnv.print("$(_batch_offset) + ");
+                                batchEnv.print("$(_batch_offset) + ");
                             }
-                            groupEnv.printLine("((y + j) * $(num_pre)) + x] = shTile[" + getThreadID(0) + "][" + getThreadID(1) + " + j];");
+                            batchEnv.printLine("((y + j) * $(num_pre)) + x] = shTile[" + getThreadID(0) + "][" + getThreadID(1) + " + j];");
                         }
                     }
                 }
