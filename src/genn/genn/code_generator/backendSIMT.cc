@@ -988,8 +988,8 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                     // Split ID into lane and batch
                     groupEnv.printLine("const unsigned int lane = $(id) % 32;");
-                    groupEnv.printLine("const unsigned int batch = $(id) / 32;");
-                    groupEnv.add(Type::Uint32.addConst(), "batch", "batch");
+                    groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
+                                 {groupEnv.addInitialiser("const unsigned int batch = $(id) / 32;")});
 
                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
                     buildStandardEnvironment(batchEnv);
