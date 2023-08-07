@@ -168,7 +168,8 @@ class GroupMixin(object):
         self._model._slm.pull_extra_global_param_from_device(self.name, egp_name,
                                                              len(egp.values))
 
-    def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
+    def _load_vars(self, vars, size=None, var_dict=None, 
+                   get_location_fn=None, batched=True):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -190,8 +191,8 @@ class GroupMixin(object):
             var_loc = get_location_fn(v.name) 
             if var_loc & VarLocation.HOST:
                 # Determine how many copies of this variable are present
-                num_copies = (1 if v.access & VarAccessDuplication.SHARED
-                              else self._model.batch_size)
+                var_batched = (batched and not v.access & VarAccessDuplication.SHARED)
+                num_copies = self._model.batch_size if var_batched else 1
                 
                 # Determine size of this variable
                 var_size = (1 if v.access & VarAccessDuplication.SHARED_NEURON
@@ -830,7 +831,7 @@ class CustomUpdateMixin(GroupMixin):
  
     def load(self):
         self._load_vars(self.custom_update_model.get_vars(),
-                        size=self.size)
+                        size=self.size, batched=self._is_batched)
         self._load_egp()
  
     def load_init_egps(self):
@@ -869,10 +870,8 @@ class CustomUpdateWUMixin(GroupMixin):
             var_loc = self.get_var_location(v.name) 
             if var_loc & VarLocation.HOST:
                 # Determine how many copies of this variable are present
-                # **YUCK** this isn't quite right - really should look at is_batched()
-                #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                #              else self._model.batch_size)
-                num_copies = 1
+                var_batched = (self._is_batched and not v.access & VarAccessDuplication.SHARED)
+                num_copies = self._model.batch_size if var_batched else 1
 
                 # Get view
                 size = self.synapse_group.weight_update_var_size * num_copies

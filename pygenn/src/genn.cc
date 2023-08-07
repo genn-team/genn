@@ -506,13 +506,20 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdate, CustomUpdateBase>(m, "CustomUpdate", pybind11::dynamic_attr())
         .def_property_readonly("size", &CustomUpdate::getSize)
-        .def_property_readonly("var_references", &CustomUpdate::getVarReferences);
+        .def_property_readonly("var_references", &CustomUpdate::getVarReferences)
+
+        // **NOTE** we use the 'publicist' pattern to expose some protected properties
+        .def_property_readonly("_is_batched", &CustomUpdateInternal::isBatched);
+
 
     //------------------------------------------------------------------------
     // genn.CustomUpdateWU
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdateWU, CustomUpdateBase>(m, "CustomUpdateWU", pybind11::dynamic_attr())
-        .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences);
+        .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences)
+
+        // **NOTE** we use the 'publicist' pattern to expose some protected properties
+        .def_property_readonly("_is_batched", &CustomUpdateWUInternal::isBatched);
 
     //------------------------------------------------------------------------
     // genn.NeuronGroup
