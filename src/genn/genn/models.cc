@@ -79,6 +79,15 @@ bool VarReference::isDuplicated() const
     }
 }
 //----------------------------------------------------------------------------
+CustomUpdate *VarReference::getReferencedCustomUpdate() const
+{
+    return std::visit(
+            Utils::Overload{
+                [](const CURef &ref)->CustomUpdate* { return ref.group; },
+                [](const auto&)->CustomUpdate* { return nullptr; }},
+            m_Detail);
+}
+//----------------------------------------------------------------------------
 bool VarReference::operator < (const VarReference &other) const
 {
     // **NOTE** variable and target names are enough to guarantee uniqueness
@@ -184,6 +193,15 @@ std::string WUVarReference::getTransposeTargetName() const
         Utils::Overload{
             [](const WURef &ref) { return ref.transposeGroup->getName(); },
             [](const auto&)->std::string { throw std::runtime_error("No transpose"); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+CustomUpdateWU *WUVarReference::getReferencedCustomUpdate() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const CURef &ref)->CustomUpdateWU* { return ref.group; },
+            [](const auto&)->CustomUpdateWU* { return nullptr; }},
         m_Detail);
 }
 //------------------------------------------------------------------------

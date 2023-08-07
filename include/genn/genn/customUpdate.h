@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -137,6 +138,24 @@ protected:
         }
     }
 
+    template<typename G, typename V>
+    std::vector<G*> getReferencedCustomUpdates(const std::unordered_map<std::string, V>& varRefs) const
+    {
+        // Loop through variable references
+        std::vector<G*> references;
+        for(const auto &v : varRefs) {
+            // If a custom update is referenced, add to set
+            auto *refCU = v.second.getReferencedCustomUpdate();
+            if(refCU != nullptr) {
+                references.push_back(refCU);
+            }
+        }
+
+        // Return set
+        return references;
+    }
+
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -246,6 +265,14 @@ protected:
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
     bool isPerNeuron() const{ return m_PerNeuron; }
 
+    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdate*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdate>(m_VarReferences);
+    }
+
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -253,8 +280,6 @@ protected:
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
-
-    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
 private:
     //------------------------------------------------------------------------
@@ -299,6 +324,12 @@ protected:
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     const std::vector<unsigned int> &getKernelSize() const;
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdateWU*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdateWU>(m_VarReferences); 
+    }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */

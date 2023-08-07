@@ -35,6 +35,7 @@ public:
     using CustomUpdate::getHashDigest;
     using CustomUpdate::getInitHashDigest;
     using CustomUpdate::getDelayNeuronGroup;
+    using CustomUpdate::getReferencedCustomUpdates;
     using CustomUpdate::isBatchReduction;
     using CustomUpdate::isNeuronReduction;
 };
@@ -95,6 +96,7 @@ public:
     using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;
     using CustomUpdateWU::getKernelSize;
+    using CustomUpdateWU::getReferencedCustomUpdates;
     using CustomUpdateWU::isBatchReduction;
     using CustomUpdateWU::isTransposeOperation;
 };

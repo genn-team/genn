@@ -196,6 +196,10 @@ public:
     //! If model is batched, will the variable this is referencing be duplicated?
     bool isDuplicated() const;
 
+    //! If this reference points to another custom update, return pointer to it
+    /*! This is used to detect circular dependencies */
+    CustomUpdate *getReferencedCustomUpdate() const;
+
     //------------------------------------------------------------------------
     // Operators
     //------------------------------------------------------------------------
@@ -265,6 +269,10 @@ public:
 
     SynapseGroup *getTransposeSynapseGroup() const;
     std::string getTransposeTargetName() const;
+
+    //! If this reference points to another custom update, return pointer to it
+    /*! This is used to detect circular dependencies */
+    CustomUpdateWU *getReferencedCustomUpdate() const;
 
     //------------------------------------------------------------------------
     // Operators

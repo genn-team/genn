@@ -24,6 +24,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
@@ -31,6 +32,72 @@
 
 // GeNN transpiler includes
 #include "transpiler/parser.h"
+
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+//! Use Kahn's algorithm to sort custom updates topologically based on inter-custom update references
+template<typename G>
+std::vector<G*> getSortedCustomUpdates(std::map<std::string, G> &customUpdates)
+{
+    // Loop through custom updates
+    std::set<G*> startCustomUpdate;
+    std::multimap<G*, G*> referencingCustomUpdates;
+    std::map<G*, int> inDegree;
+    for(auto &c : customUpdates) {
+        // Get vector of other custom updates referenced by this one and use to build reverse lookup structure
+        const auto referenced = c.second.getReferencedCustomUpdates();
+        for(auto *r : referenced) {
+            referencingCustomUpdates.emplace(static_cast<G*>(r), &c.second);
+        }
+        
+        // Store this as initial in-degree
+        inDegree.emplace(&c.second, referenced.size());
+
+        // If it doesn't references any other custom updates, it's a possible starting node
+        if(referenced.empty()) {
+            startCustomUpdate.insert(&c.second);
+        }
+    }
+
+    // Loop through start nodes
+    std::vector<G*> sortedCustomUpdates;
+    while(!startCustomUpdate.empty()) {
+        // Move custom update from star set to sorted 
+        auto *cu = *startCustomUpdate.begin();
+        sortedCustomUpdates.push_back(cu);
+        startCustomUpdate.erase(startCustomUpdate.begin());
+
+        // Loop through all custom updates whch reference this one
+        auto const [refBegin, refEnd] = referencingCustomUpdates.equal_range(cu);
+        for(auto r = refBegin; r != refEnd; r++) {
+            // Decrease in-degree
+            int &rInDegree = inDegree.at(r->second);
+            rInDegree--;
+
+            // If in-degree has reached zero, add to starting set
+            if(rInDegree == 0) {
+                startCustomUpdate.insert(r->second);
+            }
+        }
+    }
+
+    // If any custom updates end up with an in-degree greater than 0
+    if(std::any_of(inDegree.cbegin(), inDegree.cend(),
+                   [](const auto &cu){ return cu.second > 0; }))
+    {
+        throw std::runtime_error("Custom update variable references cannot form a cycle");
+    }
+
+    // Check that all custom updates have made it into the sorted list
+    assert(sortedCustomUpdates.size() == customUpdates.size());
+
+    // Return sorted custom updates
+    return sortedCustomUpdates;
+}
+}   // Anonymous namespace
 
 // ---------------------------------------------------------------------------
 // GeNN::ModelSpec
@@ -225,6 +292,21 @@ void ModelSpec::finalise()
     // Build type context
     m_TypeContext = {{"scalar", getPrecision()}, {"timepoint", getTimePrecision()}};
 
+    // Sort custom updates and custom WU updates so whether each one 
+    // should be batched or not gets correctly resolved
+    const auto sortedCustomUpdates = getSortedCustomUpdates(m_CustomUpdates);
+    const auto sortedCustomWUUpdates = getSortedCustomUpdates(m_CustomWUUpdates);
+    
+    LOGD_GENN << "Custom update finalise order";
+    for(const auto *c : sortedCustomUpdates) {
+        LOGD_GENN << "\t" << c->getName();
+    }
+
+    LOGD_GENN << "Custom WU update finalise order";
+    for(const auto *c : sortedCustomWUUpdates) {
+        LOGD_GENN << "\t" << c->getName();
+    }
+
     // Finalise neuron groups
     for(auto &n : m_LocalNeuronGroups) {
         n.second.finalise(m_DT);
@@ -243,13 +325,13 @@ void ModelSpec::finalise()
     // Finalise custom update groups
     // **NOTE** needs to be after synapse groups are finalised 
     // so which vars are delayed has been established
-    for(auto &c : m_CustomUpdates) {
-        c.second.finalise(m_DT, m_BatchSize);
+    for(auto *c : sortedCustomUpdates) {
+        c->finalise(m_DT, m_BatchSize);
     }
 
     // Finalise custom WUM update groups
-    for(auto &c : m_CustomWUUpdates) {
-        c.second.finalise(m_DT, m_BatchSize);
+    for(auto *c : sortedCustomWUUpdates) {
+        c->finalise(m_DT, m_BatchSize);
     }
 
     // Finalize custom connectivity update groups
