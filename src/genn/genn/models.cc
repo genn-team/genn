@@ -37,172 +37,273 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 //----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
+NeuronGroup *VarReference::getDelayNeuronGroup() const
+{ 
+    return std::visit(
+        Utils::Overload{
+            [this](const NGRef &ref)->NeuronGroup* {
+                return (ref.group->isDelayRequired() && ref.group->isVarQueueRequired(getVar().name)) ? ref.group : nullptr;
+            },
+            [](const WUPreRef &ref)->NeuronGroup* {
+                return (ref.group->getDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
+            },
+            [](const WUPostRef &ref)->NeuronGroup* {
+                return (ref.group->getBackPropDelaySteps() > 0) ? ref.group->getTrgNeuronGroup() : nullptr;
+            },
+            [](const auto&)->NeuronGroup* { return nullptr; }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+std::string VarReference::getTargetName() const 
+{ 
+    return std::visit(
+            Utils::Overload{
+            [](const PSMRef &ref) { return ref.group->getFusedPSVarSuffix(); },
+            [](const WUPreRef &ref) { return ref.group->getFusedWUPreVarSuffix(); },
+            [](const WUPostRef &ref) { return ref.group->getFusedWUPostVarSuffix(); },
+            [](const auto &ref) { return ref.group->getName(); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+bool VarReference::isDuplicated() const
+{
+    if(getVar().access & VarAccessDuplication::SHARED) {
+        return false;
+    }
+    else {
+        return std::visit(
+            Utils::Overload{
+                [](const CURef &ref) { return ref.group->isBatched(); },
+                [](const auto&) { return true; }},
+            m_Detail);
+    }
+}
+//----------------------------------------------------------------------------
+bool VarReference::operator < (const VarReference &other) const
+{
+    // **NOTE** variable and target names are enough to guarantee uniqueness
+    const std::string targetName = getTargetName();
+    const std::string otherTargetName = other.getTargetName();
+    return (std::tie(getVar().name, targetName) < std::tie(other.getVar().name, otherTargetName));
+}
+//----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
 {
-    return VarReference(static_cast<NeuronGroupInternal *>(ng), varName);
+    return VarReference(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(),
+                        ng->getNumNeurons(), NGRef{static_cast<NeuronGroupInternal*>(ng)});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &varName)
 {
-    return VarReference(static_cast<CurrentSourceInternal *>(cs), varName);
+    auto *csInternal = static_cast<CurrentSourceInternal*>(cs);
+    return VarReference(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(),
+                        csInternal->getTrgNeuronGroup()->getNumNeurons(), CSRef{csInternal});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &varName)
 {
-    return VarReference(static_cast<CustomUpdateInternal *>(cu), varName);
+    return VarReference(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(),
+                        cu->getSize(), CURef{static_cast<CustomUpdateInternal*>(cu)});
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    CustomConnectivityUpdateInternal *cuInternal = static_cast<CustomConnectivityUpdateInternal*>(cu);
-    const auto *cum = cuInternal->getCustomConnectivityUpdateModel();
-    auto *sg = cuInternal->getSynapseGroup();
-    auto getDelayNG = [sg]() { return (sg->getDelaySteps() > 0) ? sg->getSrcNeuronGroup() : nullptr; };
-    return VarReference(sg->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
-                        cum->getPreVarIndex(varName), cum->getPreVars(),
-                        [cuInternal]() { return cuInternal->getName(); }, []() { return true; });
+    auto *ccuInternal = static_cast<CustomConnectivityUpdateInternal*>(ccu);
+    auto *sg = ccuInternal->getSynapseGroup();
+    return VarReference(ccu->getCustomConnectivityUpdateModel()->getPreVarIndex(varName), ccu->getCustomConnectivityUpdateModel()->getPreVars(),
+                        sg->getSrcNeuronGroup()->getNumNeurons(), CCUPreRef{ccuInternal});
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    CustomConnectivityUpdateInternal *cuInternal = static_cast<CustomConnectivityUpdateInternal*>(cu);
-    const auto *cum = cuInternal->getCustomConnectivityUpdateModel();
-    auto *sg = cuInternal->getSynapseGroup();
-    auto getDelayNG = [sg]() { return (sg->getBackPropDelaySteps() > 0) ? sg->getTrgNeuronGroup() : nullptr; };
-    return VarReference(sg->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
-                        cum->getPostVarIndex(varName), cum->getPostVars(),
-                        [cuInternal]() { return cuInternal->getName(); }, []() { return true; });
+    auto *ccuInternal = static_cast<CustomConnectivityUpdateInternal*>(ccu);
+    auto *sg = ccuInternal->getSynapseGroup();
+    return VarReference(ccu->getCustomConnectivityUpdateModel()->getPostVarIndex(varName), ccu->getCustomConnectivityUpdateModel()->getPostVars(),
+                        sg->getTrgNeuronGroup()->getNumNeurons(), CCUPostRef{ccuInternal});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    SynapseGroupInternal *sgInternal = static_cast<SynapseGroupInternal*>(sg);
-    const auto *psm = sgInternal->getPSModel();
-    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
-                        []() { return nullptr; },
-                        psm->getVarIndex(varName), psm->getVars(),
-                        [sgInternal]() { return sgInternal->getFusedPSVarSuffix(); }, []() { return true; });
+    auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
+    return VarReference(sg->getPSModel()->getVarIndex(varName), sg->getPSModel()->getVars(),
+                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), PSMRef{sgInternal});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    SynapseGroupInternal *sgInternal = static_cast<SynapseGroupInternal*>(sg);
-    const auto *wum = sgInternal->getWUModel();
-    auto getDelayNG = [sgInternal]() { return (sgInternal->getDelaySteps() > 0) ? sgInternal->getSrcNeuronGroup() : nullptr; };
-    return VarReference(sgInternal->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
-                        wum->getPreVarIndex(varName), wum->getPreVars(),
-                        [sgInternal]() { return sgInternal->getName(); }, []() { return true; });
+    auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
+    return VarReference(sg->getWUModel()->getPreVarIndex(varName), sg->getWUModel()->getPreVars(),
+                        sgInternal->getSrcNeuronGroup()->getNumNeurons(), WUPreRef{sgInternal});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    SynapseGroupInternal *sgInternal = static_cast<SynapseGroupInternal *>(sg);
-    const auto *wum = sgInternal->getWUModel();
-    auto getDelayNG = [sgInternal]() { return (sgInternal->getBackPropDelaySteps() > 0) ? sgInternal->getTrgNeuronGroup() : nullptr; };
-    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
-                        wum->getPostVarIndex(varName), wum->getPostVars(),
-                        [sgInternal]() { return sgInternal->getName(); }, []() { return true; });
+    auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
+    return VarReference(sg->getWUModel()->getPostVarIndex(varName), sg->getWUModel()->getPostVars(),
+                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), WUPostRef{sgInternal});
 }
-//----------------------------------------------------------------------------
-VarReference::VarReference(NeuronGroupInternal *ng, const std::string &varName)
-:   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), 
-                     [ng]() { return ng->getName(); }, []() { return true; }),
-    m_Size(ng->getNumNeurons()), m_GetDelayNeuronGroup([ng, varName]() { return (ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr; })
-{
-}
-//----------------------------------------------------------------------------
-VarReference::VarReference(CurrentSourceInternal *cs, const std::string &varName)
-:   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), 
-                     [cs]() { return cs->getName(); }, []() { return true; }),
-    m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetDelayNeuronGroup([]() { return nullptr; })
-{
-
-}
-//----------------------------------------------------------------------------
-VarReference::VarReference(CustomUpdate *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), 
-                     [cu]() { return cu->getName(); }, [cu]() { return static_cast<CustomUpdateInternal*>(cu)->isBatched(); }),
-    m_Size(cu->getSize()), m_GetDelayNeuronGroup([]() { return nullptr; })
-{
-
-}
-//----------------------------------------------------------------------------
-VarReference::VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
-                           size_t varIndex, const Models::Base::VarVec &varVec, 
-                           GetTargetNameFn getTargetName, IsBatchedFn isBatched)
-:   VarReferenceBase(varIndex, varVec, getTargetName, isBatched), m_Size(size), m_GetDelayNeuronGroup(getDelayNeuronGroup)
-{}
 
 //----------------------------------------------------------------------------
 // WUVarReference
 //----------------------------------------------------------------------------
-WUVarReference::WUVarReference(SynapseGroup *sg, const std::string &varName,
-                               SynapseGroup *transposeSG, const std::string &transposeVarName)
-:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), 
-                     [sg]() { return sg->getName(); }, []() { return true; }),
-    m_SG(static_cast<SynapseGroupInternal*>(sg)), m_TransposeSG(static_cast<SynapseGroupInternal*>(transposeSG)),
-    m_TransposeVarIndex((transposeSG == nullptr) ? std::nullopt : std::optional<size_t>(transposeSG->getWUModel()->getVarIndex(transposeVarName))),
-    m_TransposeVar((transposeSG == nullptr) ? std::nullopt : std::optional<Models::Base::Var>(transposeSG->getWUModel()->getVars().at(*m_TransposeVarIndex))),
-    m_GetTransposeTargetName((transposeSG == nullptr) ? GetTargetNameFn() : [transposeSG]() { return transposeSG->getName(); })
+std::string WUVarReference::getTargetName() const
 {
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && !(sg->getMatrixType() & SynapseMatrixWeight::KERNEL)) {
-        throw std::runtime_error("Only INDIVIDUAL or KERNEL weight update variables can be referenced.");
-    }
-
-    // If a transpose synapse group is specified
-    if(m_TransposeSG != nullptr) {
-        // Check that both tranpose and original group has individual variables
-        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || !(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-            throw std::runtime_error("Transpose updates can only reference INDIVIDUAL weight update variables.");
-        }
-
-        // Check that both the tranpose and main synapse groups have dense connectivity
-        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixConnectivity::DENSE) || !(m_SG->getMatrixType() & SynapseMatrixConnectivity::DENSE)) {
-            throw std::runtime_error("Tranpose updates can only be performed on DENSE weight update model variables.");
-        }
-
-        // Check that sizes of transpose and main synapse groups match
-        if((m_TransposeSG->getSrcNeuronGroup()->getNumNeurons() != m_SG->getTrgNeuronGroup()->getNumNeurons())
-           || (m_TransposeSG->getTrgNeuronGroup()->getNumNeurons() != m_SG->getSrcNeuronGroup()->getNumNeurons()))
-        {
-            throw std::runtime_error("Transpose updates can only be performed on connections between appropriately sized neuron groups.");
-        }
-
-        // Check types
-        // **NOTE** this is a bit over-conservative as, at this point, types are not resolved so "scalar" cannot be compared with "float"
-        if(getVar().type != getTransposeVar().type) {
-            throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
-        }
-
-        // Check duplicatedness of variables
-        if((getVar().access & VarAccessDuplication::DUPLICATE) != (getTransposeVar().access & VarAccessDuplication::DUPLICATE)) {
-            throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
-        }
-    }
+    return std::visit(
+        Utils::Overload{
+            [](const auto &ref) { return ref.group->getName(); }},
+        m_Detail);
 }
 //----------------------------------------------------------------------------
-WUVarReference::WUVarReference(CustomUpdateWU *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(),
-                     [cu]() { return cu->getName(); }, [cu]() { return static_cast<CustomUpdateWUInternal*>(cu)->isBatched(); }),
-    m_SG(static_cast<CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr)
+bool WUVarReference::isDuplicated() const
 {
-}
-//----------------------------------------------------------------------------
-WUVarReference::WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName)
-:   VarReferenceBase(cu->getCustomConnectivityUpdateModel()->getVarIndex(varName), cu->getCustomConnectivityUpdateModel()->getVars(), 
-                     [cu]() { return cu->getName(); }, [cu]() { return false; }),
-    m_SG(static_cast<CustomConnectivityUpdateInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr)
-{
+    if(getVar().access & VarAccessDuplication::SHARED) {
+        return false;
+    }
+    else {
+        return std::visit(
+            Utils::Overload{
+                [](const CURef &ref) { return ref.group->isBatched(); },
+                [](const auto&) { return true; }},
+            m_Detail);
+    }
 }
 //----------------------------------------------------------------------------
 SynapseGroup *WUVarReference::getSynapseGroup() const
 {
-    return m_SG;
+    return getSynapseGroupInternal();
 }
-//----------------------------------------------------------------------------
+//------------------------------------------------------------------------
 SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
-{ 
-    return m_TransposeSG; 
+{
+    return getTransposeSynapseGroupInternal();
+}
+//------------------------------------------------------------------------
+std::string WUVarReference::getTransposeTargetName() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref) { return ref.transposeGroup->getName(); },
+            [](const auto&)->std::string { throw std::runtime_error("No transpose"); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+bool WUVarReference::operator < (const WUVarReference &other) const
+{
+    // **NOTE** variable and target names are enough to guarantee uniqueness
+    const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
+    const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
+    if (hasTranspose && otherHasTranspose) {
+        return (std::tie(getVar().name, getTargetName(), getTransposeVar().name, getTransposeTargetName()) 
+                < std::tie(other.getVar().name, other.getTargetName(), other.getTransposeVar().name, other.getTransposeTargetName()));
+    }
+    else if (hasTranspose) {
+        return false;
+    }
+    else if (otherHasTranspose) {
+        return true;
+    }
+    else {
+        return (std::tie(getVar().name, getTargetName()) 
+                < std::tie(other.getVar().name, other.getTargetName()));
+    }
+}
+//------------------------------------------------------------------------
+WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std::string &varName, 
+                                                    SynapseGroup *transposeSG, const std::string &transposeVarName)
+{
+    if(transposeSG) {
+        return WUVarReference(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), 
+                              transposeSG->getWUModel()->getVarIndex(transposeVarName), transposeSG->getWUModel()->getVars(),
+                              WURef{static_cast<SynapseGroupInternal*>(sg), static_cast<SynapseGroupInternal*>(transposeSG)});
+    }
+    else {
+        return WUVarReference(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(),
+                              WURef{static_cast<SynapseGroupInternal*>(sg), static_cast<SynapseGroupInternal*>(transposeSG)});
+    }
+}
+//------------------------------------------------------------------------
+WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const std::string &varName)
+{
+    return WUVarReference(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(),
+                          CURef{static_cast<CustomUpdateWUInternal*>(cu)});
+}
+//------------------------------------------------------------------------
+WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName)
+{
+    return WUVarReference(ccu->getCustomConnectivityUpdateModel()->getVarIndex(varName), ccu->getCustomConnectivityUpdateModel()->getVars(),
+                          CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu)});
+}
+//------------------------------------------------------------------------
+SynapseGroupInternal *WUVarReference::getSynapseGroupInternal() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref) { return ref.group; },
+            [](const auto &ref) { return ref.group->getSynapseGroup(); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref)->SynapseGroupInternal* { return ref.transposeGroup; },
+            [](const auto&)->SynapseGroupInternal* { return nullptr; }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
+                               const DetailType &detail)
+:   VarReferenceBase(varIndex, varVec), m_TransposeVarIndex(std::nullopt), 
+    m_TransposeVar(std::nullopt), m_Detail(detail)
+{
+    // Check matrix types
+    auto *sg = getSynapseGroup();
+    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && !(sg->getMatrixType() & SynapseMatrixWeight::KERNEL)) {
+        throw std::runtime_error("Only INDIVIDUAL or KERNEL weight update variables can be referenced.");
+    }
+}
+//------------------------------------------------------------------------
+WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
+                               size_t transposeVarIndex, const Models::Base::VarVec &transposeVarVec,
+                               const DetailType &detail)
+:   VarReferenceBase(varIndex, varVec), m_TransposeVarIndex(transposeVarIndex), 
+    m_TransposeVar(transposeVarVec.at(transposeVarIndex)), m_Detail(detail)
+{
+    // Check matrix types
+    auto *sg = getSynapseGroupInternal();
+    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && !(sg->getMatrixType() & SynapseMatrixWeight::KERNEL)) {
+        throw std::runtime_error("Only INDIVIDUAL or KERNEL weight update variables can be referenced.");
+    }
+
+    // Check that both tranpose and original group has individual variables
+    auto *transposeSG = getTransposeSynapseGroupInternal();
+    if(!(transposeSG->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || !(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+        throw std::runtime_error("Transpose updates can only reference INDIVIDUAL weight update variables.");
+    }
+
+    // Check that both the tranpose and main synapse groups have dense connectivity
+    if(!(transposeSG->getMatrixType() & SynapseMatrixConnectivity::DENSE) || !(sg->getMatrixType() & SynapseMatrixConnectivity::DENSE)) {
+        throw std::runtime_error("Tranpose updates can only be performed on DENSE weight update model variables.");
+    }
+
+    // Check that sizes of transpose and main synapse groups match
+    if((transposeSG->getSrcNeuronGroup()->getNumNeurons() != sg->getTrgNeuronGroup()->getNumNeurons())
+        || (transposeSG->getTrgNeuronGroup()->getNumNeurons() != sg->getSrcNeuronGroup()->getNumNeurons()))
+    {
+        throw std::runtime_error("Transpose updates can only be performed on connections between appropriately sized neuron groups.");
+    }
+
+    // Check types
+    // **NOTE** this is a bit over-conservative as, at this point, types are not resolved so "scalar" cannot be compared with "float"
+    if(getVar().type != getTransposeVar().type) {
+        throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
+    }
+
+    // Check duplicatedness of variables
+    if((getVar().access & VarAccessDuplication::DUPLICATE) != (getTransposeVar().access & VarAccessDuplication::DUPLICATE)) {
+        throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
+    }
 }
 
 //----------------------------------------------------------------------------

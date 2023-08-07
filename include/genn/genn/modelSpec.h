@@ -175,19 +175,19 @@ inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::stri
 inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
                                              SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
-    return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
+    return Models::WUVarReference::createWUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
 //! Creates a reference to a custom weight update variable
 inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
 {
-    return Models::WUVarReference(cu, varName);
+    return Models::WUVarReference::createWUVarReference(cu, varName);
 }
 
 //! Creates a reference to a custom connectivity update update variable
 inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
-    return Models::WUVarReference(cu, varName);
+    return Models::WUVarReference::createWUVarReference(cu, varName);
 }
 
 //! Creates a reference to a neuron group extra global parameter

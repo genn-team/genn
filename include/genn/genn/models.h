@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 // GeNN includes
@@ -15,22 +16,25 @@
 // Forward declarations
 namespace GeNN
 {
-class CustomConnectivityUpdate;
-class CustomUpdate;
-class CustomUpdateWU;
 class NeuronGroup;
 class SynapseGroup;
 class CurrentSource;
+class CustomUpdate;
+class CustomUpdateWU;
+class CustomConnectivityUpdate;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 class CurrentSourceInternal;
+class CustomUpdateInternal;
+class CustomUpdateWUInternal;
+class CustomConnectivityUpdateInternal;
 }
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-
+#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE) using NAME = Detail<GROUP_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
 // GeNN::Models::Base
@@ -144,41 +148,30 @@ public:
     //------------------------------------------------------------------------
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
-    std::string getTargetName() const { return m_GetTargetName(); }
     
-    bool isDuplicated() const
-    {
-        return m_IsBatched() && !(m_Var.access & VarAccessDuplication::SHARED); 
-    }
-
-    bool operator < (const VarReferenceBase &other) const
-    {
-        // **NOTE** variable and target names are enough to guarantee uniqueness
-        const std::string targetName = m_GetTargetName();
-        const std::string otherTargetName = other.m_GetTargetName();
-        return (std::tie(m_Var.name, targetName) < std::tie(other.m_Var.name, otherTargetName));
-    }
 
 protected:
     //------------------------------------------------------------------------
-    // Typedefines
+    // Detail
     //------------------------------------------------------------------------
-    typedef std::function<std::string(void)> GetTargetNameFn;
-    typedef std::function<bool(void)> IsBatchedFn;
-
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec, 
-                     GetTargetNameFn getTargetName, IsBatchedFn isBatched)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex)), m_GetTargetName(getTargetName), m_IsBatched(isBatched)
+    //! Minimal helper class for definining unique struct 
+    //! wrappers around group pointers for use with std::variant
+    template<typename G, typename Tag>
+    struct Detail
+    {
+        G *group;
+    };
+    
+    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec)
+    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex))
     {}
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const size_t m_VarIndex;
-    const Models::Base::Var m_Var;
-    const GetTargetNameFn m_GetTargetName;
-    const IsBatchedFn m_IsBatched;
+    size_t m_VarIndex;
+    Models::Base::Var m_Var;
 };
 
 //----------------------------------------------------------------------------
@@ -190,8 +183,23 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Get size of variable
     unsigned int getSize() const { return m_Size; }
-    NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
+
+    //! If variable is delayed, get neuron group which manages its delay
+    NeuronGroup *getDelayNeuronGroup() const;
+    
+    //! Get suffix to use when accessing target variable names
+    // **TODO** rename to getNameSuffix
+    std::string getTargetName() const;
+    
+    //! If model is batched, will the variable this is referencing be duplicated?
+    bool isDuplicated() const;
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    bool operator < (const VarReference &other) const;
 
     //------------------------------------------------------------------------
     // Static API
@@ -199,8 +207,8 @@ public:
     static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
     static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
     static VarReference createVarRef(CustomUpdate *cu, const std::string &varName);
-    static VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
-    static VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName);
+    static VarReference createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
+    static VarReference createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
@@ -209,20 +217,29 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<NeuronGroup*(void)> GetDelayNeuronGroupFn;
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal);
+    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal);
+    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal);
 
-    VarReference(NeuronGroupInternal *ng, const std::string &varName);
-    VarReference(CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(CustomUpdate *cu, const std::string &varName);
-    VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
-                 size_t varIndex, const Models::Base::VarVec &varVec, 
-                 GetTargetNameFn getTargetName, IsBatchedFn isBatched);
+    //! Variant type used to store 'detail'
+    using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
+                                    CURef, CCUPreRef, CCUPostRef>;
+
+    VarReference(size_t varIndex, const Models::Base::VarVec &varVec, unsigned int size,
+                 const DetailType &detail)
+    :   VarReferenceBase(varIndex, varVec), m_Size(size), m_Detail(detail)
+    {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const unsigned int m_Size;
-    const GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
+    unsigned int m_Size;
+    DetailType m_Detail;
 };
 
 //----------------------------------------------------------------------------
@@ -231,61 +248,77 @@ private:
 class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
 public:
-    WUVarReference(SynapseGroup *sg, const std::string &varName,
-                   SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
-    WUVarReference(CustomUpdateWU *cu, const std::string &varName);
-    WUVarReference(CustomConnectivityUpdate *cu, const std::string &varName);
-
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
+    size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
+    
+    //! Get suffix to use when accessing target variable names
+    // **TODO** rename to getNameSuffix
+    std::string getTargetName() const;
+    
+    //! If model is batched, will the variable this is referencing be duplicated?
+    bool isDuplicated() const;
+
     SynapseGroup *getSynapseGroup() const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
-    const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
-    size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
-    std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
+    std::string getTransposeTargetName() const;
 
-    bool operator < (const WUVarReference &other) const
-    {
-        //**TODO** could be expressed in terms of tuple <
-        const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
-        const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
-        if (hasTranspose && otherHasTranspose) {
-            if (other.m_TransposeVar->name < m_TransposeVar->name) {
-                return false;
-            }
-            else if (m_TransposeVar->name < other.m_TransposeVar->name) {
-                return true;
-            }
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    bool operator < (const WUVarReference &other) const;
 
-            auto transposeTargetName = m_GetTransposeTargetName();
-            auto otherTransposeTargetName = other.m_GetTransposeTargetName();
-            if (otherTransposeTargetName < transposeTargetName) {
-                return false;
-            }
-            else if (transposeTargetName < otherTransposeTargetName) {
-                return true;
-            }
-        }
-        else if (hasTranspose) {
-            return false;
-        }
-        else if (otherHasTranspose) {
-            return true;
-        }
-        
-        return (VarReferenceBase::operator < (other));
-    }
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
+    static WUVarReference createWUVarReference(SynapseGroup *sg, const std::string &varName, 
+                                               SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    static WUVarReference createWUVarReference(CustomUpdateWU *cu, const std::string &varName);
+    static WUVarReference createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName);
+
 private:
+    //------------------------------------------------------------------------
+    // WURef
+    //------------------------------------------------------------------------
+    //! Struct for storing weight update group variable reference - needs
+    //! Additional field to store synapse group associated with transpose
+    struct WURef
+    {
+        SynapseGroupInternal *group;
+        SynapseGroupInternal *transposeGroup;
+    };
+
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal);
+    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal);
+
+     //! Variant type used to store 'detail'
+    using DetailType = std::variant<WURef, CURef, CCURef>;
+
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    SynapseGroupInternal *getSynapseGroupInternal() const;
+    SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
+
+    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
+                   const DetailType &detail);
+    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
+                   size_t transposeVarIndex, const Models::Base::VarVec &transposeVarVec,
+                   const DetailType &detail);
+    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    SynapseGroupInternal * const m_SG;
-    SynapseGroupInternal * const m_TransposeSG;
-    const std::optional<size_t> m_TransposeVarIndex;
-    const std::optional<Models::Base::Var> m_TransposeVar;
-    const GetTargetNameFn m_GetTransposeTargetName;
+    std::optional<size_t> m_TransposeVarIndex;
+    std::optional<Models::Base::Var> m_TransposeVar;
+    
+    DetailType m_Detail;
 };
 
 //----------------------------------------------------------------------------

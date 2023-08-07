@@ -241,6 +241,8 @@ void ModelSpec::finalise()
     }
 
     // Finalise custom update groups
+    // **NOTE** needs to be after synapse groups are finalised 
+    // so which vars are delayed has been established
     for(auto &c : m_CustomUpdates) {
         c.second.finalise(m_DT, m_BatchSize);
     }
@@ -251,6 +253,8 @@ void ModelSpec::finalise()
     }
 
     // Finalize custom connectivity update groups
+    // **NOTE** needs to be after synapse groups are finalised 
+    // so which vars are delayed has been established
     for (auto &c : m_CustomConnectivityUpdates) {
         c.second.finalise(m_DT, m_BatchSize);
     }

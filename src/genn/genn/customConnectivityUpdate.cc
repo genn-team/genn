@@ -238,7 +238,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         // Loop through synapse group variables
         for (const auto &v : getSynapseGroup()->getWUModel()->getVars()) {
             // Create reference to variable
-            Models::WUVarReference ref(getSynapseGroup(), v.name);
+            auto ref = Models::WUVarReference::createWUVarReference(getSynapseGroup(), v.name);
 
             // Add to dependent variables if it isn't already 'manually' referenced
             if (manualReferences.find(ref) == manualReferences.cend()) {
@@ -253,7 +253,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         // Loop through custom update variables
         for (const auto &v : c->getCustomUpdateModel()->getVars()) {
             // Create reference to variable
-            Models::WUVarReference ref(c, v.name);
+            auto ref = Models::WUVarReference::createWUVarReference(c, v.name);
 
             // Add to dependent variables if it isn't already 'manually' referenced
             if (manualReferences.find(ref) == manualReferences.cend()) {
@@ -272,7 +272,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         // Loop through custom connectivity update variables
         for (const auto &v : c->getCustomConnectivityUpdateModel()->getVars()) {
             // Create reference to variable
-            Models::WUVarReference ref(c, v.name);
+            auto ref = Models::WUVarReference::createWUVarReference(c, v.name);
 
             // Add to dependent variables if it isn't already 'manually' referenced
             if (manualReferences.find(ref) == manualReferences.cend()) {
