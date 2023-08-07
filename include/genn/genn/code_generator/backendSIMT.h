@@ -348,24 +348,8 @@ private:
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
     {
         env.print("if($(id) < ");
-        
-        // If synapse group has kernel weights, check ID against product of kernel dimensions
-        if (kernel) {
-            // Loop through kernel dimensions and multiply together
-            env.getStream() << "(";
-            for (size_t i = 0; i < kernelDimensions; i++) {
-                env.print(getKernelSize(g, i));
-                if (i != (kernelDimensions - 1)) {
-                    env.getStream() << " * ";
-                }
-            }
-            env.getStream() << ")";
-        }
-        // Otherwise, against number of postsynaptic neurons
-        else {
-            env.print("$(num_post)");
-        }
-        env.getStream() << ")";
+        env.print(kernel ? "$(_kernel_size)" : "$(num_post)");
+        env.print(")");
         {
             CodeStream::Scope b(env.getStream());
             EnvironmentGroupMergedField<G> initEnv(env, g);

@@ -539,7 +539,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
     }
 
     // Generate initialisation code
-    const std::string stride = kernel ? "$(_kern_batch_offset)" : "$(num_pre) * $(_row_stride)";
+    const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, stride, batchSize,
                                           [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                                           {
