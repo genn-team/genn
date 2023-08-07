@@ -221,6 +221,30 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         env.addField(Uint32.createPointer(), "_remap", "remap", 
                      [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "remap" + sg.getName(); });
     }
+    else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
+        std::ostringstream kernSizeInit;
+        kernSizeInit << "const unsigned int kernelSize = ";
+        const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
+        for (size_t d = 0; d < kernelSize.size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                                [d](const auto &g, size_t) { return std::to_string(g.getKernelSize().at(d)); });
+            }
+
+            // Multiply size by dimension
+            kernSizeInit << getKernelSize(env.getGroup(), d);
+            if (d != (kernelSize.size() - 1)) {
+                kernSizeInit << " * ";
+            }
+        }
+
+        // Add size field
+        kernSizeInit << ";";
+        env.add(Type::Uint32.addConst(), "_kernel_size", "kernelSize",
+                {env.addInitialiser(kernSizeInit.str())});
+    }
 
     // If batching is enabled
     if(batchSize > 1) {
@@ -240,34 +264,10 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                     {env.addInitialiser("const unsigned int synBatchOffset = $(_pre_batch_offset) * $(_row_stride);")});
         }
         
-        // If synapse group has kernel
-        const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
-        if(!kernelSize.empty()) {
-            // **TODO** automatic heterogeneity detection on all fields would make this much nicer
-            std::ostringstream kernSizeInit;
-            kernSizeInit << "const unsigned int kernelSize = ";
-            const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
-            for (size_t d = 0; d < kernelSize.size(); d++) {
-                // If this dimension has a heterogeneous size, add it to struct
-                if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                    env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                                 [d](const auto &g, size_t) { return std::to_string(g.getKernelSize().at(d)); });
-                }
-
-                // Multiply size by dimension
-                kernSizeInit << getKernelSize(env.getGroup(), d);
-                if (d != (kernelSize.size() - 1)) {
-                    kernSizeInit << " * ";
-                }
-            }
-
-            // Add size field
-            kernSizeInit << ";";
-            env.add(Type::Uint32.addConst(), "_kernel_size", "kernelSize",
-                    {env.addInitialiser(kernSizeInit.str())});
-
-            // From this calculate kernel batch offset
-            env.add(Uint32.addConst(), "_kern_batch_offset", "$(_kernel_size) * $(_batch)");
+        // If group has kernel weights, calculate batch stride over them
+        if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+            env.add(Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
+                    {env.addInitialiser("const unsigned int kernBatchOffset = $(_kernel_size) * $(batch);")});
         }
     }
 
