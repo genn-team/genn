@@ -49,7 +49,7 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
         // Loop through kernel size dimensions
         // **TODO** automatic heterogeneity detection on all fields would make this much nicer
         std::ostringstream kernSizeInit;
-        kernSizeInit << "const unsigned int size = ";
+        kernSizeInit << "const unsigned int kernelSize = ";
         const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
         for (size_t d = 0; d < kernelSize.size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
@@ -67,8 +67,9 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
 
         // Add size field
         kernSizeInit << ";";
-        env.add(Type::Uint32.addConst(), "_size", "size",
+        env.add(Type::Uint32.addConst(), "_kernel_size", "kernelSize",
                 {env.addInitialiser(kernSizeInit.str())});
+        env.add(Type::Uint32.addConst(), "_size", "$(_kernel_size)");
     }
     // Otherwise, calculate size as normal
     else {
