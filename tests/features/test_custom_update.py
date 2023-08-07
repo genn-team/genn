@@ -20,93 +20,52 @@ from pygenn import (create_current_source_model,
                     init_toeplitz_connectivity,
                     init_var)
 
-reduction_neuron_model = create_neuron_model(
-    "reduction_neuron",
-    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("Y", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
-
-neuron_model = create_neuron_model(
-    "neuron",
-    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
-
-static_pulse_duplicate_model = create_weight_update_model(
-    "static_pulse_duplicate",
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-    sim_code=
-    """
-    addToPost(g);
-    """)
-
-current_source_model = create_current_source_model(
-    "current_source",
-    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
-
-weight_update_model = create_weight_update_model(
-    "weight_update",
-    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-    pre_var_name_types=[("preX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("preXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)],
-    post_var_name_types=[("postX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("postXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
-
-postsynaptic_update_model = create_postsynaptic_model(
-    "postsynaptic_update",
-    var_name_types=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
-
-custom_update_model = create_custom_update_model(
-    "custom_update",
-    var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-    var_refs=[("R", "scalar")])
-
-set_time_custom_update_model = create_custom_update_model(
-    "set_time_custom_update",
-     update_code=
-     """
-     V = (batch * 1000.0) + t;
-     R = (batch * 1000.0) + t;
-     """,
-     var_name_types=[("V", "scalar")],
-     var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
-
-set_time_shared_custom_update_model = create_custom_update_model(
-    "set_time_custom_update",
-     update_code=
-     """
-     R = (batch * 1000.0) + t;
-     """,
-     var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
- 
-softmax_1_custom_update_model = create_custom_update_model(
-    "softmax_1",
-    update_code=
-    """
-    MaxX = X;
-    """,
-    var_name_types=[("MaxX", "scalar", VarAccess.REDUCE_NEURON_MAX)],
-    var_refs=[("X", "scalar", VarAccessMode.READ_ONLY)])
-
-softmax_2_custom_update_model = create_custom_update_model(
-    "softmax_2",
-    update_code=
-    """
-    SumExpX = exp(X - MaxX);
-    """,
-    var_name_types=[("SumExpX", "scalar", VarAccess.REDUCE_NEURON_SUM)],
-    var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
-              ("MaxX", "scalar", VarAccessMode.READ_ONLY)])
-
-softmax_3_custom_update_model = create_custom_update_model(
-    "softmax_3",
-    update_code=
-    """
-    Y = exp(X - MaxX) / SumExpX;
-    """,
-    var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
-              ("MaxX", "scalar", VarAccessMode.READ_ONLY),
-              ("SumExpX", "scalar", VarAccessMode.READ_ONLY),
-              ("Y", "scalar", VarAccessMode.READ_WRITE)])
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update(backend, precision, batch_size):
+    neuron_model = create_neuron_model(
+        "neuron",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+    current_source_model = create_current_source_model(
+        "current_source",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_var_name_types=[("preX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("preXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)],
+        post_var_name_types=[("postX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("postXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+    postsynaptic_update_model = create_postsynaptic_model(
+        "postsynaptic_update",
+        var_name_types=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+
+    custom_update_model = create_custom_update_model(
+        "custom_update",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        var_refs=[("R", "scalar")])
+
+    set_time_custom_update_model = create_custom_update_model(
+        "set_time_custom_update",
+         update_code=
+         """
+         V = (batch * 1000.0) + t;
+         R = (batch * 1000.0) + t;
+         """,
+         var_name_types=[("V", "scalar")],
+         var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
+
+    set_time_shared_custom_update_model = create_custom_update_model(
+        "set_time_custom_update",
+         update_code=
+         """
+         R = (batch * 1000.0) + t;
+         """,
+         var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
+ 
     model = GeNNModel(precision, "test_custom_update", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
@@ -249,6 +208,15 @@ def test_custom_update(backend, precision, batch_size):
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_transpose(backend, precision, batch_size):
+    static_pulse_duplicate_model = create_weight_update_model(
+        "static_pulse_duplicate",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        sim_code=
+        """
+        addToPost(g);
+        """)
+
+
     model = GeNNModel(precision, "test_custom_update_transpose", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
@@ -295,6 +263,40 @@ def test_custom_update_transpose(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 def test_custom_update_neuron_reduce(backend, precision, batch_size):
+    reduction_neuron_model = create_neuron_model(
+        "reduction_neuron",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("Y", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
+
+    softmax_1_custom_update_model = create_custom_update_model(
+        "softmax_1",
+        update_code=
+        """
+        MaxX = X;
+        """,
+        var_name_types=[("MaxX", "scalar", VarAccess.REDUCE_NEURON_MAX)],
+        var_refs=[("X", "scalar", VarAccessMode.READ_ONLY)])
+
+    softmax_2_custom_update_model = create_custom_update_model(
+        "softmax_2",
+        update_code=
+        """
+        SumExpX = exp(X - MaxX);
+        """,
+        var_name_types=[("SumExpX", "scalar", VarAccess.REDUCE_NEURON_SUM)],
+        var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
+                  ("MaxX", "scalar", VarAccessMode.READ_ONLY)])
+
+    softmax_3_custom_update_model = create_custom_update_model(
+        "softmax_3",
+        update_code=
+        """
+        Y = exp(X - MaxX) / SumExpX;
+        """,
+        var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
+                  ("MaxX", "scalar", VarAccessMode.READ_ONLY),
+                  ("SumExpX", "scalar", VarAccessMode.READ_ONLY),
+                  ("Y", "scalar", VarAccessMode.READ_WRITE)])
+              
     model = GeNNModel(precision, "test_custom_neuron_reduce", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
@@ -336,9 +338,10 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
         assert np.allclose(softmax(x, axis=1), n_pop.vars["Y"].view)
 
 
-@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_batch(backend, precision):
+def test_custom_update_batch_reduction(backend, precision, batch_size):
     pass
 
 
