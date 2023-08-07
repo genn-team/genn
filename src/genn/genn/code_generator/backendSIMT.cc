@@ -942,7 +942,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             // If update is a batch reduction
             if(cg.getArchetype().isBatchReduction()) {
                 groupEnv.printLine("// only do this for existing neurons");
-                groupEnv.print("if($(id) < $(size)");
+                groupEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     
