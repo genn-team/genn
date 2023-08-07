@@ -905,7 +905,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
     }
  
     // Loop through rows
-    const std::string stride = kernel ? "$(_kern_batch_offset)" : "$(num_pre) * $(_row_stride)";
+    const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
         backend, groupEnv, *this, stride, getArchetype().isBatched() ? batchSize : 1,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
