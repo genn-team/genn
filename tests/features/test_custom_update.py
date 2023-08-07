@@ -302,7 +302,7 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
     model.batch_size = batch_size
 
     # Create a neuron model with two state variables
-    x = (np.random.uniform(high=100.0, size=(5, 50)) if batch_size > 1
+    x = (np.random.uniform(high=100.0, size=(batch_size, 50)) if batch_size > 1
          else np.random.uniform(high=100.0, size=(50)))
     n_pop = model.add_neuron_population("Neurons", 50, reduction_neuron_model, 
                                         {}, {"X": x, "Y": 0.0})
@@ -342,8 +342,95 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_batch_reduction(backend, precision, batch_size):
-    pass
+    # **TODO** once VarAccess is refactored, we should really be able to reduce neuron shared across batch dimension
+    neuron_model = create_neuron_model(
+        "neuron",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("SumX", "scalar", VarAccess.READ_ONLY)])
 
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE), ("SumX", "scalar", VarAccess.READ_ONLY)])
+   
+    reduction_custom_update_model = create_custom_update_model(
+        "reduction_custom_update",
+        update_code=
+        """
+        SumX = X;
+        MaxX = X;
+        """,
+        var_name_types=[("MaxX", "scalar", VarAccess.REDUCE_BATCH_MAX)],
+        var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
+                  ("SumX", "scalar", VarAccessMode.REDUCE_SUM)])
 
+    model = GeNNModel(precision, "test_custom_update_batch_reduction", 
+                      backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+    
+    # Create a variety of models to attach custom updates to
+    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
+    
+    x_n = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
+           else np.random.uniform(high=100.0, size=100))
+    n_pop = model.add_neuron_population("Neurons", 100, neuron_model, 
+                                        {}, {"X": x_n, "SumX": 0.0})
+    
+    x_dense_s = (np.random.uniform(high=100.0, size=(batch_size, 1000)) if batch_size > 1
+                 else np.random.uniform(high=100.0, size=1000))
+    dense_s_pop = model.add_synapse_population(
+        "DenseSynapses", "DENSE", 0,
+        ss_pop, n_pop,
+        weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}, {}, {},
+        "DeltaCurr", {}, {})
+
+    x_sparse_s = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
+                 else np.random.uniform(high=100.0, size=100))
+    sparse_s_pop = model.add_synapse_population(
+        "SparseSynapses", "SPARSE", 0,
+        ss_pop, n_pop,
+        weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
+    
+    x_kern_s = (np.random.uniform(high=100.0, size=(batch_size, 9)) if batch_size > 1
+                 else np.random.uniform(high=100.0, size=9))
+    conv_params = {"conv_kh": 3, "conv_kw": 3,
+                   "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
+                   "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
+    kern_s_pop = model.add_synapse_population(
+        "ToeplitzSynapses", "TOEPLITZ", 0,
+        ss_pop, n_pop,
+        weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}, {}, {},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_params))
+
+    # Create reduction custom updates
+    reduce_n = model.add_custom_update("NeuronReduce", "Test", reduction_custom_update_model,
+                                       {}, {"MaxX": 0.0}, {"X": create_var_ref(n_pop, "X"), "SumX": create_var_ref(n_pop, "SumX")})
+    reduce_s_dense = model.add_custom_update("DenseSynapseReduce", "Test", reduction_custom_update_model,
+                                             {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(dense_s_pop, "X"), "SumX": create_wu_var_ref(dense_s_pop, "SumX")})
+    reduce_s_sparse = model.add_custom_update("SparseSynapseReduce", "Test", reduction_custom_update_model,
+                                              {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(sparse_s_pop, "X"), "SumX": create_wu_var_ref(sparse_s_pop, "SumX")})
+    reduce_s_dense = model.add_custom_update("KernelSynapseReduce", "Test", reduction_custom_update_model,
+                                             {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(kern_s_pop, "X"), "SumX": create_wu_var_ref(kern_s_pop, "SumX")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Launch custom update to perform reductions
+    model.custom_update("Test")
+    
+    # Simulate 20 timesteps
+    #samples = [
+    #    (n_pop, "SumX", n_pop.vars, (100,)),
+    #    (reduce_n, "MaxX", reduce_n.vars, (100,))]
+    
+    n_pop.pull_var_from_device("SumX")
+    reduce_n.pull_var_from_device("MaxX")
+    assert np.allclose(np.sum(x_n, axis=0), n_pop.vars["SumX"].view)
+    assert np.allclose(np.max(x_n, axis=0), reduce_n.vars["MaxX"].view)
+ 
 if __name__ == '__main__':
-    test_custom_update("cuda", types.Float, 5)
+    test_custom_update_batch_reduction("cuda", types.Float, 5)
+    
