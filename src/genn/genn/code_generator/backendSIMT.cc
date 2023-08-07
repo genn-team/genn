@@ -1098,7 +1098,12 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
             const SynapseGroupInternal *sg = cg.getArchetype().getSynapseGroup();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
-            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(env, cg);
+            // **YUCK** add an environment with a hidden copy of ID so we 
+            // can overwrite ID deeper in here without losing access to original
+            EnvironmentExternal idEnv(env);
+            idEnv.add(Type::Uint32.addConst(), "_id", "$(id)");
+
+            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(idEnv, cg);
             buildSizeEnvironment(groupEnv);
  
             // If update isn't a batch reduction
@@ -1108,17 +1113,13 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
                     const std::string blockSizeStr = std::to_string(blockSize);
-                    const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * ((size + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
+                    const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * (($(_size) + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(id) % paddedSize;")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(_id) % paddedSize;")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(id) / paddedSize;")});
-
-                    // **TODO** why isn't this in standard environment?
-                    groupEnv.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
-                                 {groupEnv.addInitialiser("const unsigned int batchOffset = size * $(batch);")});
+                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(_id) / paddedSize;")});
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
