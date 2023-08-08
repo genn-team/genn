@@ -434,12 +434,25 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     os << pCode << std::endl;*/
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, EnvironmentExternalBase &env)
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                                Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                                                                Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
+    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
+
+    // Substitute in parameters and derived parameters for initialising connectivity
+    const auto &connectInit = getArchetype().getToeplitzConnectivityInitialiser();
+    groupEnv.addConnectInitParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
+                                  &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitParamHeterogeneous);
+    groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
+                                         &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitDerivedParamHeterogeneous);
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
+
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' Toeplitz connectivity diagonal build code");
     prettyPrintStatements(getArchetype().getToeplitzConnectivityInitialiser().getDiagonalBuildCodeTokens(), 
-                          getTypeContext(), env, errorHandler);
+                          getTypeContext(), groupEnv, errorHandler, forEachSynapseTypeCheckHandler,
+                          forEachSynapsePrettyPrintHandler);
 }
 
 //----------------------------------------------------------------------------

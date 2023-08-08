@@ -1750,112 +1750,86 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
     const auto *wu = sg.getArchetype().getWUModel();
 
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
-        const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
+        // Create environment for generating presynaptic update code
+        // **TODO** this should generate into a seperate CodeStream
+        EnvironmentExternal preUpdateEnv(env);
+        preUpdateEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
+
+        // Replace $(id_post) with first 'function' parameter as simulation code is
+        // going to be, in turn, substituted into Toeplitz connectivity generation code
+        preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "$(0)");
+
+        // Replace kernel indices with the subsequent 'function' parameters
+        for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+            preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(i),
+                             "$(" + std::to_string(i + 1) + ")");
+        }
+                    
+        // Add correct functions for apply synaptic input
+        preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+        preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+        preUpdateEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+
+        // Generate spike update
+        if(trueSpike) {
+            sg.generateSpikeUpdate(*this, preUpdateEnv, 1);
+        }
+        else {
+            sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1);
+        }
 
         // Loop through Toeplitz matrix diagonals
-        env.print("for(unsigned int j = 0; j < $(row_stride); j++)");
+        env.print("for(unsigned int j = 0; j < $(_row_stride); j++)");
         {
-            /*CodeStream::Scope b(env.getStream());
+            CodeStream::Scope b(env.getStream());
 
-            // Create substitution stack for generating procedural connectivity code
-            Substitutions connSubs(&popSubs);
-            connSubs.addVarSubstitution("id_diag", "j");
+            EnvironmentExternal toeplitzEnv(env);
+            toeplitzEnv.add(Type::Uint32.addConst(), "id_diag", "j");
+            
+            // Define type
+            const auto addSynapseType = Type::ResolvedType::createFunction(
+                Type::Void, std::vector<Type::ResolvedType>{1ull + sg.getArchetype().getKernelSize().size(), Type::Uint32});
 
-            // Add substitutions
-            connSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                               [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitParamHeterogeneous(p);  },
-                                               "", "group->");
-            connSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                             [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(p);  },
-                                             "", "group->");
-            connSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
-            connSubs.addVarNameSubstitution(connectInit.getSnippet()->getDiagonalBuildStateVars());
+            // Generate toeplitz connectivity generation code using custom for_each_synapse loop
+            sg.generateToeplitzConnectivity(
+                *this, toeplitzEnv,
+                // Within for_each_synapse loops, define the following types
+                [addSynapseType, this](auto &env, auto &errorHandler)
+                {
+                    // Add type of add synapse function
+                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "add_synapse", 0}, addSynapseType, errorHandler);
 
-            // Initialise any diagonal build state variables defined
-            for (const auto &d : connectInit.getSnippet()->getDiagonalBuildStateVars()) {
-                // Apply substitutions to value
-                std::string value = d.value;
-                connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
-                //value = ensureFtype(value, modelMerged.getModel().getPrecision());
+                    // Add typed indices
+                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
+                },
+                [addSynapseType, trueSpike, &eventSuffix, &sg, /*batchSize, &backend, &removeSynapseStream,*/ this](auto &env, auto generateBody)
+                {
+                    // Detect spike events or spikes and do the update
+                    env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
+                    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+                        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
+                    }
+                    else {
+                        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
+                    }
+                    {
+                        CodeStream::Scope b(env.getStream());
+                        EnvironmentExternal bodyEnv(env);
 
-                os << d.type.resolve(sg.getTypeContext()).getName() << " " << d.name << " = " << value << ";" << std::endl;
-            }
+                        const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
+                        bodyEnv.printLine("const unsigned int ipre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];");
+                        
+                        // Add presynaptic index
+                        bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
-             // Detect spike events or spikes and do the update
-            os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-            if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
-            }
-            else {
-                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
-            }
-            {
-                CodeStream::Scope b(os);
-
-                const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
-                os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
-
-                // Create another substitution stack for generating presynaptic simulation code
-                Substitutions presynapticUpdateSubs(&popSubs);
-                connSubs.addVarSubstitution("id_pre", "ipre");
-                presynapticUpdateSubs.addVarSubstitution("id_pre", "ipre");
-
-                if(!wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-                }
-
-                // If this is a spike-like event, insert threshold check for this presynaptic neuron
-                if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    os << "if(";
-
-                    // Generate weight update threshold condition
-                    sg.generateSpikeEventThreshold(*this, os, modelMerged, presynapticUpdateSubs);
-
-                    os << ")";
-                    os << CodeStream::OB(10);
-                }
-
-                // Replace $(id_post) with first 'function' parameter as simulation code is
-                // going to be, in turn, substituted into procedural connectivity generation code
-                presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
-
-                // Replace kernel indices with the subsequent 'function' parameters
-                for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-                    presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
-                                                             "$(" + std::to_string(i + 1) + ")");
-                }
-
-                if(sg.getArchetype().isDendriticDelayRequired()) {
-                    presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-                }
-                else {
-                    presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-                }
-
-                if(sg.getArchetype().isPresynapticOutputRequired()) {
-                    presynapticUpdateSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, "ipre") + "] += $(0)");
-                }
-
-                // Generate presynaptic simulation code into new stringstream-backed code stream
-                std::ostringstream presynapticUpdateStream;
-                CodeStream presynapticUpdate(presynapticUpdateStream);
-                if(trueSpike) {
-                    sg.generateSpikeUpdate(*this, presynapticUpdate, modelMerged, presynapticUpdateSubs);
-                }
-                else {
-                    sg.generateSpikeEventUpdate(*this, presynapticUpdate, modelMerged, presynapticUpdateSubs);
-                }
-
-                // When a synapse should be 'added', substitute in presynaptic update code
-                connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
-
-                // Generate toeplitz connectivity code
-                sg.generateToeplitzConnectivity(*this, os, connSubs);
-
-                if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    os << CodeStream::CB(130); // end if (eCode)
-                }
-            }*/
+                        // Add function substitution with parameters to add synapse
+                        // **TODO** presynaptic update should go here
+                        bodyEnv.add(addSynapseType, "add_synapse", "");
+                                    
+                        // Generate body of for_each_synapse loop within this new environment
+                        generateBody(bodyEnv);
+                    }
+                });
         }
     }
     else {
@@ -1876,7 +1850,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
 
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
-            groupEnv.add(Type::Uint32, "id_pre", "idPre",
+            groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                          {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
             // If this is a spike-like event, insert threshold check for this presynaptic neuron
@@ -1899,9 +1873,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
 
                     // **TODO** 64-bit id_syn
-                    synEnv.add(Type::Uint32, "id_syn", "idSyn",
+                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
                                {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
-                    synEnv.add(Type::Uint32, "id_post", "idPost",
+                    synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
                                {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
                     
                     // Add correct functions for apply synaptic input
@@ -1932,7 +1906,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
-                    groupEnv.add(Type::Uint32, "id_post", "ipost");
+                    groupEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
                     
                     // Add correct functions for apply synaptic input
                     groupEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");

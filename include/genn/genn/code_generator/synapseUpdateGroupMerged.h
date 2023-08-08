@@ -120,7 +120,9 @@ public:
     void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env,
+                                      Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                                      Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);
 
     //----------------------------------------------------------------------------
     // Static constants
