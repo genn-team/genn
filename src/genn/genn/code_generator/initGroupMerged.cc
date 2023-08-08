@@ -279,7 +279,8 @@ void NeuronInitGroupMerged::InSynWUMPostVars::generate(const BackendBase &backen
                                                        NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
     genInitNeuronVarCode<SynapseWUPostVarAdapter, NeuronInitGroupMerged>(
-        backend, env, *this, ng, "InSynWUMPost" + std::to_string(getIndex()), "num_neurons", 0, batchSize);
+        backend, env, *this, ng, "InSynWUMPost" + std::to_string(getIndex()), "num_neurons", 
+        getArchetype().getTrgNeuronGroup()->getNumDelaySlots(), batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -289,7 +290,8 @@ void NeuronInitGroupMerged::OutSynWUMPreVars::generate(const BackendBase &backen
                                                        NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
     genInitNeuronVarCode<SynapseWUPreVarAdapter, NeuronInitGroupMerged>(
-        backend, env, *this, ng, "OutSynWUMPre" + std::to_string(getIndex()), "num_neurons", 0, batchSize);
+        backend, env, *this, ng, "OutSynWUMPre" + std::to_string(getIndex()), "num_neurons", 
+        getArchetype().getSrcNeuronGroup()->getNumDelaySlots(), batchSize);
 }
 
 //----------------------------------------------------------------------------
