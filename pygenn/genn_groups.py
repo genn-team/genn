@@ -200,19 +200,20 @@ class GroupMixin(object):
                             
                 # Get view
                 resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data.view = self._assign_ext_ptr_array(v.name, var_size * num_copies,
-                                                           resolved_type)
+                var_data._view = self._assign_ext_ptr_array(
+                    v.name, var_size * num_copies, resolved_type)
 
                 # If there is more than one copy, reshape view to 2D
                 if num_copies > 1:
-                    var_data.view = np.reshape(var_data.view, (num_copies, -1))
+                    var_data._view = np.reshape(var_data._view,
+                                                (num_copies, -1))
 
                 # If manual initialisation is required, copy over variables
                 if var_data.init_required:
                     var_data.view[:] = var_data.values
             else:
                 assert not var_data.init_required
-                var_data.view = None
+                var_data._view = None
 
     def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
@@ -228,9 +229,9 @@ class GroupMixin(object):
                     self.name, egp_name + egp_suffix, len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
-                                                           len(egp_data.values), 
-                                                           resolved_type)
+                egp_data._view = self._assign_ext_ptr_array(
+                    egp_name + egp_suffix, len(egp_data.values), 
+                    resolved_type)
 
                 # Copy values
                 egp_data.view[:] = egp_data.values
@@ -255,9 +256,7 @@ class GroupMixin(object):
 
         # Loop through variables and clear views
         for v in itervalues(var_dict):
-            v.view = None
-            for e in itervalues(v.extra_global_params):
-                e.view = None
+            v._unload()
 
     def _unload_egps(self, egp_dict=None):
         # If no EGP dictionary is specified, use standard one
@@ -266,7 +265,7 @@ class GroupMixin(object):
 
         # Loop through extra global params and clear views
         for e in itervalues(egp_dict):
-            e.view = None
+            e._unload()
 
 class NeuronGroupMixin(GroupMixin):
 
@@ -629,20 +628,20 @@ class SynapseGroupMixin(GroupMixin):
                                     else self._model.batch_size)
                     # Get view
                     resolved_type = var_data.type.resolve(self._model.type_context)
-                    var_data.view = self._assign_ext_ptr_array(
+                    var_data._view = self._assign_ext_ptr_array(
                         v.name, self.weight_update_var_size * num_copies, 
                         resolved_type)
 
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:
-                        var_data.view = np.reshape(var_data.view, 
-                                                   (num_copies, -1))
+                        var_data._view = np.reshape(var_data._view, 
+                                                    (num_copies, -1))
 
                     # Initialise variable if necessary
                     self._init_wum_var(var_data, num_copies)
                 else:
                     assert not var_data.init_required
-                    var_data.view = None
+                    var_data._view = None
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
@@ -743,7 +742,7 @@ class SynapseGroupMixin(GroupMixin):
             # **NOTE** we assume order is row-major
             if ((self.matrix_type & SynapseMatrixConnectivity.DENSE) or
                 (self.matrix_type & SynapseMatrixWeight.KERNEL)):
-                var_data.view[:] = var_data.values
+                var_data._view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
                 if num_copies == 1:
@@ -761,9 +760,9 @@ class SynapseGroupMixin(GroupMixin):
                 for i, r in zip(row_start_idx, self.row_lengths):
                     # Copy row from non-padded indices into correct location
                     if num_copies == 1:
-                        var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                        var_data._view[i:i + r] = sorted_var[syn:syn + r]
                     else:
-                        var_data.view[:,i:i + r] = sorted_var[:,syn:syn + r]
+                        var_data._view[:,i:i + r] = sorted_var[:,syn:syn + r]
                     syn += r
             else:
                 raise Exception("Matrix format not supported")
@@ -866,13 +865,13 @@ class CustomUpdateWUMixin(GroupMixin):
                 # Get view
                 size = self.synapse_group.weight_update_var_size * num_copies
                 resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data.view = self._assign_ext_ptr_array(
+                var_data._view = self._assign_ext_ptr_array(
                     v.name, size, resolved_type)
 
                 # If there is more than one copy, reshape view to 2D
                 if num_copies > 1:
-                    var_data.view = np.reshape(var_data.view, 
-                                               (num_copies, -1))
+                    var_data._view = np.reshape(var_data._view, 
+                                                (num_copies, -1))
 
                 # Initialise variable if necessary
                 self.synapse_group._init_wum_var(var_data, num_copies)
@@ -938,7 +937,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
                 # Get view
                 size = self.synapse_group.weight_update_var_size
                 resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data.view = self._assign_ext_ptr_array(
+                var_data._view = self._assign_ext_ptr_array(
                     v.name, size, resolved_type)
 
                 # Initialise variable if necessary

@@ -110,7 +110,7 @@ class Variable(object):
         self.name = variable_name
         self.type = variable_type
         self.group = proxy(group)
-        self.view = None
+        self._view = None
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
@@ -154,6 +154,15 @@ class Variable(object):
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.extra_global_params = {}
+    
+    def _unload(self):
+        self._view = None
+        for e in itervalues(self.extra_global_params):
+            e._unload()
+
+    @property
+    def view(self):
+        return self._view
 
 class ExtraGlobalParameter(object):
 
@@ -174,7 +183,7 @@ class ExtraGlobalParameter(object):
         self.type = variable_type
         self.group = group if type(group) in ProxyTypes else proxy(group)
         self.name = variable_name
-        self.view = None
+        self._view = None
         self.set_values(values)
 
     def set_values(self, values):
@@ -194,3 +203,10 @@ class ExtraGlobalParameter(object):
             except TypeError:
                 raise ValueError("extra global variables can only be "
                                  "initialised with iterables")
+
+    def _unload(self):
+        self._view = None
+
+    @property
+    def view(self):
+        return self._view
