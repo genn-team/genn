@@ -202,7 +202,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_src_spk", "srcSpk",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
-    env.addField(Uint32.createPointer(), "_src_spk_evnt_cnt", "srcSpkCntEvnt",
+    env.addField(Uint32.createPointer(), "_src_spk_cnt_evnt", "srcSpkCntEvnt",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
