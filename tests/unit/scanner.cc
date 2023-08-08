@@ -98,26 +98,37 @@ TEST(Scanner, HexInt)
 TEST(Scanner, DecimalFloat)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("1.0 0.2 100.0f 0.2f -12.0d -0.0004f", errorHandler);
+    const auto tokens = Scanner::scanSource("1.0 2. 0.2 100.0f 10.f 0.2f -12.0d -0.0004f 1e-4 10.0e4f -1.E-5d", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
-    ASSERT_EQ(tokens.size(), 9);
+    ASSERT_EQ(tokens.size(), 15);
     ASSERT_EQ(tokens[0].type, Token::Type::SCALAR_NUMBER);
     ASSERT_EQ(tokens[1].type, Token::Type::SCALAR_NUMBER);
-    ASSERT_EQ(tokens[2].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[2].type, Token::Type::SCALAR_NUMBER);
     ASSERT_EQ(tokens[3].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::DOUBLE_NUMBER);
+    ASSERT_EQ(tokens[4].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[5].type, Token::Type::FLOAT_NUMBER);
     ASSERT_EQ(tokens[6].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[7].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[8].type, Token::Type::END_OF_FILE);
+    ASSERT_EQ(tokens[7].type, Token::Type::DOUBLE_NUMBER);
+    ASSERT_EQ(tokens[8].type, Token::Type::MINUS);
+    ASSERT_EQ(tokens[9].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[10].type, Token::Type::SCALAR_NUMBER);
+    ASSERT_EQ(tokens[11].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[12].type, Token::Type::MINUS);
+    ASSERT_EQ(tokens[13].type, Token::Type::DOUBLE_NUMBER);
+    ASSERT_EQ(tokens[14].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "1.0");
-    ASSERT_EQ(tokens[1].lexeme, "0.2");
-    ASSERT_EQ(tokens[2].lexeme, "100.0");
-    ASSERT_EQ(tokens[3].lexeme, "0.2");
-    ASSERT_EQ(tokens[5].lexeme, "12.0");
-    ASSERT_EQ(tokens[7].lexeme, "0.0004");
+    ASSERT_EQ(tokens[1].lexeme, "2.");
+    ASSERT_EQ(tokens[2].lexeme, "0.2");
+    ASSERT_EQ(tokens[3].lexeme, "100.0");
+    ASSERT_EQ(tokens[4].lexeme, "10.");
+    ASSERT_EQ(tokens[5].lexeme, "0.2");
+    ASSERT_EQ(tokens[7].lexeme, "12.0");
+    ASSERT_EQ(tokens[9].lexeme, "0.0004");
+    ASSERT_EQ(tokens[10].lexeme, "1e-4");
+    ASSERT_EQ(tokens[11].lexeme, "10.0e4");
+    ASSERT_EQ(tokens[13].lexeme, "1.E-5");
 }
 //--------------------------------------------------------------------------
 TEST(Scanner, String)
