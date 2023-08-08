@@ -892,12 +892,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
-    const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
     for(const auto &p : getWUModel()->getParamNames()) {
-        const std::string paramName = "$(" + p + ")";
-        if((preSpikeCode.find(paramName) != std::string::npos)
-           || (preDynamicsCode.find(paramName) != std::string::npos)) 
+        if(Utils::isIdentifierReferenced(p, getWUPreSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p, getWUPreDynamicsCodeTokens())) 
         {
             Utils::updateHash(getWUParams().at(p), hash);
         }
@@ -906,9 +903,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
     for(const auto &d : getWUModel()->getDerivedParams()) {
-        const std::string derivedParamName = "$(" + d.name + ")";
-        if((preSpikeCode.find(derivedParamName) != std::string::npos)
-           || (preDynamicsCode.find(derivedParamName) != std::string::npos)) 
+        if(Utils::isIdentifierReferenced(d.name, getWUPreSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(d.name, getWUPreDynamicsCodeTokens()))
         {
             Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }
@@ -933,12 +929,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
-    const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
     for(const auto &p : getWUModel()->getParamNames()) {
-        const std::string paramName = "$(" + p + ")";
-        if((postSpikeCode.find(paramName) != std::string::npos)
-           || (postDynamicsCode.find(paramName) != std::string::npos)) 
+       if(Utils::isIdentifierReferenced(p, getWUPostSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p, getWUPostDynamicsCodeTokens())) 
         {
             Utils::updateHash(getWUParams().at(p), hash);
         }
@@ -947,9 +940,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
     for(const auto &d : getWUModel()->getDerivedParams()) {
-        const std::string derivedParamName = "$(" + d.name + ")";
-        if((postSpikeCode.find(derivedParamName) != std::string::npos)
-           || (postDynamicsCode.find(derivedParamName) != std::string::npos)) 
+        if(Utils::isIdentifierReferenced(d.name, getWUPostSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(d.name, getWUPostDynamicsCodeTokens())) 
         {
             Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }

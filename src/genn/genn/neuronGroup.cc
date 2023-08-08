@@ -372,8 +372,8 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
         std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(inSynWithPostUpdate),
                      [](SynapseGroupInternal *sg)
                      {
-                         return (!sg->getWUModel()->getPostSpikeCode().empty()
-                                 || !sg->getWUModel()->getPostDynamicsCode().empty()
+                         return (!Utils::areTokensEmpty(sg->getWUPostSpikeCodeTokens())
+                                 || !Utils::areTokensEmpty(sg->getWUPostDynamicsCodeTokens())
                                  || !sg->getWUModel()->getPostVars().empty());
                      });
 
@@ -390,8 +390,8 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreUpdate),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPreSpikeCode().empty()
-                             || !sg->getWUModel()->getPreDynamicsCode().empty()
+                     return (!Utils::areTokensEmpty(sg->getWUPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUPreDynamicsCodeTokens())
                              || !sg->getWUModel()->getPreVars().empty());
                  });
 
