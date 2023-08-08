@@ -15,79 +15,48 @@ from pygenn import (create_current_source_model,
                     init_sparse_connectivity,
                     init_var)
 
-# How to initialise various sorts of variable
-var_init = {"uniform": ("scalar", init_var("Uniform", {"min": 0.0, "max": 1.0}), stats.uniform, []), 
-            "normal": ("scalar", init_var("Normal", {"mean": 0.0, "sd": 1.0}), stats.norm, []), 
-            "exponential": ("scalar", init_var("Exponential", {"lambda": 1.0}), stats.expon, []), 
-            "gamma": ("scalar", init_var("Gamma", {"a": 4.0, "b": 1.0}), stats.gamma, [4.0]), 
-            "binomial": ("unsigned int", init_var("Binomial", {"n": 20, "p": 0.5}), stats.binom, [20, 0.5])}
-        
-def create_vars(prefix=""):
-    return [(prefix + v, type) for v, (type, _, _, _) in var_init.items()]
-
-def init_vars(prefix=""):
-    return {(prefix + v): init for v, (_, init, _, _) in var_init.items()}
-
-neuron_model = create_neuron_model(
-    "neuron",
-    sim_code=
-    """
-    uniform = gennrand_uniform();
-    normal = gennrand_normal();
-    """,
-    var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
-
-current_source_model = create_current_source_model(
-    "current_source",
-    injection_code=
-    """
-    uniform = gennrand_uniform();
-    normal = gennrand_normal();
-    injectCurrent(0.0);
-    """,
-    var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
-
-custom_connectivity_update_model = create_custom_connectivity_update_model(
-    "custom_connectivity_update",
-    row_update_code=
-    """
-    preUniform = gennrand_uniform();
-    preNormal = gennrand_normal();
-    """,
-    host_update_code=
-    """
-    for(int i = 0; i < num_pre; i++) {
-        postUniform[i] = gennrand_uniform();
-        postNormal[i] = gennrand_normal();
-    }
-    pushpostUniformToDevice();
-    pushpostNormalToDevice();
-    """,
-    pre_var_name_types=[("preUniform", "scalar"), ("preNormal", "scalar")],
-    post_var_name_types=[("postUniform", "scalar"), ("postNormal", "scalar")])
-
-nop_neuron_model = create_neuron_model(
-    "nop_neuron",
-    var_name_types=create_vars())
-
-nop_current_source_model = create_current_source_model(
-    "nop_current_source",
-    var_name_types=create_vars())
-
-nop_postsynaptic_update_model = create_postsynaptic_model(
-    "nop_postsynaptic_update",
-    var_name_types=create_vars("psm_"))
-
-nop_weight_update_model = create_weight_update_model(
-    "nop_weight_update",
-    var_name_types=create_vars(),
-    pre_var_name_types=create_vars("pre_"),
-    post_var_name_types=create_vars("post_"))
-
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_sim(backend, precision):
+    neuron_model = create_neuron_model(
+        "neuron",
+        sim_code=
+        """
+        uniform = gennrand_uniform();
+        normal = gennrand_normal();
+        """,
+        var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
+
+    current_source_model = create_current_source_model(
+        "current_source",
+        injection_code=
+        """
+        uniform = gennrand_uniform();
+        normal = gennrand_normal();
+        injectCurrent(0.0);
+        """,
+        var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
+
+    custom_connectivity_update_model = create_custom_connectivity_update_model(
+        "custom_connectivity_update",
+        row_update_code=
+        """
+        preUniform = gennrand_uniform();
+        preNormal = gennrand_normal();
+        """,
+        host_update_code=
+        """
+        for(int i = 0; i < num_pre; i++) {
+            postUniform[i] = gennrand_uniform();
+            postNormal[i] = gennrand_normal();
+        }
+        pushpostUniformToDevice();
+        pushpostNormalToDevice();
+        """,
+        pre_var_name_types=[("preUniform", "scalar"), ("preNormal", "scalar")],
+        post_var_name_types=[("postUniform", "scalar"), ("postNormal", "scalar")])
+
     model = GeNNModel(precision, "test_sim", backend=backend)
     
     # Add neuron and current source populations
@@ -147,6 +116,37 @@ def test_sim(backend, precision):
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_init(backend, precision):
+    # How to initialise various sorts of variable
+    var_init = {"uniform": ("scalar", init_var("Uniform", {"min": 0.0, "max": 1.0}), stats.uniform, []), 
+                "normal": ("scalar", init_var("Normal", {"mean": 0.0, "sd": 1.0}), stats.norm, []), 
+                "exponential": ("scalar", init_var("Exponential", {"lambda": 1.0}), stats.expon, []), 
+                "gamma": ("scalar", init_var("Gamma", {"a": 4.0, "b": 1.0}), stats.gamma, [4.0]), 
+                "binomial": ("unsigned int", init_var("Binomial", {"n": 20, "p": 0.5}), stats.binom, [20, 0.5])}
+
+    def create_vars(prefix=""):
+        return [(prefix + v, type) for v, (type, _, _, _) in var_init.items()]
+
+    def init_vars(prefix=""):
+        return {(prefix + v): init for v, (_, init, _, _) in var_init.items()}
+
+    nop_neuron_model = create_neuron_model(
+        "nop_neuron",
+        var_name_types=create_vars())
+
+    nop_current_source_model = create_current_source_model(
+        "nop_current_source",
+        var_name_types=create_vars())
+
+    nop_postsynaptic_update_model = create_postsynaptic_model(
+        "nop_postsynaptic_update",
+        var_name_types=create_vars("psm_"))
+
+    nop_weight_update_model = create_weight_update_model(
+        "nop_weight_update",
+        var_name_types=create_vars(),
+        pre_var_name_types=create_vars("pre_"),
+        post_var_name_types=create_vars("post_"))
+        
     model = GeNNModel(precision, "test_init", backend=backend)
     
     model.seed = 2346679
