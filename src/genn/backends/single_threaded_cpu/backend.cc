@@ -1862,7 +1862,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         // Detect spike events or spikes and do the update
         env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
         if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(pre_delay_slot)]; i++)");
+            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
         }
         else {
             env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
@@ -1875,7 +1875,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
 
-            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(pre_delay_offset) + " : "";
+            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
             groupEnv.add(Type::Uint32, "id_pre", "idPre",
                          {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
