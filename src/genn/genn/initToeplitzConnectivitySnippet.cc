@@ -22,7 +22,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getDiagonalBuildCode(), hash);
-    Utils::updateHash(getDiagonalBuildStateVars(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -30,7 +29,6 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Toeplitz connectivity initialiser ");
-    Utils::validateVecNames(getDiagonalBuildStateVars(), "Row building state variable");
 }
 
 //----------------------------------------------------------------------------
