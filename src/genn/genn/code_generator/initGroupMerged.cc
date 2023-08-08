@@ -683,23 +683,21 @@ bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHet
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns)
 {
-    const auto &connectInit = getArchetype().getConnectivityInitialiser();
-    const auto *snippet = connectInit.getSnippet();
-
     // Create environment for group
     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
 
-    // Substitute in parameters and derived parameters for initialising variables
+    // Substitute in parameters and derived parameters for initialising connectivity
+    const auto &connectInit = getArchetype().getConnectivityInitialiser();
     groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(snippet->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
 
     const std::string context = rowNotColumns ? "row" : "column";
     Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
     prettyPrintStatements(rowNotColumns ? connectInit.getRowBuildCodeTokens() : connectInit.getColBuildCodeTokens(), 
-                            getTypeContext(), groupEnv, errorHandler);
+                          getTypeContext(), groupEnv, errorHandler);
 }
 
 
