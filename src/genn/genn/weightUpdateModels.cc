@@ -32,6 +32,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getSynapseDynamicsSuppportCode(), hash);
     Utils::updateHash(getPreSpikeCode(), hash);
     Utils::updateHash(getPostSpikeCode(), hash);
+    Utils::updateHash(getPreDynamicsCode(), hash);
+    Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPreVars(), hash);
     Utils::updateHash(getPostVars(), hash);
     Utils::updateHash(isPreSpikeTimeRequired(), hash);
@@ -40,6 +42,36 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(isPrevPreSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevPostSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevPreSpikeEventTimeRequired(), hash);
+
+    // Return digest
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
+{
+    // Superclass
+    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getPreSpikeCode(), hash);
+    Utils::updateHash(getPreDynamicsCode(), hash);
+    Utils::updateHash(getPreVars(), hash);
+
+    // Return digest
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
+{
+    // Superclass
+    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getPostSpikeCode(), hash);
+    Utils::updateHash(getPostDynamicsCode(), hash);
+    Utils::updateHash(getPostVars(), hash);
 
     // Return digest
     return hash.get_digest();

@@ -879,7 +879,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() c
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getWUModel()->getPreHashDigest(), hash);
     Utils::updateHash(getDelaySteps(), hash);
 
     // Loop through presynaptic variable initialisers and hash first parameter.
@@ -916,7 +916,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getWUModel()->getPostHashDigest(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
 
     // Loop through postsynaptic variable initialisers and hash first parameter.
