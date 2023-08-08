@@ -23,7 +23,6 @@ std::string EnvironmentExternalBase::define(const std::string&)
 {
     throw std::runtime_error("Cannot declare variable in external environment");
 }
-
 //----------------------------------------------------------------------------    
 void EnvironmentExternalBase::define(const Token&, const Type::ResolvedType&, ErrorHandlerBase&)
 {
@@ -32,51 +31,44 @@ void EnvironmentExternalBase::define(const Token&, const Type::ResolvedType&, Er
 //----------------------------------------------------------------------------    
 CodeStream &EnvironmentExternalBase::getContextStream() const
 {
-    return std::visit(
-        Utils::Overload{
-            [](std::pair<TypeChecker::EnvironmentBase*, PrettyPrinter::EnvironmentBase*> enclosing)->CodeStream& 
-            { 
-                assert(enclosing.second != nullptr);
-                return enclosing.second->getStream(); 
-            },
-            [](std::reference_wrapper<CodeStream> os)->CodeStream& 
-            { 
-                return os.get(); 
-            }},
-        m_Context);
+    // If context includes a code stream
+    if(std::get<2>(m_Context)) {
+        return *std::get<2>(m_Context);
+    }
+    // Otherwise
+    else {
+        // Assert that there is a pretty printing environment
+        assert(std::get<1>(m_Context));
+
+        // Return its stream
+        return std::get<1>(m_Context)->getStream();
+    }
 }
 //----------------------------------------------------------------------------
 std::string EnvironmentExternalBase::getContextName(const std::string &name, std::optional<Type::ResolvedType> type) const
 {
-    return std::visit(
-        Utils::Overload{
-            [&name, &type](std::pair<TypeChecker::EnvironmentBase*, PrettyPrinter::EnvironmentBase*> enclosing)->std::string
-            { 
-                assert(enclosing.second != nullptr);
-                return enclosing.second->getName(name, type);
-            },
-            [&name](std::reference_wrapper<CodeStream>)->std::string 
-            { 
-                throw std::runtime_error("Identifier '" + name + "' undefined"); 
-            }},
-        m_Context);
+    // If context includes a pretty-printing environment, get name from it
+    if(std::get<1>(m_Context)) {
+        return std::get<1>(m_Context)->getName(name, type);
+    }
+    // Otherwise, give error
+    else {
+        throw std::runtime_error("Identifier '" + name + "' undefined"); 
+    }
+
 }
 //----------------------------------------------------------------------------
 std::vector<Type::ResolvedType> EnvironmentExternalBase::getContextTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler)  const
 {
-    return std::visit(
-        Utils::Overload{
-            [&errorHandler, &name](std::pair<TypeChecker::EnvironmentBase*, PrettyPrinter::EnvironmentBase*> enclosing)->std::vector<Type::ResolvedType>
-            { 
-                assert(enclosing.first != nullptr);
-                return enclosing.first->getTypes(name, errorHandler); 
-            },
-            [&errorHandler, &name](std::reference_wrapper<CodeStream>)->std::vector<Type::ResolvedType>
-            { 
-                errorHandler.error(name, "Undefined identifier");
-                throw TypeChecker::TypeCheckError();
-            }},
-        m_Context);
+    // If context includes a type-checking environment, get type from it
+    if(std::get<0>(m_Context)) {
+        return std::get<0>(m_Context)->getTypes(name, errorHandler); 
+    }
+    // Otherwise, give error
+    else {
+        errorHandler.error(name, "Undefined identifier");
+        throw TypeChecker::TypeCheckError();
+    }
 }
 
 //---------------------------------------------------------------------------

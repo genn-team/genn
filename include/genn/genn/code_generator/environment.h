@@ -38,17 +38,22 @@ class GENN_EXPORT EnvironmentExternalBase : public Transpiler::PrettyPrinter::En
 {
 public:
     explicit EnvironmentExternalBase(EnvironmentExternalBase &enclosing)
-    :   m_Context(std::make_pair(&enclosing, &enclosing))
+    :   m_Context{&enclosing, &enclosing, nullptr}
     {
     }
 
     explicit EnvironmentExternalBase(Transpiler::PrettyPrinter::EnvironmentBase &enclosing)
-    :   m_Context(std::make_pair(nullptr, &enclosing))
+    :   m_Context{nullptr, &enclosing, nullptr}
     {
     }
 
     explicit EnvironmentExternalBase(CodeStream &os)
-    :   m_Context(os)
+    :   m_Context{nullptr, nullptr, &os}
+    {
+    }
+
+    EnvironmentExternalBase(EnvironmentExternalBase &enclosing, CodeStream &os)
+    :   m_Context{&enclosing, &enclosing, &os}
     {
     }
 
@@ -82,8 +87,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::variant<std::pair<Transpiler::TypeChecker::EnvironmentBase*, Transpiler::PrettyPrinter::EnvironmentBase*>,
-                 std::reference_wrapper<CodeStream>> m_Context;
+    std::tuple<Transpiler::TypeChecker::EnvironmentBase*, Transpiler::PrettyPrinter::EnvironmentBase*, CodeStream*> m_Context;
 };
 
 //----------------------------------------------------------------------------
@@ -106,6 +110,11 @@ public:
     explicit EnvironmentLibrary(CodeStream &os, const Library &library)
     :   EnvironmentExternalBase(os), m_Library(library)
     {}
+
+    EnvironmentLibrary(EnvironmentExternalBase &enclosing, CodeStream &os, const Library &library)
+    :   EnvironmentExternalBase(enclosing, os), m_Library(library)
+    {
+    }
 
     //------------------------------------------------------------------------
     // TypeChecker::EnvironmentBase virtuals
@@ -236,6 +245,12 @@ public:
     EnvironmentExternalDynamicBase(CodeStream &os, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(os), P(std::forward<PolicyArgs>(policyArgs)...), m_Contents(m_ContentsStream)
     {}
+
+    template<typename... PolicyArgs>
+    EnvironmentExternalDynamicBase(EnvironmentExternalBase &enclosing, CodeStream &os, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing, os), P(std::forward<PolicyArgs>(policyArgs)...), m_Contents(m_ContentsStream)
+    {
+    }
 
     ~EnvironmentExternalDynamicBase()
     {
