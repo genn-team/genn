@@ -201,7 +201,7 @@ def test_custom_update(backend, precision, batch_size):
             if view.shape != shape:
                 assert False, f"{pop.name} var {var_name} has wrong shape ({view.shape} rather than {shape})"
             # If values don't match, give error
-            elif not np.all(np.isclose(view, correct)):
+            elif not np.allclose(view, correct):
                 assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
@@ -385,12 +385,14 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
 
     x_sparse_s = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=100))
+    pre_ind_sparse = np.repeat(np.arange(10), 10)
+    post_ind_sparse = np.random.randint(0, 100, len(pre_ind_sparse))
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
         weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {},
-        init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
+        "DeltaCurr", {}, {})
+    sparse_s_pop.set_sparse_connections(pre_ind_sparse, post_ind_sparse)
     
     x_kern_s = (np.random.uniform(high=100.0, size=(batch_size, 9)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=9))
@@ -411,26 +413,49 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
                                              {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(dense_s_pop, "X"), "SumX": create_wu_var_ref(dense_s_pop, "SumX")})
     reduce_s_sparse = model.add_custom_update("SparseSynapseReduce", "Test", reduction_custom_update_model,
                                               {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(sparse_s_pop, "X"), "SumX": create_wu_var_ref(sparse_s_pop, "SumX")})
-    reduce_s_dense = model.add_custom_update("KernelSynapseReduce", "Test", reduction_custom_update_model,
-                                             {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(kern_s_pop, "X"), "SumX": create_wu_var_ref(kern_s_pop, "SumX")})
-    
+    reduce_s_kernel = model.add_custom_update("KernelSynapseReduce", "Test", reduction_custom_update_model,
+                                              {}, {"MaxX": 0.0}, {"X": create_wu_var_ref(kern_s_pop, "X"), "SumX": create_wu_var_ref(kern_s_pop, "SumX")})
+
     # Build model and load
     model.build()
     model.load()
-    
+
     # Launch custom update to perform reductions
     model.custom_update("Test")
-    
-    # Simulate 20 timesteps
-    #samples = [
-    #    (n_pop, "SumX", n_pop.vars, (100,)),
-    #    (reduce_n, "MaxX", reduce_n.vars, (100,))]
-    
+
+    # Check neuron reduction
     n_pop.pull_var_from_device("SumX")
     reduce_n.pull_var_from_device("MaxX")
-    assert np.allclose(np.sum(x_n, axis=0), n_pop.vars["SumX"].view)
-    assert np.allclose(np.max(x_n, axis=0), reduce_n.vars["MaxX"].view)
- 
+    assert np.allclose(np.sum(x_n, axis=0) if batch_size > 1 else x_n,
+                       n_pop.vars["SumX"].view)
+    assert np.allclose(np.max(x_n, axis=0) if batch_size > 1 else x_n,
+                       reduce_n.vars["MaxX"].view)
+
+    # Loop through synapse reductions
+    x_sparse_s_order = (x_sparse_s[:,sparse_s_pop.synapse_order] if batch_size > 1
+                        else x_sparse_s[sparse_s_pop.synapse_order])
+    samples = [
+        (x_dense_s, dense_s_pop, reduce_s_dense),
+        (x_sparse_s_order, sparse_s_pop, reduce_s_sparse),
+        (x_kern_s, kern_s_pop, reduce_s_kernel)]
+    for data, sum_pop, max_pop in samples:
+        # Check sum
+        sum_pop.pull_var_from_device("SumX")
+        sum_correct = np.sum(data, axis=0) if batch_size > 1 else data
+        sum_value = sum_pop.get_var_values("SumX") if batch_size > 1 else data
+        if not np.allclose(sum_correct, sum_value):
+            assert False, f"{sum_pop.name} var SumX has wrong value ({sum_value} rather than {sum_correct})"
+
+        # Check max
+        max_pop.pull_var_from_device("MaxX")
+        max_correct = np.max(data, axis=0) if batch_size > 1 else data
+        max_value = max_pop.get_var_values("MaxX")
+        if not np.allclose(max_correct, max_value):
+            assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
+        
+
+    print("MERR")
+
 if __name__ == '__main__':
     test_custom_update_batch_reduction("cuda", types.Float, 5)
     
