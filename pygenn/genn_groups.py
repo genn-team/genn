@@ -440,16 +440,6 @@ class SynapseGroupMixin(GroupMixin):
             for egp in connect_init.snippet.get_extra_global_params()}
 
     @property
-    def num_synapses(self):
-        """Number of synapses in group"""
-        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return self.trg.size * self.src.size
-        elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            return self._num_synapses
-        else:
-            raise Exception("Matrix format not supported")
-
-    @property
     def weight_update_var_size(self):
         """Size of each weight update variable"""
         if self.matrix_type & SynapseMatrixConnectivity.DENSE:
@@ -474,9 +464,6 @@ class SynapseGroupMixin(GroupMixin):
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
-
-            # Count synapses
-            self._num_synapses = len(post_indices)
 
             # Count the number of synapses in each row
             row_lengths = np.bincount(pre_indices, minlength=self.src.size)
@@ -649,7 +636,7 @@ class SynapseGroupMixin(GroupMixin):
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:
                         var_data.view = np.reshape(var_data.view, 
-                                                    (num_copies, -1))
+                                                   (num_copies, -1))
 
                     # Initialise variable if necessary
                     self._init_wum_var(var_data, num_copies)
@@ -759,7 +746,10 @@ class SynapseGroupMixin(GroupMixin):
                 var_data.view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
-                sorted_var = var_data.values[self.synapse_order]
+                if num_copies == 1:
+                    sorted_var = var_data.values[self.synapse_order]
+                else:
+                    sorted_var = var_data.values[:,self.synapse_order]
 
                 # Create (x)range containing the index
                 # where each row starts in ind
@@ -773,7 +763,7 @@ class SynapseGroupMixin(GroupMixin):
                     if num_copies == 1:
                         var_data.view[i:i + r] = sorted_var[syn:syn + r]
                     else:
-                        var_data.view[i:i + r,:] = sorted_var[syn:syn + r,:]
+                        var_data.view[:,i:i + r] = sorted_var[:,syn:syn + r]
                     syn += r
             else:
                 raise Exception("Matrix format not supported")
