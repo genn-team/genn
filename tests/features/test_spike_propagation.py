@@ -9,54 +9,9 @@ from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
                     create_weight_update_model,
-                    init_sparse_connectivity, init_var)
-
-decoder_model = create_sparse_connect_init_snippet(
-    "decoder",
-    row_build_code=
-    """
-    for(unsigned int j = 0; j < num_post; j++) {
-       const unsigned int jValue = (1 << j);
-       if(((id_pre + 1) & jValue) != 0) {
-           addSynapse(j);
-       }
-    }
-    """)
-
-decoder_dense_model = create_var_init_snippet(
-    "decoder_dense",
-    var_init_code=
-    """
-    const unsigned int jValue = (1 << id_post);
-    value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
-    """)
-
-pre_reverse_model = create_neuron_model(
-    "pre_reverse",
-    var_name_types=[("x", "scalar")],
-    sim_code=
-    """
-    x = Isyn;
-    """)
-    
-pre_reverse_spike_source_model = create_neuron_model(
-    "pre_reverse_spike_source",
-    var_name_types=[("startSpike", "unsigned int"), 
-                    ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
-                    ("x", "scalar")],
-    extra_global_params=[("spikeTimes", "scalar*")],
-    sim_code=
-    """
-    x = Isyn;
-    """,
-    threshold_condition_code=
-    """
-    startSpike != endSpike && t >= spikeTimes[startSpike]
-    """,
-    reset_code=
-    """
-    startSpike++;
-    """)
+                    init_sparse_connectivity, 
+                    init_toeplitz_connectivity,
+                    init_var)
 
 post_neuron_model = create_neuron_model(
     "post_neuron",
@@ -66,25 +21,39 @@ post_neuron_model = create_neuron_model(
     """,
     var_name_types=[("x", "scalar")])
 
-static_pulse_reverse_model = create_weight_update_model(
-    "static_pulse_reverse",
-    sim_code=
-    """
-    $(addToPre, $(g));
-    """,
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+# (Normalised) horizontal Sobel convolution kernel
+vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
+                              [2.0,   0.0,    -2.0],
+                              [1.0,   0.0,    -1.0]])
 
-static_pulse_reverse_post_model = create_weight_update_model(
-    "static_pulse_reverse_post",
-    learn_post_code=
-    """
-    $(addToPre, $(g));
-    """,
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+# (Normalised) vertical Sobel convolution kernel
+horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
+                                [0.0,     0.0,    0.0],
+                                [-1.0,    -2.0,   -1.0]])
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward(backend, precision):
+    decoder_model = create_sparse_connect_init_snippet(
+        "decoder",
+        row_build_code=
+        """
+        for(unsigned int j = 0; j < num_post; j++) {
+           const unsigned int jValue = (1 << j);
+           if(((id_pre + 1) & jValue) != 0) {
+               addSynapse(j);
+           }
+        }
+        """)
+
+    decoder_dense_model = create_var_init_snippet(
+        "decoder_dense",
+        var_init_code=
+        """
+        const unsigned int jValue = (1 << id_post);
+        value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
+        """)
+        
     model = GeNNModel(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
@@ -309,6 +278,33 @@ def test_forward_den_delay(backend, precision):
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(backend, precision):
+    pre_reverse_spike_source_model = create_neuron_model(
+        "pre_reverse_spike_source",
+        var_name_types=[("startSpike", "unsigned int"), 
+                        ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
+                        ("x", "scalar")],
+        extra_global_params=[("spikeTimes", "scalar*")],
+        sim_code=
+        """
+        x = Isyn;
+        """,
+        threshold_condition_code=
+        """
+        startSpike != endSpike && t >= spikeTimes[startSpike]
+        """,
+        reset_code=
+        """
+        startSpike++;
+        """)
+
+    static_pulse_reverse_model = create_weight_update_model(
+        "static_pulse_reverse",
+        sim_code=
+        """
+        $(addToPre, $(g));
+        """,
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+
     model = GeNNModel(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
@@ -362,6 +358,22 @@ def test_reverse(backend, precision):
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse_post(backend, precision):
+    pre_reverse_model = create_neuron_model(
+        "pre_reverse",
+        var_name_types=[("x", "scalar")],
+        sim_code=
+        """
+        x = Isyn;
+        """)
+
+    static_pulse_reverse_post_model = create_weight_update_model(
+        "static_pulse_reverse_post",
+        learn_post_code=
+        """
+        $(addToPre, $(g));
+        """,
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+
     model = GeNNModel(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0
 
@@ -432,6 +444,49 @@ def test_reverse_post(backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_forward_toeplitz(backend, precision):
+    model = GeNNModel(precision, "test_forward_toeplitz", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to present test pattern
+    test_pattern = np.load("test_pattern.npy")
+    end_spikes = np.cumsum(np.bincount(test_pattern))
+    start_spikes = np.concatenate(([0,], end_spikes[:-1]))
+    pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
+                                          {}, {"startSpike": start_spikes, "endSpike": end_spikes})
+    pre_pop.extra_global_params["spikeTimes"].set_values(test_pattern)
+
+    # Add two postsynaptic populations to receive horizontal and vertical edges
+    post_horiz_pop = model.add_neuron_population(
+        "PostHorizNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+    post_vert_pop = model.add_neuron_population(
+        "PostVertNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+    
+    # Add convolutional connectivity
+    conv_params = {"conv_kh": 3, "conv_kw": 3,
+                   "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                   "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    model.add_synapse_population(
+        "HorizSynapse", "TOEPLITZ", 0,
+        pre_pop, post_horiz_pop,
+        "StaticPulse", {}, {"g": horizontal_kernel}, {}, {},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_params))
+    model.add_synapse_population(
+        "VertSynapse", "TOEPLITZ", 0,
+        pre_pop, post_horiz_pop,
+        "StaticPulse", {}, {"g": vertical_kernel}, {}, {},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_params))
+
+    # Build model and load
+    model.build()
+    model.load()
+
 if __name__ == '__main__':
-    test_forward_den_delay("cuda", types.Float)
+    test_forward_toeplitz("single_threaded_cpu", types.Float)
     
