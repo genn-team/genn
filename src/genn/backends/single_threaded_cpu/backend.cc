@@ -1750,32 +1750,35 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
     const auto *wu = sg.getArchetype().getWUModel();
 
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
-        // Create environment for generating presynaptic update code
-        // **TODO** this should generate into a seperate CodeStream
-        EnvironmentExternal preUpdateEnv(env);
-        preUpdateEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
+        // Create environment for generating presynaptic update code into seperate CodeStream
+        std::ostringstream preUpdateStream;
+        CodeStream preUpdate(preUpdateStream);
+        {
+            EnvironmentExternal preUpdateEnv(env, preUpdate);
+            preUpdateEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
-        // Replace $(id_post) with first 'function' parameter as simulation code is
-        // going to be, in turn, substituted into Toeplitz connectivity generation code
-        preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "$(0)");
+            // Replace $(id_post) with first 'function' parameter as simulation code is
+            // going to be, in turn, substituted into Toeplitz connectivity generation code
+            preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "$(0)");
 
-        // Replace kernel indices with the subsequent 'function' parameters
-        for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-            preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(i),
-                             "$(" + std::to_string(i + 1) + ")");
-        }
+            // Replace kernel indices with the subsequent 'function' parameters
+            for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(i),
+                                 "$(" + std::to_string(i + 1) + ")");
+            }
                     
-        // Add correct functions for apply synaptic input
-        preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-        preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-        preUpdateEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+            // Add correct functions for apply synaptic input
+            preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+            preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+            preUpdateEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
-        // Generate spike update
-        if(trueSpike) {
-            sg.generateSpikeUpdate(*this, preUpdateEnv, 1);
-        }
-        else {
-            sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1);
+            // Generate spike update
+            if(trueSpike) {
+                sg.generateSpikeUpdate(*this, preUpdateEnv, 1);
+            }
+            else {
+                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1);
+            }
         }
 
         // Loop through Toeplitz matrix diagonals
@@ -1783,6 +1786,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         {
             CodeStream::Scope b(env.getStream());
 
+            // Create second environment for initialising Toeplitz connectivity
             EnvironmentExternal toeplitzEnv(env);
             toeplitzEnv.add(Type::Uint32.addConst(), "id_diag", "j");
             
@@ -1793,16 +1797,13 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             // Generate toeplitz connectivity generation code using custom for_each_synapse loop
             sg.generateToeplitzConnectivity(
                 *this, toeplitzEnv,
-                // Within for_each_synapse loops, define the following types
-                [addSynapseType, this](auto &env, auto &errorHandler)
+                // Within for_each_synapse loops, define add_synapse function and id_pre
+                [addSynapseType](auto &env, auto &errorHandler)
                 {
-                    // Add type of add synapse function
                     env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "add_synapse", 0}, addSynapseType, errorHandler);
-
-                    // Add typed indices
                     env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
                 },
-                [addSynapseType, trueSpike, &eventSuffix, &sg, /*batchSize, &backend, &removeSynapseStream,*/ this](auto &env, auto generateBody)
+                [addSynapseType, trueSpike, &eventSuffix, &preUpdateStream, &sg](auto &env, auto generateBody)
                 {
                     // Detect spike events or spikes and do the update
                     env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
@@ -1822,9 +1823,8 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         // Add presynaptic index
                         bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
-                        // Add function substitution with parameters to add synapse
-                        // **TODO** presynaptic update should go here
-                        bodyEnv.add(addSynapseType, "add_synapse", "");
+                        // Add function substitution with parameters to add 
+                        bodyEnv.add(addSynapseType, "add_synapse", preUpdateStream.str());
                                     
                         // Generate body of for_each_synapse loop within this new environment
                         generateBody(bodyEnv);
