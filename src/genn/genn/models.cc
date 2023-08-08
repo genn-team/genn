@@ -211,8 +211,8 @@ bool WUVarReference::operator < (const WUVarReference &other) const
     const bool hasTranspose = (getTransposeSynapseGroup() != nullptr);
     const bool otherHasTranspose = (other.getTransposeSynapseGroup() != nullptr);
     if (hasTranspose && otherHasTranspose) {
-        return (std::tie(getVar().name, getTargetName(), getTransposeVar().name, getTransposeTargetName()) 
-                < std::tie(other.getVar().name, other.getTargetName(), other.getTransposeVar().name, other.getTransposeTargetName()));
+        return (std::make_tuple(getVar().name, getTargetName(), getTransposeVar().name, getTransposeTargetName()) 
+                < std::tuple(other.getVar().name, other.getTargetName(), other.getTransposeVar().name, other.getTransposeTargetName()));
     }
     else if (hasTranspose) {
         return false;
@@ -221,8 +221,8 @@ bool WUVarReference::operator < (const WUVarReference &other) const
         return true;
     }
     else {
-        return (std::tie(getVar().name, getTargetName()) 
-                < std::tie(other.getVar().name, other.getTargetName()));
+        return (std::make_tuple(getVar().name, getTargetName()) 
+                < std::make_tuple(other.getVar().name, other.getTargetName()));
     }
 }
 //------------------------------------------------------------------------
