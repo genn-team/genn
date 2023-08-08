@@ -14,6 +14,10 @@
 #include "code_generator/environment.h"
 
 // Forward declarations
+namespace GeNN::CodeGenerator
+{
+    class CustomUpdateWUGroupMergedBase;
+}
 namespace filesystem
 {
     class path;
@@ -238,7 +242,7 @@ private:
 
     //! Helper to generate code to copy reduced custom weight update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
-    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMerged &cg, const std::string &idxName) const;
+    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const;
 
     template<typename G, typename R>
     void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
