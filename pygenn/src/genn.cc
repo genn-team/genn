@@ -87,7 +87,6 @@ class PyInitToeplitzConnectivitySnippetBase : public PySnippet<InitToeplitzConne
     using Base = InitToeplitzConnectivitySnippet::Base;
 public:
     virtual std::string getDiagonalBuildCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_diagonal_build_code", getDiagonalBuildCode); }
-    virtual ParamValVec getDiagonalBuildStateVars() const override { PYBIND11_OVERRIDE_NAME(ParamValVec, Base, "get_diagonal_build_state_vars", getDiagonalBuildStateVars); }
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override { PYBIND11_OVERRIDE_NAME(CalcMaxLengthFunc, Base, "get_calc_max_row_length_func", getCalcMaxRowLengthFunc); }
     virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override { PYBIND11_OVERRIDE_NAME(CalcKernelSizeFunc, Base, "get_calc_kernel_size_func", getCalcKernelSizeFunc); }
 };
@@ -678,7 +677,6 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<InitToeplitzConnectivitySnippet::Base, Snippet::Base, PyInitToeplitzConnectivitySnippetBase>(m, "InitToeplitzConnectivitySnippetBase")
         .def(pybind11::init<>())
         .def("get_diagonal_build_code", &InitToeplitzConnectivitySnippet::Base::getDiagonalBuildCode)
-        .def("get_diagonal_build_state_vars", &InitToeplitzConnectivitySnippet::Base::getDiagonalBuildStateVars)
         .def("get_calc_max_row_length_func", &InitToeplitzConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
         .def("get_calc_kernel_size_func", &InitToeplitzConnectivitySnippet::Base::getCalcKernelSizeFunc);
 
