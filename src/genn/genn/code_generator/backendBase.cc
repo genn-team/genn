@@ -73,6 +73,14 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     }
     // Otherwise, calculate size as normal
     else {
+        // Connectivity fields
+        if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                         [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+            env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                         [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+        }
+
         // **TODO** 64-bit synapse indices
         env.add(Type::Uint32.addConst(), "_size", "size",
                 {env.addInitialiser("const unsigned int size = $(num_pre) * $(_row_stride);")});
@@ -396,15 +404,6 @@ void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, Environm
     if(env.getGroup().getArchetype().isBatched()) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(_size) * $(batch);")});
-    }
-    
-    // Connectivity fields
-    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
-    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
-        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
-                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
     }
 }
 //--------------------------------------------------------------------------

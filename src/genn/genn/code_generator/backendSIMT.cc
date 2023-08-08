@@ -1127,14 +1127,11 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 }
             }
 
-            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> batchEnv(groupEnv, cg);
-            buildStandardEnvironment(batchEnv);
-
             // if this isn't a padding thread
-            batchEnv.print("if ($(id) < $(_size))");
+            groupEnv.print("if ($(id) < $(_size))");
             {
-                CodeStream::Scope b(batchEnv.getStream());
-                EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(batchEnv, cg);
+                CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, cg);
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                     synEnv.add(Type::Uint32.addConst(), "id_kernel", "$(id)");
@@ -1175,18 +1172,24 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     synEnv.add(Type::Uint32.addConst(), "batch", "batch");
                 }
 
-                cg.generateCustomUpdate(
-                    *this, synEnv,
-                    [&reductionTargets, this](auto &env, auto &cg)
-                    {
-                         // If this is a reduction
-                        if(cg.getArchetype().isBatchReduction()) {
-                            // Loop through reduction targets and generate reduction
-                            for(const auto &r : reductionTargets) {
-                                env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
+                // **NOTE** use scope to force batchEnv to generate all code within loop
+                {
+                    EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> batchEnv(synEnv, cg);
+                    buildStandardEnvironment(batchEnv);
+
+                    cg.generateCustomUpdate(
+                        *this, batchEnv,
+                        [&reductionTargets, this](auto &env, auto &cg)
+                        {
+                                // If this is a reduction
+                            if(cg.getArchetype().isBatchReduction()) {
+                                // Loop through reduction targets and generate reduction
+                                for(const auto &r : reductionTargets) {
+                                    env.printLine(getReductionOperation("_lr" + r.name, "$(" + r.name + ")", r.access, r.type) + ";");
+                                }
                             }
-                        }
-                    });
+                        });
+                }
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
@@ -1195,7 +1198,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        synEnv.printLine("group->" + r.name + "[" + r.index + "] = lr" + r.name + ";");
+                        synEnv.printLine("group->" + r.name + "[" + r.index + "] = _lr" + r.name + ";");
                     }
                 }
 
