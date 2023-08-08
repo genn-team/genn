@@ -727,8 +727,13 @@ class SynapseGroupMixin(GroupMixin):
             row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
 
             # Build list of subviews representing each row
-            rows = [var_view[i:i + r] for i, r in zip(row_start_idx, row_ls)]
-
+            if len(var_view.shape) == 1:
+                rows = [var_view[i:i + r] 
+                        for i, r in zip(row_start_idx, row_ls)]
+            else:
+                rows = [var_view[:,i:i + r] 
+                        for i, r in zip(row_start_idx, row_ls)]
+            
             # Stack all rows together into single array
             return np.hstack(rows)
         else:
