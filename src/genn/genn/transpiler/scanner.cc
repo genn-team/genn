@@ -192,28 +192,31 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
         }
 
         // Read decimal place
-        const bool isFloat = scanState.match('.');
+        bool isFloat = scanState.match('.');
 
         // Read digits
         while(std::isdigit(scanState.peek())) {
             scanState.advance();
         }
 
-        // If it's float
-        if(isFloat) {
-            // If there's an exponent
-            if(scanState.match('e')) {
-                // Read sign
-                if(scanState.peek() == '-' || scanState.peek() == '+') {
-                    scanState.advance();
-                }
+        // If there's an exponent
+        if(scanState.match('e') || scanState.match('E')) {
+            // Must be floating point, whatever precedes
+            isFloat = true;
 
-                // Read digits
-                while(std::isdigit(scanState.peek())) {
-                    scanState.advance();
-                }
+            // Read sign
+            if(scanState.peek() == '-' || scanState.peek() == '+') {
+                scanState.advance();
             }
 
+            // Read digits
+            while(std::isdigit(scanState.peek())) {
+                scanState.advance();
+            }
+        }
+        
+        // If it's float
+        if(isFloat) {
             // If number has an f suffix, emplace FLOAT_NUMBER token
             if (std::tolower(scanState.peek()) == 'f') {
                 emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
@@ -225,7 +228,7 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
                 scanState.advance();
             }
-            // Otherwise, emplace scalar literal with type to be decoded later
+            // Otherwise, emplace scalar literal whose type will be decoded later
             else {
                 emplaceToken(tokens, Token::Type::SCALAR_NUMBER, scanState);
             }
