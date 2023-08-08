@@ -297,7 +297,7 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
                   ("SumExpX", "scalar", VarAccessMode.READ_ONLY),
                   ("Y", "scalar", VarAccessMode.READ_WRITE)])
               
-    model = GeNNModel(precision, "test_custom_neuron_reduce", backend=backend)
+    model = GeNNModel(precision, "test_custom_update_neuron_reduce", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
 
@@ -452,9 +452,6 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
         max_value = max_pop.get_var_values("MaxX")
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
-        
-
-    print("MERR")
 
 if __name__ == '__main__':
     test_custom_update_batch_reduction("cuda", types.Float, 5)
