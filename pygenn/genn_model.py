@@ -1440,6 +1440,61 @@ def create_sparse_connect_init_snippet(class_name,
     return create_model(class_name, InitSparseConnectivitySnippetBase, param_names,
                         None, derived_params, extra_global_params, body)
 
+def create_toeplitz_connect_init_snippet(class_name,
+                                         param_names=None,
+                                         derived_params=None,
+                                         diagonal_build_code=None,
+                                         calc_max_row_len_func=None,
+                                         calc_kernel_size_func=None,
+                                         extra_global_params=None):
+    """This helper function creates a custom
+    InitToeplitzConnectivitySnippet class.
+    See also:
+    create_neuron_model
+    create_weight_update_model
+    create_postsynaptic_model
+    create_current_source_model
+    create_var_init_snippet
+
+    Args:
+    class_name              --  name of the new class
+
+    Keyword args:
+    param_names             --  list of strings with param names of the model
+    derived_params          --  list of pairs, where the first member is string
+                                with name of the derived parameter and the
+                                second MUST be an instance of the class which
+                                inherits from pygenn.genn_wrapper.DerivedParamFunc
+    diagonal_build_code     --  string with diagonal building code
+    calc_max_row_len_func   --  instance of class inheriting from
+                                CalcMaxLengthFunc used to calculate maximum
+                                row length of synaptic matrix
+    calc_kernel_size_func   --  instance of class inheriting from CalcKernelSizeFunc
+                                used to calculate kernel dimensions
+    extra_global_params     --  list of pairs of strings with names and
+                                types of additional parameters
+    """
+
+    body = {}
+
+    if diagonal_build_code is not None:
+        body["get_diagonal_build_code"] =\
+            lambda self: dedent(diagonal_build_code)
+
+    if col_build_code is not None:
+        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+
+    if calc_max_row_len_func is not None:
+        body["get_calc_max_row_length_func"] = \
+            lambda self: make_cmlf(calc_max_row_len_func)
+
+    if calc_kernel_size_func is not None:
+        body["get_calc_kernel_size_func"] = \
+            lambda self: make_cksf(calc_kernel_size_func)
+
+    return create_model(class_name, InitToeplitzConnectivitySnippetBase, param_names,
+                        None, derived_params, extra_global_params, body)
+
 @deprecated("this wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):
     """Helper function to create derived parameter function class

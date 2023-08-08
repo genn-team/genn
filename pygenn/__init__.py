@@ -15,6 +15,7 @@ from .genn_model import (GeNNModel, create_neuron_model,
                          create_custom_connectivity_update_model,
                          create_var_init_snippet,
                          create_sparse_connect_init_snippet,
+                         create_toeplitz_connect_init_snippet,
                          init_sparse_connectivity, 
                          init_toeplitz_connectivity, init_var)
 
