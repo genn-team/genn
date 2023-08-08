@@ -323,8 +323,8 @@ class NeuronGroupMixin(GroupMixin):
                 "recordSpkEvent", recording_words, types.Uint32)
 
         if self.num_delay_slots > 1:
-            self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
-                "spkQuePtr" + self.name)
+            self.spike_que_ptr = self._assign_ext_ptr_single(
+                "spkQuePtr", types.Uint32)
 
         # Load neuron state variables
         self._load_vars(self.neuron_model.get_vars())
