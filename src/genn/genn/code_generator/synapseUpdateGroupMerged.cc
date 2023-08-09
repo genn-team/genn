@@ -60,41 +60,35 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        const auto vars = wu->getVars();
-        for(const auto &var : vars) {
+        for(const auto &var : wu->getVars()) {
             // If this variable has any initialisation code
             const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
             if(!Utils::areTokensEmpty(varInit.getCodeTokens())) {
-                assert(false);
-                // Configure variable substitutions
-                /*CodeGenerator::Substitutions varSubs(&synapseSubs);
-                varSubs.addVarSubstitution("value", "l" + var.name);
-                varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                  [&var, &sg](const std::string &p) { return sg.isWUVarInitParamHeterogeneous(var.name, p); },
-                                                  "", "group->", var.name);
-                varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                [&var, &sg](const std::string &p) { return sg.isWUVarInitDerivedParamHeterogeneous(var.name, p); },
-                                                "", "group->", var.name);
-                varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                               "", "group->", var.name);
-
-                // Generate variable initialization code
-                std::string code = varInit.getSnippet()->getCode();
-                varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
-
-                // Declare local variable
-                os << var.type.resolve(sg.getTypeContext()).getName() << " " << "l" << var.name << ";" << std::endl;
-
-                // Insert code to initialize variable into scope
+                // Declare variable
+                const auto resolvedType = var.type.resolve(sg.getTypeContext());
+                synEnv.printLine(resolvedType.getName() + " _l" + var.name + ";");
                 {
-                    CodeGenerator::CodeStream::Scope b(os);
-                    os << code << std::endl;;
-                }*/
+                    CodeStream::Scope b(synEnv.getStream());
+
+                    // Substitute in parameters and derived parameters for initialising variables
+                    // **THINK** synEnv has quite a lot of unwanted stuff at t
+                    EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
+                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(&G::isVarInitParamHeterogeneous, var.name);
+                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(&G::isVarInitDerivedParamHeterogeneous, var.name);
+                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+
+                    // Add read-write environment entry for variable
+                    varInitEnv.add(resolvedType, "value", "_l" + var.name);
+
+                    // Pretty print variable initialisation code
+                    Transpiler::ErrorHandler errorHandler("Synapse group '" + sg.getArchetype().getName() + "' variable '" + var.name + "' init code");
+                    prettyPrintStatements(varInit.getCodeTokens(), sg.getTypeContext(), varInitEnv, errorHandler);
+                }
+
+                // Add read-only environment entry for variable
+                synEnv.add(resolvedType.addConst(), var.name, "_l" + var.name);
             }
         }
-
-        // Substitute variables for newly-declared local variables
-        //synEnv.add(vars, "", "l");
     }
     // Otherwise, if weights are kernels, use kernel index to index into variables
     else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
