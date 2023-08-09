@@ -29,7 +29,7 @@ VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                       [](const auto &init){ return !init.second.getSnippet()->getCode().empty(); });
+                       [](const auto &init){ return !Utils::areTokensEmpty(init.second.getCodeTokens()); });
 }
 //----------------------------------------------------------------------------
 CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 

@@ -272,9 +272,6 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                     }
                 }
 
-                /*if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-                }*/
                 /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     env.getStream() << "if(";
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {

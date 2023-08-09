@@ -1024,8 +1024,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     }
 
                     // If there is row-building code in this snippet
-                    const auto *snippet = s.getArchetype().getConnectivityInitialiser().getSnippet();
-                    if(!snippet->getRowBuildCode().empty()) {
+                    const auto &connectInit = s.getArchetype().getConnectivityInitialiser();
+                    if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                         // Generate loop through source neurons
                         groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
 
@@ -1037,7 +1037,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     }
                     // Otherwise
                     else {
-                        assert(!snippet->getColBuildCode().empty());
+                        assert(!Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
 
                         // Loop through target neurons
                         groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
@@ -1061,7 +1061,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                             // Calculate index in data structure of this synapse
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                if(!snippet->getRowBuildCode().empty()) {
+                                if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                     addSynapse << "const unsigned int idx = " << "($(id_pre) * $(_row_stride)) + $(_row_length)[i];" << std::endl;
                                 }
                                 else {
@@ -1076,7 +1076,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                 // Replace $(id_post) with first 'function' parameter as simulation code is
                                 // going to be, in turn, substituted into procedural connectivity generation code
                                 assert(false);
-                                if(!snippet->getRowBuildCode().empty()) {
+                                if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                     kernelInitEnv.add(Type::Uint32.addConst(), "id_post", "$(0)");
                                 }
                                 else {
@@ -1098,7 +1098,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                             }
 
                             // If there is row-building code in this snippet
-                            if(!snippet->getRowBuildCode().empty()) {
+                            if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                 // If matrix is sparse, add function to increment row length and insert synapse into ind array
                                 if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     addSynapse << "$(_ind)[idx] = $(0);" << std::endl;
@@ -1128,7 +1128,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
 
                         // Call appropriate connectivity handler
-                        if(!snippet->getRowBuildCode().empty()) {
+                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                             s.generateSparseRowInit(*this, groupEnv);
                         }
                         else {
@@ -1164,7 +1164,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
                     // If postsynaptic learning is required, initially zero column lengths
-                    if (!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
+                    if (!Utils::areTokensEmpty(s.getArchetype().getWUPostLearnCodeTokens())) {
                         groupEnv.getStream() << "// Zero column lengths" << std::endl;
                         groupEnv.printLine("std::fill_n($(_col_length), $(num_post), 0);");
                     }
@@ -1182,7 +1182,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         }
 
                         // If postsynaptic learning is required
-                        if(!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
+                        if(!Utils::areTokensEmpty(s.getArchetype().getWUPostLearnCodeTokens())) {
                             groupEnv.printLine("// Loop through synapses in corresponding matrix row");
                             groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
                             {

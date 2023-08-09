@@ -938,12 +938,12 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
             
             // If this synapse population has SPARSE connectivity and column-based on device connectivity, insert a call to cudaMemset to zero row lengths
             // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !s.second.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !Utils::areTokensEmpty(s.second.getConnectivityInitialiser().getColBuildCodeTokens())) {
                 initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_rowLength" << s.first << ", 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
             }
 
             // If this synapse population has SPARSE connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
                 initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
             }
         }

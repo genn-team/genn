@@ -381,15 +381,15 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
     // Loop through variables
     const V varAdaptor(group);
     for(const auto &var : varAdaptor.getDefs()) {
-        const auto *varInitSnippet = varAdaptor.getInitialisers().at(var.name).getSnippet();
-        const bool autoInitialized = !varInitSnippet->getCode().empty();
+        const auto &varInit = varAdaptor.getInitialisers().at(var.name);
+        const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
         const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                     runnerPushFunc, runnerPullFunc, resolvedType, var.name + group.getName(), varAdaptor.getLoc(var.name),
                     autoInitialized, getSizeFn(group, var), mem, statePushPullFunctions);
 
         // Loop through EGPs required to initialize variable
-        for(const auto &egp : varInitSnippet->getExtraGlobalParams()) {
+        for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc,
                                 egp.type, egp.name + var.name + group.getName(),
@@ -1082,11 +1082,11 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         const auto neuronModel = n.second.getNeuronModel();
         std::vector<std::string> neuronStatePushPullFunctions;
         for(const auto &var : neuronModel->getVars()) {
-            const auto *varInitSnippet = n.second.getVarInitialisers().at(var.name).getSnippet();
+            const auto &varInit = n.second.getVarInitialisers().at(var.name);
             const unsigned int numCopies = getNumVarCopies(var.access, batchSize);
             const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
             const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * numElements;
-            const bool autoInitialized = !varInitSnippet->getCode().empty();
+            const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
             const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc, resolvedType, var.name + n.first,
@@ -1122,7 +1122,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                               });
 
             // Loop through EGPs required to initialize neuron variable
-            for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
+            for(const auto &e : varInit.getSnippet()->getExtraGlobalParams()) {
                 genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
                                     runnerVarDecl, runnerExtraGlobalParamFunc, 
                                     e.type, e.name + var.name + n.first,
@@ -1313,8 +1313,9 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
     for(const auto &s : model.getSynapseGroups()) {
-        const auto *snippet = s.second.getConnectivityInitialiser().getSnippet();
-        const bool autoInitialized = !snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty();
+        const auto &connectInit = s.second.getConnectivityInitialiser();
+        const bool autoInitialized = (!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens()) 
+                                      || !Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
 
         if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
@@ -1398,8 +1399,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         std::vector<std::string> synapseGroupStatePushPullFunctions;
         if (individualWeights || proceduralWeights || kernelWeights) {
             for(const auto &wuVar : wu->getVars()) {
-                const auto *varInitSnippet = s.second.getWUVarInitialisers().at(wuVar.name).getSnippet();
-                const bool autoInitialized = !varInitSnippet->getCode().empty();
+                const auto &varInit = s.second.getWUVarInitialisers().at(wuVar.name);
+                const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
@@ -1418,7 +1419,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 }
 
                 // Loop through EGPs required to initialize WUM 
-                for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
+                for(const auto &e : varInit.getSnippet()->getExtraGlobalParams()) {
                     genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                         runnerVarDecl, runnerExtraGlobalParamFunc, 
                                         e.type, e.name + wuVar.name + s.second.getName(),

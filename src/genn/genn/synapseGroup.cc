@@ -224,12 +224,12 @@ VarLocation SynapseGroup::getSparseConnectivityLocation() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
 {
-    return !getWUModel()->getSimCode().empty();
+    return !Utils::areTokensEmpty(getWUSimCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSpikeEventRequired() const
 {
-     return !getWUModel()->getEventCode().empty();
+     return !Utils::areTokensEmpty(getWUEventCodeTokens());
 }
 //----------------------------------------------------------------------------
 const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals() const
@@ -758,9 +758,9 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
     // Return true if the matrix type is sparse or bitmask 
     // and there is code to initialise sparse connectivity 
-    const auto *snippet = getConnectivityInitialiser().getSnippet();
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
-            && (!snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty()));
+            && (!Utils::areTokensEmpty(getConnectivityInitialiser().getRowBuildCodeTokens()) 
+                || !Utils::areTokensEmpty(getConnectivityInitialiser().getColBuildCodeTokens())));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPreOutputBeFused() const
@@ -964,8 +964,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Type::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
-    Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
-    Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
+    Utils::updateHash(Utils::areTokensEmpty(getWUSynapseDynamicsCodeTokens()), hash);
+    Utils::updateHash(Utils::areTokensEmpty(getWUPostLearnCodeTokens()), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {

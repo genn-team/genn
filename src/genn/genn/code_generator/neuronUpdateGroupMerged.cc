@@ -530,12 +530,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
 
     // If a threshold condition is provided
-    if (!nm->getThresholdConditionCode().empty()) {
+    if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
         neuronVarEnv.getStream() << "// test whether spike condition was fulfilled previously" << std::endl;
-        
-        //if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-        //    thCode = disambiguateNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
-        //}
 
         if (nm->isAutoRefractoryRequired()) {
             neuronVarEnv.getStream() << "const bool oldSpike = (";
@@ -633,7 +629,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     }*/
 
     // test for true spikes if condition is provided
-    if (!nm->getThresholdConditionCode().empty()) {
+    if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
         neuronVarEnv.getStream() << "// test for and register a true spike" << std::endl;
         neuronVarEnv.getStream() << "if ((";
         
@@ -650,7 +646,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
             genEmitTrueSpike(neuronVarEnv, *this);
 
             // add after-spike reset if provided
-            if (!nm->getResetCode().empty()) {
+            if (!Utils::areTokensEmpty(getArchetype().getResetCodeTokens())) {
                 neuronVarEnv.getStream() << "// spike reset code" << std::endl;
                 
                 Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' reset code");
@@ -671,7 +667,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                              [](const OutSynWUMPreCode &sg)
                                              {
                                                  return ((sg.getArchetype().getDelaySteps() != NO_DELAY)
-                                                         && sg.getArchetype().getWUModel()->getPreDynamicsCode().empty());
+                                                         && Utils::areTokensEmpty(sg.getArchetype().getWUPreDynamicsCodeTokens()));
                                              });
 
             // Are there any incoming synapse groups with postsynaptic code
@@ -680,7 +676,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                               [](const auto &sg)
                                               {
                                                   return ((sg.getArchetype().getBackPropDelaySteps() != NO_DELAY)
-                                                           && sg.getArchetype().getWUModel()->getPostDynamicsCode().empty());
+                                                           && Utils::areTokensEmpty(sg.getArchetype().getWUPostDynamicsCodeTokens()));
                                               });
 
             // If spike times, presynaptic variables or postsynaptic variables are required, add if clause

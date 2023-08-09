@@ -189,7 +189,7 @@ bool NeuronGroup::isTrueSpikeRequired() const
 
     // If any INCOMING synapse groups require postsynaptic learning, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getLearnPostCode().empty(); }))
+        [](SynapseGroupInternal *sg){ return !Utils::areTokensEmpty(sg->getWUPostLearnCodeTokens()); }))
     {
         return true;
     }
@@ -425,8 +425,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() cons
     std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPostSpikeCode().empty()
-                             || !sg->getWUModel()->getPostDynamicsCode().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUPostSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUPostDynamicsCodeTokens()));
                  });
     return vec;
 }
@@ -437,8 +437,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreCode() cons
     std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPreSpikeCode().empty()
-                             || !sg->getWUModel()->getPreDynamicsCode().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUPreDynamicsCodeTokens()));
                 });
     return vec;
 }
