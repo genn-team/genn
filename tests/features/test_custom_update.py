@@ -262,6 +262,7 @@ def test_custom_update_transpose(backend, precision, batch_size):
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_neuron_reduce(backend, precision, batch_size):
     reduction_neuron_model = create_neuron_model(
         "reduction_neuron",
