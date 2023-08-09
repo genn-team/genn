@@ -21,6 +21,26 @@ post_neuron_model = create_neuron_model(
     """,
     var_name_types=[("x", "scalar")])
 
+decoder_model = create_sparse_connect_init_snippet(
+    "decoder",
+    row_build_code=
+    """
+    for(unsigned int j = 0; j < num_post; j++) {
+        const unsigned int jValue = (1 << j);
+        if(((id_pre + 1) & jValue) != 0) {
+            addSynapse(j);
+        }
+    }
+    """)
+
+decoder_dense_model = create_var_init_snippet(
+    "decoder_dense",
+    var_init_code=
+    """
+    const unsigned int jValue = (1 << id_post);
+    value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
+    """)
+
 # (Normalised) horizontal Sobel convolution kernel
 vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
                               [2.0,   0.0,    -2.0],
@@ -33,27 +53,7 @@ horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward(backend, precision):
-    decoder_model = create_sparse_connect_init_snippet(
-        "decoder",
-        row_build_code=
-        """
-        for(unsigned int j = 0; j < num_post; j++) {
-           const unsigned int jValue = (1 << j);
-           if(((id_pre + 1) & jValue) != 0) {
-               addSynapse(j);
-           }
-        }
-        """)
-
-    decoder_dense_model = create_var_init_snippet(
-        "decoder_dense",
-        var_init_code=
-        """
-        const unsigned int jValue = (1 << id_post);
-        value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
-        """)
-        
+def test_forward(backend, precision):    
     model = GeNNModel(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
@@ -503,6 +503,51 @@ def test_forward_toeplitz(backend, precision):
     assert np.allclose(post_vert_pop.vars["x"].view, 
                        np.load("vertical_output.npy"))
 
+@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_forward_procedural(backend, precision):
+    model = GeNNModel(precision, "test_forward_procedural", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to generate one-hot pattern to decode
+    ss_pop = model.add_neuron_population("SpikeSource", 16, "SpikeSourceArray",
+                                         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
+    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+
+    # Create one output neuron pop with constant weight sparse decoder population
+    procedural_constant_weight_n_pop = model.add_neuron_population(
+        "PostProceduralConstantWeightNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "ProceduralConstantWeightSynapse", "PROCEDURAL", 0,
+        ss_pop, procedural_constant_weight_n_pop,
+        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(decoder_model, {}))
+    
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 16 timesteps
+    output_place_values = 2 ** np.arange(4)
+    output_populations = [procedural_constant_weight_n_pop]
+    while model.timestep < 16:
+        model.step_time()
+
+        # Loop through output populations
+        for pop in output_populations:
+            # Pull state variable
+            pop.pull_var_from_device("x")
+
+            # Convert to binary mask
+            output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
+
+            # Sum up active place values
+            output_value = np.sum(output_place_values[output_binary])
+            if output_value != (model.timestep - 1):
+                assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
+
 if __name__ == '__main__':
-    test_forward_toeplitz("single_threaded_cpu", types.Float)
+    test_forward_procedural("cuda", types.Float)
     
