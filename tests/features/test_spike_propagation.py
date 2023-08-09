@@ -514,7 +514,7 @@ def test_forward_procedural(backend, precision):
                                          {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
     ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
 
-    # Create one output neuron pop with constant weight sparse decoder population
+    # Create one output neuron pop with constant weight procedural decoder population
     procedural_constant_weight_n_pop = model.add_neuron_population(
         "PostProceduralConstantWeightNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
@@ -525,13 +525,24 @@ def test_forward_procedural(backend, precision):
         "DeltaCurr", {}, {},
         init_sparse_connectivity(decoder_model, {}))
     
+    # Create one output neuron pop with dense procedural decoder population
+    dense_procedural_n_pop = model.add_neuron_population(
+        "PostDenseProceduralNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "DenseProceduralSynapse", "DENSE_PROCEDURALG", 0,
+        ss_pop, dense_procedural_n_pop,
+        "StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}, {}, {},
+        "DeltaCurr", {}, {})
+    
     # Build model and load
     model.build()
     model.load()
 
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
-    output_populations = [procedural_constant_weight_n_pop]
+    output_populations = [procedural_constant_weight_n_pop,
+                          dense_procedural_n_pop]
     while model.timestep < 16:
         model.step_time()
 
