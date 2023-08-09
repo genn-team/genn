@@ -412,13 +412,13 @@ public:
                      "conv_oh", "conv_ow", "conv_oc"});
 
     SET_ROW_BUILD_CODE(
-        "const int inRow = (id_pre / (int)conv_ic) / (int)conv_iw\n"
-        "const int inCol = (id_pre / (int)conv_ic) % (int)conv_iw\n"
-        "const int inChan = id_pre % (int)conv_ic\n"
-        "const int maxOutRow = min((int)conv_oh, max(0, 1 + ((inRow + (int)conv_padh) / (int)conv_sh)))\n"
-        "const int minOutCol = min((int)conv_ow, max(0, 1 + (int)floor((inCol + conv_padw - conv_kw) / conv_sw)))\n"
-        "const int maxOutCol = min((int)conv_ow, max(0, 1 + ((inCol + (int)conv_padw) / (int)conv_sw)))\n"
-        "int outRow = min((int)conv_oh, max(0, 1 + (int)floor((inRow + conv_padh - conv_kh) / conv_sh)))\n"
+        "const int inRow = (id_pre / (int)conv_ic) / (int)conv_iw;\n"
+        "const int inCol = (id_pre / (int)conv_ic) % (int)conv_iw;\n"
+        "const int inChan = id_pre % (int)conv_ic;\n"
+        "const int maxOutRow = min((int)conv_oh, max(0, 1 + ((inRow + (int)conv_padh) / (int)conv_sh)));\n"
+        "const int minOutCol = min((int)conv_ow, max(0, 1 + (int)floor((inCol + conv_padw - conv_kw) / conv_sw)));\n"
+        "const int maxOutCol = min((int)conv_ow, max(0, 1 + ((inCol + (int)conv_padw) / (int)conv_sw)));\n"
+        "int outRow = min((int)conv_oh, max(0, 1 + (int)floor((inRow + conv_padh - conv_kh) / conv_sh)));\n"
         "for(;outRow < maxOutRow; outRow++) {\n"
         "   const int strideRow = (outRow * (int)conv_sh) - (int)conv_padh;\n"
         "   const int kernRow = inRow - strideRow;\n"
