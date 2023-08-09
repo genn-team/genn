@@ -449,34 +449,34 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
                      {groupEnv.addInitialiser("const unsigned int thread = $(id) % " + numThreadsPerSpikeStr + ";")});
     }
     else {
-        env.printLine("const unsigned int spike = $(id);");
+        groupEnv.add(Type::Uint32.addConst(), "_spike", "$(id)");
     }
 
     // If there is a spike for this thread to process
-    env.print("if ($(_spike) < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
+    groupEnv.print("if ($(_spike) < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
     {
-        CodeStream::Scope b(env.getStream());
+        CodeStream::Scope b(groupEnv.getStream());
         
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            env.getStream() << "scalar lrevInSyn = 0.0;" << std::endl;
+            groupEnv.getStream() << "scalar lrevInSyn = 0.0;" << std::endl;
         }
 
         // Create environment and add presynaptic index
-        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
-                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(spike)") + "];")});
+                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(_spike)") + "];")});
 
         // **YUCK** add a hidden copy of num_post so we can overwrite deeper in here without losing access to original
         synEnv.add(Type::Uint32.addConst(), "_num_post", "$(num_post)");
 
-        // If this connectivity requires an RNG for initialisation,
-        // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
+        // If this connectivity requires an RNG for initialisation, make copy of connect Phillox RNG
+        // and skip ahead to id that would have been used to initialize any variables associated with it
         if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getRowBuildCodeTokens())
            || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
         {
             std::ostringstream skipAhead;
             if(numThreadsPerSpike > 1) {
-                skipAhead << "($(id_pre) * " << numThreadsPerSpike << ") + $(thread)";
+                skipAhead << "($(id_pre) * " << numThreadsPerSpike << ") + $(_thread)";
             }
             else {
                 skipAhead << "$(id_pre)";
@@ -563,7 +563,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         // Write sum of presynaptic output to global memory
         // **TODO** this should be triggered by lazy logic - if referenced, do it!
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            env.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lrevInSyn);");
+            groupEnv.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lrevInSyn);");
         }
 
     }
