@@ -1034,8 +1034,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         groupEnv.add(Type::Uint32.addConst(), "id_post_begin", "0");
                         groupEnv.add(Type::Uint32.addConst(), "id_thread", "0");
                         groupEnv.add(Type::Uint32.addConst(), "num_threads", "1");
-                        //groupEnv.add("num_pre", "group->numSrcNeurons");
-                        //groupEnv.add("num_post", "group->numTrgNeurons");
                     }
                     // Otherwise
                     else {
