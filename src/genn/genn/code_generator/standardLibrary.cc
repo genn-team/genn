@@ -26,6 +26,13 @@ using namespace GeNN::CodeGenerator;
     std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float, Type::Float}), #NAME"($(0), $(1), $(2))")),  \
     std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double, Type::Double}), #NAME"($(0), $(1), $(2))"))
 
+#define ADD_TWO_ARG_INT_FUNC(NAME)                                                                                                              \
+    std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int32, Type::Int32}),#NAME"($(0), $(1))")),     \
+    std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Int64, {Type::Int64, Type::Int64}), #NAME"($(0), $(1))")),    \
+    std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Uint32}), #NAME"($(0), $(1))")), \
+    std::make_pair(#NAME, std::make_pair(Type::ResolvedType::createFunction(Type::Uint64, {Type::Uint64, Type::Uint64}), #NAME"($(0), $(1))"))
+
+
 //---------------------------------------------------------------------------
 // Anonymous namespace
 //---------------------------------------------------------------------------
@@ -108,7 +115,13 @@ const auto libraryTypes = initLibraryTypes(
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(lgamma),
     ADD_TWO_ARG_FLOAT_DOUBLE_FUNC(copysign),
     ADD_THREE_ARG_FLOAT_DOUBLE_FUNC(fma),
-    
+
+    // Integer functions
+    ADD_TWO_ARG_INT_FUNC(min),
+    ADD_TWO_ARG_INT_FUNC(max),
+    std::make_pair("abs", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int32}), "abs($(0))")),
+    std::make_pair("abs", std::make_pair(Type::ResolvedType::createFunction(Type::Int64, {Type::Int64}), "abs($(0))")),
+
     // Printf
     std::make_pair("printf", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int8.addQualifier(Type::Qualifier::CONSTANT).createPointer()}, true), "printf($(0), $(@))")));
 }
