@@ -123,7 +123,7 @@ public:
         "        const int postInd = ((postRow * (int)conv_ow * (int)conv_oc) +\n"
         "                             (postCol * (int)conv_oc) +\n"
         "                              kernOutChan);\n"
-        "        add_synapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
+        "        addSynapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
         "     }\n"
         "}\n");
 
@@ -185,7 +185,7 @@ public:
         "           const int postInd = ((postRow * (int)conv_ow * (int)conv_oc) +\n"
         "                                 (postCol * (int)conv_oc) +\n"
         "                                 kernOutChan);\n"
-        "           add_synapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
+        "           addSynapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
         "       }\n"
         "    }\n"
         "}\n");

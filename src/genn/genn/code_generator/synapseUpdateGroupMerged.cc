@@ -382,34 +382,21 @@ void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backen
     applySynapseSubstitutions(backend, env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, EnvironmentExternalBase &env)
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env)
 {
+    // Create environment for group
+    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
+
+    // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
+    groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+                                  &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
+    groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+                                         &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
 
-    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
-
-    assert(false);
-    // Add substitutions
-    //synEnv.addParams()
-    //synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
-    //synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
-    /*popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                      [this](const std::string &p) { return isSparseConnectivityInitParamHeterogeneous(p);  },
-                                      "", "group->");
-    popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                    [this](const std::string &p) { return isSparseConnectivityInitDerivedParamHeterogeneous(p);  },
-                                    "", "group->");
-    popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
-
- 
-    // Apply substitutions to row building code
-    std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-        
-    popSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(getIndex()));
-    //pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
-
-    // Write out code
-    os << pCode << std::endl;*/
+    Transpiler::ErrorHandler errorHandler("Synapse group procedural connectivity '" + getArchetype().getName() + "' row build code");
+    prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, 

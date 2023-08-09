@@ -333,10 +333,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                 }
 
-                if(sg.getArchetype().isPresynapticOutputRequired()) {
-                    synEnv.add(Type::AddToPre, "addToPre",
-                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
-                }
+                // Use global memory atomic for presynaptic output
+                // **NOTE** this could use per-block shared memory
+                synEnv.add(Type::AddToPre, "addToPre",
+                            backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
                 if(trueSpike) {
                     sg.generateSpikeUpdate(backend, synEnv, batchSize);
@@ -434,148 +434,137 @@ void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateG
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                                  const BackendSIMT&, unsigned int batchSize, bool trueSpike) const
+                                  const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
+    const std::string numThreadsPerSpikeStr = std::to_string(numThreadsPerSpike);
 
+    EnvironmentExternal groupEnv(env);
     if(numThreadsPerSpike > 1) {
-        const std::string numThreadsPerSpikeStr = std::to_string(numThreadsPerSpike);
-        env.printLine("const unsigned int spike = $(id) / " + numThreadsPerSpikeStr + ";");
-        env.printLine("const unsigned int thread = $(id) % " + numThreadsPerSpikeStr + ";");
-        env.printLine("const unsigned int numPostPerThread =  ($(num_post) + " + numThreadsPerSpikeStr + " - 1) / " + numThreadsPerSpikeStr + ";");
-
-        // Calculate the starting position and length of the sub-row to process on this thread
-        // **TODO** fast-divide style optimisations here
-        env.getStream() << "const unsigned int idPostStart = thread * numPostPerThread;" << std::endl;
-        env.getStream() << "const unsigned int postRemainder = " << env["num_post"] << " % numPostPerThread;" << std::endl;
-        env.getStream() << "const unsigned int numPost = (postRemainder == 0 || thread < " << (numThreadsPerSpike - 1) << ") ? numPostPerThread : postRemainder;" << std::endl;
+        groupEnv.add(Type::Uint32.addConst(), "_spike", "spike",
+                     {groupEnv.addInitialiser("const unsigned int spike = $(id) / " + numThreadsPerSpikeStr + ";")});
+        groupEnv.add(Type::Uint32.addConst(), "_thread", "thread",
+                     {groupEnv.addInitialiser("const unsigned int thread = $(id) % " + numThreadsPerSpikeStr + ";")});
     }
     else {
         env.printLine("const unsigned int spike = $(id);");
     }
 
-    if(sg.getArchetype().isPresynapticOutputRequired()) {
-        env.getStream() << "scalar lrevInSyn = 0.0;" << std::endl;
-    }
-
     // If there is a spike for this thread to process
-    env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
+    env.print("if ($(_spike) < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
     {
         CodeStream::Scope b(env.getStream());
+        
+        if(sg.getArchetype().isPresynapticOutputRequired()) {
+            env.getStream() << "scalar lrevInSyn = 0.0;" << std::endl;
+        }
 
         // Create environment and add presynaptic index
         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
-                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") + "];")});
+                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(spike)") + "];")});
 
-        /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-            os << "if(";
-
-            // Generate weight update threshold condition
-            Substitutions threshSubs(&synSubs);
-            sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
-
-            // end code substitutions ----
-            os << ")";
-
-            os << CodeStream::OB(130);
-        }*/
-
-        // Create substitution stack for generating procedural connectivity code
-        assert(false);
-        /*Substitutions connSubs(&synSubs);
-        synEnv.add("num_threads", std::to_string(numThreadsPerSpike));
+        // **YUCK** add a hidden copy of num_post so we can overwrite deeper in here without losing access to original
+        synEnv.add(Type::Uint32.addConst(), "_num_post", "$(num_post)");
 
         // If this connectivity requires an RNG for initialisation,
         // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
-        if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())
+        if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getRowBuildCodeTokens())
            || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
         {
-            std::stringstream skipAhead;
+            std::ostringstream skipAhead;
             if(numThreadsPerSpike > 1) {
-                skipAhead << "(preInd * " << numThreadsPerSpike << ") + thread";
+                skipAhead << "($(id_pre) * " << numThreadsPerSpike << ") + $(thread)";
             }
             else {
-                skipAhead << "preInd";
+                skipAhead << "$(id_pre)";
             }
-            skipAhead << " + " << connSubs["group_start_id"] << " + " << (backend.getNumInitialisationRNGStreams(modelMerged) * model.getBatchSize());
 
-            // **NOTE** add RNG to synSubs so it can be correctly referenced in presynapticUpdateSubs below
-            backend.genGlobalRNGSkipAhead(os, synSubs, skipAhead.str());
+            // **FIXME**
+            skipAhead << " + " << "$(_group_start_id) + " << (0/*backend.getNumInitialisationRNGStreams(modelMerged)*/ * batchSize);
+
+            synEnv.add(Type::Void, "_rng", backend.genGlobalRNGSkipAhead(synEnv.getStream(), skipAhead.str()));
         }
 
-        // If we are using more than one thread to process each row
-        if(numThreadsPerSpike > 1) {
-            connSubs.addVarSubstitution("id_post_begin", "idPostStart");
-            connSubs.addVarSubstitution("id_thread", "thread");
-            connSubs.addVarSubstitution("num_post", "numPost");
-            connSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-        }
-        else {
-            connSubs.addVarSubstitution("id_post_begin", "0");
-            connSubs.addVarSubstitution("id_thread", "0");
-            connSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
-            connSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-        }
+        // Create environment for generating presynaptic update code into seperate CodeStream
+        std::ostringstream preUpdateStream;
+        CodeStream preUpdate(preUpdateStream);
+        {
+            CodeStream::Scope b(preUpdate);
+            EnvironmentExternal preUpdateEnv(synEnv, preUpdate);
 
-        // Create another substitution stack for generating presynaptic simulation code
-        Substitutions presynapticUpdateSubs(&synSubs);
+            // Replace $(id_post) with first 'function' parameter as simulation code is
+            // going to be, in turn, substituted into Toeplitz connectivity generation code
+            // **YUCK** we need to do this in an initialiser so the $(0) doesn't get confused with those used in AddToXXXX
+            preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                             {preUpdateEnv.addInitialiser("const unsigned int idPost = $(0);")});
 
-        // Replace $(id_post) with first 'function' parameter as simulation code is
-        // going to be, in turn, substituted into procedural connectivity generation code
-        presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
-
-        // If weights are provided by a kernel
-        if(!sg.getArchetype().getKernelSize().empty()) {
             // Replace kernel indices with the subsequent 'function' parameters
+            // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
             for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-                presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
-                                                         "$(" + std::to_string(i + 1) + ")");
+                const std::string iStr = std::to_string(i);
+                preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
+                                 {preUpdateEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+            }
+                    
+            // Add correct functions for applying synaptic input
+            preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+                             backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+            preUpdateEnv.add(Type::AddToPost, "addToPost",
+                             backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
+            preUpdateEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
+
+            // Generate spike update
+            if(trueSpike) {
+                sg.generateSpikeUpdate(backend, preUpdateEnv, 1);
+            }
+            else {
+                sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1);
             }
         }
 
-        // If dendritic delay is required, use atomic operation to update dendritic delay buffer
-        if(sg.getArchetype().isDendriticDelayRequired()) {
-            presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, 
-                                                      backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+        {
+            // Create second environment for initialising Toeplitz connectivity
+            EnvironmentExternal connEnv(synEnv);
+
+            // If we are using more than one thread to process each row
+            if(numThreadsPerSpike > 1) {
+                // Calculate the starting position and length of the sub-row to process on this thread
+                // **TODO** fast-divide style optimisations here
+                const size_t numPostPerThreadInit = connEnv.addInitialiser(
+                    "const unsigned int numPostPerThread =  ($(num_post) + " + numThreadsPerSpikeStr + " - 1) / " + numThreadsPerSpikeStr + ";");
+
+                connEnv.add(Type::Uint32.addConst(), "id_post_begin", "idPostBegin",
+                            {numPostPerThreadInit,
+                             connEnv.addInitialiser("const unsigned int idPostBegin = $(_thread) * numPostPerThread;")});
+                connEnv.add(Type::Uint32.addConst(), "id_thread", "$(_thread)");
+                connEnv.add(Type::Uint32.addConst(), "num_post", "numPost",
+                            {numPostPerThreadInit,
+                             connEnv.addInitialiser("const unsigned int postRemainder = $(_num_post) % numPostPerThread;"),
+                             connEnv.addInitialiser("const unsigned int numPost = (postRemainder == 0 || thread < " + std::to_string(numThreadsPerSpike - 1) + ") ? numPostPerThread : postRemainder;")});
+            }
+            else {
+                connEnv.add(Type::Uint32.addConst(), "id_post_begin", "0");
+                connEnv.add(Type::Uint32.addConst(), "id_thread", "0");
+            }
+
+            // When a synapse should be 'added', substitute in presynaptic update code
+            const auto addSynapseType = Type::ResolvedType::createFunction(
+                Type::Void, std::vector<Type::ResolvedType>{1ull + sg.getArchetype().getKernelSize().size(), Type::Uint32});
+            connEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
+
+            // Generate procedural connectivity code
+            sg.generateProceduralConnectivity(backend, connEnv);
+
         }
-        // Otherwise, substitute global memory array for $(inSyn)
-        else {
-            presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
-                                                      backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-        }
-        
+
+        // Write sum of presynaptic output to global memory
+        // **TODO** this should be triggered by lazy logic - if referenced, do it!
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
+            env.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lrevInSyn);");
         }
-        
-        // Generate presynaptic simulation code into new stringstream-backed code stream
-        std::ostringstream presynapticUpdateStream;
-        CodeStream presynapticUpdate(presynapticUpdateStream);
-        if(trueSpike) {
-            sg.generateSpikeUpdate(backend, presynapticUpdate, modelMerged, presynapticUpdateSubs);
-        }
-        else {
-            sg.generateSpikeEventUpdate(backend, presynapticUpdate, modelMerged, presynapticUpdateSubs);
-        }
-
-        // When a synapse should be 'added', substitute in presynaptic update code
-        connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
-
-        // Generate procedural connectivity code
-        sg.generateProceduralConnectivity(backend, os, connSubs);
-
-        //if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-        //    os << CodeStream::CB(130);
-        //}
-
-        // Should this be in the Postamble?
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
-            // write lrevInSyn to global memory if not 0
-            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
-        }*/
 
     }
 }
@@ -708,7 +697,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
 
 
                     synEnv.add(Type::AddToPost, "addToPost",
-                        "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
+                               "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
                     synEnv.add(Type::AddToPre, "addToPre",
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
@@ -838,6 +827,11 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
 
+        // Use global memory atomic for presynaptic output
+        // **NOTE** this could use per-block shared memory
+        preUpdateEnv.add(Type::AddToPre, "addToPre",
+                         backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+
         // Generate spike update
         if(trueSpike) {
             sg.generateSpikeUpdate(backend, preUpdateEnv, 1);
@@ -858,10 +852,10 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
     // Generate toeplitz connectivity generation code using custom for_each_synapse loop
     sg.generateToeplitzConnectivity(
         backend, toeplitzEnv,
-        // Within for_each_synapse loops, define add_synapse function and id_pre
+        // Within for_each_synapse loops, define addSynapse function and id_pre
         [addSynapseType](auto &env, auto &errorHandler)
         {
-            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "add_synapse", 0}, addSynapseType, errorHandler);
+            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
             env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
         },
         [addSynapseType, batchSize, trueSpike, &preUpdateStream, &backend, &sg]
@@ -902,7 +896,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                         bodyEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
                         // Add function substitution with parameters to add 
-                        bodyEnv.add(addSynapseType, "add_synapse", preUpdateStream.str());
+                        bodyEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
 
                         // Generate body of for_each_synapse loop within this new environment
                         generateBody(bodyEnv);

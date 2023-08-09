@@ -1383,7 +1383,6 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                 CodeStream::Scope b(groupEnv.getStream());
 
                 // If population RNGs are initialised on device and this neuron is going to require one, 
-                
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
                     // Add field for RNG
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> rngInitEnv(groupEnv, ng);

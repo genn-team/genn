@@ -1802,10 +1802,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             // Generate toeplitz connectivity generation code using custom for_each_synapse loop
             sg.generateToeplitzConnectivity(
                 *this, toeplitzEnv,
-                // Within for_each_synapse loops, define add_synapse function and id_pre
+                // Within for_each_synapse loops, define addSynapse function and id_pre
                 [addSynapseType](auto &env, auto &errorHandler)
                 {
-                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "add_synapse", 0}, addSynapseType, errorHandler);
+                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
                     env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
                 },
                 [addSynapseType, trueSpike, &eventSuffix, &preUpdateStream, &sg](auto &env, auto generateBody)
@@ -1829,7 +1829,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
                         // Add function substitution with parameters to add 
-                        bodyEnv.add(addSynapseType, "add_synapse", preUpdateStream.str());
+                        bodyEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
 
                         // Generate body of for_each_synapse loop within this new environment
                         generateBody(bodyEnv);
