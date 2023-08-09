@@ -60,16 +60,14 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        assert(false);
-        /*const auto vars = wu->getVars();
+        const auto vars = wu->getVars();
         for(const auto &var : vars) {
-            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
-            
             // If this variable has any initialisation code
-            if(!varInit.getSnippet()->getCode().empty()) {
-                
+            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
+            if(!Utils::areTokensEmpty(varInit.getCodeTokens())) {
+                assert(false);
                 // Configure variable substitutions
-                CodeGenerator::Substitutions varSubs(&synapseSubs);
+                /*CodeGenerator::Substitutions varSubs(&synapseSubs);
                 varSubs.addVarSubstitution("value", "l" + var.name);
                 varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                   [&var, &sg](const std::string &p) { return sg.isWUVarInitParamHeterogeneous(var.name, p); },
@@ -91,12 +89,12 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                 {
                     CodeGenerator::CodeStream::Scope b(os);
                     os << code << std::endl;;
-                }
+                }*/
             }
         }
 
         // Substitute variables for newly-declared local variables
-        synEnv.add(vars, "", "l");*/
+        //synEnv.add(vars, "", "l");
     }
     // Otherwise, if weights are kernels, use kernel index to index into variables
     else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
