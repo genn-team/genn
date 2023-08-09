@@ -96,10 +96,6 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     {
         CodeStream::Scope b(env.getStream());
 
-        /*if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
-            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-        }*/
-
         env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") + "];");
 
         if(numThreadsPerSpike > 1) {
@@ -474,10 +470,6 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
                    {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") + "];")});
 
-        /*if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
-            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-        }*/
-
         /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << "if(";
 
@@ -676,10 +668,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
             {
                 CodeStream::Scope b(env.getStream());
 
-                /*if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-                }
-                if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
+                /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";
 
                     Substitutions threshSubs(&popSubs);

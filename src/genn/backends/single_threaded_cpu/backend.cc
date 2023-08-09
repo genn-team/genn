@@ -1848,9 +1848,6 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         }
         {
             CodeStream::Scope b(env.getStream());
-            /*if(!wu->getSimSupportCode().empty()) {
-                os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-            }*/
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
 

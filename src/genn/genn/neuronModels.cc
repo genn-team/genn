@@ -33,7 +33,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getThresholdConditionCode(), hash);
     Utils::updateHash(getResetCode(), hash);
-    Utils::updateHash(getSupportCode(), hash);
     Utils::updateHash(isAutoRefractoryRequired(), hash);
     Utils::updateHash(getAdditionalInputVars(), hash);
     return hash.get_digest();

@@ -12,9 +12,6 @@
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
 
-#define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string getSimSupportCode() const override{ return SIM_SUPPORT_CODE; }
-#define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string getLearnPostSupportCode() const override{ return LEARN_POST_SUPPORT_CODE; }
-#define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const override{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
 #define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const override{ return PRE_SPIKE_CODE; }
 #define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
@@ -59,26 +56,6 @@ public:
 
     //! Gets codes to test for events
     virtual std::string getEventThresholdConditionCode() const{ return ""; }
-
-    //! Gets support code to be made available within the synapse kernel/function.
-    /*! This is intended to contain user defined device functions that are used in the weight update code.
-        Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions; note that this support code is available to
-        sim, event threshold and event code */
-    virtual std::string getSimSupportCode() const{ return ""; }
-
-    //! Gets support code to be made available within learnSynapsesPost kernel/function.
-    /*! Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions. */
-    virtual std::string getLearnPostSupportCode() const{ return ""; }
-
-    //! Gets support code to be made available within the synapse dynamics kernel/function.
-    /*! Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions. */
-    virtual std::string getSynapseDynamicsSuppportCode() const{ return ""; }
 
     //! Gets code to be run once per spiking presynaptic
     //! neuron before sim code is run on synapses

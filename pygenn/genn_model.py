@@ -853,8 +853,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space={}):
 def create_neuron_model(class_name, param_names=None,
                         var_name_types=None, derived_params=None,
                         sim_code=None, threshold_condition_code=None,
-                        reset_code=None, support_code=None,
-                        extra_global_params=None,
+                        reset_code=None, extra_global_params=None,
                         additional_input_vars=None,
                         is_auto_refractory_required=None):
     """This helper function creates a custom NeuronModel class.
@@ -880,7 +879,6 @@ def create_neuron_model(class_name, param_names=None,
     sim_code                    --  string with the simulation code
     threshold_condition_code    --  string with the threshold condition code
     reset_code                  --  string with the reset code
-    support_code                --  string with the support code
     extra_global_params         --  list of pairs of strings with names and
                                     types of additional parameters
     additional_input_vars       --  list of tuples with names and types as
@@ -901,9 +899,6 @@ def create_neuron_model(class_name, param_names=None,
     if reset_code is not None:
         body["get_reset_code"] = lambda self: dedent(reset_code)
 
-    if support_code is not None:
-        body["get_support_code"] = lambda self: dedent(support_code)
-
     if additional_input_vars:
         body["get_additional_input_vars"] = \
             lambda self: [ParamVal(a[0], a[1], a[2])
@@ -921,7 +916,7 @@ def create_neuron_model(class_name, param_names=None,
 def create_postsynaptic_model(class_name, param_names=None,
                               var_name_types=None, derived_params=None,
                               decay_code=None, apply_input_code=None,
-                              support_code=None, extra_global_params=None):
+                              extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_neuron_model
@@ -942,7 +937,6 @@ def create_postsynaptic_model(class_name, param_names=None,
                             should be a functor returned by create_dpf_class
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
-    support_code        --  string with the support code
     extra_global_params --  list of pairs of strings with names and
                             types of additional parameters
     """
@@ -953,9 +947,6 @@ def create_postsynaptic_model(class_name, param_names=None,
 
     if apply_input_code is not None:
         body["get_apply_input_code"] = lambda self: dedent(apply_input_code)
-
-    if support_code is not None:
-        body["get_support_code"] = lambda self: dedent(support_code)
 
     return create_model(class_name, PostsynapticModelBase, param_names,
                         var_name_types, derived_params, 
@@ -974,9 +965,6 @@ def create_weight_update_model(class_name, param_names=None,
                                post_spike_code=None,
                                pre_dynamics_code=None,
                                post_dynamics_code=None,
-                               sim_support_code=None,
-                               learn_post_support_code=None,
-                               synapse_dynamics_suppport_code=None,
                                extra_global_params=None,
                                is_pre_spike_time_required=None,
                                is_post_spike_time_required=None,
@@ -1025,11 +1013,6 @@ def create_weight_update_model(class_name, param_names=None,
                                                 timestep on presynaptic neuron
     post_dynamics_code                      --  string with the code run every
                                                 timestep on postsynaptic neuron
-    sim_support_code                        --  string with simulation support code
-    learn_post_support_code                 --  string with support code for
-                                                learn_synapse_post kernel/function
-    synapse_dynamics_suppport_code          --  string with synapse dynamics
-                                                support code
     extra_global_params                     --  list of pairs of strings with names and
                                                 types of additional parameters
     is_pre_spike_time_required              --  boolean, is presynaptic spike time
@@ -1074,17 +1057,6 @@ def create_weight_update_model(class_name, param_names=None,
 
     if post_dynamics_code is not None:
         body["get_post_dynamics_code"] = lambda self: dedent(post_dynamics_code)
-
-    if sim_support_code is not None:
-        body["get_sim_support_code"] = lambda self: dedent(sim_support_code)
-
-    if learn_post_support_code is not None:
-        body["get_learn_post_support_code"] = \
-            lambda self: dedent(learn_post_support_code)
-
-    if synapse_dynamics_suppport_code is not None:
-        body["get_synapse_dynamics_suppport_code"] = \
-            lambda self: dedent(synapse_dynamics_suppport_code)
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \

@@ -604,16 +604,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
             // Open scope for spike-like event test
             os << CodeStream::OB(31);
 
-            // Use presynaptic update namespace if required
-            if (!spkEventCond.supportCode.empty() && backend.supportsNamespace()) {
-                os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode) << ";" << std::endl;
-            }
-
-            // Substitute with namespace functions
-            if (!spkEventCond.supportCode.empty() && !backend.supportsNamespace()) {
-                eCode = disambiguateNamespaceFunction(spkEventCond.supportCode, eCode, modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode));
-            }
-
             // Combine this event threshold test with
             os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
 

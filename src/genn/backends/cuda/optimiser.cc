@@ -31,7 +31,6 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateRunner.h"
-#include "code_generator/generateSupportCode.h"
 #include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
@@ -470,11 +469,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         generateInit(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
         generateRunner(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
 
-        // Generate support code module if the backend supports namespaces
-        if (backend.supportsNamespace()) {
-            generateSupportCode(outputPath, modelMerged, dryRunSuffix);
-        }
-
         // Loop through modules
         std::vector<std::thread> threads;
         for(const auto &m : modules) {
@@ -496,9 +490,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
         // Remove tempory source file
         if(std::remove((outputPath / ("runner" + dryRunSuffix + ".cc")).str().c_str())) {
-            LOGW_BACKEND << "Cannot remove dry-run source file";
-        }
-        if(std::remove((outputPath / ("supportCode" + dryRunSuffix + ".h")).str().c_str())) {
             LOGW_BACKEND << "Cannot remove dry-run source file";
         }
         if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {

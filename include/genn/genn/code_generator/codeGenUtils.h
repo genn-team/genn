@@ -56,12 +56,6 @@ inline size_t padSize(size_t size, size_t blockSize)
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
 
 //--------------------------------------------------------------------------
-/*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
- */
- //--------------------------------------------------------------------------
-GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
-
-//--------------------------------------------------------------------------
 /*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing an expression
  */
  //--------------------------------------------------------------------------

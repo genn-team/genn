@@ -16,7 +16,6 @@
 #include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
-#include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
 namespace GeNN::CodeGenerator
@@ -240,18 +239,6 @@ public:
     void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
     void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
     void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
-
-    void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPresynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPostsynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genSynapseDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_SynapseDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-
-    const std::string &getNeuronUpdateSupportCodeNamespace(const std::string &code) const{ return m_NeuronUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPostsynapticDynamicsSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticDynamicsSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPresynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PresynapticUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
     //! Get hash digest of entire model
     boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
@@ -516,21 +503,6 @@ private:
 
     //! Merged custom connectivity update groups where host processing needs to be performed
     std::vector<CustomConnectivityHostUpdateGroupMerged> m_MergedCustomConnectivityHostUpdateGroups;
-
-    //! Unique support code strings for neuron update
-    SupportCodeMerged m_NeuronUpdateSupportCode;
-
-    //! Unique support code strings for postsynaptic model
-    SupportCodeMerged m_PostsynapticDynamicsSupportCode;
-
-    //! Unique support code strings for presynaptic update
-    SupportCodeMerged m_PresynapticUpdateSupportCode;
-
-    //! Unique support code strings for postsynaptic update
-    SupportCodeMerged m_PostsynapticUpdateSupportCode;
-
-    //! Unique support code strings for synapse dynamics
-    SupportCodeMerged m_SynapseDynamicsSupportCode;
 
     //! Map containing mapping of original extra global param names to their locations within merged groups
     MergedEGPMap m_MergedEGPs;

@@ -30,7 +30,6 @@
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
-    <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
     <ClCompile Include="code_generator\lazyString.cc" />
     <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
@@ -82,7 +81,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\lazyString.h" />
@@ -90,7 +88,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\standardLibrary.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\synapseUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />

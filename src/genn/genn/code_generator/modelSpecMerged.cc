@@ -15,9 +15,7 @@ using namespace GeNN::CodeGenerator;
 // GeNN::CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
  ModelSpecMerged::ModelSpecMerged(const BackendBase &backend, const ModelSpecInternal &model)
-:   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
-    m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
-    m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
+:   m_Model(model)
 {
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronUpdateGroups,
                        [](const NeuronGroupInternal&){ return true; },

@@ -46,31 +46,6 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
     os << "#define " << prefix << "_MAX " << Utils::writePreciseString(numeric.max, numeric.maxDigits10) << numeric.literalSuffix << std::endl;
 }
 //----------------------------------------------------------------------------
-std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
-    // Regex for function call - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments)
-    std::regex funcCallRegex(R"(\w+(?=\(.*\)))");
-    std::smatch matchedInCode;
-    std::regex_search(code.begin(), code.end(), matchedInCode, funcCallRegex);
-    std::string newCode = code;
-
-    // Regex for function definition - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments) followed by braces on the same or new line
-    std::regex supportCodeRegex(R"(\w+(?=\(.*\)\s*\{))");
-    std::smatch matchedInSupportCode;
-    std::regex_search(supportCode.begin(), supportCode.end(), matchedInSupportCode, supportCodeRegex);
-
-    // Iterating each function in code
-    for (const auto& funcInCode : matchedInCode) {
-        // Iterating over every function in support code to check if that function is indeed defined in support code (and not called - like fmod())
-        for (const auto& funcInSupportCode : matchedInSupportCode) {
-            if (funcInSupportCode.str() == funcInCode.str()) {
-                newCode = std::regex_replace(newCode, std::regex(funcInCode.str()), namespaceName + "_$&");
-                break;
-            }
-        }
-    }
-    return newCode;
-}
-//----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                            EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
 {

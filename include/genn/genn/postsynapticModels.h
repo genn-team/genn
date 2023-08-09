@@ -12,7 +12,6 @@
 #define SET_DECAY_CODE(DECAY_CODE) virtual std::string getDecayCode() const override{ return DECAY_CODE; }
 #define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const override{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
 #define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const override{ return APPLY_INPUT_CODE; }
-#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 
 //----------------------------------------------------------------------------
 // GeNN::PostsynapticModels::Base
@@ -28,7 +27,6 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
-    virtual std::string getSupportCode() const{ return ""; }
 
     //----------------------------------------------------------------------------
     // Public API

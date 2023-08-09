@@ -155,7 +155,6 @@ public:
     virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
     virtual std::string getThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_threshold_condition_code", getThresholdConditionCode); }
     virtual std::string getResetCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_reset_code", getResetCode); }
-    virtual std::string getSupportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_support_code", getSupportCode); }
 
     virtual Models::Base::ParamValVec getAdditionalInputVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::ParamValVec, Base, "get_additional_input_vars", getAdditionalInputVars); }
 
@@ -172,7 +171,6 @@ class PyPostsynapticModelBase : public PyModel<PostsynapticModels::Base>
 public:
     virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
     virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
-    virtual std::string getSupportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_support_code", getSupportCode); }
 };
 
 //----------------------------------------------------------------------------
@@ -188,9 +186,6 @@ public:
     virtual std::string getLearnPostCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_code", getLearnPostCode); }
     virtual std::string getSynapseDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_synapse_dynamics_code", getSynapseDynamicsCode); }
     virtual std::string getEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_event_threshold_condition_code", getEventThresholdConditionCode); }
-    virtual std::string getSimSupportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_support_code", getSimSupportCode); }
-    virtual std::string getLearnPostSupportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_support_code", getLearnPostSupportCode); }
-    virtual std::string getSynapseDynamicsSuppportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_synapse_dynamics_support_code", getSynapseDynamicsSuppportCode); }
     virtual std::string getPreSpikeCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_spike_code", getPreSpikeCode); }
     virtual std::string getPostSpikeCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_spike_code", getPostSpikeCode); }
     virtual std::string getPreDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_dynamics_code", getPreDynamicsCode); }
@@ -769,7 +764,6 @@ PYBIND11_MODULE(genn, m)
         .def("get_sim_code", &NeuronModels::Base::getSimCode)
         .def("get_threshold_condition_code", &NeuronModels::Base::getThresholdConditionCode)
         .def("get_reset_code", &NeuronModels::Base::getResetCode)
-        .def("get_support_code", &NeuronModels::Base::getSupportCode)
         .def("get_additional_input_vars", &NeuronModels::Base::getAdditionalInputVars)
         .def("is_auto_refractory_required", &NeuronModels::Base::isAutoRefractoryRequired);
         
@@ -780,8 +774,7 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_decay_code", &PostsynapticModels::Base::getDecayCode)
-        .def("get_apply_input_code", &PostsynapticModels::Base::getApplyInputCode)
-        .def("get_support_code", &PostsynapticModels::Base::getSupportCode);
+        .def("get_apply_input_code", &PostsynapticModels::Base::getApplyInputCode);
     
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
@@ -794,9 +787,6 @@ PYBIND11_MODULE(genn, m)
         .def("get_learn_post_code", &WeightUpdateModels::Base::getLearnPostCode)
         .def("get_synapse_dynamics_code", &WeightUpdateModels::Base::getSynapseDynamicsCode)
         .def("get_event_threshold_condition_code", &WeightUpdateModels::Base::getEventThresholdConditionCode)
-        .def("get_sim_support_cde", &WeightUpdateModels::Base::getSimSupportCode)
-        .def("get_learn_post_support_code", &WeightUpdateModels::Base::getLearnPostSupportCode)
-        .def("get_synapse_dynamics_support_code", &WeightUpdateModels::Base::getSynapseDynamicsSuppportCode)
         .def("get_pre_spike_code", &WeightUpdateModels::Base::getPreSpikeCode)
         .def("get_post_spike_code", &WeightUpdateModels::Base::getPostSpikeCode)
         .def("get_pre_dynamics_code", &WeightUpdateModels::Base::getPreDynamicsCode)

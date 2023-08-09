@@ -16,7 +16,6 @@
 
 // Code generator includes
 #include "code_generator/codeStream.h"
-#include "code_generator/generateSupportCode.h"
 #include "code_generator/generateRunner.h"
 #include "code_generator/modelSpecMerged.h"
 
@@ -123,11 +122,6 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateInit(outputPath, modelMerged, backend, memorySpaces);
         mem = generateRunner(outputPath, modelMerged, backend, memorySpaces);
-        
-        // Generate support code module if the backend supports namespaces
-        if(backend.supportsNamespace()) {
-            generateSupportCode(outputPath, modelMerged);
-        }
 
         // Get list of files to copy into generated code
         const auto backendSharePath = sharePath / "backends";
@@ -200,9 +194,6 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     CodeStream neuronUpdate(neuronUpdateStream);
 
     neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
-    if (backend.supportsNamespace()) {
-        neuronUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
-    }
     neuronUpdate << std::endl;
 
     // Neuron update kernel
@@ -247,9 +238,6 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
     CodeStream synapseUpdate(synapseUpdateStream);
 
     synapseUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
-    if (backend.supportsNamespace()) {
-        synapseUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
-    }
     synapseUpdate << std::endl;
 
     // Synaptic update kernels

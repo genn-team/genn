@@ -313,8 +313,6 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
 
-    virtual bool supportsNamespace() const final { return true; };
-
     //! Get hash digest of this backends identification and the preferences it has been configured with
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 

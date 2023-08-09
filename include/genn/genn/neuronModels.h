@@ -19,7 +19,6 @@
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string getThresholdConditionCode() const override{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const override{ return RESET_CODE; }
-#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 #define SET_ADDITIONAL_INPUT_VARS(...) virtual ParamValVec getAdditionalInputVars() const override{ return __VA_ARGS__; }
 #define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const override{ return AUTO_REFRACTORY_REQUIRED; }
 
@@ -46,12 +45,6 @@ public:
 
     //! Gets code that defines the reset action taken after a spike occurred. This can be empty
     virtual std::string getResetCode() const{ return ""; }
-
-    //! Gets support code to be made available within the neuron kernel/funcion.
-    /*! This is intended to contain user defined device functions that are used in the neuron codes.
-        Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef;
-        functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. */
-    virtual std::string getSupportCode() const{ return ""; }
 
     //! Gets names, types (as strings) and initial values of local variables into which
     //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input

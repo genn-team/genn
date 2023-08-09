@@ -23,7 +23,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 
     Utils::updateHash(getDecayCode(), hash);
     Utils::updateHash(getApplyInputCode(), hash);
-    Utils::updateHash(getSupportCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
