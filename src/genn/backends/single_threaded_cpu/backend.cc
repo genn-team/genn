@@ -1069,36 +1069,40 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                                   {addSynapseEnv.addInitialiser("const unsigned int idPre = $(0);")});
                             }
 
-                            // Calculate index of new synapse
-                            addSynapseEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
-                                              {addSynapseEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id_pre)];")});
+                            // If matrix is sparse
+                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                // Calculate index of new synapse
+                                addSynapseEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
+                                                {addSynapseEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id_pre)];")});
 
-                            // If there is a kernel
-                           if(!s.getArchetype().getKernelSize().empty()) {
-                                // Create new environment
-                                EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(addSynapseEnv, s);
+                                // If there is a kernel
+                                if(!s.getArchetype().getKernelSize().empty()) {
+                                    // Create new environment
+                                    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(addSynapseEnv, s);
 
-                                // Replace kernel indices with the subsequent 'function' parameters
-                                // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
-                                for(size_t i = 0; i < s.getArchetype().getKernelSize().size(); i++) {
-                                    const std::string iStr = std::to_string(i);
-                                    kernelInitEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
-                                                      {kernelInitEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+                                    // Replace kernel indices with the subsequent 'function' parameters
+                                    // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
+                                    for(size_t i = 0; i < s.getArchetype().getKernelSize().size(); i++) {
+                                        const std::string iStr = std::to_string(i);
+                                        kernelInitEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
+                                                        {kernelInitEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+                                    }
+
+                                    // Call handler to initialize variables
+                                    s.generateKernelInit(*this, kernelInitEnv, 1);
                                 }
 
-                                // Call handler to initialize variables
-                                s.generateKernelInit(*this, kernelInitEnv, 1);
-                            }
-
-                            // If matrix is sparse, add function to increment row length and insert synapse into ind array
-                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                // Add synapse to data structure
                                 addSynapseEnv.printLine("$(_ind)[$(id_syn)] = $(id_post);");
                                 addSynapseEnv.printLine("$(_row_length)[$(id_pre)]++;");
                             }
                             // Otherwise, if it's bitmask
-                            // **THINK** why is this logic so convoluted?
                             else {
+                                assert(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK);
+                                assert(s.getArchetype().getKernelSize().empty()) ;
+
                                  // If there is row-building code in this snippet
+                                 // **THINK** why is this logic so convoluted?
                                 if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                     addSynapseEnv.printLine("const int64_t rowStartGID = $(id_pre) * $(_row_stride);");
                                     addSynapseEnv.printLine("setB($(_gp)[(rowStartGID + ($(id_post))) / 32], (rowStartGID + $(id_post)) & 31);");

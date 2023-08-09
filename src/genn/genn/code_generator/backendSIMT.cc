@@ -1581,67 +1581,69 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             {
                 CodeStream::Scope b(groupEnv.getStream());
 
-                // Create new stream to generate addSynapse function which initializes all kernel variables
+                // Create environment for generating add synapsecode into seperate CodeStream
                 std::ostringstream addSynapseStream;
                 CodeStream addSynapse(addSynapseStream);
-
-                // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
-                addSynapse << "do";
                 {
                     CodeStream::Scope b(addSynapse);
+                    EnvironmentExternal addSynapseEnv(groupEnv, addSynapse);
 
-                    // Calculate index in data structure of this synapse
-                    /*if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            addSynapse << "const unsigned int idx = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)];" << std::endl;
-                        }
-                        else {
-                            addSynapse << "const unsigned int idx = (($(0)) * $(_row_stride)) + $(_row_length)[$(0)];" << std::endl;
-                        }
-                    }*/
-
-                    // If there is a kernel
-                    if(!sg.getArchetype().getKernelSize().empty()) {
-                        assert(false);
-                        /*Substitutions kernelInitSubs(&popSubs);
-
-                        // Replace $(id_post) with first 'function' parameter as simulation code is
-                        // going to be, in turn, substituted into procedural connectivity generation code
-                        if(!snippet->getRowBuildCode().empty()) {
-                            kernelInitSubs.addVarSubstitution("id_post", "$(0)");
-                        }
-                        else {
-                            kernelInitSubs.addVarSubstitution("id_pre", "$(0)");
-                        }
-
-                        // Add index of synapse
-                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            kernelInitSubs.addVarSubstitution("id_syn", "idx");
-                        }
-
-                        // Replace kernel indices with the subsequent 'function' parameters
-                        for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-                            kernelInitSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "$(" + std::to_string(i + 1) + ")");
-                        }
-
-                        // Call handler to initialize variables
-                        sg.generateKernelInit(*this, kernelInit, modelMerged, kernelInitSubs);*/
+                    // Get postsynaptic/presynaptic index from first addSynapse parameter
+                    // **YUCK** we need to do this in an initialiser so the $(0) doesn't get confused with those used in AddToXXXX
+                    if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
+                        addSynapseEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                                            {addSynapseEnv.addInitialiser("const unsigned int idPost = $(0);")});
+                    }
+                    else {
+                        addSynapseEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
+                                            {addSynapseEnv.addInitialiser("const unsigned int idPre = $(0);")});
                     }
 
                     // If matrix is sparse
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // If there is row-building code in this snippet
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            addSynapse << "$(_ind)[($(id_pre) * $(_row_stride)) + $(_row_length)[$(id)]] = $(0);" << std::endl;
-                            addSynapse << "$(_row_length)[$(id)]++;" << std::endl;
+                            // Calculate index of new synapse
+                            addSynapseEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
+                                              {addSynapseEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id_pre)];")});
+
+                            // Increment row length
+                            addSynapseEnv.printLine("$(_row_length)[$(id_pre)]++;");
                         }
                         // Otherwise
                         else {
-                            addSynapse << "$(_ind)[(($(0)) * $(_row_stride)) + " << getAtomic(Type::Uint32) << +"(&$(_row_length)[$(0)], 1)] = $(id_post);";
+                            // Atomically increment row length and get previous value i.e. where our synapse is being inserted
+                            // and, from this, calculate index of new synapse
+                            addSynapseEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
+                                              {addSynapseEnv.addInitialiser("const unsigned int prevRowLen = " + getAtomic(Type::Uint32) + "(&$(_row_length)[$(id_pre)], 1);"),
+                                               addSynapseEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + prevRowLen;")});
+                        }
+
+                        // Set index of synapse
+                        addSynapseEnv.printLine("$(_ind)[$(id_syn)] = $(id_post);");
+
+                        // If there is a kernel
+                        if(!sg.getArchetype().getKernelSize().empty()) {
+                            // Create new environment
+                            EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(addSynapseEnv, sg);
+
+                            // Replace kernel indices with the subsequent 'function' parameters
+                            // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
+                            for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                                const std::string iStr = std::to_string(i);
+                                kernelInitEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
+                                                  {kernelInitEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+                            }
+
+                            // Call handler to initialize variables
+                            sg.generateKernelInit(*this, kernelInitEnv, 1);
                         }
                     }
                     // Otherwise, if it's bitmask
                     else {
+                        assert(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK);
+                        assert(sg.getArchetype().getKernelSize().empty()) ;
+
                         // Figure out required type for indexing into bitmask
                         const std::string indexType = areSixtyFourBitSynapseIndicesRequired(sg) ? "uint64_t" : "unsigned int";
 
@@ -1657,10 +1659,10 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                         }
                     }
                 }
-                addSynapse << "while(false)";
-
-                groupEnv.add(Type::ResolvedType::createFunction(Type::Void, {Type::Uint32}), "addSynapse", 
-                             addSynapseStream.str());
+               
+                // Use addSynapseStream to implement addSynapse function
+                const auto addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + sg.getArchetype().getKernelSize().size(), Type::Uint32});
+                groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
 
                 // If this connectivity requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
