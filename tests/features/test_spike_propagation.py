@@ -346,31 +346,61 @@ def test_forward_kernel(backend, precision):
                                           {}, {"startSpike": start_spikes, "endSpike": end_spikes})
     pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
 
-    # Add two postsynaptic populations to receive horizontal and vertical edges
-    post_horiz_pop = model.add_neuron_population(
+    # Add postsynaptic populations to receive horizontal and vertical edges
+    post_toeplitz_horiz_pop = model.add_neuron_population(
         "PostHorizNeurons", 62 * 62, post_neuron_model, 
         {}, {"x": 0.0})
 
-    post_vert_pop = model.add_neuron_population(
+    post_toeplitz_vert_pop = model.add_neuron_population(
         "PostVertNeurons", 62 * 62, post_neuron_model, 
         {}, {"x": 0.0})
 
+    post_sparse_horiz_pop = model.add_neuron_population(
+        "PostSparseHorizNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    post_sparse_vert_pop = model.add_neuron_population(
+        "PostSparseVertNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+    
     # Add convolutional toeplitz connectivity
     conv_toeplitz_params = {"conv_kh": 3, "conv_kw": 3,
                             "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
                             "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
     model.add_synapse_population(
-        "HorizSynapse", "TOEPLITZ", 0,
-        pre_pop, post_horiz_pop,
+        "ToeplitzHorizSynapse", "TOEPLITZ", 0,
+        pre_pop, post_toeplitz_horiz_pop,
         "StaticPulse", {}, {"g": horizontal_kernel.flatten()}, {}, {},
         "DeltaCurr", {}, {},
         init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
     model.add_synapse_population(
-        "VertSynapse", "TOEPLITZ", 0,
-        pre_pop, post_vert_pop,
+        "ToeplitzVertSynapse", "TOEPLITZ", 0,
+        pre_pop, post_toeplitz_vert_pop,
         "StaticPulse", {}, {"g": vertical_kernel.flatten()}, {}, {},
         "DeltaCurr", {}, {},
         init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
+
+    # Add sparse connectivity with kernel initialisation
+    conv_params = {"conv_kh": 3, "conv_kw": 3,
+                   "conv_sh": 1, "conv_sw": 1,
+                   "conv_padh": 0, "conv_padw": 0,
+                   "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                   "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    sparse_horiz_s_pop = model.add_synapse_population(
+        "SparseHorizSynapse", "SPARSE", 0,
+        pre_pop, post_sparse_horiz_pop,
+        "StaticPulse", {}, {"g": init_var("Kernel")}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("Conv2D", conv_params))
+    sparse_horiz_s_pop.vars["g"].extra_global_params["kernel"].set_values(horizontal_kernel.flatten())
+
+    sparse_vert_s_pop = model.add_synapse_population(
+        "SparseVertSynapse", "SPARSE", 0,
+        pre_pop, post_sparse_vert_pop,
+        "StaticPulse", {}, {"g": init_var("Kernel")}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("Conv2D", conv_params))
+    sparse_vert_s_pop.vars["g"].extra_global_params["kernel"].set_values(vertical_kernel.flatten())
 
     # Build model and load
     model.build()
@@ -382,14 +412,22 @@ def test_forward_kernel(backend, precision):
     model.step_time()
     
     # Download output variables from device
-    post_horiz_pop.pull_var_from_device("x")
-    post_vert_pop.pull_var_from_device("x")
-    
+    post_toeplitz_horiz_pop.pull_var_from_device("x")
+    post_toeplitz_vert_pop.pull_var_from_device("x")
+    post_sparse_horiz_pop.pull_var_from_device("x")
+    post_sparse_vert_pop.pull_var_from_device("x")
+
     # Check against correct convolutions
-    assert np.allclose(post_horiz_pop.vars["x"].view, 
-                       np.load("horizontal_output.npy"))
-    assert np.allclose(post_vert_pop.vars["x"].view, 
-                       np.load("vertical_output.npy"))
+    correct_horizontal = np.load("horizontal_output.npy") 
+    correct_vertical = np.load("vertical_output.npy")
+    assert np.allclose(post_toeplitz_horiz_pop.vars["x"].view, 
+                       correct_horizontal)
+    assert np.allclose(post_toeplitz_vert_pop.vars["x"].view, 
+                       correct_vertical)
+    assert np.allclose(post_sparse_horiz_pop.vars["x"].view, 
+                       correct_horizontal)
+    assert np.allclose(post_sparse_vert_pop.vars["x"].view, 
+                       correct_vertical)
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -622,5 +660,5 @@ def test_reverse_post(backend, precision):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 if __name__ == '__main__':
-    test_forward_kernel_procedural("cuda", types.Float)
+    test_forward_kernel("single_threaded_cpu", types.Float)
     
