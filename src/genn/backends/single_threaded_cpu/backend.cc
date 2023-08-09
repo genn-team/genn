@@ -1754,17 +1754,22 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
         std::ostringstream preUpdateStream;
         CodeStream preUpdate(preUpdateStream);
         {
+            CodeStream::Scope b(preUpdate);
             EnvironmentExternal preUpdateEnv(env, preUpdate);
             preUpdateEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
             // Replace $(id_post) with first 'function' parameter as simulation code is
             // going to be, in turn, substituted into Toeplitz connectivity generation code
-            preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "$(0)");
+            // **YUCK** we need to do this in an initialiser so the $(0) doesn't get confused with those used in AddToXXXX
+            preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                             {preUpdateEnv.addInitialiser("const unsigned int idPost = $(0);")});
 
             // Replace kernel indices with the subsequent 'function' parameters
+            // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
             for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-                preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(i),
-                                 "$(" + std::to_string(i + 1) + ")");
+                const std::string iStr = std::to_string(i);
+                preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
+                                 {preUpdateEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
             }
                     
             // Add correct functions for apply synaptic input
@@ -1825,7 +1830,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                         // Add function substitution with parameters to add 
                         bodyEnv.add(addSynapseType, "add_synapse", preUpdateStream.str());
-                                    
+
                         // Generate body of for_each_synapse loop within this new environment
                         generateBody(bodyEnv);
                     }
