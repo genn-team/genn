@@ -485,7 +485,8 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             // **FIXME**
             skipAhead << " + " << "$(_group_start_id) + " << (0/*backend.getNumInitialisationRNGStreams(modelMerged)*/ * batchSize);
 
-            synEnv.add(Type::Void, "_rng", backend.genGlobalRNGSkipAhead(synEnv.getStream(), skipAhead.str()));
+            synEnv.add(Type::Void, "_rng", backend.genGlobalRNGSkipAhead(synEnv.getStream(), 
+                       printSubs(skipAhead.str(), synEnv)));
         }
 
         // Create environment for generating presynaptic update code into seperate CodeStream
@@ -526,15 +527,16 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         }
 
         {
-            // Create second environment for initialising Toeplitz connectivity
+            // Create second environment for initialising procedural connectivity
             EnvironmentExternal connEnv(synEnv);
+            connEnv.add(Type::Uint32.addConst(), "num_threads", numThreadsPerSpikeStr);
 
             // If we are using more than one thread to process each row
             if(numThreadsPerSpike > 1) {
                 // Calculate the starting position and length of the sub-row to process on this thread
                 // **TODO** fast-divide style optimisations here
                 const size_t numPostPerThreadInit = connEnv.addInitialiser(
-                    "const unsigned int numPostPerThread =  ($(num_post) + " + numThreadsPerSpikeStr + " - 1) / " + numThreadsPerSpikeStr + ";");
+                    "const unsigned int numPostPerThread =  ($(_num_post) + " + numThreadsPerSpikeStr + " - 1) / " + numThreadsPerSpikeStr + ";");
 
                 connEnv.add(Type::Uint32.addConst(), "id_post_begin", "idPostBegin",
                             {numPostPerThreadInit,
