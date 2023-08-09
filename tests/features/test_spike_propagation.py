@@ -452,20 +452,21 @@ def test_forward_toeplitz(backend, precision):
 
     # Create spike source array to present test pattern
     test_pattern = np.load("test_pattern.npy")
-    end_spikes = np.cumsum(np.bincount(test_pattern))
+    end_spikes = np.cumsum(np.bincount(test_pattern, minlength=64 * 64))
     start_spikes = np.concatenate(([0,], end_spikes[:-1]))
     pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
                                           {}, {"startSpike": start_spikes, "endSpike": end_spikes})
-    pre_pop.extra_global_params["spikeTimes"].set_values(test_pattern)
+    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
 
     # Add two postsynaptic populations to receive horizontal and vertical edges
     post_horiz_pop = model.add_neuron_population(
         "PostHorizNeurons", 62 * 62, post_neuron_model, 
         {}, {"x": 0.0})
+
     post_vert_pop = model.add_neuron_population(
         "PostVertNeurons", 62 * 62, post_neuron_model, 
         {}, {"x": 0.0})
-    
+
     # Add convolutional connectivity
     conv_params = {"conv_kh": 3, "conv_kw": 3,
                    "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
@@ -473,19 +474,34 @@ def test_forward_toeplitz(backend, precision):
     model.add_synapse_population(
         "HorizSynapse", "TOEPLITZ", 0,
         pre_pop, post_horiz_pop,
-        "StaticPulse", {}, {"g": horizontal_kernel}, {}, {},
+        "StaticPulse", {}, {"g": horizontal_kernel.flatten()}, {}, {},
         "DeltaCurr", {}, {},
         init_toeplitz_connectivity("Conv2D", conv_params))
     model.add_synapse_population(
         "VertSynapse", "TOEPLITZ", 0,
-        pre_pop, post_horiz_pop,
-        "StaticPulse", {}, {"g": vertical_kernel}, {}, {},
+        pre_pop, post_vert_pop,
+        "StaticPulse", {}, {"g": vertical_kernel.flatten()}, {}, {},
         "DeltaCurr", {}, {},
         init_toeplitz_connectivity("Conv2D", conv_params))
 
     # Build model and load
     model.build()
     model.load()
+    
+    # Step time twice - in first timestep spikes will be emitted 
+    # by pre_pop. In second, they will be received by the post_pops
+    model.step_time()
+    model.step_time()
+    
+    # Download output variables from device
+    post_horiz_pop.pull_var_from_device("x")
+    post_vert_pop.pull_var_from_device("x")
+    
+    # Check against correct convolutions
+    assert np.allclose(post_horiz_pop.vars["x"].view, 
+                       np.load("horizontal_output.npy"))
+    assert np.allclose(post_vert_pop.vars["x"].view, 
+                       np.load("vertical_output.npy"))
 
 if __name__ == '__main__':
     test_forward_toeplitz("single_threaded_cpu", types.Float)
