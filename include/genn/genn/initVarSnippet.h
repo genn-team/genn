@@ -102,7 +102,7 @@ class Kernel : public Base
 {
     DECLARE_SNIPPET(InitVarSnippet::Kernel);
 
-    SET_CODE("value = kerne)[id_kerneL];");
+    SET_CODE("value = kernel[id_kernel];");
 
     SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
 };
