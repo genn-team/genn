@@ -147,6 +147,9 @@ public:
 
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 
+    //! Is a dendritic delay update beside from the host one in stepTime required?
+    virtual bool isDendriticDelayUpdateRequired() const final { return true; }
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------

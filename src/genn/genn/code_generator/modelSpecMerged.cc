@@ -45,13 +45,15 @@ using namespace GeNN::CodeGenerator;
                        [](const CustomUpdateWUInternal &cg){ return cg.isTransposeOperation(); },
                        &CustomUpdateWUInternal::getHashDigest);
 
-    createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                       [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
-                       &CustomUpdateInternal::getHashDigest);
+    if(backend.isHostReductionRequired()) {
+        createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
+                           [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
+                           &CustomUpdateInternal::getHashDigest);
 
-    createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                       [](const CustomUpdateWUInternal &cg){ return cg.isBatchReduction(); },
-                       &CustomUpdateWUInternal::getHashDigest);
+        createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
+                           [](const CustomUpdateWUInternal &cg){ return cg.isBatchReduction(); },
+                           &CustomUpdateWUInternal::getHashDigest);
+    }
 
     createMergedGroups(getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
                        [](const CustomConnectivityUpdateInternal &cg){ return !Utils::areTokensEmpty(cg.getRowUpdateCodeTokens()); },
@@ -69,16 +71,18 @@ using namespace GeNN::CodeGenerator;
                        [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
                        &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
 
-    std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
-    for(const auto &n : getModel().getNeuronGroups()) {
-        for(const auto *sg : n.second.getFusedPSMInSyn()) {
-            if(sg->isDendriticDelayRequired()) {
-                synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
+    if(backend.isDendriticDelayUpdateRequired()) {
+        std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
+        for(const auto &n : getModel().getNeuronGroups()) {
+            for(const auto *sg : n.second.getFusedPSMInSyn()) {
+                if(sg->isDendriticDelayRequired()) {
+                    synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
+                }
             }
         }
+        createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
     }
-    createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                       &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
                        [](const NeuronGroupInternal&){ return true; },
