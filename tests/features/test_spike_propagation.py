@@ -275,6 +275,183 @@ def test_forward_den_delay(backend, precision):
             if not np.isclose(pop.vars["x"].view[0], correct):
                 assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view[0]} rather than {correct})"
 
+
+@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_forward_procedural(backend, precision):
+    model = GeNNModel(precision, "test_forward_procedural", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to generate one-hot pattern to decode
+    ss_pop = model.add_neuron_population("SpikeSource", 16, "SpikeSourceArray",
+                                         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
+    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+
+    # Create one output neuron pop with constant weight procedural decoder population
+    procedural_constant_weight_n_pop = model.add_neuron_population(
+        "PostProceduralConstantWeightNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "ProceduralConstantWeightSynapse", "PROCEDURAL", 0,
+        ss_pop, procedural_constant_weight_n_pop,
+        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(decoder_model, {}))
+    
+    # Create one output neuron pop with dense procedural decoder population
+    dense_procedural_n_pop = model.add_neuron_population(
+        "PostDenseProceduralNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "DenseProceduralSynapse", "DENSE_PROCEDURALG", 0,
+        ss_pop, dense_procedural_n_pop,
+        "StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}, {}, {},
+        "DeltaCurr", {}, {})
+    
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 16 timesteps
+    output_place_values = 2 ** np.arange(4)
+    output_populations = [procedural_constant_weight_n_pop,
+                          dense_procedural_n_pop]
+    while model.timestep < 16:
+        model.step_time()
+
+        # Loop through output populations
+        for pop in output_populations:
+            # Pull state variable
+            pop.pull_var_from_device("x")
+
+            # Convert to binary mask
+            output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
+
+            # Sum up active place values
+            output_value = np.sum(output_place_values[output_binary])
+            if output_value != (model.timestep - 1):
+                assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
+
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_forward_kernel(backend, precision):
+    model = GeNNModel(precision, "test_forward_kernel", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to present test pattern
+    test_pattern = np.load("test_pattern.npy")
+    end_spikes = np.cumsum(np.bincount(test_pattern, minlength=64 * 64))
+    start_spikes = np.concatenate(([0,], end_spikes[:-1]))
+    pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
+                                          {}, {"startSpike": start_spikes, "endSpike": end_spikes})
+    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
+
+    # Add two postsynaptic populations to receive horizontal and vertical edges
+    post_horiz_pop = model.add_neuron_population(
+        "PostHorizNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    post_vert_pop = model.add_neuron_population(
+        "PostVertNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    # Add convolutional toeplitz connectivity
+    conv_toeplitz_params = {"conv_kh": 3, "conv_kw": 3,
+                            "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                            "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    model.add_synapse_population(
+        "HorizSynapse", "TOEPLITZ", 0,
+        pre_pop, post_horiz_pop,
+        "StaticPulse", {}, {"g": horizontal_kernel.flatten()}, {}, {},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
+    model.add_synapse_population(
+        "VertSynapse", "TOEPLITZ", 0,
+        pre_pop, post_vert_pop,
+        "StaticPulse", {}, {"g": vertical_kernel.flatten()}, {}, {},
+        "DeltaCurr", {}, {},
+        init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
+
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Step time twice - in first timestep spikes will be emitted 
+    # by pre_pop. In second, they will be received by the post_pops
+    model.step_time()
+    model.step_time()
+    
+    # Download output variables from device
+    post_horiz_pop.pull_var_from_device("x")
+    post_vert_pop.pull_var_from_device("x")
+    
+    # Check against correct convolutions
+    assert np.allclose(post_horiz_pop.vars["x"].view, 
+                       np.load("horizontal_output.npy"))
+    assert np.allclose(post_vert_pop.vars["x"].view, 
+                       np.load("vertical_output.npy"))
+
+@pytest.mark.parametrize("backend", ["cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_forward_kernel_procedural(backend, precision):
+    model = GeNNModel(precision, "test_forward_kernel_procedural", backend=backend)
+    model.dt = 1.0
+
+    # Create spike source array to present test pattern
+    test_pattern = np.load("test_pattern.npy")
+    end_spikes = np.cumsum(np.bincount(test_pattern, minlength=64 * 64))
+    start_spikes = np.concatenate(([0,], end_spikes[:-1]))
+    pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
+                                          {}, {"startSpike": start_spikes, "endSpike": end_spikes})
+    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
+
+    # Add two postsynaptic populations to receive horizontal and vertical edges
+    post_horiz_pop = model.add_neuron_population(
+        "PostHorizNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    post_vert_pop = model.add_neuron_population(
+        "PostVertNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    # Add convolutional toeplitz connectivity
+    conv_params = {"conv_kh": 3, "conv_kw": 3,
+                   "conv_sh": 1, "conv_sw": 1,
+                   "conv_padh": 0, "conv_padw": 0,
+                   "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                   "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    model.add_synapse_population(
+        "HorizSynapse", "PROCEDURAL_KERNELG", 0,
+        pre_pop, post_horiz_pop,
+        "StaticPulse", {}, {"g": horizontal_kernel.flatten()}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("Conv2D", conv_params))
+    model.add_synapse_population(
+        "VertSynapse", "PROCEDURAL_KERNELG", 0,
+        pre_pop, post_vert_pop,
+        "StaticPulse", {}, {"g": vertical_kernel.flatten()}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("Conv2D", conv_params))
+
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Step time twice - in first timestep spikes will be emitted 
+    # by pre_pop. In second, they will be received by the post_pops
+    model.step_time()
+    model.step_time()
+    
+    # Download output variables from device
+    post_horiz_pop.pull_var_from_device("x")
+    post_vert_pop.pull_var_from_device("x")
+    
+    # Check against correct convolutions
+    assert np.allclose(post_horiz_pop.vars["x"].view, 
+                       np.load("horizontal_output.npy"))
+    assert np.allclose(post_vert_pop.vars["x"].view, 
+                       np.load("vertical_output.npy"))
+
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(backend, precision):
@@ -444,121 +621,6 @@ def test_reverse_post(backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_toeplitz(backend, precision):
-    model = GeNNModel(precision, "test_forward_toeplitz", backend=backend)
-    model.dt = 1.0
-
-    # Create spike source array to present test pattern
-    test_pattern = np.load("test_pattern.npy")
-    end_spikes = np.cumsum(np.bincount(test_pattern, minlength=64 * 64))
-    start_spikes = np.concatenate(([0,], end_spikes[:-1]))
-    pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
-                                          {}, {"startSpike": start_spikes, "endSpike": end_spikes})
-    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
-
-    # Add two postsynaptic populations to receive horizontal and vertical edges
-    post_horiz_pop = model.add_neuron_population(
-        "PostHorizNeurons", 62 * 62, post_neuron_model, 
-        {}, {"x": 0.0})
-
-    post_vert_pop = model.add_neuron_population(
-        "PostVertNeurons", 62 * 62, post_neuron_model, 
-        {}, {"x": 0.0})
-
-    # Add convolutional connectivity
-    conv_params = {"conv_kh": 3, "conv_kw": 3,
-                   "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
-                   "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
-    model.add_synapse_population(
-        "HorizSynapse", "TOEPLITZ", 0,
-        pre_pop, post_horiz_pop,
-        "StaticPulse", {}, {"g": horizontal_kernel.flatten()}, {}, {},
-        "DeltaCurr", {}, {},
-        init_toeplitz_connectivity("Conv2D", conv_params))
-    model.add_synapse_population(
-        "VertSynapse", "TOEPLITZ", 0,
-        pre_pop, post_vert_pop,
-        "StaticPulse", {}, {"g": vertical_kernel.flatten()}, {}, {},
-        "DeltaCurr", {}, {},
-        init_toeplitz_connectivity("Conv2D", conv_params))
-
-    # Build model and load
-    model.build()
-    model.load()
-    
-    # Step time twice - in first timestep spikes will be emitted 
-    # by pre_pop. In second, they will be received by the post_pops
-    model.step_time()
-    model.step_time()
-    
-    # Download output variables from device
-    post_horiz_pop.pull_var_from_device("x")
-    post_vert_pop.pull_var_from_device("x")
-    
-    # Check against correct convolutions
-    assert np.allclose(post_horiz_pop.vars["x"].view, 
-                       np.load("horizontal_output.npy"))
-    assert np.allclose(post_vert_pop.vars["x"].view, 
-                       np.load("vertical_output.npy"))
-
-@pytest.mark.parametrize("backend", ["cuda"])
-@pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_procedural(backend, precision):
-    model = GeNNModel(precision, "test_forward_procedural", backend=backend)
-    model.dt = 1.0
-
-    # Create spike source array to generate one-hot pattern to decode
-    ss_pop = model.add_neuron_population("SpikeSource", 16, "SpikeSourceArray",
-                                         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
-    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
-
-    # Create one output neuron pop with constant weight procedural decoder population
-    procedural_constant_weight_n_pop = model.add_neuron_population(
-        "PostProceduralConstantWeightNeuron", 4, post_neuron_model, 
-        {}, {"x": 0.0})
-    model.add_synapse_population(
-        "ProceduralConstantWeightSynapse", "PROCEDURAL", 0,
-        ss_pop, procedural_constant_weight_n_pop,
-        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-        "DeltaCurr", {}, {},
-        init_sparse_connectivity(decoder_model, {}))
-    
-    # Create one output neuron pop with dense procedural decoder population
-    dense_procedural_n_pop = model.add_neuron_population(
-        "PostDenseProceduralNeuron", 4, post_neuron_model, 
-        {}, {"x": 0.0})
-    model.add_synapse_population(
-        "DenseProceduralSynapse", "DENSE_PROCEDURALG", 0,
-        ss_pop, dense_procedural_n_pop,
-        "StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}, {}, {},
-        "DeltaCurr", {}, {})
-    
-    # Build model and load
-    model.build()
-    model.load()
-
-    # Simulate 16 timesteps
-    output_place_values = 2 ** np.arange(4)
-    output_populations = [procedural_constant_weight_n_pop,
-                          dense_procedural_n_pop]
-    while model.timestep < 16:
-        model.step_time()
-
-        # Loop through output populations
-        for pop in output_populations:
-            # Pull state variable
-            pop.pull_var_from_device("x")
-
-            # Convert to binary mask
-            output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
-
-            # Sum up active place values
-            output_value = np.sum(output_place_values[output_binary])
-            if output_value != (model.timestep - 1):
-                assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-
 if __name__ == '__main__':
-    test_forward_procedural("cuda", types.Float)
+    test_forward_kernel_procedural("cuda", types.Float)
     
