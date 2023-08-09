@@ -236,7 +236,7 @@ public:
 
     SET_ROW_BUILD_CODE(
         "scalar x = 0.0;\n"
-        "for(unsigned int c = rowLength; c != 0; c--) {\n"
+        "for(unsigned int c = (unsigned int)rowLength; c != 0; c--) {\n"
         "   const scalar u = gennrand_uniform();\n"
         "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
         "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
