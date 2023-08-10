@@ -117,8 +117,10 @@ public:
     }
 
     void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
-    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
-    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                  unsigned int batchSize, double dt);
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                             unsigned int batchSize, double dt);
     void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env,
                                       Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
@@ -147,7 +149,8 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                               unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -172,7 +175,8 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                               unsigned int batchSize, double dt);
 
     //----------------------------------------------------------------------------
     // Static constants

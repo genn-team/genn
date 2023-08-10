@@ -20,14 +20,6 @@
 #define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
 
-#define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PRE_SPIKE_EVENT_TIME(PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPreSpikeEventTimeRequired() const override{ return PRE_SPIKE_EVENT_TIME_REQUIRED; }
-
-#define SET_NEEDS_PREV_PRE_SPIKE_TIME(PREV_PRE_SPIKE_TIME_REQUIRED) virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PREV_POST_SPIKE_TIME(PREV_POST_SPIKE_TIME_REQUIRED) virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME(PREV_PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }
-
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
@@ -86,24 +78,6 @@ public:
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
     virtual VarVec getPostVars() const{ return {}; }
-
-    //! Whether presynaptic spike times are needed or not
-    virtual bool isPreSpikeTimeRequired() const{ return false; }
-
-    //! Whether postsynaptic spike times are needed or not
-    virtual bool isPostSpikeTimeRequired() const{ return false; }
-
-    //! Whether presynaptic spike-like-event times are needed or not
-    virtual bool isPreSpikeEventTimeRequired() const { return false;  }
-
-    //! Whether PREVIOUS presynaptic spike times are needed or not
-    virtual bool isPrevPreSpikeTimeRequired() const{ return false; }
-
-    //! Whether PREVIOUS postsynaptic spike times are needed or not
-    virtual bool isPrevPostSpikeTimeRequired() const{ return false; }
-
-    //! Whether PREVIOUS presynaptic spike-like-event times are needed or not
-    virtual bool isPrevPreSpikeEventTimeRequired() const { return false;  }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -352,8 +326,5 @@ public:
         {"off0", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
         {"off1", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
         {"off2", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
-
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 }   //namespace GeNN::WeightUpdateModels

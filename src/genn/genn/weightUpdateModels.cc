@@ -33,12 +33,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPreVars(), hash);
     Utils::updateHash(getPostVars(), hash);
-    Utils::updateHash(isPreSpikeTimeRequired(), hash);
-    Utils::updateHash(isPostSpikeTimeRequired(), hash);
-    Utils::updateHash(isPreSpikeEventTimeRequired(), hash);
-    Utils::updateHash(isPrevPreSpikeTimeRequired(), hash);
-    Utils::updateHash(isPrevPostSpikeTimeRequired(), hash);
-    Utils::updateHash(isPrevPreSpikeEventTimeRequired(), hash);
 
     // Return digest
     return hash.get_digest();

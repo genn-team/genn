@@ -751,13 +751,15 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             // If spike events should be processed
             if(sg.getArchetype().isSpikeEventRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, false);
+                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
+                                                     modelMerged.getModel().getDT(), false);
             }
 
             // If true spikes should be processed
             if(sg.getArchetype().isTrueSpikeRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, true);
+                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
+                                                     modelMerged.getModel().getDT(), true);
             }
 
             groupEnv.getStream() << std::endl;
@@ -845,7 +847,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
 
                         synEnv.add(Type::AddToPre, "addToPre", getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
-                        sg.generateSynapseUpdate(*this, synEnv, batchSize);
+                        sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             synEnv.getStream() << CodeStream::CB(1540);
@@ -911,7 +913,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 synEnv.add(Type::AddToPre, "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
-                sg.generateSynapseUpdate(*this, synEnv, batchSize);
+                sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(1);

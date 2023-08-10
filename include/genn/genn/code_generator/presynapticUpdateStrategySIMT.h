@@ -41,8 +41,8 @@ public:
                              const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const = 0;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const = 0;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const = 0;
@@ -74,8 +74,8 @@ public:
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const final;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
@@ -107,8 +107,8 @@ public:
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const final;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
@@ -148,8 +148,8 @@ public:
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const final;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
@@ -181,8 +181,8 @@ public:
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const final;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
@@ -214,8 +214,8 @@ public:
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                           const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const final;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;

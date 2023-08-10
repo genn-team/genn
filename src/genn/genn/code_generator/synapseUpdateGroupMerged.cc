@@ -16,7 +16,7 @@ namespace
 {
 template<typename G>
 void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
-                               G &sg, unsigned int batchSize)
+                               G &sg, unsigned int batchSize, double dt)
 {
     const auto *wu = sg.getArchetype().getWUModel();
 
@@ -48,6 +48,31 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         synEnv.add(Type::Uint32, "id_kernel", "kernelInd", 
                    {synEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(sg) + ";")});
     }
+
+    // Calculate axonal delays to add to (somatic) spike times and subsitute in presynaptic spike and spike-like event times
+    const std::string timeStr = sg.getTimeType().getName();
+    const std::string axonalDelayMs = writePreciseLiteral(dt * (double)(sg.getArchetype().getDelaySteps() + 1u), sg.getTimeType());
+    const bool preDelay = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired();
+    const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
+    const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
+    synEnv.add(sg.getTimeType().addConst(), "st_pre", "stPre",
+               {synEnv.addInitialiser("const " + timeStr + " stPre = " + axonalDelayMs + " + $(_src_spk_time)[" + preSTIndex + "];")});
+    synEnv.add(sg.getTimeType().addConst(), "prev_st_pre", "prevSTPre",
+               {synEnv.addInitialiser("const " + timeStr + " prevSTPre = " + axonalDelayMs + " + $(_src_prev_spk_time)[" + prevPreSTIndex + "];")});
+    synEnv.add(sg.getTimeType().addConst(), "set_pre", "setPre",
+               {synEnv.addInitialiser("const " + timeStr + " setPre = " + axonalDelayMs + " + $(_src_spk_time_evnt)[" + preSTIndex + "];")});
+    synEnv.add(sg.getTimeType().addConst(), "prev_set_pre", "prevSETPre",
+               {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_spk_time_evnt)[" + prevPreSTIndex + "];")});
+
+    // Calculate backprop delay to add to (somatic) spike times and substitute in postsynaptic spike times
+    const std::string backPropDelayMs = writePreciseLiteral(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
+    const bool postDelay = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired();
+    const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");
+    const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");
+    synEnv.add(sg.getTimeType().addConst(), "st_post", "stPost",
+               {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_spk_time)[" + postSTIndex + "];")});
+    synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
+               {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_spk_time)[" + prevPostSTIndex + "];")});
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -102,36 +127,6 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
             });
     }
 
-    // Make presynaptic neuron substitutions
-    /*const std::string axonalDelayOffset = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getDelaySteps() + 1u)) + " + ";
-    neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
-                                      axonalDelayOffset, "_pre", "Pre", "", "", false,
-                                      [&sg](const std::string &p) { return sg.isSrcNeuronParamHeterogeneous(p); },
-                                      [&sg](const std::string &p) { return sg.isSrcNeuronDerivedParamHeterogeneous(p); },
-                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
-                                      {
-                                          return sg.getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      },
-                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
-                                      { 
-                                          return sg.getPrePrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      });
-
-
-    // Make postsynaptic neuron substitutions
-    const std::string backPropDelayMs = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u)) + " + ";
-    neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
-                                      backPropDelayMs, "_post", "Post", "", "", false,
-                                      [&sg](const std::string &p) { return sg.isTrgNeuronParamHeterogeneous(p); },
-                                      [&sg](const std::string &p) { return sg.isTrgNeuronDerivedParamHeterogeneous(p); },
-                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
-                                      {
-                                          return sg.getPostVarIndex(delay, batchSize, varDuplication, synapseSubs["id_post"]); 
-                                      },
-                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
-                                      { 
-                                          return sg.getPostPrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_post"]); 
-                                      });*/
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + sg.getArchetype().getName() + "' weight update model " + errorContext);
@@ -364,14 +359,16 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     prettyPrintStatements(getArchetype().getWUEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                            unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                       unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env)
@@ -417,9 +414,10 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                          unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
 }
 
 //----------------------------------------------------------------------------
@@ -427,9 +425,10 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                       unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
 }
 
 

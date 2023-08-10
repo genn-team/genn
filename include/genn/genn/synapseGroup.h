@@ -146,11 +146,29 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    //! Does synapse group need to handle 'true' spikes
+    //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;
 
-    //! Does synapse group need to handle spike-like events
+    //! Does synapse group need to handle spike-like events?
     bool isSpikeEventRequired() const;
+
+    //! Are presynaptic spike times needed?
+    bool isPreSpikeTimeRequired() const;
+
+    //! Are presynaptic spike-like-event times needed?
+    bool isPreSpikeEventTimeRequired() const;
+
+    //! Are PREVIOUS presynaptic spike times needed?
+    bool isPrevPreSpikeTimeRequired() const;
+
+    //! Are PREVIOUS presynaptic spike-like-event times needed?
+    bool isPrevPreSpikeEventTimeRequired() const;
+
+    //! Are postsynaptic spike times needed?
+    bool isPostSpikeTimeRequired() const;
+
+    //! Are PREVIOUS postsynaptic spike times needed?
+    bool isPrevPostSpikeTimeRequired() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
@@ -314,6 +332,12 @@ protected:
 
     //! Is sparse connectivity initialisation code required for this synapse group?
     bool isSparseConnectivityInitRequired() const;
+
+    //! Is the presynaptic time variable with identifier referenced in weight update model?
+    bool isPreTimeReferenced(const std::string &identifier) const;
+
+    //! Is the postsynaptic time variable with identifier referenced in weight update model?
+    bool isPostTimeReferenced(const std::string &identifier) const;
 
     //! Get the type to use for sparse connectivity indices for synapse group
     const Type::ResolvedType &getSparseIndType() const;

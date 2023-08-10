@@ -376,7 +376,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, synEnv, 1);
+                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                     }
@@ -388,7 +388,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
             Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
                 *this, memorySpaces,
-                [this, &funcEnv](auto &s)
+                [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "// merged presynaptic update group " << s.getIndex() << std::endl;
@@ -405,12 +405,12 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                     
                         // generate the code for processing spike-like events
                         if (s.getArchetype().isSpikeEventRequired()) {
-                            genPresynapticUpdate(groupEnv, s, false);
+                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
                         }
 
                         // generate the code for processing true spike events
                         if (s.getArchetype().isTrueSpikeRequired()) {
-                            genPresynapticUpdate(groupEnv, s, true);
+                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         }
                         funcEnv.getStream() << std::endl;
                     }
@@ -487,7 +487,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
             
-                                s.generateSynapseUpdate(*this, synEnv, 1);
+                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                         groupEnv.getStream() << std::endl;
@@ -1729,7 +1729,8 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, bool trueSpike) const
+void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                   double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
@@ -1764,10 +1765,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(*this, preUpdateEnv, 1);
+                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1);
+                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt);
             }
         }
 
@@ -1871,10 +1872,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1);
+                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
                     }
                 }
             }
@@ -1921,10 +1922,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, 1);
+                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt);
                             }
                             else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, 1);
+                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt);
                             }
                         }
 
@@ -1959,10 +1960,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                    
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1);
+                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
                     }
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {

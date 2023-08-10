@@ -73,8 +73,8 @@ void PreSpan::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged
 {
 }
 //----------------------------------------------------------------------------
-void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                        const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
+void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                        unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
@@ -144,10 +144,10 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             synEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
             
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, synEnv, batchSize);
+                sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
+                sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
             }
             
         }
@@ -226,8 +226,8 @@ size_t PostSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const 
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                         const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
+void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                         unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
@@ -335,10 +335,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                             backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
                 if(trueSpike) {
-                    sg.generateSpikeUpdate(backend, synEnv, batchSize);
+                    sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
                 }
                 else {
-                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
+                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -429,8 +429,8 @@ void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateG
 {
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                                  const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
+void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                                  unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
@@ -515,10 +515,10 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, preUpdateEnv, 1);
+                sg.generateSpikeUpdate(backend, preUpdateEnv, batchSize, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1);
+                sg.generateSpikeEventUpdate(backend, preUpdateEnv, batchSize, dt);
             }
         }
 
@@ -616,8 +616,8 @@ size_t PostSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal&, co
     return 32;
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                                const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
+void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                                unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_evnt";
@@ -699,10 +699,10 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(backend, synEnv, batchSize);
+                        sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize);
+                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
                     }
 
                     synEnv.getStream() << "ibit++;" << std::endl;
@@ -784,8 +784,8 @@ size_t PostSpanToeplitz::getSharedMemoryPerThread(const SynapseGroupInternal &sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                                 const BackendSIMT &backend, unsigned int batchSize, bool trueSpike) const
+void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                                 unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Create environment for generating presynaptic update code into seperate CodeStream
     std::ostringstream preUpdateStream;
@@ -831,10 +831,10 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
         // Generate spike update
         if(trueSpike) {
-            sg.generateSpikeUpdate(backend, preUpdateEnv, 1);
+            sg.generateSpikeUpdate(backend, preUpdateEnv, 1, dt);
         }
         else {
-            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1);
+            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1, dt);
         }
     }
 

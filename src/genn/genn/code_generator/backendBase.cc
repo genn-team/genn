@@ -206,7 +206,15 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
-
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_spk_time", "srcSpkTime",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getSrcNeuronGroup()->getName(); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_spk_time_evnt", "srcSpkTimeEvnt",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "seT" + g.getSrcNeuronGroup()->getName(); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_spk_time", "srcPrevSpkTime",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getSrcNeuronGroup()->getName(); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_spk_time_evnt", "srcPrevSpkTimeEvnt",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevSET" + g.getSrcNeuronGroup()->getName(); });
+    
     // Target neuron fields
     env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
                  [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
@@ -214,7 +222,11 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
-        
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_spk_time", "trgSpkTime",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getTrgNeuronGroup()->getName(); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_spk_time", "trgPrevSpkTime",
+                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getTrgNeuronGroup()->getName(); });
+
     // Connectivity fields
     if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         env.addField(Uint32.createPointer(), "_gp", "gp",
@@ -306,8 +318,8 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                     {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
 
-        if(env.getGroup().getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() 
-            || env.getGroup().getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) 
+        if(env.getGroup().getArchetype().isPrevPreSpikeTimeRequired() 
+            || env.getGroup().getArchetype().isPrevPreSpikeEventTimeRequired()) 
         {
             env.add(Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
                     {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
@@ -346,7 +358,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                     {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
 
-        if(env.getGroup().getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
+        if(env.getGroup().getArchetype().isPrevPostSpikeTimeRequired()) {
             env.add(Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
                     {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
                                         + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});

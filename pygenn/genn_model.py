@@ -965,13 +965,7 @@ def create_weight_update_model(class_name, param_names=None,
                                post_spike_code=None,
                                pre_dynamics_code=None,
                                post_dynamics_code=None,
-                               extra_global_params=None,
-                               is_pre_spike_time_required=None,
-                               is_post_spike_time_required=None,
-                               is_pre_spike_event_time_required=None,
-                               is_prev_pre_spike_time_required=None,
-                               is_prev_post_spike_time_required=None,
-                               is_prev_pre_spike_event_time_required=None):
+                               extra_global_params=None):
     """This helper function creates a custom WeightUpdateModel class.
     See also:
     create_neuron_model
@@ -1015,18 +1009,6 @@ def create_weight_update_model(class_name, param_names=None,
                                                 timestep on postsynaptic neuron
     extra_global_params                     --  list of pairs of strings with names and
                                                 types of additional parameters
-    is_pre_spike_time_required              --  boolean, is presynaptic spike time
-                                                required in any weight update kernels?
-    is_post_spike_time_required             --  boolean, is postsynaptic spike time
-                                                required in any weight update kernels?
-    is_pre_spike_event_time_required        --  boolean, is presynaptic spike-like-event
-                                                time required in any weight update kernels?
-    is_prev_pre_spike_time_required         --  boolean, is previous presynaptic spike time
-                                                required in any weight update kernels?
-    is_prev_post_spike_time_required        --  boolean, is previous postsynaptic spike time
-                                                required in any weight update kernels?
-    is_prev_pre_spike_event_time_required   --  boolean, is _previous_ presynaptic spike-like-event 
-                                                time required in any weight update kernels?
     """
     body = {}
 
@@ -1065,30 +1047,6 @@ def create_weight_update_model(class_name, param_names=None,
     if post_var_name_types is not None:
         body["get_post_vars"] = \
             lambda self: [Var(*vn) for vn in post_var_name_types]
-
-    if is_pre_spike_time_required is not None:
-        body["is_pre_spike_time_required"] = \
-            lambda self: is_pre_spike_time_required
-
-    if is_post_spike_time_required is not None:
-        body["is_post_spike_time_required"] = \
-            lambda self: is_post_spike_time_required
-    
-    if is_pre_spike_event_time_required is not None:
-        body["is_pre_spike_event_time_required"] = \
-            lambda self: is_pre_spike_event_time_required
-
-    if is_prev_pre_spike_time_required is not None:
-        body["is_prev_pre_spike_time_required"] = \
-            lambda self: is_prev_pre_spike_time_required
-
-    if is_prev_post_spike_time_required is not None:
-        body["is_prev_post_spike_time_required"] = \
-            lambda self: is_prev_post_spike_time_required
-
-    if is_prev_pre_spike_event_time_required is not None:
-        body["is_prev_pre_spike_event_time_required"] = \
-            lambda self: is_prev_pre_spike_event_time_required
 
     return create_model(class_name, WeightUpdateModelBase, param_names,
                         var_name_types, derived_params, 

@@ -232,6 +232,36 @@ bool SynapseGroup::isSpikeEventRequired() const
      return !Utils::areTokensEmpty(getWUEventCodeTokens());
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPreSpikeTimeRequired() const
+{
+    return isPreTimeReferenced("st_pre");
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPreSpikeEventTimeRequired() const
+{
+    return isPreTimeReferenced("set_pre");
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPrevPreSpikeTimeRequired() const
+{
+    return isPreTimeReferenced("prev_st_pre");
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPrevPreSpikeEventTimeRequired() const
+{
+    return isPreTimeReferenced("prev_set_pre");
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPostSpikeTimeRequired() const
+{
+    return isPostTimeReferenced("st_post");
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPrevPostSpikeTimeRequired() const
+{
+    return isPostTimeReferenced("prev_st_post");
+}
+//----------------------------------------------------------------------------
 const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals() const
 {
     return getConstInitVals(m_WUVarInitialisers);
@@ -761,6 +791,28 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
             && (!Utils::areTokensEmpty(getConnectivityInitialiser().getRowBuildCodeTokens()) 
                 || !Utils::areTokensEmpty(getConnectivityInitialiser().getColBuildCodeTokens())));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
+{
+    return (Utils::isIdentifierReferenced(identifier, getWUEventCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPreDynamicsCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPreSpikeCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isPostTimeReferenced(const std::string &identifier) const
+{
+    return (Utils::isIdentifierReferenced(identifier, getWUEventCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPostDynamicsCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUPostSpikeCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPreOutputBeFused() const
