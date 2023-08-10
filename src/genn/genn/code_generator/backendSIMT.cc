@@ -344,7 +344,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -353,7 +353,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
                     }
                 }
             }

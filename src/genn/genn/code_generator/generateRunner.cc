@@ -526,10 +526,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
     definitionsInternal << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;
     backend.genDefinitionsInternalPreamble(definitionsInternal, modelMerged);
     
-    // write DT macro
-    const ModelSpecInternal &model = modelMerged.getModel();
-
     // Write ranges of scalar and time types
+    const ModelSpecInternal &model = modelMerged.getModel();
     genTypeRange(definitions, model.getPrecision(), "SCALAR");
     genTypeRange(definitions, model.getTimePrecision(), "TIME");
 

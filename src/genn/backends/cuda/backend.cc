@@ -318,8 +318,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     std::ostringstream neuronUpdateStream;
     CodeStream neuronUpdate(neuronUpdateStream);
 
-    // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    // Begin environment with dt and standard library
+    EnvironmentExternal dtEnv(neuronUpdate);
+    dtEnv.add(model.getTimePrecision().addConst(), "dt", 
+              writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+    EnvironmentLibrary neuronUpdateEnv(dtEnv, StandardLibrary::getMathsFunctions());
 
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
@@ -370,8 +373,6 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
         EnvironmentExternal funcEnv(neuronUpdateEnv);
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
-        funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(model.getDT(), model.getTimePrecision()));
         funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
         if(model.getBatchSize() > 1) {
             funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -457,11 +458,14 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     std::ostringstream synapseUpdateStream;
     CodeStream synapseUpdate(synapseUpdateStream);
 
-    // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
+    // Begin environment with dt and standard library
+    const ModelSpecInternal &model = modelMerged.getModel();
+    EnvironmentExternal dtEnv(synapseUpdate);
+    dtEnv.add(model.getTimePrecision().addConst(), "dt", 
+              writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+    EnvironmentLibrary synapseUpdateEnv(dtEnv, StandardLibrary::getMathsFunctions());
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
-    const ModelSpecInternal &model = modelMerged.getModel();
     size_t idSynapseDendricDelayUpdate = 0;
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                    [](const auto &sg){ return sg.second.isDendriticDelayRequired(); }))
@@ -487,8 +491,6 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
-            funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -515,8 +517,6 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
-            funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -540,8 +540,6 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
-            funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -632,14 +630,16 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-
     // Generate stream with synapse update code
     std::ostringstream customUpdateStream;
     CodeStream customUpdate(customUpdateStream);
 
-    // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
+    // Begin environment with dt and standard library
+    const ModelSpecInternal &model = modelMerged.getModel();
+    EnvironmentExternal dtEnv(customUpdate);
+    dtEnv.add(model.getTimePrecision().addConst(), "dt", 
+              writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+    EnvironmentLibrary customUpdateEnv(dtEnv, StandardLibrary::getMathsFunctions());
 
     // Build set containing union of all custom update group names
     std::set<std::string> customUpdateGroups;
@@ -670,8 +670,6 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                 EnvironmentExternal funcEnv(customUpdateEnv);
                 funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
-                funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                            writePreciseLiteral(model.getDT(), model.getTimePrecision()));
                 funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
@@ -701,8 +699,6 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                 EnvironmentExternal funcEnv(customUpdateEnv);
                 funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
-                funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                            writePreciseLiteral(model.getDT(), model.getTimePrecision()));
                 funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
@@ -825,14 +821,16 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                       HostHandler preambleHandler) const
 {
-    const ModelSpecInternal &model = modelMerged.getModel();
-
     // Generate stream with synapse update code
     std::ostringstream initStream;
     CodeStream init(initStream);
 
-    // Begin environment with RNG library and standard library
-    EnvironmentLibrary rngEnv(init, getRNGFunctions(model.getPrecision()));
+    // Begin environment with dt, RNG and standard library
+    const ModelSpecInternal &model = modelMerged.getModel();
+    EnvironmentExternal dtEnv(init);
+    dtEnv.add(model.getTimePrecision().addConst(), "dt", 
+              writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+    EnvironmentLibrary rngEnv(dtEnv, getRNGFunctions(model.getPrecision()));
     EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
 
     // If device RNG is required, generate kernel to initialise it
@@ -858,12 +856,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         // common variables for all cases
         CodeStream::Scope b(initEnv.getStream());
         
-        EnvironmentExternal funcEnv(initEnv);
-        funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(model.getDT(), model.getTimePrecision()));
-
-        funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(funcEnv, modelMerged, memorySpaces, idInitStart);
+        initEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        genInitializeKernel(initEnv, modelMerged, memorySpaces, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -881,12 +875,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         {
             CodeStream::Scope b(initEnv.getStream());
 
-            EnvironmentExternal funcEnv(initEnv);
-            funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
-
-            funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(funcEnv, modelMerged, numStaticInitThreads, memorySpaces, idSparseInitStart);
+            initEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genInitializeSparseKernel(initEnv, modelMerged, numStaticInitThreads, memorySpaces, idSparseInitStart);
         }
     }
 
