@@ -22,13 +22,10 @@ else
     CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
 fi
 
-# Clean GeNN library
+# Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
 pushd $GENN_PATH
 make clean COVERAGE=1
-popd
 
-# Make sure we have a version of the single-threaded CPU backend with coverage calculation built
-pushd $GENN_PATH
 make single_threaded_cpu -j $CORE_COUNT COVERAGE=1
 popd
 
@@ -105,5 +102,3 @@ if [ $REPORT -eq 1 ]; then
     # Generate browseable HTML
     genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ 1>> ../../msg 2>> msg
 fi
-
-popd    # tests
