@@ -192,12 +192,6 @@ public:
     virtual std::string getPostDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_dynamics_code", getPostDynamicsCode); }
     virtual VarVec getPreVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_pre_vars", getPreVars); }
     virtual VarVec getPostVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_post_vars", getPostVars); }
-    virtual bool isPreSpikeTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_pre_spike_time_required", isPreSpikeTimeRequired); }
-    virtual bool isPostSpikeTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_post_spike_time_required", isPostSpikeTimeRequired); }
-    virtual bool isPreSpikeEventTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_pre_spike_event_time_required", isPreSpikeEventTimeRequired); }
-    virtual bool isPrevPreSpikeTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_prev_pre_spike_time_required", isPrevPreSpikeTimeRequired); }
-    virtual bool isPrevPostSpikeTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_prev_post_spike_time_required", isPrevPostSpikeTimeRequired); }
-    virtual bool isPrevPreSpikeEventTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_prev_pre_spike_event_time_required", isPrevPreSpikeEventTimeRequired); }
 };
 
 CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
@@ -792,13 +786,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_pre_dynamics_code", &WeightUpdateModels::Base::getPreDynamicsCode)
         .def("get_post_dynamics_code", &WeightUpdateModels::Base::getPostDynamicsCode)
         .def("get_pre_vars", &WeightUpdateModels::Base::getPreVars)
-        .def("get_post_vars", &WeightUpdateModels::Base::getPostVars)
-        .def("is_pre_spike_time_required", &WeightUpdateModels::Base::isPreSpikeTimeRequired)
-        .def("is_post_spike_time_required", &WeightUpdateModels::Base::isPostSpikeTimeRequired)
-        .def("is_pre_spike_event_time_required", &WeightUpdateModels::Base::isPreSpikeEventTimeRequired)
-        .def("is_prev_pre_spike_time_required", &WeightUpdateModels::Base::isPrevPreSpikeTimeRequired)
-        .def("is_prev_post_spike_time_required", &WeightUpdateModels::Base::isPrevPostSpikeTimeRequired)
-        .def("is_prev_pre_spike_event_time_required", &WeightUpdateModels::Base::isPrevPreSpikeEventTimeRequired);
+        .def("get_post_vars", &WeightUpdateModels::Base::getPostVars);
 
     //------------------------------------------------------------------------
     // genn.SparseConnectivityInit
