@@ -20,7 +20,7 @@ cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 opencl_path = os.environ.get("OPENCL_PATH")
 
 # Is OpenCL installed
-opencl_installed = False#opencl_path is not None and os.path.exists(opencl_path)
+opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 
 # Are we on Linux? 
 # **NOTE** Pybind11Extension provides WIN and MAC

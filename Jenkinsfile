@@ -96,7 +96,7 @@ for(b = 0; b < builderNodes.size(); b++) {
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.11.0/googletest",
-                     "PATH+GENN=" + pwd() + "/genn/bin"]) {
+                     "PATH+GENN=" + pwd() + "/genn/bin", "OPENCL_PATH="]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
 
@@ -140,7 +140,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         if (isUnix()) {
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def runTestsCommand = "./run_tests.sh 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
+                            def runTestsCommand = "./run_tests.sh 1>>\"../${uniqueMsg}\" 2>&1";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
@@ -174,7 +174,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pytest pytest-cov wheel flake8
+                    pip install numpy scipy pybind11 pytest pytest-cov wheel flake8
                     """;
                 }
 
@@ -184,7 +184,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building LibGeNN";
                         def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         def commandsLibGeNN = """
-                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/  1>>\"${uniqueMsg}\" 2>&1
+                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/ 1>>\"${uniqueMsg}\" 2>&1
                         """;
                         def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
                         if (statusLibGeNN != 0) {
@@ -265,14 +265,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
-                            rm -rf virtualenv
-                            ${env.PYTHON} -m venv virtualenv
-                            . virtualenv/bin/activate
+                            . ${WORKSPACE}/venv/bin/activate
 
-                            pip install --upgrade pip
-                            pip install wheel "numpy>=1.17" pybind11
-
-                            python setup.py clean --all
+                            python setup.py clean --all 1>> "${uniqueMsg}" 2>> "${uniqueMsg}
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             """
 
