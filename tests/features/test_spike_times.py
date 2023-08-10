@@ -68,6 +68,8 @@ def test_spike_times_pre(backend, precision):
     model.build()
     model.load()
 
+    s_pop.pull_connectivity_from_device()
+    
     samples = [(s_pop, "a", 11.0),
                (s_pop, "b", 21.0)]
     while model.timestep < 100:
@@ -91,4 +93,4 @@ def test_spike_times_pre(backend, precision):
 
 
 if __name__ == '__main__':
-    test_spike_times_pre("single_threaded_cpu", types.Float)
+    test_spike_times_pre("cuda", types.Float)
