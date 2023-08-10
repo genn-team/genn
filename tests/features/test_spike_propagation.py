@@ -538,12 +538,16 @@ def test_reverse(backend, precision):
     model = GeNNModel(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
-    # Create spike source array with extra x variable 
+    # Create spike source arrays with extra x variable 
     # to generate one-hot pattern to decode
     pre_n_pop = model.add_neuron_population(
         "SpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
     pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    pre_pre_n_pop = model.add_neuron_population(
+        "PreSpikeSource", 16, pre_reverse_spike_source_model,
+        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
+    pre_pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
     
     # Add postsynptic population to connect to
     post_n_pop = model.add_neuron_population(
@@ -574,6 +578,14 @@ def test_reverse(backend, precision):
         "DeltaCurr", {}, {})
     s_pop.set_sparse_connections(pre_inds, post_inds)
     
+    s_pre_pop = model.add_synapse_population(
+        "SparsePreSynapse", "SPARSE", 0,
+        pre_pre_n_pop, post_n_pop,
+        static_pulse_reverse_model, {}, {"g": weights}, {}, {},
+        "DeltaCurr", {}, {})
+    s_pre_pop.set_sparse_connections(pre_inds, post_inds)
+    s_pre_pop.span_type = SpanType.PRESYNAPTIC
+    
     # Build model and load
     model.build()
     model.load()
@@ -583,7 +595,10 @@ def test_reverse(backend, precision):
         model.step_time()
         
         pre_n_pop.pull_var_from_device("x")
+        pre_pre_n_pop.pull_var_from_device("x")
+        
         assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
+        assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -675,5 +690,5 @@ def test_reverse_post(backend, precision):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 if __name__ == '__main__':
-    test_forward("cuda", types.Float)
+    test_reverse("cuda", types.Float)
     
