@@ -184,7 +184,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building LibGeNN";
                         def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         def commandsLibGeNN = """
-                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/ 1>>\"${uniqueMsg}\" 2>&1
+                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>>\"${uniqueMsg}\" 2>&1
                         """;
                         def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
                         if (statusLibGeNN != 0) {
