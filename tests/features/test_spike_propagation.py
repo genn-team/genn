@@ -138,6 +138,20 @@ def test_forward(backend, precision):
         init_sparse_connectivity(decoder_model, {}))
     sparse_pre_s_pop.span_type = SpanType.PRESYNAPTIC
     
+    # Create one output neuron pop with sparse 
+    # decoder population and presynaptic parallelism
+    sparse_hybrid_n_pop = model.add_neuron_population(
+        "PostSparseHybridNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    sparse_hybrid_s_pop = model.add_synapse_population(
+        "SparseHybridSynapse", "SPARSE", 0,
+        ss_pop, sparse_hybrid_n_pop,
+        "StaticPulse", {}, {"g": 1.0}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity(decoder_model, {}))
+    sparse_hybrid_s_pop.span_type = SpanType.PRESYNAPTIC
+    sparse_hybrid_s_pop.num_threads_per_spike = 2
+
     # Create one output neuron pop with sparse decoder population
     manual_sparse_n_pop = model.add_neuron_population(
         "ManualPostSparseNeuron", 4, post_neuron_model,
@@ -190,8 +204,9 @@ def test_forward(backend, precision):
     output_populations = [sparse_constant_weight_n_pop,
                           sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
-                          sparse_n_pop, sparse_pre_n_pop, manual_sparse_n_pop,
-                          bitmask_n_pop, dense_n_pop, manual_dense_n_pop]
+                          sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
+                          manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
+                          manual_dense_n_pop]
     while model.timestep < 16:
         model.step_time()
 
@@ -660,5 +675,5 @@ def test_reverse_post(backend, precision):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 if __name__ == '__main__':
-    test_forward_kernel("single_threaded_cpu", types.Float)
+    test_forward("cuda", types.Float)
     
