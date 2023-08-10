@@ -10,6 +10,13 @@ from setuptools import find_packages, setup
 # **YUCK** this is not a great test
 debug_build = "--debug" in sys.argv
 
+# Determine if this is a coverage build
+if "--coverage" in sys.argv:
+    coverage_build = True
+    sys.argv.remove("--coverage")
+else:
+    coverage_build = False
+
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
 cuda_path = os.environ.get("CUDA_PATH")
 
@@ -36,7 +43,12 @@ else:
 if WIN:
     genn_lib_suffix = "_Debug_DLL" if debug_build else "_Release_DLL"
 else:
-    genn_lib_suffix = "_dynamic_debug" if debug_build else "_dynamic"
+    if coverage_build:
+        genn_lib_suffix = "_coverage_dynamic"
+    elif debug_build:
+        genn_lib_suffix = "_dynamic_debug"
+    else:
+        genn_lib_suffix = "_dynamic"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 
