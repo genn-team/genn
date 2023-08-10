@@ -89,7 +89,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     }
 
     if(sg.getArchetype().isPresynapticOutputRequired()) {
-        env.getStream() << sg.getScalarType().getName() << " lrevInSyn = 0.0;" << std::endl;
+        env.getStream() << sg.getScalarType().getName() << " lOutPre = 0.0;" << std::endl;
     }
     
     env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
@@ -141,7 +141,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
                        backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
             synEnv.add(Type::AddToPost, "addToPost",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            synEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
+            synEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
             
             if(trueSpike) {
                 sg.generateSpikeUpdate(backend, synEnv, batchSize);
@@ -156,10 +156,9 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             os << CodeStream::CB(130);
         }*/
         
-        // Should this be in the Postamble?
+        // Add lOutPre to global memory
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            // write lrevInSyn to global memory if not 0
-            env.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);");
+            env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "preInd") + "], lOutPre);");
         }
         
     }
@@ -455,7 +454,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         CodeStream::Scope b(groupEnv.getStream());
         
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            groupEnv.getStream() << "scalar lrevInSyn = 0.0;" << std::endl;
+            groupEnv.getStream() << "scalar lOutPre = 0.0;" << std::endl;
         }
 
         // Create environment and add presynaptic index
@@ -512,7 +511,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
                              backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
             preUpdateEnv.add(Type::AddToPost, "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            preUpdateEnv.add(Type::AddToPre, "addToPre", "lrevInSyn += $(0)");
+            preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
 
             // Generate spike update
             if(trueSpike) {
@@ -560,9 +559,8 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         }
 
         // Write sum of presynaptic output to global memory
-        // **TODO** this should be triggered by lazy logic - if referenced, do it!
         if(sg.getArchetype().isPresynapticOutputRequired()) {
-            groupEnv.printLine("if(lrevInSyn != 0.0) " + backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lrevInSyn);");
+            groupEnv.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
         }
 
     }
