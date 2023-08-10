@@ -57,9 +57,9 @@ def test_spike_times_pre(backend, precision):
 
     # Add synapse models testing various ways of reading presynaptic WU vars
     float_min = np.finfo(np.float32).min
-    s_pre_learn_post_sparse_pop = model.add_synapse_population(
-        "PreLearnPostSparseSynapses", "SPARSE", 20,
-        post_n_pop, pre_n_pop,
+    s_pop = model.add_synapse_population(
+        "Synapses", "SPARSE", 20,
+        pre_n_pop, post_n_pop,
         weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity("OneToOne"))
@@ -67,6 +67,27 @@ def test_spike_times_pre(backend, precision):
     # Build model and load
     model.build()
     model.load()
+
+    samples = [(s_pop, "a", 11.0),
+               (s_pop, "b", 21.0)]
+    while model.timestep < 100:
+        model.step_time()
+    
+        # Loop through synapse groups and compare value of w with delayed time
+        for pop, var_name, offset in samples:
+            # Calculate time of spikes we SHOULD be reading
+            # **NOTE** we delay by 22 timesteps because:
+            # 1) delay = 20
+            # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
+            # 3) t is incremented one timestep at te end of StepGeNN
+            delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
+            delayed_time[delayed_time < 21.0] = float_min
+
+            pop.pull_var_from_device(var_name)
+            var_value = pop.get_var_values(var_name)
+            if not np.allclose(delayed_time, var_value):
+                assert False, f"Var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
+
 
 
 if __name__ == '__main__':
