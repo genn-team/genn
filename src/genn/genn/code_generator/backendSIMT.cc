@@ -344,7 +344,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_spk_time)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
                     }
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -353,7 +353,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_spk_evnt_time)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
+                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - DT;");
                     }
                 }
             }
@@ -364,7 +364,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt)[$(batch)])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_spk_time)[");
+                        neuronEnv.print("$(_prev_st)[");
                         if (batchSize == 1) {
                             neuronEnv.print("$(_spk)[$(id)]");
                         }
@@ -379,7 +379,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt_evnt)[$(batch)])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_spk_evnt_time)[");
+                        neuronEnv.print("$(_prev_set)[");
                         if (batchSize == 1) {
                             neuronEnv.print("$(_spk_evnt)[$(id)]");
                         }
@@ -604,7 +604,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
                     if(ng.getArchetype().isSpikeTimeRequired()) {
-                        groupEnv.printLine("$(_spk_time)[" + queueOffset + "n] = $(t);");
+                        groupEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
                     }
                 }
             }
@@ -618,7 +618,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                     groupEnv.printLine("$(_spk_evnt)[" + queueOffset + "$(_sh_spk_evnt_pos) + " + getThreadID() + "] = n;");
                     if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                        groupEnv.printLine("$(_spk_evnt_time)[" + queueOffset + "n] = $(t);");
+                        groupEnv.printLine("$(_set)[" + queueOffset + "n] = $(t);");
                     }
                 }
             }

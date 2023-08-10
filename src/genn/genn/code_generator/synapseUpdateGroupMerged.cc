@@ -56,13 +56,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
     const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
     synEnv.add(sg.getTimeType().addConst(), "st_pre", "stPre",
-               {synEnv.addInitialiser("const " + timeStr + " stPre = " + axonalDelayMs + " + $(_src_spk_time)[" + preSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " stPre = " + axonalDelayMs + " + $(_src_st)[" + preSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_pre", "prevSTPre",
-               {synEnv.addInitialiser("const " + timeStr + " prevSTPre = " + axonalDelayMs + " + $(_src_prev_spk_time)[" + prevPreSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSTPre = " + axonalDelayMs + " + $(_src_prev_st)[" + prevPreSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "set_pre", "setPre",
-               {synEnv.addInitialiser("const " + timeStr + " setPre = " + axonalDelayMs + " + $(_src_spk_time_evnt)[" + preSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " setPre = " + axonalDelayMs + " + $(_src_set)[" + preSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_set_pre", "prevSETPre",
-               {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_spk_time_evnt)[" + prevPreSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_set)[" + prevPreSTIndex + "];")});
 
     // Calculate backprop delay to add to (somatic) spike times and substitute in postsynaptic spike times
     const std::string backPropDelayMs = writePreciseLiteral(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
@@ -70,9 +70,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");
     const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");
     synEnv.add(sg.getTimeType().addConst(), "st_post", "stPost",
-               {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_spk_time)[" + postSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_st)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
-               {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_spk_time)[" + prevPostSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_st)[" + prevPostSTIndex + "];")});
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {

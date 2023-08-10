@@ -376,22 +376,22 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
 
     // Initialize spike times
     if(getArchetype().isSpikeTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "sT", batchSize);
+        genInitSpikeTime(backend, groupEnv, "_st", batchSize);
     }
 
     // Initialize previous spike times
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        genInitSpikeTime( backend, groupEnv, "prevST", batchSize);
+        genInitSpikeTime( backend, groupEnv, "_prev_st", batchSize);
     }
                
     // Initialize spike-like-event times
     if(getArchetype().isSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "seT", batchSize);
+        genInitSpikeTime(backend, groupEnv, "_set", batchSize);
     }
 
     // Initialize previous spike-like-event times
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "prevSET", batchSize);
+        genInitSpikeTime(backend, groupEnv, "_prev_set", batchSize);
     }
        
     // If neuron group requires delays

@@ -107,13 +107,13 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                   [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
 
-    env.addField(env.getGroup().getTimeType().createPointer(), "_spk_time", "sT",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_st", "sT",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_spk_evnt_time", "seT",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_set", "seT",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "seT" + g.getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_time", "prevST", 
+    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_st", "prevST", 
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_spk_evnt_time", "prevSET",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_set", "prevSET",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevSET" + g.getName(); });
 
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
@@ -206,13 +206,13 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_spk_time", "srcSpkTime",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getSrcNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_spk_time_evnt", "srcSpkTimeEvnt",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "seT" + g.getSrcNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_spk_time", "srcPrevSpkTime",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getSrcNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_spk_time_evnt", "srcPrevSpkTimeEvnt",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevSET" + g.getSrcNeuronGroup()->getName(); });
     
     // Target neuron fields
@@ -222,9 +222,9 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
     env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_spk_time", "trgSpkTime",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getTrgNeuronGroup()->getName(); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_spk_time", "trgPrevSpkTime",
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
                  [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getTrgNeuronGroup()->getName(); });
 
     // Connectivity fields

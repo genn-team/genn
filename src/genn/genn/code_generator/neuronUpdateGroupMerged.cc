@@ -486,13 +486,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     const std::string timePrecision = getTimeType().getName();
     const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "$(id)");
     neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
-                  {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_spk_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_st", "lprevST", 
-                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevST = $(_prev_spk_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevST = $(_prev_st)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "set", "lseT", 
-                  {neuronEnv.addInitialiser("const " + timePrecision + " lseT = $(_spk_evnt_time)[" + spikeTimeReadIndex+ "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lseT = $(_set)[" + spikeTimeReadIndex+ "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_set", "lprevSET", 
-                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevSET = $(_prev_spk_evnt_time)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + timePrecision + " lprevSET = $(_prev_set)[" + spikeTimeReadIndex + "];")});
 
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
@@ -686,12 +686,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(st);");
+                    neuronVarEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(st);");
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_prev_spk_time)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(prev_st);");
+                    neuronVarEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(prev_st);");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
