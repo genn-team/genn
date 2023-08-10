@@ -29,12 +29,9 @@ pattern_spike_neuron_model = create_neuron_model(
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_spike_times_pre(backend, precision):
-    # Weight update models which update a PRESYNAPTIC variable 
-    # when a PRESYNAPTIC spike is received and copy it into synapse 
-    # during various kinds of synaptic event
-    weight_update_model = create_weight_update_model(
-        "weight_update",
+def test_spike_times(backend, precision):
+    pre_weight_update_model = create_weight_update_model(
+        "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
         sim_code=
         """
@@ -45,7 +42,19 @@ def test_spike_times_pre(backend, precision):
         b = st_pre;
         """)
     
-    model = GeNNModel(precision, "test_spike_times_pre", backend=backend)
+    post_weight_update_model = create_weight_update_model(
+        "post_weight_update",
+        var_name_types=[("a", "scalar"), ("b", "scalar")],
+        sim_code=
+        """
+        a = st_post;
+        """,
+        learn_post_code=
+        """
+        b = prev_st_post;
+        """)
+    
+    model = GeNNModel(precision, "test_spike_times", backend=backend)
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations
@@ -57,21 +66,32 @@ def test_spike_times_pre(backend, precision):
 
     # Add synapse models testing various ways of reading presynaptic WU vars
     float_min = np.finfo(np.float32).min
-    s_pop = model.add_synapse_population(
-        "Synapses", "SPARSE", 20,
+    s_pre_pop = model.add_synapse_population(
+        "PreSynapses", "SPARSE", 20,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
+        pre_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity("OneToOne"))
     
+    s_post_pop = model.add_synapse_population(
+        "PostSynapses", "SPARSE", 0,
+        post_n_pop, pre_n_pop,
+        post_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
+        "DeltaCurr", {}, {},
+        init_sparse_connectivity("OneToOne"))
+    s_post_pop.back_prop_delay_steps = 20
+
     # Build model and load
     model.build()
     model.load()
 
-    s_pop.pull_connectivity_from_device()
-    
-    samples = [(s_pop, "a", 11.0),
-               (s_pop, "b", 21.0)]
+    s_pre_pop.pull_connectivity_from_device()
+    s_post_pop.pull_connectivity_from_device()
+
+    samples = [(s_pre_pop, "a", 11.0),
+               (s_pre_pop, "b", 21.0),
+               (s_post_pop, "a", 21.0),
+               (s_post_pop, "b", 11.0)]
     while model.timestep < 100:
         model.step_time()
     
@@ -88,9 +108,9 @@ def test_spike_times_pre(backend, precision):
             pop.pull_var_from_device(var_name)
             var_value = pop.get_var_values(var_name)
             if not np.allclose(delayed_time, var_value):
-                assert False, f"Var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
+                assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
 
 
 
 if __name__ == '__main__':
-    test_spike_times_pre("cuda", types.Float)
+    test_spike_times("cuda", types.Float)
