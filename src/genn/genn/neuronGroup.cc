@@ -142,7 +142,10 @@ bool NeuronGroup::isSpikeTimeRequired() const
         return true;
     }
 
-    return false;
+    // If spike time is referenced in neuron itself, return true
+    return (Utils::isIdentifierReferenced("st", getSimCodeTokens())
+            || Utils::isIdentifierReferenced("st", getResetCodeTokens())
+            || Utils::isIdentifierReferenced("st", getThresholdConditionCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isPrevSpikeTimeRequired() const
@@ -161,21 +164,40 @@ bool NeuronGroup::isPrevSpikeTimeRequired() const
         return true;
     }
 
-    return false;
+    // If previous spike time is referenced in neuron itself, return true
+    return (Utils::isIdentifierReferenced("prev_st", getSimCodeTokens())
+            || Utils::isIdentifierReferenced("prev_st", getResetCodeTokens())
+            || Utils::isIdentifierReferenced("prev_st", getThresholdConditionCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventTimeRequired() const
 {
     // If any OUTGOING synapse groups require PRESYNAPTIC spike-like event times, return true
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroup *sg) { return sg->isPreSpikeEventTimeRequired(); });
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](SynapseGroup *sg) { return sg->isPreSpikeEventTimeRequired(); }))
+    {
+        return true;
+    }
+
+    // If spike event time is referenced in neuron itself, return true
+    return (Utils::isIdentifierReferenced("set", getSimCodeTokens())
+            || Utils::isIdentifierReferenced("set", getResetCodeTokens())
+            || Utils::isIdentifierReferenced("set", getThresholdConditionCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isPrevSpikeEventTimeRequired() const
 {
     // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroup *sg) { return sg->isPrevPreSpikeEventTimeRequired(); });
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](SynapseGroup *sg) { return sg->isPrevPreSpikeEventTimeRequired(); }))
+    {
+        return true;
+    }
+
+    // If previous spike event time is referenced in neuron itself, return true
+    return (Utils::isIdentifierReferenced("prev_set", getSimCodeTokens())
+            || Utils::isIdentifierReferenced("prev_set", getResetCodeTokens())
+            || Utils::isIdentifierReferenced("prev_set", getThresholdConditionCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
