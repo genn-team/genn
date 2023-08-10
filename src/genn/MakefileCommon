@@ -17,14 +17,6 @@ ifeq ($(DARWIN),DARWIN)
     CXX				:=clang++
 endif
 
-# Setup compiler based on configuration
-ifdef MPI_ENABLE
-    GENN_PREFIX			:=$(GENN_PREFIX)_mpi
-    CXXFLAGS			+=-DMPI_ENABLE $(shell mpiCC -showme:compile)
-    LDFLAGS			+=$(shell mpiCC -showme:link)
-    CXX				:=mpiCC
-endif
-
 ifdef COVERAGE
     GENN_PREFIX			:=$(GENN_PREFIX)_coverage
 
