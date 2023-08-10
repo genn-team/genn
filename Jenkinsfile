@@ -133,36 +133,19 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                buildStep("Running tests (" + env.NODE_NAME + ")") {
+                buildStep("Running unit tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
                     def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                     dir("genn/tests") {
                         if (isUnix()) {
-                            // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
-                            def runTestArguments = "";
-                            if("dev_toolset" in nodeLabel) {
-                                echo "Enabling devtoolset 6 version of GCC";
-                                runTestArguments += " -d";
-                            }
-
-                            // If node has suitable CUDA, add -c option
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel || "cuda11" in nodeLabel) {
-                                runTestArguments += " -c";
-                            }
-
-                            // If node has OpenCL, add -l option
-                            if(nodeLabel.contains("opencl")) {
-                                runTestArguments += " -l";
-                            }
-
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
+                            def runTestsCommand = "./run_tests.sh 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
 
                         }
@@ -177,20 +160,75 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
                         }
                     }
                 }
 
-                buildStep("Gathering test results (" + env.NODE_NAME + ")") {
+                buildStep("Setup virtualenv (${NODE_NAME})") {
+                    // Set up new virtualenv
+                    echo "Creating virtualenv";
+                    sh """
+                    rm -rf ${WORKSPACE}/venv
+                    ${env.PYTHON} -m venv ${WORKSPACE}/venv
+                    . ${WORKSPACE}/venv/bin/activate
+                    pip install -U pip
+                    pip install numpy scipy pytest pytest-cov wheel flake8
+                    """;
+                }
+
+                buildStep("Installing PyGeNN (${NODE_NAME})") {
+                    dir("genn") {
+                        // Build dynamic LibGeNN
+                        echo "Building LibGeNN";
+                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+                        def commandsLibGeNN = """
+                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/  1>>\"${uniqueMsg}\" 2>&1
+                        """;
+                        def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
+                        if (statusLibGeNN != 0) {
+                            setBuildStatus("Building LibGeNN (${NODE_NAME})", "FAILURE");
+                        }
+
+                        // Build PyGeNN module
+                        echo "Building and installing PyGeNN";
+                        def commandsPyGeNN = """
+                        . ${WORKSPACE}/venv/bin/activate
+                        python setup.py develop 1>>\"${uniqueMsg}\" 2>&1
+                        """;
+                        def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
+                        if (statusPyGeNN != 0) {
+                            setBuildStatus("Building PyGeNN (${NODE_NAME})", "FAILURE");
+                        }
+                    }
+                }
+
+                def coverageMLGeNN = "${WORKSPACE}/coverage_${NODE_NAME}.xml";
+                buildStep("Running feature tests (${NODE_NAME})") {
+                    dir("tests/features") {
+                        // Run ML GeNN test suite
+                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+                        def commandsTest = """
+                        . ${WORKSPACE}/venv/bin/activate
+                        rm -f ${messagesTests}
+                        pytest -v --cov . --cov-report=xml:${coverageMLGeNN} --junitxml test_results_features.xml 1>>\"../../${uniqueMsg}\" 2>&1
+                        """;
+                        def statusTests = sh script:commandsTest, returnStatus:true;
+                        if (statusTests != 0) {
+                            setBuildStatus("Running tests (${NODE_NAME})", "FAILURE");
+                        }
+                    }
+                }
+
+                buildStep("Gathering test results (${NODE_NAME})") {
                     dir("genn/tests") {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
                     }
                 }
 
-                buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
+                buildStep("Uploading coverage (${NODE_NAME})") {
                     dir("genn/tests") {
                         if(isUnix()) {
                             // If coverage was emitted
@@ -208,7 +246,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
+                buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
                         def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         if(isUnix()) {
@@ -298,7 +336,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                buildStep("Archiving output (" + env.NODE_NAME + ")") {
+                buildStep("Archiving output (${NODE_NAME})") {
                     dir("genn") {
                         def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         archive uniqueMsg;
