@@ -1,12 +1,3 @@
-// Standard C++ includes
-#if defined(__GNUC__) && __GNUC__ < 8
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
-#else
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -14,7 +5,6 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -368,13 +358,6 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
 
     // Check correct groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdateGroups().size(), 2);

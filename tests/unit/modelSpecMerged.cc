@@ -2,19 +2,11 @@
 #include <array>
 #include <functional>
 #include <vector>
-#if defined(__GNUC__) && __GNUC__ < 8
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
-#else
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
 
 // Google test includes
 #include "gtest/gtest.h"
 
 // GeNN code generator includes
-#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -88,9 +80,6 @@ public:
         "    const scalar newWeight = $(g) + ($(Aplus) * timing);\n"
         "    $(g) = fmin($(Wmax), newWeight);\n"
         "}\n");
-
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 
@@ -200,15 +189,6 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
 
         // Created merged model
         CodeGenerator::ModelSpecMerged modelMerged(backend, model);
-
-        // Generate modules
-        // **NOTE** these are ordered in terms of memory-space priority
-        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
-        const filesystem::path outputPath = fs::temp_directory_path().string();
-        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateInit(outputPath, modelMerged, backend, memorySpaces);
 
         // Write hash digests of model to array
         moduleHash[i] = modelMerged.getHashDigest(backend);

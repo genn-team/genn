@@ -1,12 +1,3 @@
-// Standard C++ includes
-#if defined(__GNUC__) && __GNUC__ < 8
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
-#else
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -14,7 +5,6 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -57,9 +47,6 @@ public:
     SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
     SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 
@@ -93,9 +80,6 @@ public:
     SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
     SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditiveEGPWMinMax);
 
@@ -130,9 +114,6 @@ public:
     SET_POST_SPIKE_CODE("$(postTrace) += $(S);\n");
     SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
     SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditiveEGPSpike);
 
@@ -163,9 +144,6 @@ public:
     SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
     SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditiveEGPDynamics);
 
@@ -307,8 +285,6 @@ public:
         {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
-
-    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_SNIPPET(LIFAdditional);
 }   // Anonymous namespace
@@ -399,13 +375,6 @@ TEST(SynapseGroup, CompareWUDifferentModel)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 2);
@@ -458,13 +427,6 @@ TEST(SynapseGroup, CompareWUDifferentParams)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
@@ -570,13 +532,6 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
@@ -723,13 +678,6 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
@@ -871,13 +819,6 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
@@ -937,13 +878,6 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateSynapseUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);

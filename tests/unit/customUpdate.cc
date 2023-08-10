@@ -1,12 +1,3 @@
-// Standard C++ includes
-#if defined(__GNUC__) && __GNUC__ < 8
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
-#else
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -14,7 +5,6 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -812,12 +802,6 @@ TEST(CustomUpdates, CompareDifferentModel)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 2);
@@ -857,12 +841,6 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check correct groups are merged
     // **NOTE** update groups don't matter for initialization
@@ -938,12 +916,6 @@ TEST(CustomUpdates, CompareDifferentDelay)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization
@@ -1033,12 +1005,6 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check correct groups are merged
     // **NOTE** transpose variables don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().size() == 2);
@@ -1090,12 +1056,6 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().empty());
@@ -1157,12 +1117,6 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateCustomUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization

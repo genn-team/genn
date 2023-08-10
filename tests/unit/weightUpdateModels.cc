@@ -54,8 +54,6 @@ public:
         {"off1", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tChng"); }},
         {"off2", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish10"); }}});
 
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 
 class STDPAdditive : public WeightUpdateModels::Base
@@ -88,9 +86,6 @@ public:
     SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
     SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }

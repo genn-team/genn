@@ -1,12 +1,3 @@
-// Standard C++ includes
-#if defined(__GNUC__) && __GNUC__ < 8
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
-#else
-    #include <filesystem>
-    namespace fs = std::filesystem;
-#endif
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -14,7 +5,6 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
@@ -133,8 +123,6 @@ public:
         {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
-
-    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_SNIPPET(LIFAdditional);
 
@@ -176,8 +164,6 @@ public:
         {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
-
-    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_SNIPPET(LIFRandom);
 
@@ -211,9 +197,6 @@ public:
     SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
     SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }
@@ -673,12 +656,6 @@ TEST(NeuronGroup, CompareNeuronModels)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-    
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
@@ -729,12 +706,6 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
@@ -834,11 +805,6 @@ TEST(NeuronGroup, CompareCurrentSources)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neurons are merged into two groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
@@ -966,12 +932,6 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 3);
@@ -1081,12 +1041,6 @@ TEST(NeuronGroup, ComparePreOutput)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-
     // Check neurons are merged into six groups (one for each output group and one for each number of incoming synapses)
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 6);
     ASSERT_EQ(modelSpecMerged.getMergedNeuronInitGroups().size(), 6);
@@ -1175,12 +1129,6 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neuron init and update is merged into three groups (NG0 with no outsyns, NG1, NG2, NG3 and NG5 with 1 outsyn and NG4with 2 outsyns)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
@@ -1282,12 +1230,6 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
-
-    // Generate required modules
-    // **NOTE** these are ordered in terms of memory-space priority
-    const filesystem::path outputPath = fs::temp_directory_path().string();
-    generateNeuronUpdate(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
-    generateInit(outputPath, modelSpecMerged, backend, CodeGenerator::BackendBase::MemorySpaces{});
 
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
