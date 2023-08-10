@@ -326,9 +326,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
-    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const auto &ng){ return (ng.second.isPrevSpikeTimeRequired() || ng.second.isPrevSpikeEventTimeRequired()); }))
-    {
+    if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
         neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
         {
             CodeStream::Scope b(neuronUpdateEnv.getStream());
@@ -467,9 +465,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idSynapseDendricDelayUpdate = 0;
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return sg.second.isDendriticDelayRequired(); }))
-    {
+    if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -482,9 +478,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return (sg.second.isSpikeEventRequired() || sg.second.isTrueSpikeRequired()); }))
-    {
+    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -508,9 +502,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.second.getWUPostLearnCodeTokens()); }))
-    {
+    if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -531,9 +523,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     
     // If any synapse groups require synapse dynamics
     size_t idSynapseDynamicsStart = 0;
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return !Utils::areTokensEmpty(sg.second.getWUSynapseDynamicsCodeTokens()); }))
-    {
+    if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -657,12 +647,12 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     for(const auto &g : customUpdateGroups) {
         // Generate kernel
         size_t idCustomUpdateStart = 0;
-        if(std::any_of(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                       [&g](const auto &cg) { return (cg.second.getUpdateGroupName() == g); })
-           || std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                       [&g](const auto &cg) { return (!cg.second.isTransposeOperation() && cg.second.getUpdateGroupName() == g); })
-           || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                          [&g](const auto &cg) { return (!Utils::areTokensEmpty(cg.second.getRowUpdateCodeTokens()) && cg.second.getUpdateGroupName() == g); }))
+        if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
+                       [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); })
+           || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
+                       [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); })
+           || std::any_of(modelMerged.getMergedCustomConnectivityUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityUpdateGroups().cend(),
+                          [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); }))
         {
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
@@ -690,8 +680,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
         }
 
         size_t idCustomTransposeUpdateStart = 0;
-        if(std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                       [&g](const auto &cg){ return (cg.second.isTransposeOperation() && cg.second.getUpdateGroupName() == g); }))
+        if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
+                       [&g](const auto &cg){ return (cg.getArchetype().getUpdateGroupName() == g); }))
         {
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
@@ -863,13 +853,9 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const auto &sg){ return ((sg.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
-                                               (sg.second.isWUVarInitRequired() || !Utils::areTokensEmpty(sg.second.getWUPostLearnCodeTokens()))); })
-       || std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                      [](const auto &cg){ return (cg.second.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.second.isVarInitRequired(); })
-       || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                      [](const auto &cg){ return cg.second.isVarInitRequired(); }))
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() 
+       || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()
+       || !modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().empty())
     {
         initEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
