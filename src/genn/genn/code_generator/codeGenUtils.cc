@@ -93,7 +93,7 @@ std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::Envi
 {
     // Create regex iterator to iterate over $(XXX) style varibles in format string
     // **NOTE** this doesn't match function argument $(0)
-    std::regex regex("\\$\\(([a-zA-Z_][\\w]+)\\)");
+    std::regex regex("\\$\\(([a-zA-Z_][\\w]*)\\)");
     std::sregex_iterator matchesBegin(format.cbegin(), format.cend(), regex);
     std::sregex_iterator matchesEnd;
     
@@ -117,7 +117,7 @@ std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::Envi
             if(std::next(m) == matchesEnd) {
                  // Copy the non-matched subsequence (m->prefix()) onto output
                  std::copy(m->suffix().first, m->suffix().second, std::back_inserter(output));
-                return output;
+                 return output;
             }
             // Otherwise go onto next match
             else {
