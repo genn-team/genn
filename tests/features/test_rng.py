@@ -16,9 +16,10 @@ from pygenn import (create_current_source_model,
                     init_var)
 
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_sim(backend, precision):
+def test_sim(backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         sim_code=
@@ -58,7 +59,8 @@ def test_sim(backend, precision):
         post_var_name_types=[("postUniform", "scalar"), ("postNormal", "scalar")])
 
     model = GeNNModel(precision, "test_sim", backend=backend)
-    
+    model.batch_size = batch_size
+
     # Add neuron and current source populations
     var_init = {"uniform": 0.0, "normal": 0.0}
     n_pop = model.add_neuron_population("Neurons", 1000, neuron_model, 
@@ -99,11 +101,12 @@ def test_sim(backend, precision):
     confidence_interval = 0.0001
 
     # Run for 1000 timesteps
+    shape = (1000, batch_size * 1000)
     samples = [
-        (n_pop, "uniform", n_pop.vars, stats.uniform.cdf, np.empty((1000, 1000))),
-        (n_pop, "normal", n_pop.vars, stats.norm.cdf, np.empty((1000, 1000))),
-        (cs_pop, "uniform", cs_pop.vars, stats.uniform.cdf, np.empty((1000, 1000))),
-        (cs_pop, "normal", cs_pop.vars, stats.norm.cdf, np.empty((1000, 1000))),
+        (n_pop, "uniform", n_pop.vars, stats.uniform.cdf, np.empty(shape)),
+        (n_pop, "normal", n_pop.vars, stats.norm.cdf, np.empty(shape)),
+        (cs_pop, "uniform", cs_pop.vars, stats.uniform.cdf, np.empty(shape)),
+        (cs_pop, "normal", cs_pop.vars, stats.norm.cdf, np.empty(shape)),
         (ccu, "preUniform", ccu.pre_vars, stats.uniform.cdf, np.empty((1000, 1000))),
         (ccu, "preNormal", ccu.pre_vars, stats.norm.cdf, np.empty((1000, 1000))),
         (ccu, "postUniform", ccu.post_vars, stats.uniform.cdf, np.empty((1000, 1000))),
@@ -117,9 +120,9 @@ def test_sim(backend, precision):
             pop.pull_var_from_device(var_name)
             
             # Copy data into array
-            data[model.timestep - 1,:] = vars[var_name].view[:]
-    
-    # Check all p-values exceed 95% confidence internal
+            data[model.timestep - 1,:] = vars[var_name].view[:].flatten()
+
+    # Check all p-values exceed confidence internal
     for pop, var_name, _, cdf, data in samples:
         p = stats.kstest(data.flatten(), cdf).pvalue
         if p < confidence_interval:
@@ -234,4 +237,4 @@ def test_init(backend, precision):
 
 
 if __name__ == '__main__':
-    test_sim("single_threaded_cpu", types.Float)
+    test_sim("cuda", types.Float, 5)
