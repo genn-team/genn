@@ -954,10 +954,10 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         # Load pre and postsynaptic variables
         self._load_vars(self.model.get_pre_vars(), 
                         self.synapse_group.src.size,
-                        self.pre_vars, self.get_pre_var_location)
+                        self.pre_vars, self.get_pre_var_location, False)
         self._load_vars(self.model.get_post_vars(), 
                         self.synapse_group.trg.size,
-                        self.post_vars, self.get_post_var_location)
+                        self.post_vars, self.get_post_var_location, False)
 
         # Load custom update extra global parameters
         self._load_egp()
