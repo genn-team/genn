@@ -202,9 +202,10 @@ def test_init(backend, precision):
     confidence_interval = 0.00034
     
     # Loop through populations
+    # **TODO** use get_var_values to get synapse variables
     pops = [(n_pop, "", n_pop.vars), (cs, "", cs.vars), (dense_s_pop, "", dense_s_pop.vars),
             (dense_s_pop, "pre_", dense_s_pop.pre_vars), (dense_s_pop, "post_", dense_s_pop.post_vars),
-            (dense_s_pop, "psm_", dense_s_pop.psm_vars),]
+            (dense_s_pop, "psm_", dense_s_pop.psm_vars)]
     for pop, prefix, vars in pops:
         # Loop through variables
         for var_name, (_, _, dist, args) in var_init.items():
@@ -237,4 +238,4 @@ def test_init(backend, precision):
 
 
 if __name__ == '__main__':
-    test_sim("cuda", types.Float, 5)
+    test_init("cuda", types.Float, 5)
