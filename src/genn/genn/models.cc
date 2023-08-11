@@ -8,10 +8,18 @@
 #include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// GeNN::Models::Base
+// GeNN::Models::Base::EGPRef
 //----------------------------------------------------------------------------
 namespace GeNN::Models
 {
+Base::EGPRef::EGPRef(const std::string &n, const std::string &t) 
+:   name(n), type(Utils::handleLegacyEGPType(t))
+{
+}
+
+//----------------------------------------------------------------------------
+// GeNN::Models::Base
+//----------------------------------------------------------------------------
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass

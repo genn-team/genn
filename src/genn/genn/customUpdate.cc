@@ -49,7 +49,7 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
         const auto egpRef = egpReferences.at(modelEGPRef.name);
 
         // Check types of extra global parameter references against those specified in model
-        // **THINK** due to GeNN's current string-based type system this is rather conservative
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
         if (egpRef.getEGP().type != modelEGPRef.type) {
             throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
         }

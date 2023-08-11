@@ -192,4 +192,17 @@ void validateParamNames(const std::vector<std::string> &paramNames)
         validateVarName(p, "Parameter");
     }
 }
+//--------------------------------------------------------------------------
+std::string handleLegacyEGPType(const std::string &type)
+{
+    // If type string ends in *
+    if(!type.empty() && type.back() == '*') {
+        return type.substr(0, type.length() - 1);
+    }
+    // Otherwise, throw exception
+    else {
+        throw std::runtime_error("GeNN no longer supports non-array extra global parameters. "
+                                 "Dynamic parameters provide the same functionality");
+    }
+}
 }   // namespace GeNN::utils

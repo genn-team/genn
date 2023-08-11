@@ -52,7 +52,7 @@ public:
     /*! Explicit constructors required as although, through the wonders of C++
         aggregate initialization, access would default to VarAccess::READ_WRITE
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
-    struct Var
+    struct GENN_EXPORT Var
     {
         Var(const std::string &n, const Type::ResolvedType &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
         {}
@@ -69,7 +69,7 @@ public:
         VarAccess access;
     };
 
-    struct VarRef
+    struct GENN_EXPORT VarRef
     {
         VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
         {}
@@ -86,12 +86,11 @@ public:
         VarAccessMode access;
     };
 
-    struct EGPRef
+    struct GENN_EXPORT EGPRef
     {
         EGPRef(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
         {}
-        EGPRef(const std::string &n, const std::string &t) : name(n), type(t)
-        {}
+        EGPRef(const std::string &n, const std::string &t);
 
         bool operator == (const EGPRef &other) const
         {
@@ -384,7 +383,7 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
         const auto varRef = varRefs.at(modelVarRef.name);
 
         // Check types of variable references against those specified in model
-        // **THINK** this is rather conservative but I think not allowing scalar and whatever happens to be scalar type is ok
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
         if(varRef.getVar().type != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
         }
