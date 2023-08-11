@@ -26,7 +26,7 @@ neuron_model = create_neuron_model(
 
 weight_update_model = create_weight_update_model(
     "weight_update",
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY),
+    var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                     ("d", "unsigned int", VarAccess.READ_ONLY)])
 
 
@@ -168,14 +168,19 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
         for (pop, var_name, transpose), val in zip(var_checks, var_values):
             correct = ((row_inds * 64.0) + i if transpose 
                        else (i * 64.0) + row_inds)
-            assert np.allclose(val[row_mask], correct)
+            if len(val.shape) == 1:
+                assert np.allclose(val[row_mask], correct)
+            else:
+                assert np.allclose(val[:,row_mask], correct)
 
 
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_connectivity_update(backend, precision):
+def test_custom_connectivity_update(backend, precision, batch_size):
     model = GeNNModel(precision, "test_custom_connectivity_update", backend=backend)
+    model.batch_size = batch_size
     model.dt = 1.0
     
     # Create pre and postsynaptic populations
@@ -203,7 +208,6 @@ def test_custom_connectivity_update(backend, precision):
         weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
         "DeltaCurr", {}, {},
         init_sparse_connectivity(triangle_connect_init_snippet))
-
 
     # Create custom connectivity updates
     remove_synapse_ccu = model.add_custom_connectivity_update(
@@ -268,4 +272,4 @@ def test_custom_connectivity_update(backend, precision):
                          (s_pop_1, "d", True)])
 
 if __name__ == '__main__':
-    test_custom_connectivity_update("single_threaded_cpu", types.Float)
+    test_custom_connectivity_update("cuda", types.Float, 5)
