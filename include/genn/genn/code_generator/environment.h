@@ -794,10 +794,11 @@ class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
 public:
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
+                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, bool alwaysCopy,
                               PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
-        m_Context(context), m_Contents(m_ContentsStream), m_ArrayPrefix(arrayPrefix), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
+        m_Context(context), m_Contents(m_ContentsStream), m_ArrayPrefix(arrayPrefix), 
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_AlwaysCopy(alwaysCopy)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -811,11 +812,11 @@ public:
     {
         A archetypeAdapter(m_Group.get().getArchetype());
 
-        // Copy definitions of variables which have been referenced into new vector
+        // Copy definitions of variables which have been referenced into new vector or all if always copy set
         const auto varDefs = archetypeAdapter.getDefs();
         std::vector<Def> referencedDefs;
         std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
-                     [this](const auto &v){ return m_VariablesReferenced.at(v.name).first; });
+                     [this](const auto &v){ return m_AlwaysCopy || m_VariablesReferenced.at(v.name).first; });
 
         // Loop through referenced definitions
         for(const auto &v : referencedDefs) {
@@ -849,8 +850,8 @@ public:
 
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
-            // If variables are read-write
-            if(v.access & VarAccessMode::READ_WRITE) {
+            // If we should always copy variable or variable is read-write
+            if(m_AlwaysCopy || v.access & VarAccessMode::READ_WRITE) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
@@ -916,6 +917,7 @@ private:
     std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
+    bool m_AlwaysCopy;
     std::unordered_map<std::string, std::pair<bool, Def>> m_VariablesReferenced;
 };
 

@@ -59,7 +59,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l", false,
         [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
             return getVarIndex(d, "$(id)");
@@ -67,7 +67,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", 
+        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", false,
         [this, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
@@ -184,7 +184,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l", false,
         [this, &cuEnv](const std::string&, VarAccessDuplication d)
         {
             return getVarIndex(d, "$(id_syn)");
@@ -192,7 +192,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l", false,
         [this, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
             return getVarRefIndex(getVarAccessDuplication(v.getVar().access), 

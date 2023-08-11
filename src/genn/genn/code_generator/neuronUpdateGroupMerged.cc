@@ -39,7 +39,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+        *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccessDuplication d)
         {
             return ng.getVarIndex(batchSize, d, "$(id)");
@@ -120,7 +120,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+        *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccessDuplication d)
         {
             return ng.getVarIndex(batchSize, d, "$(id)");
@@ -198,9 +198,10 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
+        // **NOTE** always copy variables here as this is when they are copied between delay slots
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l", true,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
@@ -284,9 +285,10 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
+        // **NOTE** always copy variables here as this is when they are copied between delay slots
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l", true,
             [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
@@ -496,8 +498,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
+    // **NOTE** always copy variables here as this is when they are copied between delay slots
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l", true, false,
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
