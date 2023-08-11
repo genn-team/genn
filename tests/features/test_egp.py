@@ -91,9 +91,9 @@ def test_egp_var_init(backend, precision):
         nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)},
         "DeltaCurr", {}, {},
         init_sparse_connectivity("OneToOne"))
-    dense_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
-    dense_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)
-    dense_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_values(correct)
+    sparse_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
+    sparse_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)
+    sparse_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_values(correct)
 
     # Build model and load
     model.build()
