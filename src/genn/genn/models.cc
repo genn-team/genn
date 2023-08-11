@@ -74,6 +74,8 @@ bool VarReference::isDuplicated() const
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
+                [](const CCUPreRef&){ return false; },
+                [](const CCUPostRef&){ return false; },
                 [](const auto&) { return true; }},
             m_Detail);
     }
@@ -172,7 +174,8 @@ bool WUVarReference::isDuplicated() const
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
-                [](const auto&) { return true; }},
+                [](const CCURef&) { return false; },
+                [](const WURef&) { return true; }},
             m_Detail);
     }
 }

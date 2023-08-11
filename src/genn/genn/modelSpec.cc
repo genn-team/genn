@@ -336,7 +336,8 @@ void ModelSpec::finalise()
 
     // Finalize custom connectivity update groups
     // **NOTE** needs to be after synapse groups are finalised 
-    // so which vars are delayed has been established
+    // so which vars are delayed has been established and after custom
+    // updates are finalised so which variables are batched has been established
     for (auto &c : m_CustomConnectivityUpdates) {
         c.second.finalise(m_DT, m_BatchSize);
     }
