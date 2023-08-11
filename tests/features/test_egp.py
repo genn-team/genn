@@ -7,9 +7,11 @@ from pygenn import GeNNModel
 from pygenn import (create_current_source_model, 
                     create_custom_connectivity_update_model,
                     create_custom_update_model,
+                    create_egp_ref,
                     create_neuron_model,
                     create_postsynaptic_model,
                     create_var_init_snippet,
+                    create_var_ref,
                     create_weight_update_model,
                     init_sparse_connectivity,
                     init_var)
@@ -130,5 +132,54 @@ def test_egp_var_init(backend, precision):
     if not np.allclose(sparse_s_pop.get_var_values("repeat"), tiled_correct):
         assert False, f"'{sparse_s_pop.name}' initialisation incorrect"
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_egp_ref(backend, precision):
+    neuron_model = create_neuron_model(
+        "neuron",
+        sim_code=
+        """
+        x = e[id];
+        """,
+        var_name_types=[("x", "scalar")],
+        extra_global_params=[("e", "scalar*")])
+    
+    custom_update_model = create_custom_update_model(
+        "custom_update",
+        update_code=
+        """
+        if(id == (int)round(fmod(t, 10.0))) {
+           e[id] = 1.0;
+        }
+        else {
+           e[id] = 0.0;
+        }
+        """,
+        var_refs=[("v", "scalar")],
+        extra_global_param_refs=[("e", "scalar*")])
+    
+    model = GeNNModel(precision, "test_egp_ref", backend=backend)
+    model.dt = 1.0
+    
+    n_pop = model.add_neuron_population("Neurons", 10, neuron_model, {}, {"x": 10.0});
+    n_pop.extra_global_params["e"].set_values(np.empty(10))
+
+    cu = model.add_custom_update("CU", "CustomUpdate", custom_update_model,
+                                 {}, {}, {"v": create_var_ref(n_pop, "x")}, {"e": create_egp_ref(n_pop, "e")})
+
+    # Build model and load
+    model.build()
+    model.load()
+    
+    while model.timestep < 10:
+        model.custom_update("CustomUpdate")
+        model.step_time()
+        
+        correct = np.zeros(10)
+        correct[model.timestep - 1] = 1.0
+        
+        n_pop.pull_var_from_device("x")
+        assert np.allclose(n_pop.vars["x"].view, correct)
+
 if __name__ == '__main__':
-    test_egp_var_init("cuda", types.Float)
+    test_egp_ref("cuda", types.Float)
