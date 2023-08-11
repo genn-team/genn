@@ -141,6 +141,7 @@ class PyCustomUpdateModelBase : public PyModel<CustomUpdateModels::Base>
     using Base = CustomUpdateModels::Base;
 public:
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
+    virtual EGPRefVec getExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_extra_global_param_refs", getExtraGlobalParamRefs); }
     virtual std::string getUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_update_code", getUpdateCode); }
 };
 
@@ -747,6 +748,7 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_var_refs", &CustomUpdateModels::Base::getVarRefs)
+        .def("get_extra_global_param_refs", &CustomUpdateModels::Base::getExtraGlobalParamRefs)
         .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
     
     //------------------------------------------------------------------------
@@ -820,6 +822,11 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Models::WUVarReference>(m, "WUVarReference")
         .def_property_readonly("synapse_group", &Models::WUVarReference::getSynapseGroup, pybind11::return_value_policy::reference);
+    
+    //------------------------------------------------------------------------
+    // genn.EGPReference
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::EGPReference>(m, "EGPReference");
 
     //------------------------------------------------------------------------
     // genn.PreferencesBase
