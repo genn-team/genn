@@ -119,7 +119,7 @@ def test_egp_var_init(backend, precision):
     
     # Check dense
     dense_s_pop.pull_var_from_device("repeat")
-    if not np.allclose(dense_s_pop.get_var_values("repeat"), np.tile(tiled_correct, (1, 20))):
+    if not np.allclose(dense_s_pop.get_var_values("repeat"), np.repeat(tiled_correct, 20)):
         assert False, f"'{dense_s_pop.name}' initialisation incorrect"
     
     # Download sparse connectivity
@@ -131,4 +131,4 @@ def test_egp_var_init(backend, precision):
         assert False, f"'{sparse_s_pop.name}' initialisation incorrect"
 
 if __name__ == '__main__':
-    test_egp_var_init("single_threaded_cpu", types.Float)
+    test_egp_var_init("cuda", types.Float)
