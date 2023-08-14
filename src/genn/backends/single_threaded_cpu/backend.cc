@@ -1522,7 +1522,7 @@ void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Hand
 //--------------------------------------------------------------------------
 void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
-    env.print("for (unsigned int j = 0; j < $(num_post); j++)";
+    env.print("for (unsigned int j = 0; j < $(num_post); j++)");
     {
         CodeStream::Scope b(env.getStream());
 
@@ -1948,7 +1948,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
-                    const auto indexType = backend.getSynapseIndexType(env.getGroup());
+                    const auto indexType = getSynapseIndexType(sg);
                     const auto indexTypeName = indexType.getName();
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);");
