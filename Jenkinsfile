@@ -140,7 +140,27 @@ for(b = 0; b < builderNodes.size(); b++) {
                     dir("genn/tests") {
                         if (isUnix()) {
                             // Run tests
-                            def runTestsCommand = "./run_tests.sh 1>>\"${outputFilename}\" 2>&1";
+                            def runTestsCommand = """
+                            rm -f "${outputFilename}"
+
+                            # Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
+                            pushd ../../
+                            make clean COVERAGE=1 1>> "${outputFilename}" 2>&1
+
+                            make single_threaded_cpu COVERAGE=1 1>> "${outputFilename}" 2>&1
+                            popd
+
+                            # Run unit tests
+                            pushd unit
+
+                            # Clean and build
+                            make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
+
+                            # Run tests
+                            ./test_coverage --gtest_output="xml:test_results_unit.xml 1>> "${outputFilename}" 2>&1
+
+                            popd
+                            """;
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
@@ -153,6 +173,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // Run tests
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
+                            DEL "${outputFilename}"
+
+                            msbuild ../genn.sln /m /t:single_threaded_cpu_backend /verbosity:minimal /p:Configuration=Release
+
+                            msbuild tests.sln /m /verbosity:minimal /p:Configuration=Release
+
+                            PUSHD unit
+                            unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+                            POPD
+
                             CALL run_tests.bat >> "${outputFilename}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
@@ -173,7 +203,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest pytest-cov wheel flake8
+                    pip install numpy scipy pybind11 pytest pytest-cov wheel flake8 bitarray
                     """;
                 }
 
@@ -182,7 +212,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Build dynamic LibGeNN
                         echo "Building LibGeNN";
                         def commandsLibGeNN = """
-                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>>\"${outputFilename}\" 2>&1
+                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
                         """;
                         def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
                         if (statusLibGeNN != 0) {
@@ -194,7 +224,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        python setup.py install 1>>\"${outputFilename}\" 2>&1
+                        pip install -e . 1>> "${outputFilename}" 2>&1
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
@@ -209,7 +239,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Run ML GeNN test suite
                         def commandsTest = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pytest -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>>\"${outputFilename}\" 2>&1
+                        pytest -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
                         """;
                         def statusTests = sh script:commandsTest, returnStatus:true;
                         if (statusTests != 0) {
@@ -247,11 +277,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                         if(isUnix()) {
                             // Build set of dynamic libraries
                             echo "Creating dynamic libraries";
-                            makeCommand = ""
-                            if("dev_toolset" in nodeLabel) {
-                                makeCommand += ". /opt/rh/devtoolset-6/enable\n"
-                            }
-                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn 1>> \"${outputFilename}\" 2>&1";
+                            makeCommand = """
+                            make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
+                            """;
                             def makeStatusCode = sh script:makeCommand, returnStatus:true
                             if(makeStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
@@ -281,11 +309,15 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             // If node has suitable CUDA, also build CUDA backend
                             if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
-                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${outputFilename}\" 2>&1";
+                                msbuildCommand += """
+                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
+                                """;
                             }
                             // If this node has OpenCL, also build OpenCL backend
                             if(nodeLabel.contains("opencl")) {
-                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> \"${outputFilename}\" 2>&1";
+                                msbuildCommand += """
+                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
+                                """;
                             }
 
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
