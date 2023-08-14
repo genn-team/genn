@@ -265,7 +265,7 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
 std::string writeNumeric(const NumericValue &value, const ResolvedType &type)
 {
     const auto &numeric = type.getNumeric();
-    std::visit(
+    return std::visit(
         Utils::Overload{
             [&numeric](double value) 
             {
