@@ -144,22 +144,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                             rm -f "${outputFilename}"
 
                             # Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
-                            pushd ../../
+                            cd ../../
                             make clean COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             make single_threaded_cpu COVERAGE=1 1>> "${outputFilename}" 2>&1
-                            popd
 
-                            # Run unit tests
-                            pushd unit
-
-                            # Clean and build
+                            # Clean and build unit tests
+                            cd test/unit
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             # Run tests
                             ./test_coverage --gtest_output="xml:test_results_unit.xml 1>> "${outputFilename}" 2>&1
-
-                            popd
                             """;
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
@@ -235,7 +230,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 
                 buildStep("Running feature tests (${NODE_NAME})") {
-                    dir("tests/features") {
+                    dir("genn/tests/features") {
                         // Run ML GeNN test suite
                         def commandsTest = """
                         . ${WORKSPACE}/venv/bin/activate
