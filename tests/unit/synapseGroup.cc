@@ -254,14 +254,14 @@ class LIFAdditional : public NeuronModels::Base
 public:
     DECLARE_SNIPPET(LIFAdditional);
 
-    SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", "$(Ioffset)"}});
+   SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 0.0}});
     SET_SIM_CODE(
         "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = ($(Isyn2) * $(Rmembrane)) + $(Vrest);\n"
+        "  scalar alpha = (($(Isyn2) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
