@@ -137,20 +137,19 @@ for(b = 0; b < builderNodes.size(); b++) {
                 def coveragePython = "${WORKSPACE}/coverage_python_${NODE_NAME}.xml";
                 buildStep("Running unit tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
-                    dir("genn/tests") {
+                    dir("genn") {
                         if (isUnix()) {
                             // Run tests
                             def runTestsCommand = """
                             rm -f "${outputFilename}"
 
                             # Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
-                            cd ../../
                             make clean COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             make single_threaded_cpu COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             # Clean and build unit tests
-                            cd test/unit
+                            cd tests/unit
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             # Run tests
@@ -170,11 +169,11 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             DEL "${outputFilename}"
 
-                            msbuild ../genn.sln /m /t:single_threaded_cpu_backend /verbosity:minimal /p:Configuration=Release
+                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:minimal /p:Configuration=Release
 
-                            msbuild tests.sln /m /verbosity:minimal /p:Configuration=Release
+                            msbuild tests/tests.sln /m /verbosity:minimal /p:Configuration=Release
 
-                            PUSHD unit
+                            PUSHD tests/unit
                             unit_Release.exe --gtest_output="xml:test_results_unit.xml"
                             POPD
 
