@@ -45,6 +45,44 @@ inline Qualifier operator | (Qualifier a, Qualifier b)
 }
 
 //----------------------------------------------------------------------------
+// GeNN::Type::NumericValue
+//----------------------------------------------------------------------------
+//! ResolvedType::Numeric has various values attached e.g. min and max. These
+//! Cannot be represented using any single type (double can't represent all uint64_t for example)
+//! Therefore, this type is used as a wrapper.
+class GENN_EXPORT NumericValue
+{
+public:
+    NumericValue(double value) : m_Value(value){}
+    NumericValue(uint64_t value) : m_Value(value){}
+    NumericValue(int64_t value) : m_Value(value){}
+    NumericValue(int value) : m_Value(int64_t{value}){}
+    NumericValue(unsigned int value) : m_Value(uint64_t{value}){}
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    template<typename T>
+    T get() const{ return std::get<T>(m_Value); }
+    
+    bool operator == (const NumericValue &other) const;
+    bool operator != (const NumericValue &other) const;
+    bool operator < (const NumericValue &other) const;
+    bool operator > (const NumericValue &other) const;
+    bool operator <= (const NumericValue &other) const;
+    bool operator >= (const NumericValue &other) const;
+
+private:
+    GENN_EXPORT friend void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash);
+
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    std::variant<double, uint64_t, int64_t> m_Value;
+};
+
+
+//----------------------------------------------------------------------------
 // GeNN::Type::ResolvedType
 //----------------------------------------------------------------------------
 struct GENN_EXPORT ResolvedType
@@ -55,9 +93,9 @@ struct GENN_EXPORT ResolvedType
     struct Numeric
     {
         int rank;
-        double min;
-        double max;
-        double lowest;
+        NumericValue min;
+        NumericValue max;
+        NumericValue lowest;
         int maxDigits10;
 
         bool isSigned;
@@ -370,6 +408,7 @@ GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const ResolvedType::Numeric &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const ResolvedType::Value &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const ResolvedType::Pointer &v, boost::uuids::detail::sha1 &hash);

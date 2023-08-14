@@ -27,10 +27,108 @@ const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
-// GeNN::Type::ResolvedType
+// GeNN::Type::NumericValue
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
+bool NumericValue::operator == (const NumericValue &other) const
+{
+    return std::visit(
+        Utils::Overload{
+            [](auto a, auto b)
+            {
+                return a == b;
+            }},
+        m_Value, other.m_Value);
+}
+//----------------------------------------------------------------------------
+bool NumericValue::operator != (const NumericValue &other) const
+{
+    return std::visit(
+        Utils::Overload{
+            [](auto a, auto b)
+            {
+                return a != b;
+            }},
+        m_Value, other.m_Value);
+}
+//----------------------------------------------------------------------------
+bool NumericValue::operator < (const NumericValue &other) const
+{
+    return std::visit(
+        Utils::Overload{
+            [](int64_t a, uint64_t b)
+            {
+                if(a < 0) {
+                    return true;
+                }
+                else {
+                    return (static_cast<uint64_t>(a) < b);
+                }
+            },
+            [](uint64_t a, int64_t b)
+            {
+                if(b < 0) {
+                    return false;
+                }
+                else {
+                    return (a < static_cast<uint64_t>(b));
+                }
+            },
+            [](auto a, auto b)
+            {
+                return a < b;
+            }},
+        m_Value, other.m_Value);
+}
+//----------------------------------------------------------------------------
+bool NumericValue::operator > (const NumericValue &other) const
+{
+    return std::visit(
+        Utils::Overload{
+            [](int64_t a, uint64_t b)
+            {
+                if(a < 0) {
+                    return false;
+                }
+                else {
+                    return (static_cast<uint64_t>(a) > b);
+                }
+            },
+            [](uint64_t a, int64_t b)
+            {
+                if(b < 0) {
+                    return true;
+                }
+                else {
+                    return (a > static_cast<uint64_t>(b));
+                }
+            },
+            [](auto a, auto b)
+            {
+                return a > b;
+            }},
+        m_Value, other.m_Value);
+}
+//----------------------------------------------------------------------------
+bool NumericValue::operator <= (const NumericValue &other) const
+{
+    return !this->operator > (other);
+}
+//----------------------------------------------------------------------------
+bool NumericValue::operator >= (const NumericValue &other) const
+{
+    return !this->operator < (other);
+}
+//----------------------------------------------------------------------------
+void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.m_Value, hash);
+}
+
+//----------------------------------------------------------------------------
+// GeNN::Type::ResolvedType
+//----------------------------------------------------------------------------
 std::string ResolvedType::getName() const
 {
     const std::string qualifier = hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
@@ -170,9 +268,9 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
 void updateHash(const ResolvedType::Numeric &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.rank, hash);
-    Utils::updateHash(v.min, hash);
-    Utils::updateHash(v.max, hash);
-    Utils::updateHash(v.lowest, hash);
+    updateHash(v.min, hash);
+    updateHash(v.max, hash);
+    updateHash(v.lowest, hash);
     Utils::updateHash(v.maxDigits10, hash);
     Utils::updateHash(v.isSigned, hash);
     Utils::updateHash(v.isIntegral, hash);

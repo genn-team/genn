@@ -827,11 +827,11 @@ const Type::ResolvedType &SynapseGroup::getSparseIndType() const
     if(m_NarrowSparseIndEnabled) {
         // If number of target neurons can be represented using a uint8, use this type
         const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
-        if(numTrgNeurons <= Type::Uint8.getNumeric().max) {
+        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
             return Type::Uint8;
         }
         // Otherwise, if they can be represented as a uint16, use this type
-        else if(numTrgNeurons <= Type::Uint16.getNumeric().max) {
+        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
             return Type::Uint16;
         }
     }
