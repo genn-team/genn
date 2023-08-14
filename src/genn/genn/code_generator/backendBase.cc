@@ -1,5 +1,8 @@
 #include "code_generator/backendBase.h"
 
+// Standard C++ includes
+#include <algorithm>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
@@ -81,9 +84,10 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
                          [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
         }
 
-        // **TODO** 64-bit synapse indices
-        env.add(Type::Uint32.addConst(), "_size", "size",
-                {env.addInitialiser("const unsigned int size = $(num_pre) * $(_row_stride);")});
+        const auto indexType = backend.getSynapseIndexType(env.getGroup());
+        const auto indexTypeName = indexType.getName();
+        env.add(indexType.addConst(), "_size", "size",
+                {env.addInitialiser("const " + indexTypeName + " size = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
     }
 
 }
@@ -275,15 +279,11 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         env.add(Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
                 {env.addInitialiser("const unsigned int postBatchOffset = $(num_post) * $(batch);")});
         
-        // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
-        if(backend.areSixtyFourBitSynapseIndicesRequired(env.getGroup())) {
-            assert(false);
-            //os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
-        }
-        else {
-            env.add(Uint32.addConst(), "_syn_batch_offset", "synBatchOffset",
-                    {env.addInitialiser("const unsigned int synBatchOffset = $(_pre_batch_offset) * $(_row_stride);")});
-        }
+        // Calculate batch offsets into synapse arrays
+        const auto indexType = backend.getSynapseIndexType(env.getGroup());
+        const auto indexTypeName = indexType.getName();
+        env.add(indexType.addConst(), "_syn_batch_offset", "synBatchOffset",
+                {env.addInitialiser("const " + indexTypeName + " synBatchOffset = (" + indexTypeName + ")$(_pre_batch_offset) * $(_row_stride);")});
         
         // If group has kernel weights, calculate batch stride over them
         if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
@@ -461,6 +461,27 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                 {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
     }
 }
+//-----------------------------------------------------------------------
+template<typename G, typename S>
+Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMerged<G> &m,
+                                       S getSynapseGroupFn)
+{
+    // If any merged groups have more synapses than can be represented using a uint32, use Uint64
+    if(std::any_of(m.getGroups().cbegin(), m.getGroups().cend(),
+                   [getSynapseGroupFn, &backend](const auto &g)
+                   {
+                       const auto &sg = getSynapseGroupFn(g.get());
+                       const size_t numSynapses = (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg);
+                       return (numSynapses > std::numeric_limits<uint32_t>::max());
+                   }))
+    {
+        return Type::Uint64;
+    }
+    // Otherwise, use Uint64
+    else {
+        return Type::Uint32;
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -472,18 +493,32 @@ BackendBase::BackendBase(const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char *)), m_Preferences(preferences)
 {
 }
-//--------------------------------------------------------------------------
-bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<SynapseGroupInternal> &sg) const
 {
-    // Loop through merged groups and calculate maximum number of synapses
-    size_t maxSynapses = 0;
-    for(const auto &g : sg.getGroups()) {
-        const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
-        maxSynapses = std::max(maxSynapses, numSynapses);
-    }
-
-    // Return true if any high bits are set
-    return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
+    return ::getSynapseIndexType(*this, sg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return g; 
+                                 });
+}
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<CustomUpdateWUInternal> &cg) const
+{
+    return ::getSynapseIndexType(*this, cg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return *(g.getSynapseGroup()); 
+                                 });
+}
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<CustomConnectivityUpdateInternal> &cg) const
+{
+    return ::getSynapseIndexType(*this, cg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return *(g.getSynapseGroup()); 
+                                 });
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const

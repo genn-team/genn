@@ -351,13 +351,14 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 // Add presynaptic index to substitutions
                                 synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
 
+                                const auto indexType = getSynapseIndexType(s);
+                                const auto indexTypeName = indexType.getName();
                                 if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     // Add initialiser strings to calculate synaptic and presynaptic index
-                                    const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;");
+                                    const size_t idSynInit = synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(_row_stride)) + s;");
                                     const size_t idPostInit = synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];");
 
-                                    // **TODO** id_syn can be 64-bit
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
+                                    synEnv.add(indexType.addConst(), "id_syn", "idSyn", {idSynInit});
                                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost", {idPostInit, idSynInit});
                                 }
                                 else {
@@ -365,9 +366,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                     synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
                                     // Add initialiser to calculate synaptic index
-                                    // **TODO** id_syn can be 64-bit
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
+                                    synEnv.add(indexType.addConst(), "id_syn", "idSyn", 
+                                               {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(num_post)) + j;")});
                                 }
 
                                 // Add correct functions for apply synaptic input
@@ -1522,7 +1522,7 @@ void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Hand
 //--------------------------------------------------------------------------
 void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
-    env.getStream() << "for (unsigned int j = 0; j < " << env["num_post"] << "; j++)";
+    env.print("for (unsigned int j = 0; j < $(num_post); j++)";
     {
         CodeStream::Scope b(env.getStream());
 
@@ -1860,9 +1860,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     CodeStream::Scope b(groupEnv.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
 
-                    // **TODO** 64-bit id_syn
-                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
-                               {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
+                    const auto indexType = getSynapseIndexType(sg);
+                    const auto indexTypeName = indexType.getName();
+                    synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                               {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + j;")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
                                {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
                     
@@ -1947,18 +1948,18 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPost, "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
+                    const auto indexType = backend.getSynapseIndexType(env.getGroup());
+                    const auto indexTypeName = indexType.getName();
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        // **TODO** 64-bit index
-                        synEnv.printLine("const uint64_t gid = ($(id_pre) * $(num_post)) + $(id_post);");
+                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);");
 
                         synEnv.getStream() << "if (B(" << synEnv["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                     }
                     else {
-                        synEnv.add(Type::Uint32, "id_syn", "idSyn",
-                                   {synEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(num_post)) + $(id_post);")});
+                        synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                                   {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);")});
                     }
 
-                   
                     if(trueSpike) {
                         sg.generateSpikeUpdate(*this, synEnv, 1, dt);
                     }

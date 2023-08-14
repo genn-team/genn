@@ -1068,7 +1068,7 @@ void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBa
 {
     // Initialise custom connectivity update variables
     genInitWUVarCode<CustomConnectivityUpdateVarAdapter>(
-        backend, env, *this, "$(num_pre) * $(_row_stride", 1, false,
+        backend, env, *this, "$(num_pre) * $(_row_stride)", 1, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler);

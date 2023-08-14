@@ -29,6 +29,7 @@
 // Forward declarations
 namespace GeNN
 {
+class CustomConnectivityUpdateInternal;
 class CustomUpdateInternal;
 class CustomUpdateWUInternal;
 class ModelSpecInternal;
@@ -474,7 +475,14 @@ public:
         return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
     }
 
-    bool areSixtyFourBitSynapseIndicesRequired(const GroupMerged<SynapseGroupInternal> &sg) const;
+    //! Get the type to use for synaptic indices within a merged synapse group
+    Type::ResolvedType getSynapseIndexType(const GroupMerged<SynapseGroupInternal> &sg) const;
+
+    //! Get the type to use for synaptic indices within a merged custom weight update group
+    Type::ResolvedType getSynapseIndexType(const GroupMerged<CustomUpdateWUInternal> &sg) const;
+
+    //! Get the type to use for synaptic indices within a merged custom connectivity update group
+    Type::ResolvedType getSynapseIndexType(const GroupMerged<CustomConnectivityUpdateInternal> &cg) const;
 
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;

@@ -147,11 +147,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
 
     // Calculate index of start of row
+    const auto indexType = backend.getSynapseIndexType(*this);
+    const auto indexTypeName = indexType.getName();
     updateEnv.add(Type::Uint32.addConst(), "_row_start_idx", "rowStartIdx",
                   {updateEnv.addInitialiser("const unsigned int rowStartIdx = $(id_pre) * $(_row_stride);")});
 
-    updateEnv.add(Type::Uint32.addConst(), "_syn_stride", "synStride",
-                  {updateEnv.addInitialiser("const unsigned int synStride = $(num_pre) * $(_row_stride);")});
+    updateEnv.add(indexType.addConst(), "_syn_stride", "synStride",
+                  {updateEnv.addInitialiser("const " + indexTypeName + " synStride = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
 
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
@@ -350,14 +352,14 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     Transpiler::ErrorHandler errorHandler("Custom connectivity update '" + getArchetype().getName() + "' row update code");
     prettyPrintStatements(getArchetype().getRowUpdateCodeTokens(), getTypeContext(), updateEnv, errorHandler, 
                           // Within for_each_synapse loops, define the following types
-                          [this](auto &env, auto &errorHandler)
+                          [&indexType, this](auto &env, auto &errorHandler)
                           {
                               // Add type of remove synapse function
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "remove_synapse", 0}, Type::ResolvedType::createFunction(Type::Void, {}), errorHandler);
 
                               // Add typed indices
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_post", 0}, Type::Uint32.addConst(), errorHandler);
-                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, Type::Uint32.addConst(), errorHandler);
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, indexType.addConst(), errorHandler);
 
                               // Add types for variables and variable references accessible within loop
                               // **TODO** filter
@@ -366,7 +368,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);
                           },
-                          [batchSize, &backend, &removeSynapseStream, this](auto &env, auto generateBody)
+                          [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
                               env.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
                               {
@@ -375,8 +377,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
                                   // Add postsynaptic and synaptic indices
                                   bodyEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[$(_row_start_idx) + j]");
-                                  bodyEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
-                                              {bodyEnv.addInitialiser("const unsigned int idx = $(_row_start_idx) + j;")});
+                                  bodyEnv.add(indexType.addConst(), "id_syn", "idx",
+                                              {bodyEnv.addInitialiser("const " + indexTypeName + " idx = (" + indexTypeName + ")$(_row_start_idx) + j;")});
 
                                   // Add postsynaptic and synaptic variables
                                   bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>(backend.getDeviceVarPrefix(), "$(id_syn)");

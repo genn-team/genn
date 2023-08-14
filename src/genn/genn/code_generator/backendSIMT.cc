@@ -1646,17 +1646,15 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                         assert(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK);
                         assert(sg.getArchetype().getKernelSize().empty()) ;
 
-                        // Figure out required type for indexing into bitmask
-                        const std::string indexType = areSixtyFourBitSynapseIndicesRequired(sg) ? "uint64_t" : "unsigned int";
-
                         // If there is row-building code in this snippet
+                        const auto indexTypeName = getSynapseIndexType(sg).getName();
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            addSynapse << "const " << indexType << " rowStartGID = $(id) * (" << indexType << ")($_row_stride);" << std::endl;
+                            addSynapse << "const " << indexTypeName << " rowStartGID = $(id) * (" << indexTypeName << ")($_row_stride);" << std::endl;
                             addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
                         // Otherwise
                         else {
-                            addSynapse << "const " << indexType << " colStartGID = $(id);" << std::endl;
+                            addSynapse << "const " << indexTypeName << " colStartGID = $(id);" << std::endl;
                             addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(colStartGID + (($(0)) * $(_row_stride))) / 32], 0x80000000 >> ((colStartGID + (($(0)) * $(_row_stride))) & 31));" << std::endl;
                         }
                     }
@@ -1836,7 +1834,8 @@ void BackendSIMT::genSynapseVariableRowInit(EnvironmentExternalBase &env, Handle
     EnvironmentExternal varEnv(env);
 
     // **TODO** 64-bit id_syn
-    varEnv.add(Type::Uint32.addConst(), "id_syn", "($(id_pre) * $(_row_stride)) + $(id)");
+    varEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
+               {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(id);")});
     handler(varEnv);
 }
 //--------------------------------------------------------------------------

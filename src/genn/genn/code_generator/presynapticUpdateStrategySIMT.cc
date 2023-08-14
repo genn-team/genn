@@ -98,11 +98,13 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
 
         env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") + "];");
 
+        const auto indexType = backend.getSynapseIndexType(sg);
+        const auto indexTypeName = indexType.getName();
         if(numThreadsPerSpike > 1) {
-            env.printLine("unsigned int synAddress = (preInd * $(_row_stride)) + thread;");
+            env.printLine(indexTypeName + " synAddress = ((" + indexTypeName + ")preInd * $(_row_stride)) + thread;");
         }
         else {
-            env.printLine("unsigned int synAddress = preInd * $(_row_stride);");
+            env.printLine(indexTypeName + " synAddress = (" + indexTypeName + ")preInd * $(_row_stride);");
         }
         env.printLine("const unsigned int npost = $(_row_length)[preInd];");
 
@@ -135,7 +137,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd");
             synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                        {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
-            synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress");
+            synEnv.add(indexType.addConst(), "id_syn", "synAddress");
 
             synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
@@ -261,14 +263,11 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
             env.print("if ($(id) < $(_row_stride))");
             {
                 CodeStream::Scope b(env.getStream());
+                const auto indexType = backend.getSynapseIndexType(sg);
+                const auto indexTypeName = indexType.getName();
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    // If this can only be represented using a 64-bit number
-                    if(backend.areSixtyFourBitSynapseIndicesRequired(sg)) {
-                        env.printLine("const uint64_t gid = ($(_sh_spk" +  eventSuffix + ")[j] * (uint64_t)$(_row_stride)) + $(id);");
-                    }
-                    else {
-                        env.printLine("const unsigned int gid = ($(_sh_spk" +  eventSuffix + ")[j] * $(_row_stride)) + $(id);");
-                    }
+                    env.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(_sh_spk" +  eventSuffix + ")[j] * $(_row_stride)) + $(id);");
+                    
                 }
 
                 /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
@@ -295,8 +294,8 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
 
                 synEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
-                synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
-                           {synEnv.addInitialiser( "const unsigned int synAddress = ($(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
+                synEnv.add(indexType.addConst(), "id_syn", "synAddress",
+                           {synEnv.addInitialiser( "const " + indexTypeName + " synAddress = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.printLine("const unsigned int npost = $(_sh_row_length)[j];");
