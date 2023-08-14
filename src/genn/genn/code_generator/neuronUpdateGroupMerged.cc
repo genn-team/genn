@@ -500,7 +500,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables here as this is when they are copied between delay slots
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l", true, false,
+        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l", true,
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
