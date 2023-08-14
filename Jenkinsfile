@@ -153,7 +153,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
 
                             # Run tests
-                            ./test_coverage --gtest_output="xml:test_results_unit.xml 1>> "${outputFilename}" 2>&1
+                            ./test_coverage --gtest_output="xml:test_results_unit.xml" 1>> "${outputFilename}" 2>&1
                             """;
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
