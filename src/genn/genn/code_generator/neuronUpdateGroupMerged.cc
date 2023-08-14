@@ -102,7 +102,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
         psmEnv.getStream() << "linSyn += *denDelayFront;" << std::endl;
 
         // Zero delay buffer slot
-        psmEnv.getStream() << "*denDelayFront = " << writePreciseLiteral(0.0, getScalarType()) << ";" << std::endl;
+        psmEnv.getStream() << "*denDelayFront = " << Type::writeNumeric(0.0, getScalarType()) << ";" << std::endl;
     }
 
     // Add parameters, derived parameters and extra global parameters to environment
@@ -172,7 +172,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
     outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
 
     // Zero it again
-    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + writePreciseLiteral(0.0, getScalarType()) + ";");
+    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + Type::writeNumeric(0.0, getScalarType()) + ";");
 }
 
 //----------------------------------------------------------------------------
@@ -476,7 +476,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     for (const auto &v : nm->getAdditionalInputVars()) {
         const auto resolvedType = v.type.resolve(getTypeContext());
         neuronEnv.add(resolvedType, v.name, "_" + v.name,
-                      {neuronEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + v.value + ";")});
+                      {neuronEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
     }
 
     // Substitute parameter and derived parameter names

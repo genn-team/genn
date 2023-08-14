@@ -92,40 +92,6 @@ void validateVecNames(const std::vector<T> &vec, const std::string &description)
     }
 }
 
-//! Write a floating point value to a stream - setting the precision so no digits are lost
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-void writePreciseString(std::ostream &os, T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
-{
-    // Cache previous precision
-    const std::streamsize previousPrecision = os.precision();
-
-    // Set scientific formatting
-    os << std::scientific;
-
-    // Set precision
-    os << std::setprecision(maxDigits10);
-
-    // Write value to stream
-    os << value;
-
-    // Reset to default formatting
-    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
-    os.unsetf(std::ios_base::floatfield);
-    //os << std::defaultfloat;
-
-    // Restore previous precision
-    os << std::setprecision(previousPrecision);
-}
-
-//! Write a floating point value to a string - setting the precision so no digits are lost
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-inline std::string writePreciseString(T value, int maxDigits10 = std::numeric_limits<T>::max_digits10)
-{
-    std::stringstream s;
-    writePreciseString(s, value, maxDigits10);
-    return s.str();
-}
-
 //! Boilerplate for overloading base std::visit
 template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
 template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in

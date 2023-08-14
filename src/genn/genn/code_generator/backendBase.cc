@@ -623,13 +623,12 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseCo
 std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const
 {
     // If reduction is a sum, initialise to zero
-    assert(type.isNumeric());
     if(access & VarAccessModeAttribute::SUM) {
-        return "0";
+        return Type::writeNumeric(0, type);
     }
     // Otherwise, reduction is a maximum operation, return lowest value for type
     else if(access & VarAccessModeAttribute::MAX) {
-        return Utils::writePreciseString(type.getNumeric().lowest);
+        return Type::writeNumeric(type.getNumeric().lowest, type);
     }
     else {
         assert(false);

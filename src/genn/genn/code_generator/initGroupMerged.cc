@@ -220,7 +220,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     backend.genVariableInit(groupEnv, "num_neurons", "id",
         [batchSize, this] (EnvironmentExternalBase &varEnv)
         {
-            genVariableFill(varEnv, "_out_post", writePreciseLiteral(0.0, getScalarType()), 
+            genVariableFill(varEnv, "_out_post", Type::writeNumeric(0.0, getScalarType()), 
                             "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, batchSize);
 
         });
@@ -233,7 +233,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         backend.genVariableInit(groupEnv, "num_neurons", "id",
             [batchSize, this](EnvironmentExternalBase &varEnv)
             {
-                genVariableFill(varEnv, "_den_delay", writePreciseLiteral(0.0, getScalarType()),
+                genVariableFill(varEnv, "_den_delay", Type::writeNumeric(0.0, getScalarType()),
                                 "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
                                 batchSize, true, getArchetype().getMaxDendriticDelayTimesteps());
             });
@@ -267,7 +267,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
     backend.genVariableInit(groupEnv, "num_neurons", "id",
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {
-                                genVariableFill(varEnv, "_out_pre", writePreciseLiteral(0.0, getScalarType()),
+                                genVariableFill(varEnv, "_out_pre", Type::writeNumeric(0.0, getScalarType()),
                                                 "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, batchSize);
                             });
 }

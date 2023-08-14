@@ -55,6 +55,7 @@ bool NumericValue::operator != (const NumericValue &other) const
 //----------------------------------------------------------------------------
 bool NumericValue::operator < (const NumericValue &other) const
 {
+    // **YUCK** C++20 std::cmp_greater would do this in one line
     return std::visit(
         Utils::Overload{
             [](int64_t a, uint64_t b)
@@ -84,6 +85,7 @@ bool NumericValue::operator < (const NumericValue &other) const
 //----------------------------------------------------------------------------
 bool NumericValue::operator > (const NumericValue &other) const
 {
+    // **YUCK** C++20 std::cmp_less would do this in one line
     return std::visit(
         Utils::Overload{
             [](int64_t a, uint64_t b)
@@ -119,11 +121,6 @@ bool NumericValue::operator <= (const NumericValue &other) const
 bool NumericValue::operator >= (const NumericValue &other) const
 {
     return !this->operator < (other);
-}
-//----------------------------------------------------------------------------
-void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.m_Value, hash);
 }
 
 //----------------------------------------------------------------------------
@@ -263,6 +260,39 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
             }
         }
     }
+}
+//----------------------------------------------------------------------------
+std::string writeNumeric(const NumericValue &value, const ResolvedType &type)
+{
+    const auto &numeric = type.getNumeric();
+    std::visit(
+        Utils::Overload{
+            [&numeric](double value) 
+            {
+                // Set scientific formatting
+                std::ostringstream os;
+                os << std::scientific;
+
+                // Set precision
+                os << std::setprecision(numeric.maxDigits10);
+
+                // Write value to stream
+                os << value;
+
+                // Return string stream contents with literal suffix
+                return os.str() + numeric.literalSuffix;
+            },
+            // Otherwise, if it's an integer value, convert to string followed by literal suffix
+            [&numeric](auto value) 
+            {
+                return std::to_string(value) + numeric.literalSuffix;
+            }},
+        value.get());
+}
+//----------------------------------------------------------------------------
+void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.get(), hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const ResolvedType::Numeric &v, boost::uuids::detail::sha1 &hash)

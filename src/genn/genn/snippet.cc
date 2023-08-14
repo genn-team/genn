@@ -14,25 +14,6 @@ Base::EGP::EGP(const std::string &n, const std::string &t)
 {
 }
 
-//----------------------------------------------------------------------------
-// GeNN::Snippet::Base::ParamVal
-//----------------------------------------------------------------------------
- Base::ParamVal::ParamVal(const std::string &n, const Type::ResolvedType &t, const std::string &v) 
-:   name(n), type(t), value(v)
-{}
- //----------------------------------------------------------------------------
- Base::ParamVal::ParamVal(const std::string &n, const Type::ResolvedType &t, double v)
-:   ParamVal(n, t, Utils::writePreciseString(v))
-{}
- //----------------------------------------------------------------------------
- Base::ParamVal::ParamVal(const std::string &n, const std::string &t, const std::string &v)
-:   name(n), type(t), value(v)
-{}
- //----------------------------------------------------------------------------
- Base::ParamVal::ParamVal(const std::string &n, const std::string &t, double v)
-:   ParamVal(n, t, Utils::writePreciseString(v))
-{}
-
  //----------------------------------------------------------------------------
 // GeNN::Snippet::Base
 //----------------------------------------------------------------------------

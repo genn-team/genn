@@ -453,7 +453,7 @@ public:
                  scalarType, name + fieldSuffix,
                  [getFieldValue, scalarType](const auto &g, size_t i)
                  {
-                     return writePreciseLiteral(getFieldValue(g, i), scalarType);
+                     return Type::writeNumeric(getFieldValue(g, i), scalarType);
                  });
     }
 
@@ -473,8 +473,8 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(this->getGroup().getScalarType().addConst(), p, 
-                    writePreciseLiteral(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p),
-                                        this->getGroup().getScalarType()));
+                    Type::writeNumeric(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p),
+                                       this->getGroup().getScalarType()));
             }
         }
     }
@@ -495,8 +495,8 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
                 add(this->getGroup().getScalarType().addConst(), d.name, 
-                    writePreciseLiteral(std::invoke(getDerivedParamValues, this->getGroup().getArchetype()).at(d.name),
-                                        this->getGroup().getScalarType()));
+                    Type::writeNumeric(std::invoke(getDerivedParamValues, this->getGroup().getArchetype()).at(d.name),
+                                       this->getGroup().getScalarType()));
             }
         }
     }
@@ -557,7 +557,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(this->getGroup().getScalarType().addConst(), p, 
-                    writePreciseLiteral(connectInit.getParams().at(p), this->getGroup().getScalarType()));
+                    Type::writeNumeric(connectInit.getParams().at(p), this->getGroup().getScalarType()));
             }
         }
     }
@@ -581,7 +581,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(this->getGroup().getScalarType().addConst(), d.name, 
-                    writePreciseLiteral(connectInit.getDerivedParams().at(d.name), this->getGroup().getScalarType()));
+                    Type::writeNumeric(connectInit.getDerivedParams().at(d.name), this->getGroup().getScalarType()));
             }
         }
     }
@@ -603,7 +603,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
                 add(this->getGroup().getScalarType().addConst(), p.first, 
-                    writePreciseLiteral(p.second, this->getGroup().getScalarType()));
+                    Type::writeNumeric(p.second, this->getGroup().getScalarType()));
             }
         }
     }
@@ -625,7 +625,7 @@ public:
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
                 add(this->getGroup().getScalarType().addConst(), p.first, 
-                    writePreciseLiteral(p.second, this->getGroup().getScalarType()));
+                    Type::writeNumeric(p.second, this->getGroup().getScalarType()));
             }
         }
     }

@@ -51,7 +51,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
     // Calculate axonal delays to add to (somatic) spike times and subsitute in presynaptic spike and spike-like event times
     const std::string timeStr = sg.getTimeType().getName();
-    const std::string axonalDelayMs = writePreciseLiteral(dt * (double)(sg.getArchetype().getDelaySteps() + 1u), sg.getTimeType());
+    const std::string axonalDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getDelaySteps() + 1u), sg.getTimeType());
     const bool preDelay = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired();
     const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
     const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_pre)");
@@ -65,7 +65,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_set)[" + prevPreSTIndex + "];")});
 
     // Calculate backprop delay to add to (somatic) spike times and substitute in postsynaptic spike times
-    const std::string backPropDelayMs = writePreciseLiteral(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
+    const std::string backPropDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
     const bool postDelay = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired();
     const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");
     const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDuplication::DUPLICATE, "$(id_post)");

@@ -606,9 +606,9 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         definitionsVar << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
         definitionsVar << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
         definitionsVar << std::endl;
-        runnerVarDecl << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
-        runnerVarDecl << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << writePreciseLiteral(0.0, model.getPrecision()) << ", " << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
-        runnerVarDecl << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << writePreciseLiteral(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
         runnerVarDecl << std::endl;
 
         // If no seed is specified, use system randomness to generate seed sequence
@@ -1767,7 +1767,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         }
         // Advance time
         runner << "iT++;" << std::endl;
-        runner << "t = iT * " << writePreciseLiteral(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
+        runner << "t = iT * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
         // Write step time finalise logic to runner
         runner << runnerStepTimeFinaliseStream.str();

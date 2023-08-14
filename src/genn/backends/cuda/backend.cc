@@ -331,7 +331,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
             EnvironmentExternal funcEnv(neuronUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
             funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                        Type::writeNumeric(model.getDT(), model.getTimePrecision()));
        
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
             if(model.getBatchSize() > 1) {
@@ -371,7 +371,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
         EnvironmentExternal funcEnv(neuronUpdateEnv);
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                    Type::writeNumeric(model.getDT(), model.getTimePrecision()));
         funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
         if(model.getBatchSize() > 1) {
             funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -484,7 +484,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
             funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                        Type::writeNumeric(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -510,7 +510,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
             funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                        Type::writeNumeric(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -533,7 +533,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
             EnvironmentExternal funcEnv(synapseUpdateEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
             funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                        Type::writeNumeric(model.getDT(), model.getTimePrecision()));
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 funcEnv.add(Type::Uint32.addConst(), "batch", "batch",
@@ -663,7 +663,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 EnvironmentExternal funcEnv(customUpdateEnv);
                 funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
                 funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                            writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                            Type::writeNumeric(model.getDT(), model.getTimePrecision()));
                 funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
@@ -694,7 +694,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 EnvironmentExternal funcEnv(customUpdateEnv);
                 funcEnv.add(model.getTimePrecision().addConst(), "t", "t");
                 funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                            writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                            Type::writeNumeric(model.getDT(), model.getTimePrecision()));
                 funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
                 funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
@@ -852,7 +852,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         
         EnvironmentExternal funcEnv(initEnv);
         funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                    Type::writeNumeric(model.getDT(), model.getTimePrecision()));
 
         funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
         genInitializeKernel(funcEnv, modelMerged, memorySpaces, idInitStart);
@@ -871,7 +871,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
             EnvironmentExternal funcEnv(initEnv);
             funcEnv.add(model.getTimePrecision().addConst(), "dt", 
-                        writePreciseLiteral(model.getDT(), model.getTimePrecision()));
+                        Type::writeNumeric(model.getDT(), model.getTimePrecision()));
 
             funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
             genInitializeSparseKernel(funcEnv, modelMerged, numStaticInitThreads, memorySpaces, idSparseInitStart);

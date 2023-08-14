@@ -627,7 +627,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::EGP>(m, "EGP")
         .def(pybind11::init<const std::string&, const std::string&>())
-        .def(pybind11::init<const std::string&, Type::ResolvedType&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
         .def_readonly("name", &Snippet::Base::EGP::name)
         .def_readonly("type", &Snippet::Base::EGP::type);
     
@@ -635,8 +635,8 @@ PYBIND11_MODULE(genn, m)
     // genn.ParamVal
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::ParamVal>(m, "ParamVal")
-        .def(pybind11::init<const std::string&, const std::string&, const std::string&>())
         .def(pybind11::init<const std::string&, const std::string&, double>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, double>>())
         .def_readonly("name", &Snippet::Base::ParamVal::name)
         .def_readonly("type", &Snippet::Base::ParamVal::type)
         .def_readonly("value", &Snippet::Base::ParamVal::value);

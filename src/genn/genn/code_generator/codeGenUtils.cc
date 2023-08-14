@@ -41,9 +41,9 @@ namespace GeNN::CodeGenerator
 void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix)
 {
     const auto &numeric = type.getNumeric();
-    os << "#define " << prefix << "_MIN " << Utils::writePreciseString(numeric.min, numeric.maxDigits10) << numeric.literalSuffix << std::endl << std::endl;
+    os << "#define " << prefix << "_MIN " << Type::writeNumeric(numeric.min, type) << std::endl;
 
-    os << "#define " << prefix << "_MAX " << Utils::writePreciseString(numeric.max, numeric.maxDigits10) << numeric.literalSuffix << std::endl;
+    os << "#define " << prefix << "_MAX " << Type::writeNumeric(numeric.max, type) << std::endl;
 }
 //----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 

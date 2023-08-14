@@ -124,7 +124,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
         
         Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
@@ -307,7 +307,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
         // Synapse dynamics
         {
@@ -546,7 +546,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
              funcEnv.add(Type::Uint32.addConst(), "batch", "0");
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
@@ -860,7 +860,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         CodeStream::Scope b(initEnv.getStream());
         EnvironmentExternal funcEnv(initEnv);
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
-                    writePreciseLiteral(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
         Timer t(funcEnv.getStream(), "init", model.isTimingEnabled());
 

@@ -64,7 +64,11 @@ public:
     //----------------------------------------------------------------------------
     template<typename T>
     T get() const{ return std::get<T>(m_Value); }
+    const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }
     
+    //----------------------------------------------------------------------------
+    // Operators
+    //----------------------------------------------------------------------------
     bool operator == (const NumericValue &other) const;
     bool operator != (const NumericValue &other) const;
     bool operator < (const NumericValue &other) const;
@@ -73,8 +77,6 @@ public:
     bool operator >= (const NumericValue &other) const;
 
 private:
-    GENN_EXPORT friend void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash);
-
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
@@ -404,6 +406,9 @@ GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 
 //! Apply C rules to get common type between numeric types a and b
 GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b);
+
+//! Write numeric value to string, formatting correctly for type
+GENN_EXPORT std::string writeNumeric(const NumericValue &value, const ResolvedType &type);
 
 //----------------------------------------------------------------------------
 // updateHash overrides
