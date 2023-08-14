@@ -151,10 +151,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
                         else {
                             // Run tests
-                            // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
-                            CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
+                            CALL run_tests.bat >> "${outputFilename}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
 
@@ -191,10 +190,11 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
 
                         // Build PyGeNN module
+                        // **NOTE** we have to install
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        python setup.py develop 1>>\"${uniqueMsg}\" 2>&1
+                        python setup.py install 1>>\"${outputFilename}\" 2>&1
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
@@ -262,8 +262,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             script = """
                             . ${WORKSPACE}/venv/bin/activate
 
-                            python setup.py clean --all 1>> "${uniqueMsg}" 2>> "${uniqueMsg}
-                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
+                            python setup.py clean --all 1>> "${outputFilename}" 2>&1
+                            python setup.py bdist_wheel -d . 1>> "${outputFilename}" 2>&1
                             """
 
                             def wheelStatusCode = sh script:script, returnStatus:true
@@ -312,7 +312,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             copy /Y lib\\genn*Release_DLL.* pygenn
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
+                            python setup.py bdist_wheel -d . >> "${outputFilename}" 2>&1
                             """
 
                             def wheelStatusCode = bat script:script, returnStatus:true
