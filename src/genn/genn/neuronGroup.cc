@@ -520,6 +520,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
     //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
     Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSpikeRecordingEnabled(), hash);
     Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
@@ -549,6 +550,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
     Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSimRNGRequired(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
