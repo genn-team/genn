@@ -133,8 +133,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                def outputFilename = "${WORKSPACE}/msg_${NODE_NAME}.txt";
-                def coveragePython = "${WORKSPACE}/coverage_python_${NODE_NAME}.xml";
+                def outputFilename = "${WORKSPACE}/genn/output_${NODE_NAME}.txt";
+                def compileOutputFilename = "${WORKSPACE}/genn/compile_${NODE_NAME}.txt";
+                def coveragePython = "${WORKSPACE}/genn/coverage_python_${NODE_NAME}.xml";
                 def coverageCPP = "${WORKSPACE}/genn/coverage_${NODE_NAME}.txt";
                 buildStep("Running unit tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
@@ -207,7 +208,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Build dynamic LibGeNN with coverage support
                         echo "Building LibGeNN";
                         def commandsLibGeNN = """
-                        make DYNAMIC=1 COVERAGE=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
+                        make DYNAMIC=1 COVERAGE=1 LIBRARY_DIRECTORY=`pwd`/pygenn 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
                         """;
                         def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
                         if (statusLibGeNN != 0) {
@@ -218,7 +219,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        python setup.py develop --coverage 1>> "${outputFilename}" 2>&1
+                        python setup.py develop --coverage 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
@@ -365,17 +366,19 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Archiving output (${NODE_NAME})") {
                     dir("genn") {
-                        archive outputFilename;
+                        def outputPattern = "output_" + env.NODE_NAME + ".txt";
+                        archive outputPattern;
 
                         // Run 'next-generation' warning plugin on results
+                        def compilePattern = "compile_" + env.NODE_NAME + ".txt";
                         if("mac" in nodeLabel) {
-                            recordIssues enabledForFailure: true, tool: clang(pattern: outputFilename);
+                            recordIssues enabledForFailure: true, tool: clang(pattern: compilePattern);
                         }
                         else if("windows" in nodeLabel){
-                            recordIssues enabledForFailure: true, tool: msBuild(pattern: outputFilename);
+                            recordIssues enabledForFailure: true, tool: msBuild(pattern: compilePattern);
                         }
                         else {
-                            recordIssues enabledForFailure: true, tool: gcc4(pattern: outputFilename);
+                            recordIssues enabledForFailure: true, tool: gcc4(pattern: compilePattern);
                         }
 
                     }
