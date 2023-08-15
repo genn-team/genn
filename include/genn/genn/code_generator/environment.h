@@ -631,13 +631,14 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, GetVarIndexFn getIndexFn, const std::string &fieldSuffix = "")
+    void addVars(const std::string &arrayPrefix, GetVarIndexFn getIndexFn, 
+                 const std::string &fieldSuffix = "", bool readOnly = false)
     {
         // Loop through variables
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
                      [arrayPrefix, v](const auto &g, size_t) 
@@ -649,21 +650,23 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, const std::string &fieldSuffix = "")
+    void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, 
+                 const std::string &fieldSuffix = "", bool readOnly = false)
     {
         addVars<A>(arrayPrefix, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
-                   fieldSuffix);
+                   fieldSuffix, readOnly);
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, GetVarRefIndexFn<A> getIndexFn, const std::string &fieldSuffix = "")
+    void addVarRefs(const std::string &arrayPrefix, GetVarRefIndexFn<A> getIndexFn, 
+                    const std::string &fieldSuffix = "", bool readOnly = false)
     {
         // Loop through variable references
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
                      [arrayPrefix, v](const auto &g, size_t) 
@@ -676,7 +679,8 @@ public:
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, const std::string &indexSuffix, const std::string &fieldSuffix = "")
+    void addVarRefs(const std::string &arrayPrefix, const std::string &indexSuffix, 
+                    const std::string &fieldSuffix = "", bool readOnly = false)
     {
         addVarRefs<A>(arrayPrefix, [&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
                       fieldSuffix);

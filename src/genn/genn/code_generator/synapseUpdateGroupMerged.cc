@@ -33,13 +33,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_pre)");
-        });
+        }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_post)");
-        });
+        }, "", true);
 
     
     // If this synapse group has a kernel
