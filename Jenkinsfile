@@ -135,6 +135,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 def outputFilename = "${WORKSPACE}/msg_${NODE_NAME}.txt";
                 def coveragePython = "${WORKSPACE}/coverage_python_${NODE_NAME}.xml";
+                def coverageCPP = "${WORKSPACE}/genn/coverage_${NODE_NAME}.txt";
                 buildStep("Running unit tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
                     dir("genn") {
@@ -248,22 +249,33 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                /*buildStep("Uploading coverage (${NODE_NAME})") {
+                buildStep("Uploading coverage (${NODE_NAME})") {
                     dir("genn/tests") {
                         if(isUnix()) {
-                            // If Python coverage was emitted
-                            if(fileExists(coveragePython)) {
-                                // Upload to code cov
-                                withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
-                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + uniqueCoverage + ' -t $CODECOV_TOKEN';
+                            // Run script to gather together GCOV coverage from unit and feature tests
+                            sh './gather_coverage.sh'
+                            
+                            // Upload to code cov
+                            withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
+                                // Upload Python coverage if it was produced
+                                if(fileExists(coveragePython)) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + coveragePython + ' -t $CODECOV_TOKEN';
                                 }
-                            }
-                            else {
-                                echo uniqueCoverage + " doesn't exist!";
+                                else {
+                                    echo coveragePython + " doesn't exist!";
+                                }
+                                
+                                // Upload CPP coverage if it was produced
+                                if(fileExists(coverageCPP)) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + coverageCPP + ' -t $CODECOV_TOKEN';
+                                }
+                                else {
+                                    echo coverageCPP + " doesn't exist!";
+                                }
                             }
                         }
                     }
-                }*/
+                }
 
                 buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
