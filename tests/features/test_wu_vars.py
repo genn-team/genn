@@ -209,7 +209,7 @@ def test_wu_var(backend, precision, fuse, delay):
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 
-pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("fuse", [True, False])
 @pytest.mark.parametrize("delay", [0, 20])
@@ -351,4 +351,4 @@ def test_wu_var_cont(backend, precision, fuse, delay):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 
 if __name__ == '__main__':
-    test_wu_var_cont("cuda", types.Float, True, 20)
+    test_wu_var_cont("cuda", types.Float, True, 0)
