@@ -214,11 +214,10 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
 
                         // Build PyGeNN module
-                        // **NOTE** we have to install
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pip install --editable . --install-option="--coverage" 1>> "${outputFilename}" 2>&1
+                        python setup.py develop --coverage 1>> "${outputFilename}" 2>&1
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
