@@ -88,6 +88,12 @@ extension_kwargs = {
 if WIN:
     extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
 
+if coverage_build:
+    if LINUX:
+        extension_kwargs["extra_compile_args"].extend(["--coverage"])
+    elif MAC
+        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate -fcoverage-mapping"])
+
 # Extend these kwargs for extensions which link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
