@@ -218,7 +218,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pip install --install-option="--coverage" --editable . 1>> "${outputFilename}" 2>&1
+                        pip install --editable . --install-option="--coverage" 1>> "${outputFilename}" 2>&1
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
