@@ -65,7 +65,8 @@ def test_spike_times(backend, precision):
                                              {}, {})
 
     # Add synapse models testing various ways of reading presynaptic WU vars
-    float_min = np.finfo(np.float32).min
+    np_scalar = np.float32 if precision == types.Float else np.float64
+    float_min = np.finfo(np_scalar).min
     s_pre_pop = model.add_synapse_population(
         "PreSynapses", "SPARSE", 20,
         pre_n_pop, post_n_pop,
@@ -113,4 +114,4 @@ def test_spike_times(backend, precision):
 
 
 if __name__ == '__main__':
-    test_spike_times("cuda", types.Float)
+    test_spike_times("single_threaded_cpu", types.Double)
