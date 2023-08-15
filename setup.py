@@ -91,8 +91,9 @@ if WIN:
 if coverage_build:
     if LINUX:
         extension_kwargs["extra_compile_args"].extend(["--coverage"])
+        extension_kwargs["extra_link_args"].extend(["--coverage"])
     elif MAC:
-        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate -fcoverage-mapping"])
+        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
 
 # Extend these kwargs for extensions which link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
