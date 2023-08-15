@@ -203,10 +203,10 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Installing PyGeNN (${NODE_NAME})") {
                     dir("genn") {
-                        // Build dynamic LibGeNN
+                        // Build dynamic LibGeNN with coverage support
                         echo "Building LibGeNN";
                         def commandsLibGeNN = """
-                        make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
+                        make DYNAMIC=1 COVERAGE=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
                         """;
                         def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
                         if (statusLibGeNN != 0) {
@@ -218,7 +218,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pip install -e . 1>> "${outputFilename}" 2>&1
+                        pip install --install-option="--coverage" --editable . 1>> "${outputFilename}" 2>&1
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
