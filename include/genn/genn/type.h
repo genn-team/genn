@@ -307,7 +307,7 @@ struct GENN_EXPORT ResolvedType
     template<typename T>
     static ResolvedType createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0}, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), device, Numeric{rank, std::numeric_limits<T>::min(), static_cast<double>(std::numeric_limits<T>::max()),
+        return ResolvedType{Value{name, sizeof(T), device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
                                                                    std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
                                                                    std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
                             qualifiers};

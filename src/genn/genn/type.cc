@@ -264,30 +264,59 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
 //----------------------------------------------------------------------------
 std::string writeNumeric(const NumericValue &value, const ResolvedType &type)
 {
+    // Get numeric type
     const auto &numeric = type.getNumeric();
-    return std::visit(
-        Utils::Overload{
-            [&numeric](double value) 
-            {
-                // Set scientific formatting
-                std::ostringstream os;
-                os << std::scientific;
 
-                // Set precision
-                os << std::setprecision(numeric.maxDigits10);
+    // Check limits
+    if(value < numeric.lowest) {
+        throw std::runtime_error("Numeric value too small to be represented using " + type.getName());
+    }
+    else if(value > numeric.max) {
+        throw std::runtime_error("Numeric value too large to be represented using " + type.getName());
+    }
 
-                // Write value to stream
-                os << value;
+    // If type is integral
+    if(numeric.isIntegral) {
+        return std::visit(
+            Utils::Overload{
+                // Convert double value to integer, then to string and add suffix
+                [&numeric](double value) 
+                {
+                    return std::to_string(static_cast<int64_t>(value)) + numeric.literalSuffix;
+                },
+                // Otherwise, if it's an integer value, convert to string followed by literal suffix
+                [&numeric](auto value) 
+                {
+                    return std::to_string(value) + numeric.literalSuffix;
+                }},
+            value.get());
+    }
+    // Otherwise, if type is floating point
+    else {
+         return std::visit(
+            Utils::Overload{
+                [&numeric](double value) 
+                {
+                    // Set scientific formatting
+                    std::ostringstream os;
+                    os << std::scientific;
 
-                // Return string stream contents with literal suffix
-                return os.str() + numeric.literalSuffix;
-            },
-            // Otherwise, if it's an integer value, convert to string followed by literal suffix
-            [&numeric](auto value) 
-            {
-                return std::to_string(value) + numeric.literalSuffix;
-            }},
-        value.get());
+                    // Set precision
+                    os << std::setprecision(numeric.maxDigits10);
+
+                    // Write value to stream
+                    os << value;
+
+                    // Return string stream contents with literal suffix
+                    return os.str() + numeric.literalSuffix;
+                },
+                // Otherwise, if it's an integer value, convert to string and add a .0 and suffix
+                [&numeric](auto value) 
+                {
+                    return std::to_string(value) + ".0" + numeric.literalSuffix;
+                }},
+            value.get());
+    }
 }
 //----------------------------------------------------------------------------
 void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash)
