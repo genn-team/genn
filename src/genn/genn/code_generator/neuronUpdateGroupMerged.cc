@@ -33,13 +33,16 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
 
+    // Add neuron variable references
+    csEnv.addLocalVarRefs<CurrentSourceNeuronVarRefAdapter>();
+
     // Define inject current function
     csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}), 
-              "injectCurrent", "$(Isyn) += $(0)");
+              "injectCurrent", "$(_" + getArchetype().getTargetVar() + ") += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l",
+        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -114,13 +117,11 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
         
     // Allow synapse group's PS output var to override what Isyn points to
-    if(getArchetype().getPSTargetVar() != "Isyn") {
-        psmEnv.add(getScalarType(), "Isyn", "$(" + getArchetype().getPSTargetVar() + ")");
-    }
+    psmEnv.add(getScalarType(), "Isyn", "$(_" + getArchetype().getPSTargetVar() + ")");
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l",
+        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -201,7 +202,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         // **NOTE** always copy variables if synapse group is delayed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -293,7 +294,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         // **NOTE** always copy variables if synapse group is delayed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -477,16 +478,16 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
  
     // Add default input variable
-    // **TODO** hide
+    // **NOTE** this is hidden as only their chosen target gets exposed to PSM and current source
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronChildEnv(env, *this);
-    neuronChildEnv.add(getScalarType(), "Isyn", "Isyn",
+    neuronChildEnv.add(getScalarType(), "_Isyn", "Isyn",
                        {neuronChildEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
 
     // Add additional input variables
-    // **TODO** hide
+    // **NOTE** these are hidden as only their chosen target gets exposed to PSM and currnet source
     for (const auto &v : nm->getAdditionalInputVars()) {
         const auto resolvedType = v.type.resolve(getTypeContext());
-        neuronChildEnv.add(resolvedType, v.name, "_" + v.name,
+        neuronChildEnv.add(resolvedType, "_" + v.name, "_" + v.name,
                            {neuronChildEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
     }
 
@@ -494,7 +495,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, getTypeContext(), neuronChildEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
         [batchSize, this](const std::string &varName, VarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
@@ -514,22 +515,34 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize);
+        sg.generate(backend, neuronChildEnv, *this, batchSize);
     }
 
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(neuronVarEnv, *this, batchSize);
+        sg.generate(neuronChildEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        cs.generate(neuronVarEnv, *this, batchSize);
+        cs.generate(neuronChildEnv, *this, batchSize);
     }
 
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this); 
+
+    // Expose read-only Isyn
+    neuronEnv.add(getScalarType().addConst(), "Isyn", "$(_Isyn)");
+
+    // Expose read-only additional input variables
+    for (const auto &v : nm->getAdditionalInputVars()) {
+        const auto resolvedType = v.type.resolve(getTypeContext()).addConst();
+        neuronEnv.add(resolvedType, v.name, "$(_" + v.name + ")");
+    }
+
+    // Expose neuron variables
+    neuronEnv.addVarExposeAliases<NeuronVarAdapter>();
 
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParamNames(), "", &NeuronGroupInternal::getParams, &NeuronUpdateGroupMerged::isParamHeterogeneous);
@@ -551,15 +564,15 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // If a threshold condition is provided
     if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
-        neuronVarEnv.getStream() << "// test whether spike condition was fulfilled previously" << std::endl;
+        neuronEnv.getStream() << "// test whether spike condition was fulfilled previously" << std::endl;
 
         if (nm->isAutoRefractoryRequired()) {
-            neuronVarEnv.getStream() << "const bool oldSpike = (";
+            neuronEnv.getStream() << "const bool oldSpike = (";
 
             Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' threshold condition code");
-            prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
+            prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
             
-            neuronVarEnv.getStream() << ");" << std::endl;
+            neuronEnv.getStream() << ");" << std::endl;
         }
     }
     // Otherwise, if any outgoing synapse groups have spike-processing code
@@ -569,21 +582,23 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         LOGW_CODE_GEN << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << getName() << "\" was provided. There will be no spikes detected in this population!";
     }*/
 
-    neuronVarEnv.getStream() << "// calculate membrane potential" << std::endl;
+    neuronEnv.getStream() << "// calculate membrane potential" << std::endl;
 
     Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' sim code");
-    prettyPrintStatements(getArchetype().getSimCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
+    prettyPrintStatements(getArchetype().getSimCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
 
     // Generate var update for outgoing synaptic populations with presynaptic update code
+    // **TODO** figure out environemnt here too
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
-        CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(neuronVarEnv, *this, batchSize, true);
+        CodeStream::Scope b(neuronEnv.getStream());
+        sg.generate(neuronEnv, *this, batchSize, true);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
+    // **TODO** figure out environemnt here too
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
-        CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(neuronVarEnv, *this, batchSize, true);
+        CodeStream::Scope b(neuronEnv.getStream());
+        sg.generate(neuronEnv, *this, batchSize, true);
     }
 
     // look for spike type events first.
@@ -650,27 +665,27 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // test for true spikes if condition is provided
     if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
-        neuronVarEnv.getStream() << "// test for and register a true spike" << std::endl;
-        neuronVarEnv.getStream() << "if ((";
+        neuronEnv.getStream() << "// test for and register a true spike" << std::endl;
+        neuronEnv.getStream() << "if ((";
         
         Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' threshold condition code");
-        prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
+        prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
             
-        neuronVarEnv.getStream() << ")";
+        neuronEnv.getStream() << ")";
         if (nm->isAutoRefractoryRequired()) {
-            neuronVarEnv.getStream() << " && !oldSpike";
+            neuronEnv.getStream() << " && !oldSpike";
         }
-        neuronVarEnv.getStream() << ")";
+        neuronEnv.getStream() << ")";
         {
-            CodeStream::Scope b(neuronVarEnv.getStream());
-            genEmitTrueSpike(neuronVarEnv, *this);
+            CodeStream::Scope b(neuronEnv.getStream());
+            genEmitTrueSpike(neuronEnv, *this);
 
             // add after-spike reset if provided
             if (!Utils::areTokensEmpty(getArchetype().getResetCodeTokens())) {
-                neuronVarEnv.getStream() << "// spike reset code" << std::endl;
+                neuronEnv.getStream() << "// spike reset code" << std::endl;
                 
                 Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' reset code");
-                prettyPrintStatements(getArchetype().getResetCodeTokens(), getTypeContext(), neuronVarEnv, errorHandler);
+                prettyPrintStatements(getArchetype().getResetCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
             }
         }
 
@@ -701,27 +716,27 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
             // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
             if(getArchetype().isSpikeTimeRequired() || getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
-                neuronVarEnv.getStream() << "else";
-                CodeStream::Scope b(neuronVarEnv.getStream());
+                neuronEnv.getStream() << "else";
+                CodeStream::Scope b(neuronEnv.getStream());
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(st);");
+                    neuronEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(st);");
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_st);");
+                    neuronEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_st);");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
                 for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
-                    sg.genCopyDelayedVars(neuronVarEnv, *this, batchSize);
+                    sg.genCopyDelayedVars(neuronEnv, *this, batchSize);
                 }
 
                 // Loop through incoming synapse groups with some sort of presynaptic code
                 for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
-                    sg.genCopyDelayedVars(neuronVarEnv, *this, batchSize);
+                    sg.genCopyDelayedVars(neuronEnv, *this, batchSize);
                 }
             }
         }

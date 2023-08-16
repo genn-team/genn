@@ -65,6 +65,31 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// CurrentSourceNeuronVarRefAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceNeuronVarRefAdapter
+{
+public:
+    CurrentSourceNeuronVarRefAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CS.getCurrentSourceModel()->getNeuronVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CS.getNeuronVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};
+
+//----------------------------------------------------------------------------
 // CurrentSourceEGPAdapter
 //----------------------------------------------------------------------------
 class CurrentSourceEGPAdapter
