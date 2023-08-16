@@ -704,18 +704,27 @@ class VarCachePolicy
 public:
     using GroupInternal = typename G::GroupInternal;
     using GetIndexFn = std::function<std::string(const std::string&, VarAccessDuplication)>;
+    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccessDuplication)>;
 
-    VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
+                   ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
+    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex), 
+        m_ShouldAlwaysCopy(shouldAlwaysCopy)
     {}
 
-    VarCachePolicy(GetIndexFn getIndex)
-    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
+    VarCachePolicy(GetIndexFn getIndex, ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
+    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex),
+        m_ShouldAlwaysCopy(shouldAlwaysCopy)
     {}
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    bool shouldAlwaysCopy(G&, const Models::Base::Var &var) const
+    {
+        return m_ShouldAlwaysCopy(var.name, getVarAccessDuplication(var.access));
+    }
+
     std::string getReadIndex(G&, const Models::Base::Var &var) const
     {
         return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
@@ -737,6 +746,7 @@ private:
     //------------------------------------------------------------------------
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;
+    ShouldAlwaysCopyFn m_ShouldAlwaysCopy;
 };
 
 //------------------------------------------------------------------------
@@ -761,6 +771,13 @@ protected:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    bool shouldAlwaysCopy(G&, const Models::Base::VarRef &var) const
+    {
+        // **NOTE** something else is managing the actual variables
+        // and is therefore responsible for copying between delay slots etc
+        return false;
+    }
+    
     std::string getReadIndex(G &g, const Models::Base::VarRef &var) const
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
@@ -798,11 +815,11 @@ class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
 public:
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix, bool alwaysCopy,
+                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
                               PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
         m_Context(context), m_Contents(m_ContentsStream), m_ArrayPrefix(arrayPrefix), 
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_AlwaysCopy(alwaysCopy)
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -820,7 +837,11 @@ public:
         const auto varDefs = archetypeAdapter.getDefs();
         std::vector<Def> referencedDefs;
         std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
-                     [this](const auto &v){ return m_AlwaysCopy || m_VariablesReferenced.at(v.name).first; });
+                     [this](const auto &v)
+                     {
+                        const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v); 
+                        return (alwaysCopy || m_VariablesReferenced.at(v.name).first);
+                     });
 
         // Loop through referenced definitions
         for(const auto &v : referencedDefs) {
@@ -855,7 +876,7 @@ public:
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
             // If we should always copy variable or variable is read-write
-            if(m_AlwaysCopy || v.access & VarAccessMode::READ_WRITE) {
+            if(this->shouldAlwaysCopy(m_Group.get(), v) || v.access & VarAccessMode::READ_WRITE) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
@@ -921,7 +942,6 @@ private:
     std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    bool m_AlwaysCopy;
     std::unordered_map<std::string, std::pair<bool, Def>> m_VariablesReferenced;
 };
 
