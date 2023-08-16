@@ -23,6 +23,21 @@ void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, Va
     m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
+void CurrentSource::setTargetVar(const std::string &varName)
+{
+    // If varname is either 'ISyn' or name of target neuron group additional input variable, store
+    const auto additionalInputVars = getTrgNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    if(varName == "Isyn" || 
+       std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
+                    [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
+    {
+        m_TargetVar = varName;
+    }
+    else {
+        throw std::runtime_error("Target neuron group has no input variable '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
 VarLocation CurrentSource::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)];
@@ -39,7 +54,8 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
                              VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
     m_NeuronVarReferences(neuronVarReferences), m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-    m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+    m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_TargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
@@ -106,11 +122,13 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCurrentSourceModel()->getHashDigest(), hash);
-        
+    Utils::updateHash(getTargetVar(), hash);
+
     // Loop through neuron variable references and update hash with 
-    // duplication mode of target variable as this effects indexing code
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getNeuronVarReferences()) {
-        Utils::updateHash(getVarAccessDuplication(v.second.getVar().access), hash);
+        Utils::updateHash(v.second.getVar().name, hash);
     };
     return hash.get_digest();
 }

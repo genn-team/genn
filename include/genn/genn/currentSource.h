@@ -40,6 +40,10 @@ public:
         and only applies to extra global parameters which are pointers. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
+    //! Set name of neuron input variable current source model will inject into
+    /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    void setTargetVar(const std::string &varName);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -65,6 +69,10 @@ public:
     //! Get location of neuron model extra global parameter by omdex
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
+
+    //! Get name of neuron input variable current source model will inject into
+    /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    const std::string &getTargetVar() const { return m_TargetVar; }
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
@@ -120,6 +128,10 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Name of neuron input variable current source will inject into
+    /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    std::string m_TargetVar;
 
     //! Tokens produced by scanner from injection code
     std::vector<Transpiler::Token> m_InjectionCodeTokens;
