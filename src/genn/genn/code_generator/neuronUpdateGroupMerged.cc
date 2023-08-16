@@ -476,18 +476,60 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 {
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
  
-    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(env, *this);
-
     // Add default input variable
-    neuronEnv.add(getScalarType(), "Isyn", "Isyn",
-                  {neuronEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
+    // **TODO** hide
+    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronChildEnv(env, *this);
+    neuronChildEnv.add(getScalarType(), "Isyn", "Isyn",
+                       {neuronChildEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
 
-    // **NOTE** arbitrary code in param value to be deprecated
+    // Add additional input variables
+    // **TODO** hide
     for (const auto &v : nm->getAdditionalInputVars()) {
         const auto resolvedType = v.type.resolve(getTypeContext());
-        neuronEnv.add(resolvedType, v.name, "_" + v.name,
-                      {neuronEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
+        neuronChildEnv.add(resolvedType, v.name, "_" + v.name,
+                           {neuronChildEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
     }
+
+    // Create an environment which caches variables in local variables if they are accessed
+    // **NOTE** we do this right at the top so that local copies can be used by child groups
+    // **NOTE** always copy variables if variable is delayed
+    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
+        *this, *this, getTypeContext(), neuronChildEnv, backend.getDeviceVarPrefix(), "", "l",
+        [batchSize, this](const std::string &varName, VarAccess d)
+        {
+            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
+            return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+        },
+        [batchSize, this](const std::string &varName, VarAccess d)
+        {
+            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
+            return getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+        },
+        [this](const std::string &varName, VarAccess)
+        {
+            return (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
+        });
+
+
+    // Loop through incoming synapse groups
+    for(auto &sg : m_MergedInSynPSMGroups) {
+        CodeStream::Scope b(neuronChildVarEnv.getStream());
+        sg.generate(backend, neuronVarEnv, *this, batchSize);
+    }
+
+    // Loop through outgoing synapse groups with presynaptic output
+    for (auto &sg : m_MergedOutSynPreOutputGroups) {
+        CodeStream::Scope b(neuronChildVarEnv.getStream());
+        sg.generate(neuronVarEnv, *this, batchSize);
+    }
+ 
+    // Loop through all of neuron group's current sources
+    for (auto &cs : m_MergedCurrentSourceGroups) {
+        CodeStream::Scope b(neuronChildVarEnv.getStream());
+        cs.generate(neuronVarEnv, *this, batchSize);
+    }
+
+    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this); 
 
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParamNames(), "", &NeuronGroupInternal::getParams, &NeuronUpdateGroupMerged::isParamHeterogeneous);
@@ -506,46 +548,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                   {neuronEnv.addInitialiser("const " + timePrecision + " lseT = $(_set)[" + spikeTimeReadIndex+ "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_set", "lprevSET", 
                   {neuronEnv.addInitialiser("const " + timePrecision + " lprevSET = $(_prev_set)[" + spikeTimeReadIndex + "];")});
-
-    // Create an environment which caches variables in local variables if they are accessed
-    // **NOTE** we do this right at the top so that local copies can be used by child groups
-    // **NOTE** always copy variables if variable is delayed
-    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-        *this, *this, getTypeContext(), neuronEnv, "", "l",
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccess d)
-        {
-            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-        },
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccess d)
-        {
-            const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-        },
-        [this](const std::string &varName, VarAccess)
-        {
-            return (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-        });
-
-
-    // Loop through incoming synapse groups
-    for(auto &sg : m_MergedInSynPSMGroups) {
-        CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize);
-    }
-
-    // Loop through outgoing synapse groups with presynaptic output
-    for (auto &sg : m_MergedOutSynPreOutputGroups) {
-        CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(neuronVarEnv, *this, batchSize);
-    }
- 
-    // Loop through all of neuron group's current sources
-    for (auto &cs : m_MergedCurrentSourceGroups) {
-        CodeStream::Scope b(neuronVarEnv.getStream());
-        cs.generate(neuronVarEnv, *this, batchSize);
-    }
-
 
     // If a threshold condition is provided
     if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
