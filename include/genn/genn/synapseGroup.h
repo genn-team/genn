@@ -74,7 +74,7 @@ public:
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    void setPSTargetVar(const std::string &varName);
+    void setPostTargetVar(const std::string &varName);
     
     //! Set name of neuron input variable $(addToPre, . ) commands will target
     /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */

@@ -1133,10 +1133,10 @@ TEST(SynapseGroup, InvalidPSOutputVar)
         {}, {{"g", 1.0}},
         {}, {});
 
-    prePost->setPSTargetVar("Isyn");
-    prePost->setPSTargetVar("Isyn2");
+    prePost->setPostTargetVar("Isyn");
+    prePost->setPostTargetVar("Isyn2");
     try {
-        prePost->setPSTargetVar("NonExistent");
+        prePost->setPostTargetVar("NonExistent");
         FAIL();
     }
     catch (const std::runtime_error &) {

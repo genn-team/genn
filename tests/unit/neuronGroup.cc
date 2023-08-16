@@ -464,7 +464,7 @@ TEST(NeuronGroup, FusePSM)
         "Pre", "Post",
         {}, wumVarVals,
         psmParamVals, {});
-    synTarget->setPSTargetVar("Isyn2");
+    synTarget->setPostTargetVar("Isyn2");
     
     // Create synapse group with different max dendritic delay
     auto *synDelay = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(

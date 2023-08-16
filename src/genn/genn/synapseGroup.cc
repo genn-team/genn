@@ -69,7 +69,7 @@ void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
     m_PSVarLocation[getPSModel()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::setPSTargetVar(const std::string &varName)
+void SynapseGroup::setPostTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store
     const auto additionalInputVars = getTrgNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
