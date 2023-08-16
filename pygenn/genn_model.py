@@ -406,7 +406,7 @@ class GeNNModel(ModelSpecInternal):
         return s_group
 
     def add_current_source(self, cs_name, current_source_model, pop,
-                           param_space, var_space):
+                           param_space, var_space, var_ref_space = {}):
         """Add a current source to the GeNN model
 
         Args:
@@ -419,9 +419,11 @@ class GeNNModel(ModelSpecInternal):
         pop                     --  population into which the current source 
                                     should be injected (either name or NeuronGroup object)
         param_space             --  dict with param values for the
-                                    CurrentSourceModels class
+                                    CurrentSourceModel class
         var_space               --  dict with initial variable values for the
-                                    CurrentSourceModels class
+                                    CurrentSourceModel class
+        var_ref_space           --  dict with variable references to pop for the
+                                    CurrentSourceModel class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -439,7 +441,8 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop.name, param_space, var_init)
+            cs_name, current_source_model, pop.name, param_space,
+            var_init, var_ref_space)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, var_space, pop)

@@ -103,6 +103,8 @@ class PyCurrentSourceModelBase : public PySnippet<CurrentSourceModels::Base>
 {
     using Base = CurrentSourceModels::Base;
 public:
+    virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
+
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
 };
@@ -390,7 +392,7 @@ PYBIND11_MODULE(genn, m)
         .def("add_current_source",  
              static_cast<CurrentSource* (ModelSpecInternal::*)(
                 const std::string&, const CurrentSourceModels::Base*, const std::string&, 
-                const ParamValues&, const VarValues&)>(&ModelSpecInternal::addCurrentSource), 
+                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
@@ -746,6 +748,8 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_vars", &CurrentSourceModels::Base::getVars)
+        .def("get_neuron_var_refs", &CurrentSourceModels::Base::getNeuronVarRefs)
+
         .def("get_injection_code", &CurrentSourceModels::Base::getInjectionCode);
 
     //------------------------------------------------------------------------
