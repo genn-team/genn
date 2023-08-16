@@ -182,6 +182,7 @@ public:
 
     const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
+    const std::unordered_map<std::string, Models::VarReference> &getPSNeuronVarReferences() const{ return m_PSNeuronVarReferences;  }
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
@@ -223,7 +224,7 @@ public:
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -499,6 +500,9 @@ private:
 
     //! Initialisers for post synapse model variables
     std::unordered_map<std::string, InitVarSnippet::Init> m_PSVarInitialisers;
+
+    //! References to neuron variables used by postsynaptic model
+    std::unordered_map<std::string, Models::VarReference> m_PSNeuronVarReferences;
 
     //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;

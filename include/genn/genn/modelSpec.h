@@ -381,13 +381,13 @@ public:
         \return pointer to newly created SynapseGroup */
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                    psm, postsynapticParamValues, postsynapticVarInitialisers,
+                                    psm, postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     connectivityInitialiser, uninitialisedToeplitz);
     }
 
@@ -413,13 +413,13 @@ public:
         \return pointer to newly created SynapseGroup */
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                    psm, postsynapticParamValues, postsynapticVarInitialisers,
+                                    psm, postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     uninitialisedConnectivity(), connectivityInitialiser);
     }
 
@@ -442,12 +442,12 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const ParamValues &weightParamValues, const VarValues &weightVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, {}, {},
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     connectivityInitialiser);
     }
 
@@ -469,12 +469,12 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const ParamValues &weightParamValues, const VarValues &weightVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, {}, {},
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     connectivityInitialiser);
     }
 
@@ -499,12 +499,12 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     connectivityInitialiser);
 
     }
@@ -529,12 +529,12 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
                                     connectivityInitialiser);
 
     }
@@ -738,7 +738,7 @@ private:
 
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string &src, const std::string &trg,
                                        const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser);
 
     //--------------------------------------------------------------------------

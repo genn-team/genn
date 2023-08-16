@@ -493,7 +493,7 @@ const SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::strin
 // ---------------------------------------------------------------------------
 SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                               const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                              const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                              const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, const VarReferences &postsynapticNeuronVarReferences,
                                               const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
 {
     // Get source and target neuron groups
@@ -505,7 +505,7 @@ SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMa
         name,
         name, mtype, delaySteps,
         wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-        psm, postsynapticParamValues, postsynapticVarInitialisers,
+        psm, postsynapticParamValues, postsynapticVarInitialisers, postsynapticNeuronVarReferences,
         srcNeuronGrp, trgNeuronGrp,
         connectivityInitialiser, toeplitzConnectivityInitialiser, 
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,

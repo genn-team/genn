@@ -62,26 +62,12 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
 
     // Check variable reference types
-    Models::checkVarReferences(m_NeuronVarReferences, getCurrentSourceModel()->getNeuronVarRefs());
+    Models::checkVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs());
 
-    // Loop through all variable references
-    for(const auto &modelVarRef : getCurrentSourceModel()->getNeuronVarRefs()) {
-        const auto &varRef = m_NeuronVarReferences.at(modelVarRef.name);
-
-        // If neuron var reference point to any SHARED_NEURON or SHARED variables, check that access is read-only
-        if(((varRef.getVar().access & VarAccessDuplication::SHARED_NEURON) || (varRef.getVar().access & VarAccessDuplication::SHARED))
-            && (modelVarRef.access != VarAccessMode::READ_ONLY))
-        {
-            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables in current source cannot be read-write.");
-        }
-
-        // Check variable reference points to target neuron
-        // **YUCK** this check works but is a bit gross
-        if(varRef.getTargetName() != getTrgNeuronGroup()->getName()) {
-            throw std::runtime_error("Variable references to in current source can only point to target neuron group.");
-        }
-    }
-
+    // Check additional local variable reference constraints
+    Models::checkLocalVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs(),
+                                    {getTrgNeuronGroup()->getName()}, "Variable references to in current source can only point to target neuron group.");
+    
     // Scan current source model code string
     m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
                                             "Current source '" + getName() + "' injection code");

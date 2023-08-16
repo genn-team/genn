@@ -337,7 +337,7 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                            const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -348,7 +348,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
-        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers), m_PSNeuronVarReferences(psNeuronVarReferences),
         m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
@@ -360,8 +360,16 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     Utils::validatePopName(name, "Synapse group");
     getWUModel()->validate(getWUParams(), getWUVarInitialisers(), getWUPreVarInitialisers(), getWUPostVarInitialisers(), 
                            "Synapse group " + getName() + " weight update model ");
-    getPSModel()->validate(getPSParams(), getPSVarInitialisers(), "Synapse group " + getName() + " postsynaptic model ");
+    getPSModel()->validate(getPSParams(), getPSVarInitialisers(), getPSNeuronVarReferences(),
+                           "Synapse group " + getName() + " postsynaptic model ");
 
+    // Check variable reference types
+    Models::checkVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs());
+    
+    // Check additional local variable reference constraints
+    Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs(),
+                                    {getTrgNeuronGroup()->getName()}, "Postsynaptic model variable references can only point to postsynaptic neuron group.");
+    
      // Scan weight update model code strings
     m_WUSimCodeTokens = Utils::scanCode(
         getWUModel()->getSimCode(), "Synapse group '" + getName() + "' weight update model sim code");
@@ -925,6 +933,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPSTargetVar(), hash);
+
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    for(const auto &v : getPSNeuronVarReferences()) {
+        Utils::updateHash(v.second.getVar().name, hash);
+    };
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -944,6 +960,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
         assert(w.second.getParams().size() == 1);
         Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
+
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    for(const auto &v : getPSNeuronVarReferences()) {
+        Utils::updateHash(v.second.getVar().name, hash);
+    };
     
     return hash.get_digest();
 }

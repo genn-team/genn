@@ -12,6 +12,7 @@
 #define SET_DECAY_CODE(DECAY_CODE) virtual std::string getDecayCode() const override{ return DECAY_CODE; }
 #define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const override{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
 #define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const override{ return APPLY_INPUT_CODE; }
+#define SET_NEURON_VAR_REFS(...) virtual VarRefVec getNeuronVarRefs() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::PostsynapticModels::Base
@@ -31,6 +32,9 @@ public:
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
 
+    //! Gets names and types of model variable references
+    virtual VarRefVec getNeuronVarRefs() const{ return {}; }
+    
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -46,6 +50,7 @@ public:
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
 };
 
@@ -75,10 +80,10 @@ public:
 // GeNN::PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
-/*! This model has no variables and two parameters:
+/*! This model has no variables, two parameters and a variable reference
   - \c tau : Decay time constant
-  - \c E : Reversal potential
-
+  - \c E   : Reversal potential
+  - \c V   : Is a reference to the neuron's membrane voltage
   \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
 class ExpCond : public Base
 {
@@ -90,6 +95,8 @@ public:
     SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
 
     SET_PARAM_NAMES({"tau", "E"});
+
+    SET_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_DERIVED_PARAMS({{"expDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tau")); }}});
 };
