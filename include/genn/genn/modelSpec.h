@@ -566,7 +566,7 @@ public:
                                     const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
-                                targetNeuronGroupName, paramValues, varInitialisers, varReferences);
+                                targetNeuronGroupName, paramValues, varInitialisers, neuronVarReferences);
     }
 
     //! Adds a new custom update with references to the model using a custom update model managed by the user
