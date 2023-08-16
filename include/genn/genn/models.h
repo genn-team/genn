@@ -207,7 +207,7 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
-    
+
 private:
     //------------------------------------------------------------------------
     // Typedefines

@@ -29,7 +29,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
     const auto paramNames = getParamNames();
     Utils::validateParamNames(paramNames);
     Utils::validateVecNames(getDerivedParams(), "Derived parameter");
-    Utils::validateVecNames(getExtraGlobalParams(), "Derived parameter");
+    Utils::validateVecNames(getExtraGlobalParams(), "Extra global parameter");
 
     // If there are a different number of sizes than values, give error
     if(paramNames.size() != paramValues.size()) {

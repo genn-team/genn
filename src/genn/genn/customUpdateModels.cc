@@ -64,7 +64,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(vars, varValues, "variable", description);
 
     const auto varRefs = getVarRefs();
-    Utils::validateVecNames(getVarRefs(), "Variable reference");
+    Utils::validateVecNames(varRefs, "Variable reference");
 
     // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);

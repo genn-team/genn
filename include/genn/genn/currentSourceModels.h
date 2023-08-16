@@ -16,6 +16,7 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_INJECTION_CODE(INJECTION_CODE) virtual std::string getInjectionCode() const override{ return INJECTION_CODE; }
+#define SET_NEURON_VAR_REFS(...) virtual VarRefVec getNeuronVarRefs() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::CurrentSourceModels::Base
@@ -35,6 +36,9 @@ public:
     //! Gets model variables
     virtual std::vector<Var> getVars() const{ return {}; }
 
+    //! Gets names and types of model variable references
+    virtual VarRefVec getNeuronVarRefs() const{ return {}; }
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -50,6 +54,7 @@ public:
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
 };
 

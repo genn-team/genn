@@ -162,11 +162,11 @@ NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned in
                                             const ParamValues &paramValues, const VarValues &varInitialisers)
 {
     // Add neuron group to map
-    auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, size, model,
-                              paramValues, varInitialisers, 
-                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+    auto result = m_LocalNeuronGroups.try_emplace(
+        name,
+        name, size, model,
+        paramValues, varInitialisers, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
@@ -190,16 +190,16 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 }
 // ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName, 
-                                           const ParamValues &paramValues, const VarValues &varInitialisers)
+                                           const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences)
 {
     auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
 
     // Add current source to map
-    auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
-        std::forward_as_tuple(currentSourceName),
-        std::forward_as_tuple(currentSourceName, model, paramValues,
-                              varInitialisers, targetGroup, 
-                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+    auto result = m_LocalCurrentSources.try_emplace(
+        currentSourceName,
+        currentSourceName, model, paramValues,
+        varInitialisers, neuronVarReferences, targetGroup, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
@@ -215,11 +215,11 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
                                          const VarReferences &varReferences, const EGPReferences &egpReferences)
 {
     // Add neuron group to map
-    auto result = m_CustomUpdates.emplace(std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, updateGroupName, model,
-                              paramValues, varInitialisers, varReferences, egpReferences,
-                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+    auto result = m_CustomUpdates.try_emplace(
+        name,
+        name, updateGroupName, model,
+        paramValues, varInitialisers, varReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
@@ -240,12 +240,12 @@ CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::stri
     auto targetSynapseGroup = findSynapseGroupInternal(targetSynapseGroupName);
 
     // Add neuron group to map
-    auto result = m_CustomConnectivityUpdates.emplace(std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, updateGroupName, targetSynapseGroup, model,
-                              paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
-                              varReferences, preVarReferences, postVarReferences, 
-                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+    auto result = m_CustomConnectivityUpdates.try_emplace(
+        name,
+        name, updateGroupName, targetSynapseGroup, model,
+        paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
+        varReferences, preVarReferences, postVarReferences, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a custom connectivity update with duplicate name:" + name);
@@ -260,11 +260,11 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
                                            const WUVarReferences &varReferences, const EGPReferences &egpReferences)
 {
     // Add neuron group to map
-    auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, updateGroupName, model,
-                              paramValues, varInitialisers, varReferences, egpReferences,
-                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+    auto result = m_CustomWUUpdates.try_emplace(
+        name,
+        name, updateGroupName, model,
+        paramValues, varInitialisers, varReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
@@ -501,16 +501,15 @@ SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMa
     auto trgNeuronGrp = findNeuronGroupInternal(trg);
 
     // Add synapse group to map
-    auto result = m_LocalSynapseGroups.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, mtype, delaySteps,
-                                wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                psm, postsynapticParamValues, postsynapticVarInitialisers,
-                                srcNeuronGrp, trgNeuronGrp,
-                                connectivityInitialiser, toeplitzConnectivityInitialiser, 
-                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
-                                m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
+    auto result = m_LocalSynapseGroups.try_emplace(
+        name,
+        name, mtype, delaySteps,
+        wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+        psm, postsynapticParamValues, postsynapticVarInitialisers,
+        srcNeuronGrp, trgNeuronGrp,
+        connectivityInitialiser, toeplitzConnectivityInitialiser, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
+        m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);

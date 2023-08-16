@@ -294,8 +294,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
-    const unsigned int m_Size;
+    std::unordered_map<std::string, Models::VarReference> m_VarReferences;
+    unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
 };
 
@@ -349,7 +349,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
+    std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     SynapseGroupInternal *m_SynapseGroup;
 };
 }   // namespace GeNN

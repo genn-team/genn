@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "neuronGroupInternal.h"
 
 //------------------------------------------------------------------------
 // GeNN::CurrentSource
@@ -34,15 +35,36 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                              const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                             const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
-                             VarLocation defaultExtraGlobalParamLocation)
+                             const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
+                             VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_NeuronVarReferences(neuronVarReferences), m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
-    getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
+    getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
+
+    // Check variable reference types
+    Models::checkVarReferences(m_NeuronVarReferences, getCurrentSourceModel()->getNeuronVarRefs());
+
+    // Loop through all variable references
+    for(const auto &modelVarRef : getCurrentSourceModel()->getNeuronVarRefs()) {
+        const auto &varRef = m_NeuronVarReferences.at(modelVarRef.name);
+
+        // If neuron var reference point to any SHARED_NEURON or SHARED variables, check that access is read-only
+        if(((varRef.getVar().access & VarAccessDuplication::SHARED_NEURON) || (varRef.getVar().access & VarAccessDuplication::SHARED))
+            && (modelVarRef.access != VarAccessMode::READ_ONLY))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables in current source cannot be read-write.");
+        }
+
+        // Check variable reference points to target neuron
+        // **YUCK** this check works but is a bit gross
+        if(varRef.getTargetName() != getTrgNeuronGroup()->getName()) {
+            throw std::runtime_error("Variable references to in current source can only point to target neuron group.");
+        }
+    }
 
     // Scan current source model code string
     m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
@@ -82,7 +104,15 @@ bool CurrentSource::isVarInitRequired() const
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
 {
-    return getCurrentSourceModel()->getHashDigest();
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getCurrentSourceModel()->getHashDigest(), hash);
+        
+    // Loop through neuron variable references and update hash with 
+    // duplication mode of target variable as this effects indexing code
+    for(const auto &v : getNeuronVarReferences()) {
+        Utils::updateHash(getVarAccessDuplication(v.second.getVar().access), hash);
+    };
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
