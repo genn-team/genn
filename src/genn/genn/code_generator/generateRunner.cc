@@ -27,17 +27,17 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-unsigned int getNumVarCopies(VarAccess varAccess, unsigned int batchSize, bool batched = true)
+unsigned int getNumVarCopies(unsigned int varAccess, unsigned int batchSize, bool batched = true)
 {
     return ((varAccess & VarAccessDuplication::SHARED) || !batched) ? 1 : batchSize;
 }
 //--------------------------------------------------------------------------
-unsigned int getNumVarElements(VarAccess varAccess, unsigned int numNeurons)
+unsigned int getNumVarElements(unsigned int varAccess, unsigned int numNeurons)
 {
     return (varAccess & VarAccessDuplication::SHARED_NEURON) ? 1 : numNeurons;
 }
 //--------------------------------------------------------------------------
-unsigned int getVarSize(VarAccess varAccess, unsigned int numElements, unsigned int batchSize, 
+unsigned int getVarSize(unsigned int varAccess, unsigned int numElements, unsigned int batchSize, 
                         unsigned int delaySlots = 1, bool batched = true)
 {
     return getNumVarCopies(varAccess, batchSize, batched) * getNumVarElements(varAccess, numElements) * delaySlots;

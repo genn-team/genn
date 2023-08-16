@@ -2016,8 +2016,9 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateG
     genWriteBackReductions(env, cg, idxName,
                            [&cg](const Models::VarReference &varRef, const std::string &index)
                            {
+                               const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
                                return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                                        getVarAccessDuplication(varRef.getVar().access),
+                                                        getVarAccessDuplication(varAccess),
                                                         index);
                            });
 }
@@ -2027,7 +2028,8 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateW
     genWriteBackReductions(env, cg, idxName,
                            [&cg](const Models::WUVarReference &varRef, const std::string &index)
                            {
-                               return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
+                               const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+                               return cg.getVarRefIndex(getVarAccessDuplication(varAccess),
                                                         index);
                            });
 }

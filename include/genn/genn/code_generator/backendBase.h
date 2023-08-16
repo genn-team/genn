@@ -568,11 +568,12 @@ private:
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
-            if (v.access & VarAccessModeAttribute::REDUCE) {
+            const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
+            if (varAccess & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
                 os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
-                reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(v.access),
-                                            cg.getVarIndex(getVarAccessDuplication(v.access), idx)});
+                reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(varAccess),
+                                            cg.getVarIndex(getVarAccessDuplication(varAccess), idx)});
             }
         }
 

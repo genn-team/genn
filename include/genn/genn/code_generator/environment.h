@@ -405,7 +405,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
-    using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
+    using GetVarIndexFn = std::function<std::string(std::optional<unsigned int>, const std::string&)>;
 
     template<typename A>
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
@@ -653,7 +653,7 @@ public:
     void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, 
                  const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
+        addVars<A>(arrayPrefix, [&indexSuffix](std::optional<unsigned int>, const std::string &) { return indexSuffix; }, 
                    fieldSuffix, readOnly);
     }
 
@@ -682,7 +682,7 @@ public:
     void addVarRefs(const std::string &arrayPrefix, const std::string &indexSuffix, 
                     const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVarRefs<A>(arrayPrefix, [&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
+        addVarRefs<A>(arrayPrefix, [&indexSuffix](std::optional<unsigned int>, auto &) { return indexSuffix; }, 
                       fieldSuffix);
     }
 
@@ -722,22 +722,23 @@ public:
     //------------------------------------------------------------------------
     bool shouldAlwaysCopy(G&, const Models::Base::Var &var) const
     {
-        if(m_ShouldAlwaysCopy) {
-            return m_ShouldAlwaysCopy(var.name, getVarAccessDuplication(var.access));
-        }
-        else {
-            return false;
-        }
+        // **TODO** default from InitModel class
+        const unsigned int varAccess = var.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+        return m_ShouldAlwaysCopy(var.name, getVarAccessDuplication(varAccess));
     }
 
     std::string getReadIndex(G&, const Models::Base::Var &var) const
     {
-        return m_GetReadIndex(var.name, getVarAccessDuplication(var.access));
+        // **TODO** default from InitModel class
+        const unsigned int varAccess = var.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+        return m_GetReadIndex(var.name, getVarAccessDuplication(varAccess));
     }
 
     std::string getWriteIndex(G&, const Models::Base::Var &var) const
     {
-        return m_GetWriteIndex(var.name, getVarAccessDuplication(var.access));
+        // **TODO** default from InitModel class
+        const unsigned int varAccess = var.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+        return m_GetWriteIndex(var.name, getVarAccessDuplication(varAccess));
     }
 
     std::string getTargetName(const GroupInternal &g, const Models::Base::Var &var) const

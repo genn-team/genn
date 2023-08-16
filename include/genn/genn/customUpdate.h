@@ -93,7 +93,8 @@ protected:
         if(std::any_of(vars.cbegin(), vars.cend(),
                        [duplication](const Models::Base::Var &v)
                        { 
-                           return (v.access & VarAccessModeAttribute::REDUCE) && (v.access & duplication);
+                           const unsigned int access = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+                           return (access & VarAccessModeAttribute::REDUCE) && (access & duplication);
                        }))
         {
             return true;
@@ -101,9 +102,10 @@ protected:
 
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
-            const auto &varRef = varRefs.at(modelVarRef.name);
             // If custom update model reduces into this variable reference and the variable it targets has correct duplication flag
-            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) & (varRef.getVar().access & duplication)) {
+            const auto &varRef = varRefs.at(modelVarRef.name);
+            const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) & (varAccess & duplication)) {
                 return true;
             }
         }
@@ -130,7 +132,8 @@ protected:
 
             // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
+            const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+            if(m_Batched && (varAccess & VarAccessDuplication::SHARED)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");

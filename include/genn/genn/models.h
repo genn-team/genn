@@ -54,10 +54,26 @@ public:
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct GENN_EXPORT Var
     {
-        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
+        Var(const std::string &n, const Type::ResolvedType &t)
+        :   name(n), type(t)
         {}
-        Var(const std::string &n, const std::string &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
+        Var(const std::string &n, const std::string &t)
+        :   name(n), type(t)
         {}
+
+        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a)
+        :   name(n), type(t), access(static_cast<unsigned int>(a))
+        {}
+        Var(const std::string &n, const std::string &t, VarAccess a)
+        :   name(n), type(t), access(static_cast<unsigned int>(a))
+        {}
+
+        /*Var(const std::string &n, const Type::ResolvedType &t, NeuronVarAccess a)
+        :   name(n), type(t), access(static_cast<unsigned int>(a))
+        {}
+        Var(const std::string &n, const std::string &t, NeuronVarAccess a)
+        :   name(n), type(t), access(static_cast<unsigned int>(a))
+        {}*/
         
         bool operator == (const Var &other) const
         {
@@ -66,7 +82,7 @@ public:
 
         std::string name;
         Type::UnresolvedType type;
-        VarAccess access;
+        std::optional<unsigned int> access;
     };
 
     struct GENN_EXPORT VarRef
@@ -389,7 +405,9 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
         }
 
         // Check that no reduction targets reference duplicated variables
-        if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
+        // **TODO** default from InitModel class
+        const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
+        if((varAccess & VarAccessDuplication::DUPLICATE) 
             && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
         {
             throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");

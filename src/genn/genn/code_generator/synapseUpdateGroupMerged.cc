@@ -30,13 +30,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](VarAccess a, const std::string&) 
+        [&sg, batchSize](unsigned int a, const std::string&) 
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](VarAccess a, const std::string&) 
+        [&sg, batchSize](unsigned int a, const std::string&) 
         { 
             return sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), "$(id_post)");
         }, "", true);
@@ -78,7 +78,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](VarAccess a, const std::string&) 
+            [&sg, batchSize](unsigned int a, const std::string&) 
             { 
                 return sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), "$(id_syn)");
             });
@@ -121,7 +121,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](VarAccess a, const std::string&) 
+            [&sg, batchSize](unsigned int a, const std::string&) 
             { 
                 return sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), "$(id_kernel)");
             });
