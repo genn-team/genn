@@ -636,15 +636,17 @@ public:
     }
 
     template<typename A>
-    void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "",
+                bool readOnly = false, bool hidden = false)
     {
         // Loop through variables
         // **TODO** get default access from adaptor
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
-            addField(qualifiedType, v.name,
+            const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
+            const auto name = hidden ? ("_" + v.name) : v.name;
+            addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
                      [v](const auto &runtime, const auto &g, size_t) 
                      { 
@@ -655,14 +657,16 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &indexSuffix, const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVars(const std::string &indexSuffix, const std::string &fieldSuffix = "",
+                 bool readOnly = false, bool hidden = false)
     {
         addVars<A>([&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
-                   fieldSuffix, readOnly);
+                   fieldSuffix, readOnly, hidden);
     }
 
     template<typename A>
-    void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "",
+                    bool readOnly = false, bool hidden = false)
     {
         // Loop through variable references
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -670,7 +674,8 @@ public:
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
-            addField(qualifiedType, v.name,
+            const auto name = hidden ? ("_" + v.name) : v.name;
+            addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
                      [v](const auto &runtime, const auto &g, size_t) 
                      { 
@@ -681,10 +686,44 @@ public:
     }
 
     template<typename A>
-    void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "",
+                    bool readOnly = false, bool hidden = false)
     {
-        addVarRefs<A>([&indexSuffix](std::optional<unsigned int>, auto &) { return indexSuffix; }, 
-                      fieldSuffix);
+        addVarRefs<A>([&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
+                      fieldSuffix, readOnly, hidden);
+    }
+
+    template<typename A>
+    void addVarExposeAliases(bool readOnly = false)
+    {
+        // Loop through variables and add unhiding aliases
+        const A archetypeAdaptor(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
+            add(qualifiedType, v.name, "$(_" + v.name + ")");
+        }
+    }
+
+
+    template<typename A>
+    void addLocalVarRefs(bool readOnly = false)
+    {
+        // Loop through variable references
+        const A archetypeAdaptor(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            // If variable access is read-only, qualify type with const
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;        
+
+            // Get ARCHETYPE variable reference
+            // **NOTE** this means all local variable references
+            // in merged group must point to same variable
+            const auto varRef = archetypeAdaptor.getInitialisers().at(v.name);
+
+            // Add alias from variable reference name to hidden variable name
+            add(qualifiedType, v.name, "$(_" + varRef.getVar().name + ")");
+        }
     }
 
 private:
@@ -824,10 +863,10 @@ public:
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
                               const std::string &fieldSuffix, const std::string &localPrefix,
-                              PolicyArgs&&... policyArgs)
+                              bool hidden, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
         m_Context(context), m_Contents(m_ContentsStream),
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_Hidden(hidden)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -896,7 +935,8 @@ public:
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
     {
         // If name isn't found in environment
-        auto var = m_VariablesReferenced.find(name.lexeme);
+        const std::string suffixedName = m_Hidden ? ("_" + name.lexeme) : name.lexeme;
+        auto var = m_VariablesReferenced.find(suffixedName);
         if (var == m_VariablesReferenced.end()) {
             return getContextTypes(name, errorHandler);
         }
@@ -918,7 +958,8 @@ public:
     virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
     {
         // If variable with this name isn't found, try and get name from context
-        auto var = m_VariablesReferenced.find(name);
+        const std::string suffixedName = m_Hidden ? ("_" + name) : name;
+        auto var = m_VariablesReferenced.find(suffixedName);
         if(var == m_VariablesReferenced.end()) {
             return getContextName(name, type);
         }
@@ -948,6 +989,7 @@ private:
     CodeStream m_Contents;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
+    bool m_Hidden;
     std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
 };
 
