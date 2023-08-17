@@ -573,7 +573,7 @@ private:
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
                 os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(varAccess), resolvedType) << ";" << std::endl;
                 reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(varAccess),
-                                            cg.getVarIndex(getVarAccessDuplication(varAccess), idx)});
+                                            cg.getVarIndex(varAccess), idx)});
             }
         }
 

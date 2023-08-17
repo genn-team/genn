@@ -255,7 +255,7 @@ private:
             const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
             if(varAccess & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(varAccess), idx) << "] = " << env[v.name] << ";" << std::endl;
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDim(varAccess), idx) << "] = " << env[v.name] << ";" << std::endl;
             }
         }
 

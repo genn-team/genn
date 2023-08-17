@@ -96,7 +96,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     {
         CodeStream::Scope b(env.getStream());
 
-        env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") + "];");
+        env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, "spike") + "];");
 
         const auto indexType = backend.getSynapseIndexType(sg);
         const auto indexTypeName = indexType.getName();
@@ -247,7 +247,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
         {
             CodeStream::Scope b(env.getStream());
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) + "];");
+            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, index) + "];");
             env.printLine("$(_sh_spk" +  eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 env.printLine("$(_sh_row_length)[" + backend.getThreadID() + "] = $(_row_length)[spk];");
@@ -459,7 +459,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         // Create environment and add presynaptic index
         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
-                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(_spike)") + "];")});
+                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, "$(_spike)") + "];")});
 
         // **YUCK** add a hidden copy of num_post so we can overwrite deeper in here without losing access to original
         synEnv.add(Type::Uint32.addConst(), "_num_post", "$(num_post)");
@@ -639,7 +639,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
         {
             CodeStream::Scope b(env.getStream());
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) + "];");
+            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, index) + "];");
             env.printLine("$(_sh_spk" + eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
         }
         backend.genSharedMemBarrier(env.getStream());
@@ -873,7 +873,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 {
                     CodeStream::Scope b(env.getStream());
                     const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-                    env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) + "];");
+                    env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, index) + "];");
                     env.printLine("$(_sh_spk" +  eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
                 }
                 backend.genSharedMemBarrier(env.getStream());

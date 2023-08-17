@@ -75,7 +75,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const Models::Base::Var &v) 
                     { 
-                        return (v.getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON); 
+                        return (v.getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::SHARED_NEURON); 
                     }))
     {
         throw std::runtime_error("Custom connectivity update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");

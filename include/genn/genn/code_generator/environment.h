@@ -704,8 +704,8 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDuplication)>;
-    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccessDuplication)>;
+    using GetIndexFn = std::function<std::string(const std::string&, unsigned int)>;
+    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, unsigned int)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
                    ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())

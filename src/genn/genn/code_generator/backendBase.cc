@@ -703,7 +703,7 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
                                    [&cg](const Models::VarReference &varRef, const std::string &index)
                                    {
                                        return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                                                getVarAccessDuplication(varRef.getVar().getAccess(VarAccess::READ_WRITE)),
+                                                                varRef.getVar().getAccess(NeuronVarAccess::READ_WRITE),
                                                                 index);
                                    });
 }
@@ -713,7 +713,7 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
     return genInitReductionTargets(os, cg, idx,
                                    [&cg](const Models::WUVarReference &varRef, const std::string &index)
                                    {
-                                       return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().getAccess(VarAccess::READ_WRITE)),
+                                       return cg.getVarRefIndex(varRef.getVar().getAccess(SynapseVarAccess::READ_WRITE),
                                                                 index);
                                    });
 }

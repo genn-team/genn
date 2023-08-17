@@ -32,8 +32,8 @@ public:
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
-    std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarIndex(unsigned int varAccess, const std::string &index) const;
+    std::string getVarRefIndex(bool delay, unsigned int varAccess, const std::string &index) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -67,8 +67,8 @@ public:
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
-    std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarIndex(unsigned int varAccess, const std::string &index) const;
+    std::string getVarRefIndex(unsigned int varAccess, const std::string &index) const;
 
 };
 

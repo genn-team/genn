@@ -185,9 +185,9 @@ public:
     
     void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     
-    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
+    std::string getReadVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
+    std::string getWriteVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }

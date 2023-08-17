@@ -75,10 +75,8 @@ std::string VarReference::getTargetName() const
 //----------------------------------------------------------------------------
 bool VarReference::isDuplicated() const
 {
-    if(getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED) {
-        return false;
-    }
-    else {
+    // If target variable has BATCH dimension
+    if(getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::BATCH) {
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
@@ -86,6 +84,9 @@ bool VarReference::isDuplicated() const
                 [](const CCUPostRef&){ return false; },
                 [](const auto&) { return true; }},
             m_Detail);
+    }
+    else {
+        return false;
     }
 }
 //----------------------------------------------------------------------------
@@ -175,16 +176,17 @@ std::string WUVarReference::getTargetName() const
 //----------------------------------------------------------------------------
 bool WUVarReference::isDuplicated() const
 {
-    if(getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED) {
-        return false;
-    }
-    else {
+    // If target variable has BATCH dimension
+    if(getVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH) {
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
                 [](const CCURef&) { return false; },
                 [](const WURef&) { return true; }},
             m_Detail);
+    }
+    else {
+        return false;
     }
 }
 //----------------------------------------------------------------------------
@@ -330,8 +332,8 @@ WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varV
     }
 
     // Check duplicatedness of variables
-    if((getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::DUPLICATE) 
-       != (getTransposeVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::DUPLICATE)) 
+    if((getVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH) 
+       != (getTransposeVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH)) 
     {
         throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
     }

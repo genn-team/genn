@@ -514,7 +514,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
                                   [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
-                                  ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)"));
+                                  ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)"));
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
                 ng.generateNeuronUpdate(*this, groupEnv, batchSize,
@@ -587,10 +587,10 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             }
 
             // Copy spikes into block of $(_spk)
-            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");
+            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "");
             if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
                 const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
-                                                                           batchSize, VarAccessDuplication::DUPLICATE, "");
+                                                                           batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "");
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -805,7 +805,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-                    groupEnv.printLine("const unsigned int spk = $(_trg_spk)[" + sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) + "];");
+                    groupEnv.printLine("const unsigned int spk = $(_trg_spk)[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::POST_NEURON, index) + "];");
                     groupEnv.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

@@ -176,11 +176,11 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
     // If model is batched we need to check all variable references 
     // are SHARED as, connectivity itself is always SHARED
     if (batchSize > 1) {
-        // If any referenced presynaptic variables aren't shared, give error
+        // If any referenced presynaptic variables are batched, give error
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)) != VarAccessDuplication::SHARED); 
+                            return (v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Presynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
@@ -190,7 +190,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPostVarReferences().cbegin(), getPostVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)) != VarAccessDuplication::SHARED); 
+                            return (v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE)& VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");

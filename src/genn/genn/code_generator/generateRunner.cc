@@ -29,12 +29,12 @@ namespace
 {
 unsigned int getNumVarCopies(unsigned int varAccess, unsigned int batchSize, bool batched = true)
 {
-    return ((varAccess & VarAccessDuplication::SHARED) || !batched) ? 1 : batchSize;
+    return ((varAccess & VarAccessDim::BATCH) && batched) ? batchSize : 1;
 }
 //--------------------------------------------------------------------------
 unsigned int getNumVarElements(unsigned int varAccess, unsigned int numNeurons)
 {
-    return (varAccess & VarAccessDuplication::SHARED_NEURON) ? 1 : numNeurons;
+    return (varAccess & VarAccessDim::NEURON) ? numNeurons : 1;
 }
 //--------------------------------------------------------------------------
 unsigned int getVarSize(unsigned int varAccess, unsigned int numElements, unsigned int batchSize, 

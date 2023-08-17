@@ -86,15 +86,15 @@ protected:
     const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
     template<typename V>
-    bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDuplication duplication) const
+    bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and have correct duplication flag
+        // Return true if any variables have REDUCE flag in their access mode and doesn't have reduction dimension
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
-                       [duplication](const Models::Base::Var &v)
+                       [reduceDim](const Models::Base::Var &v)
                        { 
                            const unsigned int access = v.getAccess(VarAccess::READ_WRITE);
-                           return (access & VarAccessModeAttribute::REDUCE) && (access & duplication);
+                           return (access & VarAccessModeAttribute::REDUCE) && !(access & reduceDim);
                        }))
         {
             return true;
@@ -102,10 +102,11 @@ protected:
 
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
-            // If custom update model reduces into this variable reference and the variable it targets has correct duplication flag
+            // If custom update model reduces into this variable reference 
+            // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && (varRef.getVar().getAccess(VarAccess::READ_WRITE) & duplication)) 
+                && !(varRef.getVar().getAccess(VarAccess::READ_WRITE) & reduceDim)) 
             {
                 return true;
             }
@@ -131,12 +132,12 @@ protected:
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If custom update is batched, check that any variable references to shared variables are read-only
+            // If custom update is batched, check that any variable references to variables that aren't batched are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && (varRef.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED)
+            if(m_Batched && !(varRef.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDim::BATCH)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");
+                throw std::runtime_error("Variable references to non-batched variables in batched custom updates cannot be read-write.");
             }
         }
     }
@@ -264,8 +265,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
-    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::NEURON); }
     bool isPerNeuron() const{ return m_PerNeuron; }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
@@ -321,7 +322,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
     bool isTransposeOperation() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }

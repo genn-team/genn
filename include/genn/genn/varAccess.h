@@ -25,22 +25,13 @@ enum class VarAccessMode : unsigned int
     REDUCE_MAX  = static_cast<unsigned int>(VarAccessModeAttribute::REDUCE) | static_cast<unsigned int>(VarAccessModeAttribute::MAX),
 };
 
-//! Flags defining how variables should be duplicated across multiple batches
-enum class VarAccessDuplication : unsigned int
-{
-    DUPLICATE       = (1 << 5), //! This variable should be duplicated in each batch
-    SHARED          = (1 << 6), //! This variable should be shared between batches
-    SHARED_NEURON   = (1 << 7)  //! This variable should be shared between neurons
-};
-
 //! Flags defining dimensions this variables has
 enum class VarAccessDim : unsigned int
 {
     NEURON      = (1 << 5),
     PRE_NEURON  = (1 << 6),
     POST_NEURON = (1 << 7),
-    DELAY       = (1 << 8),
-    BATCH       = (1 << 9),
+    BATCH       = (1 << 8),
 };
 
 //! Supported combinations of access mode and dimension for neuron variables
@@ -53,7 +44,7 @@ enum class NeuronVarAccess : unsigned int
 };
 
 //! Supported combinations of access mode and dimension for synapse variables
-/*enum class SynapseVarAccess : unsigned int
+enum class SynapseVarAccess : unsigned int
 {
     // Synaptic variables
     READ_WRITE                  = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
@@ -61,17 +52,17 @@ enum class NeuronVarAccess : unsigned int
     READ_ONLY_DUPLICATE         = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
     // Presynaptic variables
-    READ_WRITE_PRE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
-    READ_ONLY_PRE               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON),
-    READ_ONLY_PRE_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    //READ_WRITE_PRE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    //READ_ONLY_PRE               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON),
+    //READ_ONLY_PRE_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
     // Postsynaptic variables
-    READ_WRITE_POST             = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
-    READ_ONLY_POST              = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON),
-    READ_ONLY_POST_DUPLICATE    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH), 
+    //READ_WRITE_POST             = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    //READ_ONLY_POST              = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON),
+    //READ_ONLY_POST_DUPLICATE    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH), 
 };
 
-enum class CustomUpdateVarAccess : unsigned int
+/*enum class CustomUpdateVarAccess : unsigned int
 {
     // Variables with matching shape
     READ_WRITE,
@@ -95,19 +86,6 @@ enum class CustomUpdateVarAccess : unsigned int
     REDUCE_POST_NEURON_MAX,       
 }*/
 
-//! Supported combinations of VarAccessMode and VarAccessDuplication
-enum class VarAccess : unsigned int
-{
-    READ_WRITE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    READ_ONLY               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
-    READ_ONLY_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    REDUCE_BATCH_SUM        = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    REDUCE_BATCH_MAX        = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    REDUCE_NEURON_SUM       = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
-    REDUCE_NEURON_MAX       = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
-};
-
 //----------------------------------------------------------------------------
 // Operators
 //----------------------------------------------------------------------------
@@ -116,9 +94,9 @@ inline bool operator & (unsigned int type, VarAccessMode mode)
     return (type & static_cast<unsigned int>(mode)) != 0;
 }
 
-inline bool operator & (unsigned int type, VarAccessDuplication duplication)
+inline bool operator & (unsigned int type, VarAccessDim dim)
 {
-    return (type & static_cast<unsigned int>(duplication)) != 0;
+    return (type & static_cast<unsigned int>(dim)) != 0;
 }
 
 inline bool operator & (unsigned int type, VarAccessModeAttribute modeAttribute)
@@ -136,6 +114,11 @@ inline bool operator & (VarAccessMode a, VarAccessMode b)
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
+inline unsigned int operator | (VarAccessDim a, VarAccessDim b)
+{
+    return (static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
+}
+
 
 //----------------------------------------------------------------------------
 // Helpers
@@ -143,10 +126,5 @@ inline bool operator & (VarAccessMode a, VarAccessMode b)
 inline VarAccessMode getVarAccessMode(unsigned int type)
 {
     return static_cast<VarAccessMode>(type & 0x1F);
-}
-
-inline VarAccessDuplication getVarAccessDuplication(unsigned int type)
-{
-    return static_cast<VarAccessDuplication>(type & ~0x1F);
 }
 }   // namespace GeNN

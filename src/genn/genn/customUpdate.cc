@@ -134,26 +134,26 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     // Check variable reference types
     Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
-    // Update is per-neuron if any variables or variable reference targets AREN'T SHARED_NEURON
+    // Update is per-neuron if any variables or variable reference targets have neuron dimension
     const auto modelVars = getCustomUpdateModel()->getVars();
     m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                               [](const auto& v) 
                               {
-                                  return !(v.second.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON); 
+                                  return (v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON); 
                               });
     m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
                                [](const Models::Base::Var& v) 
                                {
-                                   return !(v.getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON); 
+                                   return (v.getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON); 
                                });
 
     // Loop through all variable references
     for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
         const auto &varRef = m_VarReferences.at(modelVarRef.name);
 
-        // If custom update is per-neuron, check that any variable references to SHARED_NEURON variables are read-only
+        // If custom update is per-neuron, check that any variable references to variables without NEURON axis are read-only
         // **NOTE** if custom update isn't per-neuron, it's totally fine to write to SHARED_NEURON variables
-        if(m_PerNeuron && (varRef.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON)
+        if(m_PerNeuron && !(varRef.getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON)
             && (modelVarRef.access == VarAccessMode::READ_WRITE))
         {
             throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
@@ -218,8 +218,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         // Update hash with whether variable references require delay
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
-        // Update hash with duplication mode of target variable as this effects indexing code
-        Utils::updateHash(getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)), hash);
+        // Update hash with target variable access mode as this effects indexing code
+        Utils::updateHash(v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE), hash);
     }
     return hash.get_digest();
 }
@@ -340,8 +340,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
         // Update hash with whether variable references require transpose
         Utils::updateHash((v.second.getTransposeSynapseGroup() == nullptr), hash);
 
-        // Update hash with duplication mode of target variable as this effects indexing code
-        Utils::updateHash(getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)), hash);
+        // Update hash with access mode of target variable as this effects indexing code
+        Utils::updateHash(v.second.getVar().getAccess(SynapseVarAccess::READ_WRITE), hash);
     }
 
     return hash.get_digest();

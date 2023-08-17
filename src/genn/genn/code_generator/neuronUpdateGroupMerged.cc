@@ -40,7 +40,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-        [batchSize, &ng](const std::string&, VarAccessDuplication d)
+        [batchSize, &ng](const std::string&, unsigned int d)
         {
             return ng.getVarIndex(batchSize, d, "$(id)");
         });
@@ -83,7 +83,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                     [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
 
     // Read into local variable
-    const std::string idx = ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)");
+    const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)");
     psmEnv.getStream() << "// postsynaptic model " << getIndex() << std::endl;
     psmEnv.printLine(getScalarType().getName() + " linSyn = $(_out_post)[" + idx + "];");
 
@@ -121,7 +121,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-        [batchSize, &ng](const std::string&, VarAccessDuplication d)
+        [batchSize, &ng](const std::string&, unsigned int d)
         {
             return ng.getVarIndex(batchSize, d, "$(id)");
         });
@@ -134,7 +134,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     prettyPrintStatements(getArchetype().getPSDecayCodeTokens(), getTypeContext(), varEnv, decayErrorHandler);
 
     // Write back linSyn
-    varEnv.printLine("$(_out_post)[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = linSyn;");
+    varEnv.printLine("$(_out_post)[" + ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)") + "] = linSyn;");
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -168,7 +168,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
                        [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
 
     // Add reverse insyn variable to 
-    const std::string idx = ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)");
+    const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)");
     outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
 
     // Zero it again
@@ -202,15 +202,15 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &synEnv, &ng](const std::string&, unsigned int d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
             },
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &synEnv, &ng](const std::string&, unsigned int d)
             {
                 return ng.getWriteVarIndex(delayed, batchSize, d, "$(id)");
             },
-            [delayed](const std::string&, VarAccessDuplication)
+            [delayed](const std::string&, unsigned int)
             {
                 return delayed;
             });
@@ -242,10 +242,10 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
-            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
+            const unsigned int varAccess = v.getAccess(NeuronVarAccess::READ_WRITE);
             if(varAccess & VarAccessMode::READ_WRITE) {
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "];");
+                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varAccess, "$(id)") + "] = ");
+                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varAccess, "$(id)") + "];");
             }
         }
     }
@@ -294,15 +294,15 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-            [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &ng](const std::string&, unsigned int d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, d, "$(id)");
             },
-            [batchSize, delayed, &ng](const std::string&, VarAccessDuplication d)
+            [batchSize, delayed, &ng](const std::string&, unsigned int d)
             {
                 return ng.getWriteVarIndex(delayed, batchSize, d, "$(id)");
             },
-            [delayed](const std::string&, VarAccessDuplication)
+            [delayed](const std::string&, unsigned int)
             {
                 return delayed;
             });     
@@ -334,10 +334,10 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
-            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
+            const unsigned int varAccess = v.getAccess(NeuronVarAccess::READ_WRITE);
             if(varAccess & VarAccessMode::READ_WRITE) {
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "];");
+                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varAccess, "$(id)") + "] = ");
+                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varAccess, "$(id)") + "];");
             }
         }
     }
@@ -496,7 +496,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     
     // Substitute spike times
     const std::string timePrecision = getTimeType().getName();
-    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "$(id)");
+    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
+                                                           VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)");
     neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
                   {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_st", "lprevST", 
@@ -511,17 +512,17 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
         *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l",
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
+        [batchSize, &neuronEnv, this](const std::string &varName, unsigned int d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
             return getReadVarIndex(delayed, batchSize, d, "$(id)") ;
         },
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccessDuplication d)
+        [batchSize, &neuronEnv, this](const std::string &varName, unsigned int d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
             return getWriteVarIndex(delayed, batchSize, d, "$(id)") ;
         },
-        [this](const std::string &varName, VarAccessDuplication)
+        [this](const std::string &varName, unsigned int)
         {
             return (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
         });
@@ -703,12 +704,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
                 // If spike times are required, copy times from register
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(st);");
+                    neuronVarEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id)") + "] = $(st);");
                 }
 
                 // If previous spike times are required, copy times from register
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronVarEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "] = $(prev_st);");
+                    neuronVarEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON "$(id)") + "] = $(prev_st);");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
@@ -740,53 +741,56 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, En
     }
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-        return (batchSize == 1) ? "0" : "$(batch)";
+    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize >= 1);
+    if (!(varAccess & VarAccessDim::NEURON)) {
+        return batched ? "$(batch)" : "0";
     }
-    else if(varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-        return index;
-    }
-    else {
+    else if(batched) {
         return "$(_batch_offset) + " + index;
     }
+    else {
+        return index;
+    }
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
 {
     if(delay) {
-        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return (batchSize == 1) ? "$(_read_delay_slot)" : "$(_read_batch_delay_slot)";
+        const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize >= 1);
+        if (!(varAccess & VarAccessDim::NEURON)) {
+            return batched ? "$(_read_batch_delay_slot)" : "$(_read_delay_slot)";
         }
-        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-            return "$(_read_delay_offset) + " + index;
-        }
-        else {
+        else if(batched) {
             return "$(_read_batch_delay_offset) + " + index;
         }
+        else {
+            return "$(_read_delay_offset) + " + index;
+        }
     }
     else {
-        return getVarIndex(batchSize, varDuplication, index);
+        return getVarIndex(batchSize, varAccess, index);
     }
 }
 //--------------------------------------------------------------------------
-std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
 {
     if(delay) {
-        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return (batchSize == 1) ? "$(_write_delay_slot)" : "$(_write_batch_delay_slot)";
+        const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize >= 1);
+        if (!(varAccess & VarAccessDim::NEURON)) {
+            return batched ? "$(_write_batch_delay_slot)" : "$(_write_delay_slot)";
         }
-        else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
-            return "$(_write_delay_offset) + " + index;
+        else if (batched) {
+            return "$(_write_batch_delay_offset) + " + index;
         }
         else {
-            return "$(_write_batch_delay_offset) + " + index;
+            return "$(_write_delay_offset) + " + index;
         }
     }
     else {
-        return getVarIndex(batchSize, varDuplication, index);
+        return getVarIndex(batchSize, varAccess, index);
     }
 }
 //----------------------------------------------------------------------------
