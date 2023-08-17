@@ -252,9 +252,10 @@ private:
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
-            if(v.access & VarAccessModeAttribute::REDUCE) {
+            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
+            if(varAccess & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(v.access), idx) << "] = " << env[v.name] << ";" << std::endl;
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(varAccess), idx) << "] = " << env[v.name] << ";" << std::endl;
             }
         }
 

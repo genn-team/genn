@@ -85,23 +85,11 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     const auto preVars = getPreVars();
     const auto postVars = getPostVars();
     if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v)
-                   {
-                       const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                       return (varAccess & VarAccessModeAttribute::REDUCE); 
-                   })
+                   [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
        || std::any_of(preVars.cbegin(), preVars.cend(),
-                      [](const Models::Base::Var &v)
-                      {
-                          const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                          return (varAccess & VarAccessModeAttribute::REDUCE); 
-                      })
+                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
        || std::any_of(postVars.cbegin(), postVars.cend(),
-                      [](const Models::Base::Var &v)
-                      {
-                          const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                          return (varAccess & VarAccessModeAttribute::REDUCE); 
-                      }))
+                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); }))
     {
         throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
@@ -116,8 +104,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const Models::Base::Var &v) 
                     { 
-                        const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                        return (varAccess & VarAccessDuplication::SHARED_NEURON); 
+                        return (v.getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON); 
                     }))
     {
         throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");

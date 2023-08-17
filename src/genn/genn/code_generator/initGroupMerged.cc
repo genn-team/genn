@@ -87,7 +87,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                             });
 
             // If variable is shared between neurons
-            if (getVarAccessDuplication(var.access) == VarAccessDuplication::SHARED_NEURON) {
+            if (getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)) == VarAccessDuplication::SHARED_NEURON) {
                 backend.genPopVariableInit(
                     varEnv,
                     [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots]
@@ -103,7 +103,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
                         
                         // Fill value across all delay slots and batches
-                        genScalarFill(varInitEnv, "_value", "$(value)", getVarAccessDuplication(var.access),
+                        genScalarFill(varInitEnv, "_value", "$(value)", getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)),
                                       batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
@@ -125,7 +125,8 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
                         // Fill value across all delay slots and batches
                         genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
-                                        getVarAccessDuplication(var.access), batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
+                                        getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)), 
+                                        batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
         }
@@ -184,7 +185,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    getVarAccessDuplication(var.access), batchSize);
+                                    getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)), batchSize);
                 });
         }
     }

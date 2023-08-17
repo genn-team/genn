@@ -180,8 +180,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            const unsigned int varAccess = v.second.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                            return (getVarAccessDuplication(varAccess) != VarAccessDuplication::SHARED); 
+                            return (getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)) != VarAccessDuplication::SHARED); 
                         }))
         {
             throw std::runtime_error("Presynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
@@ -191,8 +190,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPostVarReferences().cbegin(), getPostVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            const unsigned int varAccess = v.second.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-                            return (getVarAccessDuplication(varAccess) != VarAccessDuplication::SHARED); 
+                            return (getVarAccessDuplication(v.second.getVar().getAccess(VarAccess::READ_WRITE)) != VarAccessDuplication::SHARED); 
                         }))
         {
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");

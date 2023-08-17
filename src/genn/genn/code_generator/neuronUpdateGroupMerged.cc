@@ -242,9 +242,10 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
-            if(v.access & VarAccessMode::READ_WRITE) {
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "];");
+            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
+            if(varAccess & VarAccessMode::READ_WRITE) {
+                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "] = ");
+                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "];");
             }
         }
     }
@@ -333,9 +334,10 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
-            if(v.access & VarAccessMode::READ_WRITE) {
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(v.access), "$(id)") + "];");
+            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
+            if(varAccess & VarAccessMode::READ_WRITE) {
+                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "] = ");
+                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, getVarAccessDuplication(varAccess), "$(id)") + "];");
             }
         }
     }

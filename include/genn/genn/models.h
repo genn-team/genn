@@ -80,6 +80,21 @@ public:
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
+        unsigned int getAccess(VarAccess defaultAccess) const
+        {
+            return access.value_or(static_cast<unsigned int>(defaultAccess)); 
+        }
+
+        VarAccessMode getAccessMode() const
+        {
+            if(access) {
+                return getVarAccessMode(access.value());
+            }
+            else {
+                return VarAccessMode::READ_WRITE;
+            }
+        }
+
         std::string name;
         Type::UnresolvedType type;
         std::optional<unsigned int> access;
@@ -95,6 +110,11 @@ public:
         bool operator == (const VarRef &other) const
         {
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
+        }
+
+        VarAccessMode getAccessMode() const
+        {
+            return access;
         }
 
         std::string name;
@@ -406,8 +426,7 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
 
         // Check that no reduction targets reference duplicated variables
         // **TODO** default from InitModel class
-        const unsigned int varAccess = varRef.getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
-        if((varAccess & VarAccessDuplication::DUPLICATE) 
+        if((varRef.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::DUPLICATE) 
             && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
         {
             throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");

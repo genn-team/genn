@@ -141,7 +141,7 @@ protected:
         // Loop through variables and add pointers if they are reduction targets
         const auto *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
-            if(v.access & VarAccessModeAttribute::REDUCE) {
+            if(v.getAccessMode() & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
                              [&backend, v](const auto &g, size_t) 
@@ -153,7 +153,7 @@ protected:
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
-            if(v.access & VarAccessModeAttribute::REDUCE) {
+            if(v.getAccessMode() & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
                              [&backend, v](const auto &g, size_t) 

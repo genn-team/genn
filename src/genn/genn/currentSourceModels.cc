@@ -37,8 +37,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     if(std::any_of(vars.cbegin(), vars.cend(),
                    [](const Models::Base::Var &v)
                    { 
-                       const unsigned int varAccess = v.access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE));
-                       return (varAccess & VarAccessModeAttribute::REDUCE); 
+                       return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); 
                    }))
     {
         throw std::runtime_error("Current source models cannot include variables with REDUCE access modes - they are only supported by custom update models");

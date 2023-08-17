@@ -383,7 +383,7 @@ private:
             const auto *cm = cg.getArchetype().getCustomUpdateModel();
             for(const auto &v : cm->getVars()) {
                 // If variable is reduction target
-                if(v.access & VarAccessModeAttribute::REDUCE) {
+                if(v.getAccessMode() & VarAccessModeAttribute::REDUCE) {
                     // Add pointer field
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
@@ -394,7 +394,7 @@ private:
                     
                     // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
-                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
+                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(v.getAccessMode()) + ", ncclCommunicator, 0));");
                 }
             }
 

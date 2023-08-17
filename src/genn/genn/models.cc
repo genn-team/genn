@@ -75,8 +75,7 @@ std::string VarReference::getTargetName() const
 //----------------------------------------------------------------------------
 bool VarReference::isDuplicated() const
 {
-    const unsigned int varAccess = getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-    if(varAccess & VarAccessDuplication::SHARED) {
+    if(getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED) {
         return false;
     }
     else {
@@ -176,8 +175,7 @@ std::string WUVarReference::getTargetName() const
 //----------------------------------------------------------------------------
 bool WUVarReference::isDuplicated() const
 {
-    const unsigned int varAccess = getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-    if(varAccess & VarAccessDuplication::SHARED) {
+    if(getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED) {
         return false;
     }
     else {
@@ -332,9 +330,9 @@ WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varV
     }
 
     // Check duplicatedness of variables
-    const unsigned int varAccess = getVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-    const unsigned int transposeVarAccess = getTransposeVar().access.value_or(static_cast<unsigned int>(VarAccess::READ_WRITE)); 
-    if((varAccess & VarAccessDuplication::DUPLICATE) != (transposeVarAccess & VarAccessDuplication::DUPLICATE)) {
+    if((getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::DUPLICATE) 
+       != (getTransposeVar().getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::DUPLICATE)) 
+    {
         throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
     }
 }

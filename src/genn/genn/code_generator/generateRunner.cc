@@ -1081,8 +1081,9 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         std::vector<std::string> neuronStatePushPullFunctions;
         for(const auto &var : neuronModel->getVars()) {
             const auto &varInit = n.second.getVarInitialisers().at(var.name);
-            const unsigned int numCopies = getNumVarCopies(var.access, batchSize);
-            const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
+            const unsigned int varAccess = var.getAccess(VarAccess::READ_WRITE); 
+            const unsigned int numCopies = getNumVarCopies(varAccess, batchSize);
+            const unsigned int numElements = getNumVarElements(varAccess, n.second.getNumNeurons());
             const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * numElements;
             const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
             const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
@@ -1152,7 +1153,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                    runnerPushFunc, runnerPullFunc, *cs, mem, currentSourcePushPullFunctions,
                                                    [batchSize, &n](const CurrentSourceInternal&, const Models::Base::Var &var)
                                                    { 
-                                                       return getVarSize(var.access, n.second.getNumNeurons(), batchSize);
+                                                       return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                                                                         n.second.getNumNeurons(), batchSize);
                                                    });
             genRunnerEGPs<CurrentSourceEGPAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                                    runnerVarDecl, runnerExtraGlobalParamFunc, *cs);
@@ -1175,7 +1177,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         runnerPushFunc, runnerPullFunc, model.getCustomUpdates(), mem, statePushPullFunctions,
         [batchSize](const CustomUpdateInternal &c, const Models::Base::Var &var)
         { 
-            return getVarSize(var.access, c.getSize(), batchSize, 1, c.isBatched());
+            return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                              c.getSize(), batchSize, 1, c.isBatched());
         });
 
     genCustomUpdate<CustomUpdateVarAdapter, CustomUpdateEGPAdapter>(
@@ -1189,7 +1192,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
             const size_t count = ((sg->getMatrixType() & SynapseMatrixWeight::KERNEL)
                                   ? sg->getKernelSizeFlattened() 
                                   : sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
-            return getVarSize(var.access, count, batchSize, 1, c.isBatched());
+            return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                              count, batchSize, 1, c.isBatched());
         });
     allVarStreams << std::endl;
 
@@ -1270,7 +1274,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                      runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
                                                      [batchSize](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                      { 
-                                                         return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
+                                                         return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                                                                           sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
                                                      }); 
         }
         // Loop through fused outgoing synapse populations with weightupdate models that have presynaptic output 
@@ -1287,7 +1292,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
                                                        [batchSize, preDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                        { 
-                                                           return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), 
+                                                           return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                                                                             sg.getSrcNeuronGroup()->getNumNeurons(), 
                                                                              batchSize, preDelaySlots);
                                                        }); 
         }
@@ -1299,7 +1305,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                         runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc, *sg, mem, 
                                                         [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                         { 
-                                                            return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), 
+                                                            return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                                                                              sg.getTrgNeuronGroup()->getNumNeurons(), 
                                                                               batchSize, postDelaySlots);
                                                         }); 
         }  
@@ -1400,15 +1407,16 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 const auto &varInit = s.second.getWUVarInitialisers().at(wuVar.name);
                 const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
+                const unsigned int wuVarAccess = wuVar.getAccess(VarAccess::READ_WRITE);
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
-                                autoInitialized, size * getNumVarCopies(wuVar.access, batchSize), mem, synapseGroupStatePushPullFunctions);
+                                autoInitialized, size * getNumVarCopies(wuVarAccess, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
                 else if(kernelWeights) {
                      // Calculate size of kernel
-                     const size_t size = s.second.getKernelSizeFlattened() * getNumVarCopies(wuVar.access, batchSize);
+                     const size_t size = s.second.getKernelSizeFlattened() * getNumVarCopies(wuVarAccess, batchSize);
                      
                      // Generate variable
                      genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -1443,7 +1451,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                             s.second, synapseGroupStatePushPullFunctions,
                                                             [batchSize](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                             { 
-                                                                return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
+                                                                return getVarSize(var.getAccess(VarAccess::READ_WRITE), 
+                                                                                  sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
                                                             }); 
         }
         
@@ -1455,7 +1464,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                               s.second, synapseGroupStatePushPullFunctions,
                                                               [batchSize, preDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                               { 
-                                                                  return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots);
+                                                                  return getVarSize(var.getAccess(VarAccess::READ_WRITE), sg.getSrcNeuronGroup()->getNumNeurons(), 
+                                                                                    batchSize, preDelaySlots);
                                                               }); 
             
         }
@@ -1468,7 +1478,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                                                s.second, synapseGroupStatePushPullFunctions,
                                                                [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                                { 
-                                                                   return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
+                                                                   return getVarSize(var.getAccess(VarAccess::READ_WRITE), sg.getTrgNeuronGroup()->getNumNeurons(), 
+                                                                                     batchSize, postDelaySlots);
                                                                });
         }
         

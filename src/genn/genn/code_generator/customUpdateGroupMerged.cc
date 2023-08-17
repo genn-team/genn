@@ -71,7 +71,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         [this, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
-                                  getVarAccessDuplication(v.getVar().access), 
+                                  getVarAccessDuplication(v.getVar().getAccess(VarAccess::READ_WRITE)), 
                                   "$(id)");
         });
 
@@ -195,8 +195,8 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
-            return getVarRefIndex(getVarAccessDuplication(v.getVar().access), 
-                                  varEnv["id_syn"]);
+            return getVarRefIndex(getVarAccessDuplication(v.getVar().getAccess(VarAccess::READ_WRITE)), 
+                                  "$(id_syn)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
