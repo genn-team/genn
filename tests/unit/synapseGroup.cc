@@ -687,7 +687,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
     ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous("prob"));
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous("prob"));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous("probLogRecip"));
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isVarInitParamHeterogeneous("g", "constant"));
 }
 
