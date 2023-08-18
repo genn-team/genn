@@ -55,5 +55,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
     Utils::validateVecNames(getExtraGlobalParamRefs(), "Extra global parameter reference");
+
+    // If any variables have an invalid access mode, give an error
+    const auto vars = getVars();
+    if(std::any_of(vars.cbegin(), vars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.template isValid<CustomUpdateVarAccess>(); }))
+    {
+        throw std::runtime_error("Custom update model variables must have CustomUpdateVarAccess access type");
+    }
 }
 }   // namespace GeNN::CustomUpdateModels
