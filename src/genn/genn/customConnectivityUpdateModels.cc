@@ -47,38 +47,31 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateVecNames(getVarRefs(), "Synapse variable reference");
     Utils::validateVecNames(getPreVarRefs(), "Presynaptic variable reference");
     Utils::validateVecNames(getPostVarRefs(), "Postsynaptic variable reference");
-
     
     // Validate variable initialisers
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
     
+    // Validate variable reference initialisers
     Utils::validateInitialisers(getVarRefs(), varRefTargets, "variable reference", description);
     Utils::validateInitialisers(getPreVarRefs(), preVarRefTargets, "presynaptic variable reference", description);
     Utils::validateInitialisers(getPostVarRefs(), postVarRefTargets, "postsynaptic variable reference", description);
     
-    
-    // If any variables have a reduction access mode, give an error
-    // **YUCK** copy-paste from WUM - could go in helper/Models::Base
+    // Check variables have suitable access types
     if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(preVars.cbegin(), preVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(postVars.cbegin(), postVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); }))
+                   [](const Models::Base::Var &v){ return !v.access.isValidSynapse(); }))
     {
-        throw std::runtime_error("Custom connectivity update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+        throw std::runtime_error("Custom connectivity update models variables much have SynapseVarAccess access type");
     }
-
-    // If any variables have shared neuron duplication mode, give an error
-    // **YUCK** copy-paste from WUM - could go in helper/Models::Base
-    if (std::any_of(vars.cbegin(), vars.cend(),
-                    [](const Models::Base::Var &v) 
-                    { 
-                        return (v.getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::SHARED_NEURON); 
-                    }))
+    if(std::any_of(preVars.cbegin(), preVars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.isValidNeuron(); }))
     {
-        throw std::runtime_error("Custom connectivity update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
+        throw std::runtime_error("Custom connectivity update models presynaptic variables much have NeuronVarAccess access type");
+    }
+    if(std::any_of(postVars.cbegin(), postVars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.isValidNeuron(); }))
+    {
+        throw std::runtime_error("Custom connectivity update models postsynaptic variables much have NeuronVarAccess access type");
     }
 }
 }   // namespace GeNN::CustomConnectivityUpdateModels

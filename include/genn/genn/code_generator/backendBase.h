@@ -560,20 +560,20 @@ private:
     //--------------------------------------------------------------------------
     // Private API
     //--------------------------------------------------------------------------
-    template<typename G, typename R>
-    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg, const std::string &idx, R getVarRefIndexFn) const
+    template<typename A, typename G, typename R>
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg, const std::string &idx, 
+                                                         R getVarRefIndexFn) const
     {
         // Loop through variables
         std::vector<ReductionTarget> reductionTargets;
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
-            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE); 
-            if (varAccess & VarAccessModeAttribute::REDUCE) {
+            if (v.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
-                os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(varAccess), resolvedType) << ";" << std::endl;
-                reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(varAccess),
-                                            cg.getVarIndex(varAccess), idx)});
+                os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(v.access, resolvedType) << ";" << std::endl;
+                reductionTargets.push_back({v.name, resolvedType, v.access,
+                                            cg.getVarIndex(v.access.getDims<A>(), idx)});
             }
         }
 

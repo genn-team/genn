@@ -699,22 +699,22 @@ std::string BackendBase::getReductionOperation(const std::string &reduction, con
 //-----------------------------------------------------------------------
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
 {
-    return genInitReductionTargets(os, cg, idx,
-                                   [&cg](const Models::VarReference &varRef, const std::string &index)
-                                   {
-                                       return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                                                varRef.getVar().getAccess(NeuronVarAccess::READ_WRITE),
-                                                                index);
-                                   });
+    return genInitReductionTargets<NeuronVarAccess>(
+        os, cg, idx,
+        [&cg](const Models::VarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                        varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+        });
 }
 //-----------------------------------------------------------------------
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
 {
-    return genInitReductionTargets(os, cg, idx,
-                                   [&cg](const Models::WUVarReference &varRef, const std::string &index)
-                                   {
-                                       return cg.getVarRefIndex(varRef.getVar().getAccess(SynapseVarAccess::READ_WRITE),
-                                                                index);
-                                   });
+    return genInitReductionTargets<NeuronVarAccess>(
+        os, cg, idx,
+        [&cg](const Models::WUVarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+        });
 }
 }   // namespace GeNN::CodeGenerator

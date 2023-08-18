@@ -246,16 +246,15 @@ private:
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
     void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const;
 
-    template<typename G, typename R>
+    template<typename A, typename G, typename R>
     void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
     {
         const auto *cm = cg.getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
-            const unsigned int varAccess = v.getAccess(VarAccess::READ_WRITE);
-            if(varAccess & VarAccessModeAttribute::REDUCE) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDim(varAccess), idx) << "] = " << env[v.name] << ";" << std::endl;
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(v.access.getDims<A>(), idx) << "] = " << env[v.name] << ";" << std::endl;
             }
         }
 

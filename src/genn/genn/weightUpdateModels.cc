@@ -77,37 +77,32 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
 
+    
+    const auto preVars = getPreVars();
+    const auto postVars = getPostVars();
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
 
-    // If any variables have a reduction access mode, give an error
-    const auto vars = getVars();
-    const auto preVars = getPreVars();
-    const auto postVars = getPostVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(preVars.cbegin(), preVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(postVars.cbegin(), postVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
-
-    // Validate variable reference initialisers
+    // Validate variable initialisers
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
-
-    // Validate variable reference initialisers
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
 
-    // If any variables have shared neuron duplication mode, give an error
-    if (std::any_of(vars.cbegin(), vars.cend(),
-                    [](const Models::Base::Var &v) 
-                    { 
-                        return (v.getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON); 
-                    }))
+    // Check variables have suitable access types
+    const auto vars = getVars();
+    if(std::any_of(vars.cbegin(), vars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.isValidSynapse(); }))
     {
-        throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
+        throw std::runtime_error("Weight update models variables much have SynapseVarAccess access type");
+    }
+    if(std::any_of(preVars.cbegin(), preVars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.isValidNeuron(); }))
+    {
+        throw std::runtime_error("Weight update models presynaptic variables much have NeuronVarAccess access type");
+    }
+    if(std::any_of(postVars.cbegin(), postVars.cend(),
+                   [](const Models::Base::Var &v){ return !v.access.isValidNeuron(); }))
+    {
+        throw std::runtime_error("Weight update models postsynaptic variables much have NeuronVarAccess access type");
     }
 }
 }   // namespace WeightUpdateModels

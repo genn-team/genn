@@ -1,5 +1,12 @@
 #pragma once
 
+// Standard C++ includes
+#include <variant>
+
+// GeNN includes
+#include "gennExport.h"
+#include "gennUtils.h"
+
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
@@ -89,42 +96,86 @@ enum class SynapseVarAccess : unsigned int
 //----------------------------------------------------------------------------
 // Operators
 //----------------------------------------------------------------------------
-inline bool operator & (unsigned int type, VarAccessMode mode)
-{
-    return (type & static_cast<unsigned int>(mode)) != 0;
-}
-
-inline bool operator & (unsigned int type, VarAccessDim dim)
-{
-    return (type & static_cast<unsigned int>(dim)) != 0;
-}
-
-inline bool operator & (unsigned int type, VarAccessModeAttribute modeAttribute)
-{
-    return (type & static_cast<unsigned int>(modeAttribute)) != 0;
-}
-
 inline bool operator & (VarAccessMode mode, VarAccessModeAttribute modeAttribute)
 {
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
 
-inline bool operator & (VarAccessMode a, VarAccessMode b)
+inline bool operator & (VarAccessDim a, VarAccessDim b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
-inline unsigned int operator | (VarAccessDim a, VarAccessDim b)
+inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
 {
-    return (static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
-
 //----------------------------------------------------------------------------
-// Helpers
+// VarAccess
 //----------------------------------------------------------------------------
-inline VarAccessMode getVarAccessMode(unsigned int type)
+//! Wrapper class encapsulating 
+GENN_EXPORT class VarAccess
 {
-    return static_cast<VarAccessMode>(type & 0x1F);
-}
+public:
+    VarAccess()
+    {}
+    VarAccess(NeuronVarAccess n) : m_Access{n}
+    {}
+    VarAccess(SynapseVarAccess s) : m_Access{s}
+    {}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    template<typename V>
+    VarAccessDim getDims() const
+    {
+        const unsigned int val = std::visit(
+            Utils::Overload{
+                [](std::monostate) { return static_cast<unsigned int>(V::READ_WRITE); },
+                [](V v) { return static_cast<unsigned int>(v); },
+                [](auto)->unsigned int { throw std::runtime_error("Invalid var access type"); }},
+            m_Access);
+
+        // Mask out dimension bits and cast to enum
+        return static_cast<VarAccessDim>(val & ~0x1F);
+    }
+
+    //! Returns true if this VarAccess would be valid for a neuron
+    bool isValidNeuron() const
+    {
+        return !std::holds_alternative<SynapseVarAccess>(m_Access);
+    }
+
+    //! Returns true if this VarAccess would be valid for a synapse
+    bool isValidSynapse() const
+    {
+        return !std::holds_alternative<NeuronVarAccess>(m_Access);
+    }
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        Utils::updateHash(m_Access, hash);
+    }
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    operator VarAccessMode() const
+    {
+        return std::visit(
+            Utils::Overload{
+                [](std::monostate) { return VarAccessMode::READ_WRITE; },
+                [](auto v) { return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F); }},
+            m_Access);
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::variant<std::monostate, NeuronVarAccess, SynapseVarAccess> m_Access;
+};
+
 }   // namespace GeNN

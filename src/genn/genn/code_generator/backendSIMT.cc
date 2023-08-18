@@ -587,7 +587,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             }
 
             // Copy spikes into block of $(_spk)
-            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "");
+            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                VarAccessDim::BATCH | VarAccessDim::NEURON, "");
             if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
                 const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
                                                                            batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "");
@@ -805,7 +806,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-                    groupEnv.printLine("const unsigned int spk = $(_trg_spk)[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::POST_NEURON, index) + "];");
+                    groupEnv.printLine("const unsigned int spk = $(_trg_spk)[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, index) + "];");
                     groupEnv.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

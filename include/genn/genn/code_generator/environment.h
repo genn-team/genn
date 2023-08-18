@@ -405,7 +405,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
-    using GetVarIndexFn = std::function<std::string(unsigned int, const std::string&)>;
+    using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
 
     template<typename A>
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
@@ -639,14 +639,14 @@ public:
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (readOnly || (v.getAccessMode() & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
+            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
                      [arrayPrefix, v](const auto &g, size_t) 
                      { 
                          return arrayPrefix + v.name + A(g).getNameSuffix();
                      },
-                     getIndexFn(v.getAccess(VarAccess::READ_WRITE), v.name));
+                     getIndexFn(v.access, v.name));
         }
     }
 
@@ -654,7 +654,7 @@ public:
     void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, 
                  const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVars<A>(arrayPrefix, [&indexSuffix](unsigned int, const std::string &) { return indexSuffix; }, 
+        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
                    fieldSuffix, readOnly);
     }
 
@@ -704,8 +704,8 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<std::string(const std::string&, unsigned int)>;
-    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, unsigned int)>;
+    using GetIndexFn = std::function<std::string(const std::string&, VarAccess)>;
+    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccess)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
                    ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
@@ -723,20 +723,17 @@ public:
     //------------------------------------------------------------------------
     bool shouldAlwaysCopy(G&, const Models::Base::Var &var) const
     {
-        // **TODO** default from InitModel class
-        return m_ShouldAlwaysCopy(var.name, getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)));
+        return m_ShouldAlwaysCopy(var.name, var.access);
     }
 
     std::string getReadIndex(G&, const Models::Base::Var &var) const
     {
-        // **TODO** default from InitModel class
-        return m_GetReadIndex(var.name, getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)));
+        return m_GetReadIndex(var.name, var.access);
     }
 
     std::string getWriteIndex(G&, const Models::Base::Var &var) const
     {
-        // **TODO** default from InitModel class
-        return m_GetWriteIndex(var.name, getVarAccessDuplication(var.getAccess(VarAccess::READ_WRITE)));
+        return m_GetWriteIndex(var.name, var.access);
     }
 
     std::string getTargetName(const GroupInternal &g, const Models::Base::Var &var) const
@@ -860,7 +857,7 @@ public:
                                             return arrayPrefix + this->getTargetName(group.getGroups().at(i), v);
                                         });
 
-            if(v.getAccessMode() & VarAccessMode::READ_ONLY) {
+            if(v.access == VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
             }
             getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
@@ -868,7 +865,7 @@ public:
             // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
-            if(!(v.getAccessMode() & VarAccessModeAttribute::REDUCE)) {
+            if(!(v.access & VarAccessModeAttribute::REDUCE)) {
                 getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
@@ -880,7 +877,7 @@ public:
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
             // If we should always copy variable or variable is read-write
-            if(this->shouldAlwaysCopy(m_Group.get(), v) || v.getAccessMode() & VarAccessMode::READ_WRITE) {
+            if(this->shouldAlwaysCopy(m_Group.get(), v) || (v.access == VarAccessMode::READ_WRITE)) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
@@ -904,7 +901,7 @@ public:
 
             // Resolve type, add qualifier if required and return
             const auto resolvedType = var->second.second.type.resolve(m_Context.get());
-            const auto qualifiedType = (var->second.second.getAccessMode() & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            const auto qualifiedType = (var->second.second.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             return {qualifiedType};
         }
     }

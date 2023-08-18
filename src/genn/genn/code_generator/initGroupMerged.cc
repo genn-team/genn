@@ -21,10 +21,10 @@ using namespace GeNN::Transpiler;
 namespace
 {
 void genVariableFill(EnvironmentExternalBase &env, const std::string &target, const std::string &value, const std::string &idx, const std::string &stride,
-                     unsigned int varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                     VarAccessDim varDims, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varAccess & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDims & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -41,10 +41,10 @@ void genVariableFill(EnvironmentExternalBase &env, const std::string &target, co
 }
 //--------------------------------------------------------------------------
 void genScalarFill(EnvironmentExternalBase &env, const std::string &target, const std::string &value,
-                   unsigned int varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                   VarAccessDim varDims, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varAccess & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDims & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -87,11 +87,11 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                             });
 
             // If variable has NEURON axis
-            const unsigned int varAccess = var.getAccess(NeuronVarAccess::READ_WRITE);
-            if (varAccess & VarAccessDim::NEURON) {
+            const VarAccessDim varDims = var.access.getDims<NeuronVarAccess>();
+            if (varDims & VarAccessDim::NEURON) {
                 backend.genVariableInit(
                     varEnv, count, "id",
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots]
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -105,14 +105,14 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
                         // Fill value across all delay slots and batches
                         genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
-                                        varAccess, batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
+                                        varDims, batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
             // Otherwise
             else {
                 backend.genPopVariableInit(
                     varEnv,
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots]
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -125,7 +125,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
                         
                         // Fill value across all delay slots and batches
-                        genScalarFill(varInitEnv, "_value", "$(value)", varAccess,
+                        genScalarFill(varInitEnv, "_value", "$(value)", varDims,
                                       batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
@@ -185,7 +185,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    var.getAccess(SynapseVarAccess::READ_WRITE), batchSize);
+                                    var.access.getDims<SynapseVarAccess>(), batchSize);
                 });
         }
     }

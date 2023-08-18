@@ -131,7 +131,7 @@ class StaticPulse : public Base
 public:
     DECLARE_SNIPPET(StaticPulse);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPost(g);\n");
 };
@@ -182,7 +182,7 @@ class StaticPulseDendriticDelay : public Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelay);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}, {"d", "uint8_t", SynapseVarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
@@ -219,7 +219,7 @@ public:
     DECLARE_SNIPPET(StaticGraded);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
 
     SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
 

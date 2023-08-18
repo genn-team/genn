@@ -2013,22 +2013,22 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const
 {
-    genWriteBackReductions(env, cg, idxName,
-                           [&cg](const Models::VarReference &varRef, const std::string &index)
-                           {
-                               return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                                        varRef.getVar().getAccess(NeuronVarAccess::READ_WRITE),
-                                                        index);
-                           });
+    genWriteBackReductions<NeuronVarAccess>(
+        env, cg, idxName,
+        [&cg](const Models::VarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                    varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+        });
 }
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const
 {
-    genWriteBackReductions(env, cg, idxName,
-                           [&cg](const Models::WUVarReference &varRef, const std::string &index)
-                           {
-                               return cg.getVarRefIndex(varRef.getVar().getAccess(SynapseVarAccess::READ_WRITE),
-                                                        index);
-                           });
+    genWriteBackReductions<SynapseVarAccess>(
+        env, cg, idxName,
+        [&cg](const Models::WUVarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+        });
 }
 }   // namespace GeNN::CodeGenerator::SingleThreadedCPU

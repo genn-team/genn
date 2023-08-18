@@ -85,16 +85,17 @@ protected:
 
     const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
-    template<typename V>
-    bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDim reduceDim) const
+    template<typename A, typename V>
+    bool isReduction(const std::unordered_map<std::string, V> &varRefs, 
+                     VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and doesn't have reduction dimension
+        // Return true if any variables have REDUCE flag in their access mode and don't have reduction dimension
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
                        [reduceDim](const Models::Base::Var &v)
                        { 
-                           const unsigned int access = v.getAccess(VarAccess::READ_WRITE);
-                           return (access & VarAccessModeAttribute::REDUCE) && !(access & reduceDim);
+                           return ((v.access & VarAccessModeAttribute::REDUCE) 
+                                   && !(v.access.getDims<A>() & reduceDim));
                        }))
         {
             return true;
@@ -106,7 +107,7 @@ protected:
             // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && !(varRef.getVar().getAccess(VarAccess::READ_WRITE) & reduceDim)) 
+                && !(varRef.getVar().access.getDims<A>() & reduceDim)) 
             {
                 return true;
             }
@@ -116,7 +117,7 @@ protected:
     }
 
     //! Helper function to check if variable reference types match those specified in model
-    template<typename V>
+    template<typename A, typename V>
     void checkVarReferenceBatching(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
     {
         // If target of any variable references is duplicated, custom update should be batched
@@ -134,7 +135,7 @@ protected:
 
             // If custom update is batched, check that any variable references to variables that aren't batched are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && !(varRef.getVar().getAccess(VarAccess::READ_WRITE) & VarAccessDim::BATCH)
+            if(m_Batched && !(varRef.getVar().access.getDims<A>() & VarAccessDim::BATCH)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable references to non-batched variables in batched custom updates cannot be read-write.");
@@ -265,8 +266,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
-    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::NEURON); }
+    bool isBatchReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::BATCH); }
+    bool isNeuronReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::NEURON); }
     bool isPerNeuron() const{ return m_PerNeuron; }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
@@ -322,7 +323,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
+    bool isBatchReduction() const { return isReduction<SynapseVarAccess>(getVarReferences(), VarAccessDim::BATCH); }
     bool isTransposeOperation() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }

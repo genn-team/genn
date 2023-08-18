@@ -32,8 +32,8 @@ public:
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
-    std::string getVarIndex(unsigned int varAccess, const std::string &index) const;
-    std::string getVarRefIndex(bool delay, unsigned int varAccess, const std::string &index) const;
+    std::string getVarIndex(VarAccessDim varDims, const std::string &index) const;
+    std::string getVarRefIndex(bool delay, VarAccessDim varDims, const std::string &index) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -67,8 +67,8 @@ public:
     void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
-    std::string getVarIndex(unsigned int varAccess, const std::string &index) const;
-    std::string getVarRefIndex(unsigned int varAccess, const std::string &index) const;
+    std::string getVarIndex(VarAccessDim varDims, const std::string &index) const;
+    std::string getVarRefIndex(VarAccessDim varDims, const std::string &index) const;
 
 };
 
@@ -141,7 +141,7 @@ protected:
         // Loop through variables and add pointers if they are reduction targets
         const auto *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
-            if(v.getAccessMode() & VarAccessModeAttribute::REDUCE) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
                              [&backend, v](const auto &g, size_t) 
@@ -153,7 +153,7 @@ protected:
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
-            if(v.getAccessMode() & VarAccessModeAttribute::REDUCE) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
                              [&backend, v](const auto &g, size_t) 

@@ -37,11 +37,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                                {  
                                    boost::uuids::detail::sha1 hashA;  
                                    Type::updateHash(a.getVar().type, hashA);
-                                   Utils::updateHash(a.getVar().getAccess(VarAccess::READ_WRITE), hashA);
+                                   Utils::updateHash(a.getVar().access.getDims<SynapseVarAccess>(), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
                                    Type::updateHash(b.getVar().type, hashB);
-                                   Utils::updateHash(b.getVar().getAccess(VarAccess::READ_WRITE), hashB);
+                                   Utils::updateHash(b.getVar().access.getDims<SynapseVarAccess>(), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
                                 });

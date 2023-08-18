@@ -44,33 +44,40 @@ public:
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
 
-    std::string getPreVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+    std::string getPreVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varAccess, index);
+        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDims, index);
     }
     
-    std::string getPostVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+    std::string getPostVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varAccess, index);
+        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDims, index);
     }
 
-    std::string getPreWUVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varAccess, index);
+        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDims, index);
     }
     
-    std::string getPostWUVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varAccess, index);
+        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDims, index);
     }
 
     std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
 
-    std::string getPreVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
-    std::string getPostVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
+    std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
+    {
+        return getPrePostVarIndex(delay, batchSize, varDims, index, "pre");
+    }
 
-    std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
-    std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
+    std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
+    {
+        return getPrePostVarIndex(delay, batchSize, varDims, index, "post");
+    }
+
+    std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
+    std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     
     std::string getPostISynIndex(unsigned int batchSize, const std::string &index) const
     {
@@ -82,8 +89,8 @@ public:
         return ((batchSize == 1) ? "" : "$(pre_batch_offset) + ") + index;
     }
 
-    std::string getSynVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
-    std::string getKernelVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const;
+    std::string getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
+    std::string getKernelVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -95,8 +102,8 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    std::string getVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess,
-                            VarAccessDim neuruonAxis, const std::string &index, const std::string &prefix) const;
+    std::string getPrePostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims,
+                                   const std::string &index, const std::string &prefix) const;
 };
 
 //----------------------------------------------------------------------------

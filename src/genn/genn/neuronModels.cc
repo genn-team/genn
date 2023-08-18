@@ -50,9 +50,9 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     // If any variables have a reduction access mode, give an error
     const auto vars = getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.getAccessMode() & VarAccessModeAttribute::REDUCE); }))
+                   [](const Models::Base::Var &v){ return !v.access.isValidNeuron(); }))
     {
-        throw std::runtime_error("Neuron models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+        throw std::runtime_error("Neuron model variables much have NeuronVarAccess access type");
     }
 }
 }   // namespace GeNN::NeuronModels

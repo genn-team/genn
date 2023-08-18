@@ -30,15 +30,15 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](unsigned int a, const std::string&) 
+        [&sg, batchSize](VarAccess a, const std::string&) 
         { 
-            return sg.getPreWUVarIndex(batchSize, a, "$(id_pre)");
+            return sg.getPreWUVarIndex(batchSize, a.getDims<NeuronVarAccess>(), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](unsigned int a, const std::string&) 
+        [&sg, batchSize](VarAccess a, const std::string&) 
         { 
-            return sg.getPostWUVarIndex(batchSize, a, "$(id_post)");
+            return sg.getPostWUVarIndex(batchSize, a.getDims<NeuronVarAccess>(), "$(id_post)");
         }, "", true);
 
     
@@ -78,9 +78,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](unsigned int a, const std::string&) 
+            [&sg, batchSize](VarAccess a, const std::string&) 
             { 
-                return sg.getSynVarIndex(batchSize, a, "$(id_syn)");
+                return sg.getSynVarIndex(batchSize, a.getDims<SynapseVarAccess>(), "$(id_syn)");
             });
     }
     // Otherwise, if weights are procedual
@@ -121,9 +121,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](unsigned int a, const std::string&) 
+            [&sg, batchSize](VarAccess a, const std::string&) 
             { 
-                return sg.getKernelVarIndex(batchSize, a, "$(id_kernel)");
+                return sg.getKernelVarIndex(batchSize, a.getDims<SynapseVarAccess>(), "$(id_kernel)");
             });
     }
 
@@ -179,6 +179,7 @@ bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
+    // **TODO** this is basically VarAccessDim::BATCH
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
         return  (batchSize == 1) ? "$(_pre_delay_slot)" : "$(_pre_batch_delay_slot)";
     }
@@ -189,6 +190,7 @@ std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
 {
+    // **TODO** this is basically VarAccessDim::BATCH
     if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
         return  (batchSize == 1) ? "$(_post_delay_slot)" : "$(_post_batch_delay_slot)";
     }
@@ -208,20 +210,10 @@ std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize,
         return "(((*$(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
     }
 }
-//----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
-{
-    return getVarIndex(delay, batchSize, varAccess, VarAccessDim::PRE_NEURON, index, "pre");
-}
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
-   return getVarIndex(delay, batchSize, varAccess, VarAccessDim::POST_NEURON, index, "post");
-}
-//--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
-{
-    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize > 1);
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
 
     if(delay) {
         return (batched ? "$(_pre_prev_spike_time_batch_delay_offset) + " : "$(_pre_prev_spike_time_delay_offset) + " ) + index;
@@ -231,9 +223,9 @@ std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigne
     }
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
-    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize > 1);
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
    
     if(delay) {
         return (batched ? "$(_post_prev_spike_time_batch_delay_offset) + " : "$(_post_prev_spike_time_delay_offset) + ") + index;
@@ -243,24 +235,24 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
     }
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
-    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize > 1);
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
     return (batched ? "$(_syn_batch_offset) + " : "") + index;
 }
 //--------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, unsigned int varAccess, const std::string &index) const
+std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
-    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize > 1);
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
     return (batched ? "$(_kern_batch_offset) + " : "") + index;
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSize, unsigned int varAccess,
-                                                VarAccessDim neuronAxis, const std::string &index, const std::string &prefix) const
+std::string SynapseGroupMergedBase::getPrePostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims,
+                                                       const std::string &index, const std::string &prefix) const
 {
-    const bool batched = ((varAccess & VarAccessDim::BATCH) && batchSize > 1);
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
     if (delay) {
-        if (!(varAccess & neuronAxis)) {
+        if (!(varDims & VarAccessDim::NEURON)) {
             return (batched ? "$(_" + prefix + "_batch_delay_slot)" : "$(_" + prefix + "_delay_slot)");
         }
         else if(batched) {
@@ -271,7 +263,7 @@ std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSi
         }
     }
     else {
-        if (!(varAccess & neuronAxis)) {
+        if (!(varDims & VarAccessDim::NEURON)) {
             return batched ? "$(batch)" : "0";
         }
         else if (batched) {

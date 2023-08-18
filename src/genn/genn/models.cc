@@ -76,7 +76,7 @@ std::string VarReference::getTargetName() const
 bool VarReference::isDuplicated() const
 {
     // If target variable has BATCH dimension
-    if(getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::BATCH) {
+    if(getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::BATCH) {
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
@@ -177,7 +177,7 @@ std::string WUVarReference::getTargetName() const
 bool WUVarReference::isDuplicated() const
 {
     // If target variable has BATCH dimension
-    if(getVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH) {
+    if(getVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH) {
         return std::visit(
             Utils::Overload{
                 [](const CURef &ref) { return ref.group->isBatched(); },
@@ -332,8 +332,8 @@ WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varV
     }
 
     // Check duplicatedness of variables
-    if((getVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH) 
-       != (getTransposeVar().getAccess(SynapseVarAccess::READ_WRITE) & VarAccessDim::BATCH)) 
+    if((getVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH) 
+       != (getTransposeVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH)) 
     {
         throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
     }
@@ -385,7 +385,7 @@ void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
+    v.access.updateHash(hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)

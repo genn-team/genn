@@ -139,12 +139,12 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                               [](const auto& v) 
                               {
-                                  return (v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON); 
+                                  return (v.second.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
                               });
     m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
                                [](const Models::Base::Var& v) 
                                {
-                                   return (v.getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON); 
+                                   return (v.access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
                                });
 
     // Loop through all variable references
@@ -153,7 +153,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
         // If custom update is per-neuron, check that any variable references to variables without NEURON axis are read-only
         // **NOTE** if custom update isn't per-neuron, it's totally fine to write to SHARED_NEURON variables
-        if(m_PerNeuron && !(varRef.getVar().getAccess(NeuronVarAccess::READ_WRITE) & VarAccessDim::NEURON)
+        if(m_PerNeuron && !(varRef.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON)
             && (modelVarRef.access == VarAccessMode::READ_WRITE))
         {
             throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
@@ -179,7 +179,7 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference batching
-    checkVarReferenceBatching(m_VarReferences, batchSize);
+    checkVarReferenceBatching<NeuronVarAccess>(m_VarReferences, batchSize);
 
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -218,8 +218,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         // Update hash with whether variable references require delay
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
-        // Update hash with target variable access mode as this effects indexing code
-        Utils::updateHash(v.second.getVar().getAccess(NeuronVarAccess::READ_WRITE), hash);
+        // Update hash with target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getVar().access.getDims<NeuronVarAccess>(), hash);
     }
     return hash.get_digest();
 }
@@ -267,7 +267,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // Give error if custom update model includes any shared neuron variables
     // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
     // this safely checks for attempts to do neuron reductions
-    const auto vars = getCustomUpdateModel()->getVars();
+    /*const auto vars = getCustomUpdateModel()->getVars();
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const Models::Base::Var &v)
                     {
@@ -275,7 +275,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
                     }))
     {
         throw std::runtime_error("Custom weight updates cannot use models with SHARED_NEURON variables.");
-    }
+    }*/
 
     // If this is a transpose operation
     if(isTransposeOperation()) {
@@ -311,7 +311,7 @@ void CustomUpdateWU::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference types
-    checkVarReferenceBatching(m_VarReferences, batchSize);
+    checkVarReferenceBatching<SynapseVarAccess>(m_VarReferences, batchSize);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const
@@ -340,8 +340,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
         // Update hash with whether variable references require transpose
         Utils::updateHash((v.second.getTransposeSynapseGroup() == nullptr), hash);
 
-        // Update hash with access mode of target variable as this effects indexing code
-        Utils::updateHash(v.second.getVar().getAccess(SynapseVarAccess::READ_WRITE), hash);
+        // Update hash with access mode of target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getVar().access.getDims<SynapseVarAccess>(), hash);
     }
 
     return hash.get_digest();

@@ -197,8 +197,8 @@ public:
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
-              {"a", "scalar", VarAccess::READ_ONLY}, {"b", "scalar", VarAccess::READ_ONLY},
-              {"c", "scalar", VarAccess::READ_ONLY}, {"d", "scalar", VarAccess::READ_ONLY}});
+              {"a", "scalar", NeuronVarAccess::READ_ONLY}, {"b", "scalar", NeuronVarAccess::READ_ONLY},
+              {"c", "scalar", NeuronVarAccess::READ_ONLY}, {"d", "scalar", NeuronVarAccess::READ_ONLY}});
 };
 
 //----------------------------------------------------------------------------
@@ -282,7 +282,7 @@ public:
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
-    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}} );
+    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", NeuronVarAccess::READ_ONLY_DUPLICATE}} );
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
