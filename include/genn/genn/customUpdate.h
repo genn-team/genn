@@ -89,13 +89,13 @@ protected:
     bool isReduction(const std::unordered_map<std::string, V> &varRefs, 
                      VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and don't have reduction dimension
+        // Return true if any variables have REDUCE flag in their access mode and have reduction dimension
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
                        [reduceDim](const Models::Base::Var &v)
                        { 
                            return ((v.access & VarAccessModeAttribute::REDUCE) 
-                                   && !(v.access.template getDims<A>() & reduceDim));
+                                   && (v.access.template getDims<A>() & reduceDim));
                        }))
         {
             return true;
@@ -104,10 +104,10 @@ protected:
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             // If custom update model reduces into this variable reference 
-            // and the variable it targets doesn't have reduction dimension
+            // and the variable it targets has reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && !(varRef.getVar().access.template getDims<A>() & reduceDim)) 
+                && (varRef.getVar().access.template getDims<A>() & reduceDim)) 
             {
                 return true;
             }
