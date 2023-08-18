@@ -69,29 +69,28 @@ enum class SynapseVarAccess : unsigned int
     //READ_ONLY_POST_DUPLICATE    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON) | static_cast<unsigned int>(VarAccessDim::BATCH), 
 };
 
-/*enum class CustomUpdateVarAccess : unsigned int
+//! Supported combinations of access mode and dimension for custom update variables
+/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
+enum class CustomUpdateVarAccess : unsigned int
 {
-    // Variables with matching shape
-    READ_WRITE,
-    READ_ONLY,
+    // Variables with same shape as groups custom update is attached to
+    READ_WRITE                  = static_cast<unsigned int>(VarAccessMode::READ_WRITE),
+    READ_ONLY                   = static_cast<unsigned int>(VarAccessMode::READ_ONLY),
 
-    // Variables shared across batches
-    READ_WRITE_SHARED,
-    READ_ONLY_SHARED,
+    // Variables which will be shared across batches if custom update is batched
+    READ_WRITE_SHARED           = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    READ_ONLY_SHARED            = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
-
-    READ_WRITE_PRE,
+    // Variables which will be shared across neurons if per-neuron
+    READ_WRITE_SHARED_NEURON    = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::NEURON),
+    READ_ONLY_SHARED_NEURON     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::NEURON),
 
     // Reduction variables
-    REDUCE_BATCH_SUM,
-    REDUCE_BATCH_MAX,
-    REDUCE_NEURON_SUM,
-    REDUCE_NEURON_MAX,        
-    REDUCE_PRE_NEURON_SUM,
-    REDUCE_PRE_NEURON_MAX,       
-    REDUCE_POST_NEURON_SUM,       
-    REDUCE_POST_NEURON_MAX,       
-}*/
+    REDUCE_BATCH_SUM            = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    REDUCE_BATCH_MAX            = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    REDUCE_NEURON_SUM           = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::NEURON),
+    REDUCE_NEURON_MAX           = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::NEURON),
+};
 
 //----------------------------------------------------------------------------
 // Operators
@@ -124,6 +123,8 @@ public:
     {}
     VarAccess(SynapseVarAccess s) : m_Access{s}
     {}
+    VarAccess(CustomUpdateVarAccess c) : m_Access{c}
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -142,16 +143,15 @@ public:
         return static_cast<VarAccessDim>(val & ~0x1F);
     }
 
-    //! Returns true if this VarAccess would be valid for a neuron
-    bool isValidNeuron() const
+    template<typename V>
+    bool isValid() const
     {
-        return !std::holds_alternative<SynapseVarAccess>(m_Access);
-    }
-
-    //! Returns true if this VarAccess would be valid for a synapse
-    bool isValidSynapse() const
-    {
-        return !std::holds_alternative<NeuronVarAccess>(m_Access);
+        return std::visit(
+            Utils::Overload{
+                [](std::monostate) { return true; },
+                [](V v) { return true; },
+                [](auto) { return false; }},
+            m_Access);
     }
 
     void updateHash(boost::uuids::detail::sha1 &hash) const
@@ -175,7 +175,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::variant<std::monostate, NeuronVarAccess, SynapseVarAccess> m_Access;
+    std::variant<std::monostate, NeuronVarAccess, SynapseVarAccess, CustomUpdateVarAccess> m_Access;
 };
 
 }   // namespace GeNN
