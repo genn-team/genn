@@ -180,7 +180,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (v.second.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::BATCH); 
+                            return (v.second.getVar().access.template getDims<NeuronVarAccess>() & VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Presynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
@@ -190,7 +190,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPostVarReferences().cbegin(), getPostVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (v.second.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::BATCH); 
+                            return (v.second.getVar().access.template getDims<NeuronVarAccess>() & VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");

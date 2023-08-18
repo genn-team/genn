@@ -87,7 +87,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                             });
 
             // If variable has NEURON axis
-            const VarAccessDim varDims = var.access.getDims<NeuronVarAccess>();
+            const VarAccessDim varDims = var.access.template getDims<NeuronVarAccess>();
             if (varDims & VarAccessDim::NEURON) {
                 backend.genVariableInit(
                     varEnv, count, "id",
@@ -173,19 +173,19 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
             genSynapseVariableRowInitFn(varEnv,
                 [&group, &resolvedType, &stride, &var, &varInit, batchSize]
                 (EnvironmentExternalBase &env)
-                { 
+                {
                     // Generate initial value into temporary variable
                     EnvironmentGroupMergedField<G> varInitEnv(env, group);
                     varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
                     varInitEnv.add(resolvedType, "value", "initVal");
-                        
+
                     // Pretty print variable initialisation code
                     Transpiler::ErrorHandler errorHandler("Variable '" + var.name + "' init code" + std::to_string(group.getIndex()));
                     prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    var.access.getDims<SynapseVarAccess>(), batchSize);
+                                    var.access.template getDims<SynapseVarAccess>(), batchSize);
                 });
         }
     }

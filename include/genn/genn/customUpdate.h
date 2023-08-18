@@ -95,7 +95,7 @@ protected:
                        [reduceDim](const Models::Base::Var &v)
                        { 
                            return ((v.access & VarAccessModeAttribute::REDUCE) 
-                                   && !(v.access.getDims<A>() & reduceDim));
+                                   && !(v.access.template getDims<A>() & reduceDim));
                        }))
         {
             return true;
@@ -107,7 +107,7 @@ protected:
             // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && !(varRef.getVar().access.getDims<A>() & reduceDim)) 
+                && !(varRef.getVar().access.template getDims<A>() & reduceDim)) 
             {
                 return true;
             }
@@ -135,7 +135,7 @@ protected:
 
             // If custom update is batched, check that any variable references to variables that aren't batched are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && !(varRef.getVar().access.getDims<A>() & VarAccessDim::BATCH)
+            if(m_Batched && !(varRef.getVar().access.template getDims<A>() & VarAccessDim::BATCH)
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable references to non-batched variables in batched custom updates cannot be read-write.");

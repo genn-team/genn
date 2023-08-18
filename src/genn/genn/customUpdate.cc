@@ -139,12 +139,12 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                               [](const auto& v) 
                               {
-                                  return (v.second.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
+                                  return (v.second.getVar().access.template getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
                               });
     m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
                                [](const Models::Base::Var& v) 
                                {
-                                   return (v.access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
+                                   return (v.access.template getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
                                });
 
     // Loop through all variable references
