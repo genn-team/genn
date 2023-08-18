@@ -47,7 +47,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 
     Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
 
-    // If any variables have a reduction access mode, give an error
+    // If any variables have an invalid access mode, give an error
     const auto vars = getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),
                    [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
