@@ -37,7 +37,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     if(std::any_of(vars.cbegin(), vars.cend(),
                    [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
     {
-        throw std::runtime_error("Current source model variables much have NeuronVarAccess access type");
+        throw std::runtime_error("Current source model variables must have NeuronVarAccess access type");
     }
 }
 }   // namespace GeNN::CurrentSourceModels

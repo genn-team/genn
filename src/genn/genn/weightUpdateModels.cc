@@ -92,17 +92,17 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     if(std::any_of(vars.cbegin(), vars.cend(),
                    [](const Models::Base::Var &v){ return !v.access.template isValid<SynapseVarAccess>(); }))
     {
-        throw std::runtime_error("Weight update models variables much have SynapseVarAccess access type");
+        throw std::runtime_error("Weight update models variables must have SynapseVarAccess access type");
     }
     if(std::any_of(preVars.cbegin(), preVars.cend(),
                    [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
     {
-        throw std::runtime_error("Weight update models presynaptic variables much have NeuronVarAccess access type");
+        throw std::runtime_error("Weight update models presynaptic variables must have NeuronVarAccess access type");
     }
     if(std::any_of(postVars.cbegin(), postVars.cend(),
                    [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
     {
-        throw std::runtime_error("Weight update models postsynaptic variables much have NeuronVarAccess access type");
+        throw std::runtime_error("Weight update models postsynaptic variables must have NeuronVarAccess access type");
     }
 }
 }   // namespace WeightUpdateModels
