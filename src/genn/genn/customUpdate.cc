@@ -132,7 +132,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 
     // Check variable reference types
-    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Update is per-neuron if any variables or variable reference targets have neuron dimension
     const auto modelVars = getCustomUpdateModel()->getVars();
@@ -251,7 +251,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // Check variable reference types
-    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense

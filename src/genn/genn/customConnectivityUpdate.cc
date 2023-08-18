@@ -124,9 +124,9 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     }
 
     // Check variable reference types
-    Models::checkVarReferences(m_VarReferences, getCustomConnectivityUpdateModel()->getVarRefs());
-    Models::checkVarReferences(m_PreVarReferences, getCustomConnectivityUpdateModel()->getPreVarRefs());
-    Models::checkVarReferences(m_PostVarReferences, getCustomConnectivityUpdateModel()->getPostVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getCustomConnectivityUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_PreVarReferences, getCustomConnectivityUpdateModel()->getPreVarRefs());
+    Models::checkVarReferenceTypes(m_PostVarReferences, getCustomConnectivityUpdateModel()->getPostVarRefs());
 
     // Give error if any WU var references aren't pointing to synapse group
     if (std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),

@@ -385,7 +385,7 @@ GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &h
 
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
-void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
 {
     // Loop through all variable references
     for(const auto &modelVarRef : modelVarRefs) {
@@ -396,13 +396,6 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
         if(varRef.getVar().type != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
         }
-
-        // Check that no reduction targets reference duplicated variables
-        /*if((varRef.getVar().access.getDims<A>() & VarAccessDuplication::DUPLICATE) 
-            && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
-        {
-            throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
-        }*/
     }
 }
 } // GeNN::Models
