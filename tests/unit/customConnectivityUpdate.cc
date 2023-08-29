@@ -19,7 +19,7 @@ class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelayReverse);
 
-    SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
+    SET_VARS({{"d", "uint8_t", SynapseVarAccess::READ_ONLY}, {"g", "scalar", SynapseVarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPostDelay(g, d);\n");
 };

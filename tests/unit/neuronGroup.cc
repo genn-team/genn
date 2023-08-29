@@ -19,7 +19,7 @@ class StaticPulseBack : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseBack);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
 
     SET_SIM_CODE(
         "$(addToInSyn, $(g));\n"
