@@ -465,7 +465,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
 
     VarValues sumVarValues{{"sum", 0.0}};
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
-    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "d")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "g")}};
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
 
@@ -547,7 +547,7 @@ TEST(CustomUpdates, BatchingWriteShared)
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
-    // Create custom update which tries to create a read-write refernece to a (which isn't batched)
+    // Create custom update which tries to create a read-write reference to a (which isn't batched)
     VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "U")}};
     try {
         model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
@@ -570,9 +570,10 @@ TEST(CustomUpdates, WriteNeuronShared)
     // Create custom update which tries to create a read-write reference to a (which isn't per-neuron)
     VarValues sum2VarValues{{"mult", 1.0}};
     VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
+    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                {}, sum2VarValues, sum2VarReferences);
     try {
-        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                    {}, sum2VarValues, sum2VarReferences);
+        model.finalise();
         FAIL();
     }
     catch(const std::runtime_error &) {
