@@ -772,7 +772,7 @@ protected:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const Models::Base::VarRef &var) const
+    bool shouldAlwaysCopy(G&, const Models::Base::VarRef&) const
     {
         // **NOTE** something else is managing the actual variables
         // and is therefore responsible for copying between delay slots etc

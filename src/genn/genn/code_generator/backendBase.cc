@@ -411,7 +411,7 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
+void buildStandardCustomUpdateWUEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // Add batch offset if group is batched
     if((env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
@@ -579,12 +579,12 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
@@ -611,13 +611,13 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
-    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
-    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
