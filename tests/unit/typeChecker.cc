@@ -109,7 +109,7 @@ public:
         throw TypeChecker::TypeCheckError();
     }
 
-    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
+    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase&) final
     {
         const auto [typeBegin, typeEnd] = m_Library.get().equal_range(name.lexeme);
         if (typeBegin == typeEnd) {
