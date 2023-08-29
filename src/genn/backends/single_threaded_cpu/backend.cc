@@ -2018,7 +2018,7 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateG
         [&cg](const Models::VarReference &varRef, const std::string &index)
         {
             return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, 1,
-                                     varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+                                     varRef.getDims(), index);
         });
 }
 //--------------------------------------------------------------------------
@@ -2028,7 +2028,7 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateW
         env, cg, idxName,
         [&cg](const Models::WUVarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(1, varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+            return cg.getVarRefIndex(1, varRef.getDims(), index);
         });
 }
 }   // namespace GeNN::CodeGenerator::SingleThreadedCPU

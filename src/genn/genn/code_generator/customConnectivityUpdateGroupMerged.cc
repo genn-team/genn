@@ -37,11 +37,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                                {  
                                    boost::uuids::detail::sha1 hashA;  
                                    Type::updateHash(a.getVar().type, hashA);
-                                   Utils::updateHash(a.getVar().access.template getDims<SynapseVarAccess>(), hashA);
+                                   Utils::updateHash(a.getDims(), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
                                    Type::updateHash(b.getVar().type, hashB);
-                                   Utils::updateHash(b.getVar().access.template getDims<SynapseVarAccess>(), hashB);
+                                   Utils::updateHash(b.getDims(), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
                                 });
@@ -56,61 +56,6 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                        {
                            return (vars.size() == m_SortedDependentVars.front().size());
                        }));
-    
-    
-    /*addField(Uint32, "rowStride",
-            [&backend](const auto &cg, size_t) 
-            { 
-                const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-            });
-    
-    
-    assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
-             [&backend](const auto &cg, size_t) 
-             { 
-                 return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
-             });
-
-    addField(Uint32.createPointer(), "rowLength",
-             [&backend](const auto &cg, size_t) 
-             { 
-                 return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-             });
-
-    // If some presynaptic variables are delayed, add delay pointer
-    if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "preSpkQuePtr", 
-                 [&backend](const auto &cg, size_t) 
-                 { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
-                 });
-    }
-
-    // If some postsynaptic variables are delayed, add delay pointer
-    if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "postSpkQuePtr", 
-                 [&backend](const auto &cg, size_t) 
-                 { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
-                 });
-    }
-    
-
-    // Add variables to struct
-
-    
-    // Loop through sorted dependent variables
-    for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVar().type.resolve(getTypeContext());
-        addField(resolvedType.createPointer(), "_dependentVar" + std::to_string(i), 
-                 [i, &backend, this](const auto&, size_t g) 
-                 { 
-                     const auto &varRef = m_SortedDependentVars[g][i];
-                     return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
-                 });
-    }*/
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::getHashDigest() const

@@ -71,7 +71,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
-                                  v.getVar().access.getDims<NeuronVarAccess>(), "$(id)");
+                                  v.getDims(), "$(id)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");

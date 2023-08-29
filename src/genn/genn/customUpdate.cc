@@ -134,32 +134,6 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     // Check variable reference types
     Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
-    // Update is per-neuron if any variables or variable reference targets have neuron dimension
-    /*const auto modelVars = getCustomUpdateModel()->getVars();
-    m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                              [](const auto& v) 
-                              {
-                                  return (v.second.getVar().access.template getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
-                              });
-    m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
-                               [](const Models::Base::Var& v) 
-                               {
-                                   return (v.access.template getDims<NeuronVarAccess>() & VarAccessDim::NEURON); 
-                               });
-
-    // Loop through all variable references
-    for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
-        const auto &varRef = m_VarReferences.at(modelVarRef.name);
-
-        // If custom update is per-neuron, check that any variable references to variables without NEURON axis are read-only
-        // **NOTE** if custom update isn't per-neuron, it's totally fine to write to SHARED_NEURON variables
-        if(m_PerNeuron && !(varRef.getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::NEURON)
-            && (modelVarRef.access == VarAccessMode::READ_WRITE))
-        {
-            throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
-        }
-    }
-    */
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
         throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
@@ -179,7 +153,7 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference batching
-    checkVarReferenceDims<NeuronVarAccess>(m_VarReferences, batchSize);
+    checkVarReferenceDims(m_VarReferences, batchSize);
 
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -218,7 +192,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
         // Update hash with target variable dimensions as this effects indexing code
-        Utils::updateHash(v.second.getVar().access.getDims<NeuronVarAccess>(), hash);
+        Utils::updateHash(v.second.getDims(), hash);
     }
     return hash.get_digest();
 }
@@ -295,7 +269,7 @@ void CustomUpdateWU::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference types
-    checkVarReferenceDims<SynapseVarAccess>(m_VarReferences, batchSize);
+    checkVarReferenceDims(m_VarReferences, batchSize);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

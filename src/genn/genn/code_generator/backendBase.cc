@@ -706,18 +706,18 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
         [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
             return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, batchSize,
-                                     varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+                                     varRef.getDims(), index);
         });
 }
 //-----------------------------------------------------------------------
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, 
                                                                                unsigned int batchSize, const std::string &idx) const
 {
-    return genInitReductionTargets<NeuronVarAccess>(
+    return genInitReductionTargets<SynapseVarAccess>(
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::WUVarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(batchSize, varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+            return cg.getVarRefIndex(batchSize, varRef.getDims(), index);
         });
 }
 }   // namespace GeNN::CodeGenerator

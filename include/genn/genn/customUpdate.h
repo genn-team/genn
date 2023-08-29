@@ -118,7 +118,7 @@ protected:
     }
 
     //! Helper function to check if variable reference types match those specified in model
-    template<typename A, typename V>
+    template<typename V>
     void checkVarReferenceDims(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
     {
         // Loop through variable references and or together their dimensions to get dimensionality of update
@@ -133,7 +133,7 @@ protected:
 
             // If the shape of the references variable doesn't match the dimensionality 
             // of the custom update, check its access mode isn't read-write
-            if((m_Dims != varRef.getVar().access.template getDims<A>())
+            if((m_Dims != varRef.getDims())
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
