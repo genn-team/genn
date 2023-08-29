@@ -15,7 +15,7 @@ import numpy as np
 
 from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
-                   SynapseMatrixWeight, VarAccessDuplication, VarLocation)
+                   SynapseMatrixWeight, VarAccessDim, VarLocation)
 from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
 
 

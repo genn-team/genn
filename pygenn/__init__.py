@@ -4,8 +4,9 @@ import sys
 # pygenn interface
 from .genn import (create_var_ref, create_psm_var_ref, create_wu_pre_var_ref,
                    create_wu_post_var_ref, create_wu_var_ref, create_egp_ref,
-                   create_psm_egp_ref, create_wu_egp_ref, PlogSeverity,
-                   SpanType, SynapseMatrixType, VarAccess,
+                   create_psm_egp_ref, create_wu_egp_ref, 
+                   CustomUpdateVarAccess, NeuronVarAccess, PlogSeverity,
+                   SpanType, SynapseMatrixType, SynapseVarAccess,
                    VarAccessMode, VarLocation)
 from .genn_model import (GeNNModel, create_neuron_model,
                          create_postsynaptic_model,
