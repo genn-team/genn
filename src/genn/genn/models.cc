@@ -75,13 +75,32 @@ std::string VarReference::getTargetName() const
 //----------------------------------------------------------------------------
 VarAccessDim VarReference::getDims() const
 {
-    const VarAccessDim varDims = getVar().access.getDims<NeuronVarAccess>();
+    const auto &varAccess = getVar().access;
     return std::visit(
         Utils::Overload{
-            [varDims](const CURef &ref) { return clearDim(ref.group->getDims(), varDims); },
-            [varDims](const CCUPreRef&){ return clearDim(varDims, VarAccessDim::BATCH); },
-            [varDims](const CCUPostRef&){ return clearDim(varDims, VarAccessDim::BATCH); },
-            [varDims](const auto&) { return varDims; }},
+            // If reference is to a custom update variable, 
+            // remove dimensions from those of update
+            [&varAccess](const CURef &ref) 
+            { 
+                return clearDim(ref.group->getDims(),
+                                varAccess.getDims<CustomUpdateVarAccess>()); 
+            },
+            // Otherwise, if reference is to the presynaptic variables of a custom connectivity update,
+            // remove BATCH dimension as these are never batched
+            [&varAccess](const CCUPreRef&)
+            { 
+                return clearDim(varAccess.getDims<NeuronVarAccess>(), 
+                                VarAccessDim::BATCH); 
+            },
+            // Otherwise, if reference is to the postsynaptic variables of a custom connectivity update,
+            // remove BATCH dimension as these are never batched
+            [&varAccess](const CCUPostRef&)
+            { 
+                return clearDim(varAccess.getDims<NeuronVarAccess>(), 
+                                VarAccessDim::BATCH); 
+            },
+            // Otherwise, use dimensionality directly
+            [&varAccess](const auto&) { return varAccess.getDims<NeuronVarAccess>(); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -171,12 +190,25 @@ std::string WUVarReference::getTargetName() const
 //----------------------------------------------------------------------------
 VarAccessDim WUVarReference::getDims() const
 {
-    const VarAccessDim varDims = getVar().access.getDims<SynapseVarAccess>();
+    const auto &varAccess = getVar().access;
     return std::visit(
         Utils::Overload{
-            [varDims](const CURef &ref) { return clearDim(ref.group->getDims(), varDims); },
-            [varDims](const CCURef&) { return clearDim(varDims, VarAccessDim::BATCH); },
-            [varDims](const WURef&) { return varDims; }},
+            // If reference is to a custom update variable, 
+            // remove dimensions from those of update
+            [&varAccess](const CURef &ref) 
+            { 
+                return clearDim(ref.group->getDims(),
+                                varAccess.getDims<CustomUpdateVarAccess>()); 
+            },
+            // Otherwise, if reference is to the synaptic variables of a custom connectivity update,
+            // remove BATCH dimension as these are never batched
+            [&varAccess](const CCURef&) 
+            { 
+                return clearDim(varAccess.getDims<SynapseVarAccess>(), 
+                                VarAccessDim::BATCH); 
+            },
+            // Otherwise, use dimensionality directly
+            [&varAccess](const WURef&){ return varAccess.getDims<SynapseVarAccess>(); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
