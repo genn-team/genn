@@ -120,7 +120,7 @@ inline VarAccessDim clearDim(VarAccessDim a, VarAccessDim b)
 // VarAccess
 //----------------------------------------------------------------------------
 //! Wrapper class encapsulating 
-GENN_EXPORT class VarAccess
+class VarAccess
 {
 public:
     VarAccess()
