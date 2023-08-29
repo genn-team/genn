@@ -285,31 +285,45 @@ PYBIND11_MODULE(genn, m)
 
         .def("__and__", [](VarAccessMode a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator());
-
-    //! Flags defining how variables should be duplicated across multiple batches
-    pybind11::enum_<VarAccessDuplication>(m, "VarAccessDuplication")
-        .value("DUPLICATE", VarAccessDuplication::DUPLICATE)
-        .value("SHARED", VarAccessDuplication::SHARED)
-        .value("SHARED_NEURON", VarAccessDuplication::SHARED_NEURON);
-
-    //! Supported combinations of VarAccessMode and VarAccessDuplication
-    pybind11::enum_<VarAccess>(m, "VarAccess")
-        .value("READ_WRITE", VarAccess::READ_WRITE)
-        .value("READ_ONLY", VarAccess::READ_ONLY)
-        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON)
-        .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
-        .value("REDUCE_BATCH_SUM", VarAccess::REDUCE_BATCH_SUM)
-        .value("REDUCE_BATCH_MAX", VarAccess::REDUCE_BATCH_MAX)
-        .value("REDUCE_NEURON_SUM", VarAccess::REDUCE_NEURON_SUM)
-        .value("REDUCE_NEURON_MAX", VarAccess::REDUCE_NEURON_MAX)
-
-        .def("__and__", [](VarAccess a, VarAccessModeAttribute b){ return a & b; }, 
-             pybind11::is_operator())
-        .def("__and__", [](VarAccess a, VarAccessMode b){ return a & b; }, 
-             pybind11::is_operator())
-        .def("__and__", [](VarAccess a, VarAccessDuplication b){ return a & b; }, 
+    
+    //! Flags defining dimensions this variables has
+    pybind11::enum_<VarAccessDim>(m, "VarAccessDim")
+        .value("NEURON", VarAccessDim::NEURON)
+        .value("PRE_NEURON", VarAccessDim::PRE_NEURON)
+        .value("POST_NEURON", VarAccessDim::POST_NEURON)
+        .value("BATCH", VarAccessDim::BATCH)
+        
+        .def("__and__", [](VarAccessDim a, VarAccessDim b){ return a & b; }, 
              pybind11::is_operator());
     
+    //! Supported combinations of access mode and dimension for neuron variables
+    pybind11::enum_<NeuronVarAccess>(m, "NeuronVarAccess")
+        .value("READ_WRITE", NeuronVarAccess::READ_WRITE)
+        .value("READ_ONLY", NeuronVarAccess::READ_ONLY)
+        .value("READ_ONLY_DUPLICATE", NeuronVarAccess::READ_ONLY_DUPLICATE)
+        .value("READ_ONLY_SHARED_NEURON", NeuronVarAccess::READ_ONLY_SHARED_NEURON);
+
+    //! Supported combinations of access mode and dimension for synapse variables
+    pybind11::enum_<SynapseVarAccess>(m, "SynapseVarAccess")
+        .value("READ_WRITE", SynapseVarAccess::READ_WRITE)
+        .value("READ_ONLY", SynapseVarAccess::READ_ONLY)
+        .value("READ_ONLY_DUPLICATE", SynapseVarAccess::READ_ONLY_DUPLICATE);
+
+
+    //! Supported combinations of access mode and dimension for custom update variables
+    /*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
+    pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess")
+        .value("READ_WRITE", CustomUpdateVarAccess::READ_WRITE)
+        .value("READ_ONLY", CustomUpdateVarAccess::READ_ONLY)
+        .value("READ_WRITE_SHARED", CustomUpdateVarAccess::READ_WRITE_SHARED)
+        .value("READ_ONLY_SHARED", CustomUpdateVarAccess::READ_ONLY_SHARED)
+        .value("READ_WRITE_SHARED_NEURON", CustomUpdateVarAccess::READ_WRITE_SHARED_NEURON)
+        .value("READ_ONLY_SHARED_NEURON", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON)
+        .value("REDUCE_BATCH_SUM", CustomUpdateVarAccess::REDUCE_BATCH_SUM)
+        .value("REDUCE_BATCH_MAX", CustomUpdateVarAccess::REDUCE_BATCH_MAX)
+        .value("REDUCE_NEURON_SUM", CustomUpdateVarAccess::REDUCE_NEURON_SUM)
+        .value("REDUCE_NEURON_MAX", CustomUpdateVarAccess::REDUCE_NEURON_MAX);
+
     //! Locations of variables
     pybind11::enum_<VarLocation>(m, "VarLocation")
         .value("HOST", VarLocation::HOST)
@@ -498,7 +512,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomUpdate::getVarReferences)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_is_batched", &CustomUpdateInternal::isBatched);
+        .def_property_readonly("_dims", &CustomUpdateInternal::getDims);
 
 
     //------------------------------------------------------------------------
@@ -508,7 +522,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_is_batched", &CustomUpdateWUInternal::isBatched);
+        .def_property_readonly("_dims", &CustomUpdateWUInternal::getDims);
 
     //------------------------------------------------------------------------
     // genn.NeuronGroup
@@ -677,6 +691,21 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
 
         .def("get_code", &InitVarSnippet::Base::getCode);
+
+    //------------------------------------------------------------------------
+    // genn.VarAccess
+    //------------------------------------------------------------------------
+    pybind11::class_<VarAccess>(m, "VarAccess")
+        .def(pybind11::init<NeuronVarAccess>())
+        .def(pybind11::init<SynapseVarAccess>())
+        .def(pybind11::init<CustomUpdateVarAccess>())
+        
+        .def("get_neuron_dims", 
+             [](const VarAccess &v) { return v.getDims<NeuronVarAccess>(); })
+        .def("get_synapse_dims", 
+             [](const VarAccess &v) { return v.getDims<SynapseVarAccess>(); })
+        .def("get_custom_update_dims", 
+             [](const VarAccess &v) { return v.getDims<CustomUpdateVarAccess>(); });
 
     //------------------------------------------------------------------------
     // genn.Var
