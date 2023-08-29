@@ -313,7 +313,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                    {
                        boost::uuids::detail::sha1 hash;  
                        Type::updateHash(v.getVar().type, hash);
-                       Utils::updateHash(v.isDuplicated(), hash);
+                       Utils::updateHash(v.getDims(), hash);
                        return hash.get_digest();
                    });
     
@@ -329,7 +329,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
 
     // Update hash with duplication mode of synaptic variable references
     for(const auto &v : getVarReferences()) {
-        Utils::updateHash(v.second.isDuplicated(), hash);
+        Utils::updateHash(v.second.getDims(), hash);
     }
 
     return hash.get_digest();

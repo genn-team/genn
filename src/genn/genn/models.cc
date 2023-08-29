@@ -73,21 +73,16 @@ std::string VarReference::getTargetName() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-bool VarReference::isDuplicated() const
+VarAccessDim VarReference::getDims() const
 {
-    // If target variable has BATCH dimension
-    if(getVar().access.getDims<NeuronVarAccess>() & VarAccessDim::BATCH) {
-        return std::visit(
-            Utils::Overload{
-                [](const CURef &ref) { return ref.group->isBatched(); },
-                [](const CCUPreRef&){ return false; },
-                [](const CCUPostRef&){ return false; },
-                [](const auto&) { return true; }},
-            m_Detail);
-    }
-    else {
-        return false;
-    }
+    const VarAccessDim varDims = getVar().access.getDims<NeuronVarAccess>();
+    return std::visit(
+        Utils::Overload{
+            [varDims](const CURef &ref) { return clearDim(ref.group->getDims(), varDims); },
+            [varDims](const CCUPreRef&){ return clearDim(varDims, VarAccessDim::BATCH); },
+            [varDims](const CCUPostRef&){ return clearDim(varDims, VarAccessDim::BATCH); },
+            [varDims](const auto&) { return varDims; }},
+        m_Detail);
 }
 //----------------------------------------------------------------------------
 CustomUpdate *VarReference::getReferencedCustomUpdate() const
@@ -174,20 +169,15 @@ std::string WUVarReference::getTargetName() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-bool WUVarReference::isDuplicated() const
+VarAccessDim WUVarReference::getDims() const
 {
-    // If target variable has BATCH dimension
-    if(getVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH) {
-        return std::visit(
-            Utils::Overload{
-                [](const CURef &ref) { return ref.group->isBatched(); },
-                [](const CCURef&) { return false; },
-                [](const WURef&) { return true; }},
-            m_Detail);
-    }
-    else {
-        return false;
-    }
+    const VarAccessDim varDims = getVar().access.getDims<SynapseVarAccess>();
+    return std::visit(
+        Utils::Overload{
+            [varDims](const CURef &ref) { return clearDim(ref.group->getDims(), varDims); },
+            [varDims](const CCURef&) { return clearDim(varDims, VarAccessDim::BATCH); },
+            [varDims](const WURef&) { return varDims; }},
+        m_Detail);
 }
 //----------------------------------------------------------------------------
 SynapseGroup *WUVarReference::getSynapseGroup() const

@@ -70,8 +70,8 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool isBatched() const { return m_Batched; }
+    //! Get dimensions of this custom update
+    VarAccessDim getDims() const{ return m_Dims; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -118,27 +118,24 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename A, typename V>
-    void checkVarReferenceBatching(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
+    void checkVarReferenceDims(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
     {
-        // If target of any variable references is duplicated, custom update should be batched
-        if(batchSize > 1) {
-            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const auto &v) { return v.second.isDuplicated(); });
-        }
-        else {
-            m_Batched = false;
+        // Loop through variable references and or together their dimensions to get dimensionality of update
+        m_Dims = VarAccessDim{0};
+        for(const auto &v : varRefs) {
+            m_Dims = m_Dims | v.second.getDims();
         }
 
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If custom update is batched, check that any variable references to variables that aren't batched are read-only
-            // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && !(varRef.getVar().access.template getDims<A>() & VarAccessDim::BATCH)
+            // If the shape of the references variable doesn't match the dimensionality 
+            // of the custom update, check its access mode isn't read-write
+            if((m_Dims != varRef.getVar().access.template getDims<A>())
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to non-batched variables in batched custom updates cannot be read-write.");
+                throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
             }
         }
     }
@@ -165,11 +162,11 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
-    const std::string m_UpdateGroupName;
+    std::string m_Name;
+    std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
@@ -184,8 +181,8 @@ private:
     //! Tokens produced by scanner from update code
     std::vector<Transpiler::Token> m_UpdateCodeTokens;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool m_Batched;
+    //! Dimensions of this custom update
+    VarAccessDim m_Dims;
 };
 
 //----------------------------------------------------------------------------
@@ -268,7 +265,6 @@ protected:
     //------------------------------------------------------------------------
     bool isBatchReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::BATCH); }
     bool isNeuronReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::NEURON); }
-    bool isPerNeuron() const{ return m_PerNeuron; }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
@@ -293,9 +289,6 @@ private:
     const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
-
-    //! Is this custom update per-neuron i.e. run in parallel across all neurons
-    bool m_PerNeuron;
 };
 
 //------------------------------------------------------------------------

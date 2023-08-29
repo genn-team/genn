@@ -38,7 +38,7 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
     m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_Batched(false)
+    m_Dims{0}
 {
     // Validate names
     Utils::validatePopName(name, "Custom update");
@@ -91,13 +91,13 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
-    Utils::updateHash(isBatched(), hash);
+    Utils::updateHash(getDims(), hash);
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
-    Utils::updateHash(isBatched(), hash);
+    Utils::updateHash(getDims(), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {
@@ -122,7 +122,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
 {
     // Validate parameters, variables and variable references
     getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
@@ -135,7 +135,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Update is per-neuron if any variables or variable reference targets have neuron dimension
-    const auto modelVars = getCustomUpdateModel()->getVars();
+    /*const auto modelVars = getCustomUpdateModel()->getVars();
     m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                               [](const auto& v) 
                               {
@@ -159,7 +159,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
             throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
         }
     }
-
+    */
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
         throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
@@ -179,7 +179,7 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference batching
-    checkVarReferenceBatching<NeuronVarAccess>(m_VarReferences, batchSize);
+    checkVarReferenceDims<NeuronVarAccess>(m_VarReferences, batchSize);
 
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -203,8 +203,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateHash(hash);
 
-    // Update hash with whether custom update is per-neuron and if delay is required
-    Utils::updateHash(isPerNeuron(), hash);
+    // Update hash with whether delay is required
     const bool delayed = (getDelayNeuronGroup() != nullptr);
     Utils::updateHash(delayed, hash);
 
@@ -229,7 +228,6 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
     // Superclass
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateInitHash(hash);
-    Utils::updateHash(isPerNeuron(), hash);
     return hash.get_digest();
 }
 
@@ -263,20 +261,6 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     {
         throw std::runtime_error("All referenced variables must belong to the same synapse group.");
     }
-
-    // Give error if custom update model includes any shared neuron variables
-    // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
-    // this safely checks for attempts to do neuron reductions
-    /*const auto vars = getCustomUpdateModel()->getVars();
-    if (std::any_of(vars.cbegin(), vars.cend(),
-                    [](const Models::Base::Var &v)
-                    {
-                        return (v.getAccess(VarAccess::READ_WRITE) & VarAccessDuplication::SHARED_NEURON);
-                    }))
-    {
-        throw std::runtime_error("Custom weight updates cannot use models with SHARED_NEURON variables.");
-    }*/
-
     // If this is a transpose operation
     if(isTransposeOperation()) {
         // Check that it isn't also a reduction
@@ -311,7 +295,7 @@ void CustomUpdateWU::finalise(double dt, unsigned int batchSize)
     CustomUpdateBase::finalise(dt);
 
     // Check variable reference types
-    checkVarReferenceBatching<SynapseVarAccess>(m_VarReferences, batchSize);
+    checkVarReferenceDims<SynapseVarAccess>(m_VarReferences, batchSize);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

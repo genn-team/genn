@@ -1177,7 +1177,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         [batchSize](const CustomUpdateInternal &c, const Models::Base::Var &var)
         { 
             return getVarSize(var.access.getDims<NeuronVarAccess>(), 
-                              c.getSize(), batchSize, 1, c.isBatched());
+                              c.getSize(), batchSize, 1, c.getDims() & VarAccessDim::BATCH);
         });
 
     genCustomUpdate<CustomUpdateVarAdapter, CustomUpdateEGPAdapter>(
@@ -1192,7 +1192,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                                   ? sg->getKernelSizeFlattened() 
                                   : sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg));
             return getVarSize(var.access.getDims<SynapseVarAccess>(), count, 
-                              batchSize, 1, c.isBatched());
+                              batchSize, 1, c.getDims() & VarAccessDim::BATCH);
         });
     allVarStreams << std::endl;
 

@@ -853,7 +853,7 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, Envir
 {
     // Initialise custom update variables
     genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, env, *this, "", "size", 1, 
-                                                 getArchetype().isBatched() ? batchSize : 1);        
+                                                 (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1);        
 }
 
 // ----------------------------------------------------------------------------
@@ -911,7 +911,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
     // Loop through rows
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        backend, groupEnv, *this, stride, getArchetype().isBatched() ? batchSize : 1, false,
+        backend, groupEnv, *this, stride, (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             if (kernel) {
@@ -966,7 +966,7 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
 {
     genInitWUVarCode<CustomUpdateVarAdapter>(
         backend, env, *this, "$(num_pre) * $(_row_stride)",
-        getArchetype().isBatched() ? batchSize : 1, false,
+        (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 

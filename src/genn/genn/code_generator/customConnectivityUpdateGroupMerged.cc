@@ -170,7 +170,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
-        if(batchSize == 1 || !varRef.isDuplicated()) {
+        if(batchSize == 1 || !(varRef.getDims() & VarAccessDim::BATCH)) {
             // Determine index
             const std::string index = (varRef.getDelayNeuronGroup() != nullptr) ? "$(_pre_delay_offset) + $(id_pre)" : "$(id_pre)";
             
@@ -240,8 +240,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
-            {
+            const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
+            if (batchSize > 1 && (varRef.getDims() & VarAccessDim::BATCH)) {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
@@ -261,8 +261,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && dependentVars.at(i).isDuplicated())
-            {
+            if (batchSize > 1 && (dependentVars.at(i).getDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and zero
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -306,8 +305,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated())
-            {
+            const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
+            if (batchSize > 1 && (varRef.getDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -325,7 +324,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && dependentVars.at(i).isDuplicated()) {
+            if (batchSize > 1 && (dependentVars.at(i).getDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {

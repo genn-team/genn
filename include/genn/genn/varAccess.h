@@ -110,6 +110,12 @@ inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
     return static_cast<VarAccessDim>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
+
+inline VarAccessDim clearDim(VarAccessDim a, VarAccessDim b)
+{
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(a) & ~static_cast<unsigned int>(b));
+}
+
 //----------------------------------------------------------------------------
 // VarAccess
 //----------------------------------------------------------------------------
@@ -132,10 +138,14 @@ public:
     template<typename V>
     VarAccessDim getDims() const
     {
+        // Extract value
         const unsigned int val = std::visit(
             Utils::Overload{
+                // If access is set to default, use READ_WRITE mode of typed var access e.g. NeuronVarAcccess::READ_WRITE
                 [](std::monostate) { return static_cast<unsigned int>(V::READ_WRITE); },
+                // Otherwise, if stored type matches template type, use value
                 [](V v) { return static_cast<unsigned int>(v); },
+                // Otherwise, give error
                 [](auto)->unsigned int { throw std::runtime_error("Invalid var access type"); }},
             m_Access);
 
@@ -149,7 +159,7 @@ public:
         return std::visit(
             Utils::Overload{
                 [](std::monostate) { return true; },
-                [](V v) { return true; },
+                [](V) { return true; },
                 [](auto) { return false; }},
             m_Access);
     }
@@ -164,6 +174,7 @@ public:
     //------------------------------------------------------------------------
     operator VarAccessMode() const
     {
+        // If access is set to default, access mode is always read-write otherwise mask out and cast access mode, bits
         return std::visit(
             Utils::Overload{
                 [](std::monostate) { return VarAccessMode::READ_WRITE; },

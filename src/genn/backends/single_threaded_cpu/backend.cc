@@ -574,16 +574,16 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
                             buildSizeEnvironment(groupEnv);
-                            buildStandardEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
 
                             if (c.getArchetype().isNeuronReduction()) {
                                 // Initialise reduction targets
                                 // **TODO** these should be provided with some sort of caching mechanism
-                                const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), c);
+                                const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), c, 1);
 
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
-                                if (c.getArchetype().isPerNeuron()) {
+                                if (c.getArchetype().getDims() & VarAccessDim::NEURON) {
                                     memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
@@ -592,7 +592,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 }
                                 {
                                     CodeStream::Scope b(memberEnv.getStream());
-                                    c.generateCustomUpdate(*this, memberEnv,
+                                    c.generateCustomUpdate(*this, memberEnv, 1,
                                                            [&reductionTargets, this](auto &env, auto&)
                                                            {        
                                                                // Loop through reduction targets and generate reduction
@@ -611,7 +611,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             else {
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
-                                if (c.getArchetype().isPerNeuron()) {
+                                if (c.getArchetype().getDims() & VarAccessDim::NEURON) {
                                     memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
@@ -622,7 +622,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, memberEnv,
+                                    c.generateCustomUpdate(*this, memberEnv, 1,
                                                            [this](auto &env, auto &c)
                                                            {        
                                                                // Write back reductions
@@ -651,7 +651,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(funcEnv, c);
                             buildSizeEnvironment(groupEnv);
-                            buildStandardEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
 
                             // **TODO** add fields
                             const SynapseGroupInternal *sg = c.getArchetype().getSynapseGroup();
@@ -660,7 +660,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                    [&c, this](EnvironmentExternalBase &env)
                                                    {
                                                        // Call custom update handler
-                                                       c.generateCustomUpdate(*this, env,
+                                                       c.generateCustomUpdate(*this, env, 1,
                                                                               [this](auto &env, CustomUpdateWUGroupMergedBase &c)
                                                                               {        
                                                                                   // Write back reductions
@@ -710,7 +710,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         }
 
                                         // Generate custom update
-                                        c.generateCustomUpdate(*this, synEnv,
+                                        c.generateCustomUpdate(*this, synEnv, 1,
                                                                [this](auto &env, auto &c)
                                                                {        
                                                                    // Write back reductions
@@ -778,7 +778,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
                             buildSizeEnvironment(groupEnv);
-                            buildStandardEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
 
                             // Add field for transpose field and get its name
                             const std::string transposeVarName = c.addTransposeField(*this, groupEnv);
@@ -804,7 +804,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 
                                     // Generate custom update
                                     c.generateCustomUpdate(
-                                        *this, synEnv,
+                                        *this, synEnv, 1,
                                         [&transposeVarName, this](auto &env, const auto&)
                                         {        
                                             // Update transpose variable
@@ -922,7 +922,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
-                    buildStandardEnvironment(groupEnv);
+                    buildStandardEnvironment(groupEnv, 1);
                     c.generateInit(*this, groupEnv, 1);
                 }
             });
@@ -984,7 +984,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(funcEnv, c);
-                    buildStandardEnvironment(groupEnv);
+                    buildStandardEnvironment(groupEnv, 1);
                     c.generateInit(*this, groupEnv, 1);
                 }
             });
@@ -1210,7 +1210,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     // Get reference to group
                     funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
-                    buildStandardEnvironment(groupEnv);
+                    buildStandardEnvironment(groupEnv, 1);
 
                     groupEnv.printLine("// Loop through presynaptic neurons");
                     groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
@@ -2017,8 +2017,8 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateG
         env, cg, idxName,
         [&cg](const Models::VarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                    varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, 1,
+                                     varRef.getVar().access.getDims<NeuronVarAccess>(), index);
         });
 }
 //--------------------------------------------------------------------------
@@ -2028,7 +2028,7 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateW
         env, cg, idxName,
         [&cg](const Models::WUVarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+            return cg.getVarRefIndex(1, varRef.getVar().access.getDims<SynapseVarAccess>(), index);
         });
 }
 }   // namespace GeNN::CodeGenerator::SingleThreadedCPU

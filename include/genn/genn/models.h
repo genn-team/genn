@@ -201,8 +201,8 @@ public:
     // **TODO** rename to getNameSuffix
     std::string getTargetName() const;
     
-    //! If model is batched, will the variable this is referencing be duplicated?
-    bool isDuplicated() const;
+    //! Get dimensions of variable being referenced
+    VarAccessDim getDims() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -270,8 +270,8 @@ public:
     // **TODO** rename to getNameSuffix
     std::string getTargetName() const;
     
-    //! If model is batched, will the variable this is referencing be duplicated?
-    bool isDuplicated() const;
+    //! Get dimensions of variable being referenced
+    VarAccessDim getDims() const;
 
     SynapseGroup *getSynapseGroup() const;
 

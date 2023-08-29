@@ -29,11 +29,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
-    std::string getVarIndex(VarAccessDim varDims, const std::string &index) const;
-    std::string getVarRefIndex(bool delay, VarAccessDim varDims, const std::string &index) const;
+    std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
+    std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -64,11 +64,11 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
-    std::string getVarIndex(VarAccessDim varDims, const std::string &index) const;
-    std::string getVarRefIndex(VarAccessDim varDims, const std::string &index) const;
+    std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
+    std::string getVarRefIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
 
 };
 

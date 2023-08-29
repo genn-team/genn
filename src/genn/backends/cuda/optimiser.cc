@@ -162,7 +162,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 
     // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
-        const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
+        const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
         const size_t size = numCopies * (c.second.isNeuronReduction() ? 32 : c.second.getSize());
 
         groupSizes[KernelCustomUpdate].push_back(size);
@@ -176,7 +176,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     for(const auto &c : model.getCustomWUUpdates()) {
         const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(c.second.getSynapseGroup());
         if(c.second.isTransposeOperation()) {
-            const size_t numCopies = c.second.isBatched() ? model.getBatchSize() : 1;
+            const size_t numCopies = (c.second.getDims() & VarAccessDim::BATCH) ? model.getBatchSize() : 1;
             const size_t size = numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
             groupSizes[KernelCustomTransposeUpdate].push_back(size);
             customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
@@ -184,7 +184,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         else {
             customUpdateKernels.insert(c.second.getUpdateGroupName());
 
-            const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
+            const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
             if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections());
             }

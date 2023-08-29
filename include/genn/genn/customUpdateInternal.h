@@ -26,8 +26,7 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::isBatched;
-    using CustomUpdate::isPerNeuron;
+    using CustomUpdateBase::getDims;
     using CustomUpdateBase::getVarLocationHashDigest;
     using CustomUpdateBase::getUpdateCodeTokens;
 
@@ -86,7 +85,7 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::getDims;
     using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
     using CustomUpdateBase::getUpdateCodeTokens;

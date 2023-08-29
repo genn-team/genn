@@ -94,7 +94,7 @@ private:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If model isn't batched or variable isn't duplicated
             const auto &varRef = archetypeAdaptor.getInitialisers().at(v.name);
-            if(batchSize == 1 || !varRef.isDuplicated()) {
+            if(batchSize == 1 || !(varRef.getDims() & VarAccessDim::BATCH)) {
                 // Add field with qualified type which indexes private pointer field
                 const auto resolvedType = v.type.resolve(getTypeContext());
                 const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;

@@ -373,10 +373,11 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // If batching is enabled, calculate batch offset
-    if(env.getGroup().getArchetype().isBatched()) {
+    const bool batched = (env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1);
+    if(batched) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(size) * $(batch);")});
     }
@@ -397,7 +398,7 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
                 {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(size);")});
 
         // If batching is also enabled, calculate offset including delay and batch
-        if(env.getGroup().getArchetype().isBatched()) {
+        if(batched) {
             const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
             env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
                     {env.addInitialiser("const unsigned int batchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_delay_slot);")});
@@ -410,10 +411,10 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+void buildStandardCustomUpdateWUEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // Add batch offset if group is batched
-    if(env.getGroup().getArchetype().isBatched()) {
+    if((env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(_size) * $(batch);")});
     }
@@ -571,19 +572,19 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDe
     buildStandardSynapseEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateEnvironment(*this, env);
+    buildStandardCustomUpdateEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
@@ -601,22 +602,22 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseIn
     buildStandardSynapseEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateSizeEnvironment(env);
-    buildStandardCustomUpdateEnvironment(*this, env);
+    buildStandardCustomUpdateEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
-    buildStandardCustomUpdateWUEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
@@ -697,24 +698,26 @@ std::string BackendBase::getReductionOperation(const std::string &reduction, con
     }
 }
 //-----------------------------------------------------------------------
-std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, 
+                                                                               unsigned int batchSize, const std::string &idx) const
 {
     return genInitReductionTargets<NeuronVarAccess>(
-        os, cg, idx,
-        [&cg](const Models::VarReference &varRef, const std::string &index)
+        os, cg, batchSize, idx,
+        [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                        varRef.getVar().access.getDims<NeuronVarAccess>(), index);
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, batchSize,
+                                     varRef.getVar().access.getDims<NeuronVarAccess>(), index);
         });
 }
 //-----------------------------------------------------------------------
-std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, 
+                                                                               unsigned int batchSize, const std::string &idx) const
 {
     return genInitReductionTargets<NeuronVarAccess>(
-        os, cg, idx,
-        [&cg](const Models::WUVarReference &varRef, const std::string &index)
+        os, cg, batchSize, idx,
+        [batchSize, &cg](const Models::WUVarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getVar().access.getDims<SynapseVarAccess>(), index);
+            return cg.getVarRefIndex(batchSize, varRef.getVar().access.getDims<SynapseVarAccess>(), index);
         });
 }
 }   // namespace GeNN::CodeGenerator
