@@ -85,17 +85,18 @@ protected:
 
     const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
-    template<typename A, typename V>
+    template<typename V>
     bool isReduction(const std::unordered_map<std::string, V> &varRefs, 
                      VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and have reduction dimension
+        // Return true if any variables have REDUCE flag in their access mode and have reduction dimension 
+        // **NOTE** this is correct because custom update variable access types are defined subtractively
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
                        [reduceDim](const Models::Base::Var &v)
                        { 
                            return ((v.access & VarAccessModeAttribute::REDUCE) 
-                                   && (v.access.template getDims<A>() & reduceDim));
+                                   && (v.access.getDims<CustomUpdateVarAccess>() & reduceDim));
                        }))
         {
             return true;
@@ -104,10 +105,10 @@ protected:
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             // If custom update model reduces into this variable reference 
-            // and the variable it targets has reduction dimension
+            // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && (varRef.getVar().access.template getDims<A>() & reduceDim)) 
+                && !(varRef.getDims() & reduceDim)) 
             {
                 return true;
             }
@@ -263,8 +264,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::BATCH); }
-    bool isNeuronReduction() const { return isReduction<NeuronVarAccess>(getVarReferences(), VarAccessDim::NEURON); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::NEURON); }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
@@ -316,7 +317,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction<SynapseVarAccess>(getVarReferences(), VarAccessDim::BATCH); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
     bool isTransposeOperation() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
