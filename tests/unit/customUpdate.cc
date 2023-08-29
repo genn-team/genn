@@ -489,7 +489,7 @@ TEST(CustomUpdates, BatchingVars)
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
-    // Create updates where variable is shared and references vary
+    // Create updates where variable has same dimensionality as references but dimensionality varies
     VarValues sumVarValues{{"sum", 1.0}};
     VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
