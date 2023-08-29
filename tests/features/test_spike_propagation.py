@@ -4,7 +4,7 @@ from pygenn import types
 
 from pygenn import GeNNModel
 
-from pygenn.genn import SpanType, VarAccess
+from pygenn.genn import NeuronVarAccess, SpanType, SynapseVarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
@@ -511,7 +511,7 @@ def test_reverse(backend, precision):
     pre_reverse_spike_source_model = create_neuron_model(
         "pre_reverse_spike_source",
         var_name_types=[("startSpike", "unsigned int"), 
-                        ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
+                        ("endSpike", "unsigned int", NeuronVarAccess.READ_ONLY_DUPLICATE),
                         ("x", "scalar")],
         extra_global_params=[("spikeTimes", "scalar*")],
         sim_code=
@@ -533,7 +533,7 @@ def test_reverse(backend, precision):
         """
         $(addToPre, $(g));
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        var_name_types=[("g", "scalar", SynapseVarAccess.READ_ONLY)])
 
     model = GeNNModel(precision, "test_reverse", backend=backend)
     model.dt = 1.0
@@ -617,7 +617,7 @@ def test_reverse_post(backend, precision):
         """
         $(addToPre, $(g));
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        var_name_types=[("g", "scalar", SynapseVarAccess.READ_ONLY)])
 
     model = GeNNModel(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0

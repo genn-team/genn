@@ -5,7 +5,7 @@ from scipy import stats
 
 from pygenn import GeNNModel
 
-from pygenn.genn import VarAccess
+from pygenn.genn import NeuronVarAccess
 from pygenn import (create_neuron_model,
                     create_weight_update_model,
                     init_sparse_connectivity, init_var)
@@ -220,7 +220,7 @@ def test_wu_var_cont(backend, precision, fuse, delay):
     pre_learn_post_weight_update_model = create_weight_update_model(
         "pre_learn_post_weight_update",
         var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", NeuronVarAccess.READ_ONLY)],
         
         learn_post_code=
         """
@@ -234,7 +234,7 @@ def test_wu_var_cont(backend, precision, fuse, delay):
     pre_sim_weight_update_model = create_weight_update_model(
         "pre_sim_weight_update",
         var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", NeuronVarAccess.READ_ONLY)],
         
         sim_code=
         """
@@ -251,7 +251,7 @@ def test_wu_var_cont(backend, precision, fuse, delay):
     post_learn_post_weight_update_model = create_weight_update_model(
         "post_learn_post_weight_update",
         var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        post_var_name_types=[("s", "scalar"), ("shift", "scalar", NeuronVarAccess.READ_ONLY)],
         
         learn_post_code=
         """
@@ -265,7 +265,7 @@ def test_wu_var_cont(backend, precision, fuse, delay):
     post_sim_weight_update_model = create_weight_update_model(
         "post_sim_weight_update",
         var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        post_var_name_types=[("s", "scalar"), ("shift", "scalar", NeuronVarAccess.READ_ONLY)],
         
         sim_code=
         """
