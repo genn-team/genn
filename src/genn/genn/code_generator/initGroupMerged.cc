@@ -87,7 +87,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                             });
 
             // If variable has NEURON axis
-            const VarAccessDim varDims = var.access.template getDims<NeuronVarAccess>();
+            const VarAccessDim varDims = adaptor.getVarDims(var);
             if (varDims & VarAccessDim::NEURON) {
                 backend.genVariableInit(
                     varEnv, count, "id",
@@ -171,7 +171,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(varEnv,
-                [&group, &resolvedType, &stride, &var, &varInit, batchSize]
+                [&adaptor, &group, &resolvedType, &stride, &var, &varInit, batchSize]
                 (EnvironmentExternalBase &env)
                 {
                     // Generate initial value into temporary variable
@@ -185,7 +185,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    var.access.template getDims<SynapseVarAccess>(), batchSize);
+                                    adaptor.getVarDims(var), batchSize);
                 });
         }
     }

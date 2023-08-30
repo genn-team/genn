@@ -118,6 +118,8 @@ public:
 
     bool isVarDelayed(const std::string &) const { return false; }
 
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<NeuronVarAccess>(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -167,6 +169,9 @@ public:
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<SynapseVarAccess>(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -196,6 +201,8 @@ public:
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<NeuronVarAccess>(); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -224,6 +231,8 @@ public:
     const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<NeuronVarAccess>(); }
 
 private:
     //----------------------------------------------------------------------------

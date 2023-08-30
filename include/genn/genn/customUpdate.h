@@ -50,6 +50,9 @@ public:
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
+    //! Get dimensions of this custom update
+    VarAccessDim getDims() const{ return m_Dims; }
+
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
@@ -69,9 +72,6 @@ protected:
     bool isInitRNGRequired() const;
 
     bool isZeroCopyEnabled() const;
-
-    //! Get dimensions of this custom update
-    VarAccessDim getDims() const{ return m_Dims; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -207,6 +207,11 @@ public:
     bool isVarDelayed(const std::string &) const { return false; }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const
+    { 
+        return clearDim(m_CU.getDims(), var.access.getDims<CustomUpdateVarAccess>());
+    }
 
 private:
     //----------------------------------------------------------------------------
