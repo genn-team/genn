@@ -62,7 +62,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, batchSize, &cuEnv](const std::string&, VarAccess d)
         {
-            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<NeuronVarAccess>()), "$(id)");
+            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<CustomUpdateVarAccess>()), "$(id)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -189,7 +189,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, batchSize, &cuEnv](const std::string&, VarAccess d)
         {
-            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<SynapseVarAccess>()), "$(id_syn)");
+            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<CustomUpdateVarAccess>()), "$(id_syn)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -197,7 +197,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
-            return getVarRefIndex(batchSize, v.getVar().access.getDims<SynapseVarAccess>(), "$(id_syn)");
+            return getVarRefIndex(batchSize, v.getDims(), "$(id_syn)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
