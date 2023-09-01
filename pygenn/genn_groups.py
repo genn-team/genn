@@ -789,10 +789,10 @@ class SynapseGroupMixin(GroupMixin):
             # **NOTE** we assume order is row-major
             if ((self.matrix_type & SynapseMatrixConnectivity.DENSE) or
                 (self.matrix_type & SynapseMatrixWeight.KERNEL)):
-                var_data._view[:] = var_data.values
+                var_data.view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
-                if len(var_data.shape) == 1:
+                if len(var_data.view.shape) == 1:
                     sorted_var = var_data.values[self.synapse_order]
                 else:
                     sorted_var = var_data.values[:,self.synapse_order]
@@ -806,10 +806,10 @@ class SynapseGroupMixin(GroupMixin):
                 syn = 0
                 for i, r in zip(row_start_idx, self.row_lengths):
                     # Copy row from non-padded indices into correct location
-                    if len(var_data.shape) == 1:
-                        var_data._view[i:i + r] = sorted_var[syn:syn + r]
+                    if len(var_data.view.shape) == 1:
+                        var_data.view[i:i + r] = sorted_var[syn:syn + r]
                     else:
-                        var_data._view[:,i:i + r] = sorted_var[:,syn:syn + r]
+                        var_data.view[:,i:i + r] = sorted_var[:,syn:syn + r]
                     syn += r
             else:
                 raise Exception("Matrix format not supported")
