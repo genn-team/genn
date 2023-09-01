@@ -574,8 +574,10 @@ private:
             if (v.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
                 os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(v.access, resolvedType) << ";" << std::endl;
+                const VarAccessDim varAccessDim = clearDim(cg.getArchetype().getDims(), 
+                                                           v.access.template getDims<CustomUpdateVarAccess>());
                 reductionTargets.push_back({v.name, resolvedType, v.access,
-                                            cg.getVarIndex(batchSize, v.access.template getDims<A>(), idx)});
+                                            cg.getVarIndex(batchSize, varAccessDim, idx)});
             }
         }
 

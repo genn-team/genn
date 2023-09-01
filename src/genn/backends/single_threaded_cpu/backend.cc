@@ -2013,7 +2013,7 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const
 {
-    genWriteBackReductions<NeuronVarAccess>(
+    genWriteBackReductions(
         env, cg, idxName,
         [&cg](const Models::VarReference &varRef, const std::string &index)
         {
@@ -2024,7 +2024,7 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateG
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const
 {
-    genWriteBackReductions<SynapseVarAccess>(
+    genWriteBackReductions(
         env, cg, idxName,
         [&cg](const Models::WUVarReference &varRef, const std::string &index)
         {
