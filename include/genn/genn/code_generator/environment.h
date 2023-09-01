@@ -723,7 +723,12 @@ public:
     //------------------------------------------------------------------------
     bool shouldAlwaysCopy(G&, const Models::Base::Var &var) const
     {
-        return m_ShouldAlwaysCopy(var.name, var.access);
+        if(m_ShouldAlwaysCopy) {
+            return m_ShouldAlwaysCopy(var.name, var.access);
+        }
+        else {
+            return false;
+        }
     }
 
     std::string getReadIndex(G&, const Models::Base::Var &var) const
