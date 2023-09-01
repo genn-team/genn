@@ -993,7 +993,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
                 # Determine shape of this variable
                 var_shape = _get_synapse_var_shape(
                     v.access.get_synapse_dims(), 
-                    self, 1)
+                    self.synapse_group, 1)
 
                 resolved_type = var_data.type.resolve(self._model.type_context)
                 var_data._view = self._assign_ext_ptr_array(
