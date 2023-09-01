@@ -43,25 +43,28 @@ size_t getNeuronVarSize(VarAccessDim varDims, size_t numElements, size_t batchSi
     return getNumVarCopies(varDims, batchSize, batched) * getNumNeuronVarElements(varDims, numElements) * delaySlots;
 }
 //--------------------------------------------------------------------------
-size_t getSynapseVarSize(VarAccessDim varDims, size_t numPre, size_t rowStride, size_t batchSize, 
-                         std::optional<size_t> kernelSize = std::nullopt, bool batched = true)
+size_t getSynapseVarSize(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg, 
+                         size_t batchSize, bool batched = true)
 {
-    const size_t numCopies = getNumVarCopies(varDims, batchSize, batched);
     const bool pre = (varDims & VarAccessDim::PRE_NEURON);
     const bool post = (varDims & VarAccessDim::POST_NEURON);
+    const unsigned int numPre = sg.getSrcNeuronGroup()->getNumNeurons();
+    const unsigned int numPost = sg.getTrgNeuronGroup()->getNumNeurons();
+    const unsigned int rowStride = backend.getSynapticMatrixRowStride(sg);
+    const size_t numCopies = getNumVarCopies(varDims, batchSize, batched);
     if(pre && post) {
-        if(kernelSize) {
-            return kernelSize.value() * numCopies;
+        if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
+            return sg.getKernelSizeFlattened() * numCopies;
         }
         else {
             return numPre * rowStride * numCopies;
         }
     }
-    else if(varDims & VarAccessDim::PRE_NEURON) {
+    else if(pre) {
         return numPre * numCopies;
     }
-    else if(varDims & VarAccessDim::POST_NEURON) {
-        return rowStride * numCopies;
+    else if(post) {
+        return numPost * numCopies;
     }
     else {
         return numCopies;
@@ -1212,11 +1215,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         runnerPushFunc, runnerPullFunc, model.getCustomWUUpdates(), mem, statePushPullFunctions, 
         [batchSize, &backend](const CustomUpdateWUInternal &c, VarAccessDim varDims) 
         { 
-            const SynapseGroupInternal *sg = c.getSynapseGroup();
-            return getSynapseVarSize(varDims, sg->getSrcNeuronGroup()->getNumNeurons(),
-                                     backend.getSynapticMatrixRowStride(*sg), batchSize,
-                                     (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) ? std::make_optional(sg->getKernelSizeFlattened()) : std::nullopt,
-                                     c.getDims() & VarAccessDim::BATCH);
+            return getSynapseVarSize(varDims, backend, *c.getSynapseGroup(), 
+                                     batchSize, c.getDims() & VarAccessDim::BATCH);
         });
     allVarStreams << std::endl;
 
@@ -1430,9 +1430,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
                 if(individualWeights || kernelWeights) {
                     const size_t size = getSynapseVarSize(wuVar.access.getDims<SynapseVarAccess>(),
-                                                          s.second.getSrcNeuronGroup()->getNumNeurons(),
-                                                          backend.getSynapticMatrixRowStride(s.second), batchSize,
-                                                          kernelWeights ? std::make_optional(s.second.getKernelSizeFlattened()) : std::nullopt);
+                                                          backend, s.second, batchSize);
 
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
