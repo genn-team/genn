@@ -705,7 +705,10 @@ PYBIND11_MODULE(genn, m)
         .def("get_synapse_dims", 
              [](const VarAccess &v) { return v.getDims<SynapseVarAccess>(); })
         .def("get_custom_update_dims", 
-             [](const VarAccess &v) { return v.getDims<CustomUpdateVarAccess>(); });
+             [](const VarAccess &v, VarAccessDim cuDims) 
+             { 
+                 return clearDim(cuDims, v.getDims<CustomUpdateVarAccess>()); 
+             });
 
     //------------------------------------------------------------------------
     // genn.Var
