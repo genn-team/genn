@@ -51,7 +51,7 @@ def test_custom_update(backend, precision, batch_size):
 
     custom_update_model = create_custom_update_model(
         "custom_update",
-        var_name_types=[("X", "scalar", CustomUpdateVarAccess.READ_ONLY_DUPLICATE)],
+        var_name_types=[("X", "scalar", CustomUpdateVarAccess.READ_ONLY)],
         var_refs=[("R", "scalar")])
 
     set_time_custom_update_model = create_custom_update_model(
@@ -272,8 +272,8 @@ def test_custom_update_transpose(backend, precision, batch_size):
 def test_custom_update_neuron_reduce(backend, precision, batch_size):
     reduction_neuron_model = create_neuron_model(
         "reduction_neuron",
-        var_name_types=[("X", "scalar", CustomUpdateVarAccess.READ_ONLY_DUPLICATE), 
-                        ("Y", "scalar", CustomUpdateVarAccess.READ_ONLY_DUPLICATE)])
+        var_name_types=[("X", "scalar", NeuronVarAccess.READ_ONLY_DUPLICATE), 
+                        ("Y", "scalar", NeuronVarAccess.READ_ONLY_DUPLICATE)])
 
     softmax_1_custom_update_model = create_custom_update_model(
         "softmax_1",
