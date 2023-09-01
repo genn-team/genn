@@ -666,7 +666,7 @@ class SynapseGroupMixin(GroupMixin):
                     var_data._view = np.reshape(var_data._view, var_shape)
 
                     # Initialise variable if necessary
-                    self._init_wum_var(var_data, num_copies)
+                    self._init_wum_var(var_data)
                 else:
                     assert not var_data.init_required
                     var_data._view = None
@@ -701,9 +701,9 @@ class SynapseGroupMixin(GroupMixin):
             # Load postsynaptic update model variables
             self._load_vars(
                 self.ps_model.get_vars(),
-                lambda v, b: _get_neuron_var_shape(v.access.get_neuron_dims(),
-                                                   self.trg.size,
-                                                   self._model.batch_size),
+                lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+                                                self.trg.size,
+                                                self._model.batch_size),
                 self.psm_vars, self.get_ps_var_location)
                 
             # If it's inSyn is accessible on the host
@@ -781,7 +781,7 @@ class SynapseGroupMixin(GroupMixin):
         else:
             raise Exception("Matrix format not supported")
             
-    def _init_wum_var(self, var_data, num_copies):
+    def _init_wum_var(self, var_data):
         # If initialisation is required
         if var_data.init_required:
             # If connectivity is dense,
@@ -792,7 +792,7 @@ class SynapseGroupMixin(GroupMixin):
                 var_data._view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
-                if num_copies == 1:
+                if len(var_data.shape) == 1:
                     sorted_var = var_data.values[self.synapse_order]
                 else:
                     sorted_var = var_data.values[:,self.synapse_order]
@@ -806,7 +806,7 @@ class SynapseGroupMixin(GroupMixin):
                 syn = 0
                 for i, r in zip(row_start_idx, self.row_lengths):
                     # Copy row from non-padded indices into correct location
-                    if num_copies == 1:
+                    if len(var_data.shape) == 1:
                         var_data._view[i:i + r] = sorted_var[syn:syn + r]
                     else:
                         var_data._view[:,i:i + r] = sorted_var[:,syn:syn + r]
@@ -920,7 +920,7 @@ class CustomUpdateWUMixin(GroupMixin):
                  # Determine shape of this variable
                 var_shape = _get_synapse_var_shape(
                     v.access.get_custom_update_dims(self._dims), 
-                    self, batch_size)
+                    self.synapse_group, batch_size)
                 
                 # Get view
                 resolved_type = var_data.type.resolve(self._model.type_context)
@@ -930,7 +930,7 @@ class CustomUpdateWUMixin(GroupMixin):
                 var_data._view = np.reshape(var_data._view, var_shape)
 
                 # Initialise variable if necessary
-                self.synapse_group._init_wum_var(var_data, num_copies)
+                self.synapse_group._init_wum_var(var_data)
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
@@ -1003,7 +1003,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
                 var_data._view = np.reshape(var_data._view, var_shape)
                 
                 # Initialise variable if necessary
-                self.synapse_group._init_wum_var(var_data, 1)
+                self.synapse_group._init_wum_var(var_data)
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
