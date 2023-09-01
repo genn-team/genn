@@ -53,8 +53,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     const std::string timeStr = sg.getTimeType().getName();
     const std::string axonalDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getDelaySteps() + 1u), sg.getTimeType());
     const bool preDelay = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired();
-    const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, "$(id_pre)");
-    const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::PRE_NEURON, "$(id_pre)");
+    const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id_pre)");
+    const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id_pre)");
     synEnv.add(sg.getTimeType().addConst(), "st_pre", "stPre",
                {synEnv.addInitialiser("const " + timeStr + " stPre = " + axonalDelayMs + " + $(_src_st)[" + preSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_pre", "prevSTPre",
@@ -67,8 +67,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Calculate backprop delay to add to (somatic) spike times and substitute in postsynaptic spike times
     const std::string backPropDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
     const bool postDelay = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired();
-    const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::POST_NEURON, "$(id_post)");
-    const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::POST_NEURON, "$(id_post)");
+    const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id_post)");
+    const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::NEURON, "$(id_post)");
     synEnv.add(sg.getTimeType().addConst(), "st_post", "stPost",
                {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_st)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
