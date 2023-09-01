@@ -34,11 +34,11 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                       [](const CustomUpdateInternal&) { return true; },
+                       [](const CustomUpdateInternal &cg) { return !Utils::areTokensEmpty(cg.getUpdateCodeTokens()); },
                        &CustomUpdateInternal::getHashDigest);
 
     createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                       [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
+                       [](const CustomUpdateWUInternal &cg) { return !Utils::areTokensEmpty(cg.getUpdateCodeTokens()) && !cg.isTransposeOperation(); },
                        &CustomUpdateWUInternal::getHashDigest);
 
     createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
