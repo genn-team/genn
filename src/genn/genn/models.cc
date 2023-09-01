@@ -188,30 +188,6 @@ std::string WUVarReference::getTargetName() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-VarAccessDim WUVarReference::getDims() const
-{
-    const auto &varAccess = getVar().access;
-    return std::visit(
-        Utils::Overload{
-            // If reference is to a custom update variable, 
-            // remove dimensions from those of update
-            [&varAccess](const CURef &ref) 
-            { 
-                return clearDim(ref.group->getDims(),
-                                varAccess.getDims<CustomUpdateVarAccess>()); 
-            },
-            // Otherwise, if reference is to the synaptic variables of a custom connectivity update,
-            // remove BATCH dimension as these are never batched
-            [&varAccess](const CCURef&) 
-            { 
-                return clearDim(varAccess.getDims<SynapseVarAccess>(), 
-                                VarAccessDim::BATCH); 
-            },
-            // Otherwise, use dimensionality directly
-            [&varAccess](const WURef&){ return varAccess.getDims<SynapseVarAccess>(); }},
-        m_Detail);
-}
-//----------------------------------------------------------------------------
 SynapseGroup *WUVarReference::getSynapseGroup() const
 {
     return getSynapseGroupInternal();
@@ -305,6 +281,30 @@ SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
         m_Detail);
 }
 //------------------------------------------------------------------------
+VarAccessDim WUVarReference::getVarDims(const Models::Base::Var &var) const
+{
+    const auto &varAccess = var.access;
+    return std::visit(
+        Utils::Overload{
+            // If reference is to a custom update variable, 
+            // remove dimensions from those of update
+            [&varAccess](const CURef &ref) 
+            { 
+                return clearDim(ref.group->getDims(),
+                                varAccess.getDims<CustomUpdateVarAccess>()); 
+            },
+            // Otherwise, if reference is to the synaptic variables of a custom connectivity update,
+            // remove BATCH dimension as these are never batched
+            [&varAccess](const CCURef&) 
+            { 
+                return clearDim(varAccess.getDims<SynapseVarAccess>(), 
+                                VarAccessDim::BATCH); 
+            },
+            // Otherwise, use dimensionality directly
+            [&varAccess](const WURef&){ return varAccess.getDims<SynapseVarAccess>(); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
 WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
                                const DetailType &detail)
 :   VarReferenceBase(varIndex, varVec), m_TransposeVarIndex(std::nullopt), 
@@ -354,8 +354,8 @@ WUVarReference::WUVarReference(size_t varIndex, const Models::Base::VarVec &varV
     }
 
     // Check duplicatedness of variables
-    if((getVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH) 
-       != (getTransposeVar().access.getDims<SynapseVarAccess>() & VarAccessDim::BATCH)) 
+    if((getDims() & VarAccessDim::BATCH) 
+       != (getTransposeDims() & VarAccessDim::BATCH)) 
     {
         throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
     }

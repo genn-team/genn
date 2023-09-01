@@ -298,8 +298,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
         // Update hash with whether variable references require transpose
         Utils::updateHash((v.second.getTransposeSynapseGroup() == nullptr), hash);
 
-        // Update hash with access mode of target variable dimensions as this effects indexing code
-        Utils::updateHash(v.second.getVar().access.getDims<SynapseVarAccess>(), hash);
+        // Update hash with dimensionality of target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getDims(), hash);
     }
 
     return hash.get_digest();

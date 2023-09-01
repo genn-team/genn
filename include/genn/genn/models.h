@@ -271,12 +271,15 @@ public:
     std::string getTargetName() const;
     
     //! Get dimensions of variable being referenced
-    VarAccessDim getDims() const;
+    VarAccessDim getDims() const{ return getVarDims(getVar()); }
 
     SynapseGroup *getSynapseGroup() const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
     std::string getTransposeTargetName() const;
+
+    //! Get dimensions of transpose variable being referenced
+    VarAccessDim getTransposeDims() const{ return getVarDims(getTransposeVar()); }
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -321,13 +324,14 @@ private:
     //------------------------------------------------------------------------
     SynapseGroupInternal *getSynapseGroupInternal() const;
     SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
+    VarAccessDim getVarDims(const Models::Base::Var &var) const;
 
     WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
                    const DetailType &detail);
     WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
                    size_t transposeVarIndex, const Models::Base::VarVec &transposeVarVec,
                    const DetailType &detail);
-    
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
