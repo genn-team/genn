@@ -696,10 +696,6 @@ PYBIND11_MODULE(genn, m)
     // genn.VarAccess
     //------------------------------------------------------------------------
     pybind11::class_<VarAccess>(m, "VarAccess")
-        .def(pybind11::init<NeuronVarAccess>())
-        .def(pybind11::init<SynapseVarAccess>())
-        .def(pybind11::init<CustomUpdateVarAccess>())
-        
         .def("get_neuron_dims", 
              [](const VarAccess &v) { return v.getDims<NeuronVarAccess>(); })
         .def("get_synapse_dims", 
@@ -714,9 +710,13 @@ PYBIND11_MODULE(genn, m)
     // genn.Var
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base::Var>(m, "Var")
-        .def(pybind11::init<const std::string&, const std::string&, VarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&, NeuronVarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&, SynapseVarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&, CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
-        .def(pybind11::init<const std::string&, const Type::ResolvedType&, VarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, NeuronVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, SynapseVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::Var::name)
         .def_readonly("type", &Models::Base::Var::type)
