@@ -210,7 +210,7 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
     if (cg.isNeuronReduction()) {
         return padKernelSize(32 * numCopies, KernelCustomUpdate);
     }
-    else if (!(cg.getDims() & VarAccessDim::NEURON)) {
+    else if (cg.getDims() & VarAccessDim::NEURON) {
         return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
     }
     else {
@@ -1042,25 +1042,8 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     }
                 }
             }
-            // Otherwise, if this update isn't per-neuron
+            // Otherwise, if this update is per-neuron
             else if (cg.getArchetype().getDims() & VarAccessDim::NEURON) {
-                // Use local ID for batch and always use zero for ID
-                groupEnv.add(Type::Uint32.addConst(), "batch", "$(_id)");
-                groupEnv.add(Type::Uint32.addConst(), "id", "0");
-
-                groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
-                groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << ((cg.getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1) << ")";
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
-                    buildStandardEnvironment(batchEnv, batchSize);
-
-                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
-                                            [](auto&, auto&){});
-                }
-            }
-            // Otherwise
-            else {
                 if((cg.getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
@@ -1085,6 +1068,23 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 batchEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(batchEnv.getStream());
+                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
+                                            [](auto&, auto&){});
+                }
+            }
+            // Otherwise
+            else {
+                // Use local ID for batch and always use zero for ID
+                groupEnv.add(Type::Uint32.addConst(), "batch", "$(_id)");
+                groupEnv.add(Type::Uint32.addConst(), "id", "0");
+
+                groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+                groupEnv.getStream() << "if(" << groupEnv["batch"] << " < " << ((cg.getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1) << ")";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+                    EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
+                    buildStandardEnvironment(batchEnv, batchSize);
+
                     cg.generateCustomUpdate(*this, batchEnv, batchSize,
                                             [](auto&, auto&){});
                 }
