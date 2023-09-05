@@ -995,6 +995,10 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, set_sparse_connections"
                             "can only be used on the 'master' population")
         elif self.is_ragged:
+            # Cast index arrays to numpy arrays if necessary
+            pre_indices = np.asarray(pre_indices)
+            post_indices = np.asarray(post_indices)
+            
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
 
@@ -1010,7 +1014,7 @@ class SynapseGroup(Group):
             self.pop.set_max_connections(max_row_length)
 
             # Set ind to sorted postsynaptic indices
-            self.ind = np.asarray(post_indices)[self.synapse_order]
+            self.ind = post_indices[self.synapse_order]
 
             # Cache the row lengths
             self.row_lengths = row_lengths
