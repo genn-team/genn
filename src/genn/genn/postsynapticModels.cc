@@ -19,8 +19,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
-
+    Snippet::Base::updateHash(hash);
+    Utils::updateHash(getVars(), hash);
     Utils::updateHash(getDecayCode(), hash);
     Utils::updateHash(getApplyInputCode(), hash);
     return hash.get_digest();
@@ -31,14 +31,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
     // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Snippet::Base::validate(paramValues, description);
 
-    // If any variables have a reduction access mode, give an error
+    // Validate variable names
     const auto vars = getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
-    {
-        throw std::runtime_error("Postsynaptic model variables must have NeuronVarAccess access type");
-    }
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 }   // namespace GeNN::PostsynapticModels

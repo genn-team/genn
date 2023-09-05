@@ -20,8 +20,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
-
+    Snippet::Base::updateHash(hash);
+    Utils::updateHash(getVars(), hash);
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getEventCode(), hash);
     Utils::updateHash(getLearnPostCode(), hash);
@@ -41,7 +41,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
 {
     // Superclass
-    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
     boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
 
@@ -56,10 +55,8 @@ boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
 boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
 {
     // Superclass
-    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
     boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
-
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPostVars(), hash);
@@ -75,34 +72,18 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
     // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Snippet::Base::validate(paramValues, description);
 
-    
+    const auto vars = getVars();
     const auto preVars = getPreVars();
     const auto postVars = getPostVars();
+    Utils::validateVecNames(getVars(), "Variable");
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
 
     // Validate variable initialisers
+    Utils::validateInitialisers(vars, preVarValues, "variable", description);
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
-
-    // Check variables have suitable access types
-    const auto vars = getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<SynapseVarAccess>(); }))
-    {
-        throw std::runtime_error("Weight update models variables must have SynapseVarAccess access type");
-    }
-    if(std::any_of(preVars.cbegin(), preVars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
-    {
-        throw std::runtime_error("Weight update models presynaptic variables must have NeuronVarAccess access type");
-    }
-    if(std::any_of(postVars.cbegin(), postVars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
-    {
-        throw std::runtime_error("Weight update models postsynaptic variables must have NeuronVarAccess access type");
-    }
 }
 }   // namespace WeightUpdateModels

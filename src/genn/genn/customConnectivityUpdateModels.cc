@@ -37,11 +37,12 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
     // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Models::Base::validate(paramValues, description);
 
     const auto vars = getVars();
     const auto preVars = getPreVars();
     const auto postVars = getPostVars();
+    Utils::validateVecNames(vars, "Variable");
     Utils::validateVecNames(preVars, "Presynaptic variable");
     Utils::validateVecNames(postVars, "Presynaptic variable");
     Utils::validateVecNames(getVarRefs(), "Synapse variable reference");
@@ -49,6 +50,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateVecNames(getPostVarRefs(), "Postsynaptic variable reference");
     
     // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
     
@@ -56,22 +58,5 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(getVarRefs(), varRefTargets, "variable reference", description);
     Utils::validateInitialisers(getPreVarRefs(), preVarRefTargets, "presynaptic variable reference", description);
     Utils::validateInitialisers(getPostVarRefs(), postVarRefTargets, "postsynaptic variable reference", description);
-    
-    // Check variables have suitable access types
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<SynapseVarAccess>(); }))
-    {
-        throw std::runtime_error("Custom connectivity update models variables must have SynapseVarAccess access type");
-    }
-    if(std::any_of(preVars.cbegin(), preVars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
-    {
-        throw std::runtime_error("Custom connectivity update models presynaptic variables must have NeuronVarAccess access type");
-    }
-    if(std::any_of(postVars.cbegin(), postVars.cend(),
-                   [](const Models::Base::Var &v){ return !v.access.template isValid<NeuronVarAccess>(); }))
-    {
-        throw std::runtime_error("Custom connectivity update models postsynaptic variables must have NeuronVarAccess access type");
-    }
 }
 }   // namespace GeNN::CustomConnectivityUpdateModels
