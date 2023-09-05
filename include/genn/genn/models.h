@@ -52,30 +52,54 @@ public:
     /*! Explicit constructors required as although, through the wonders of C++
         aggregate initialization, access would default to VarAccess::READ_WRITE
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
-    struct GENN_EXPORT Var
+    template<typename A>
+    struct VarBase
     {
-        Var(const std::string &n, const Type::ResolvedType &t)
-        :   name(n), type(t)
-        {}
-        Var(const std::string &n, const std::string &t)
-        :   name(n), type(t)
-        {}
-
-        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a)
+        VarBase(const std::string &n, const Type::ResolvedType &t, A a)
         :   name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const std::string &t, VarAccess a)
+        VarBase(const std::string &n, const std::string &t, A a)
         :   name(n), type(t), access(a)
         {}
         
-        bool operator == (const Var &other) const
+        bool operator == (const VarBase &other) const
         {
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
         Type::UnresolvedType type;
-        VarAccess access;
+        A access;
+    };
+
+    struct NeuronVar : public VarBase<NeuronVarAccess>
+    {
+        NeuronVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, NeuronVarAccess::READ_WRITE)
+        {}
+        NeuronVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, NeuronVarAccess::READ_WRITE)
+        {}
+    };
+
+    struct SynapseVar : public VarBase<SynapseVarAccess>
+    {
+        SynapseVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, SynapseVarAccess::READ_WRITE)
+        {}
+        SynapseVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, SynapseVarAccess::READ_WRITE)
+        {}
+    };
+
+    struct CustomUpdateVar : public VarBase<CustomUpdateVarAccess>
+    {
+        CustomUpdateVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+        CustomUpdateVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
     };
 
     struct GENN_EXPORT VarRef
@@ -113,24 +137,8 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<Var> VarVec;
     typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
-
-    //----------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    //! Gets model variables
-    virtual VarVec getVars() const{ return {}; }
-
-    //------------------------------------------------------------------------
-    // Public methods
-    //------------------------------------------------------------------------
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getVars());
-    }
 
 protected:
     //------------------------------------------------------------------------

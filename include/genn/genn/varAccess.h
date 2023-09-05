@@ -116,77 +116,33 @@ inline VarAccessDim clearDim(VarAccessDim a, VarAccessDim b)
     return static_cast<VarAccessDim>(static_cast<unsigned int>(a) & ~static_cast<unsigned int>(b));
 }
 
-//----------------------------------------------------------------------------
-// VarAccess
-//----------------------------------------------------------------------------
-//! Wrapper class encapsulating 
-class VarAccess
+inline VarAccessDim getAccessDim(NeuronVarAccess v)
 {
-public:
-    VarAccess()
-    {}
-    VarAccess(NeuronVarAccess n) : m_Access{n}
-    {}
-    VarAccess(SynapseVarAccess s) : m_Access{s}
-    {}
-    VarAccess(CustomUpdateVarAccess c) : m_Access{c}
-    {}
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
+}
 
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    template<typename V>
-    VarAccessDim getDims() const
-    {
-        // Extract value
-        const unsigned int val = std::visit(
-            Utils::Overload{
-                // If access is set to default, use READ_WRITE mode of typed var access e.g. NeuronVarAcccess::READ_WRITE
-                [](std::monostate) { return static_cast<unsigned int>(V::READ_WRITE); },
-                // Otherwise, if stored type matches template type, use value
-                [](V v) { return static_cast<unsigned int>(v); },
-                // Otherwise, give error
-                [](auto)->unsigned int { throw std::runtime_error("Invalid var access type"); }},
-            m_Access);
+inline VarAccessDim getAccessDim(SynapseVarAccess v)
+{
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
+}
 
-        // Mask out dimension bits and cast to enum
-        return static_cast<VarAccessDim>(val & ~0x1F);
-    }
+inline VarAccessDim getAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
+{
+    return clearDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
+}
 
-    template<typename V>
-    bool isValid() const
-    {
-        return std::visit(
-            Utils::Overload{
-                [](std::monostate) { return true; },
-                [](V) { return true; },
-                [](auto) { return false; }},
-            m_Access);
-    }
+inline VarAccessMode getVarAccessMode(NeuronVarAccess v)
+{
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+}
 
-    void updateHash(boost::uuids::detail::sha1 &hash) const
-    {
-        Utils::updateHash(m_Access, hash);
-    }
+inline VarAccessMode getVarAccessMode(SynapseVarAccess v)
+{
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+}
 
-    //------------------------------------------------------------------------
-    // Operators
-    //------------------------------------------------------------------------
-    operator VarAccessMode() const
-    {
-        // If access is set to default, access mode is always read-write otherwise mask out and cast access mode, bits
-        return std::visit(
-            Utils::Overload{
-                [](std::monostate) { return VarAccessMode::READ_WRITE; },
-                [](auto v) { return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F); }},
-            m_Access);
-    }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::variant<std::monostate, NeuronVarAccess, SynapseVarAccess, CustomUpdateVarAccess> m_Access;
-};
-
+inline VarAccessMode getVarAccessMode(CustomUpdateVarAccess v)
+{
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+}
 }   // namespace GeNN
