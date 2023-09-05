@@ -55,13 +55,13 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<SynapseVarAccess>(); }
+    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
+    std::vector<Models::Base::NeuronVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
@@ -92,7 +92,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<NeuronVarAccess>(); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -115,7 +115,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
+    std::vector<Models::Base::NeuronVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
@@ -123,7 +123,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return var.access.getDims<NeuronVarAccess>(); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
     
 private:
     //----------------------------------------------------------------------------
