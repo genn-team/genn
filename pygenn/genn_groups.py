@@ -1010,7 +1010,7 @@ class SynapseGroup(Group):
             self.pop.set_max_connections(max_row_length)
 
             # Set ind to sorted postsynaptic indices
-            self.ind = post_indices[self.synapse_order]
+            self.ind = np.asarray(post_indices)[self.synapse_order]
 
             # Cache the row lengths
             self.row_lengths = row_lengths
