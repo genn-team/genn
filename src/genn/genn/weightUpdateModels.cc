@@ -82,7 +82,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
 
     // Validate variable initialisers
-    Utils::validateInitialisers(vars, preVarValues, "variable", description);
+    Utils::validateInitialisers(vars, varValues, "variable", description);
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
 }
