@@ -118,7 +118,7 @@ public:
 
     bool isVarDelayed(const std::string &) const { return false; }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -170,7 +170,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_SG.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -201,7 +201,7 @@ public:
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -232,7 +232,7 @@ public:
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------

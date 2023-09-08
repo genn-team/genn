@@ -61,7 +61,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -123,7 +123,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
     
 private:
     //----------------------------------------------------------------------------

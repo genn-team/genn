@@ -42,22 +42,22 @@ VarAccessDim VarReference::getVarDims() const
             // remove dimensions from those of update
             [](const CURef &ref) 
             { 
-                return getAccessDim(ref.var.access, ref.group->getDims());
+                return getVarAccessDim(ref.var.access, ref.group->getDims());
             },
             // Otherwise, if reference is to the presynaptic variables of a custom connectivity update,
             // remove BATCH dimension as these are never batched
             [](const CCUPreRef &ref)
             { 
-                return clearDim(getAccessDim(ref.var.access), VarAccessDim::BATCH); 
+                return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
             // Otherwise, if reference is to the postsynaptic variables of a custom connectivity update,
             // remove BATCH dimension as these are never batched
             [](const CCUPostRef &ref)
             { 
-                return clearDim(getAccessDim(ref.var.access), VarAccessDim::BATCH); 
+                return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
             // Otherwise, use dimensionality directly
-            [](const auto &ref) { return getAccessDim(ref.var.access); }},
+            [](const auto &ref) { return getVarAccessDim(ref.var.access); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -210,16 +210,16 @@ VarAccessDim WUVarReference::getVarDims() const
             // remove dimensions from those of update
             [](const CURef &ref) 
             { 
-                return getAccessDim(ref.var.access, ref.group->getDims());
+                return getVarAccessDim(ref.var.access, ref.group->getDims());
             },
             // Otherwise, if reference is to the synaptic variables of a custom connectivity update,
             // remove BATCH dimension as these are never batched
             [](const CCURef &ref) 
             { 
-                return clearDim(getAccessDim(ref.var.access), VarAccessDim::BATCH); 
+                return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
             // Otherwise, use dimensionality directly
-            [](const WURef &ref){ return getAccessDim(ref.var.access); }},
+            [](const WURef &ref){ return getVarAccessDim(ref.var.access); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -276,7 +276,7 @@ std::optional<VarAccessDim> WUVarReference::getTransposeVarDims() const
             [](const WURef &ref)->std::optional<VarAccessDim>
             { 
                 if(ref.transposeVar) {
-                    return getAccessDim(ref.transposeVar->access);
+                    return getVarAccessDim(ref.transposeVar->access);
                 }
                 else {
                     return std::nullopt;

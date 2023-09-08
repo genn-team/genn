@@ -32,13 +32,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         backend.getDeviceVarPrefix(),
         [&sg, batchSize](NeuronVarAccess a, const std::string&) 
         { 
-            return sg.getPreWUVarIndex(batchSize, getAccessDim(a), "$(id_pre)");
+            return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
         [&sg, batchSize](NeuronVarAccess a, const std::string&) 
         { 
-            return sg.getPostWUVarIndex(batchSize, getAccessDim(a), "$(id_post)");
+            return sg.getPostWUVarIndex(batchSize, getVarAccessDim(a), "$(id_post)");
         }, "", true);
 
     
@@ -80,7 +80,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
             backend.getDeviceVarPrefix(),
             [&sg, batchSize](SynapseVarAccess a, const std::string&) 
             { 
-                return sg.getSynVarIndex(batchSize, getAccessDim(a), "$(id_syn)");
+                return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
             });
     }
     // Otherwise, if weights are procedual
@@ -123,7 +123,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
             backend.getDeviceVarPrefix(),
             [&sg, batchSize](SynapseVarAccess a, const std::string&) 
             { 
-                return sg.getKernelVarIndex(batchSize, getAccessDim(a), "$(id_kernel)");
+                return sg.getKernelVarIndex(batchSize, getVarAccessDim(a), "$(id_kernel)");
             });
     }
 

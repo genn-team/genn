@@ -210,7 +210,7 @@ public:
 
     VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
     { 
-        return getAccessDim(var.access, m_CU.getDims());
+        return getVarAccessDim(var.access, m_CU.getDims());
     }
 
 private:

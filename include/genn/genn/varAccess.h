@@ -128,24 +128,24 @@ inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-inline VarAccessDim clearDim(VarAccessDim a, VarAccessDim b)
+inline VarAccessDim clearVarAccessDim(VarAccessDim a, VarAccessDim b)
 {
     return static_cast<VarAccessDim>(static_cast<unsigned int>(a) & ~static_cast<unsigned int>(b));
 }
 
-inline VarAccessDim getAccessDim(NeuronVarAccess v)
+inline VarAccessDim getVarAccessDim(NeuronVarAccess v)
 {
     return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
 }
 
-inline VarAccessDim getAccessDim(SynapseVarAccess v)
+inline VarAccessDim getVarAccessDim(SynapseVarAccess v)
 {
     return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
 }
 
-inline VarAccessDim getAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
+inline VarAccessDim getVarAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
 {
-    return clearDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
+    return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
 }
 
 inline VarAccessMode getVarAccessMode(VarAccessMode v)

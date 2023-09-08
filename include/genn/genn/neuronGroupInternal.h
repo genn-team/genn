@@ -78,7 +78,7 @@ public:
 
     const std::string &getNameSuffix() const{ return m_NG.getName(); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
     
 private:
     //----------------------------------------------------------------------------
