@@ -405,7 +405,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
-    using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
+    using GetVarIndexFn = std::function<std::string(VarAccessDim, const std::string&)>;
 
     template<typename A>
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
@@ -695,6 +695,10 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
+//! Type of a single definition
+template<typename A>
+using Def = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+
 //------------------------------------------------------------------------
 // GeNN::CodeGenerator::VarCachePolicy
 //------------------------------------------------------------------------
@@ -704,8 +708,8 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<std::string(const std::string&, VarAccess)>;
-    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccess)>;
+    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDim)>;
+    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccessDim)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
                    ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
@@ -721,7 +725,7 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const Models::Base::Var &var) const
+    bool shouldAlwaysCopy(G&, const Def<A> &var) const
     {
         if(m_ShouldAlwaysCopy) {
             return m_ShouldAlwaysCopy(var.name, var.access);
@@ -731,17 +735,17 @@ public:
         }
     }
 
-    std::string getReadIndex(G&, const Models::Base::Var &var) const
+    std::string getReadIndex(G&, const Def<A> &var) const
     {
         return m_GetReadIndex(var.name, var.access);
     }
 
-    std::string getWriteIndex(G&, const Models::Base::Var &var) const
+    std::string getWriteIndex(G&, const Def<A> &var) const
     {
         return m_GetWriteIndex(var.name, var.access);
     }
 
-    std::string getTargetName(const GroupInternal &g, const Models::Base::Var &var) const
+    std::string getTargetName(const GroupInternal &g, const Def<A> &var) const
     {
         return var.name + A(g).getNameSuffix();
     }
@@ -777,24 +781,24 @@ protected:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const Models::Base::VarRef&) const
+    bool shouldAlwaysCopy(G&, const Def<A>&) const
     {
         // **NOTE** something else is managing the actual variables
         // and is therefore responsible for copying between delay slots etc
         return false;
     }
     
-    std::string getReadIndex(G &g, const Models::Base::VarRef &var) const
+    std::string getReadIndex(G &g, const Def<A> &var) const
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getWriteIndex(G &g, const Models::Base::VarRef &var) const
+    std::string getWriteIndex(G &g, const Def<A> &var) const
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getTargetName(const GroupInternal &g, const Models::Base::VarRef &var) const
+    std::string getTargetName(const GroupInternal &g, const Def<A> &var) const
     {
         const auto &initialiser = A(g).getInitialisers().at(var.name);
         return initialiser.getVar().name + initialiser.getTargetName();
@@ -815,8 +819,7 @@ private:
 template<typename P, typename A, typename G, typename F = G>
 class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
 {
-    //! Type of a single definition
-    using Def = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+    
 
 public:
     template<typename... PolicyArgs>
@@ -841,7 +844,7 @@ public:
 
         // Copy definitions of variables which have been referenced into new vector or all if always copy set
         const auto varDefs = archetypeAdapter.getDefs();
-        std::vector<Def> referencedDefs;
+        std::vector<Def<A>> referencedDefs;
         std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
                      [this](const auto &v)
                      {

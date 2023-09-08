@@ -706,7 +706,7 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
         [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
             return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, batchSize,
-                                     varRef.getDims(), index);
+                                     varRef.getVarDims(), index);
         });
 }
 //-----------------------------------------------------------------------
@@ -717,7 +717,7 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::WUVarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(batchSize, varRef.getDims(), index);
+            return cg.getVarRefIndex(batchSize, varRef.getVarDims(), index);
         });
 }
 }   // namespace GeNN::CodeGenerator

@@ -100,15 +100,29 @@ inline bool operator & (VarAccessMode mode, VarAccessModeAttribute modeAttribute
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
 
+inline bool operator & (NeuronVarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
+
+inline bool operator & (SynapseVarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
+
+inline bool operator & (CustomUpdateVarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
 inline bool operator & (VarAccessDim a, VarAccessDim b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
-inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
+/*inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
 {
     return static_cast<VarAccessDim>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
-}
+}*/
 
 
 inline VarAccessDim clearDim(VarAccessDim a, VarAccessDim b)

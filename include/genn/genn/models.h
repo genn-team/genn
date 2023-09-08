@@ -33,8 +33,10 @@ class CustomConnectivityUpdateInternal;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE) using NAME = Detail<GROUP_TYPE, struct _##NAME>
+#define SET_NEURON_VARS(...) virtual std::vector<NeuronVar> getVars() const override{ return __VA_ARGS__; }
+#define SET_SYNAPSE_VARS(...) virtual std::vector<SynapseVar> getVars() const override{ return __VA_ARGS__; }
+#define SET_CUSTOM_UPDATE_VARS(...) virtual std::vector<CustomUpdateVar> getVars() const override{ return __VA_ARGS__; }
+#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
 // GeNN::Models::Base
@@ -74,6 +76,8 @@ public:
 
     struct NeuronVar : public VarBase<NeuronVarAccess>
     {
+        using VarBase<NeuronVarAccess>::VarBase;
+
         NeuronVar(const std::string &n, const Type::ResolvedType &t) 
         :   VarBase(n, t, NeuronVarAccess::READ_WRITE)
         {}
@@ -84,6 +88,8 @@ public:
 
     struct SynapseVar : public VarBase<SynapseVarAccess>
     {
+        using VarBase<SynapseVarAccess>::VarBase;
+
         SynapseVar(const std::string &n, const Type::ResolvedType &t) 
         :   VarBase(n, t, SynapseVarAccess::READ_WRITE)
         {}
@@ -94,6 +100,8 @@ public:
 
     struct CustomUpdateVar : public VarBase<CustomUpdateVarAccess>
     {
+        using VarBase<CustomUpdateVarAccess>::VarBase;
+
         CustomUpdateVar(const std::string &n, const Type::ResolvedType &t) 
         :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
         {}
@@ -139,18 +147,6 @@ public:
     //----------------------------------------------------------------------------
     typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
-
-protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-    //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::string &description) const;
-   
 };
 
 //----------------------------------------------------------------------------
@@ -158,36 +154,18 @@ protected:
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReferenceBase
 {
-public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    const Models::Base::Var &getVar() const { return m_Var; }
-    size_t getVarIndex() const { return m_VarIndex; }
-    
-
 protected:
     //------------------------------------------------------------------------
     // Detail
     //------------------------------------------------------------------------
     //! Minimal helper class for definining unique struct 
     //! wrappers around group pointers for use with std::variant
-    template<typename G, typename Tag>
+    template<typename G, typename V, typename Tag>
     struct Detail
     {
         G *group;
+        V var;
     };
-    
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex))
-    {}
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    size_t m_VarIndex;
-    Models::Base::Var m_Var;
 };
 
 //----------------------------------------------------------------------------
@@ -199,18 +177,24 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Get name of variable
+    const std::string &getVarName() const;
+
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
+
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
+
     //! Get size of variable
-    unsigned int getSize() const { return m_Size; }
+    unsigned int getSize() const;
 
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
     //! Get suffix to use when accessing target variable names
     // **TODO** rename to getNameSuffix
-    std::string getTargetName() const;
-    
-    //! Get dimensions of variable being referenced
-    VarAccessDim getDims() const;
+    const std::string &getTargetName() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -237,28 +221,25 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal);
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
 
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
                                     CURef, CCUPreRef, CCUPostRef>;
 
-    VarReference(size_t varIndex, const Models::Base::VarVec &varVec, unsigned int size,
-                 const DetailType &detail)
-    :   VarReferenceBase(varIndex, varVec), m_Size(size), m_Detail(detail)
+    VarReference(const DetailType &detail) : m_Detail(detail)
     {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    unsigned int m_Size;
     DetailType m_Detail;
 };
 
@@ -271,23 +252,33 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
-    size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
+    //! Get name of variable
+    const std::string &getVarName() const;
+
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
+
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
     
     //! Get suffix to use when accessing target variable names
     // **TODO** rename to getNameSuffix
-    std::string getTargetName() const;
+    const std::string &getTargetName() const;
     
-    //! Get dimensions of variable being referenced
-    VarAccessDim getDims() const{ return getVarDims(getVar()); }
-
     SynapseGroup *getSynapseGroup() const;
+    
+    //! Get name of tranpose variable
+    std::optional<std::string> getTransposeVarName() const;
 
-    SynapseGroup *getTransposeSynapseGroup() const;
-    std::string getTransposeTargetName() const;
+    // Get type of transpose variable
+    std::optional<Type::UnresolvedType> getTransposeVarType() const;
 
     //! Get dimensions of transpose variable being referenced
-    VarAccessDim getTransposeDims() const{ return getVarDims(getTransposeVar()); }
+    std::optional<VarAccessDim> getTransposeVarDims() const;
+
+    std::optional<std::string> getTransposeTargetName() const;
+
+    SynapseGroup *getTransposeSynapseGroup() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -316,13 +307,16 @@ private:
     {
         SynapseGroupInternal *group;
         SynapseGroupInternal *transposeGroup;
+
+        Base::SynapseVar var;
+        std::optional<Base::SynapseVar> transposeVar;
     };
 
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::SynapseVar);
 
      //! Variant type used to store 'detail'
     using DetailType = std::variant<WURef, CURef, CCURef>;
@@ -332,20 +326,12 @@ private:
     //------------------------------------------------------------------------
     SynapseGroupInternal *getSynapseGroupInternal() const;
     SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
-    VarAccessDim getVarDims(const Models::Base::Var &var) const;
 
-    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
-                   const DetailType &detail);
-    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
-                   size_t transposeVarIndex, const Models::Base::VarVec &transposeVarVec,
-                   const DetailType &detail);
+    WUVarReference(const DetailType &detail);
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::optional<size_t> m_TransposeVarIndex;
-    std::optional<Models::Base::Var> m_TransposeVar;
-    
     DetailType m_Detail;
 };
 
@@ -388,7 +374,9 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::NeuronVar &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::SynapseVar &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);

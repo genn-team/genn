@@ -93,10 +93,10 @@ protected:
         // **NOTE** this is correct because custom update variable access types are defined subtractively
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
-                       [reduceDim](const Models::Base::Var &v)
+                       [reduceDim](const Models::Base::CustomUpdateVar &v)
                        { 
                            return ((v.access & VarAccessModeAttribute::REDUCE) 
-                                   && (v.access.getDims<CustomUpdateVarAccess>() & reduceDim));
+                                   && (v.access & reduceDim));
                        }))
         {
             return true;
@@ -108,7 +108,7 @@ protected:
             // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
             if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
-                && !(varRef.getDims() & reduceDim)) 
+                && !(varRef.getVarDims() & reduceDim)) 
             {
                 return true;
             }

@@ -113,7 +113,7 @@ class PoissonExp : public Base
         "current *= ExpDecay;\n");
 
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
-    SET_VARS({{"current", "scalar"}});
+    SET_NEURON_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
         {"ExpDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tauSyn")); }},
         {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},

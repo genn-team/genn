@@ -115,7 +115,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
-        if(batchSize == 1 || !(varRef.getDims() & VarAccessDim::BATCH)) {
+        if(batchSize == 1 || !(varRef.getVarDims() & VarAccessDim::BATCH)) {
             // Determine index
             const std::string index = (varRef.getDelayNeuronGroup() != nullptr) ? "$(_pre_delay_offset) + $(id_pre)" : "$(id_pre)";
             
