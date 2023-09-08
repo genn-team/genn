@@ -15,7 +15,8 @@ import numpy as np
 
 from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
-                   SynapseMatrixWeight, VarAccess, VarAccessDim, VarLocation)
+                   SynapseMatrixWeight, VarAccessDim, VarLocation)
+from .genn import get_var_access_dim
 from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
 
 def _get_num_var_copies(var_dims, batch_size):
@@ -355,7 +356,7 @@ class NeuronGroupMixin(GroupMixin):
         # **TODO** delay slots
         self._load_vars(
             self.neuron_model.get_vars(),
-            lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+            lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                             self.size,
                                             self._model.batch_size))
 
@@ -655,7 +656,7 @@ class SynapseGroupMixin(GroupMixin):
                 if var_loc & VarLocation.HOST:
                     # Determine shape of this variable
                     var_shape = _get_synapse_var_shape(
-                        v.access.get_synapse_dims(), 
+                        get_var_access_dim(v.access), 
                         self, self._model.batch_size)
                     
                     # Get view
@@ -680,7 +681,7 @@ class SynapseGroupMixin(GroupMixin):
         if not self._wu_pre_model_fused:
             self._load_vars(
                 self.wu_model.get_pre_vars(),
-                lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+                lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.src.size,
                                                 self._model.batch_size),
                 self.pre_vars, self.get_wu_pre_var_location)
@@ -691,7 +692,7 @@ class SynapseGroupMixin(GroupMixin):
         if not self._wu_post_model_fused:
             self._load_vars(
                 self.wu_model.get_post_vars(),
-                lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+                lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.trg.size,
                                                 self._model.batch_size),
                 self.post_vars, self.get_wu_post_var_location)
@@ -701,7 +702,7 @@ class SynapseGroupMixin(GroupMixin):
             # Load postsynaptic update model variables
             self._load_vars(
                 self.ps_model.get_vars(),
-                lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+                lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.trg.size,
                                                 self._model.batch_size),
                 self.psm_vars, self.get_ps_var_location)
@@ -840,7 +841,7 @@ class CurrentSourceMixin(GroupMixin):
         # Load current source variables
         self._load_vars(
             self.current_source_model.get_vars(),
-            lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+            lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                             self.size,
                                             self._model.batch_size))
 
@@ -875,7 +876,7 @@ class CustomUpdateMixin(GroupMixin):
                       else 1)
         self._load_vars(
             self.custom_update_model.get_vars(),
-            lambda v: _get_neuron_var_shape(v.access.get_custom_update_dims(self._dims),
+            lambda v: _get_neuron_var_shape(get_var_access_dim(v.access, self._dims),
                                             self.size, batch_size))
         self._load_egp()
  
@@ -919,7 +920,7 @@ class CustomUpdateWUMixin(GroupMixin):
             if var_loc & VarLocation.HOST:
                  # Determine shape of this variable
                 var_shape = _get_synapse_var_shape(
-                    v.access.get_custom_update_dims(self._dims), 
+                    get_var_access_dim(v.access, self._dims), 
                     self.synapse_group, batch_size)
                 
                 # Get view
@@ -992,7 +993,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
             if var_loc & VarLocation.HOST:
                 # Determine shape of this variable
                 var_shape = _get_synapse_var_shape(
-                    v.access.get_synapse_dims(), 
+                    get_var_access_dim(v.access), 
                     self.synapse_group, 1)
 
                 resolved_type = var_data.type.resolve(self._model.type_context)
@@ -1011,12 +1012,12 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         # Load pre and postsynaptic variables
         self._load_vars(
             self.model.get_pre_vars(),
-            lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+            lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                             self.synapse_group.src.size, 1),
             self.pre_vars, self.get_pre_var_location)
         self._load_vars(
             self.model.get_post_vars(), 
-            lambda v: _get_neuron_var_shape(v.access.get_neuron_dims(),
+            lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                             self.synapse_group.trg.size, 1),
             self.post_vars, self.get_post_var_location)
 

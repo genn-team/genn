@@ -59,16 +59,17 @@ from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from .genn import (generate_code, init_logging, CurrentSource,
-                   CurrentSourceModelBase, CustomConnectivityUpdate, 
-                   CustomConnectivityUpdateModelBase, CustomUpdate, 
-                   CustomUpdateModelBase, CustomUpdateWU, DerivedParam, 
-                   EGP, EGPRef, InitSparseConnectivitySnippetBase,
+                   CurrentSourceModelBase, CustomConnectivityUpdate,
+                   CustomConnectivityUpdateModelBase, CustomUpdate,
+                   CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
+                   DerivedParam, EGP, EGPRef, 
+                   InitSparseConnectivitySnippetBase, 
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase, NeuronVar,
                    ParamVal, PlogSeverity, PostsynapticModelBase,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   ToeplitzConnectivityInit, UnresolvedType, Var, VarInit, 
-                   VarLocation, VarRef, WeightUpdateModelBase)
+                   SynapseVar, ToeplitzConnectivityInit, UnresolvedType, 
+                   VarInit, VarLocation, VarRef, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
@@ -904,13 +905,16 @@ def create_neuron_model(class_name, param_names=None,
             lambda self: [ParamVal(a[0], a[1], a[2])
                                    for a in additional_input_vars]
 
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+
     if is_auto_refractory_required is not None:
         body["is_auto_refractory_required"] = \
             lambda self: is_auto_refractory_required
 
     return create_model(class_name, NeuronModelBase, param_names, 
-                        var_name_types, derived_params, 
-                        extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 
 def create_postsynaptic_model(class_name, param_names=None,
@@ -948,9 +952,12 @@ def create_postsynaptic_model(class_name, param_names=None,
     if apply_input_code is not None:
         body["get_apply_input_code"] = lambda self: dedent(apply_input_code)
 
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+
     return create_model(class_name, PostsynapticModelBase, param_names,
-                        var_name_types, derived_params, 
-                        extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 
 def create_weight_update_model(class_name, param_names=None,
@@ -1039,18 +1046,21 @@ def create_weight_update_model(class_name, param_names=None,
 
     if post_dynamics_code is not None:
         body["get_post_dynamics_code"] = lambda self: dedent(post_dynamics_code)
-
+    
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [SynapseVar(*vn) for vn in var_name_types]
+    
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: [Var(*vn) for vn in pre_var_name_types]
+            lambda self: [NeuronVar(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: [Var(*vn) for vn in post_var_name_types]
+            lambda self: [NeuronVar(*vn) for vn in post_var_name_types]
 
     return create_model(class_name, WeightUpdateModelBase, param_names,
-                        var_name_types, derived_params, 
-                        extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 
 def create_current_source_model(class_name, param_names=None,
@@ -1085,9 +1095,12 @@ def create_current_source_model(class_name, param_names=None,
     if injection_code is not None:
         body["get_injection_code"] = lambda self: dedent(injection_code)
 
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+
     return create_model(class_name, CurrentSourceModelBase, param_names,
-                        var_name_types, derived_params, 
-                        extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 
 def create_custom_update_model(class_name, param_names=None,
@@ -1132,13 +1145,16 @@ def create_custom_update_model(class_name, param_names=None,
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
 
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [CustomUpdateVar(*vn) for vn in var_name_types]
+
     if extra_global_param_refs is not None:
         body["get_extra_global_param_refs"] =\
             lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
     return create_model(class_name, CustomUpdateModelBase, param_names,
-                        var_name_types, derived_params,
-                        extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 def create_custom_connectivity_update_model(class_name, 
                                             param_names=None,
@@ -1188,6 +1204,10 @@ def create_custom_connectivity_update_model(class_name,
     if host_update_code is not None:
         body["get_host_update_code"] = lambda self: dedent(host_update_code)
 
+    if var_name_types is not None:
+        body["get_vars"] = \
+            lambda self: [SynapseVar(*vn) for vn in var_name_types]
+
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
             lambda self: [Var(*vn) for vn in pre_var_name_types]
@@ -1208,12 +1228,11 @@ def create_custom_connectivity_update_model(class_name,
             lambda self: [VarRef(*v) for v in post_var_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
-                        param_names, var_name_types, derived_params, 
-                        extra_global_params, body)
+                        param_names, derived_params, extra_global_params, body)
 
 
-def create_model(class_name, base, param_names, var_name_types,
-                 derived_params, extra_global_params, custom_body):
+def create_model(class_name, base, param_names, derived_params, 
+                 extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
     This part is common for all model classes and is nearly useless on its own
@@ -1230,8 +1249,6 @@ def create_model(class_name, base, param_names, var_name_types,
     class_name      --  name of the new class
     base            --  base class
     param_names     --  list of strings with param names of the model
-    var_name_types  --  list of pairs of strings with varible names and
-                        types of the model
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
@@ -1249,10 +1266,6 @@ def create_model(class_name, base, param_names, var_name_types,
 
     if param_names is not None:
         body["get_param_names"] = lambda self: param_names
-
-    if var_name_types is not None:
-        body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
 
     if derived_params is not None:
         body["get_derived_params"] = \

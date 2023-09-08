@@ -52,17 +52,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PyModel
-//----------------------------------------------------------------------------
-// 'Trampoline' base class to wrap classes derived off Models::Base
-template <class ModelBase = Models::Base> 
-class PyModel : public PySnippet<ModelBase> 
-{
-public:
-    virtual Models::Base::VarVec getVars() const override{ PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, ModelBase, "get_vars", getVars); }
-};
-
-//----------------------------------------------------------------------------
 // PyInitSparseConnectivitySnippetBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for sparse connectivity initialisation snippets
@@ -106,23 +95,25 @@ public:
 // PyCurrentSourceModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for current source models
-class PyCurrentSourceModelBase : public PyModel<CurrentSourceModels::Base> 
+class PyCurrentSourceModelBase : public PySnippet<CurrentSourceModels::Base> 
 {
     using Base = CurrentSourceModels::Base;
 public:
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
+    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
 };
 
 //----------------------------------------------------------------------------
 // PyCustomConnectivityUpdateModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for custom connectivity update models
-class PyCustomConnectivityUpdateModelBase : public PyModel<CustomConnectivityUpdateModels::Base> 
+class PyCustomConnectivityUpdateModelBase : public PySnippet<CustomConnectivityUpdateModels::Base> 
 {
     using Base = CustomConnectivityUpdateModels::Base;
 public:
-    virtual VarVec getPreVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_pre_vars", getPreVars); }
-    virtual VarVec getPostVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_post_vars", getPostVars); }
+    virtual std::vector<Models::Base::SynapseVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::SynapseVar>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::NeuronVar> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_pre_vars", getPreVars); }
+    virtual std::vector<Models::Base::NeuronVar> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_post_vars", getPostVars); }
     
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
     virtual VarRefVec getPreVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_pre_var_refs", getPreVarRefs); }
@@ -136,10 +127,11 @@ public:
 // PyCustomUpdateModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for custom update models
-class PyCustomUpdateModelBase : public PyModel<CustomUpdateModels::Base> 
+class PyCustomUpdateModelBase : public PySnippet<CustomUpdateModels::Base> 
 {
     using Base = CustomUpdateModels::Base;
 public:
+    virtual std::vector<Models::Base::CustomUpdateVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::CustomUpdateVar>, Base, "get_vars", getVars); }
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
     virtual EGPRefVec getExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_extra_global_param_refs", getExtraGlobalParamRefs); }
     virtual std::string getUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_update_code", getUpdateCode); }
@@ -149,7 +141,7 @@ public:
 // PyNeuronModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for neuron models
-class PyNeuronModelBase : public PyModel<NeuronModels::Base> 
+class PyNeuronModelBase : public PySnippet<NeuronModels::Base> 
 {
     using Base = NeuronModels::Base;
 public:
@@ -157,6 +149,7 @@ public:
     virtual std::string getThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_threshold_condition_code", getThresholdConditionCode); }
     virtual std::string getResetCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_reset_code", getResetCode); }
 
+    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
     virtual Models::Base::ParamValVec getAdditionalInputVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::ParamValVec, Base, "get_additional_input_vars", getAdditionalInputVars); }
 
     virtual bool isAutoRefractoryRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_auto_refractory_required", isAutoRefractoryRequired); }
@@ -166,10 +159,12 @@ public:
 // PyPostsynapticModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for postsynaptic models
-class PyPostsynapticModelBase : public PyModel<PostsynapticModels::Base> 
+class PyPostsynapticModelBase : public PySnippet<PostsynapticModels::Base> 
 {
     using Base = PostsynapticModels::Base;
 public:
+    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
+
     virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
     virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
 };
@@ -178,7 +173,7 @@ public:
 // PyWeightUpdateModelBase
 //----------------------------------------------------------------------------
 // 'Trampoline' class for weight update models
-class PyWeightUpdateModelBase : public PyModel<WeightUpdateModels::Base> 
+class PyWeightUpdateModelBase : public PySnippet<WeightUpdateModels::Base> 
 {
     using Base = WeightUpdateModels::Base;
 public:
@@ -191,8 +186,10 @@ public:
     virtual std::string getPostSpikeCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_spike_code", getPostSpikeCode); }
     virtual std::string getPreDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_dynamics_code", getPreDynamicsCode); }
     virtual std::string getPostDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_dynamics_code", getPostDynamicsCode); }
-    virtual VarVec getPreVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_pre_vars", getPreVars); }
-    virtual VarVec getPostVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::VarVec, Base, "get_post_vars", getPostVars); }
+    
+    virtual std::vector<Models::Base::SynapseVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::SynapseVar>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::NeuronVar> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_pre_vars", getPreVars); }
+    virtual std::vector<Models::Base::NeuronVar> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_post_vars", getPostVars); }
 };
 
 CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
@@ -363,6 +360,9 @@ PYBIND11_MODULE(genn, m)
     m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_psm_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
     m.def("create_wu_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
+    m.def("get_var_access_dim", pybind11::overload_cast<NeuronVarAccess>(&getVarAccessDim));
+    m.def("get_var_access_dim", pybind11::overload_cast<SynapseVarAccess>(&getVarAccessDim));
+    m.def("get_var_access_dim", pybind11::overload_cast<CustomUpdateVarAccess, VarAccessDim>(&getVarAccessDim));
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
@@ -693,34 +693,40 @@ PYBIND11_MODULE(genn, m)
         .def("get_code", &InitVarSnippet::Base::getCode);
 
     //------------------------------------------------------------------------
-    // genn.VarAccess
+    // genn.NeuronVar
     //------------------------------------------------------------------------
-    pybind11::class_<VarAccess>(m, "VarAccess")
-        .def("get_neuron_dims", 
-             [](const VarAccess &v) { return v.getDims<NeuronVarAccess>(); })
-        .def("get_synapse_dims", 
-             [](const VarAccess &v) { return v.getDims<SynapseVarAccess>(); })
-        .def("get_custom_update_dims", 
-             [](const VarAccess &v, VarAccessDim cuDims) 
-             { 
-                 return clearDim(cuDims, v.getDims<CustomUpdateVarAccess>()); 
-             });
-
-    //------------------------------------------------------------------------
-    // genn.Var
-    //------------------------------------------------------------------------
-    pybind11::class_<Models::Base::Var>(m, "Var")
+    pybind11::class_<Models::Base::NeuronVar>(m, "NeuronVar")
         .def(pybind11::init<const std::string&, const std::string&, NeuronVarAccess>())
-        .def(pybind11::init<const std::string&, const std::string&, SynapseVarAccess>())
-        .def(pybind11::init<const std::string&, const std::string&, CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&, NeuronVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
+        .def_readonly("name", &Models::Base::NeuronVar::name)
+        .def_readonly("type", &Models::Base::NeuronVar::type)
+        .def_readonly("access", &Models::Base::NeuronVar::access);
+    
+    //------------------------------------------------------------------------
+    // genn.SynapseVar
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::Base::SynapseVar>(m, "SynapseVar")
+        .def(pybind11::init<const std::string&, const std::string&, SynapseVarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&, SynapseVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
+        .def_readonly("name", &Models::Base::SynapseVar::name)
+        .def_readonly("type", &Models::Base::SynapseVar::type)
+        .def_readonly("access", &Models::Base::SynapseVar::access);
+    
+    //------------------------------------------------------------------------
+    // genn.CustomUpdateVar
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::Base::CustomUpdateVar>(m, "CustomUpdateVar")
+        .def(pybind11::init<const std::string&, const std::string&, CustomUpdateVarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&, CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
-        .def_readonly("name", &Models::Base::Var::name)
-        .def_readonly("type", &Models::Base::Var::type)
-        .def_readonly("access", &Models::Base::Var::access);
+        .def_readonly("name", &Models::Base::CustomUpdateVar::name)
+        .def_readonly("type", &Models::Base::CustomUpdateVar::type)
+        .def_readonly("access", &Models::Base::CustomUpdateVar::access);
 
     //------------------------------------------------------------------------
     // genn.VarRef
@@ -744,25 +750,21 @@ PYBIND11_MODULE(genn, m)
         .def_readonly("type", &Models::Base::EGPRef::type);
 
     //------------------------------------------------------------------------
-    // genn.ModelBase
-    //------------------------------------------------------------------------
-    pybind11::class_<Models::Base, Snippet::Base, PyModel<>>(m, "ModelBase")
-        .def("get_vars", &Models::Base::getVars);
-    
-    //------------------------------------------------------------------------
     // genn.CurrentSourceModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CurrentSourceModels::Base, Models::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
+    pybind11::class_<CurrentSourceModels::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
         .def(pybind11::init<>())
 
+        .def("get_vars", &CurrentSourceModels::Base::getVars)
         .def("get_injection_code", &CurrentSourceModels::Base::getInjectionCode);
 
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomConnectivityUpdateModels::Base, Models::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
+    pybind11::class_<CustomConnectivityUpdateModels::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
         .def(pybind11::init<>())
 
+        .def("get_vars", &CustomConnectivityUpdateModels::Base::getVars)
         .def("get_pre_vars", &CustomConnectivityUpdateModels::Base::getPreVars)
         .def("get_post_vars", &CustomConnectivityUpdateModels::Base::getPostVars)
         
@@ -776,9 +778,10 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CustomUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomUpdateModels::Base, Models::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
+    pybind11::class_<CustomUpdateModels::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
         .def(pybind11::init<>())
-
+        
+        .def("get_vars", &CustomUpdateModels::Base::getVars)
         .def("get_var_refs", &CustomUpdateModels::Base::getVarRefs)
         .def("get_extra_global_param_refs", &CustomUpdateModels::Base::getExtraGlobalParamRefs)
         .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
@@ -786,9 +789,10 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.NeuronModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<NeuronModels::Base, Models::Base, PyNeuronModelBase>(m, "NeuronModelBase")
+    pybind11::class_<NeuronModels::Base, PyNeuronModelBase>(m, "NeuronModelBase")
         .def(pybind11::init<>())
-
+        
+        .def("get_vars", &NeuronModels::Base::getVars)
         .def("get_sim_code", &NeuronModels::Base::getSimCode)
         .def("get_threshold_condition_code", &NeuronModels::Base::getThresholdConditionCode)
         .def("get_reset_code", &NeuronModels::Base::getResetCode)
@@ -798,16 +802,17 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.PostsynapticModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<PostsynapticModels::Base, Models::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
+    pybind11::class_<PostsynapticModels::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
         .def(pybind11::init<>())
-
+        
+        .def("get_vars", &PostsynapticModels::Base::getVars)
         .def("get_decay_code", &PostsynapticModels::Base::getDecayCode)
         .def("get_apply_input_code", &PostsynapticModels::Base::getApplyInputCode);
     
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<WeightUpdateModels::Base, Models::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
+    pybind11::class_<WeightUpdateModels::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
         .def(pybind11::init<>())
         
         .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
@@ -819,6 +824,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_post_spike_code", &WeightUpdateModels::Base::getPostSpikeCode)
         .def("get_pre_dynamics_code", &WeightUpdateModels::Base::getPreDynamicsCode)
         .def("get_post_dynamics_code", &WeightUpdateModels::Base::getPostDynamicsCode)
+        .def("get_vars", &WeightUpdateModels::Base::getVars)
         .def("get_pre_vars", &WeightUpdateModels::Base::getPreVars)
         .def("get_post_vars", &WeightUpdateModels::Base::getPostVars);
 
