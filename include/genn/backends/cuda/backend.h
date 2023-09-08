@@ -394,7 +394,7 @@ private:
                     
                     // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
-                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(v.access) + ", ncclCommunicator, 0));");
+                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
                 }
             }
 
@@ -408,7 +408,7 @@ private:
                                       [this, v](const auto &g, size_t) 
                                       { 
                                           const auto varRef = g.getVarReferences().at(v.name);
-                                          return getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); ;
+                                          return getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); ;
                                       });
 
                     // Add NCCL reduction
