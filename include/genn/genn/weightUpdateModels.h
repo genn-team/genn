@@ -17,8 +17,8 @@
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
 #define SET_POST_DYNAMICS_CODE(POST_DYNAMICS_CODE) virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }
 
-#define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<NeuronVar> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<NeuronVar> getPostVars() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base

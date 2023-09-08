@@ -7,8 +7,8 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<NeuronVar> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<NeuronVar> getPostVars() const override{ return __VA_ARGS__; }
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_PRE_VAR_REFS(...) virtual VarRefVec getPreVarRefs() const override{ return __VA_ARGS__; }
