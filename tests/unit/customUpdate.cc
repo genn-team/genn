@@ -23,9 +23,9 @@ public:
     DECLARE_SNIPPET(IzhikevichVariableShared);
 
     SET_PARAM_NAMES({});
-    SET_VARS({{"V","scalar"}, {"U", "scalar"},
-              {"a", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON},
-              {"c", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_NEURON_VARS({{"V","scalar"}, {"U", "scalar"},
+                     {"a", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON},
+                     {"c", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", NeuronVarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_SNIPPET(IzhikevichVariableShared);
 
@@ -34,10 +34,10 @@ class StaticPulseDendriticDelaySplit : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelaySplit);
 
-    SET_VARS({{"gCommon", "scalar", SynapseVarAccess::READ_ONLY}, 
-              {"g", "scalar", SynapseVarAccess::READ_ONLY_DUPLICATE}, 
-              {"dCommon", "scalar", SynapseVarAccess::READ_ONLY},
-              {"d", "scalar", SynapseVarAccess::READ_ONLY_DUPLICATE}});
+    SET_SYNAPSE_VARS({{"gCommon", "scalar", SynapseVarAccess::READ_ONLY}, 
+                      {"g", "scalar", SynapseVarAccess::READ_ONLY_DUPLICATE}, 
+                      {"dCommon", "scalar", SynapseVarAccess::READ_ONLY},
+                      {"d", "scalar", SynapseVarAccess::READ_ONLY_DUPLICATE}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(gCommon) + $(g), $(dCommon) + $(d));\n");
 };
@@ -49,7 +49,7 @@ class Sum : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
-    SET_VARS({{"sum", "scalar"}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -61,7 +61,7 @@ class Sum2 : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
 
-    SET_VARS({{"mult", "scalar", CustomUpdateVarAccess::READ_ONLY}});
+    SET_CUSTOM_UPDATE_VARS({{"mult", "scalar", CustomUpdateVarAccess::READ_ONLY}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -73,7 +73,7 @@ class Sum3 : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
 
-    SET_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE},
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -131,7 +131,7 @@ class Cont : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Cont);
 
-    SET_VARS({{"g", "scalar"}});
+    SET_SYNAPSE_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_pre);\n");
@@ -143,7 +143,7 @@ class Cont2 : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Cont2);
 
-    SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
+    SET_SYNAPSE_VARS({{"g", "scalar"}, {"x", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost((g + x) * V_pre);\n");
@@ -169,8 +169,8 @@ class ReduceDouble : public CustomUpdateModels::Base
         "reduction1 = var1;\n"
         "reduction2 = var2;\n");
 
-    SET_VARS({{"reduction1", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM},
-              {"reduction2", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}});
+    SET_CUSTOM_UPDATE_VARS({{"reduction1", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM},
+                            {"reduction2", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}});
 
     SET_VAR_REFS({{"var1", "scalar", VarAccessMode::READ_ONLY},
                   {"var2", "scalar", VarAccessMode::READ_ONLY}});
@@ -183,7 +183,7 @@ class ReduceSharedVar : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("reduction = var;\n");
 
-    SET_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM}})
+    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(ReduceSharedVar);
@@ -195,7 +195,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("reduction = var;\n");
 
-    SET_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}})
+    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(ReduceNeuronSharedVar);

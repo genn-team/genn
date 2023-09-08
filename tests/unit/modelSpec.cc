@@ -24,7 +24,7 @@ public:
 
     SET_PARAM_NAMES({"tau"});
 
-    SET_VARS({{"x", "scalar"}});
+    SET_NEURON_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
         {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
@@ -39,7 +39,7 @@ class Sum : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
-    SET_VARS({{"sum", "scalar"}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -50,7 +50,7 @@ class RemoveSynapse : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapse);
     
-    SET_VARS({{"a", "scalar"}});
+    SET_SYNAPSE_VARS({{"a", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "for_each_synapse{\n"
         "   if(id_post == (id_pre + 1)) {\n"

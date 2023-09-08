@@ -19,7 +19,7 @@ class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelayReverse);
 
-    SET_VARS({{"d", "uint8_t", SynapseVarAccess::READ_ONLY}, {"g", "scalar", SynapseVarAccess::READ_ONLY}});
+    SET_SYNAPSE_VARS({{"d", "uint8_t", SynapseVarAccess::READ_ONLY}, {"g", "scalar", SynapseVarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
@@ -31,7 +31,7 @@ class Sum : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("sum += a;\n");
 
-    SET_VARS({{"sum", "scalar"}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(Sum);
@@ -41,7 +41,7 @@ class RemoveSynapse : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapse);
     
-    SET_VARS({{"a", "scalar"}});
+    SET_SYNAPSE_VARS({{"a", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"
         "   if(id_post == (id_pre + 1)) {\n"
@@ -57,7 +57,7 @@ class RemoveSynapseVarRef : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapseVarRef);
     
-    SET_VARS({{"a", "scalar"}});
+    SET_SYNAPSE_VARS({{"a", "scalar"}});
     SET_VAR_REFS({{"b", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"
@@ -108,7 +108,7 @@ class Cont : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Cont);
 
-    SET_VARS({{"g", "scalar"}});
+    SET_SYNAPSE_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_pre);\n");
@@ -120,7 +120,7 @@ class ContPost : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(ContPost);
 
-    SET_VARS({{"g", "scalar"}});
+    SET_SYNAPSE_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_post);\n");
@@ -132,7 +132,7 @@ bool hasVarRef(const std::vector<Models::WUVarReference> &varRefs, const std::st
     return std::find_if(varRefs.cbegin(), varRefs.cend(), 
                         [&targetName, &varName](const Models::WUVarReference &r)
                         { 
-                            return (r.getTargetName() == targetName) && (r.getVar().name == varName);
+                            return (r.getTargetName() == targetName) && (r.getVarName() == varName);
                         }) != varRefs.cend();
 }
 }   // Anonymous namespace
