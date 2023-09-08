@@ -23,14 +23,14 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 const std::string &VarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return ref.var.name; }},
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const Type::UnresolvedType &VarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return ref.var.type; }},
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -97,10 +97,10 @@ const std::string &VarReference::getTargetName() const
 { 
     return std::visit(
         Utils::Overload{
-            [](const PSMRef &ref) { return ref.group->getFusedPSVarSuffix(); },
-            [](const WUPreRef &ref) { return ref.group->getFusedWUPreVarSuffix(); },
-            [](const WUPostRef &ref) { return ref.group->getFusedWUPostVarSuffix(); },
-            [](const auto &ref) { return ref.group->getName(); }},
+            [](const PSMRef &ref) { return std::cref(ref.group->getFusedPSVarSuffix()); },
+            [](const WUPreRef &ref) { return std::cref(ref.group->getFusedWUPreVarSuffix()); },
+            [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostVarSuffix()); },
+            [](const auto &ref) { return std::cref(ref.group->getName()); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -191,14 +191,14 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
 const std::string &WUVarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return ref.var.name; }},
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const Type::UnresolvedType &WUVarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return ref.var.type; }},
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -226,7 +226,7 @@ VarAccessDim WUVarReference::getVarDims() const
 const std::string &WUVarReference::getTargetName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return ref.group->getName(); }},
+        Utils::Overload{[](const auto &ref) { return std::cref(ref.group->getName()); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -248,7 +248,7 @@ std::optional<std::string> WUVarReference::getTransposeVarName() const
                     return std::nullopt;
                 }
             },
-            [](const auto&){ return std::nullopt; }},
+            [](const auto&)->std::optional<std::string>{ return std::nullopt; }},
         m_Detail);
 }
 //------------------------------------------------------------------------
@@ -265,7 +265,7 @@ std::optional<Type::UnresolvedType> WUVarReference::getTransposeVarType() const
                     return std::nullopt;
                 }
             },
-            [](const auto&){ return std::nullopt; }},
+            [](const auto&)->std::optional<Type::UnresolvedType>{ return std::nullopt; }},
         m_Detail);
 }
 //------------------------------------------------------------------------
@@ -282,7 +282,7 @@ std::optional<VarAccessDim> WUVarReference::getTransposeVarDims() const
                     return std::nullopt;
                 }
             },
-            [](const auto&){ return std::nullopt; }},
+            [](const auto&)->std::optional<VarAccessDim>{ return std::nullopt; }},
         m_Detail);
 }
 //------------------------------------------------------------------------

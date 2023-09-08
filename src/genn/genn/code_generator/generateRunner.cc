@@ -1110,8 +1110,8 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         std::vector<std::string> neuronStatePushPullFunctions;
         for(const auto &var : neuronModel->getVars()) {
             const auto &varInit = n.second.getVarInitialisers().at(var.name);
-            const unsigned int numCopies = getNumVarCopies(var.access.getDims<NeuronVarAccess>(), batchSize);
-            const unsigned int numElements = getNumNeuronVarElements(var.access.getDims<NeuronVarAccess>(), n.second.getNumNeurons());
+            const unsigned int numCopies = getNumVarCopies(getAccessDim(var.access), batchSize);
+            const unsigned int numElements = getNumNeuronVarElements(getAccessDim(var.access), n.second.getNumNeurons());
             const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * numElements;
             const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
             const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
@@ -1429,7 +1429,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
                 const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
                 if(individualWeights || kernelWeights) {
-                    const size_t size = getSynapseVarSize(wuVar.access.getDims<SynapseVarAccess>(),
+                    const size_t size = getSynapseVarSize(getAccessDim(wuVar.access),
                                                           backend, s.second, batchSize);
 
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,

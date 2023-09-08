@@ -40,9 +40,9 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-        [batchSize, &ng](const std::string&, VarAccess d)
+        [batchSize, &ng](const std::string&, NeuronVarAccess d)
         {
-            return ng.getVarIndex(batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+            return ng.getVarIndex(batchSize, getAccessDim(d), "$(id)");
         });
 
     // Pretty print code back to environment
@@ -121,9 +121,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-        [batchSize, &ng](const std::string&, VarAccess d)
+        [batchSize, &ng](const std::string&, NeuronVarAccess d)
         {
-            return ng.getVarIndex(batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+            return ng.getVarIndex(batchSize, getAccessDim(d), "$(id)");
         });
 
     // Pretty print code back to environment
@@ -202,15 +202,15 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &synEnv, &ng](const std::string&, NeuronVarAccess d)
             {
-                return ng.getReadVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+                return ng.getReadVarIndex(delayed, batchSize, getAccessDim(d), "$(id)");
             },
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &synEnv, &ng](const std::string&, NeuronVarAccess d)
             {
-                return ng.getWriteVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+                return ng.getWriteVarIndex(delayed, batchSize, getAccessDim(d), "$(id)");
             },
-            [delayed](const std::string&, VarAccess)
+            [delayed](const std::string&, NeuronVarAccess)
             {
                 return delayed;
             });
@@ -242,8 +242,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
-            if(v.access == VarAccessMode::READ_WRITE) {
-                const VarAccessDim varDims = v.access.getDims<NeuronVarAccess>();
+            if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
+                const VarAccessDim varDims = getAccessDim(v.access);
                 env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
                 env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
@@ -294,15 +294,15 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
-            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &ng](const std::string&, NeuronVarAccess d)
             {
-                return ng.getReadVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+                return ng.getReadVarIndex(delayed, batchSize, getAccessDim(d), "$(id)");
             },
-            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &ng](const std::string&, NeuronVarAccess d)
             {
-                return ng.getWriteVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)");
+                return ng.getWriteVarIndex(delayed, batchSize, getAccessDim(d), "$(id)");
             },
-            [delayed](const std::string&, VarAccess)
+            [delayed](const std::string&, NeuronVarAccess)
             {
                 return delayed;
             });     
@@ -334,8 +334,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
-            if(v.access == VarAccessMode::READ_WRITE) {
-                const VarAccessDim varDims = v.access.getDims<NeuronVarAccess>();
+            if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
+                const VarAccessDim varDims = getAccessDim(v.access);
                 env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
                 env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
@@ -512,17 +512,17 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
         *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l",
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccess d)
+        [batchSize, &neuronEnv, this](const std::string &varName, NeuronVarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getReadVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)") ;
+            return getReadVarIndex(delayed, batchSize, getAccessDim(d), "$(id)") ;
         },
-        [batchSize, &neuronEnv, this](const std::string &varName, VarAccess d)
+        [batchSize, &neuronEnv, this](const std::string &varName, NeuronVarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
-            return getWriteVarIndex(delayed, batchSize, d.getDims<NeuronVarAccess>(), "$(id)") ;
+            return getWriteVarIndex(delayed, batchSize, getAccessDim(d), "$(id)") ;
         },
-        [this](const std::string &varName, VarAccess)
+        [this](const std::string &varName, NeuronVarAccess)
         {
             return (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
         });

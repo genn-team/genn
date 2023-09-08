@@ -60,9 +60,9 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, batchSize, &cuEnv](const std::string&, VarAccess d)
+        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
-            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<CustomUpdateVarAccess>()), "$(id)");
+            return getVarIndex(batchSize, getAccessDim(d, getArchetype().getDims()), "$(id)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -187,9 +187,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, batchSize, &cuEnv](const std::string&, VarAccess d)
+        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
-            return getVarIndex(batchSize, clearDim(getArchetype().getDims(), d.getDims<CustomUpdateVarAccess>()), "$(id_syn)");
+            return getVarIndex(batchSize, getAccessDim(d, getArchetype().getDims()), "$(id_syn)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
@@ -197,7 +197,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
         [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
-            return getVarRefIndex(batchSize, v.getDims(), "$(id_syn)");
+            return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -242,7 +242,7 @@ std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendB
                            [&backend, v](const auto &g, size_t)
                            {
                                const auto varRef = g.getVarReferences().at(v.name);
-                               return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
+                               return backend.getDeviceVarPrefix() + *varRef.getTransposeVarName() + *varRef.getTransposeTargetName();
                            });
 
             // Return name of transpose variable

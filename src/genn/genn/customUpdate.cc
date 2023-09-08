@@ -192,7 +192,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
         // Update hash with target variable dimensions as this effects indexing code
-        Utils::updateHash(v.second.getDims(), hash);
+        Utils::updateHash(v.second.getVarDims(), hash);
     }
     return hash.get_digest();
 }
@@ -299,7 +299,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
         Utils::updateHash((v.second.getTransposeSynapseGroup() == nullptr), hash);
 
         // Update hash with dimensionality of target variable dimensions as this effects indexing code
-        Utils::updateHash(v.second.getDims(), hash);
+        Utils::updateHash(v.second.getVarDims(), hash);
     }
 
     return hash.get_digest();

@@ -30,15 +30,15 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](VarAccess a, const std::string&) 
+        [&sg, batchSize](NeuronVarAccess a, const std::string&) 
         { 
-            return sg.getPreWUVarIndex(batchSize, a.getDims<NeuronVarAccess>(), "$(id_pre)");
+            return sg.getPreWUVarIndex(batchSize, getAccessDim(a), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](VarAccess a, const std::string&) 
+        [&sg, batchSize](NeuronVarAccess a, const std::string&) 
         { 
-            return sg.getPostWUVarIndex(batchSize, a.getDims<NeuronVarAccess>(), "$(id_post)");
+            return sg.getPostWUVarIndex(batchSize, getAccessDim(a), "$(id_post)");
         }, "", true);
 
     
@@ -78,9 +78,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](VarAccess a, const std::string&) 
+            [&sg, batchSize](SynapseVarAccess a, const std::string&) 
             { 
-                return sg.getSynVarIndex(batchSize, a.getDims<SynapseVarAccess>(), "$(id_syn)");
+                return sg.getSynVarIndex(batchSize, getAccessDim(a), "$(id_syn)");
             });
     }
     // Otherwise, if weights are procedual
@@ -121,9 +121,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
         synEnv.template addVars<SynapseWUVarAdapter>(
             backend.getDeviceVarPrefix(),
-            [&sg, batchSize](VarAccess a, const std::string&) 
+            [&sg, batchSize](SynapseVarAccess a, const std::string&) 
             { 
-                return sg.getKernelVarIndex(batchSize, a.getDims<SynapseVarAccess>(), "$(id_kernel)");
+                return sg.getKernelVarIndex(batchSize, getAccessDim(a), "$(id_kernel)");
             });
     }
 

@@ -573,10 +573,9 @@ private:
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
-                os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(v.access, resolvedType) << ";" << std::endl;
-                const VarAccessDim varAccessDim = clearDim(cg.getArchetype().getDims(), 
-                                                           v.access.template getDims<CustomUpdateVarAccess>());
-                reductionTargets.push_back({v.name, resolvedType, v.access,
+                os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
+                const VarAccessDim varAccessDim = getAccessDim(v.access, cg.getArchetype().getDims());
+                reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(v.access),
                                             cg.getVarIndex(batchSize, varAccessDim, idx)});
             }
         }

@@ -63,6 +63,8 @@ public:
         VarBase(const std::string &n, const std::string &t, A a)
         :   name(n), type(t), access(a)
         {}
+
+        using AccessType = A;
         
         bool operator == (const VarBase &other) const
         {
@@ -393,7 +395,7 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
 
         // Check types of variable references against those specified in model
         // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
-        if(varRef.getVar().type != modelVarRef.type) {
+        if(varRef.getVarType() != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
         }
     }

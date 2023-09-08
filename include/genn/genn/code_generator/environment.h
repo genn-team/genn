@@ -405,7 +405,12 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
-    using GetVarIndexFn = std::function<std::string(VarAccessDim, const std::string&)>;
+
+    template<typename A>
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+
+    template<typename A>
+    using GetVarIndexFn = std::function<std::string(typename AdapterDef<A>::AccessType, const std::string&)>;
 
     template<typename A>
     using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
@@ -631,7 +636,7 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, GetVarIndexFn getIndexFn, 
+    void addVars(const std::string &arrayPrefix, GetVarIndexFn<A> getIndexFn, 
                  const std::string &fieldSuffix = "", bool readOnly = false)
     {
         // Loop through variables
@@ -654,7 +659,7 @@ public:
     void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, 
                  const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVars<A>(arrayPrefix, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
+        addVars<A>(arrayPrefix, [&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
                    fieldSuffix, readOnly);
     }
 
@@ -695,9 +700,6 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
-//! Type of a single definition
-template<typename A>
-using Def = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
 
 //------------------------------------------------------------------------
 // GeNN::CodeGenerator::VarCachePolicy
@@ -708,8 +710,10 @@ class VarCachePolicy
 {
 public:
     using GroupInternal = typename G::GroupInternal;
-    using GetIndexFn = std::function<std::string(const std::string&, VarAccessDim)>;
-    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, VarAccessDim)>;
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+    using AdapterAccess = typename AdapterDef::AccessType;
+    using GetIndexFn = std::function<std::string(const std::string&, AdapterAccess)>;
+    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, AdapterAccess)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
                    ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
@@ -725,7 +729,7 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const Def<A> &var) const
+    bool shouldAlwaysCopy(G&, const AdapterDef &var) const
     {
         if(m_ShouldAlwaysCopy) {
             return m_ShouldAlwaysCopy(var.name, var.access);
@@ -735,17 +739,17 @@ public:
         }
     }
 
-    std::string getReadIndex(G&, const Def<A> &var) const
+    std::string getReadIndex(G&, const AdapterDef &var) const
     {
         return m_GetReadIndex(var.name, var.access);
     }
 
-    std::string getWriteIndex(G&, const Def<A> &var) const
+    std::string getWriteIndex(G&, const AdapterDef &var) const
     {
         return m_GetWriteIndex(var.name, var.access);
     }
 
-    std::string getTargetName(const GroupInternal &g, const Def<A> &var) const
+    std::string getTargetName(const GroupInternal &g, const AdapterDef &var) const
     {
         return var.name + A(g).getNameSuffix();
     }
@@ -768,6 +772,7 @@ class VarRefCachePolicy
 {
 protected:
     using GroupInternal = typename G::GroupInternal;
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
     using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&)>;
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
@@ -781,27 +786,27 @@ protected:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const Def<A>&) const
+    bool shouldAlwaysCopy(G&, const AdapterDef&) const
     {
         // **NOTE** something else is managing the actual variables
         // and is therefore responsible for copying between delay slots etc
         return false;
     }
     
-    std::string getReadIndex(G &g, const Def<A> &var) const
+    std::string getReadIndex(G &g, const AdapterDef &var) const
     {
         return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getWriteIndex(G &g, const Def<A> &var) const
+    std::string getWriteIndex(G &g, const AdapterDef &var) const
     {
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getTargetName(const GroupInternal &g, const Def<A> &var) const
+    std::string getTargetName(const GroupInternal &g, const AdapterDef &var) const
     {
         const auto &initialiser = A(g).getInitialisers().at(var.name);
-        return initialiser.getVar().name + initialiser.getTargetName();
+        return initialiser.getVarName() + initialiser.getTargetName();
     }
 
 private:
@@ -819,9 +824,9 @@ private:
 template<typename P, typename A, typename G, typename F = G>
 class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
 {
-    
-
 public:
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
                               const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
@@ -844,7 +849,7 @@ public:
 
         // Copy definitions of variables which have been referenced into new vector or all if always copy set
         const auto varDefs = archetypeAdapter.getDefs();
-        std::vector<Def<A>> referencedDefs;
+        std::vector<AdapterDef> referencedDefs;
         std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
                      [this](const auto &v)
                      {
@@ -865,7 +870,7 @@ public:
                                             return arrayPrefix + this->getTargetName(group.getGroups().at(i), v);
                                         });
 
-            if(v.access == VarAccessMode::READ_ONLY) {
+            if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
             }
             getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
@@ -885,7 +890,7 @@ public:
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
             // If we should always copy variable or variable is read-write
-            if(this->shouldAlwaysCopy(m_Group.get(), v) || (v.access == VarAccessMode::READ_WRITE)) {
+            if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
@@ -951,7 +956,7 @@ private:
     std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    std::unordered_map<std::string, std::pair<bool, Def>> m_VariablesReferenced;
+    std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
 };
 
 template<typename A, typename G, typename F = G>

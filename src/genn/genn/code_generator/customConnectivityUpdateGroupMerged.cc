@@ -36,12 +36,12 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         dependentVarsList.sort([](const auto &a, const auto &b)
                                {  
                                    boost::uuids::detail::sha1 hashA;  
-                                   Type::updateHash(a.getVar().type, hashA);
-                                   Utils::updateHash(a.getDims(), hashA);
+                                   Type::updateHash(a.getVarType(), hashA);
+                                   Utils::updateHash(a.getVarDims(), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
-                                   Type::updateHash(b.getVar().type, hashB);
-                                   Utils::updateHash(b.getDims(), hashB);
+                                   Type::updateHash(b.getVarType(), hashB);
+                                   Utils::updateHash(b.getVarDims(), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
                                 });
@@ -129,7 +129,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                        [&backend, v](const auto &g, size_t) 
                        { 
                            const auto varRef = g.getPreVarReferences().at(v.name);
-                           return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
+                           return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
                        },
                        index);
         }
@@ -144,12 +144,12 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVar().type.resolve(getTypeContext());
+        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVarType().resolve(getTypeContext());
         updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
                            [i, &backend, this](const auto&, size_t g) 
                            { 
                                const auto &varRef = m_SortedDependentVars[g][i];
-                               return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
+                               return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
                            });
     }
 
@@ -186,7 +186,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
             const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
-            if (batchSize > 1 && (varRef.getDims() & VarAccessDim::BATCH)) {
+            if (batchSize > 1 && (varRef.getVarDims() & VarAccessDim::BATCH)) {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
@@ -206,7 +206,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && (dependentVars.at(i).getDims() & VarAccessDim::BATCH)) {
+            if (batchSize > 1 && (dependentVars.at(i).getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and zero
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -219,7 +219,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 addSynapse << "$(_dependent_var_" << i << ")[newIdx] = 0;" << std::endl;
             }
 
-            addSynapseTypes.push_back(dependentVars.at(i).getVar().type.resolve(getTypeContext()));
+            addSynapseTypes.push_back(dependentVars.at(i).getVarType().resolve(getTypeContext()));
         }
 
         // Increment row length
@@ -251,7 +251,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
             const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
-            if (batchSize > 1 && (varRef.getDims() & VarAccessDim::BATCH)) {
+            if (batchSize > 1 && (varRef.getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -269,7 +269,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && (dependentVars.at(i).getDims() & VarAccessDim::BATCH)) {
+            if (batchSize > 1 && (dependentVars.at(i).getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {

@@ -180,7 +180,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (v.second.getDims() & VarAccessDim::BATCH); 
+                            return (v.second.getVarDims() & VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Presynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
@@ -190,7 +190,7 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         if (std::any_of(getPostVarReferences().cbegin(), getPostVarReferences().cend(),
                         [](const auto &v) 
                         { 
-                            return (v.second.getDims() & VarAccessDim::BATCH); 
+                            return (v.second.getVarDims() & VarAccessDim::BATCH); 
                         }))
         {
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
@@ -312,8 +312,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                    [](const Models::WUVarReference &v)
                    {
                        boost::uuids::detail::sha1 hash;  
-                       Type::updateHash(v.getVar().type, hash);
-                       Utils::updateHash(v.getDims(), hash);
+                       Type::updateHash(v.getVarType(), hash);
+                       Utils::updateHash(v.getVarDims(), hash);
                        return hash.get_digest();
                    });
     
@@ -329,7 +329,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
 
     // Update hash with duplication mode of synaptic variable references
     for(const auto &v : getVarReferences()) {
-        Utils::updateHash(v.second.getDims(), hash);
+        Utils::updateHash(v.second.getVarDims(), hash);
     }
 
     return hash.get_digest();

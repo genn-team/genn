@@ -96,7 +96,7 @@ protected:
                        [reduceDim](const Models::Base::CustomUpdateVar &v)
                        { 
                            return ((v.access & VarAccessModeAttribute::REDUCE) 
-                                   && (v.access & reduceDim));
+                                   && (static_cast<unsigned int>(v.access) & static_cast<unsigned int>(reduceDim)));
                        }))
         {
             return true;
@@ -124,7 +124,7 @@ protected:
         // Loop through variable references and or together their dimensions to get dimensionality of update
         m_Dims = VarAccessDim{0};
         for(const auto &v : varRefs) {
-            m_Dims = m_Dims | v.second.getDims();
+            m_Dims = m_Dims | v.second.getVarDims();
         }
 
         // Loop through all variable references
@@ -133,7 +133,7 @@ protected:
 
             // If the shape of the references variable doesn't match the dimensionality 
             // of the custom update, check its access mode isn't read-write
-            if((m_Dims != varRef.getDims())
+            if((m_Dims != varRef.getVarDims())
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
@@ -210,7 +210,7 @@ public:
 
     VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
     { 
-        getAccessDim(var.access, m_CU.getDims());
+        return getAccessDim(var.access, m_CU.getDims());
     }
 
 private:
