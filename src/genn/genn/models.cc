@@ -313,8 +313,12 @@ CustomUpdateWU *WUVarReference::getReferencedCustomUpdate() const
 //------------------------------------------------------------------------
 bool WUVarReference::operator < (const WUVarReference &other) const
 {
-    return (std::tie(getVarName(), getTargetName(), getTransposeVarName(), getTransposeTargetName()) 
-            < std::tie(other.getVarName(), other.getTargetName(), other.getTransposeVarName(), other.getTransposeTargetName()));
+    const auto transposeVarName = getTransposeVarName();
+    const auto transposeTargetName = getTransposeTargetName();
+    const auto otherTransposeVarName = other.getTransposeVarName();
+    const auto otherTransposeTargetName = other.getTransposeTargetName();
+    return (std::tie(getVarName(), getTargetName(), transposeVarName, transposeTargetName) 
+            < std::tie(other.getVarName(), other.getTargetName(), otherTransposeVarName, otherTransposeTargetName));
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std::string &varName, 
