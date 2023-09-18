@@ -752,7 +752,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CurrentSourceModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CurrentSourceModels::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
+    pybind11::class_<CurrentSourceModels::Base, Snippet::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
         .def(pybind11::init<>())
 
         .def("get_vars", &CurrentSourceModels::Base::getVars)
@@ -761,7 +761,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomConnectivityUpdateModels::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
+    pybind11::class_<CustomConnectivityUpdateModels::Base, Snippet::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
         .def(pybind11::init<>())
 
         .def("get_vars", &CustomConnectivityUpdateModels::Base::getVars)
@@ -778,7 +778,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CustomUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomUpdateModels::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
+    pybind11::class_<CustomUpdateModels::Base, Snippet::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &CustomUpdateModels::Base::getVars)
@@ -789,7 +789,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.NeuronModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<NeuronModels::Base, PyNeuronModelBase>(m, "NeuronModelBase")
+    pybind11::class_<NeuronModels::Base, Snippet::Base, PyNeuronModelBase>(m, "NeuronModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &NeuronModels::Base::getVars)
@@ -802,7 +802,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.PostsynapticModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<PostsynapticModels::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
+    pybind11::class_<PostsynapticModels::Base, Snippet::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &PostsynapticModels::Base::getVars)
@@ -812,7 +812,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<WeightUpdateModels::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
+    pybind11::class_<WeightUpdateModels::Base, Snippet::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
         .def(pybind11::init<>())
         
         .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
