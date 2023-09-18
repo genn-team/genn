@@ -210,7 +210,7 @@ class GeNNModel(ModelSpecInternal):
             types.Uint16:   np.uint16,
             types.Int8:     np.int8,
             types.Uint8:    np.uint8,
-            types.Bool:     np.bool8}
+            types.Bool:     np.bool_}
 
     @property
     def backend_name(self):
@@ -851,6 +851,58 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space={}):
                                                 init_toeplitz_connectivity_snippets)
     return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, param_space)
 
+
+def create_model(class_name, base, param_names, derived_params, 
+                 extra_global_params, custom_body):
+    """This helper function completes a custom model class creation.
+
+    This part is common for all model classes and is nearly useless on its own
+    unless you specify custom_body.
+    See also:
+    create_neuron_model
+    create_weight_update_model
+    create_postsynaptic_model
+    create_current_source_model
+    create_var_init_snippet
+    create_sparse_connect_init_snippet
+
+    Args:
+    class_name      --  name of the new class
+    base            --  base class
+    param_names     --  list of strings with param names of the model
+    derived_params  --  list of pairs, where the first member is string with
+                        name of the derived parameter and the second should 
+                        be a functor returned by create_dpf_class
+    extra_global_params --  list of pairs of strings with names and types of
+                            additional parameters
+    custom_body     --  dictionary with attributes and methods of the new class
+    """
+
+    def ctor(self):
+        base.__init__(self)
+
+    body = {
+        "__init__": ctor,
+    }
+
+    if param_names is not None:
+        body["get_param_names"] = lambda self: param_names
+
+    if derived_params is not None:
+        body["get_derived_params"] = \
+            lambda self: [DerivedParam(dp[0], dp[1]) 
+                          for dp in derived_params]
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: [EGP(egp[0], egp[1])
+                          for egp in extra_global_params]
+
+    if custom_body is not None:
+        body.update(custom_body)
+
+    return type(class_name, (base,), body)()
+
 def create_neuron_model(class_name, param_names=None,
                         var_name_types=None, derived_params=None,
                         sim_code=None, threshold_condition_code=None,
@@ -1210,11 +1262,11 @@ def create_custom_connectivity_update_model(class_name,
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: [Var(*vn) for vn in pre_var_name_types]
+            lambda self: [NeuronVar(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: [Var(*vn) for vn in post_var_name_types]
+            lambda self: [NeuronVar(*vn) for vn in post_var_name_types]
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
@@ -1229,58 +1281,6 @@ def create_custom_connectivity_update_model(class_name,
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
                         param_names, derived_params, extra_global_params, body)
-
-
-def create_model(class_name, base, param_names, derived_params, 
-                 extra_global_params, custom_body):
-    """This helper function completes a custom model class creation.
-
-    This part is common for all model classes and is nearly useless on its own
-    unless you specify custom_body.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_postsynaptic_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
-
-    Args:
-    class_name      --  name of the new class
-    base            --  base class
-    param_names     --  list of strings with param names of the model
-    derived_params  --  list of pairs, where the first member is string with
-                        name of the derived parameter and the second should 
-                        be a functor returned by create_dpf_class
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
-    custom_body     --  dictionary with attributes and methods of the new class
-    """
-
-    def ctor(self):
-        base.__init__(self)
-
-    body = {
-        "__init__": ctor,
-    }
-
-    if param_names is not None:
-        body["get_param_names"] = lambda self: param_names
-
-    if derived_params is not None:
-        body["get_derived_params"] = \
-            lambda self: [DerivedParam(dp[0], dp[1]) 
-                          for dp in derived_params]
-
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1])
-                          for egp in extra_global_params]
-
-    if custom_body is not None:
-        body.update(custom_body)
-
-    return type(class_name, (base,), body)()
 
 
 def create_var_init_snippet(class_name, param_names=None,
@@ -1314,7 +1314,7 @@ def create_var_init_snippet(class_name, param_names=None,
         body["get_code"] = lambda self: dedent(var_init_code)
 
     return create_model(class_name, InitVarSnippetBase, 
-                        param_names, None, derived_params, 
+                        param_names, derived_params, 
                         extra_global_params, body)
 
 
@@ -1381,7 +1381,7 @@ def create_sparse_connect_init_snippet(class_name,
             lambda self: make_cksf(calc_kernel_size_func)
 
     return create_model(class_name, InitSparseConnectivitySnippetBase, param_names,
-                        None, derived_params, extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 def create_toeplitz_connect_init_snippet(class_name,
                                          param_names=None,
@@ -1436,7 +1436,7 @@ def create_toeplitz_connect_init_snippet(class_name,
             lambda self: make_cksf(calc_kernel_size_func)
 
     return create_model(class_name, InitToeplitzConnectivitySnippetBase, param_names,
-                        None, derived_params, extra_global_params, body)
+                        derived_params, extra_global_params, body)
 
 @deprecated("this wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):
