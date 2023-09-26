@@ -73,6 +73,8 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
+    bool isModelReduction() const;
+
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     void updateHash(boost::uuids::detail::sha1 &hash) const;

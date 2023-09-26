@@ -87,6 +87,27 @@ bool CustomUpdateBase::isZeroCopyEnabled() const
                        [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
+bool CustomUpdateBase::isModelReduction() const
+{
+    // Return true if any variables have REDUCE flag in their access mode
+    const auto vars = getCustomUpdateModel()->getVars();
+    if(std::any_of(vars.cbegin(), vars.cend(),
+                    [](const auto &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        return true;
+    }
+
+    // Return true if any variable references have REDUCE flag in their access mode
+    const auto varRefs = getCustomUpdateModel()->getVarRefs();
+    if(std::any_of(varRefs.cbegin(), varRefs.cend(),
+                    [](const auto &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
@@ -135,8 +156,14 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Check only one type of reduction is specified
-    if (isBatchReduction() && isNeuronReduction()) {
+    const bool batchReduction = isBatchReduction();
+    const bool neuronReduction = isNeuronReduction();
+    if (batchReduction && neuronReduction) {
         throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
+    }
+    // Otherwise, if model specifies reduction operations but none are correctly configured
+    else if(isModelReduction() && !batchReduction && !neuronReduction) {
+        throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
     }
 
     // Give error if any sizes differ
@@ -225,6 +252,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // Check variable reference types
     Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
+    // If model specifies reduction operations but none are correctly configured
+    if(isModelReduction() && !isBatchReduction()) {
+        throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
+    }
+
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -235,6 +267,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     {
         throw std::runtime_error("All referenced variables must belong to the same synapse group.");
     }
+
     // If this is a transpose operation
     if(isTransposeOperation()) {
         // Check that it isn't also a reduction
