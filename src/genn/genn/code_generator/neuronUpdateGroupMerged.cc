@@ -1,5 +1,8 @@
 #include "code_generator/neuronUpdateGroupMerged.h"
 
+// GeNN includes
+#include "groupAdapters.h"
+
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
@@ -241,7 +244,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
     if(getArchetype().getBackPropDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUPostDynamicsCodeTokens())) {
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
-        for(const auto &v : getArchetype().getWUModel()->getPostVars()) {
+        for(const auto &v : SynapseWUPostVarAdapter(getArchetype()).getDefs()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
                 env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
@@ -333,7 +336,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
     if(getArchetype().getDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUPreDynamicsCodeTokens())) {
         // Loop through variables and copy between read and write delay slots
         // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
-        for(const auto &v : getArchetype().getWUModel()->getPreVars()) {
+        for(const auto &v : SynapseWUPreVarAdapter(getArchetype()).getDefs()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
                 env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");

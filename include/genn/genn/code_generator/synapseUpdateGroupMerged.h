@@ -68,12 +68,12 @@ public:
 
     std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPrePostVarIndex(delay, batchSize, varDims, index, "pre");
+        return getPrePostVarIndex(delay, batchSize, varDims, index, true);
     }
 
     std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPrePostVarIndex(delay, batchSize, varDims, index, "post");
+        return getPrePostVarIndex(delay, batchSize, varDims, index, false);
     }
 
     std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -103,7 +103,7 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     std::string getPrePostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims,
-                                   const std::string &index, const std::string &prefix) const;
+                                   const std::string &index, bool preNotPost) const;
 };
 
 //----------------------------------------------------------------------------

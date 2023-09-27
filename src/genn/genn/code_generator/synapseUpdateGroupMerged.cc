@@ -30,13 +30,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](NeuronVarAccess a, const std::string&) 
+        [&sg, batchSize](SynapseVarAccess a, const std::string&) 
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         backend.getDeviceVarPrefix(),
-        [&sg, batchSize](NeuronVarAccess a, const std::string&) 
+        [&sg, batchSize](SynapseVarAccess a, const std::string&) 
         { 
             return sg.getPostWUVarIndex(batchSize, getVarAccessDim(a), "$(id_post)");
         }, "", true);
@@ -248,11 +248,13 @@ std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, Va
 }
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPrePostVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims,
-                                                       const std::string &index, const std::string &prefix) const
+                                                       const std::string &index, bool preNotPost) const
 {
+    const std::string prefix = preNotPost ? "pre" : "post";
+    const VarAccessDim neuronAxis = preNotPost ? VarAccessDim::PRE_NEURON : VarAccessDim::POST_NEURON;
     const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
     if (delay) {
-        if (!(varDims & VarAccessDim::NEURON)) {
+        if (!(varDims & neuronAxis)) {
             return (batched ? "$(_" + prefix + "_batch_delay_slot)" : "$(_" + prefix + "_delay_slot)");
         }
         else if(batched) {
@@ -263,7 +265,7 @@ std::string SynapseGroupMergedBase::getPrePostVarIndex(bool delay, unsigned int 
         }
     }
     else {
-        if (!(varDims & VarAccessDim::NEURON)) {
+        if (!(varDims & neuronAxis)) {
             return batched ? "$(batch)" : "0";
         }
         else if (batched) {
