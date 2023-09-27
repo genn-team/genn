@@ -1,8 +1,5 @@
 #include "code_generator/neuronUpdateGroupMerged.h"
 
-// GeNN includes
-#include "groupAdapters.h"
-
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 

@@ -80,6 +80,18 @@ public:
         return getNamedVecIndex(varName, getVars());
     }
 
+    //! Gets per-synapse model variables 
+    /*! these have both VarAccessDim::PRE_NEURON and VarAccessDim::POST_NEURON */
+    std::vector<SynapseVar> getSynVars() const{ return getFilteredVars(true, true); }
+
+    //! Gets presynaptic model variables 
+    /*! these have VarAccessDim::PRE_NEURON and not VarAccessDim::POST_NEURON */
+    std::vector<SynapseVar> getPreVars() const{ return getFilteredVars(true, false); }
+
+    //! Gets postsynaptic model variables 
+    /*! these have VarAccessDim::POST_NEURON and not VarAccessDim::PRE_NEURON */
+    std::vector<SynapseVar> getPostVars() const{ return getFilteredVars(false, true); }
+
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -93,6 +105,9 @@ public:
     void validate(const std::unordered_map<std::string, double> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
+
+private:
+    std::vector<SynapseVar> getFilteredVars(bool pre, bool post) const;
 };
 
 //----------------------------------------------------------------------------

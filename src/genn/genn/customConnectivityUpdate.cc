@@ -242,7 +242,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         || (getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL))
     {
         // Loop through synapse group variables
-        for (const auto &v : getSynapseGroup()->getWUModel()->getVars()) {
+        for (const auto &v : getSynapseGroup()->getWUModel()->getSynVars()) {
             // Create reference to variable
             auto ref = Models::WUVarReference::createWUVarReference(getSynapseGroup(), v.name);
 

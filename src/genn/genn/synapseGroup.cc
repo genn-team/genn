@@ -812,7 +812,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 
     // If weights are procedural, include variable initialiser hashes
     if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        for(const auto &w : getWUVarInitialisers()) {
+        for(const auto &w : getWUSynVarInitialisers()) {
             Utils::updateHash(w.first, hash);
             Utils::updateHash(w.second.getHashDigest(), hash);
         }
@@ -974,7 +974,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Utils::updateHash(Utils::areTokensEmpty(getWUPostLearnCodeTokens()), hash);
 
     // Include variable initialiser hashes
-    for(const auto &w : getWUVarInitialisers()) {
+    for(const auto &w : getWUSynVarInitialisers()) {
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
@@ -1052,5 +1052,21 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
     Utils::updateHash(m_WUExtraGlobalParamLocation, hash);
     Utils::updateHash(m_PSExtraGlobalParamLocation, hash);
     return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+std::unordered_map<std::string, InitVarSnippet::Init> SynapseGroup::getWUFilteredVarInitialisers(bool pre, bool post) const
+{
+    // Copy initialisers into new map if pre and post dimensions match
+    const auto vars = getWUModel()->getVars();
+    std::unordered_map<std::string, InitVarSnippet::Init> filteredInit;
+    for(const auto &v : vars) {
+        const auto dim = getVarAccessDim(v.access);
+        if(((dim & VarAccessDim::PRE_NEURON) == pre) 
+           && ((dim & VarAccessDim::POST_NEURON) == post))
+        {
+            filteredInit.emplace(v.name, getWUVarInitialisers().at(v.name));
+        }
+    }
+    return filteredInit;
 }
 }   // namespace GeNN

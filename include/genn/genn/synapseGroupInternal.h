@@ -34,6 +34,9 @@ public:
 
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
+    using SynapseGroup::getWUSynVarInitialisers;
+    using SynapseGroup::getWUPreVarInitialisers;
+    using SynapseGroup::getWUPostVarInitialisers;
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::getWUSimCodeTokens;
@@ -164,9 +167,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
     
-    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_SG.getWUModel()->getVars(); }
+    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_SG.getWUModel()->getSynVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> getInitialisers() const{ return m_SG.getWUSynVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getName(); }
 
@@ -191,17 +194,17 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
 
-    std::vector<Models::Base::NeuronVar> getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
+    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -222,17 +225,17 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
 
-    std::vector<Models::Base::NeuronVar> getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
+    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 
-    VarAccessDim getVarDims(const Models::Base::NeuronVar &var) const{ return getVarAccessDim(var.access); }
+    VarAccessDim getVarDims(const Models::Base::SynapseVar &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------

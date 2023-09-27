@@ -1426,7 +1426,7 @@ MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath,
         const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
         if (individualWeights || proceduralWeights || kernelWeights) {
-            for(const auto &wuVar : wu->getVars()) {
+            for(const auto &wuVar : wu->getSynVars()) {
                 const auto &varInit = s.second.getWUVarInitialisers().at(wuVar.name);
                 const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
                 const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());

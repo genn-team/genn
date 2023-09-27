@@ -241,6 +241,10 @@ protected:
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
+    std::unordered_map<std::string, InitVarSnippet::Init> getWUSynVarInitialisers() const{ return getWUFilteredVarInitialisers(true, true); }
+    std::unordered_map<std::string, InitVarSnippet::Init> getWUPreVarInitialisers() const{ return getWUFilteredVarInitialisers(true, false); }
+    std::unordered_map<std::string, InitVarSnippet::Init> getWUPostVarInitialisers() const{ return getWUFilteredVarInitialisers(false, true); }
+
     const std::unordered_map<std::string, double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::unordered_map<std::string, double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
@@ -392,7 +396,13 @@ protected:
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
     
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    std::unordered_map<std::string, InitVarSnippet::Init> getWUFilteredVarInitialisers(bool pre, bool post) const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

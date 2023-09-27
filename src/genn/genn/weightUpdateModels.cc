@@ -75,4 +75,19 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateVecNames(vars, "Variable");
     Utils::validateInitialisers(vars, varValues, "variable", description);
 }
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getFilteredVars(bool pre, bool post) const
+{
+    // Copy variables into new vector if pre and post dimensions match
+    const auto vars = getVars();
+    std::vector<Base::SynapseVar> filteredVars;
+    std::copy_if(vars.cbegin(), vars.cend(), std::back_inserter(filteredVars),
+                 [pre, post](const auto &v)
+                 {
+                     const auto dim = getVarAccessDim(v.access);
+                     return (((dim & VarAccessDim::PRE_NEURON) == pre) 
+                             && ((dim & VarAccessDim::POST_NEURON) == post));
+                 });
+    return filteredVars;
+}
 }   // namespace WeightUpdateModels
