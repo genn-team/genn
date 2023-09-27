@@ -31,8 +31,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPreDynamicsCode(), hash);
     Utils::updateHash(getPostDynamicsCode(), hash);
-    Utils::updateHash(getPreVars(), hash);
-    Utils::updateHash(getPostVars(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -67,23 +65,14 @@ boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
 //----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
                     const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                     const std::string &description) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, description);
 
-    const auto vars = getVars();
-    const auto preVars = getPreVars();
-    const auto postVars = getPostVars();
-    Utils::validateVecNames(getVars(), "Variable");
-    Utils::validateVecNames(getPreVars(), "Presynaptic variable");
-    Utils::validateVecNames(getPostVars(), "Presynaptic variable");
-
     // Validate variable initialisers
+    const auto vars = getVars();
+    Utils::validateVecNames(vars, "Variable");
     Utils::validateInitialisers(vars, varValues, "variable", description);
-    Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
-    Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
 }
 }   // namespace WeightUpdateModels

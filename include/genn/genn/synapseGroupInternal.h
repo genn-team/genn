@@ -15,14 +15,14 @@ public:
     using GroupExternal = SynapseGroup;
 
     SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers,
                          const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                          VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
+    :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers,
                      ps, psParams, psVarInitialisers, srcNeuronGroup, trgNeuronGroup,
                      connectivityInitialiser, toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
                      defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)

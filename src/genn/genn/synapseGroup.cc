@@ -49,16 +49,6 @@ void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
     m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_WUPreVarLocation[getWUModel()->getPreVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_WUPostVarLocation[getWUModel()->getPostVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
 void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)] = loc;
@@ -283,36 +273,12 @@ bool SynapseGroup::isZeroCopyEnabled() const
         return true;
     }
 
-    // If there are any weight update variables implemented in zero-copy mode return true
-    if(std::any_of(m_WUPreVarLocation.begin(), m_WUPreVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    // If there are any weight update variables implemented in zero-copy mode return true
-    if(std::any_of(m_WUPostVarLocation.begin(), m_WUPostVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
     return false;
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
 {
     return m_WUVarLocation[getWUModel()->getVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
-{
-    return m_WUPreVarLocation[getWUModel()->getPreVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
-{
-    return m_WUPostVarLocation[getWUModel()->getPostVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &paramName) const
@@ -336,7 +302,7 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
@@ -347,10 +313,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), 
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
-        m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
@@ -358,8 +323,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), getWUPreVarInitialisers(), getWUPostVarInitialisers(), 
-                           "Synapse group " + getName() + " weight update model ");
+    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), "Synapse group " + getName() + " weight update model ");
     getPSModel()->validate(getPSParams(), getPSVarInitialisers(), "Synapse group " + getName() + " postsynaptic model ");
 
      // Scan weight update model code strings
@@ -552,16 +516,6 @@ void SynapseGroup::finalise(double dt)
 
     // Initialise derived parameters for PSM variable initialisers
     for(auto &v : m_PSVarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Initialise derived parameters for WU presynaptic variable initialisers
-    for(auto &v : m_WUPreVarInitialisers) {
-        v.second.finalise(dt);
-    }
-    
-    // Initialise derived parameters for WU postsynaptic variable initialisers
-    for(auto &v : m_WUPostVarInitialisers) {
         v.second.finalise(dt);
     }
 
@@ -1094,8 +1048,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
     Utils::updateHash(getDendriticDelayLocation(), hash);
     Utils::updateHash(getSparseConnectivityLocation(), hash);
     Utils::updateHash(m_WUVarLocation, hash);
-    Utils::updateHash(m_WUPreVarLocation, hash);
-    Utils::updateHash(m_WUPostVarLocation, hash);
     Utils::updateHash(m_PSVarLocation, hash);
     Utils::updateHash(m_WUExtraGlobalParamLocation, hash);
     Utils::updateHash(m_PSExtraGlobalParamLocation, hash);

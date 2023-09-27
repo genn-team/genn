@@ -17,9 +17,6 @@
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
 #define SET_POST_DYNAMICS_CODE(POST_DYNAMICS_CODE) virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }
 
-#define SET_PRE_VARS(...) virtual std::vector<NeuronVar> getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual std::vector<NeuronVar> getPostVars() const override{ return __VA_ARGS__; }
-
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
@@ -74,14 +71,6 @@ public:
     //! Gets model variables
     virtual std::vector<SynapseVar> getVars() const{ return {}; }
 
-    //! Gets names and types (as strings) of state variables that are common
-    //! across all synapses coming from the same presynaptic neuron
-    virtual std::vector<NeuronVar> getPreVars() const{ return {}; }
-
-    //! Gets names and types (as strings) of state variables that are common
-    //! across all synapses going to the same postsynaptic neuron
-    virtual std::vector<NeuronVar> getPostVars() const{ return {}; }
-
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -89,18 +78,6 @@ public:
     size_t getVarIndex(const std::string &varName) const
     {
         return getNamedVecIndex(varName, getVars());
-    }
-
-    //! Find the index of a named presynaptic variable
-    size_t getPreVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getPreVars());
-    }
-
-    //! Find the index of a named postsynaptic variable
-    size_t getPostVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getPostVars());
     }
 
     //! Update hash from model
@@ -115,8 +92,6 @@ public:
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                   const std::string &description) const;
 };
 

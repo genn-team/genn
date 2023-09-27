@@ -50,14 +50,6 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of weight update model presynaptic state variable
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setWUPreVarLocation(const std::string &varName, VarLocation loc);
-    
-    //! Set location of weight update model postsynaptic state variable
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setWUPostVarLocation(const std::string &varName, VarLocation loc);
-    
     //! Set location of weight update model extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
@@ -174,8 +166,6 @@ public:
 
     const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
     const std::unordered_map<std::string, double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
@@ -190,12 +180,6 @@ public:
 
     //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model presynaptic state variable by name
-    VarLocation getWUPreVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model postsynaptic state variable by name
-    VarLocation getWUPostVarLocation(const std::string &var) const;
 
     //! Get location of weight update model extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
@@ -222,7 +206,7 @@ public:
 
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
@@ -472,12 +456,6 @@ private:
 
     //! Initialisers for weight update model per-synapse variables
     std::unordered_map<std::string, InitVarSnippet::Init> m_WUVarInitialisers;
-
-    //! Initialisers for weight update model per-presynaptic neuron variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPreVarInitialisers;
-
-    //! Initialisers for weight update model post-presynaptic neuron variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPostVarInitialisers;
     
     //! Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
@@ -493,12 +471,6 @@ private:
 
     //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;
-
-    //! Location of individual presynaptic state variables
-    std::vector<VarLocation> m_WUPreVarLocation;
-
-    //! Location of individual postsynaptic state variables
-    std::vector<VarLocation> m_WUPostVarLocation;
 
     //! Location of weight update model extra global parameters
     std::vector<VarLocation> m_WUExtraGlobalParamLocation;
