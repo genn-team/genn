@@ -547,7 +547,7 @@ TEST(CustomUpdates, BatchingWriteShared)
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
-    // Create custom update which tries to create a read-write reference to a (which isn't batched)
+    // Create custom update which tries to create a reduction reference to U (which, like V, is batched)
     VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "U")}};
     try {
         model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
