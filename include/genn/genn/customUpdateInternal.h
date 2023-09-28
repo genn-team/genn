@@ -39,6 +39,64 @@ public:
     using CustomUpdate::isNeuronReduction;
 };
 
+
+//----------------------------------------------------------------------------
+// CustomUpdateVarAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarAdapter
+{
+public:
+    CustomUpdateVarAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+
+    std::vector<Models::Base::CustomUpdateVar> getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
+    { 
+        return getVarAccessDim(var.access, m_CU.getDims());
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateEGPAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateEGPAdapter
+{
+public:
+    CustomUpdateEGPAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateInternal &m_CU;
+};
+
 //----------------------------------------------------------------------------
 // CustomUpdateVarRefAdapter
 //----------------------------------------------------------------------------
