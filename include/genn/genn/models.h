@@ -189,14 +189,30 @@ public:
     VarAccessDim getVarDims() const;
 
     //! Get size of variable
-    unsigned int getSize() const;
+    std::optional<unsigned int> getSize() const;
 
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
+    //! Get synapse group associated with variable
+    SynapseGroup *getSynapseGroup() const;
+
     //! Get suffix to use when accessing target variable names
     // **TODO** rename to getNameSuffix
     const std::string &getTargetName() const;
+
+     //! Get name of tranpose variable
+    std::optional<std::string> getTransposeVarName() const;
+
+    // Get type of transpose variable
+    std::optional<Type::UnresolvedType> getTransposeVarType() const;
+
+    //! Get dimensions of transpose variable being referenced
+    std::optional<VarAccessDim> getTransposeVarDims() const;
+
+    std::optional<std::string> getTransposeTargetName() const;
+
+    SynapseGroup *getTransposeSynapseGroup() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -213,92 +229,11 @@ public:
     static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
     static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
     static VarReference createVarRef(CustomUpdate *cu, const std::string &varName);
-    static VarReference createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
-    static VarReference createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
+    static VarReference createVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
+                                       SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
     
-private:
-    //------------------------------------------------------------------------
-    // Typedefines
-    //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
-    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
-
-    //! Variant type used to store 'detail'
-    using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
-                                    CURef, CCUPreRef, CCUPostRef>;
-
-    VarReference(const DetailType &detail) : m_Detail(detail)
-    {}
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    DetailType m_Detail;
-};
-
-//----------------------------------------------------------------------------
-// GeNN::Models::WUVarReference
-//----------------------------------------------------------------------------
-class GENN_EXPORT WUVarReference : public VarReferenceBase
-{
-public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    //! Get name of variable
-    const std::string &getVarName() const;
-
-    // Get type of variable
-    const Type::UnresolvedType &getVarType() const;
-
-    // Get dimensions of variable
-    VarAccessDim getVarDims() const;
-    
-    //! Get suffix to use when accessing target variable names
-    // **TODO** rename to getNameSuffix
-    const std::string &getTargetName() const;
-    
-    SynapseGroup *getSynapseGroup() const;
-    
-    //! Get name of tranpose variable
-    std::optional<std::string> getTransposeVarName() const;
-
-    // Get type of transpose variable
-    std::optional<Type::UnresolvedType> getTransposeVarType() const;
-
-    //! Get dimensions of transpose variable being referenced
-    std::optional<VarAccessDim> getTransposeVarDims() const;
-
-    std::optional<std::string> getTransposeTargetName() const;
-
-    SynapseGroup *getTransposeSynapseGroup() const;
-
-    //! If this reference points to another custom update, return pointer to it
-    /*! This is used to detect circular dependencies */
-    CustomUpdateWU *getReferencedCustomUpdate() const;
-
-    //------------------------------------------------------------------------
-    // Operators
-    //------------------------------------------------------------------------
-    bool operator < (const WUVarReference &other) const;
-
-    //------------------------------------------------------------------------
-    // Static API
-    //------------------------------------------------------------------------
-    static WUVarReference createWUVarReference(SynapseGroup *sg, const std::string &varName, 
-                                               SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
-    static WUVarReference createWUVarReference(CustomUpdateWU *cu, const std::string &varName);
-    static WUVarReference createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName);
-
 private:
     //------------------------------------------------------------------------
     // WURef
@@ -317,19 +252,22 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
     DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::SynapseVar);
 
-     //! Variant type used to store 'detail'
-    using DetailType = std::variant<WURef, CURef, CCURef>;
+    //! Variant type used to store 'detail'
+    using DetailType = std::variant<NGRef, PSMRef, WURef, CSRef, CURef, CCURef>;
+
+    VarReference(const DetailType &detail);
 
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
     SynapseGroupInternal *getSynapseGroupInternal() const;
     SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
-
-    WUVarReference(const DetailType &detail);
 
     //------------------------------------------------------------------------
     // Members
