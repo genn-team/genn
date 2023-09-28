@@ -16,6 +16,21 @@ IMPLEMENT_SNIPPET(PiecewiseSTDP);
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getSynVars() const
+{ 
+    return getFilteredSynapseVars(getVars(), true, true); 
+}
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getPreVars() const
+{
+    return getFilteredSynapseVars(getVars(), true, false); 
+}
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getPostVars() const
+{ 
+    return getFilteredSynapseVars(getVars(), false, true); 
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
@@ -74,20 +89,5 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     const auto vars = getVars();
     Utils::validateVecNames(vars, "Variable");
     Utils::validateInitialisers(vars, varValues, "variable", description);
-}
-//----------------------------------------------------------------------------
-std::vector<Base::SynapseVar> Base::getFilteredVars(bool pre, bool post) const
-{
-    // Copy variables into new vector if pre and post dimensions match
-    const auto vars = getVars();
-    std::vector<Base::SynapseVar> filteredVars;
-    std::copy_if(vars.cbegin(), vars.cend(), std::back_inserter(filteredVars),
-                 [pre, post](const auto &v)
-                 {
-                     const auto dim = getVarAccessDim(v.access);
-                     return (((dim & VarAccessDim::PRE_NEURON) == pre) 
-                             && ((dim & VarAccessDim::POST_NEURON) == post));
-                 });
-    return filteredVars;
 }
 }   // namespace WeightUpdateModels

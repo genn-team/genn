@@ -155,7 +155,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     
     // Get variables which will need to be manipulated when adding and removing synapses
-    const auto ccuVars = cm->getVars();
+    const auto ccuVars = cm->getSynVars();
     const auto ccuVarRefs = cm->getVarRefs();
     const auto &dependentVars = getSortedArchetypeDependentVars();
     std::vector<Type::ResolvedType> addSynapseTypes{Type::Uint32};
@@ -307,7 +307,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
                               // Add types for variables and variable references accessible within loop
                               // **TODO** filter
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getSynVars(), errorHandler);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);

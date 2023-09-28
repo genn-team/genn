@@ -592,8 +592,6 @@ public:
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param preVarInitialisers presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param postVarInitialisers postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varReferences variable references wrapped in WUVarReferences object.
         \param varReferences variable references wrapped in VarReferences object.
         \param varReferences variable references wrapped in VarReferences object.
@@ -602,14 +600,12 @@ public:
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
                                                           const std::string &targetSynapseGroupName,
                                                           const ParamValues &paramValues, const VarValues &varInitialisers,
-                                                          const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
                                                           const WUVarReferences &varReferences, const VarReferences &preVarReferences,
                                                           const VarReferences &postVarReferences)
     {
         return addCustomConnectivityUpdate(name, updateGroupName, targetSynapseGroupName, 
                                            CustomConnectivityUpdateModel::getInstance(), paramValues,
-                                           varInitialisers, preVarInitialisers, postVarInitialisers, 
-                                           varReferences, preVarReferences, postVarReferences);
+                                           varInitialisers, varReferences, preVarReferences, postVarReferences);
     }
 
 protected:

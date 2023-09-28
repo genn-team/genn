@@ -8,6 +8,22 @@
 //----------------------------------------------------------------------------
 namespace GeNN::CustomConnectivityUpdateModels
 {
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getSynVars() const
+{ 
+    return getFilteredSynapseVars(getVars(), true, true); 
+}
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getPreVars() const
+{
+    return getFilteredSynapseVars(getVars(), true, false); 
+}
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getPostVars() const
+{ 
+    return getFilteredSynapseVars(getVars(), false, true); 
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass

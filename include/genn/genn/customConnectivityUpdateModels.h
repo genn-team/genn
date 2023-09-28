@@ -29,14 +29,6 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets names and types (as strings) of state variables that are common
-    //! across all synapses coming from the same presynaptic neuron
-    virtual std::vector<NeuronVar> getPreVars() const { return {}; }
-
-    //! Gets names and types (as strings) of state variables that are common
-    //! across all synapses going to the same postsynaptic neuron
-    virtual std::vector<NeuronVar> getPostVars() const { return {}; }
-
     //! Gets model variables
     virtual std::vector<SynapseVar> getVars() const{ return {}; }
 
@@ -64,17 +56,18 @@ public:
         return getNamedVecIndex(varName, getVars());
 
     }
-    //! Find the index of a named presynaptic variable
-    size_t getPreVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getPreVars());
-    }
 
-    //! Find the index of a named postsynaptic variable
-    size_t getPostVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getPostVars());
-    }
+    //! Gets per-synapse model variables 
+    /*! these have both VarAccessDim::PRE_NEURON and VarAccessDim::POST_NEURON */
+    std::vector<SynapseVar> getSynVars() const;
+
+    //! Gets presynaptic model variables 
+    /*! these have VarAccessDim::PRE_NEURON and not VarAccessDim::POST_NEURON */
+    std::vector<SynapseVar> getPreVars() const;
+
+    //! Gets postsynaptic model variables 
+    /*! these have VarAccessDim::POST_NEURON and not VarAccessDim::PRE_NEURON */
+    std::vector<SynapseVar> getPostVars() const;
 
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;

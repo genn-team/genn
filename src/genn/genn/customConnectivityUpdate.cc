@@ -47,29 +47,9 @@ void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLoc
     m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
-void CustomConnectivityUpdate::setPreVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)] = loc;
-}
-//------------------------------------------------------------------------
-void CustomConnectivityUpdate::setPostVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)] = loc;
-}
-//------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)];
-}
-//------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdate::getPreVarLocation(const std::string &varName) const
-{
-    return m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)];
-}
-//------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdate::getPostVarLocation(const std::string &varName) const
-{
-    return m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isVarInitRequired() const
@@ -93,13 +73,11 @@ bool CustomConnectivityUpdate::isPostVarInitRequired() const
 CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                                                    const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                                   const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                                    const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                                                    const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                                                    VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_SynapseGroup(synapseGroup), m_CustomConnectivityUpdateModel(customConnectivityUpdateModel),
-    m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
-    m_VarLocation(varInitialisers.size(), defaultVarLocation), m_PreVarLocation(preVarInitialisers.size(), defaultVarLocation), m_PostVarLocation(postVarInitialisers.size(), defaultVarLocation), 
+    m_Params(params), m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences),
     m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
@@ -108,8 +86,8 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     // Validate names
     Utils::validatePopName(name, "Custom connectivity update");
     Utils::validatePopName(updateGroupName, "Custom connectivity update group name");
-    getCustomConnectivityUpdateModel()->validate(getParams(), getVarInitialisers(), getPreVarInitialisers(),
-                                                 getPostVarInitialisers(), getVarReferences(), getPreVarReferences(),
+    getCustomConnectivityUpdateModel()->validate(getParams(), getVarInitialisers(), 
+                                                 getVarReferences(), getPreVarReferences(),
                                                  getPostVarReferences(), "Custom connectivity update " + getName());
 
     // Scan custom connectivity update model code strings
@@ -158,18 +136,8 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
         m_DerivedParams.emplace(d.name, d.func(getParams(), dt));
     }
 
-    // Finalise derived parameters for synaptic variable initialisers
+    // Finalise derived parameters for variable initialisers
     for (auto &v : m_VarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Finalise derived parameters for presynaptic variable initialisers
-    for (auto &v : m_PreVarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Finalise derived parameters for postsynaptic variable initialisers
-    for (auto &v : m_PostVarInitialisers) {
         v.second.finalise(dt);
     }
 
@@ -257,7 +225,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
     // Loop through custom updates which reference this synapse group
     for(auto *c : getSynapseGroup()->getCustomUpdateReferences()) {
         // Loop through custom update variables
-        for (const auto &v : c->getCustomUpdateModel()->getVars()) {
+        for (const auto &v : c->getCustomUpdateModel()->getSynVars()) {
             // Create reference to variable
             auto ref = Models::WUVarReference::createWUVarReference(c, v.name);
 
@@ -276,7 +244,7 @@ std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariab
         }
         
         // Loop through custom connectivity update variables
-        for (const auto &v : c->getCustomConnectivityUpdateModel()->getVars()) {
+        for (const auto &v : c->getCustomConnectivityUpdateModel()->getSynVars()) {
             // Create reference to variable
             auto ref = Models::WUVarReference::createWUVarReference(c, v.name);
 
@@ -339,23 +307,12 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getInitHashDig
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCustomConnectivityUpdateModel()->getVars(), hash);
-    Utils::updateHash(getCustomConnectivityUpdateModel()->getPreVars(), hash);
-    Utils::updateHash(getCustomConnectivityUpdateModel()->getPostVars(), hash);
 
     // Include synaptic variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
 
-    // Include presynaptic variable initialiser hashes
-    for(const auto &w : getPreVarInitialisers()) {
-        Utils::updateHash(w.second.getHashDigest(), hash);
-    }
-
-    // Include postsynaptic variable initialiser hashes
-    for(const auto &w : getPostVarInitialisers()) {
-        Utils::updateHash(w.second.getHashDigest(), hash);
-    }
     return hash.get_digest();
 }
 //------------------------------------------------------------------------
@@ -363,8 +320,6 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getVarLocation
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_PreVarLocation, hash);
-    Utils::updateHash(m_PostVarLocation, hash);
     Utils::updateHash(m_ExtraGlobalParamLocation, hash);
     return hash.get_digest();
 }

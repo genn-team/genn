@@ -17,11 +17,10 @@ public:
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
                                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                      const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                                      const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                                      VarLocation defaultExtraGlobalParamLocation)
-    :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers, preVarInitialisers, postVarInitialisers,
+    :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers,
                                  varReferences, preVarReferences, postVarReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
         getSynapseGroup()->addCustomUpdateReference(this);
@@ -55,7 +54,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    std::vector<Models::Base::SynapseVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getSynVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
@@ -82,7 +81,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
     std::vector<Models::Base::NeuronVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
@@ -113,7 +112,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
     std::vector<Models::Base::NeuronVar> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 

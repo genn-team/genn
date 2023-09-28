@@ -28,14 +28,6 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of presynaptic state variable
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setPreVarLocation(const std::string &varName, VarLocation loc);
-
-    //! Set location of postsynaptic state variable
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setPostVarLocation(const std::string &varName, VarLocation loc);
-
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -47,8 +39,6 @@ public:
 
     const std::unordered_map<std::string, double> &getParams() const { return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
 
     const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
     const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
@@ -56,12 +46,6 @@ public:
 
     //! Get variable location for synaptic state variable
     VarLocation getVarLocation(const std::string &varName) const;
-
-    //! Get variable location for presynaptic state variable
-    VarLocation getPreVarLocation(const std::string &varName) const;
-    
-    //! Get variable location for postsynaptic state variable
-    VarLocation getPostVarLocation(const std::string &varName) const;
 
     //! Is var init code required for any synaptic variables in this custom connectivity update group?
     bool isVarInitRequired() const;
@@ -76,7 +60,6 @@ protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                              const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                             const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                              const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation);
@@ -136,13 +119,9 @@ private:
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
-    std::vector<VarLocation> m_PreVarLocation;
-    std::vector<VarLocation> m_PostVarLocation;
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
