@@ -53,11 +53,6 @@ public:
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
-
-    void validate(const std::unordered_map<std::string, double> &paramValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
-                  const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------

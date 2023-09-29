@@ -149,6 +149,12 @@ public:
     //----------------------------------------------------------------------------
     typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
+
+protected:
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
+    std::vector<SynapseVar> getFilteredSynapseVars(const std::vector<SynapseVar> &vars, bool pre, bool post) const;
 };
 
 //----------------------------------------------------------------------------
@@ -320,7 +326,6 @@ GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 
 //! Helper function to check if variable reference types match those specified in model

@@ -136,12 +136,12 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 //----------------------------------------------------------------------------
 bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDigest() const
@@ -193,9 +193,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
+    EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
+        [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });

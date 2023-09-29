@@ -18,6 +18,23 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 }
 
 //----------------------------------------------------------------------------
+// GeNN::Models::Base
+//----------------------------------------------------------------------------
+std::vector<Base::SynapseVar> Base::getFilteredSynapseVars(const std::vector<Base::SynapseVar> &vars, bool pre, bool post) const
+{
+    // Copy variables into new vector if pre and post dimensions match
+    std::vector<Base::SynapseVar> filteredVars;
+    std::copy_if(vars.cbegin(), vars.cend(), std::back_inserter(filteredVars),
+                 [pre, post](const auto &v)
+                 {
+                     const auto dim = getVarAccessDim(v.access);
+                     return (((dim & VarAccessDim::PRE_NEURON) == pre) 
+                             && ((dim & VarAccessDim::POST_NEURON) == post));
+                 });
+    return filteredVars;
+}
+
+//----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
 const std::string &VarReference::getVarName() const
@@ -430,12 +447,6 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 }
 //----------------------------------------------------------------------------
 void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.getTargetName(), hash);
-    Utils::updateHash(v.getVarName(), hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.getTargetName(), hash);
     Utils::updateHash(v.getVarName(), hash);

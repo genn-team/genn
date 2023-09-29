@@ -34,7 +34,8 @@ bool CustomUpdate::isVarInitRequired() const
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                            const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                           const std::unordered_map<std::string, Models::VarReference> &varReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences, 
+                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
     m_VarInitialisers(varInitialisers), m_VarReferences(varReferences), m_EGPReferences(egpReferences), 
     m_VarLocation(varInitialisers.size(), defaultVarLocation), 
@@ -55,79 +56,6 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
         throw std::runtime_error("Custom update models must reference variables.");
     }
 
-    // Loop through variable references and or together their dimensions to get dimensionality of update
-    for(const auto &v : m_VarReferences) {
-        m_Dims = m_Dims | v.second.getVarDims();
-    }
-
-    // Loop through all variable references
-    for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
-        const auto varRef = getVarReferences().at(modelVarRef.name);
-
-        // If the shape of the references variable doesn't match the dimensionality 
-        // of the custom update, check its access mode isn't read-write
-        if((m_Dims != varRef.getVarDims())
-            && (modelVarRef.access == VarAccessMode::READ_WRITE))
-        {
-            throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
-        }
-    }
-
-    const bool synaptic = (m_Dims & VarAccessDim::PRE_NEURON) && (m_Dims & VarAccessDim::POST_NEURON);
-
-    if(synaptic) {
-        // Give error if references point to different synapse groups
-    // **NOTE** this could be relaxed for dense
-    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                   [this](const auto &v) 
-                   { 
-                       return (v.second.getSynapseGroup() != m_SynapseGroup); 
-                   }))
-    {
-        throw std::runtime_error("All referenced variables must belong to the same synapse group.");
-    }
-
-    // If this is a transpose operation
-    if(isTransposeOperation()) {
-        // Check that it isn't also a reduction
-        if(isBatchReduction()) {
-            throw std::runtime_error("Custom weight updates cannot perform both transpose and batch reduction operations.");
-        }
-
-        // Give error if any of the variable references aren't dense
-        // **NOTE** there's no reason NOT to implement sparse transpose
-        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [](const auto &v) 
-                       {
-                           return !(v.second.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
-                       }))
-        {
-            throw std::runtime_error("Custom weight updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
-        }
-
-        // If there's more than one variable with a transpose give error
-        // **NOTE** there's no reason NOT to allow multiple transposes, it just gets a little tricky with shared memory allocations
-        if(std::count_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                        [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }) > 1)
-        {
-            throw std::runtime_error("Each custom weight update can only calculate the tranpose of a single variable,");
-        }
-    }
-    }
-    else {
-    
-        m_Size = m_VarReferences.begin()->second.getSize();
-
-        // Give error if any sizes differ
-        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const auto &v) { return v.second.getSize() != m_Size; }))
-        {
-            throw std::runtime_error("All referenced variables must have the same size.");
-        }
-    }
-
-
-   
     // Loop through all extra global parameter references
     for (const auto &modelEGPRef : getCustomUpdateModel()->getExtraGlobalParamRefs()) {
         const auto egpRef = egpReferences.at(modelEGPRef.name);
@@ -138,6 +66,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
             throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
         }
     }
+
     // Scan custom update model code string
     m_UpdateCodeTokens = Utils::scanCode(getCustomUpdateModel()->getUpdateCode(), 
                                          "Custom update '" + getName() + "' update code");
@@ -157,19 +86,112 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
         v.second.finalise(dt);
     }
 
-    
-    // If any variable references have delays
-    auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                                 [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
-    if(delayRef != m_VarReferences.cend()) {
-        // Set the delay neuron group 
-        m_DelayNeuronGroup = delayRef->second.getDelayNeuronGroup();
+    // Loop through variable references and or together their dimensions to get dimensionality of update
+    // **NOTE** this must be done at finalise-time as custom updates need to be sorted 
+    // in dependency order so references between them are correctly resolves
+    for(const auto &v : m_VarReferences) {
+        m_Dims = m_Dims | v.second.getVarDims();
+    }
 
-        // If any of the variable references are delayed with a different group, give an error
-        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [this](const auto &v) { return (v.second.getDelayNeuronGroup() != nullptr) && (v.second.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
+    // **TODO** we need to 'unify' dimensions so NEURON|POST_NEURON becomes PRE_NEURON|POST_NEURON if 
+
+    // Loop through all variable references
+    for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+        const auto varRef = getVarReferences().at(modelVarRef.name);
+
+        // If the shape of the references variable doesn't match the dimensionality 
+        // of the custom update, check its access mode isn't read-write
+        if((m_Dims != varRef.getVarDims())
+            && (modelVarRef.access == VarAccessMode::READ_WRITE))
         {
-            throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
+            throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
+        }
+    }
+
+    // If custom update is synaptic i.e. across both pre and postsynaptic axes
+    if(isSynaptic()) {
+        // **TODO** check any non-synaptic variables/var references are read-only
+        
+        // If model specifies reduction operations but none are correctly configured
+        if(isModelReduction() && !isReduction(VarAccessDim::BATCH)) {
+            throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
+        }
+
+        // Give error if references point to different synapse groups
+        // **NOTE** this could be relaxed for dense
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [this](const auto &v) 
+                       { 
+                           return (v.second.getSynapseGroup() != m_SynapseGroup); 
+                       }))
+        {
+            throw std::runtime_error("All referenced variables must belong to the same synapse group.");
+        }
+
+        // If this is a transpose operation
+        if(isTransposeOperation()) {
+            // Check that it isn't also a reduction
+            if(isReduction(VarAccessDim::BATCH)) {
+                throw std::runtime_error("Custom weight updates cannot perform both transpose and batch reduction operations.");
+            }
+
+            // Give error if any of the variable references aren't dense
+            // **NOTE** there's no reason NOT to implement sparse transpose
+            if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                           [](const auto &v) 
+                           {
+                               return !(v.second.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
+                           }))
+            {
+                throw std::runtime_error("Custom weight updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
+            }
+
+            // If there's more than one variable with a transpose give error
+            // **NOTE** there's no reason NOT to allow multiple transposes, it just gets a little tricky with shared memory allocations
+            if(std::count_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                            [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }) > 1)
+            {
+                throw std::runtime_error("Each custom weight update can only calculate the tranpose of a single variable,");
+            }
+        }
+    }
+    // Otherwise, it's across a single axis
+    else {
+        // Get size of first variable reference
+        m_Size = m_VarReferences.begin()->second.getSize();
+        assert(m_Size.has_value());
+
+        // Give error if any sizes differ
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [this](const auto &v) { return v.second.getSize() != m_Size; }))
+        {
+            throw std::runtime_error("All referenced variables must have the same size.");
+        }
+
+        // Check only one type of reduction is specified
+        const bool batchReduction = isReduction(VarAccessDim::BATCH);
+        const bool neuronReduction = isReduction(VarAccessDim::NEURON);
+        if (batchReduction && neuronReduction) {
+            throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
+        }
+        // Otherwise, if model specifies reduction operations but none are correctly configured
+        else if(isModelReduction() && !batchReduction && !neuronReduction) {
+            throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
+        }
+
+        // If any variable references have delays
+        auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                                     [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
+        if(delayRef != m_VarReferences.cend()) {
+            // Set the delay neuron group 
+            m_DelayNeuronGroup = delayRef->second.getDelayNeuronGroup();
+
+            // If any of the variable references are delayed with a different group, give an error
+            if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                           [this](const auto &v) { return (v.second.getDelayNeuronGroup() != nullptr) && (v.second.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
+            {
+                throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
+            }
         }
     }
 }
@@ -222,17 +244,21 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(getDims(), hash);
 
-    //Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    //Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    // If custom update is synaptic
+    if(isSynaptic()) {
+        Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
+        Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    }
+    else {
+        // Update hash with whether delay is required
+        const bool delayed = (getDelayNeuronGroup() != nullptr);
+        Utils::updateHash(delayed, hash);
 
-    // Update hash with whether delay is required
-    //const bool delayed = (getDelayNeuronGroup() != nullptr);
-    //Utils::updateHash(delayed, hash);
-
-    // If it is, also update hash with number of delay slots
-    //if(delayed) {
-    //    Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
-    //}
+        // If it is, also update hash with number of delay slots
+        if(delayed) {
+            Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
+        }
+    }
 
     // Loop through variable references
     for(const auto &v : getVarReferences()) {
@@ -246,7 +272,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
         Utils::updateHash(v.second.getVarDims(), hash);
     }
 
-    return hash.getDigest();
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
@@ -255,8 +281,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
     Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
     Utils::updateHash(getDims(), hash);
 
-    //Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    //Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    if(isSynaptic()) {
+        Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
+        Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    }
 
     // Include variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {
@@ -264,7 +292,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
 
-    return hash.getDigest();
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdate::getVarLocationHashDigest() const
@@ -320,49 +348,4 @@ std::vector<CustomUpdate*> CustomUpdate::getReferencedCustomUpdates() const
     // Return set
     return references;
 }
-
-//----------------------------------------------------------------------------
-// CustomUpdate
-//----------------------------------------------------------------------------
-CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
-{
-   
-    // Check only one type of reduction is specified
-    const bool batchReduction = isBatchReduction();
-    const bool neuronReduction = isNeuronReduction();
-    if (batchReduction && neuronReduction) {
-        throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
-    }
-    // Otherwise, if model specifies reduction operations but none are correctly configured
-    else if(isModelReduction() && !batchReduction && !neuronReduction) {
-        throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
-    }
-
-    
-}
-//----------------------------------------------------------------------------
-// GeNN::CustomUpdateWU
-//----------------------------------------------------------------------------
-CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                               const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                               const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                               const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
-{
-    
-    // If model specifies reduction operations but none are correctly configured
-    if(isModelReduction() && !isBatchReduction()) {
-        throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
-    }
-
-}
-
-
-
 }   // namespace GeNN

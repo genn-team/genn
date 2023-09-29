@@ -20,7 +20,7 @@ namespace GeNN
 class GENN_EXPORT CustomUpdate
 {
 public:
-    CustomUpdate(const CustomUpdateBase &) = delete;
+    CustomUpdate(const CustomUpdate &) = delete;
     CustomUpdate() = delete;
 
     //------------------------------------------------------------------------
@@ -50,11 +50,6 @@ public:
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
-    //! Get dimensions of this custom update
-    VarAccessDim getDims() const{ return m_Dims; }
-
-    std::optional<unsigned int> getSize() const { return m_Size; }
-
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                  const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
@@ -64,7 +59,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalise(double dt);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -79,6 +74,16 @@ protected:
     bool isModelReduction() const;
 
     bool isTransposeOperation() const;
+
+    //! Get dimensions of this custom update
+    VarAccessDim getDims() const{ return m_Dims; }
+
+    //! Is this custom update synaptic? i.e. has pre and postsynaptic neuron dimensions
+    bool isSynaptic() const{ return ((getDims() & VarAccessDim::PRE_NEURON) && (getDims() & VarAccessDim::POST_NEURON)); }
+
+    //! Get size of this custom update
+    /*! Only non-synaptic custom updates have size */
+    std::optional<unsigned int> getSize() const { return m_Size; }
 
      //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -95,6 +100,9 @@ protected:
     bool isReduction(VarAccessDim reduceDim) const;
 
     std::vector<CustomUpdate*> getReferencedCustomUpdates() const;
+
+    const NeuronGroup *getDelayNeuronGroup() const{ return m_DelayNeuronGroup; }
+    const SynapseGroupInternal *getSynapseGroup() const{ return m_SynapseGroup; }
 
 private:
     //------------------------------------------------------------------------
@@ -125,7 +133,7 @@ private:
 
     std::optional<unsigned int> m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
-    const SynapseGroup *m_SynapseGroup;
+    const SynapseGroupInternal *m_SynapseGroup;
 };
 
 }   // namespace GeNN

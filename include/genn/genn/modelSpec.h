@@ -46,7 +46,6 @@ namespace GeNN
 using ParamValues = std::unordered_map<std::string, double>;
 using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
-using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
 using EGPReferences = std::unordered_map<std::string, Models::EGPReference>;
 
 //! Initialise a variable using an initialisation snippet
@@ -141,16 +140,10 @@ inline Models::VarReference createVarRef(CustomUpdate *cu, const std::string &va
     return Models::VarReference::createVarRef(cu, varName);
 }
 
-//! Creates a reference to a presynaptic custom connectivity update variable
-inline Models::VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
+//! Creates a reference to a custom connectivity update variable
+inline Models::VarReference createVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
-    return Models::VarReference::createPreVarRef(cu, varName);
-}
-
-//! Creates a reference to a postsynaptic custom connectivity update variable
-inline Models::VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
-{
-    return Models::VarReference::createPostVarRef(cu, varName);
+    return Models::VarReference::createVarRef(cu, varName);
 }
 
 //! Creates a reference to a postsynaptic model variable
@@ -159,35 +152,11 @@ inline Models::VarReference createPSMVarRef(SynapseGroup *sg, const std::string 
     return Models::VarReference::createPSMVarRef(sg, varName);
 }
 
-//! Creates a reference to a weight update model presynaptic variable
-inline Models::VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
-{
-    return Models::VarReference::createWUPreVarRef(sg, varName);
-}
-
-//! Creates a reference to a weight update model postsynapticvariable
-inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
-{
-    return Models::VarReference::createWUPostVarRef(sg, varName);
-}
-
 //! Creates a reference to a weight update model variable
-inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
-                                             SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
+inline Models::VarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
+                                           SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
-    return Models::WUVarReference::createWUVarReference(sg, varName, transposeSG, transposeVarName);
-}
-
-//! Creates a reference to a custom weight update variable
-inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
-{
-    return Models::WUVarReference::createWUVarReference(cu, varName);
-}
-
-//! Creates a reference to a custom connectivity update update variable
-inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
-{
-    return Models::WUVarReference::createWUVarReference(cu, varName);
+    return Models::VarReference::createWUVarRef(sg, varName, transposeSG, transposeVarName);
 }
 
 //! Creates a reference to a neuron group extra global parameter
@@ -510,19 +479,6 @@ public:
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
                                   const VarReferences &varReferences, const EGPReferences &egpReferences = {});
 
-    //! Adds a new custom update with references to weight update model variable to the 
-    //! model using a custom update model managed by the user
-    /*! \param name string containing unique name of custom update
-        \param updateGroupName string containing name of group to add this custom update to
-        \param model custom update model to use for custom update.
-        \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varReferences variable references wrapped in VarReferences object.
-        \return pointer to newly created CustomUpdateBase */
-    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
-                                    const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {});
-
     //! Adds a new custom update to the model using a singleton custom update model 
     //! created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CustomUpdateModel type of custom update model (derived from CustomUpdateModels::Base).
@@ -536,25 +492,6 @@ public:
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
                                   const VarReferences &varReferences, const EGPReferences &egpReferences = {})
-    {
-        return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
-                               paramValues, varInitialisers, varReferences, egpReferences);
-    }
-
-
-    //! Adds a new custom update with references to weight update model variables to the model using a singleton 
-    //! custom update model created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
-    /*! \tparam CustomUpdateModel type of neuron model (derived from CustomUpdateModels::Base).
-        \param name string containing unique name of custom update
-        \param updateGroupName string containing name of group to add this custom update to
-        \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varInitialisers variable references wrapped in WUVarReferences object.
-        \return pointer to newly created CustomUpdateBase */
-    template<typename CustomUpdateModel>
-    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
-                                    const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {})
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
                                paramValues, varInitialisers, varReferences, egpReferences);

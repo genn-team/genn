@@ -34,25 +34,26 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
-                       [](const CustomUpdateInternal &cg) { return !Utils::areTokensEmpty(cg.getUpdateCodeTokens()); },
+                       [](const CustomUpdateInternal &cg) { return !cg.isSynaptic() && !Utils::areTokensEmpty(cg.getUpdateCodeTokens()); },
                        &CustomUpdateInternal::getHashDigest);
 
-    createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                       [](const CustomUpdateWUInternal &cg) { return !Utils::areTokensEmpty(cg.getUpdateCodeTokens()) && !cg.isTransposeOperation(); },
-                       &CustomUpdateWUInternal::getHashDigest);
+    createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateWUGroups,
+                       [](const CustomUpdateInternal &cg) { return cg.isSynaptic() && Utils::areTokensEmpty(cg.getUpdateCodeTokens()) && !cg.isTransposeOperation(); },
+                       &CustomUpdateInternal::getHashDigest);
 
-    createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
-                       [](const CustomUpdateWUInternal &cg){ return cg.isTransposeOperation(); },
-                       &CustomUpdateWUInternal::getHashDigest);
+    createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateTransposeWUGroups,
+                       [](const CustomUpdateInternal &cg){ return cg.isSynaptic() && cg.isTransposeOperation(); },
+                       &CustomUpdateInternal::getHashDigest);
 
     if(backend.isHostReductionRequired()) {
+        // **TODO** merge these
         createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                           [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
+                           [](const CustomUpdateInternal &cg) { return !cg.isSynaptic() && cg.isReduction(VarAccessDim::BATCH); },
                            &CustomUpdateInternal::getHashDigest);
 
-        createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                           [](const CustomUpdateWUInternal &cg){ return cg.isBatchReduction(); },
-                           &CustomUpdateWUInternal::getHashDigest);
+        createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
+                           [](const CustomUpdateInternal &cg){ return cg.isSynaptic() && cg.isReduction(VarAccessDim::BATCH); },
+                           &CustomUpdateInternal::getHashDigest);
     }
 
     createMergedGroups(getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdateGroups,
@@ -89,17 +90,17 @@ using namespace GeNN::CodeGenerator;
                        &NeuronGroupInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateInitGroups,
-                       [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
+                       [](const CustomUpdateInternal &cg) { return !cg.isSynaptic() && cg.isVarInitRequired(); },
                        &CustomUpdateInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateInitGroups,
-                       [](const CustomUpdateWUInternal &cg) 
+                       [](const CustomUpdateInternal &cg) 
                        {
-                           return (((cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE)
-                                   || (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL))
-                                   && cg.isVarInitRequired());
+                           return (cg.isSynaptic() && cg.isVarInitRequired()
+                                   && ((cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE)
+                                   || (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL)));
                        },
-                       &CustomUpdateWUInternal::getInitHashDigest);
+                       &CustomUpdateInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedSynapseInitGroups,
                        [](const SynapseGroupInternal &sg)
@@ -124,11 +125,12 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getWUInitHashDigest);
 
     createMergedGroups(getModel().getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
-                       [](const CustomUpdateWUInternal &cg) 
+                       [](const CustomUpdateInternal &cg) 
                        {
-                           return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); 
+                           return (cg.isSynaptic() && cg.isVarInitRequired() 
+                                   && (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)); 
                        },
-                       &CustomUpdateWUInternal::getInitHashDigest);
+                       &CustomUpdateInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomConnectivityUpdates(), m_MergedCustomConnectivityUpdatePreInitGroups,
                        [&backend](const CustomConnectivityUpdateInternal &cg) 

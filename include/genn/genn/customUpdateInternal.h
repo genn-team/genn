@@ -23,20 +23,21 @@ public:
     {
     }
 
-    using CustomUpdateBase::getDerivedParams;
-    using CustomUpdateBase::isInitRNGRequired;
-    using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::getDims;
-    using CustomUpdateBase::getVarLocationHashDigest;
-    using CustomUpdateBase::getUpdateCodeTokens;
+    using CustomUpdate::getDerivedParams;
+    using CustomUpdate::isInitRNGRequired;
+    using CustomUpdate::isZeroCopyEnabled;
+    using CustomUpdate::getDims;
+    using CustomUpdate::getVarLocationHashDigest;
+    using CustomUpdate::getUpdateCodeTokens;
 
     using CustomUpdate::finalise;
     using CustomUpdate::getHashDigest;
     using CustomUpdate::getInitHashDigest;
     using CustomUpdate::getDelayNeuronGroup;
     using CustomUpdate::getReferencedCustomUpdates;
-    using CustomUpdate::isBatchReduction;
-    using CustomUpdate::isNeuronReduction;
+    using CustomUpdate::isReduction;
+    using CustomUpdate::isSynaptic;
+    using CustomUpdate::isTransposeOperation;
 };
 
 
@@ -120,66 +121,5 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const CustomUpdateInternal &m_CU;
-};
-
-//------------------------------------------------------------------------
-// CustomUpdateInternal
-//------------------------------------------------------------------------
-class CustomUpdateWUInternal : public CustomUpdateWU
-{
-public:
-    using GroupExternal = CustomUpdateWU;
-
-    CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params, 
-                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences, 
-                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
-                       egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
-    {
-        getSynapseGroup()->addCustomUpdateReference(this);
-    }
-
-    using CustomUpdateBase::getDerivedParams;
-    using CustomUpdateBase::isInitRNGRequired;
-    using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::getDims;
-    using CustomUpdateBase::isReduction;
-    using CustomUpdateBase::getVarLocationHashDigest;
-    using CustomUpdateBase::getUpdateCodeTokens;
-    
-    using CustomUpdateWU::finalise;
-    using CustomUpdateWU::getHashDigest;
-    using CustomUpdateWU::getInitHashDigest;
-    using CustomUpdateWU::getSynapseGroup;
-    using CustomUpdateWU::getKernelSize;
-    using CustomUpdateWU::getReferencedCustomUpdates;
-    using CustomUpdateWU::isBatchReduction;
-    using CustomUpdateWU::isTransposeOperation;
-};
-
-//----------------------------------------------------------------------------
-// CustomUpdateWUVarRefAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateWUVarRefAdapter
-{
-public:
-    CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
-    {}
-
-    using RefType = Models::WUVarReference;
-
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVarRefs(); }
-
-    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateWUInternal &m_CU;
 };
 }   // namespace GeNN

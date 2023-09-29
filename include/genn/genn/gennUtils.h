@@ -64,9 +64,6 @@ GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
 //! be provided by pointer types is provided but, internally, non-pointer types are used. This handles pointer types specified by string.
 GENN_EXPORT std::string handleLegacyEGPType(const std::string &type);
 
-GENN_EXPORT std::vector<Models::Base::SynapseVar> getFilteredSynapseVars(
-    const std::vector<Models::Base::SynapseVar> &vars, bool pre, bool post);
-
 //! Checks that initialisers provided for all of the the item names in the vector?
 template<typename T, typename V>
 void validateInitialisers(const std::vector<T> &vec, const std::unordered_map<std::string, V> &values, 

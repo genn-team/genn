@@ -51,7 +51,7 @@ private:
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
+class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateInternal>
 {
 public:
     using GroupMerged::GroupMerged;
@@ -197,7 +197,7 @@ public:
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
+class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
     using CustomUpdateHostReductionGroupMergedBase::CustomUpdateHostReductionGroupMergedBase;
