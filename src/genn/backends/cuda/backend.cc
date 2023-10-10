@@ -1992,6 +1992,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
 {
     // Get size of update group start ids (constant cache is precious so don't use for init groups
     const size_t groupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
