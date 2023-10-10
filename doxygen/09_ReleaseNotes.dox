@@ -1,5 +1,23 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN 4.9.0
+====
+This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.8.1 release. 
+It is intended as the last release for GeNN 4.X.X.
+Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, development will be switching to GeNN 5.
+
+User Side Changes
+----
+1. Ability to unload PyGeNN models
+2. Added Extra Global Parameter references 
+
+Bug fixes
+---------
+1. Fixed handling of indices specified as sequences types other than numpy arrays in ``pygenn.SynapseGroup.set_sparse_connections``.
+2. Fixed constant cache estimation bug 
+3. Fixed longstanding issue with setuptools that meant pygenn sometimes had to be built twice to obtain a functional version.
+
+
 Release Notes for GeNN v4.8.1
 ====
 This release fixes a number of issues found in the 4.8.0 release and also includes some optimisation which could be very beneficial for some classes of model.

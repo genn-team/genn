@@ -29,7 +29,7 @@
 - \subpage sectCustomUpdate
 - \subpage subsect34
 - \subpage sectVariableInitialisation
-- \subpage sectVariableReferences
+- \subpage sectReferences
 - \subpage sectSparseConnectivityInitialisation
 - \subpage sectToeplitzConnectivityInitialisation
 
@@ -1087,11 +1087,13 @@ These modes can be set as a model default using ``ModelSpec::setDefaultVarLocati
 
 
 -----
-\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectVariableReferences Next\endlink
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectReferences Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
-\page sectVariableReferences Variable references
+\page sectReferences References
+
+\section sectVariableReferences Variable references
 As well as state variables, custom updates have variable references which are used to reference variables belonging to other neuron and synapse groups or even other custom updates.
 
 \add_toggle_cpp
@@ -1142,6 +1144,29 @@ After the update has run, any updates made to the 'forward' variable will also b
 \note 
 Tranposing is currently only possible on variables belonging to synapse groups with SynapseMatrixType::DENSE_INDIVIDUALG connectivity.
 
+\section sectEGPReferences Extra Global Parameter references
+
+\add_toggle_cpp
+The extra global parameter references required by a model called SetTime could be assigned to various types of extra global parameter using the following syntax:
+\code
+SetTime::EGPReferences neuronEGPReferences(createEGPRef(ng, "E"));
+SetTime::EGPReferences currentSourceEGPReferences(createEGPRef(cs, "E"));
+SetTime::EGPReferences customUpdateEGPReferences(createEGPRef(cu, "E"));
+SetTime::EGPReferences postsynapticModelEGPReferences(createPSMEGPRef(sg, "E"));
+SetTime::EGPReferences weightUpdateEGPReferences(createWUEGPRef(sg, "E")); 
+\endcode
+\end_toggle
+\add_toggle_python
+A variable reference called R could be assigned to various types of extra global parameter using the following syntax:
+\code
+neuron_egp_ref =  {"R": genn_model.create_egp_ref(ng, "E")}
+current_source_egp_ref =  {"R": genn_model.create_egp_ref(cs, "E")}
+custom_update_egp_ref = {"R": genn_model.create_egp_ref(cu, "E")}
+postsynaptic_model_egp_ref =  {"R": genn_model.create_psm_egp_ref(sg, "E")}
+weight_update_egp_ref =  {"R": genn_model.create_wu_egp_ref(sg, "E")}
+\endcode
+\end_toggle
+where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.NeuronGroup (as returned by pygenn.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.CurrentSource (as returned by pygenn.GeNNModel.add_current_source)}, cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.GeNNModel.add_custom_update)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.SynapseGroup (as returned by pygenn.GeNNModel.add_synapse_population)}.
 
 -----
 \link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
@@ -1274,7 +1299,7 @@ Once you have defined <b>how</b> sparse connectivity is going to be initialised,
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
 
 -----
-\link sectVariableReferences Previous\endlink | \link UserManual Top\endlink | \link sectToeplitzConnectivityInitialisation Next\endlink
+\link sectReferences Previous\endlink | \link UserManual Top\endlink | \link sectToeplitzConnectivityInitialisation Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
