@@ -29,7 +29,7 @@
 - \subpage sectCustomUpdate
 - \subpage subsect34
 - \subpage sectVariableInitialisation
-- \subpage sectVariableReferences
+- \subpage sectReferences
 - \subpage sectSparseConnectivityInitialisation
 - \subpage sectToeplitzConnectivityInitialisation
 
@@ -200,11 +200,11 @@ The number of current sources in a population always equals the number of neuron
 Custom updates are added with the function
 \add_toggle_code_cpp
 model.addCustomUpdate<CustomUpdateModel>(name, updateGroupName,
-                                         paramValues, varInitialisers, varReferences)
+                                         paramValues, varInitialisers, varReferences, egpReferences)
 \end_toggle_code
 \add_toggle_code_python
 model.add_custom_update(cu_name, group_name, custom_update_model,
-                        param_space, var_space, var_ref_space)
+                        param_space, var_space, var_ref_space, egp_ref_space)
 \end_toggle_code
 where the arguments are
 \arg \add_cpp_python_text{`CustomUpdateModel`: Template parameter specifying the type of custom update model. These should be derived off CustomUpdateModels::Base and can either be one of the standard models or user-defined,`custom_update_model`: The type of custom update model. This should either be a string containing the name of a built in model or user-defined custom update model returned by pygenn.genn_model.create_custom_custom_update_class} (see \ref sect_own_custom_update).
@@ -212,7 +212,8 @@ where the arguments are
 \arg \add_cpp_python_text{`const string &updateGroupName`,`group_name`}: The name of the group this custom update belongs to. Updates in each group can be launched as described in \ref Simulate.
 \arg \add_cpp_python_text{`CustomUpdateModel::ParamValues paramValues`: The, `param_space`: Dictionary containing the} parameter values (common to all custom updates in the population) for the custom update model. 
 \arg \add_cpp_python_text{`CustomUpdateModel::VarValues varInitialisers`: The, `var_space`: Dictionary containing the} initial values or initialisation snippets for the custom update model's state variables (see \ref sectVariableInitialisation)
-\arg \add_cpp_python_text{`CustomUpdateModel::VarValues varReferences`: The, `var_ref_space`: Dictionary containing the} variable references for the custom update model (see \ref sectVariableReferences)
+\arg \add_cpp_python_text{`CustomUpdateModel::VarReferences varReferences`: The, `var_ref_space`: Dictionary containing the} variable references for the custom update model (see \ref sectVariableReferences)
+\arg \add_cpp_python_text{`CustomUpdateModel::EGPReferences egpReferences`: The, `egp_ref_space`: Dictionary containing the} extra global parameter references for the custom update model (see \ref sectEGPReferences)
 
 \section batching Batching
 When running models on a GPU, smaller models may not fully occupy the device.
@@ -806,6 +807,7 @@ For convenience the methods this class should implement can be implemented using
     supported access modes are \add_cpp_python_text{VarAccessMode::READ_WRITE, pygenn.genn_wrapper.Models.VarAccessMode_READ_WRITE} \add_cpp_python_text{VarAccessMode::READ_ONLY,pygenn.genn_wrapper.Models.VarAccessMode_READ_ONLY}, \add_cpp_python_text{VarAccessMode::REDUCE_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_SUM}, \add_cpp_python_text{VarAccessMode::REDUCE_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_MAX}, \
     \add_cpp_python_text{VarAccessMode::REDUCE_NEURON_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_NEURON_SUM}
     and add_cpp_python_text{VarAccessMode::REDUCE_NEURON_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_NEURON_MAX}.
+- \add_cpp_python_text{SET_EXTRA_GLOBAL_PARAM_REFS(),`extra_global_param_refs`} defines the names and type strings (e.g. "float", "double", etc) of the extra global parameter references. The variables defined here as `NAME` can then be used in the syntax \$(NAME) in the update code string. Extra global parameter reference types must match those of the underlying extra global parameters and only pointer type extra global parameters are supported.
 - \add_cpp_python_text{SET_UPDATE_CODE(UPDATE_CODE),``update_code=UPDATE_CODE``}: where UPDATE_CODE contains the code for to perform the custom update.
 
 For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
@@ -1087,13 +1089,14 @@ These modes can be set as a model default using ``ModelSpec::setDefaultVarLocati
 
 
 -----
-\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectVariableReferences Next\endlink
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectReferences Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
-\page sectVariableReferences Variable references
-As well as state variables, custom updates have variable references which are used to reference variables belonging to other neuron and synapse groups or even other custom updates.
+\page sectReferences References
+As well as state variables, custom updates can have variable and extra global parameter references which are used to reference variables and extra global parameters belonging to other neuron and synapse groups or even other custom updates.
 
+\section sectVariableReferences Variable references
 \add_toggle_cpp
 The variable references required by a model called SetTime could be assigned to various types of variable using the following syntax:
 \code
@@ -1142,6 +1145,29 @@ After the update has run, any updates made to the 'forward' variable will also b
 \note 
 Tranposing is currently only possible on variables belonging to synapse groups with SynapseMatrixType::DENSE_INDIVIDUALG connectivity.
 
+\section sectEGPReferences Extra Global Parameter references
+
+\add_toggle_cpp
+The extra global parameter references required by a model called SetTime could be assigned to various types of extra global parameter using the following syntax:
+\code
+SetTime::EGPReferences neuronEGPReferences(createEGPRef(ng, "E"));
+SetTime::EGPReferences currentSourceEGPReferences(createEGPRef(cs, "E"));
+SetTime::EGPReferences customUpdateEGPReferences(createEGPRef(cu, "E"));
+SetTime::EGPReferences postsynapticModelEGPReferences(createPSMEGPRef(sg, "E"));
+SetTime::EGPReferences weightUpdateEGPReferences(createWUEGPRef(sg, "E")); 
+\endcode
+\end_toggle
+\add_toggle_python
+A variable reference called R could be assigned to various types of extra global parameter using the following syntax:
+\code
+neuron_egp_ref =  {"R": genn_model.create_egp_ref(ng, "E")}
+current_source_egp_ref =  {"R": genn_model.create_egp_ref(cs, "E")}
+custom_update_egp_ref = {"R": genn_model.create_egp_ref(cu, "E")}
+postsynaptic_model_egp_ref =  {"R": genn_model.create_psm_egp_ref(sg, "E")}
+weight_update_egp_ref =  {"R": genn_model.create_wu_egp_ref(sg, "E")}
+\endcode
+\end_toggle
+where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.NeuronGroup (as returned by pygenn.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.CurrentSource (as returned by pygenn.GeNNModel.add_current_source)}, cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.GeNNModel.add_custom_update)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.SynapseGroup (as returned by pygenn.GeNNModel.add_synapse_population)}.
 
 -----
 \link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
@@ -1274,7 +1300,7 @@ Once you have defined <b>how</b> sparse connectivity is going to be initialised,
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
 
 -----
-\link sectVariableReferences Previous\endlink | \link UserManual Top\endlink | \link sectToeplitzConnectivityInitialisation Next\endlink
+\link sectReferences Previous\endlink | \link UserManual Top\endlink | \link sectToeplitzConnectivityInitialisation Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
