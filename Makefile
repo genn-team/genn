@@ -73,4 +73,4 @@ clean:
 GENN_VER := $(shell cat version.txt)
 .PHONY docker-build:
 docker-build:
-	@docker build --build-arg GENN_VER=$(GENN_VER) -t genn:$(GENN_VER) .
+	@docker build --build-arg GENN_VER=$(GENN_VER) -t genn:latest .
