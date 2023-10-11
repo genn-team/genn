@@ -8,15 +8,15 @@ Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, dev
 
 User Side Changes
 ----
-1. Ability to unload PyGeNN models
-2. Added Extra Global Parameter references 
+1. Implemented ``pygenn.GeNNModel.unload`` to manually unload GeNN models to improve control in scenarios such as parameter sweeping where multiple PyGeNN models need to be instantiated.
+2. Added Extra Global Parameter references to custom updates (see \ref defining_custom_updates, \ref sect_own_custom_update and \ref sectEGPReferences).
+3. Expose \$(num_pre), \$(num_post), \$(num_batches) to all user code strings
 
 Bug fixes
 ---------
 1. Fixed handling of indices specified as sequences types other than numpy arrays in ``pygenn.SynapseGroup.set_sparse_connections``.
-2. Fixed constant cache estimation bug 
-3. Fixed longstanding issue with setuptools that meant pygenn sometimes had to be built twice to obtain a functional version.
-
+2. Fixed bug in CUDA constant cache estimation bug which could cause nvLink errors in models with learning rules which required previous spike times.
+3. Fixed longstanding issue with setuptools that meant pygenn sometimes had to be built twice to obtain a functional version. Massive thanks to Enrico Trombetta for contributing this fix.
 
 Release Notes for GeNN v4.8.1
 ====
