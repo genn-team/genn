@@ -70,6 +70,7 @@ clean:
 	@rm -f $(LIBGENN)
 	@rm -f $(BACKEND_LIBS)
 
+GENN_VER := $(shell cat version.txt)
 .PHONY docker-build:
 docker-build:
-	@docker build -t genn:latest .
+	@docker build --build-arg GENN_VER=$(GENN_VER) -t genn:latest .
