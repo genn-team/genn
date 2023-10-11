@@ -92,6 +92,23 @@ enum class CustomUpdateVarAccess : unsigned int
     REDUCE_NEURON_MAX           = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::NEURON),
 };
 
+//! Supported combinations of access mode and dimension for custom connectivity update variables
+/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
+enum class CustomConnectivityUpdateVarAccess : unsigned int
+{
+    // Variables with same shape as groups custom update is attached to
+    READ_WRITE                  = static_cast<unsigned int>(VarAccessMode::READ_WRITE),
+    READ_ONLY                   = static_cast<unsigned int>(VarAccessMode::READ_ONLY),
+
+    // Presynaptic variables
+    READ_WRITE_PRE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::POST_NEURON),
+    READ_ONLY_PRE               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::POST_NEURON),
+    
+    // Postsynaptic variables
+    READ_WRITE_POST             = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON),
+    READ_ONLY_POST              = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::PRE_NEURON),
+};
+
 //----------------------------------------------------------------------------
 // Operators
 //----------------------------------------------------------------------------
@@ -111,6 +128,11 @@ inline bool operator & (SynapseVarAccess mode, VarAccessModeAttribute modeAttrib
 }
 
 inline bool operator & (CustomUpdateVarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
+
+inline bool operator & (CustomConnectivityUpdateVarAccess mode, VarAccessModeAttribute modeAttribute)
 {
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
@@ -145,6 +167,13 @@ inline VarAccessDim getVarAccessDim(SynapseVarAccess v)
 
 inline VarAccessDim getVarAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
 {
+    // **TODO** check that dimension we're clearing is present
+    return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
+}
+
+inline VarAccessDim getVarAccessDim(CustomConnectivityUpdateVarAccess v, VarAccessDim popDims)
+{
+    // **TODO** check that dimension we're clearing is present
     return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
 }
 

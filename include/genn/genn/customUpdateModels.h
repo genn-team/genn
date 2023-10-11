@@ -7,7 +7,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
+#define SET_CUSTOM_UPDATE_VAR_REFS(...) virtual std::vector<CustomUpdateVarRef> getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAM_REFS(...) virtual EGPRefVec getExtraGlobalParamRefs() const override{ return __VA_ARGS__; }
 #define SET_UPDATE_CODE(UPDATE_CODE) virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }
 
@@ -28,7 +28,7 @@ public:
     virtual std::vector<CustomUpdateVar> getVars() const{ return {}; }
 
     //! Gets names and typesn of model variable references
-    virtual VarRefVec getVarRefs() const{ return {}; }
+    virtual std::vector<CustomUpdateVarRef> getVarRefs() const{ return {}; }
 
     //! Gets names and types of model extra global parameter references
     virtual EGPRefVec getExtraGlobalParamRefs() const { return {}; }

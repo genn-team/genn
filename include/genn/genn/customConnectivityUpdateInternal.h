@@ -17,11 +17,10 @@ public:
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
                                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                     const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                     const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
+                                     const std::unordered_map<std::string, Models::VarReference> &varReferences, VarLocation defaultVarLocation,
                                      VarLocation defaultExtraGlobalParamLocation)
     :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers,
-                                 varReferences, preVarReferences, postVarReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
+                                 varReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
         getSynapseGroup()->addCustomUpdateReference(this);
     }

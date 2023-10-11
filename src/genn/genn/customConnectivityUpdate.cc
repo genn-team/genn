@@ -73,8 +73,7 @@ bool CustomConnectivityUpdate::isPostVarInitRequired() const
 CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                                                    const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                                   const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                                   const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
+                                                   const std::unordered_map<std::string, Models::VarReference> &varReferences, VarLocation defaultVarLocation,
                                                    VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_SynapseGroup(synapseGroup), m_CustomConnectivityUpdateModel(customConnectivityUpdateModel),
     m_Params(params), m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
@@ -87,8 +86,7 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     Utils::validatePopName(name, "Custom connectivity update");
     Utils::validatePopName(updateGroupName, "Custom connectivity update group name");
     getCustomConnectivityUpdateModel()->validate(getParams(), getVarInitialisers(), 
-                                                 getVarReferences(), getPreVarReferences(),
-                                                 getPostVarReferences(), "Custom connectivity update " + getName());
+                                                 getVarReferences(), "Custom connectivity update " + getName());
 
     // Scan custom connectivity update model code strings
     m_RowUpdateCodeTokens = Utils::scanCode(getCustomConnectivityUpdateModel()->getRowUpdateCode(), 
@@ -103,8 +101,6 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
 
     // Check variable reference types
     Models::checkVarReferenceTypes(m_VarReferences, getCustomConnectivityUpdateModel()->getVarRefs());
-    Models::checkVarReferenceTypes(m_PreVarReferences, getCustomConnectivityUpdateModel()->getPreVarRefs());
-    Models::checkVarReferenceTypes(m_PostVarReferences, getCustomConnectivityUpdateModel()->getPostVarRefs());
 
     // Give error if any WU var references aren't pointing to synapse group
     if (std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -196,7 +192,7 @@ bool CustomConnectivityUpdate::isZeroCopyEnabled() const
     return false;
 }
 //------------------------------------------------------------------------
-std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariables() const
+std::vector<Models::VarReference> CustomConnectivityUpdate::getDependentVariables() const
 {
     // Build set of 'manual' variable references
     // If variables are already referenced by this mechanism they shouldn't be included in dependent variables

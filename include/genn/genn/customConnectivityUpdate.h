@@ -40,9 +40,7 @@ public:
     const std::unordered_map<std::string, double> &getParams() const { return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
 
-    const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
-    const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
-    const std::unordered_map<std::string, Models::VarReference> &getPostVarReferences() const{ return m_PostVarReferences;  }
+    const std::unordered_map<std::string, Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
 
     //! Get variable location for synaptic state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -60,8 +58,7 @@ protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                              const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                             const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                             const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
+                             const std::unordered_map<std::string, Models::VarReference> &varReferences, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -81,7 +78,7 @@ protected:
     //! Get vector of group names and variables in synapse groups, custom updates and other 
     //! custom connectivity updates which are attached to the same sparse connectivity this 
     //! custom connectivty update will update and thus will need modifying when we add and remove synapses
-    std::vector<Models::WUVarReference> getDependentVariables() const;
+    std::vector<Models::VarReference> getDependentVariables() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -126,9 +123,7 @@ private:
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
 
-    const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
-    const std::unordered_map<std::string, Models::VarReference> m_PreVarReferences;
-    const std::unordered_map<std::string, Models::VarReference> m_PostVarReferences;
+    const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;

@@ -57,14 +57,14 @@ public:
     template<typename A>
     struct VarBase
     {
+        using AccessType = A;
+
         VarBase(const std::string &n, const Type::ResolvedType &t, A a)
         :   name(n), type(t), access(a)
         {}
         VarBase(const std::string &n, const std::string &t, A a)
         :   name(n), type(t), access(a)
         {}
-
-        using AccessType = A;
         
         bool operator == (const VarBase &other) const
         {
@@ -112,21 +112,60 @@ public:
         {}
     };
 
-    struct GENN_EXPORT VarRef
+    struct CustomConnectivityUpdateVar : public VarBase<CustomConnectivityUpdateVarAccess>
     {
-        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        using VarBase<CustomConnectivityUpdateVarAccess>::VarBase;
+
+        CustomConnectivityUpdateVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, CustomConnectivityUpdateVarAccess::READ_WRITE)
         {}
-        VarRef(const std::string &n, const std::string &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        CustomConnectivityUpdateVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, CustomConnectivityUpdateVarAccess::READ_WRITE)
+        {}
+    };
+
+    template<typename A>
+    struct VarRefBase
+    {
+        using AccessType = A;
+
+        VarRefBase(const std::string &n, const Type::ResolvedType &t, A a) : name(n), type(t), access(a)
+        {}
+        VarRefBase(const std::string &n, const std::string &t, A a) : name(n), type(t), access(a)
         {}
         
-        bool operator == (const VarRef &other) const
+        bool operator == (const VarRefBase &other) const
         {
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
         Type::UnresolvedType type;
-        VarAccessMode access;
+        A access;
+    };
+
+    struct CustomUpdateVarRef : public VarRefBase<CustomUpdateVarAccess>
+    {
+        using VarRefBase<CustomUpdateVarAccess>::VarRefBase;
+
+        CustomUpdateVarRef(const std::string &n, const Type::ResolvedType &t) 
+        :   VarRefBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+        CustomUpdateVarRef(const std::string &n, const std::string &t) 
+        :   VarRefBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+    };
+
+    struct CustomConnectivityUpdateVarRef : public VarRefBase<CustomConnectivityUpdateVarAccess>
+    {
+        using VarRefBase<CustomConnectivityUpdateVarAccess>::VarRefBase;
+
+        CustomConnectivityUpdateVarRef(const std::string &n, const Type::ResolvedType &t) 
+        :   VarRefBase(n, t, CustomConnectivityUpdateVarAccess::READ_WRITE)
+        {}
+        CustomConnectivityUpdateVarRef(const std::string &n, const std::string &t) 
+        :   VarRefBase(n, t, CustomConnectivityUpdateVarAccess::READ_WRITE)
+        {}
     };
 
     struct GENN_EXPORT EGPRef
@@ -147,7 +186,6 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
 
 protected:
