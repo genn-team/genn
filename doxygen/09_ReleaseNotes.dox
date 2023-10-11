@@ -18,6 +18,10 @@ Bug fixes
 2. Fixed bug in CUDA constant cache estimation bug which could cause nvLink errors in models with learning rules which required previous spike times.
 3. Fixed longstanding issue with setuptools that meant pygenn sometimes had to be built twice to obtain a functional version. Massive thanks to Enrico Trombetta for contributing this fix.
 
+Optimisations
+-------------
+1. Reduced the number of layers and generally optimised Docker image. Massive thanks to Benjamin Evans for his work on this.
+
 Release Notes for GeNN v4.8.1
 ====
 This release fixes a number of issues found in the 4.8.0 release and also includes some optimisation which could be very beneficial for some classes of model.
