@@ -2,11 +2,12 @@ var classCustomUpdateBase =
 [
     [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#aad47959474b3b3b16a600abd6ca6e0f3", null ],
     [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#a42ac348785fa7113e0ef8685575e2e8c", null ],
-    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#abb63e2c199fd58ebf8152e0bd7a085c2", null ],
+    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#a84f25633e4ecd51b40701593b2f58a2e", null ],
     [ "checkVarReferenceBatching", "da/da9/classCustomUpdateBase.html#a296997a7b32fdd67faa33a46dcd96cd3", null ],
     [ "checkVarReferences", "da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166", null ],
     [ "getCustomUpdateModel", "da/da9/classCustomUpdateBase.html#ab9802e15bf999e14d3074099f5327324", null ],
     [ "getDerivedParams", "da/da9/classCustomUpdateBase.html#ab7389840388acb8b146f877c4337fe58", null ],
+    [ "getEGPReferences", "da/da9/classCustomUpdateBase.html#a4358fbfba578cd969e9b4f422c4b287d", null ],
     [ "getName", "da/da9/classCustomUpdateBase.html#a35919a4e5d5d865c3678534fa987e8a8", null ],
     [ "getParams", "da/da9/classCustomUpdateBase.html#a18de527e24453617ab10c333c22159bb", null ],
     [ "getUpdateGroupName", "da/da9/classCustomUpdateBase.html#a9764365eec5330eb9f92e475be1b55d0", null ],

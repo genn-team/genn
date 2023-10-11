@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,25 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.8.1 </h1>
+<div class="textblock"><h1>Release Notes for GeNN 4.9.0 </h1>
+<p>This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.8.1 release. It is intended as the last release for GeNN 4.X.X. Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, development will be switching to GeNN 5.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Implemented <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a48bfee1914ba06c6ebcfa69cf3b9b02b">pygenn.GeNNModel.unload</a></code> to manually unload GeNN models to improve control in scenarios such as parameter sweeping where multiple PyGeNN models need to be instantiated.</li>
+<li>Added Extra Global Parameter references to custom updates (see <a class="el" href="../../df/dc3/sectDefiningNetwork.html#defining_custom_updates">Defining custom updates</a>, <a class="el" href="../../d7/d98/sectCustomUpdate.html#sect_own_custom_update">Defining your own custom update model</a> and <a class="el" href="../../de/d23/sectReferences.html#sectEGPReferences">Extra Global Parameter references</a>).</li>
+<li>Expose $(num_pre), $(num_post), $(num_batches) to all user code strings</li>
+</ol>
+<h2>Bug fixes </h2>
+<ol type="1">
+<li>Fixed handling of indices specified as sequences types other than numpy arrays in <code><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a89c87f35af246051db899da4c6b5caf3" title="Set ragged format connections between two groups of neurons. ">pygenn.SynapseGroup.set_sparse_connections</a></code>.</li>
+<li>Fixed bug in CUDA constant cache estimation bug which could cause nvLink errors in models with learning rules which required previous spike times.</li>
+<li>Fixed longstanding issue with setuptools that meant pygenn sometimes had to be built twice to obtain a functional version. Massive thanks to Enrico Trombetta for contributing this fix.</li>
+</ol>
+<h2>Optimisations </h2>
+<ol type="1">
+<li>Reduced the number of layers and generally optimised Docker image. Massive thanks to Benjamin Evans for his work on this.</li>
+</ol>
+<h1>Release Notes for GeNN v4.8.1 </h1>
 <p>This release fixes a number of issues found in the 4.8.0 release and also includes some optimisation which could be very beneficial for some classes of model.</p>
 <h2>Bug fixes </h2>
 <ol type="1">
@@ -180,7 +198,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>As well as being able to read the current spikes via the <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#af331b05c1525ca3cafc9f006d88d1746" title="Current spikes from GeNN. ">pygenn.NeuronGroup.current_spikes</a> property, they can now also be set.</li>
 <li>Spike-like events were previously not exposed to PyGeNN. These can now be pushed and pulled via <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a01125bedab7c0776fc45e12088a2ac05" title="Wrapper around GeNNModel.pull_spike_events_from_device. ">pygenn.NeuronGroup.pull_spike_events_from_device</a>, <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#aa159646c3b4d9ac4e7d991d14b3c9081" title="Wrapper around GeNNModel.push_spike_events_to_device. ">pygenn.NeuronGroup.push_spike_events_to_device</a>, <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#adb22e6e287b372d9d067fdee0beedd2e" title="Wrapper around GeNNModel.pull_current_spike_events_from_device. ">pygenn.NeuronGroup.pull_current_spike_events_from_device</a> and <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#af8bcf982d050a412941e087e9f0c81d8" title="Wrapper around GeNNModel.push_current_spike_events_to_device. ">pygenn.NeuronGroup.push_current_spike_events_to_device</a>; and accessed via <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a872c1580a3b8848f6d7685e81a9937b0" title="Current spike events from GeNN. ">pygenn.NeuronGroup.current_spike_events</a>.</li>
 <li>Added additional error handling to prevent properties of pygenn.GeNNModel that can only be set before the model was built being set afterwards.</li>
-<li>Variable references can now reference custom update variables (see <a class="el" href="../../de/d71/sectVariableReferences.html">Variable references</a>).</li>
+<li>Variable references can now reference custom update variables (see <a class="el" href="../../de/d23/sectReferences.html#sectVariableReferences">Variable references</a>).</li>
 <li>Updated the default parameters used in the MBody1 example to be more sensible.</li>
 </ol>
 <h2>Bug fixes: </h2>
@@ -615,7 +633,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:24 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:15 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

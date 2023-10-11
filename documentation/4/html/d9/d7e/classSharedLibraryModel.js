@@ -7,6 +7,7 @@ var classSharedLibraryModel =
     [ "allocateExtraGlobalParam", "d9/d7e/classSharedLibraryModel.html#a8500728c95b4d48ddd600456ea23ee28", null ],
     [ "allocateMem", "d9/d7e/classSharedLibraryModel.html#a1d7f439db16acbf066a76bc2be30075d", null ],
     [ "allocateRecordingBuffers", "d9/d7e/classSharedLibraryModel.html#aa83c34895e08008e7c67357a3f7c8301", null ],
+    [ "close", "d9/d7e/classSharedLibraryModel.html#ab19fac39945ed2aa3c4f240ae01480bc", null ],
     [ "customUpdate", "d9/d7e/classSharedLibraryModel.html#acb126198e455de0c9b3eb2dc1a99e6c5", null ],
     [ "freeExtraGlobalParam", "d9/d7e/classSharedLibraryModel.html#a22329447b2a6ef50ac0bec7e7f79a346", null ],
     [ "freeExtraGlobalParam", "d9/d7e/classSharedLibraryModel.html#a8bea2b336a4a5e95d32ec24893c343ab", null ],

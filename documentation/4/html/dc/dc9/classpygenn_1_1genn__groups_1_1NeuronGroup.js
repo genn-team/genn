@@ -34,6 +34,7 @@ var classpygenn_1_1genn__groups_1_1NeuronGroup =
     [ "spike_recording_data", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a983894b5a8c49e837820ea7065d17e10", null ],
     [ "spike_recording_enabled", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a040c63d3c2e9d9227ceec3644609d2d5", null ],
     [ "spike_recording_enabled", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0bc1278bca4c5cd0ef85c43cd6160ab2", null ],
+    [ "unload", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#abccfc69e72bf18846a418c4082f283a5", null ],
     [ "neuron", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ad69938b27e2ae30629c960edd5e1bafa", null ],
     [ "pop", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4a569b27b4c1517027d02a588079091b", null ],
     [ "prev_spike_event_times", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a14f6fe0c9b18107a45243fe83df778e0", null ],

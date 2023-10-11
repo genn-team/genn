@@ -1,6 +1,6 @@
 var classCustomUpdate =
 [
-    [ "CustomUpdate", "d7/d60/classCustomUpdate.html#a20a93aa4231102a22595cdc3343d4f06", null ],
+    [ "CustomUpdate", "d7/d60/classCustomUpdate.html#a343048799394a0a91ed897ed7adbf8b1", null ],
     [ "finalize", "d7/d60/classCustomUpdate.html#a4e357e11a354b05ab0d437910b72688a", null ],
     [ "getDelayNeuronGroup", "d7/d60/classCustomUpdate.html#ac872e0f3c3b6e2d5b10740320ab6bd09", null ],
     [ "getHashDigest", "d7/d60/classCustomUpdate.html#a221560f977b7a1af7d901df3367e0473", null ],

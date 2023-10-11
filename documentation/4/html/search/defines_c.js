@@ -15,6 +15,7 @@ var searchData=
   ['set_5fdiagonal_5fbuild_5fstate_5fvars',['SET_DIAGONAL_BUILD_STATE_VARS',['../d4/dad/initToeplitzConnectivitySnippet_8h.html#ae1c0bf8e1ae97236ad971455cf47982a',1,'initToeplitzConnectivitySnippet.h']]],
   ['set_5fevent_5fcode',['SET_EVENT_CODE',['../dc/dab/weightUpdateModels_8h.html#a8159c6f595e865d6bf609f045c07361e',1,'weightUpdateModels.h']]],
   ['set_5fevent_5fthreshold_5fcondition_5fcode',['SET_EVENT_THRESHOLD_CONDITION_CODE',['../dc/dab/weightUpdateModels_8h.html#a9e0fecc624daee536a388777788cd9de',1,'weightUpdateModels.h']]],
+  ['set_5fextra_5fglobal_5fparam_5frefs',['SET_EXTRA_GLOBAL_PARAM_REFS',['../d3/df5/customUpdateModels_8h.html#abb9f5b029621a40ae8943d6696740888',1,'customUpdateModels.h']]],
   ['set_5fextra_5fglobal_5fparams',['SET_EXTRA_GLOBAL_PARAMS',['../de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071',1,'snippet.h']]],
   ['set_5fhost_5finit_5fcode',['SET_HOST_INIT_CODE',['../de/d51/initSparseConnectivitySnippet_8h.html#a0ca9368168c21395871f838a9280db3c',1,'initSparseConnectivitySnippet.h']]],
   ['set_5finjection_5fcode',['SET_INJECTION_CODE',['../da/d49/currentSourceModels_8h.html#adf53ca7b56294cfcca6f22ddfd1daf4f',1,'currentSourceModels.h']]],

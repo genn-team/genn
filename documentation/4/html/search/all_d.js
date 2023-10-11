@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['kernel',['Kernel',['../df/d7b/classInitVarSnippet_1_1Kernel.html',1,'InitVarSnippet::Kernel'],['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61',1,'CodeGenerator::Kernel()'],['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa35c10219c45ccfb5b07444fd7e17214c',1,'KERNEL():&#160;synapseMatrixType.h']]],
+  ['kernel',['Kernel',['../df/d7b/classInitVarSnippet_1_1Kernel.html',1,'InitVarSnippet::Kernel'],['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa35c10219c45ccfb5b07444fd7e17214c',1,'KERNEL():&#160;synapseMatrixType.h'],['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61',1,'CodeGenerator::Kernel()']]],
   ['kernelblocksize',['KernelBlockSize',['../d0/d02/namespaceCodeGenerator.html#a8d84e884450f8a7a0b2e6195ba046b7e',1,'CodeGenerator']]],
   ['kernelcustomtransposeupdate',['KernelCustomTransposeUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a64977076a17c7448e110f8323f2f8250',1,'CodeGenerator']]],
   ['kernelcustomupdate',['KernelCustomUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a9b14cc8680225688918636765a5c0141',1,'CodeGenerator']]],

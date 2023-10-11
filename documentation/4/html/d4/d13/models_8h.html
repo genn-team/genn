@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -123,6 +123,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/daf/structModels_1_1Base_1_1VarRef.html">Models::Base::VarRef</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d58/structModels_1_1Base_1_1EGPRef.html">Models::Base::EGPRef</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html">Models::VarReferenceBase</a></td></tr>
@@ -130,6 +132,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">Models::EGPReference</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -161,6 +165,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memTemplParams" colspan="2">template&lt;size_t NumVars&gt; </td></tr>
 <tr class="memitem:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#af21fe15595e4e0ded13ecf3a0ef78e42">Models::WUVarReferenceContainerBase</a> = <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt; WUVarReference, NumVars &gt;</td></tr>
 <tr class="separator:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82dd26f55fb63cf608afdb2b43413d6f"><td class="memTemplParams" colspan="2">template&lt;size_t NumEGPs&gt; </td></tr>
+<tr class="memitem:a82dd26f55fb63cf608afdb2b43413d6f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a82dd26f55fb63cf608afdb2b43413d6f">Models::EGPReferenceContainerBase</a> = <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt; EGPReference, NumEGPs &gt;</td></tr>
+<tr class="separator:a82dd26f55fb63cf608afdb2b43413d6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -168,10 +175,14 @@ Functions</h2></td></tr>
 <tr class="separator:a894a4d3698fd28cb70725dcf018af320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae34fbe09a870f56771c40d0f82f23e3b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#ae34fbe09a870f56771c40d0f82f23e3b">Models::updateHash</a> (const <a class="el" href="../../d1/daf/structModels_1_1Base_1_1VarRef.html">Base::VarRef</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
 <tr class="separator:ae34fbe09a870f56771c40d0f82f23e3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72d87145dc92c445c4ef46c02c9b994c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a72d87145dc92c445c4ef46c02c9b994c">Models::updateHash</a> (const <a class="el" href="../../d7/d58/structModels_1_1Base_1_1EGPRef.html">Base::EGPRef</a> &amp;e, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a72d87145dc92c445c4ef46c02c9b994c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b20b6197ac56a8b3e9a26b70e1b86ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a5b20b6197ac56a8b3e9a26b70e1b86ef">Models::updateHash</a> (const <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
 <tr class="separator:a5b20b6197ac56a8b3e9a26b70e1b86ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b2b07b7cca0433e766bb778a7cf30fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a8b2b07b7cca0433e766bb778a7cf30fd">Models::updateHash</a> (const <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
 <tr class="separator:a8b2b07b7cca0433e766bb778a7cf30fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa904a0f8669011b47ec9a54081f13b22"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#aa904a0f8669011b47ec9a54081f13b22">Models::updateHash</a> (const <a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">EGPReference</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:aa904a0f8669011b47ec9a54081f13b22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ae0c817e85c196f39cf62d608883cda13"></a>
@@ -254,7 +265,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../d4/d13/models_8h.html">models.h</a></li>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:24 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:15 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

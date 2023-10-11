@@ -65,5 +65,6 @@ var searchData=
   ['role',['Role',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['row_5flengths',['row_lengths',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#adeae076892f9c8028bb381f4691ce6c3',1,'pygenn::genn_groups::SynapseGroup']]],
   ['rulkovmap',['RulkovMap',['../db/d23/classNeuronModels_1_1RulkovMap.html',1,'NeuronModels']]],
-  ['runtools',['runTools',['../d4/d40/classGenerateRunBase.html#a02db3a39c6c39f63724066a308cd7c8e',1,'GenerateRunBase']]]
+  ['runtools',['runTools',['../d4/d40/classGenerateRunBase.html#a02db3a39c6c39f63724066a308cd7c8e',1,'GenerateRunBase']]],
+  ['references',['References',['../de/d23/sectReferences.html',1,'UserManual']]]
 ];

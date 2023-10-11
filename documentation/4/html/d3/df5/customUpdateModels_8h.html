@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -123,10 +123,14 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:acb2777aee9463ed36d489705851f74ed"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#acb2777aee9463ed36d489705851f74ed">DECLARE_CUSTOM_UPDATE_MODEL</a>(<a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>,  NUM_PARAMS,  NUM_VARS,  NUM_VAR_REFS)</td></tr>
+<tr class="memitem:a9ff988a1f520f5c184762a3cdb970b3b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#a9ff988a1f520f5c184762a3cdb970b3b">DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF</a>(<a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>,  NUM_PARAMS,  NUM_VARS,  NUM_VAR_REFS,  NUM_EGP_REFS)</td></tr>
+<tr class="separator:a9ff988a1f520f5c184762a3cdb970b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb2777aee9463ed36d489705851f74ed"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#acb2777aee9463ed36d489705851f74ed">DECLARE_CUSTOM_UPDATE_MODEL</a>(<a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>,  NUM_PARAMS,  NUM_VARS,  NUM_VAR_REFS)&#160;&#160;&#160;<a class="el" href="../../d3/df5/customUpdateModels_8h.html#a9ff988a1f520f5c184762a3cdb970b3b">DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF</a>(<a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS, 0)</td></tr>
 <tr class="separator:acb2777aee9463ed36d489705851f74ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5fc31e556cfb8724ac72739462fee53"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#af5fc31e556cfb8724ac72739462fee53">SET_VAR_REFS</a>(...)&#160;&#160;&#160;virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:af5fc31e556cfb8724ac72739462fee53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb9f5b029621a40ae8943d6696740888"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#abb9f5b029621a40ae8943d6696740888">SET_EXTRA_GLOBAL_PARAM_REFS</a>(...)&#160;&#160;&#160;virtual EGPRefVec getExtraGlobalParamRefs() const override{ return __VA_ARGS__; }</td></tr>
+<tr class="separator:abb9f5b029621a40ae8943d6696740888"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d6d4a547def292ea8860a85ed80c1a7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/df5/customUpdateModels_8h.html#a8d6d4a547def292ea8860a85ed80c1a7">SET_UPDATE_CODE</a>(UPDATE_CODE)&#160;&#160;&#160;virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }</td></tr>
 <tr class="separator:a8d6d4a547def292ea8860a85ed80c1a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -164,14 +168,78 @@ Macros</h2></td></tr>
         <tr>
           <td></td>
           <td>)</td>
+          <td></td><td>&#160;&#160;&#160;<a class="el" href="../../d3/df5/customUpdateModels_8h.html#a9ff988a1f520f5c184762a3cdb970b3b">DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF</a>(<a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS, 0)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9ff988a1f520f5c184762a3cdb970b3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ff988a1f520f5c184762a3cdb970b3b">&#9670;&nbsp;</a></span>DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DECLARE_CUSTOM_UPDATE_MODEL_EGP_REF</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_PARAMS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_VARS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_VAR_REFS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_EGP_REFS&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
           <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a>(<a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>, NUM_PARAMS);                                          \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::VarInitContainerBase&lt;NUM_VARS&gt;</a> VarValues;                   \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::VarReferenceContainerBase&lt;NUM_VAR_REFS&gt;</a> VarReferences;      \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::WUVarReferenceContainerBase&lt;NUM_VAR_REFS&gt;</a> WUVarReferences</div><div class="ttc" id="backendBase_8cc_html_a250d7d96debe4c60c4d0449c2a96ba78"><div class="ttname"><a href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a></div><div class="ttdeci">#define TYPE(T)</div><div class="ttdef"><b>Definition:</b> backendBase.cc:14</div></div>
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a>(<a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>, NUM_PARAMS);                                                              \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::VarInitContainerBase&lt;NUM_VARS&gt;</a> VarValues;                                       \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::VarReferenceContainerBase&lt;NUM_VAR_REFS&gt;</a> VarReferences;                          \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::WUVarReferenceContainerBase&lt;NUM_VAR_REFS&gt;</a> WUVarReferences;                      \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Models::EGPReferenceContainerBase&lt;NUM_EGP_REFS&gt;</a> EGPReferences</div><div class="ttc" id="backendBase_8cc_html_a250d7d96debe4c60c4d0449c2a96ba78"><div class="ttname"><a href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a></div><div class="ttdeci">#define TYPE(T)</div><div class="ttdef"><b>Definition:</b> backendBase.cc:14</div></div>
 <div class="ttc" id="snippet_8h_html_ac5727a6720d28f034afadde948ed6e9a"><div class="ttname"><a href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a></div><div class="ttdeci">#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)</div><div class="ttdef"><b>Definition:</b> snippet.h:19</div></div>
 <div class="ttc" id="classSnippet_1_1InitialiserContainerBase_html"><div class="ttname"><a href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a></div><div class="ttdef"><b>Definition:</b> snippet.h:48</div></div>
 </div><!-- fragment -->
+</div>
+</div>
+<a id="abb9f5b029621a40ae8943d6696740888"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb9f5b029621a40ae8943d6696740888">&#9670;&nbsp;</a></span>SET_EXTRA_GLOBAL_PARAM_REFS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_EXTRA_GLOBAL_PARAM_REFS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;virtual EGPRefVec getExtraGlobalParamRefs() const override{ return __VA_ARGS__; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
 </div>
 </div>
 <a id="a8d6d4a547def292ea8860a85ed80c1a7"></a>
@@ -217,7 +285,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../d3/df5/customUpdateModels_8h.html">customUpdateModels.h</a></li>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:24 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:15 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

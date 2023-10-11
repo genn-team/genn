@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -878,6 +878,15 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>getDurationMs()
 : <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#adf8d0a3dda4632cef2940db231097d91">SpineMLSimulator::Simulator</a>
 </li>
+<li>getEGP()
+: <a class="el" href="d4/d4e/classModels_1_1EGPReference.html#a269fac7d5d3ace95b7ba476f58516c26">Models::EGPReference</a>
+</li>
+<li>getEGPIndex()
+: <a class="el" href="d4/d4e/classModels_1_1EGPReference.html#a195d992745ad40d373f7411c45512265">Models::EGPReference</a>
+</li>
+<li>getEGPReferences()
+: <a class="el" href="da/da9/classCustomUpdateBase.html#a4358fbfba578cd969e9b4f422c4b287d">CustomUpdateBase</a>
+</li>
 <li>getEndTimestep()
 : <a class="el" href="db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base.html#a74b7a568b60ff54eef26302f791f4a9b">SpineMLSimulator::LogOutput::Base</a>
 </li>
@@ -907,6 +916,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>getExtraGlobalParamLocation()
 : <a class="el" href="d1/d48/classCurrentSource.html#ac589d53c052cf96ff6eb4f10adca997d">CurrentSource</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#a2a98e9145a85b0d54ed7593a9572823c">NeuronGroup</a>
+</li>
+<li>getExtraGlobalParamRefs()
+: <a class="el" href="de/db4/classCustomUpdateModels_1_1Base.html#ab9a9ec15a117aba137e99afe8f293924">CustomUpdateModels::Base</a>
 </li>
 <li>getExtraGlobalParams()
 : <a class="el" href="da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#ac53fe67e14bdbd968a8544297a67201a">InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement</a>
@@ -1570,7 +1582,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ad4c8ae8472813f9f77d09e80c6927491">SynapseGroup</a>
 </li>
 <li>getSparseConnectivityExtraGlobalParamLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a66b8a41dab082aae12e7664c673dfabf">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a1677a4308ef9b902970033c93d42e9a9">SynapseGroup</a>
 </li>
 <li>getSparseConnectivityLocation()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#aafdea35798050ee57893d0ab6988bd81">SynapseGroup</a>
@@ -1665,7 +1677,8 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d1/d5e/classSpineMLSimulator_1_1InputValue_1_1Base.html#ad98172bd8af3f3e649d72ad3692033d8">SpineMLSimulator::InputValue::Base</a>
 </li>
 <li>getTargetName()
-: <a class="el" href="df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06">Models::VarReferenceBase</a>
+: <a class="el" href="d4/d4e/classModels_1_1EGPReference.html#ab3b4b7a43eebc0c168eacd37e0d85d54">Models::EGPReference</a>
+, <a class="el" href="df/d91/classModels_1_1VarReferenceBase.html#ac40d22518bab4dc644a1ec2216c3bc06">Models::VarReferenceBase</a>
 </li>
 <li>GetTargetNameFn
 : <a class="el" href="df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd">Models::VarReferenceBase</a>
@@ -1717,7 +1730,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 </li>
 <li>getTrgNeuronGroup()
 : <a class="el" href="d1/d48/classCurrentSource.html#a93ff03c2577f5869de575ae6d222ca30">CurrentSource</a>
-, <a class="el" href="dc/dfa/classSynapseGroup.html#a6719d7b41b650ef308b36e6603839542">SynapseGroup</a>
+, <a class="el" href="dc/dfa/classSynapseGroup.html#a4d1d61a12436e603e6443b4d6d788a00">SynapseGroup</a>
 </li>
 <li>getUpdateCode()
 : <a class="el" href="de/db4/classCustomUpdateModels_1_1Base.html#a6ac30b8f437200d82d0e565d9e319733">CustomUpdateModels::Base</a>
@@ -1742,8 +1755,8 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 </li>
 <li>getVarLocation()
 : <a class="el" href="d1/d48/classCurrentSource.html#a0b5061240ea86ae09f52bf128b158aed">CurrentSource</a>
-, <a class="el" href="da/da9/classCustomUpdateBase.html#a33214cfbb70918d02dfc288037f6a2b8">CustomUpdateBase</a>
-, <a class="el" href="d7/d3b/classNeuronGroup.html#adcbb2b02e02286d4206e94bc3905883b">NeuronGroup</a>
+, <a class="el" href="da/da9/classCustomUpdateBase.html#a6fda4b8c6e6e93496f58ccb837dfcf95">CustomUpdateBase</a>
+, <a class="el" href="d7/d3b/classNeuronGroup.html#a5f40746255edeee5e14404ef71921846">NeuronGroup</a>
 </li>
 <li>getVarLocationHashDigest()
 : <a class="el" href="d1/d48/classCurrentSource.html#a03344dd378d3545b01dee3fd817f9f75">CurrentSource</a>
@@ -1821,7 +1834,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a9fbbc52ee9d6e1d3671f22f023b7fde3">SynapseGroup</a>
 </li>
 <li>getWUPostVarLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a614ee94c1475d536f2b22057140bdccd">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a09c5025c7b424c52350abce5661d0721">SynapseGroup</a>
 </li>
 <li>getWUPreFuseHashDigest()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a0e5d3ecdf713896737ebf66c5287a5d1">SynapseGroup</a>
@@ -1836,7 +1849,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a5f60a80d62699a4b6edfda93e720ca9f">SynapseGroup</a>
 </li>
 <li>getWUPreVarLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#ad490eebd29a779d3abd26b87b1f97179">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ae89e853febe50d5c78fce67a9c8a502c">SynapseGroup</a>
 </li>
 <li>getWUVarInitialisers()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ac085e2eaf41431b8307a6f87e1de9031">SynapseGroup</a>
@@ -1873,7 +1886,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:47 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:22 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

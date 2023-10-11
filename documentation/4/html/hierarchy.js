@@ -145,6 +145,8 @@ var hierarchy =
     [ "CodeGenerator::ModelSpecMerged::EGPField", "dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html", [
       [ "CodeGenerator::ModelSpecMerged::MergedEGP", "d7/d41/structCodeGenerator_1_1ModelSpecMerged_1_1MergedEGP.html", null ]
     ] ],
+    [ "Models::Base::EGPRef", "d7/d58/structModels_1_1Base_1_1EGPRef.html", null ],
+    [ "Models::EGPReference", "d4/d4e/classModels_1_1EGPReference.html", null ],
     [ "CodeGenerator::Substitutions::FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", null ],
     [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
     [ "CodeGenerator::GroupMerged< G >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [

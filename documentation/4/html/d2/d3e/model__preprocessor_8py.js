@@ -2,6 +2,7 @@ var model__preprocessor_8py =
 [
     [ "Variable", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable" ],
     [ "ExtraGlobalParameter", "d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html", "d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter" ],
+    [ "egp_ref_space_to_egp_refs", "d2/d3e/model__preprocessor_8py.html#ad24d1ff5196eccb233bc3b4a3e0ff9ff", null ],
     [ "is_model_valid", "d2/d3e/model__preprocessor_8py.html#a8394727291320f68735c9ad636362853", null ],
     [ "param_space_to_val_vec", "d2/d3e/model__preprocessor_8py.html#a93d693245c53a02c06c201f5769500b5", null ],
     [ "param_space_to_vals", "d2/d3e/model__preprocessor_8py.html#ab095322336d228b80db47a280f435ba2", null ],

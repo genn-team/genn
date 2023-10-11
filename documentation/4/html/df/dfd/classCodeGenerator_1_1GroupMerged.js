@@ -10,6 +10,7 @@ var classCodeGenerator_1_1GroupMerged =
       [ "PointerEGP", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefa7c9a173774ebd104538ae8785ba5a971", null ]
     ] ],
     [ "GroupMerged", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a2e7e24c877ed71443ddba4ef3625fdd9", null ],
+    [ "addEGPReferences", "df/dfd/classCodeGenerator_1_1GroupMerged.html#abb6d0f9c4894360efcb1ee1068910da9", null ],
     [ "addEGPs", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a0cc9b236456bcdd0c56d743481cf0592", null ],
     [ "addField", "df/dfd/classCodeGenerator_1_1GroupMerged.html#aac65000c419542a6ba724132ee1cefc7", null ],
     [ "addHeterogeneousDerivedParams", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a41afd2fe742b3335de40142a454be52a", null ],

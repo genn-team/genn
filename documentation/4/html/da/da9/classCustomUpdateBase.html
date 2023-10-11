@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -137,6 +137,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a18de527e24453617ab10c333c22159bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3421ada538f8e6faf7fe7d14ae6d2c5b"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a3421ada538f8e6faf7fe7d14ae6d2c5b">getVarInitialisers</a> () const</td></tr>
 <tr class="separator:a3421ada538f8e6faf7fe7d14ae6d2c5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4358fbfba578cd969e9b4f422c4b287d"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">Models::EGPReference</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a4358fbfba578cd969e9b4f422c4b287d">getEGPReferences</a> () const</td></tr>
+<tr class="separator:a4358fbfba578cd969e9b4f422c4b287d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33214cfbb70918d02dfc288037f6a2b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a33214cfbb70918d02dfc288037f6a2b8">getVarLocation</a> (const std::string &amp;varName) const</td></tr>
 <tr class="memdesc:a33214cfbb70918d02dfc288037f6a2b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable location for custom update model state variable.  <a href="#a33214cfbb70918d02dfc288037f6a2b8">More...</a><br /></td></tr>
 <tr class="separator:a33214cfbb70918d02dfc288037f6a2b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,8 +151,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:abb63e2c199fd58ebf8152e0bd7a085c2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#abb63e2c199fd58ebf8152e0bd7a085c2">CustomUpdateBase</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html">CustomUpdateModels::Base</a> *customUpdateModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;varInitialisers, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation)</td></tr>
-<tr class="separator:abb63e2c199fd58ebf8152e0bd7a085c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84f25633e4ecd51b40701593b2f58a2e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a84f25633e4ecd51b40701593b2f58a2e">CustomUpdateBase</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html">CustomUpdateModels::Base</a> *customUpdateModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;varInitialisers, const std::vector&lt; <a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">Models::EGPReference</a> &gt; &amp;egpReferences, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation)</td></tr>
+<tr class="separator:a84f25633e4ecd51b40701593b2f58a2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b57c046eda3a4675b78f39769ab8cdf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a2b57c046eda3a4675b78f39769ab8cdf">initDerivedParams</a> (double dt)</td></tr>
 <tr class="separator:a2b57c046eda3a4675b78f39769ab8cdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7389840388acb8b146f877c4337fe58"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#ab7389840388acb8b146f877c4337fe58">getDerivedParams</a> () const</td></tr>
@@ -235,8 +237,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="abb63e2c199fd58ebf8152e0bd7a085c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb63e2c199fd58ebf8152e0bd7a085c2">&#9670;&nbsp;</a></span>CustomUpdateBase() <span class="overload">[3/3]</span></h2>
+<a id="a84f25633e4ecd51b40701593b2f58a2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84f25633e4ecd51b40701593b2f58a2e">&#9670;&nbsp;</a></span>CustomUpdateBase() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -277,6 +279,12 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">Models::EGPReference</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>egpReferences</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
           <td class="paramname"><em>defaultVarLocation</em>, </td>
         </tr>
@@ -294,7 +302,7 @@ Protected Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -418,6 +426,31 @@ template&lt;typename V &gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4358fbfba578cd969e9b4f422c4b287d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4358fbfba578cd969e9b4f422c4b287d">&#9670;&nbsp;</a></span>getEGPReferences()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d4/d4e/classModels_1_1EGPReference.html">Models::EGPReference</a>&gt;&amp; CustomUpdateBase::getEGPReferences </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -859,7 +892,7 @@ template&lt;typename V &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></li>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:25 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:15 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

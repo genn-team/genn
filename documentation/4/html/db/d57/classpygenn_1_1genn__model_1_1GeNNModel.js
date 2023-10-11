@@ -2,7 +2,7 @@ var classpygenn_1_1genn__model_1_1GeNNModel =
 [
     [ "__init__", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a707a6343ef7de18dec66b562d3ab19af", null ],
     [ "add_current_source", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45", null ],
-    [ "add_custom_update", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afb3bb39a2b69df18cf4ac6d0fcc45ece", null ],
+    [ "add_custom_update", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a239bba532783afbf9817eead8d4baf27", null ],
     [ "add_neuron_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a100324e214546094fced5e66fb0582d4", null ],
     [ "add_slave_synapse_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ad94018835547182c738aba36d0c15de3", null ],
     [ "add_synapse_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab573f92c82ec25d5c80f94070b6008c0", null ],
@@ -54,6 +54,7 @@ var classpygenn_1_1genn__model_1_1GeNNModel =
     [ "timestep", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8e25caa5f6fa75b1034c15d71ec86e59", null ],
     [ "timing_enabled", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a49adcd489cc63005ee91d327a8928a10", null ],
     [ "timing_enabled", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#abb6cffa809abb1752a67c2c2a8f82237", null ],
+    [ "unload", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a48bfee1914ba06c6ebcfa69cf3b9b02b", null ],
     [ "use_backend", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4735ba33ebee63fe36e2da3f384ead4a", null ],
     [ "use_backend", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3137503c327f26fcc6d7323505233745", null ],
     [ "backend_log_level", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8f28db62f1b30ae0730cd027c4ca4c91", null ],

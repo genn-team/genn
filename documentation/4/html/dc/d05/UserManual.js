@@ -43,7 +43,10 @@ var UserManual =
       [ "Defining a new variable initialisation snippet", "d4/dc6/sectVariableInitialisation.html#sect_new_var_init", null ],
       [ "Variable locations", "d4/dc6/sectVariableInitialisation.html#sect_var_init_modes", null ]
     ] ],
-    [ "Variable references", "de/d71/sectVariableReferences.html", null ],
+    [ "References", "de/d23/sectReferences.html", [
+      [ "Variable references", "de/d23/sectReferences.html#sectVariableReferences", null ],
+      [ "Extra Global Parameter references", "de/d23/sectReferences.html#sectEGPReferences", null ]
+    ] ],
     [ "Sparse connectivity initialisation", "d5/dd4/sectSparseConnectivityInitialisation.html", [
       [ "Defining a new sparse connectivity snippet", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_new_sparse_connect", null ],
       [ "Kernel-based connectivity", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_kernel", null ],

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.8.1</span>
+   &#160;<span id="projectnumber">4.9.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -114,6 +114,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4973a04263365c9a251098b7df644be0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb55b2188016309213361fc65fece69f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aeb55b2188016309213361fc65fece69f">open</a> (const std::string &amp;pathToModel, const std::string &amp;modelName, bool includeModelNameInDLL=false)</td></tr>
 <tr class="separator:aeb55b2188016309213361fc65fece69f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab19fac39945ed2aa3c4f240ae01480bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#ab19fac39945ed2aa3c4f240ae01480bc">close</a> ()</td></tr>
+<tr class="separator:ab19fac39945ed2aa3c4f240ae01480bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12e8318b0e210e2e4529b7562e5ff800"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a12e8318b0e210e2e4529b7562e5ff800">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName, unsigned int count)</td></tr>
 <tr class="separator:a12e8318b0e210e2e4529b7562e5ff800"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8500728c95b4d48ddd600456ea23ee28"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a8500728c95b4d48ddd600456ea23ee28">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName, unsigned int count)</td></tr>
@@ -457,6 +459,33 @@ template&lt;typename scalar  = float&gt; </div>
           <td>(</td>
           <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>timesteps</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab19fac39945ed2aa3c4f240ae01480bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab19fac39945ed2aa3c4f240ae01480bc">&#9670;&nbsp;</a></span>close()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::close </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -2052,7 +2081,7 @@ template&lt;typename scalar  = float&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a></li>
-    <li class="footer">Generated on Fri Apr 21 2023 16:20:25 for GeNN by
+    <li class="footer">Generated on Wed Oct 11 2023 10:51:15 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
