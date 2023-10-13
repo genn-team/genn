@@ -18,23 +18,6 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 }
 
 //----------------------------------------------------------------------------
-// GeNN::Models::Base
-//----------------------------------------------------------------------------
-std::vector<Base::SynapseVar> Base::getFilteredSynapseVars(const std::vector<Base::SynapseVar> &vars, bool pre, bool post) const
-{
-    // Copy variables into new vector if pre and post dimensions match
-    std::vector<Base::SynapseVar> filteredVars;
-    std::copy_if(vars.cbegin(), vars.cend(), std::back_inserter(filteredVars),
-                 [pre, post](const auto &v)
-                 {
-                     const auto dim = getVarAccessDim(v.access);
-                     return (((dim & VarAccessDim::PRE_NEURON) == pre) 
-                             && ((dim & VarAccessDim::POST_NEURON) == post));
-                 });
-    return filteredVars;
-}
-
-//----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
 const std::string &VarReference::getVarName() const
@@ -411,34 +394,6 @@ EGPReference EGPReference::createWUEGPRef(const SynapseGroup *sg, const std::str
 
 //----------------------------------------------------------------------------
 // Free functions
-//----------------------------------------------------------------------------
-void updateHash(const Base::NeuronVar &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.name, hash);
-    Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const Base::SynapseVar &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.name, hash);
-    Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.name, hash);
-    Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.name, hash);
-    Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
-}
 //----------------------------------------------------------------------------
 void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 {

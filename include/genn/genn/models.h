@@ -187,12 +187,6 @@ public:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::vector<EGPRef> EGPRefVec;
-
-protected:
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    std::vector<SynapseVar> getFilteredSynapseVars(const std::vector<SynapseVar> &vars, bool pre, bool post) const;
 };
 
 //----------------------------------------------------------------------------
@@ -358,17 +352,29 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-GENN_EXPORT void updateHash(const Base::NeuronVar &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const Base::SynapseVar &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
+template<typename A>
+void updateHash(const Base::VarBase<A> &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Type::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+
+template<typename A>
+void updateHash(const Base::VarRefBase<A> &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Type::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 
 //! Helper function to check if variable reference types match those specified in model
-template<typename V>
-void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+template<typename V, typename R>
+void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const std::vector<R> &modelVarRefs)
 {
     // Loop through all variable references
     for(const auto &modelVarRef : modelVarRefs) {

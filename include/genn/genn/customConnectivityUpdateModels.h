@@ -45,15 +45,15 @@ public:
 
     //! Gets per-synapse model variables 
     /*! these have both VarAccessDim::PRE_NEURON and VarAccessDim::POST_NEURON */
-    std::vector<CustomConnectivityUpdateVar> getSynVars() const;
+    std::vector<CustomConnectivityUpdateVar> getSynVars() const{ return getFilteredVars(true, true); }
 
     //! Gets presynaptic model variables 
     /*! these have VarAccessDim::PRE_NEURON and not VarAccessDim::POST_NEURON */
-    std::vector<CustomConnectivityUpdateVar> getPreVars() const;
+    std::vector<CustomConnectivityUpdateVar> getPreVars() const{ return getFilteredVars(false, true); }
 
     //! Gets postsynaptic model variables 
     /*! these have VarAccessDim::POST_NEURON and not VarAccessDim::PRE_NEURON */
-    std::vector<CustomConnectivityUpdateVar> getPostVars() const;
+    std::vector<CustomConnectivityUpdateVar> getPostVars() const{ return getFilteredVars(false, true); }
 
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -63,5 +63,11 @@ public:
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    std::vector<Base::CustomConnectivityUpdateVar> getFilteredVars(bool pre, bool post) const;
 };
 }   // GeNN::CustomConnectivityUpdateModels

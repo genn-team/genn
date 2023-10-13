@@ -76,7 +76,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 //----------------------------------------------------------------------------
-std::vector<Base::SynapseVar> Base::getFilteredSynapseVars(bool pre, bool post) const
+std::vector<Base::SynapseVar> Base::getFilteredVars(bool pre, bool post) const
 {
     // Copy variables into new vector if pre and post dimensions match
     std::vector<Base::SynapseVar> filteredVars;
