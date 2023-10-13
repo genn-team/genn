@@ -86,23 +86,50 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
         v.second.finalise(dt);
     }
 
-    // Loop through variable references and or together their dimensions to get dimensionality of update
+    // Loop through variable references and determine dimensionality of update
     // **NOTE** this must be done at finalise-time as custom updates need to be sorted 
     // in dependency order so references between them are correctly resolves
+    m_Dims = VarAccessDim{0};
     for(const auto &v : m_VarReferences) {
-        m_Dims = m_Dims | v.second.getVarDims();
+        const auto varDims = v.second.getVarDims();
+
+        // If variable is batched, set BATCH dimension in custom update dimensions
+        if(varDims & VarAccessDim::BATCH) {
+            m_Dims = m_Dims | VarAccessDim::BATCH;
+        }
+
+        // If variable is per-neuron, set NEURON dimension in custom update dimensions
+        if(varDims & VarAccessDim::NEURON) {
+            m_Dims = m_Dims | VarAccessDim::NEURON;
+        }
+
+        // If variable is per-synapse, set pre and postsynaptic flags in custom update dimensions
+        const bool pre = (varDims & VarAccessDim::PRE_NEURON);
+        const bool post = (varDims & VarAccessDim::POST_NEURON);
+        if(pre && post) {
+            m_Dims = m_Dims | VarAccessDim::PRE_NEURON | VarAccessDim::POST_NEURON;
+        }
+        // Otherwise, if variable is per-neuron, set neuron flag in custom update dimensions
+        // **TODO** when we support row and column reductions, this needs to change a little
+        else if(pre || post) {
+            m_Dims = m_Dims | VarAccessDim::NEURON;
+        }
     }
 
-    // **TODO** we need to 'unify' dimensions so NEURON|POST_NEURON becomes PRE_NEURON|POST_NEURON if 
+    // If there is some mixture of neuron and synapse flags
+    if((m_Dims & VarAccessDim::NEURON) && ((m_Dims & VarAccessDim::PRE_NEURON) || (m_Dims & VarAccessDim::POST_NEURON))) {
+        throw std::runtime_error("Custom update references ambiguous mix of neuron and synapse variables.");
+    }
 
     // Loop through all variable references
     for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
         const auto varRef = getVarReferences().at(modelVarRef.name);
 
-        // If the shape of the references variable doesn't match the dimensionality 
+        // If the batchedness of the references variable doesn't match that
         // of the custom update, check its access mode isn't read-write
-        if((m_Dims != varRef.getVarDims())
-            && (modelVarRef.access == VarAccessMode::READ_WRITE))
+        // **TODO** 
+        if(((m_Dims & VarAccessDim::BATCH) != (varRef.getVarDims() & VarAccessDim::BATCH))
+            && (modelVarRef.access & VarAccessModeAttribute::READ_WRITE))
         {
             throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
         }
