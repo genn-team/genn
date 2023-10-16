@@ -317,6 +317,14 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
+    //! Allocate backend-specific array object
+    /*! \param type         data type of array
+        \param count        number of elements in array
+        \param location     location of array e.g. device-only
+        \param memAlloc     MemAlloc object for tracking memory usage*/
+    virtual std::unique_ptr<ArrayBase> allocateArray(const Type::ResolvedType &type, size_t count, 
+                                                     VarLocation location, MemAlloc &memAlloc) const = 0;
+
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc) const = 0;

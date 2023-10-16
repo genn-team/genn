@@ -1551,6 +1551,12 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
+std::unique_ptr<ArrayBase> Backend::allocateArray(const Type::ResolvedType &type, size_t count, 
+                                                  VarLocation location, MemAlloc &memAlloc) const
+{
+    return std::make_unique<Array>(type, count, location, memAlloc);
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
                                     const Type::ResolvedType &type, const std::string &name, VarLocation loc) const
 {

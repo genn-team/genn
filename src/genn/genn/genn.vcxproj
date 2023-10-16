@@ -54,6 +54,7 @@
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
+    <ClCompile Include="runtime\runtime.cc" />
     <ClCompile Include="snippet.cc" />
     <ClCompile Include="transpiler\errorHandler.cc" />
     <ClCompile Include="transpiler\parser.cc" />
@@ -112,6 +113,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\neuronGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\neuronModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\postsynapticModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\runtime\runtime.h" />
     <ClInclude Include="..\..\..\include\genn\genn\snippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
