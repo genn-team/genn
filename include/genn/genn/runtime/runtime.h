@@ -64,6 +64,15 @@ public:
     //! Simulate one timestep
     void stepTime();
 
+    void allocateExtraGlobalParam(const std::string &groupName, const std::string &varName,
+                                  size_t count);
+                                  
+    //! Get current simulation timestep
+    uint64_t getTimestep() const{ return m_Timestep; }
+
+    //! Get current simulation time
+    double getTime() const{ return m_Timestep * m_ModelMerged.get().getModel().getDT(); }
+
 private:
     //----------------------------------------------------------------------------
     // Private API
@@ -77,24 +86,29 @@ private:
         \param memAlloc     MemAlloc object for tracking memory usage*/
     void allocateArray(const std::string &groupName, const std::string &varName,
                        const Type::ResolvedType &type, size_t count, 
-                       VarLocation location, CodeGenerator::MemAlloc &memAlloc);
+                       VarLocation location);
     
+    //! Helper to allocate array in m_Arrays data structure
+    /*! \tparam A           Adaptor class used to access 
+        \tparam G           Type of group variables are associated with
+        \param memAlloc     MemAlloc object for tracking memory usage*/
     template<typename A, typename G>
     void allocateNeuronVars(const G &group, size_t numNeurons, size_t batchSize, 
-                            size_t delaySlots, bool batched, CodeGenerator::MemAlloc &memAlloc)
+                            size_t delaySlots, bool batched)
     {
         A adaptor(group);
         for(const auto &var : adaptor.getDefs()) {
             const auto resolvedType = var.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
-
             const auto varDims = adaptor.getVarDims(var);
+
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
             const size_t numDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
-            allocateArray(adaptor.getNameSuffix(), var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
-                          adaptor.getLoc(var.name), memAlloc);
+            allocateArray(adaptor.getNameSuffix(), var.name, resolvedType, getNumVarCopies * numVarElements * numDelaySlots,
+                          adaptor.getLoc(var.name));
         }
     }
+
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
@@ -107,6 +121,8 @@ private:
 
     //! Current timestep
     uint64_t m_Timestep;
+
+    std::optional<uint64_t> m_NumRecordingTimesteps;
 
     //! Reference to merged model being run
     std::reference_wrapper<const CodeGenerator::ModelSpecMerged> m_ModelMerged;

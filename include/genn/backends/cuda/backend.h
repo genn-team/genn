@@ -128,12 +128,18 @@ class BACKEND_EXPORT Array : public ArrayBase
 {
 public:
     Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, MemAlloc &memAlloc);
+          VarLocation location);
     virtual ~Array();
     
     //------------------------------------------------------------------------
     // ArrayBase virtuals
     //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final;
+
+    //! Free array
+    virtual void free() final;
+
     //! Copy array to device
     virtual void pushToDevice() final;
 
@@ -224,13 +230,12 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    //! Allocate backend-specific array object
+    //! Create backend-specific array object
     /*! \param type         data type of array
-        \param count        number of elements in array
-        \param location     location of array e.g. device-only
-        \param memAlloc     MemAlloc object for tracking memory usage*/
-    virtual std::unique_ptr<ArrayBase> allocateArray(const Type::ResolvedType &type, size_t count, 
-                                                     VarLocation location, MemAlloc &memAlloc) const final;
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                   VarLocation location, MemAlloc &memAlloc) const final;
 
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 

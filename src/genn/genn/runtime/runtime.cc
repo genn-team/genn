@@ -21,49 +21,31 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-/*size_t getNumVarCopies(VarAccessDim varDims, size_t batchSize, bool batched = true)
-{
-    return ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
-}
-//--------------------------------------------------------------------------
-size_t getNumNeuronVarElements(VarAccessDim varDims, size_t numNeurons)
-{
-    return (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
-}
-//--------------------------------------------------------------------------
-size_t getNeuronVarSize(VarAccessDim varDims, size_t numElements, size_t batchSize, 
-                        size_t delaySlots = 1, bool batched = true)
-{
-    return getNumVarCopies(varDims, batchSize, batched) * getNumNeuronVarElements(varDims, numElements) * delaySlots;
-}
-//--------------------------------------------------------------------------
-size_t getSynapseVarSize(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg, 
-                         size_t batchSize, bool batched = true)
+size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg)
 {
     const bool pre = (varDims & VarAccessDim::PRE_NEURON);
     const bool post = (varDims & VarAccessDim::POST_NEURON);
     const unsigned int numPre = sg.getSrcNeuronGroup()->getNumNeurons();
     const unsigned int numPost = sg.getTrgNeuronGroup()->getNumNeurons();
     const unsigned int rowStride = backend.getSynapticMatrixRowStride(sg);
-    const size_t numCopies = getNumVarCopies(varDims, batchSize, batched);
     if(pre && post) {
         if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
-            return sg.getKernelSizeFlattened() * numCopies;
+            return sg.getKernelSizeFlattened();
         }
         else {
-            return numPre * rowStride * numCopies;
+            return numPre * rowStride;
         }
     }
     else if(pre) {
-        return numPre * numCopies;
+        return numPre;
     }
     else if(post) {
-        return numPost * numCopies;
+        return numPost;
     }
     else {
-        return numCopies;
+        return 1;
     }
-}*/
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -104,12 +86,12 @@ Runtime::~Runtime()
 //----------------------------------------------------------------------------
 void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 {
-    // Track memory allocations, initially starting from zero
-    auto mem = MemAlloc::zero();
+    // Store number of recording timesteps
+    m_NumRecordingTimesteps = numRecordingTimesteps;
 
+    // Loop through neuron groups
     const auto &model = m_ModelMerged.get().getModel();
     const unsigned int batchSize = model.getBatchSize();
-
     for(const auto &n : model.getNeuronGroups()) {
         // True spike variables
         const size_t numNeuronDelaySlots = batchSize * (size_t)n.second.getNumNeurons() * (size_t)n.second.getNumDelaySlots();
@@ -117,17 +99,17 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // If spikes are required, allocate arrays for counts and spikes
         if(n.second.isTrueSpikeRequired()) {
             allocateArray(n.first, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                          n.second.getSpikeLocation(), mem);
+                          n.second.getSpikeLocation());
             allocateArray(n.first, "spk", Type::Uint32, numNeuronDelaySlots, 
-                          n.second.getSpikeLocation(), mem);
+                          n.second.getSpikeLocation());
         }
 
         // If spike-like events are required, allocate arrays for counts and spikes
         if(n.second.isSpikeEventRequired()) {
             allocateArray(n.first, "spkEventCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                          n.second.getSpikeEventLocation(), mem);
+                          n.second.getSpikeEventLocation());
             allocateArray(n.first, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
-                          n.second.getSpikeEventLocation(), mem);
+                          n.second.getSpikeEventLocation());
         }
         
         // If spike or spike-like event recording is enabled
@@ -140,12 +122,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             const unsigned int numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
             if(n.second.isSpikeRecordingEnabled()) {
                 allocateArray(n.first, "recordSpk", Type::Uint32,  numRecordingWords, 
-                              VarLocation::HOST_DEVICE, mem);
+                              VarLocation::HOST_DEVICE);
 
             }
             else if(n.second.isSpikeEventRecordingEnabled()) {
                 allocateArray(n.first, "recordSpkEvent", Type::Uint32,  numRecordingWords, 
-                              VarLocation::HOST_DEVICE, mem);
+                              VarLocation::HOST_DEVICE);
             }
            
         }
@@ -153,30 +135,31 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // If neuron group has axonal or back-propagation delays, add delay queue pointer
         if (n.second.isDelayRequired()) {
             m_DelayQueuePointer.try_emplace(n.first, 0);
+            // **TODO** also make device version
         }
         
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
             allocateArray(n.first, "sT", model.getTimePrecision(), numNeuronDelaySlots, 
-                          n.second.getSpikeTimeLocation(), mem);
+                          n.second.getSpikeTimeLocation());
         }
 
         // If neuron group needs to record its previous spike times
         if (n.second.isPrevSpikeTimeRequired()) {
             allocateArray(n.first, "prevST", model.getTimePrecision(), numNeuronDelaySlots, 
-                          n.second.getPrevSpikeTimeLocation(), mem);
+                          n.second.getPrevSpikeTimeLocation());
         }
 
         // If neuron group needs to record its spike-like-event times
         if (n.second.isSpikeEventTimeRequired()) {
             allocateArray(n.first, "seT", model.getTimePrecision(), numNeuronDelaySlots, 
-                          n.second.getSpikeEventTimeLocation(), mem);
+                          n.second.getSpikeEventTimeLocation());
         }
 
         // If neuron group needs to record its previous spike-like-event times
         if (n.second.isPrevSpikeEventTimeRequired()) {
             allocateArray(n.first, "prevSET", model.getTimePrecision(), numNeuronDelaySlots, 
-                          n.second.getPrevSpikeEventTimeLocation(), mem);
+                          n.second.getPrevSpikeEventTimeLocation());
         }
 
         // If neuron group needs per-neuron RNGs
@@ -187,59 +170,109 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Allocate neuron state variables
         allocateNeuronVars<NeuronVarAdapter>(n.second, n.second.getNumNeurons(), 
-                                             batchSize, n.second.getNumDelaySlots(), true, mem);
+                                             batchSize, n.second.getNumDelaySlots(), true);
         
         // Allocate current source variables
         for (const auto *cs : n.second.getCurrentSources()) {
-            allocateNeuronVars<CurrentSourceVarAdapter>(*cs, n.second.getNumNeurons(), batchSize, 1, true, mem);
+            allocateNeuronVars<CurrentSourceVarAdapter>(*cs, n.second.getNumNeurons(), batchSize, 1, true);
         }
 
         // Allocate postsynaptic model variables from incoming populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
             allocateArray(sg->getFusedPSVarSuffix(), "outPost", model.getPrecision(), 
                           sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                          sg->getInSynLocation(), mem);
+                          sg->getInSynLocation());
             
             if (sg->isDendriticDelayRequired()) {
                 allocateArray(sg->getFusedPSVarSuffix(), "denDelay", model.getPrecision(), 
                               (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                              sg->getDendriticDelayLocation(), mem);
+                              sg->getDendriticDelayLocation());
                 //genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                 //                    Type::Uint32, "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
-            allocateNeuronVars<SynapsePSMVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true, mem);
+            allocateNeuronVars<SynapsePSMVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
         }
 
         // Allocate fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
             allocateArray(sg->getFusedPreOutputSuffix(), "outPre", model.getPrecision(), 
                           sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
-                          sg->getInSynLocation(), mem);
+                          sg->getInSynLocation());
         }
         
         // Allocate fused postsynaptic weight update variables from incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPreVarAdapter>(*sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true, mem);
+            allocateNeuronVars<SynapseWUPreVarAdapter>(*sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPostVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true, mem);
+            allocateNeuronVars<SynapseWUPostVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
         }  
+    }
+
+    // Loop through synapse groups
+    for(const auto &s : model.getSynapseGroups()) {
+        // If synapse group has individual or kernel weights
+        const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+        const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
+        if (individualWeights || kernelWeights) {
+            for(const auto &var : wu->getVars()) {
+                const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
+                const auto varDims = getVarAccessDim(var.access);
+                const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
+                const size_t numVarElements = getNumSynapseVarElements(varDims, backend, s.second);
+
+                allocateArray(s.first, var.name, resolvedType, numVarCopies * numVarElements,
+                              s.second.getWUVarLocation(var.name));
+            }
+        }
+
+        // If connectivity is bitmask
+        const size_t numPre = s.second.getSrcNeuronGroup()->getNumNeurons();
+        const size_t rowStride = backend.getSynapticMatrixRowStride(s.second);
+        if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            const size_t gpSize = ceilDivide((size_t)numPre * rowStride, 32);
+            allocateArray(s.first, "gp", Type::Uint32, gpSize,
+                          s.second.getSparseConnectivityLocation());
+        }
+        // Otherwise, if connectivity is sparse
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            // Row lengths
+            allocateArray(s.first, "rowLength", Type::Uint32, numPre,
+                          s.second.getSparseConnectivityLocation());
+
+            // Target indices
+            allocateArray(s.first, "ind", s.second.getSparseIndType(), numPre * rowStride,
+                          s.second.getSparseConnectivityLocation());
+        
+            // **TODO** remap is not always required
+            if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                // Allocate column lengths
+                const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
+                const size_t colStride = s.second.getMaxSourceConnections();
+                allocateArray(s.first, "colLength", Type::Uint32, numPost, VarLocation::DEVICE);
+                
+                // Allocate remap
+                allocateArray(s.first, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
+            }
+        }
     }
 
     // Allocate custom update variables
     for(const auto &c : model.getCustomUpdates()) {
         allocateNeuronVars<CustomUpdateVarAdapter>(c.second, c.second.getSize(), batchSize, 1, 
-                                                   c.second.getDims() & VarAccessDim::BATCH, mem);
+                                                   c.second.getDims() & VarAccessDim::BATCH);
     }
 
     // **TODO** custom update WU
 
     // **TODO** custom connectivity update
+
+    
 
 }
 //----------------------------------------------------------------------------
@@ -253,14 +286,50 @@ void Runtime::initialiseSparse()
 //----------------------------------------------------------------------------
 void Runtime::stepTime()
 {
+    // Update synaptic state
+    m_UpdateSynapses(getTime());
+    
+    // Generate code to advance host-side spike queues    
+    /*for(const auto &n : model.getNeuronGroups()) {
+        if (n.second.isDelayRequired()) {
+            runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }*/
+
+    // Update neuronal state
+    m_UpdateNeurons(getTime(), m_NumRecordingTimesteps ? m_Timestep % m_NumRecordingTimesteps : 0);
+
+    // Generate code to advance host side dendritic delay buffers
+    /*for(const auto &n : model.getNeuronGroups()) {
+        // Loop through incoming synaptic populations
+        for(const auto *sg : n.second.getFusedPSMInSyn()) {
+            if(sg->isDendriticDelayRequired()) {
+                runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+            }
+        }
+    }*/
+
+    // Advance time
+    m_Timestep++;
+}
+//----------------------------------------------------------------------------
+void Runtime::allocateExtraGlobalParam(const std::string &groupName, const std::string &varName,
+                                       size_t count)
+{
+    // Allocate array
+    // **TODO** dynamic flag determines whether this is allowed
+    m_Arrays.at(groupName).at(varName)->allocate(count);
+
+    // **TODO** call push functions
+    // **TODO** signature of push function will vary depending on backend and type
 }
 //----------------------------------------------------------------------------
 void Runtime::allocateArray(const std::string &groupName, const std::string &varName,
                             const Type::ResolvedType &type, size_t count, 
                             VarLocation location, MemAlloc &memAlloc)
 {
-    const auto r = m_Arrays[groupName].try_emplace(varName, 
-                                                   m_Backend.get().allocateArray(type, count, location, memAlloc));
+    const auto r = m_Arrays[groupName].try_emplace(
+        varName, m_Backend.get().allocateArray(type, count, location, memAlloc));
     if(!r.second) {
         throw std::runtime_error("Unable to allocate array with duplicate name '" 
                                  + varName + "' for group '" + groupName + "'");

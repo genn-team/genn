@@ -103,17 +103,33 @@ namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
 //--------------------------------------------------------------------------
 Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, MemAlloc &memAlloc)
+             VarLocation location)
 :   ArrayBase(type, count, location)
 {
-    // Malloc host pointer
-    setHostPointer(malloc(getSizeBytes()));
-    memAlloc += MemAlloc::host(getSizeBytes());
+    if(count > 0) {
+        allocate(count);
+    }
 }
 //--------------------------------------------------------------------------
 Array::~Array()
 {
+    if(getCount() > 0) {
+        free();
+    }
+}
+//--------------------------------------------------------------------------
+void Array::allocate(size_t count)
+{
+    // Malloc host pointer
+    setCount(count);
+    setHostPointer(malloc(getSizeBytes()));
+}
+//--------------------------------------------------------------------------
+void Array::free()
+{
     free(getHostPointer());
+    setHostPointer(nullptr);
+    setCount(0);
 }
 
 //--------------------------------------------------------------------------
@@ -1393,10 +1409,10 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 {
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::allocateArray(const Type::ResolvedType &type, size_t count, 
-                                                  VarLocation location, MemAlloc &memAlloc) const
+std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                VarLocation location) const
 {
-    return std::make_unique<Array>(type, count, location, memAlloc);
+    return std::make_unique<Array>(type, count, location);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 

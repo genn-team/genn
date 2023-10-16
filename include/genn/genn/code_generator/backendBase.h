@@ -199,6 +199,12 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) = 0;
+
+    //! Free array
+    virtual void free() = 0;
+
     //! Copy array to device
     virtual void pushToDevice() = 0;
 
@@ -227,6 +233,7 @@ protected:
 
     size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
 
+    void setCount(size_t count) { m_Count = count; }
     void setHostPointer(void *hostPointer) { m_HostPointer = hostPointer; }
 
 private:
@@ -317,13 +324,12 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    //! Allocate backend-specific array object
+    //! Create backend-specific array object
     /*! \param type         data type of array
-        \param count        number of elements in array
-        \param location     location of array e.g. device-only
-        \param memAlloc     MemAlloc object for tracking memory usage*/
-    virtual std::unique_ptr<ArrayBase> allocateArray(const Type::ResolvedType &type, size_t count, 
-                                                     VarLocation location, MemAlloc &memAlloc) const = 0;
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                   VarLocation location) const = 0;
 
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 

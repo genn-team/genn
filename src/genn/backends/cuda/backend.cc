@@ -194,9 +194,27 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 namespace GeNN::CodeGenerator::CUDA
 {
 Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, MemAlloc &memAlloc)
+             VarLocation location)
 :   ArrayBase(type, count, location), m_DevicePointer(nullptr)
 {
+    // Allocate if count is specified
+    if(count > 0) {
+        allocate(count);
+    }
+}
+//--------------------------------------------------------------------------
+Array::~Array()
+{
+    if(getCount() > 0) {
+        free();
+    }
+}
+//--------------------------------------------------------------------------
+void Array::allocate(size_t count)
+{
+    // Set count
+    setCount(count);
+
     // Malloc host pointer
     if(getLocation() & VarLocation::HOST) {
         const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
@@ -204,7 +222,6 @@ Array::Array(const Type::ResolvedType &type, size_t count,
         void *hostPointer = nullptr;
         CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
         setHostPointer(hostPointer);
-        memAlloc += MemAlloc::host(getSizeBytes());
     }
 
     // If variable is present on device at all
@@ -212,26 +229,29 @@ Array::Array(const Type::ResolvedType &type, size_t count,
         // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
         if(getLocation() & VarLocation::ZERO_COPY) {
             CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
-            memAlloc += MemAlloc::zeroCopy(getSizeBytes());
         }
         else {
             CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
-            memAlloc += MemAlloc::device(getSizeBytes());
         }
     }
 }
 //--------------------------------------------------------------------------
-Array::~Array()
+void Array::free()
 {
     // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
     if(getLocation() & VarLocation::HOST) {
         CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
+        setHostPointer(nullptr);
     }
 
     // If this variable wasn't allocated in zero-copy mode, free it
     if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
         CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
+        m_DevicePointer = nullptr;
     }
+
+    // Zero count
+    setCount(0);
 }
 //--------------------------------------------------------------------------
 void Array::pushToDevice()
@@ -1551,10 +1571,10 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::allocateArray(const Type::ResolvedType &type, size_t count, 
-                                                  VarLocation location, MemAlloc &memAlloc) const
+std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                VarLocation location) const
 {
-    return std::make_unique<Array>(type, count, location, memAlloc);
+    return std::make_unique<Array>(type, count, location);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
