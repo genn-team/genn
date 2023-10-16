@@ -1,5 +1,8 @@
 #include "backend.h"
 
+// Standard C includes
+#include <cstdlib>
+
 // GeNN includes
 #include "gennUtils.h"
 
@@ -94,10 +97,28 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::SingleThreadedCPU::Backend
+// CodeGenerator::SingleThreadedCPU::Array
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
+//--------------------------------------------------------------------------
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, MemAlloc &memAlloc)
+:   ArrayBase(type, count, location)
+{
+    // Malloc host pointer
+    setHostPointer(malloc(getSizeBytes()));
+    memAlloc += MemAlloc::host(getSizeBytes());
+}
+//--------------------------------------------------------------------------
+Array::~Array()
+{
+    free(getHostPointer());
+}
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::SingleThreadedCPU::Backend
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {

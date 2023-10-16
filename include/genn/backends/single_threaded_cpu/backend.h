@@ -33,6 +33,30 @@ struct Preferences : public PreferencesBase
 };
 
 //--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Array
+//--------------------------------------------------------------------------
+class BACKEND_EXPORT Array : public ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, MemAlloc &memAlloc);
+    virtual ~Array();
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Copy array to device
+    virtual void pushToDevice() final
+    {
+    }
+
+    //! Copy array from device
+    virtual void pullFromDevice() final
+    {
+    }
+};
+
+//--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendBase

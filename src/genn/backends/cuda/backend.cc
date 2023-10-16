@@ -187,11 +187,70 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 }
 }   // Anonymous namespace
 
+
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::CUDA::Backend
+// GeNN::CodeGenerator::CUDA::Array
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, MemAlloc &memAlloc)
+:   ArrayBase(type, count, location), m_DevicePointer(nullptr)
+{
+    // Malloc host pointer
+    if(getLocation() & VarLocation::HOST) {
+        const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
+
+        void *hostPointer = nullptr;
+        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
+        setHostPointer(hostPointer);
+        memAlloc += MemAlloc::host(getSizeBytes());
+    }
+
+    // If variable is present on device at all
+    if(getLocation() & VarLocation::DEVICE) {
+        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+        if(getLocation() & VarLocation::ZERO_COPY) {
+            CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+            memAlloc += MemAlloc::zeroCopy(getSizeBytes());
+        }
+        else {
+            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
+            memAlloc += MemAlloc::device(getSizeBytes());
+        }
+    }
+}
+//--------------------------------------------------------------------------
+Array::~Array()
+{
+    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
+    if(getLocation() & VarLocation::HOST) {
+        CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
+    }
+
+    // If this variable wasn't allocated in zero-copy mode, free it
+    if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pushToDevice()
+{
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pullFromDevice()
+{
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+    }
+}
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int device)
 :   BackendSIMT(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
 {

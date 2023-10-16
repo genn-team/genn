@@ -116,6 +116,7 @@ struct PreferencesBase
     }
 };
 
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::MemAlloc
 //--------------------------------------------------------------------------
@@ -184,6 +185,60 @@ inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
     in >> m.m_ZeroCopyBytes;
     return in;
 }
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::ArrayBase
+//--------------------------------------------------------------------------
+class ArrayBase
+{
+public:
+    virtual ~ArrayBase()
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    //! Copy array to device
+    virtual void pushToDevice() = 0;
+
+    //! Copy array from device
+    virtual void pullFromDevice() = 0;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Get array host pointer
+    void *getHostPointer() const{ return m_HostPointer; }
+
+protected:
+    ArrayBase(const Type::ResolvedType &type, size_t count, 
+              VarLocation location)
+    :   m_Type(type), m_Count(count), m_Location(location), m_HostPointer(nullptr)
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    const Type::ResolvedType &getType() const{ return m_Type; }
+    size_t getCount() const{ return m_Count; }
+    VarLocation getLocation() const{ return m_Location; }
+
+    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
+
+    void setHostPointer(void *hostPointer) { m_HostPointer = hostPointer; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    Type::ResolvedType m_Type;
+    size_t m_Count;
+    VarLocation m_Location;
+
+    void *m_HostPointer;
+};
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
