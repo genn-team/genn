@@ -1393,11 +1393,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -1415,38 +1415,6 @@ std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, 
     return std::make_unique<Array>(type, count, location);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
-                                    const Type::ResolvedType &type, const std::string &name, VarLocation) const
-{
-    definitions << "EXPORT_VAR " << type.getValue().name << "* " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableInstantiation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation) const
-{
-    os << type.getValue().name << "* " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name, 
-                                    VarLocation, size_t count, MemAlloc &memAlloc) const
-{
-    os << name << " = new " << type.getValue().name << "[" << count << "];" << std::endl;
-
-    memAlloc += MemAlloc::host(count * type.getValue().size);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicAllocation(CodeStream &os, 
-                                           const Type::ResolvedType &type, const std::string &name, VarLocation, 
-                                           const std::string &countVarName, const std::string &prefix) const
-{
-    if (type.isPointer()) {
-        os << "*" << prefix << name <<  " = new " << type.getPointer().valueType->getValue().name << "[" << countVarName << "];" << std::endl;
-    }
-    else {
-        os << prefix << name << " = new " << type.getValue().name << "[" << countVarName << "];" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
                                                const Type::ResolvedType &type, const std::string &name, VarLocation, 
                                                const std::string &countVarName) const
@@ -1459,54 +1427,11 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
-{
-    os << "delete[] " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const Type::ResolvedType&, const std::string&, VarLocation, bool, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const Type::ResolvedType&, const std::string&, VarLocation, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ResolvedType&, const std::string&, 
-                                     VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ResolvedType&, const std::string&, 
-                                     VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPush(CodeStream&, 
-                                     const Type::ResolvedType&, const std::string&,
-                                     VarLocation, const std::string&, const std::string&) const
-{
-     assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicPush(CodeStream&, 
                                          const Type::ResolvedType&, const std::string&,
                                          VarLocation, const std::string&) const
 {
      assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPull(CodeStream&, 
-                                     const Type::ResolvedType&, const std::string&,
-                                      VarLocation, const std::string&, const std::string&) const
-{
-    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicPull(CodeStream&, 
@@ -1588,14 +1513,9 @@ void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, Cu
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
-}
-//--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
-                               const std::string&, size_t, MemAlloc&) const
-{
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const

@@ -92,8 +92,8 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
@@ -104,71 +104,20 @@ public:
     virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
                                                    VarLocation location) const final;
 
-    //! Generate code to define a variable in the appropriate header file
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
-    
-    //! Generate code to instantiate a variable in the provided stream
-    virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
-
-    //! Generate code to allocate variable with a size known at compile-time
-    virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
-    
-    //! Generate code to allocate variable with a size known at runtime
-    virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                              const std::string &countVarName = "count", const std::string &prefix = "") const final;
-
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
 
-    //! Generate code to free a variable
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
-
-    //! Generate code for pushing a variable with a size known at compile-time to the 'device'
-    virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                 bool autoInitialized, size_t count) const final;
-    
-    //! Generate code for pulling a variable with a size known at compile-time from the 'device'
-    virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, size_t count) const final;
-
-    //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name,
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pushing a variable with a size known at runtime to the 'device'
-    virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
-
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
-                                            const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                            const std::string &countVarName) const final;
-
-    //! Generate code for pulling a variable with a size known at runtime from the 'device'
-    virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genLazyVariableDynamicPull(CodeStream &os, 
-                                            const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                            const std::string &countVarName) const final;
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
 
     //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
     virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -186,10 +135,7 @@ public:
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                  CodeStream &allocations, CodeStream &free,
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
+                                    CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 

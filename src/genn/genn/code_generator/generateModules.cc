@@ -48,7 +48,7 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     outputFileStream << inputFileStream.rdbuf();
 }
 //--------------------------------------------------------------------------
-bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest, MemAlloc &mem)
+bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
 {
     try
     {
@@ -64,10 +64,6 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
         for(auto &d : previousHashDigest) {
             is >> d;
         }
-        
-        // Read memory usage as decimal
-        is >> std::dec;
-        is >> mem;
 
         // If hash matches
         if(previousHashDigest == hashDigest) {
@@ -92,9 +88,9 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                          const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                          bool forceRebuild)
+std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                     const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                     bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -105,8 +101,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
 
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    MemAlloc mem = MemAlloc::zero();
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
+    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest)) {
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
         auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
@@ -117,7 +112,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
         generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateInit(outputPath, modelMerged, backend, memorySpaces);
-        mem = generateRunner(outputPath, modelMerged, backend, memorySpaces);
+        generateRunner(outputPath, modelMerged, backend, memorySpaces);
 
         // Get list of files to copy into generated code
         const auto backendSharePath = sharePath / "backends";
@@ -136,20 +131,6 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
             os << d << " ";
         }
         os << std::endl;
-
-        // Write model memory usage estimates so it can be reloaded if code doesn't need re-generating
-        os << std::dec;
-        os << mem << std::endl;
-    }
-
-    // Show memory usage
-    LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
-    LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
-    LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
-
-    // Give warning of model requires more memory than device has
-    if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
-        LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
     }
 
     // Output summary to log
@@ -178,8 +159,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
 
     // Return list of modules and memory usage
-    const std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
-    return std::make_pair(modules, mem);
+    return std::vector<std::string>{"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
 }
 //--------------------------------------------------------------------------
 void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
@@ -256,6 +236,22 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
     CodeStream init(initStream);
 
     init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+
+    // Generate merged synapse connectivity host init code
+    // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
+    // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
+    // get copied straight into subsequent structures and merged EGP system isn't required
+    init << "void initConnectivityHost()";
+    {
+        CodeStream::Scope b(init);
+        modelMerged.genMergedSynapseConnectivityHostInitGroups(
+            backend, memorySpaces,
+            [&backend, &modelMerged, &init](auto &sg)
+            {
+                EnvironmentExternal env(init);
+                sg.generateInit(backend, env);
+            });
+    }
 
     backend.genInit(init, modelMerged, memorySpaces,
         // Preamble handler

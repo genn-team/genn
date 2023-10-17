@@ -26,9 +26,9 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-GENN_EXPORT std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
-                                                                      const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                                      bool forceRebuild = false);
+GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
+                                                 const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                 bool forceRebuild = false);
 
 GENN_EXPORT void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend,
                                       BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
