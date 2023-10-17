@@ -235,7 +235,7 @@ public:
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
     virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
-                                                   VarLocation location, MemAlloc &memAlloc) const final;
+                                                   VarLocation location) const final;
 
     //! Generate code to define a variable in the appropriate header file
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 

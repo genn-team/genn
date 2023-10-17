@@ -127,7 +127,7 @@ void Array::allocate(size_t count)
 //--------------------------------------------------------------------------
 void Array::free()
 {
-    free(getHostPointer());
+    ::free(getHostPointer());
     setHostPointer(nullptr);
     setCount(0);
 }
