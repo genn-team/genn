@@ -70,6 +70,25 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
     const std::string libraryName = (modelPath / (modelMerged.getModel().getName() + "_CODE") / "librunner.so").str();
     m_Library = dlopen(libraryName.c_str(), RTLD_NOW);
 #endif
+
+    // If no seed is specified
+    const auto seed = m_ModelMerged.get().getModel().getSeed();
+    if(seed == 0) {
+        // Use system randomness to generate seed sequence
+        uint32_t seedData[std::mt19937::state_size];
+        std::random_device seedSource;
+        for(int i = 0; i < std::mt19937::state_size; i++) {
+            seedData[i] = seedSource();
+        }
+
+        // Seed host RNG
+        m_HostRNG.seed(std::seed_seq{std::begin(seedData), std::end(seedData)});
+    }
+    // Otherwise, seed host RNG from model seed
+    // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+    else {
+        m_HostRNG.seed(std::seed_seq{seed});
+    }
 }
 //----------------------------------------------------------------------------
 Runtime::~Runtime()

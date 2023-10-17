@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <random>
 #include <unordered_map>
 
 // Platform includes
@@ -121,6 +122,9 @@ private:
 
     //! Current timestep
     uint64_t m_Timestep;
+
+    //! Host RNG
+    std::mt19937 m_HostRNG;
 
     std::optional<uint64_t> m_NumRecordingTimesteps;
 
