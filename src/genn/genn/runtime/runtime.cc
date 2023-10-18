@@ -104,16 +104,36 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
     // Load library
 #ifdef _WIN32
     const std::string runnerName = "runner_" + modelMerged.getModel().getName();
-#ifdef _DEBUG
-    const std::string libraryName = (modelPath / (runnerName + "_Debug.dll")).str();
-#else
-    const std::string libraryName = (modelPath / (runnerName + "_Release.dll")).str();
-#endif
-     m_Library = LoadLibrary(libraryName.c_str());
+    const std::string runnerNameSuffix = backend.getPreferences().debugCode ?  "_Debug.dll" :  "_Release.dll";
+    const std::string libraryName = (modelPath / (runnerName + runnerNameSuffix)).str();
+    m_Library = LoadLibrary(libraryName.c_str());
 #else
     const std::string libraryName = (modelPath / (modelMerged.getModel().getName() + "_CODE") / "librunner.so").str();
     m_Library = dlopen(libraryName.c_str(), RTLD_NOW);
 #endif
+
+    // If library was loaded successfully
+    if(m_Library != nullptr) {
+        /*m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
+        m_FreeMem = (VoidFunction)getSymbol("freeMem");
+
+        m_Initialize = (VoidFunction)getSymbol("initialize");
+        m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
+
+        m_StepTime = (VoidFunction)getSymbol("stepTime");
+
+        m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
+        m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
+        m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
+        m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);*/
+    }
+    else {
+#ifdef _WIN32
+        throw std::runtime_error("Unable to load library - error:" + std::to_string(GetLastError()));
+#else
+        throw std::runtime_error("Unable to load library - error:" + std::string(dlerror()));
+#endif
+    }
 }
 //----------------------------------------------------------------------------
 Runtime::~Runtime()
