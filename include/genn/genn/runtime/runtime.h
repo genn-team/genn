@@ -84,9 +84,9 @@ private:
         \param count        number of elements in array
         \param location     location of array e.g. device-only
         \param memAlloc     MemAlloc object for tracking memory usage*/
-    void allocateArray(const std::string &groupName, const std::string &varName,
-                       const Type::ResolvedType &type, size_t count, 
-                       VarLocation location);
+    void createArray(const std::string &groupName, const std::string &varName,
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location);
     
     //! Helper to allocate array in m_Arrays data structure
     /*! \tparam A           Adaptor class used to access 
@@ -104,8 +104,8 @@ private:
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
             const size_t numDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
-            allocateArray(adaptor.getNameSuffix(), var.name, resolvedType, getNumVarCopies * numVarElements * numDelaySlots,
-                          adaptor.getLoc(var.name));
+            createArray(adaptor.getNameSuffix(), var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
+                        adaptor.getLoc(var.name));
         }
     }
 

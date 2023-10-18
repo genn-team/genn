@@ -1409,10 +1409,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     {
         CodeStream::Scope b(os);
 
-        // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl;
-        os << "copyConnectivityToDevice(true);" << std::endl;
-
         // If there are any sparse initialisation work-items
         if (idSparseInitStart > 0) {
             CodeStream::Scope b(os);

@@ -1032,12 +1032,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     {
         CodeStream::Scope b(initEnv.getStream());
 
-        // Copy all uninitialised state variables to device
-        if(!getPreferences().automaticCopy) {
-            initEnv.getStream() << "copyStateToDevice(true);" << std::endl;
-            initEnv.getStream() << "copyConnectivityToDevice(true);" << std::endl << std::endl;
-        }
-
         // If there are any sparse initialisation threads
         if(idSparseInitStart > 0) {
             CodeStream::Scope b(initEnv.getStream());
