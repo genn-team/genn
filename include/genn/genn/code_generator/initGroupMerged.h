@@ -179,13 +179,9 @@ public:
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, 
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -232,13 +228,9 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, 
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -259,13 +251,9 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, 
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -289,13 +277,9 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
@@ -339,13 +323,9 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+        generateRunnerBase(backend, definitions, name, true);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env);
@@ -380,13 +360,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -412,13 +388,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -443,13 +415,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -474,13 +442,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -505,13 +469,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
@@ -536,13 +496,9 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);

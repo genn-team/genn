@@ -1872,10 +1872,7 @@ std::string Backend::getNVCCFlags() const
     if(getPreferences<Preferences>().generateLineInfo) {
         nvccFlags += " --generate-line-info";
     }
-#ifdef MPI_ENABLE
-    // If MPI is enabled, add MPI include path
-    nvccFlags +=" -I\"$(MPI_PATH)/include\"";
-#endif
+
     return nvccFlags;
 }
 //-----------------------------------------------------------------------

@@ -336,10 +336,133 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     for(const auto &g : customUpdateGroups) {
         definitions << "EXPORT_FUNC void update" << g << "();" << std::endl;
     }
-#ifdef MPI_ENABLE
-    definitions << "// MPI functions" << std::endl;
-    definitions << "EXPORT_FUNC void generateMPI();" << std::endl;
-#endif
+    
+    definitions << "// Merged group upload functions" << std::endl;
+
+    // Loop through merged synapse connectivity host initialisation groups
+    for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged neuron initialisation groups
+    for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseInitGroups()) {
+         m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged synapse connectivity initialisation groups
+    for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged sparse synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom sparse WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateSparseInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom connectivity update presynaptic initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomConnectivityUpdatePreInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom connectivity update postsynaptic initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomConnectivityUpdatePostInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Generate merged custom connectivity update synaptic initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged neuron update groups
+    for(const auto &m : modelMerged.getMergedNeuronUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged presynaptic update groups
+    for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged postsynaptic update groups
+    for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through synapse dynamics groups
+    for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through neuron groups whose previous spike times need resetting
+    for(const auto &m : modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through neuron groups whose spike queues need resetting
+    for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through synapse groups whose dendritic delay pointers need updating
+    for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
+       m.generateRunner(backend, definitions);
+    }
+    
+    // Loop through custom variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom WU variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateWUGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom WU transpose variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom weight update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom connectivity update groups
+    for(const auto &m : modelMerged.getMergedCustomConnectivityUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom connectivity host update groups
+    for(const auto &m : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
 
     // End extern C block around definitions
     definitions << "}  // extern \"C\"" << std::endl;

@@ -325,61 +325,23 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void generateRunnerBase(const BackendBase &backend, 
-                            CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                            CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                            CodeStream &runnerMergedStructAlloc, const std::string &name, bool host = false) const
+    void generateRunnerBase(const BackendBase &backend, CodeStream &definitions, const std::string &name, bool host = false) const
     {
-        // Make a copy of fields and sort so largest come first. This should mean that due
-        // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = getSortedFields(backend);
-
-        // If this isn't a host merged structure, generate definition for function to push group
-        if(!host) {
-            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
-            generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
-            definitionsInternalFunc << ");" << std::endl;
-        }
+        // Generate definition for function to push group
+        definitions << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
+        generateStructFieldArgumentDefinitions(definitions, backend);
+        definitions << ");" << std::endl;
 
         // Loop through fields again to generate any EGP pushing functions that are require
-        for(const auto &f : sortedFields) {
+        for(const auto &f : m_Fields) {
             // If this field is a dynamic pointer
             if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && std::get<0>(f).isPointer()) {
-                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
-                definitionsInternalFunc << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
+                definitions << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
+                definitions << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }
 
             // Raise error if this field is a host field but this isn't a host structure
             assert(!(std::get<3>(f) & GroupMergedFieldType::HOST) || host);
-        }
-
-        // If merged group is used on host
-        if(host) {
-            // Generate struct directly into internal definitions
-            // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(definitionsInternal, backend, name, true);
-
-            // Declare array of these structs containing individual neuron group pointers etc
-            runnerVarDecl << "Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
-
-            // Export it
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "]; " << std::endl;
-        }
-
-        // Loop through groups
-        for(size_t groupIndex = 0; groupIndex < this->getGroups().size(); groupIndex++) {
-            // If this is a merged group used on the host, directly set array entry
-            if(host) {
-                runnerMergedStructAlloc << "merged" << name << "Group" << this->getIndex() << "[" << groupIndex << "] = {";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
-                runnerMergedStructAlloc << "};" << std::endl;
-            }
-            // Otherwise, call function to push to device
-            else {
-                runnerMergedStructAlloc << "pushMerged" << name << "Group" << this->getIndex() << "ToDevice(" << groupIndex << ", ";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
-                runnerMergedStructAlloc << ");" << std::endl;
-            }
         }
     }
 
