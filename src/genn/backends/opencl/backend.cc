@@ -2430,8 +2430,8 @@ void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal 
             (ng.isTrueSpikeRequired() && ng.isDelayRequired());
 
         const char *function = push ? "Write" : "Read";
-        const char* spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
-        const char* spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+        const char* spikeCntPrefix = spikeEvent ? "spkCntEvnt" : "spkCnt";
+        const char* spikePrefix = spikeEvent ? "spkEvnt" : "spk";
 
         if (delayRequired) {
             // If there's only a single batch

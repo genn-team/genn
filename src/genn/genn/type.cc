@@ -348,6 +348,32 @@ std::string writeNumeric(const NumericValue &value, const ResolvedType &type)
     }
 }
 //----------------------------------------------------------------------------
+void serialiseNumeric(const NumericValue &value, const ResolvedType &type, std::vector<std::byte> &bytes)
+{
+    #define SERIALISE(TYPE, GENN_TYPE)                                                  \
+        if(type == GENN_TYPE) {                                                         \
+            const TYPE v = value.cast<TYPE>();                                          \
+            std::byte vBytes[sizeof(TYPE)];                                             \
+            std::memcpy(vBytes, &v, sizeof(TYPE));                                      \
+            std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes)); \
+            return;                                                                     \
+        } else
+
+    SERIALISE(int8_t, Int8);
+    SERIALISE(int16_t, Int16);
+    SERIALISE(int32_t, Int32);
+    SERIALISE(int64_t, Int64);
+    SERIALISE(uint8_t, Uint8);
+    SERIALISE(uint16_t, Uint16);
+    SERIALISE(uint32_t, Uint32);
+    SERIALISE(uint64_t, Uint64);
+    SERIALISE(float, Float);
+    SERIALISE(double, Double);
+    {
+        throw std::runtime_error("Unable to serialse type '" + type.getName() + "'");
+    }
+}
+//----------------------------------------------------------------------------
 void updateHash(const NumericValue &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.get(), hash);

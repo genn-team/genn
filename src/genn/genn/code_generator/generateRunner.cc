@@ -261,7 +261,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     // ---------------------------------------------------------------------
     // Function for setting the device and the host's global variables.
     // Also estimates memory usage on device ...
-    runner << "void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ")";
+    runner << "void allocateMem()";
     {
         CodeStream::Scope b(runner);
 
@@ -320,7 +320,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     // ---------------------------------------------------------------------
     // Function definitions
     definitions << "// Runner functions" << std::endl;
-    definitions << "EXPORT_FUNC void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ");" << std::endl;
+    definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime(unsigned long long timestep, unsigned long long numRecordingTimesteps);" << std::endl;
     definitions << std::endl;

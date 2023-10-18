@@ -438,7 +438,7 @@ void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, Enviro
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeCountEnv(env, *this);
         spikeCountEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + suffix,
-                               [&suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "glbSpkCnt"); });
+                               [&suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
 
         // Generate variable initialisation code
         backend.genPopVariableInit(env,
@@ -467,7 +467,7 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeEnv(env, *this);
         spikeEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + suffix,
-                          [suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "glbSpk" + suffix); });
+                          [suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk" + suffix); });
 
 
         // Generate variable initialisation code

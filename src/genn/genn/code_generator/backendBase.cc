@@ -125,11 +125,9 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
 
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); }, 
-                 "", GroupMergedFieldType::DYNAMIC);
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); });
     env.addField(Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                 [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); },
-                 "", GroupMergedFieldType::DYNAMIC);
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
@@ -489,11 +487,21 @@ Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMe
 }
 }   // Anonymous namespace
 
+
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::BackendBase
+// GeNN::CodeGenerator::ArrayBase
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
+void ArrayBase::serialiseHost(std::vector<std::byte> &bytes) const
+{
+    std::byte vBytes[sizeof(void*)];
+    std::memcpy(vBytes, &m_HostPointer, sizeof(void*));
+    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
+}
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::BackendBase
+//--------------------------------------------------------------------------
 BackendBase::BackendBase(const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char *)), m_Preferences(preferences)
 {

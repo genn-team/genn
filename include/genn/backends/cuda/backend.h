@@ -39,7 +39,6 @@ enum class DeviceSelect
     OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
     MOST_MEMORY,    //!< Pick device with most global memory
     MANUAL,         //!< Use device specified by user
-    MANUAL_RUNTIME, //!< Use device specified by user at runtime with allocateMem parameter. Optimisation will be performed on device specified with manualDeviceID.
 };
 
 //--------------------------------------------------------------------------
@@ -68,10 +67,6 @@ struct Preferences : public PreferencesBase
 
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
-
-    //! GeNN normally identifies devices by PCI bus ID to ensure that the model is run on the same device
-    //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
-    bool selectGPUByDeviceID = false;
 
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
@@ -112,7 +107,6 @@ struct Preferences : public PreferencesBase
         // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
 
         //! Update hash with preferences
-        Utils::updateHash(selectGPUByDeviceID, hash);
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
         Utils::updateHash(enableNCCLReductions, hash);
@@ -146,16 +140,19 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() final;
 
+    //! Serialise device pointer to bytes
+    virtual void serialiseDevice(std::vector<std::byte> &bytes) const final;
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void *getDevicePointer() const{ return m_DevicePointer; }
+    std::byte *getDevicePointer() const{ return m_DevicePointer; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    void *m_DevicePointer;
+    std::byte *m_DevicePointer;
 };
 
 //--------------------------------------------------------------------------
@@ -164,7 +161,8 @@ private:
 class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
-    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int device);
+    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
+            int device, bool zeroCopy);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
@@ -284,9 +282,6 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
-
-    //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const final;
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const final { return true; }

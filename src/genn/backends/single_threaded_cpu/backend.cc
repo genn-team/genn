@@ -122,12 +122,12 @@ void Array::allocate(size_t count)
 {
     // Malloc host pointer
     setCount(count);
-    setHostPointer(malloc(getSizeBytes()));
+    setHostPointer(new std::byte[getSizeBytes()]);
 }
 //--------------------------------------------------------------------------
 void Array::free()
 {
-    ::free(getHostPointer());
+    delete [] getHostPointer();
     setHostPointer(nullptr);
     setCount(0);
 }

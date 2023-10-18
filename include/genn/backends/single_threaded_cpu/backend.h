@@ -60,6 +60,13 @@ public:
     virtual void pullFromDevice() final
     {
     }
+
+    //! Serialise device pointer to bytes
+    virtual void serialiseDevice(std::vector<std::byte> &bytes) const final
+    {
+        serialiseHost(bytes);
+    }
+
 };
 
 //--------------------------------------------------------------------------

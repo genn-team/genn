@@ -451,7 +451,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, deviceID);
+        Backend backend(blockSize, preferences, deviceID, model.zeroCopyInUse());
 
         // Create merged model
         ModelSpecMerged modelMerged(backend, model);
@@ -758,7 +758,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, deviceID);
+        return Backend(cudaBlockSize, preferences, deviceID, model.zeroCopyInUse());
     }
     // Otherwise
     else {
@@ -777,11 +777,11 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
             optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, deviceID);
+            return Backend(cudaBlockSize, preferences, deviceID, model.zeroCopyInUse());
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, deviceID, model.zeroCopyInUse());
         }
 
     }

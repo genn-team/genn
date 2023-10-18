@@ -17,11 +17,17 @@ extern "C"
 }
 #endif
 
+// FFI includes
+#include <ffi.h>
+
 // GeNN includes
 #include "gennExport.h"
 #include "type.h"
 #include "varAccess.h"
 #include "variableMode.h"
+
+// GeNN code generator includes
+#include "code_generator/groupMerged.h"
 
 namespace GeNN
 {
@@ -69,10 +75,10 @@ public:
     void allocate(std::optional<size_t> numRecordingTimesteps = std::nullopt);
 
     //! Initialise model
-    void initialise();
+    void initialize();
 
     //! Initialise parts of model which rely on sparse connectivity
-    void initialiseSparse();
+    void initializeSparse();
 
     //! Simulate one timestep
     void stepTime();
@@ -82,6 +88,16 @@ public:
 
     //! Get current simulation time
     double getTime() const;
+
+    double getNeuronUpdateTime() const{ return *(double*)getSymbol("neuronUpdateTime"); }
+    double getInitTime() const{ return *(double*)getSymbol("initTime"); }
+    double getPresynapticUpdateTime() const{ return *(double*)getSymbol("presynapticUpdateTime"); }
+    double getPostsynapticUpdateTime() const{ return *(double*)getSymbol("postsynapticUpdateTime"); }
+    double getSynapseDynamicsTime() const{ return *(double*)getSymbol("synapseDynamicsTime"); }
+    double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
+    double getCustomUpdateTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
+    double getCustomUpdateTransposeTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
+    
 
     //! Get array associated with current source variable
     CodeGenerator::ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
@@ -115,9 +131,15 @@ public:
 
 private:
     //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef void (*VoidFunction)(void);
+    typedef void (*StepTimeFunction)(unsigned long long, unsigned long long);
+
+    //----------------------------------------------------------------------------
     // Private API
     //----------------------------------------------------------------------------
-    void *getSymbol(const std::string &symbolName) const;
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                      size_t count, VarLocation location);
@@ -177,6 +199,72 @@ private:
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
                                  
+    template<typename G>
+    void pushMergedGroup(const G &g) const
+    {
+        // Loop through groups
+        const auto sortedFields = g.getSortedFields(m_Backend.get());
+
+        // Start vector of argument types with unsigned int group index and them append FFI types of each argument
+        // **TODO** allow backend to override type
+        std::vector<ffi_type*> argumentTypes{&ffi_type_uint};
+        argumentTypes.reserve(sortedFields.size() + 1);
+        std::transform(sortedFields.cbegin(), sortedFields.cend(), std::back_inserter(argumentTypes),
+                        [](const auto &f){ return std::get<0>(f).getFFIType(); });
+        
+        // Prepare an FFI Call InterFace for calls to push merged
+        ffi_cif cif;
+        ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argumentTypes.size(),
+                                         &ffi_type_void, argumentTypes.data());
+        if (status != FFI_OK) {
+            throw std::runtime_error("ffi_prep_cif failed: " + std::to_string(status));
+        }
+
+        // Get push function
+        void *pushFunction = getSymbol("pushMerged" + G::name + "Group" + std::to_string(g.getIndex()) + "ToDevice");
+
+        // Loop through groups in merged group
+        for(unsigned int groupIndex = 0; groupIndex < g.getGroups().size(); groupIndex++) {
+            // Create vector of bytes to serialise arguments into
+            std::vector<std::byte> argumentStorage;
+
+            // Create vector of arguments
+            std::vector<size_t> argumentOffsets{};
+            argumentOffsets.reserve(sortedFields.size());
+
+            // Loop through sorted fields
+            for(const auto &f : sortedFields) {
+                // Push back offset where this argument will start in the storage
+                argumentOffsets.push_back(argumentStorage.size());
+
+                std::visit(
+                    Utils::Overload{
+                        [&argumentStorage, &f](const ArrayBase *array)
+                        {
+                            if(std::get<3>(f) & GroupMergedFieldType::HOST) {
+                                array->serialiseHost(argumentStorage);
+                            }
+                            else {
+                                array->serialiseDevice(argumentStorage);
+                            }
+                        },
+                        [&argumentStorage, &f](const Type::NumericValue &value)
+                        { 
+                            Type::serialiseNumeric(value, std::get<0>(f), argumentStorage);
+                        }},
+                    std::get<2>(f)(*this, g.getGroups()[groupIndex], groupIndex));
+            }
+
+            // Build vector of argument pointers
+            std::vector<void*> argumentPointers{&groupIndex};
+            argumentPointers.reserve(1 + sortedFields.size());
+            std::transform(argumentOffsets.cbegin(), argumentOffsets.cend(), std::back_inserter(argumentPointers),
+                           [&argumentStorage](size_t offset){ return &argumentStorage[offset]; });
+
+            // Call function
+            ffi_call(&cif, FFI_FN(pushFunction), nullptr, argumentPointers.data());
+        }
+    }
 
     //----------------------------------------------------------------------------
     // Members
@@ -208,5 +296,11 @@ private:
     GroupArrayMap<SynapseGroup> m_SynapseGroupArrays;
     GroupArrayMap<CustomUpdateBase> m_CustomUpdateArrays;
     GroupArrayMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateArrays;
+
+    VoidFunction m_AllocateMem;
+    VoidFunction m_FreeMem;
+    VoidFunction m_Initialize;
+    VoidFunction m_InitializeSparse;
+    StepTimeFunction m_StepTime;
 };
 }

@@ -69,6 +69,13 @@ public:
     T get() const{ return std::get<T>(m_Value); }
     const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }
     
+    template<typename T>
+    T cast() const
+    {
+        return std::visit(Utils::Overload{[](auto v){ return static_cast<T>(v); }},
+                          m_Value);
+    }
+
     //----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------
@@ -417,6 +424,9 @@ GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType
 
 //! Write numeric value to string, formatting correctly for type
 GENN_EXPORT std::string writeNumeric(const NumericValue &value, const ResolvedType &type);
+
+//! Serialise numeric value to bytes
+GENN_EXPORT void serialiseNumeric(const NumericValue &value, const ResolvedType &type, std::vector<std::byte> &bytes);
 
 //----------------------------------------------------------------------------
 // updateHash overrides

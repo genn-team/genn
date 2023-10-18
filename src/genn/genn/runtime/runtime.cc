@@ -6,9 +6,6 @@
 // Filesystem includes
 #include "path.h"
 
-// FFI includes
-#include <ffi.h>
-
 // GeNN includes
 #include "varAccess.h"
 
@@ -49,47 +46,6 @@ size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend
         return 1;
     }
 }
-template<typename G>
-void pushMergedGroup(CodeGenerator::GroupMerged<G> &g) 
-{
-    // Loop through groups
-    const auto sortedFields = g.getSortedFields(m_Backend.get());
-
-    // Start vector of argument types with unsigned int group index and them append FFI types of each argument
-    // **TODO** allow backend to override type
-    std::vector<ffi_type*> argumentTypes{&ffi_type_uint};
-    argumentTypes.reserve(sortedFields.size() + 1);
-    std::transform(sortedFields.cbegin(), sortedFields.cend(), std::back_inserter(argumentTypes),
-                    [](const auto &f){ return std::get<0>(f).getFFIType() });
-        
-    // Prepare an FFI Call InterFace for calls to push merged
-    ffi_cif cif;
-    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argumentTypes.size(),
-                                        &ffi_type_void, argumentTypes.data());
-    if (status != FFI_OK) {
-        throw std::runtime_error("ffi_prep_cif failed: " + std::to_string(status));
-    }
-
-    // Get push function
-    void *pushFunction = getSymbol("pushMerged" + g.name + "Group" + std::to_string(g.getIndex()) + "ToDevice");
-
-    // Loop through groups in merged group
-    std::vector<void*> arguments(sortedFields.size() + 1);
-    for(unsigned int groupIndex = 0; groupIndex < g.getGroups().size(); groupIndex++) {
-        arguments[0] = &groupIndex;
-
-        for(const auto &f : sortedFields) {
-            const auto &fieldType = std::get<0>(f);
-
-            // If field type is pointer
-            //  
-            const std::string fieldInitVal = std::get<2>(f)(g.getGroups().at(groupIndex), groupIndex);
-        }
-
-        //generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
-        //runnerMergedStructAlloc << ");" << std::endl;
-    }
-}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -99,7 +55,8 @@ namespace GeNN::Runtime
 {
 Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
                  const CodeGenerator::BackendBase &backend)
-:   m_Timestep(0), m_ModelMerged(modelMerged), m_Backend(backend)
+:   m_Timestep(0), m_ModelMerged(modelMerged), m_Backend(backend), m_AllocateMem(nullptr), m_FreeMem(nullptr),
+    m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
 {
     // Load library
 #ifdef _WIN32
@@ -112,17 +69,17 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
     m_Library = dlopen(libraryName.c_str(), RTLD_NOW);
 #endif
 
-    // If library was loaded successfully
+    // If library was loaded successfully, look up basic functions in library
     if(m_Library != nullptr) {
-        /*m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
+        m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
         m_FreeMem = (VoidFunction)getSymbol("freeMem");
 
         m_Initialize = (VoidFunction)getSymbol("initialize");
         m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
 
-        m_StepTime = (VoidFunction)getSymbol("stepTime");
+        m_StepTime = (StepTimeFunction)getSymbol("stepTime");
 
-        m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
+        /*m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
         m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
         m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
         m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);*/
@@ -139,6 +96,8 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 Runtime::~Runtime()
 {
     if(m_Library) {
+        m_FreeMem();
+
 #ifdef _WIN32
         FreeLibrary(m_Library);
 #else
@@ -150,6 +109,9 @@ Runtime::~Runtime()
 //----------------------------------------------------------------------------
 void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 {
+    // Call allocate function in generated code
+    m_AllocateMem();
+
     // Store number of recording timesteps
     m_NumRecordingTimesteps = numRecordingTimesteps;
 
@@ -170,9 +132,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If spike-like events are required, allocate arrays for counts and spikes
         if(n.second.isSpikeEventRequired()) {
-            createArray(&n.second, "spkEventCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+            createArray(&n.second, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeEventLocation());
-            createArray(&n.second, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
+            createArray(&n.second, "spkEvnt", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation());
         }
         
@@ -335,26 +297,148 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // **TODO** custom connectivity update
 
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityHostInitGroups()) {
+       pushMergedGroup(m);
+    }
+
+    // Generate merged neuron initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedNeuronInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through merged synapse init groups
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseInitGroups()) {
+         pushMergedGroup(m);
+    }
+
+    // Loop through merged synapse connectivity initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through merged sparse synapse init groups
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseSparseInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Generate merged custom WU update initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Generate merged custom sparse WU update initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateSparseInitGroups()) {
+       pushMergedGroup(m);
+    }
+
+    // Generate merged custom connectivity update presynaptic initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePreInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Generate merged custom connectivity update postsynaptic initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePostInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Generate merged custom connectivity update synaptic initialisation groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateSparseInitGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through merged neuron update groups
+    for(const auto &m : m_ModelMerged.get().getMergedNeuronUpdateGroups()) {        
+        pushMergedGroup(m);
+    }
+
+    // Loop through merged presynaptic update groups
+    for(const auto &m : m_ModelMerged.get().getMergedPresynapticUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through merged postsynaptic update groups
+    for(const auto &m : m_ModelMerged.get().getMergedPostsynapticUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through synapse dynamics groups
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseDynamicsGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through neuron groups whose previous spike times need resetting
+    for(const auto &m : m_ModelMerged.get().getMergedNeuronPrevSpikeTimeUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through neuron groups whose spike queues need resetting
+    for(const auto &m : m_ModelMerged.get().getMergedNeuronSpikeQueueUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through synapse groups whose dendritic delay pointers need updating
+    for(const auto &m : m_ModelMerged.get().getMergedSynapseDendriticDelayUpdateGroups()) {
+        pushMergedGroup(m);
+    }
     
+    // Loop through custom variable update groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom WU variable update groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateWUGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom WU transpose variable update groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateTransposeWUGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom update host reduction groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateHostReductionGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom weight update host reduction groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateHostReductionGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom connectivity update groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateGroups()) {
+        pushMergedGroup(m);
+    }
+
+    // Loop through custom connectivity host update groups
+    for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
+        pushMergedGroup(m);
+    }
 
 }
 //----------------------------------------------------------------------------
-void Runtime::initialise()
+void Runtime::initialize()
 {
-    //m_Initialise()
+    m_Initialize();
 }
 //----------------------------------------------------------------------------
-void Runtime::initialiseSparse()
+void Runtime::initializeSparse()
 {
     //initEnv.getStream() << "copyStateToDevice(true);" << std::endl;
     //initEnv.getStream() << "copyConnectivityToDevice(true);" << std::endl << std::endl;
 
-    //m_InitialiseSparse();
+    m_InitializeSparse();
 }
 //----------------------------------------------------------------------------
 void Runtime::stepTime()
 {
-   //m_StepTime(getTime());
+   m_StepTime(m_Timestep, m_NumRecordingTimesteps.value_or(0));
     
     // Generate code to advance host-side spike queues    
     /*for(const auto &n : model.getNeuronGroups()) {
@@ -381,7 +465,7 @@ double Runtime::getTime() const
     return m_Timestep * m_ModelMerged.get().getModel().getDT();
 }
 //----------------------------------------------------------------------------
-void *Runtime::getSymbol(const std::string &symbolName) const
+void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 {
 #ifdef _WIN32
     void *symbol = GetProcAddress(m_Library, symbolName.c_str());
@@ -389,13 +473,20 @@ void *Runtime::getSymbol(const std::string &symbolName) const
     void *symbol = dlsym(m_Library, symbolName.c_str());
 #endif
 
-    // If this symbol's missing
-    if(symbol == nullptr) {
-        throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
-    }
-    // Otherwise, return symbolPopulationFuncs
-    else {
+    // Return symbol if it's found
+    if(symbol) {
         return symbol;
+    }
+    // Otherwise
+    else {
+        // If this isn't allowed, throw error
+        if(!allowMissing) {
+            throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
+        }
+        // Otherwise, return default
+        else {
+            return nullptr;
+        }
     }
 }
 //----------------------------------------------------------------------------

@@ -207,11 +207,17 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() = 0;
 
+    //! Serialise device pointer to bytes
+    virtual void serialiseDevice(std::vector<std::byte> &bytes) const = 0;
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     //! Get array host pointer
-    void *getHostPointer() const{ return m_HostPointer; }
+    std::byte *getHostPointer() const{ return m_HostPointer; }
+
+    //! Serialise host pointer to bytes
+    void serialiseHost(std::vector<std::byte> &bytes) const;
 
 protected:
     ArrayBase(const Type::ResolvedType &type, size_t count, 
@@ -230,7 +236,7 @@ protected:
     size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
 
     void setCount(size_t count) { m_Count = count; }
-    void setHostPointer(void *hostPointer) { m_HostPointer = hostPointer; }
+    void setHostPointer(std::byte *hostPointer) { m_HostPointer = hostPointer; }
 
 private:
     //------------------------------------------------------------------------
@@ -240,7 +246,7 @@ private:
     size_t m_Count;
     VarLocation m_Location;
 
-    void *m_HostPointer;
+    std::byte *m_HostPointer;
 };
 
 //--------------------------------------------------------------------------
@@ -394,10 +400,6 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
-
-    //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const { return ""; }
-
     //! Get list of files to copy into generated code
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
