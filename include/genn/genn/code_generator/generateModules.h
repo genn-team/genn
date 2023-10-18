@@ -11,9 +11,9 @@
 #include "backendBase.h"
 
 // Forward declarations
-namespace GeNN
+namespace GeNN::CodeGenerator
 {
-class ModelSpecInternal;
+class ModelSpecMerged;
 }
 
 namespace filesystem
@@ -26,7 +26,7 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
+GENN_EXPORT std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend, 
                                                  const filesystem::path &sharePath, const filesystem::path &outputPath,
                                                  bool forceRebuild = false);
 

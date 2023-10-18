@@ -19,6 +19,10 @@
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
+#include "code_generator/modelSpecMerged.h"
+
+// GeNN runtime includes
+#include "runtime/runtime.h"
 
 // Include backend
 #include "optimiser.h"
@@ -70,8 +74,9 @@ int main(int argc,     //!< number of arguments; expected to be 3
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
                                                 GENN_PREFERENCES);
 
-        // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, 
+        // Create merged model and generate code
+        CodeGenerator::ModelSpecMerged modelMerged(backend, model);
+        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, sharePath, 
                                                             outputPath, forceRebuild);
 
 #ifdef _WIN32
@@ -111,13 +116,34 @@ int main(int argc,     //!< number of arguments; expected to be 3
             LOGI_CODE_GEN << "Using previously generated project GUID:" << projectGUIDString;
         }
         // Create MSBuild project to compile and link all generated modules
-        std::ofstream makefile((outputPath / "runner.vcxproj").str());
-        CodeGenerator::generateMSBuild(makefile, model, backend, projectGUIDString, moduleNames);
+        {
+            std::ofstream msbuild((outputPath / "runner.vcxproj").str());
+            CodeGenerator::generateMSBuild(msbuild, model, backend, projectGUIDString, moduleNames);
+        }
+        
+        // Generate command to build using msbuild
+        const std::string buildCommand = "msbuild /m /p:Configuration=Release  /verbosity:minimal \"" + (outputPath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
-        std::ofstream makefile((outputPath / "Makefile").str());
-        CodeGenerator::generateMakefile(makefile, backend, moduleNames);
+        {
+            std::ofstream makefile((outputPath / "Makefile").str());
+            CodeGenerator::generateMakefile(makefile, backend, moduleNames);
+        }
+
+        // Generate command to build using make, using as many threads as possible
+        const unsigned int numThreads = std::thread::hardware_concurrency();
+        const std::string buildCommand = "make -C \"" + outputPath.str() + "\" -j " + std::to_string(numThreads);
 #endif
+
+        // Execute build command
+        const int retval = system(buildCommand.c_str());
+        if (retval != 0) {
+            throw std::runtime_error("Building generated code with call:'" + buildCommand + "' failed with return value:" + std::to_string(retval));
+        }
+        
+        // Create runtime and simulate
+        Runtime::Runtime runtime(targetPath, modelMerged, backend);
+        simulate(static_cast<ModelSpec&>(std::ref(model)), runtime);
 
     }
     catch(const std::exception &exception)

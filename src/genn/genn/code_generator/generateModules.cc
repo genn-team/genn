@@ -88,16 +88,12 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend,
                                      const filesystem::path &sharePath, const filesystem::path &outputPath,
                                      bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
-
-    // Create merged model
-    ModelSpecMerged modelMerged(backend, model);
-    
 
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
@@ -134,7 +130,7 @@ std::vector<std::string> generateAll(const ModelSpecInternal &model, const Backe
     }
 
     // Output summary to log
-    LOGI_CODE_GEN << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
+    LOGI_CODE_GEN << "Merging model with " << modelMerged.getModel().getNeuronGroups().size() << " neuron groups and " << modelMerged.getModel().getSynapseGroups().size() << " synapse groups results in:";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
