@@ -177,6 +177,35 @@ size_t ResolvedType::getSize(size_t pointerBytes) const
             detail);
 }
 //----------------------------------------------------------------------------
+ffi_type *ResolvedType::getFFIType() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const Type::ResolvedType::Value &value)
+            {
+                if(value.ffi_type) {
+                    return value.ffi_type;
+                }
+                else {
+                    throw std::runtime_error("Value type '" + value.name + "'cannot be passed via FFI");
+                }
+            },
+            [](const Type::ResolvedType::Pointer&)
+            {
+                return &ffi_type_pointer;
+            },
+            [](const Type::ResolvedType::Function&)->ffi_type*
+            {
+                throw std::runtime_error("Function types cannot be passed via FFI");
+            },
+            [](std::monostate)
+            {
+                return &ffi_type_void;
+            }},
+            detail);
+}
+
+//----------------------------------------------------------------------------
 // GeNN::Type::UnresolvedType
 //----------------------------------------------------------------------------
 ResolvedType UnresolvedType::resolve(const TypeContext &typeContext) const
