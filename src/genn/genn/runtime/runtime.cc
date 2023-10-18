@@ -465,6 +465,26 @@ double Runtime::getTime() const
     return m_Timestep * m_ModelMerged.get().getModel().getDT();
 }
 //----------------------------------------------------------------------------
+void Runtime::pullRecordingBuffersFromDevice() const
+{
+    if(!m_NumRecordingTimesteps) {
+        throw std::runtime_error("Recording buffer not allocated - cannot pull from device");
+    }
+
+    // Loop through neuron groups
+    for(const auto &n : m_ModelMerged.get().getModel().getNeuronGroups()) {
+        // If spike recording is enabled, pull array from device
+        if(n.second.isSpikeRecordingEnabled()) {
+            getArray(n.second, "recordSpk")->pullFromDevice();
+        }
+
+        // If spike event recording is enabled, pull array from device
+        if(n.second.isSpikeEventRecordingEnabled()) {
+            getArray(n.second, "recordSpk")->pullFromDevice();
+        }
+    }
+}
+//----------------------------------------------------------------------------
 void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 {
 #ifdef _WIN32
@@ -498,6 +518,64 @@ void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, con
         throw std::runtime_error("Unable to allocate array with " 
                                  "duplicate name '" + varName + "'");
     }
+}
+//----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEvents(const NeuronGroup &group, 
+                                                                                     ArrayBase *array) const
+{
+    if(!m_NumRecordingTimesteps) {
+        throw std::runtime_error("Recording buffer not allocated - cannot get recorded events");
+    }
+
+    // Calculate number of words per-timestep
+    const size_t timestepWords = ceilDivide(group.getNumNeurons(), 32);
+
+    if(m_Timestep < timestepWords) {
+        throw std::runtime_error("Event recording data can only be accessed once buffer is full");
+    }
+    
+    // Calculate start time
+    const double dt = m_ModelMerged.get().getModel().getDT();
+    const double startTime = (m_Timestep - timestepWords) * dt;
+
+    // Loop through
+    const uint32_t *spkRecordWords = reinterpret_cast<const uint32_t*>(array->getHostPointer());
+    std::vector<double> eventTimes;
+    std::vector<unsigned int> eventIDs;
+    for(size_t t = 0; t < m_NumRecordingTimesteps.value(); t++) {
+        // Loop through words representing timestep
+        const double time = startTime + (t * dt);
+        for(size_t w = 0; w < timestepWords; w++) {
+            // Get word
+            uint32_t spikeWord = spkRecordWords[(t * timestepWords) + w];
+            
+            // Calculate neuron id of highest bit of this word
+            unsigned int neuronID = (w * 32) + 31;
+            
+            // While bits remain
+            while(spikeWord != 0) {
+                // Calculate leading zeros
+                const int numLZ = Utils::clz(spikeWord);
+                
+                // If all bits have now been processed, zero spike word
+                // Otherwise shift past the spike we have found
+                spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
+                
+                // Subtract number of leading zeros from neuron ID
+                neuronID -= numLZ;
+                
+                // Add time and ID to vectors
+                eventTimes.push_back(time);
+                eventIDs.push_back(neuronID);
+                
+                // New neuron id of the highest bit of this word
+                neuronID--;
+            }
+        }
+    }
+
+    // Return vectors
+    return std::make_pair(eventTimes, eventIDs);
 }
 //----------------------------------------------------------------------------
 void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName,

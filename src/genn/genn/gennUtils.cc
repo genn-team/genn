@@ -7,6 +7,11 @@
 // Standard C includes
 #include <cctype>
 
+// Platform includes
+#ifdef _WIN32
+#include <intrin.h>
+#endif
+
 // GeNN transpiler includes
 #include "transpiler/errorHandler.h"
 #include "transpiler/parser.h"
@@ -204,5 +209,20 @@ std::string handleLegacyEGPType(const std::string &type)
         throw std::runtime_error("GeNN no longer supports non-array extra global parameters. "
                                  "Dynamic parameters provide the same functionality");
     }
+}
+//--------------------------------------------------------------------------
+int clz(unsigned int value)
+{
+#ifdef _WIN32
+    unsigned long leadingZero = 0;
+    if(_BitScanReverse(&leadingZero, value)) {
+        return 31 - leadingZero;
+    }
+    else {
+        return 32;
+    }
+#else
+    return __builtin_clz(value);
+#endif
 }
 }   // namespace GeNN::utils

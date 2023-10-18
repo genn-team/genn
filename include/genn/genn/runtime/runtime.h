@@ -98,6 +98,8 @@ public:
     double getCustomUpdateTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
     double getCustomUpdateTransposeTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
     
+    void pullRecordingBuffersFromDevice() const;
+
 
     //! Get array associated with current source variable
     CodeGenerator::ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
@@ -128,6 +130,16 @@ public:
     {
         return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
     }
+
+   std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikes(const NeuronGroup &group) const
+   {
+       return getRecordedEvents(group, getArray(group, "recordSpk"));
+   }
+
+   std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikeEvents(const NeuronGroup &group) const
+   {
+       return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
+   }
 
 private:
     //----------------------------------------------------------------------------
@@ -175,6 +187,9 @@ private:
         createArray(m_CustomConnectivityUpdateArrays[customConnectivityUpdate],
                     varName, type, count, location);
     }
+
+    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
+                                                                                CodeGenerator::ArrayBase *array) const;
 
     //! Helper to allocate array in m_Arrays data structure
     /*! \tparam A           Adaptor class used to access 
