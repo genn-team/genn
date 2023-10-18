@@ -63,7 +63,7 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 #ifdef _DEBUG
     const std::string libraryName = (modelPath / (runnerName + "_Debug.dll")).str();
 #else
-    const std::string libraryName = pathToModel + "\\" + runnerName + "_Release.dll";
+    const std::string libraryName = (modelPath / (runnerName + "_Release.dll")).str();
 #endif
      m_Library = LoadLibrary(libraryName.c_str());
 #else
