@@ -620,7 +620,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool ModelSpecMerged::anyPointerEGPs() const
+/*bool ModelSpecMerged::anyPointerEGPs() const
 {
     // Loop through grouped merged EGPs
     for(const auto &e : m_MergedEGPs) {
@@ -634,4 +634,4 @@ bool ModelSpecMerged::anyPointerEGPs() const
     }
 
     return false;
-}
+}*/

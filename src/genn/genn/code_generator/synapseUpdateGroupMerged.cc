@@ -15,7 +15,7 @@ using namespace GeNN::CodeGenerator;
 namespace
 {
 template<typename G>
-void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
+void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
                                G &sg, unsigned int batchSize, double dt)
 {
     const auto *wu = sg.getArchetype().getWUModel();
@@ -25,17 +25,15 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // Substitute parameter and derived parameter names
     synEnv.addParams(wu->getParamNames(), "", &SynapseGroupInternal::getWUParams, &G::isWUParamHeterogeneous);
     synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
-    synEnv.addExtraGlobalParams(wu->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
-        backend.getDeviceVarPrefix(),
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
-        backend.getDeviceVarPrefix(),
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPostWUVarIndex(batchSize, getVarAccessDim(a), "$(id_post)");
@@ -77,7 +75,6 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synEnv.template addVars<SynapseWUVarAdapter>(
-            backend.getDeviceVarPrefix(),
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
@@ -100,7 +97,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                     EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
                     varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(&G::isVarInitParamHeterogeneous, var.name);
                     varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(&G::isVarInitDerivedParamHeterogeneous, var.name);
-                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
                     // Add read-write environment entry for variable
                     varInitEnv.add(resolvedType, "value", "_l" + var.name);
@@ -120,7 +117,6 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         assert(!sg.getArchetype().getKernelSize().empty());
 
         synEnv.template addVars<SynapseWUVarAdapter>(
-            backend.getDeviceVarPrefix(),
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getKernelVarIndex(batchSize, getVarAccessDim(a), "$(id_kernel)");
@@ -331,7 +327,7 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     const auto *wum = getArchetype().getWUModel();
     synEnv.addParams(wum->getParamNames(), "", &SynapseGroupInternal::getWUParams, &PresynapticUpdateGroupMerged::isWUParamHeterogeneous);
     synEnv.addDerivedParams(wum->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
-    synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    synEnv.addExtraGlobalParams(wum->getExtraGlobalParams());
 
     // Substitute in presynaptic neuron properties
     /*const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -355,13 +351,13 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env)
@@ -375,7 +371,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
                                   &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
 
     Transpiler::ErrorHandler errorHandler("Synapse group procedural connectivity '" + getArchetype().getName() + "' row build code");
     prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
@@ -393,7 +389,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
                                   &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' Toeplitz connectivity diagonal build code");
@@ -410,7 +406,7 @@ const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                           unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
 }
 
 //----------------------------------------------------------------------------
@@ -421,7 +417,7 @@ const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(backend, env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
 }
 
 

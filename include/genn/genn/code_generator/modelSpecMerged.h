@@ -39,7 +39,7 @@ public:
     // CodeGenerator::ModelSpecMerged::EGPField
     //--------------------------------------------------------------------------
     //! Immutable structure for tracking fields of merged group structure containing EGPs
-    struct EGPField
+    /*struct EGPField
     {
         EGPField(size_t m, const Type::ResolvedType &t, const std::string &f, bool h)
         :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
@@ -76,7 +76,7 @@ public:
     //! Map of original extra global param names to their locations within merged structures
     // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
     typedef std::unordered_multimap<std::string, MergedEGP> MergedEGPDestinations;
-    typedef std::map<std::string, MergedEGPDestinations> MergedEGPMap;
+    typedef std::map<std::string, MergedEGPDestinations> MergedEGPMap;*/
 
     template<typename G>
     using GenMergedGroupFn = std::function<void(G &)>;
@@ -256,10 +256,10 @@ public:
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
 
     //! Does model have any EGPs?
-    bool anyPointerEGPs() const;
+    //bool anyPointerEGPs() const;
 
     //! Are there any destinations within the merged data structures for a particular extra global parameter?
-    bool anyMergedEGPDestinations(const std::string &name) const
+    /*bool anyMergedEGPDestinations(const std::string &name) const
     {
         return (m_MergedEGPs.find(name) != m_MergedEGPs.cend());
     }
@@ -290,27 +290,28 @@ public:
 
         // Return set
         return mergedGroupFields;
-    }
+    }*/
 
     template<typename T>
     void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const BackendBase &backend) const
     {
-
-        if(!groups.empty()) {
-            // Get set of unique fields referenced in a merged group
-            const auto mergedGroupFields = getMergedGroupFields<T>();
-            
-            os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// merged extra global parameter functions" << std::endl;
-            os << "// ------------------------------------------------------------------------" << std::endl;
-            // Loop through resultant fields and generate function to push updated pointers into group merged
-            for(auto f : mergedGroupFields) {
-                os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
-                {
-                    CodeStream::Scope b(os);
-                    backend.genMergedDynamicVariablePush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
+        // Loop through merged groups
+        for(size_t g = 0; g < groups.size(); g++) {
+            // Loop through fields
+            const auto &mergedGroup = groups[g];
+            for(const auto &f : mergedGroup.getFields()) {
+                // If field is dynamic, add record to merged EGPS
+                if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+                    // Add reference to this group's variable to data structure
+                    // **NOTE** this works fine with EGP references because the function to
+                    // get their value will just return the name of the referenced EGP
+                    assert(std::get<0>(f).isPointer());
+                    os << "void pushMerged" << T::name << g << std::get<1>(f) << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value)";
+                    {
+                        CodeStream::Scope b(os);
+                        backend.genMergedDynamicVariablePush(os, T::name, g, "idx", std::get<1>(f), "value");
+                    }
                 }
-                os << std::endl;
             }
         }
     }
@@ -380,7 +381,7 @@ private:
         mergedGroup.assignMemorySpaces(backend, memorySpaces);
 
         // Loop through fields
-        for(const auto &f : mergedGroup.getFields()) {
+        /*for(const auto &f : mergedGroup.getFields()) {
             // If field is dynamic, add record to merged EGPS
             if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
                 // Loop through groups within newly-created merged group
@@ -397,7 +398,7 @@ private:
                         std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
                 }
             }
-        }
+        }*/
     }
 
     template<typename MergedGroup>
@@ -505,6 +506,6 @@ private:
     std::vector<CustomConnectivityHostUpdateGroupMerged> m_MergedCustomConnectivityHostUpdateGroups;
 
     //! Map containing mapping of original extra global param names to their locations within merged groups
-    MergedEGPMap m_MergedEGPs;
+    //MergedEGPMap m_MergedEGPs;
 };
 }   // namespace GeNN::CodeGenerator

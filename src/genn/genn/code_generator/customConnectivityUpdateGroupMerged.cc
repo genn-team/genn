@@ -106,10 +106,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                         &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous);
     updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
-    updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     
     // Add presynaptic variables
-    updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>(backend.getDeviceVarPrefix(), "$(id_pre)");
+    updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>("$(id_pre)");
 
     // Loop through presynaptic variable references
     for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
@@ -124,33 +124,35 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
 
             // Add field
-            updateEnv.addField(qualifiedType, v.name,
+            assert(false);
+            /*updateEnv.addField(qualifiedType, v.name,
                        resolvedType.createPointer(), v.name,
-                       [&backend, v](const auto &g, size_t) 
+                       [&backend, v](const auto &runtime, const auto &g, size_t) 
                        { 
                            const auto varRef = g.getPreVarReferences().at(v.name);
                            return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
                        },
-                       index);
+                       index);*/
         }
     }
 
     // Add fields and private $(_XXX) substitutions for postsyanptic and synaptic variables and variables references as, 
     // while these can only be accessed by user code inside loop, they can be used directly by add/remove synapse functions
-    addPrivateVarPointerFields<CustomConnectivityUpdateVarAdapter>(updateEnv, backend.getDeviceVarPrefix());
-    addPrivateVarPointerFields<CustomConnectivityUpdatePostVarAdapter>(updateEnv, backend.getDeviceVarPrefix());
-    addPrivateVarRefPointerFields<CustomConnectivityUpdateVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix());
-    addPrivateVarRefPointerFields<CustomConnectivityUpdatePostVarRefAdapter>(updateEnv, backend.getDeviceVarPrefix());
+    addPrivateVarPointerFields<CustomConnectivityUpdateVarAdapter>(updateEnv);
+    addPrivateVarPointerFields<CustomConnectivityUpdatePostVarAdapter>(updateEnv);
+    addPrivateVarRefPointerFields<CustomConnectivityUpdateVarRefAdapter>(updateEnv);
+    addPrivateVarRefPointerFields<CustomConnectivityUpdatePostVarRefAdapter>(updateEnv);
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
         auto resolvedType = getSortedArchetypeDependentVars().at(i).getVarType().resolve(getTypeContext());
-        updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
-                           [i, &backend, this](const auto&, size_t g) 
+        assert(false);
+        /*updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
+                           [i, this](const auto &runtime, const auto&, size_t g) 
                            { 
                                const auto &varRef = m_SortedDependentVars[g][i];
                                return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
-                           });
+                           });*/
     }
 
     
@@ -325,8 +327,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                               {bodyEnv.addInitialiser("const " + indexTypeName + " idx = (" + indexTypeName + ")$(_row_start_idx) + j;")});
 
                                   // Add postsynaptic and synaptic variables
-                                  bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>(backend.getDeviceVarPrefix(), "$(id_syn)");
-                                  bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>(backend.getDeviceVarPrefix(), "$(id_post)");
+                                  bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>("$(id_syn)");
+                                  bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>("$(id_post)");
 
                                   // Add postsynaptic and synapse variable references, only exposing those that aren't batched
                                   addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, batchSize, "$(id_syn)");
@@ -386,17 +388,17 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Add fields for number of pre and postsynaptic neurons
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const auto &cg, size_t) 
+                          [](const auto&, const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                              return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                              return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const auto &cg, size_t) 
+                          [](const auto&, const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                              return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                              return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
 
 
@@ -419,7 +421,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
                 // Add field for host pointer
                 groupEnv.addField(pointerType, "_" + egp.name, egp.name,
-                                  [egp](const auto &g, size_t) { return egp.name + g.getName(); },
+                                  [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); },
                                   "", GroupMergedFieldType::HOST_DYNAMIC);
 
                 // Add substitution for direct access to field
@@ -427,14 +429,14 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 groupEnv.add(pointerType, egp.name, "$(_" + egp.name + ")");
 
                 // If backend has device variables, also add hidden pointer field with device pointer
-                if(!backend.getDeviceVarPrefix().empty()) {
+                /*if(!backend.getDeviceVarPrefix().empty()) {
                     groupEnv.addField(pointerType, "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
                                       [egp, &backend](const auto &g, size_t)
                                       {
                                           return backend.getDeviceVarPrefix() + egp.name + g.getName();
                                       },
                                       "", GroupMergedFieldType::DYNAMIC);
-                }
+                }*/
 
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;

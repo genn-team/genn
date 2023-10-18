@@ -513,7 +513,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
+                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
@@ -1355,7 +1355,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); },
+                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); },
                                   "$(id)");
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
 
@@ -1395,7 +1395,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // Add field for RNG
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> rngInitEnv(groupEnv, ng);
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
+                                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); });
 
                     // If batch size is 1, initialise single RNG using GLOBAL thread id for sequence
                     if(batchSize == 1) {
@@ -1505,7 +1505,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // Add field for RNG
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> rngInitEnv(groupEnv, cg);
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); });
+                                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); });
 
                     genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv), 
                                          "deviceRNGSeed", "id");

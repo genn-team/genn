@@ -52,7 +52,7 @@ public:
 
     bool isVarDelayed(const std::string&) const{ return false; }
 
-    const std::string &getNameSuffix() const{ return m_CS.getName(); }
+    const CurrentSource &getTarget() const{ return m_CS; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 

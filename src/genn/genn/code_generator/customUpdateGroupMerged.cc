@@ -54,12 +54,12 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
-    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
+    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
+    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), cuEnv, "", "l",
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
@@ -67,7 +67,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), varEnv, "", "l",
         [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
@@ -181,12 +181,12 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
-    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs(), backend.getDeviceVarPrefix());
+    cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
+    cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), cuEnv, "", "l",
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
@@ -194,7 +194,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), varEnv, "", "l",
         [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
@@ -238,12 +238,13 @@ std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendB
         // If variable has a transpose, add field with transpose suffix, pointing to transpose var
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
-            env.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
-                           [&backend, v](const auto &g, size_t)
-                           {
-                               const auto varRef = g.getVarReferences().at(v.name);
-                               return backend.getDeviceVarPrefix() + *varRef.getTransposeVarName() + *varRef.getTransposeTargetName();
-                           });
+            assert(false);
+            /*env.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
+                         [&backend, v](const auto &runtime, const auto &g, size_t)
+                         {
+                             const auto varRef = g.getVarReferences().at(v.name);
+                             return backend.getDeviceVarPrefix() + *varRef.getTransposeVarName() + *varRef.getTransposeTargetName();
+                         });*/
 
             // Return name of transpose variable
             return v.name;
@@ -260,12 +261,12 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+                 [](const auto &, const auto &c, size_t) { return c.getSize(); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
         env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                     [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getDelayNeuronGroup()->getName(); });
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getDelayNeuronGroup(), "spkQuePtr"); });
     }
 
     generateCustomUpdateBase(backend, env);
@@ -278,9 +279,9 @@ const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdate
 void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &c, size_t) 
+                 [](const auto &, const auto &c, size_t) 
                  { 
-                     return std::to_string(c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+                     return c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });
 
     generateCustomUpdateBase(backend, env);

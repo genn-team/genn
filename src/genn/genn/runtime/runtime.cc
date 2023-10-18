@@ -6,6 +6,9 @@
 // Filesystem includes
 #include "path.h"
 
+// FFI includes
+#include <ffi.h>
+
 // GeNN includes
 #include "varAccess.h"
 
@@ -25,9 +28,9 @@ size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend
 {
     const bool pre = (varDims & VarAccessDim::PRE_NEURON);
     const bool post = (varDims & VarAccessDim::POST_NEURON);
-    const unsigned int numPre = sg.getSrcNeuronGroup()->getNumNeurons();
-    const unsigned int numPost = sg.getTrgNeuronGroup()->getNumNeurons();
-    const unsigned int rowStride = backend.getSynapticMatrixRowStride(sg);
+    const size_t numPre = sg.getSrcNeuronGroup()->getNumNeurons();
+    const size_t numPost = sg.getTrgNeuronGroup()->getNumNeurons();
+    const size_t rowStride = backend.getSynapticMatrixRowStride(sg);
     if(pre && post) {
         if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
             return sg.getKernelSizeFlattened();
@@ -44,6 +47,47 @@ size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend
     }
     else {
         return 1;
+    }
+}
+template<typename G>
+void pushMergedGroup(CodeGenerator::GroupMerged<G> &g) 
+{
+    // Loop through groups
+    const auto sortedFields = g.getSortedFields(m_Backend.get());
+
+    // Start vector of argument types with unsigned int group index and them append FFI types of each argument
+    // **TODO** allow backend to override type
+    std::vector<ffi_type*> argumentTypes{&ffi_type_uint};
+    argumentTypes.reserve(sortedFields.size() + 1);
+    std::transform(sortedFields.cbegin(), sortedFields.cend(), std::back_inserter(argumentTypes),
+                    [](const auto &f){ return std::get<0>(f).getFFIType() });
+        
+    // Prepare an FFI Call InterFace for calls to push merged
+    ffi_cif cif;
+    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argumentTypes.size(),
+                                        &ffi_type_void, argumentTypes.data());
+    if (status != FFI_OK) {
+        throw std::runtime_error("ffi_prep_cif failed: " + std::to_string(status));
+    }
+
+    // Get push function
+    void *pushFunction = getSymbol("pushMerged" + g.name + "Group" + std::to_string(g.getIndex()) + "ToDevice");
+
+    // Loop through groups in merged group
+    std::vector<void*> arguments(sortedFields.size() + 1);
+    for(unsigned int groupIndex = 0; groupIndex < g.getGroups().size(); groupIndex++) {
+        arguments[0] = &groupIndex;
+
+        for(const auto &f : sortedFields) {
+            const auto &fieldType = std::get<0>(f);
+
+            // If field type is pointer
+            //  
+            const std::string fieldInitVal = std::get<2>(f)(g.getGroups().at(groupIndex), groupIndex);
+        }
+
+        //generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
+        //runnerMergedStructAlloc << ");" << std::endl;
     }
 }
 }   // Anonymous namespace
@@ -98,17 +142,17 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
         // If spikes are required, allocate arrays for counts and spikes
         if(n.second.isTrueSpikeRequired()) {
-            createArray(n.first, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+            createArray(&n.second, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeLocation());
-            createArray(n.first, "spk", Type::Uint32, numNeuronDelaySlots, 
+            createArray(&n.second, "spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation());
         }
 
         // If spike-like events are required, allocate arrays for counts and spikes
         if(n.second.isSpikeEventRequired()) {
-            createArray(n.first, "spkEventCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+            createArray(&n.second, "spkEventCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeEventLocation());
-            createArray(n.first, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
+            createArray(&n.second, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation());
         }
         
@@ -119,15 +163,15 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // Calculate number of words required and allocate arrays
-            const unsigned int numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
+            const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
             if(n.second.isSpikeRecordingEnabled()) {
-                createArray(n.first, "recordSpk", Type::Uint32,  numRecordingWords, 
+                createArray(&n.second, "recordSpk", Type::Uint32,  numRecordingWords, 
                             VarLocation::HOST_DEVICE);
 
             }
             else if(n.second.isSpikeEventRecordingEnabled()) {
-                createArray(n.first, "recordSpkEvent", Type::Uint32,  numRecordingWords, 
-                              VarLocation::HOST_DEVICE);
+                createArray(&n.second, "recordSpkEvent", Type::Uint32,  numRecordingWords, 
+                            VarLocation::HOST_DEVICE);
             }
            
         }
@@ -140,25 +184,25 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
-            createArray(n.first, "sT", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "sT", model.getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeTimeLocation());
         }
 
         // If neuron group needs to record its previous spike times
         if (n.second.isPrevSpikeTimeRequired()) {
-            createArray(n.first, "prevST", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "prevST", model.getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeTimeLocation());
         }
 
         // If neuron group needs to record its spike-like-event times
         if (n.second.isSpikeEventTimeRequired()) {
-            createArray(n.first, "seT", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "seT", model.getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeEventTimeLocation());
         }
 
         // If neuron group needs to record its previous spike-like-event times
         if (n.second.isPrevSpikeEventTimeRequired()) {
-            createArray(n.first, "prevSET", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "prevSET", model.getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeEventTimeLocation());
         }
 
@@ -169,34 +213,34 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }*/
 
         // Allocate neuron state variables
-        allocateNeuronVars<NeuronVarAdapter>(n.second, n.second.getNumNeurons(), 
+        allocateNeuronVars<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 
                                              batchSize, n.second.getNumDelaySlots(), true);
         
         // Allocate current source variables
         for (const auto *cs : n.second.getCurrentSources()) {
-            allocateNeuronVars<CurrentSourceVarAdapter>(*cs, n.second.getNumNeurons(), batchSize, 1, true);
+            allocateNeuronVars<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
         }
 
         // Allocate postsynaptic model variables from incoming populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
-            createArray(sg->getFusedPSVarSuffix(), "outPost", model.getPrecision(), 
+            createArray(sg, "outPost", model.getPrecision(), 
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getInSynLocation());
             
             if (sg->isDendriticDelayRequired()) {
-                createArray(sg->getFusedPSVarSuffix(), "denDelay", model.getPrecision(), 
+                createArray(sg, "denDelay", model.getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                             sg->getDendriticDelayLocation());
                 //genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                 //                    Type::Uint32, "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
-            allocateNeuronVars<SynapsePSMVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
+            allocateNeuronVars<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
         }
 
         // Allocate fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
-            createArray(sg->getFusedPreOutputSuffix(), "outPre", model.getPrecision(), 
+            createArray(sg, "outPre", model.getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getInSynLocation());
         }
@@ -204,13 +248,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Allocate fused postsynaptic weight update variables from incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPreVarAdapter>(*sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
+            allocateNeuronVars<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPostVarAdapter>(*sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
+            allocateNeuronVars<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
         }  
     }
 
@@ -225,8 +269,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 const auto varDims = getVarAccessDim(var.access);
                 const size_t numVarCopies = (varDims & VarAccessDim::BATCH) ? batchSize : 1;
                 const size_t numVarElements = getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
-                createArray(s.first, var.name, resolvedType, numVarCopies * numVarElements,
-                              s.second.getWUVarLocation(var.name));
+                createArray(&s.second, var.name, resolvedType, numVarCopies * numVarElements,
+                            s.second.getWUVarLocation(var.name));
             }
         }
 
@@ -235,35 +279,35 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         const size_t rowStride = m_Backend.get().getSynapticMatrixRowStride(s.second);
         if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ceilDivide((size_t)numPre * rowStride, 32);
-            createArray(s.first, "gp", Type::Uint32, gpSize,
-                          s.second.getSparseConnectivityLocation());
+            createArray(&s.second, "gp", Type::Uint32, gpSize,
+                        s.second.getSparseConnectivityLocation());
         }
         // Otherwise, if connectivity is sparse
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             // Row lengths
-            createArray(s.first, "rowLength", Type::Uint32, numPre,
-                          s.second.getSparseConnectivityLocation());
+            createArray(&s.second, "rowLength", Type::Uint32, numPre,
+                        s.second.getSparseConnectivityLocation());
 
             // Target indices
-            createArray(s.first, "ind", s.second.getSparseIndType(), numPre * rowStride,
-                          s.second.getSparseConnectivityLocation());
+            createArray(&s.second, "ind", s.second.getSparseIndType(), numPre * rowStride,
+                        s.second.getSparseConnectivityLocation());
         
             // **TODO** remap is not always required
             if(m_Backend.get().isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
                 // Allocate column lengths
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();
-                createArray(s.first, "colLength", Type::Uint32, numPost, VarLocation::DEVICE);
+                createArray(&s.second, "colLength", Type::Uint32, numPost, VarLocation::DEVICE);
                 
                 // Allocate remap
-                createArray(s.first, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
+                createArray(&s.second, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
             }
         }
     }
 
     // Allocate custom update variables
     for(const auto &c : model.getCustomUpdates()) {
-        allocateNeuronVars<CustomUpdateVarAdapter>(c.second, c.second.getSize(), batchSize, 1, 
+        allocateNeuronVars<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
                                                    c.second.getDims() & VarAccessDim::BATCH);
     }
 
@@ -312,26 +356,47 @@ void Runtime::stepTime()
     m_Timestep++;
 }
 //----------------------------------------------------------------------------
-void Runtime::allocateExtraGlobalParam(const std::string &groupName, const std::string &varName,
+double Runtime::getTime() const
+{ 
+    return m_Timestep * m_ModelMerged.get().getModel().getDT();
+}
+//----------------------------------------------------------------------------
+void *Runtime::getSymbol(const std::string &symbolName) const
+{
+#ifdef _WIN32
+    void *symbol = GetProcAddress(m_Library, symbolName.c_str());
+#else
+    void *symbol = dlsym(m_Library, symbolName.c_str());
+#endif
+
+    // If this symbol's missing
+    if(symbol == nullptr) {
+        throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
+    }
+    // Otherwise, return symbolPopulationFuncs
+    else {
+        return symbol;
+    }
+}
+//----------------------------------------------------------------------------
+void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
+                          size_t count, VarLocation location)
+{
+    const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location));
+    if(!r.second) {
+        throw std::runtime_error("Unable to allocate array with " 
+                                 "duplicate name '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
+void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName,
                                        size_t count)
 {
     // Allocate array
     // **TODO** dynamic flag determines whether this is allowed
-    m_Arrays.at(groupName).at(varName)->allocate(count);
+    groupArrays.at(varName)->allocate(count);
 
     // **TODO** call push functions
     // **TODO** signature of push function will vary depending on backend and type
-}
-//----------------------------------------------------------------------------
-void Runtime::createArray(const std::string &groupName, const std::string &varName,
-                            const Type::ResolvedType &type, size_t count, 
-                            VarLocation location)
-{
-    const auto r = m_Arrays[groupName].try_emplace(
-        varName, m_Backend.get().createArray(type, count, location));
-    if(!r.second) {
-        throw std::runtime_error("Unable to allocate array with duplicate name '" 
-                                 + varName + "' for group '" + groupName + "'");
-    }
 }
 }   // namespace GeNN::Runtime

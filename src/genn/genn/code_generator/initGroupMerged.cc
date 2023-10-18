@@ -77,13 +77,13 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
             varEnv.template addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name, fieldSuffix);
             varEnv.template addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name, fieldSuffix);
-            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name, fieldSuffix);
+            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name, fieldSuffix);
 
             // Add field for variable itself
             varEnv.addField(resolvedType.createPointer(), "_value", var.name + fieldSuffix,
-                            [&backend, var](const auto &g, size_t) 
+                            [var](const auto &runtime, const auto &g, size_t) 
                             { 
-                                return backend.getDeviceVarPrefix() + var.name + A(g).getNameSuffix(); 
+                                return runtime.getArray(g, var.name); 
                             });
 
             // If variable has NEURON axis
@@ -160,13 +160,13 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
             EnvironmentGroupMergedField<G> varEnv(env, group);
             varEnv.template addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name);
             varEnv.template addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name);
-            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+            varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
             // Add field for variable itself
             varEnv.addField(resolvedType.createPointer(), "_value", var.name,
-                            [&backend, var](const auto &g, size_t) 
+                            [var](const auto &runtime, const auto &g, size_t) 
                             { 
-                                return backend.getDeviceVarPrefix() + var.name + g.getName(); 
+                                return runtime.getArray(g, var.name); 
                             });
 
             // Generate target-specific code to initialise variable
@@ -217,7 +217,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 
     // Add field for InSyn and zero
     groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
-                      [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
         [batchSize, this] (EnvironmentExternalBase &varEnv)
         {
@@ -230,7 +230,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     if(getArchetype().isDendriticDelayRequired()) {
         // Add field for dendritic delay buffer and zero
         groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
-                          [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
+                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay"); });
         backend.genVariableInit(groupEnv, "num_neurons", "id",
             [batchSize, this](EnvironmentExternalBase &varEnv)
             {
@@ -241,7 +241,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 
         // Add field for dendritic delay pointer and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                          [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr"); });
         backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {
@@ -264,7 +264,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
 
     // Add 
     groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
-                      [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {
@@ -399,7 +399,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     if(getArchetype().isDelayRequired()) {
         // Add spike queue pointer field and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                          [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
+                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
         backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {
@@ -438,7 +438,7 @@ void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, Enviro
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeCountEnv(env, *this);
         spikeCountEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + suffix,
-                               [&backend, &suffix](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + suffix + g.getName(); });
+                               [&suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "glbSpkCnt"); });
 
         // Generate variable initialisation code
         backend.genPopVariableInit(env,
@@ -467,7 +467,7 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeEnv(env, *this);
         spikeEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + suffix,
-                          [&backend, suffix](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + suffix + g.getName(); });
+                          [suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "glbSpk" + suffix); });
 
 
         // Generate variable initialisation code
@@ -493,7 +493,7 @@ void NeuronInitGroupMerged::genInitSpikeTime(const BackendBase &backend, Environ
     // Add spike time field
     EnvironmentGroupMergedField<NeuronInitGroupMerged> timeEnv(env, *this);
     timeEnv.addField(getTimeType().createPointer(), "_time", varName,
-                     [&backend, varName](const auto &g, size_t) { return backend.getDeviceVarPrefix() + varName + g.getName(); });
+                     [varName](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, varName); });
 
 
     // Generate variable initialisation code
@@ -696,7 +696,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
 
     const std::string context = rowNotColumns ? "row" : "column";
     Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
@@ -742,10 +742,10 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         // Create substitutions
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
         groupEnv.add(Type::Uint32.addConst(), "num_threads", std::to_string(numThreads));
 
         groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
@@ -764,7 +764,8 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 const auto pointerToPointerType = pointerType.createPointer();
 
                 // Add field for host pointer
-                groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
+                assert(false);
+                /*groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
                                   [egp](const auto &g, size_t) { return "&" + egp.name + g.getName(); },
                                   "", GroupMergedFieldType::HOST_DYNAMIC);
 
@@ -788,7 +789,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                                           return "&" + backend.getHostVarPrefix() + egp.name + g.getName();
                                       },
                                       "", GroupMergedFieldType::DYNAMIC);
-                }
+                }*/
 
                 // Generate code to allocate this EGP with count specified by $(0)
                 // **NOTE** we generate these with a pointer type as the fields are pointer to pointer

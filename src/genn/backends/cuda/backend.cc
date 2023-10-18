@@ -50,8 +50,8 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
-const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>("curandState", Type::Qualifier{0}, true);
-const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>("curandStatePhilox4_32_10_t", Type::Qualifier{0}, true);
+const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>("curandState", Type::Qualifier{0}, nullptr, true);
+const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>("curandStatePhilox4_32_10_t", Type::Qualifier{0}, nullptr, true);
 
 //--------------------------------------------------------------------------
 // Timer

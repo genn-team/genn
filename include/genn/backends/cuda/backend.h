@@ -376,9 +376,9 @@ private:
                     // Add pointer field
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                                      [this, v](const auto &g, size_t) 
+                                      [v](const auto &runtime, const auto &g, size_t) 
                                       { 
-                                          return getDeviceVarPrefix() + v.name + g.getName();
+                                          return runtime.getArray(g, v.name);
                                       });
                     
                     // Add NCCL reduction
@@ -394,10 +394,10 @@ private:
                     // Add pointer field
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                                      [this, v](const auto &g, size_t) 
+                                      [v](const auto &runtime, const auto &g, size_t) 
                                       { 
                                           const auto varRef = g.getVarReferences().at(v.name);
-                                          return getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); ;
+                                          return varRef.getTargetArray(runtime);
                                       });
 
                     // Add NCCL reduction

@@ -16,8 +16,12 @@
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
 
+// GeNN runtime includes
+#include "runtime/runtime.h"
+
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Runtime;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -30,7 +34,7 @@ void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
     // Add size field
     env.addField(Type::Uint32.addConst(), "size",
                 Type::Uint32, "size", 
-                [](const auto &c, size_t) { return std::to_string(c.getSize()); });
+                [](const auto &, const auto &c, size_t) { return c.getSize(); });
 }
 //--------------------------------------------------------------------------
 template<typename G>
@@ -39,12 +43,12 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     // Synapse group fields 
     env.addField(Type::Uint32.addConst(), "num_pre",
                  Type::Uint32, "numSrcNeurons", 
-                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+                 [](const auto&, auto  &cg, size_t) { return cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); });
     env.addField(Type::Uint32.addConst(), "num_post",
                  Type::Uint32, "numTrgNeurons", 
-                 [](const auto  &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+                 [](const auto&, const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
 
     // If underlying synapse group has kernel connectivity
     const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
@@ -58,7 +62,7 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
                 env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                             [d](const auto &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+                             [d](const auto&, const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
             }
 
             // Multiply size by dimension
@@ -79,9 +83,9 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
         // Connectivity fields
         if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                         [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+                         [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "rowLength"); });
             env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
-                         [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+                         [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "ind"); });
         }
 
         const auto indexType = backend.getSynapseIndexType(env.getGroup());
@@ -99,32 +103,32 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
 
     env.addField(Uint32.addConst(), "num_neurons",
                  Uint32, "numNeurons",
-                 [](const auto &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+                 [](const auto&, const auto &ng, size_t) { return ng.getNumNeurons(); });
     env.addField(Uint32.createPointer(), "_spk_cnt", "spkCnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
     env.addField(Uint32.createPointer(), "_spk", "spk",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
     env.addField(Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvnt"); });
     env.addField(Uint32.createPointer(), "_spk_evnt", "spkEvnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sSpkEvnt"); });
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
-                  [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
 
     env.addField(env.getGroup().getTimeType().createPointer(), "_st", "sT",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_set", "seT",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "seT" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_prev_st", "prevST", 
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_prev_set", "prevSET",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevSET" + g.getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
 
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "recordSpk" + g.getName(); }, 
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); }, 
                  "", GroupMergedFieldType::DYNAMIC);
     env.addField(Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                 [&backend](const auto &g, size_t){ return backend.getDeviceVarPrefix() + "recordSpkEvent" + g.getName(); },
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); },
                  "", GroupMergedFieldType::DYNAMIC);
 
     // If batching is enabled, calculate batch offset
@@ -178,73 +182,73 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     // Synapse group fields 
     env.addField(Uint32.addConst(), "num_pre",
                  Uint32, "numSrcNeurons", 
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
     env.addField(Uint32.addConst(), "num_post",
                  Uint32, "numTrgNeurons", 
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Uint32, "_row_stride", "rowStride", 
-                 [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+                 [&backend](const auto&, const SynapseGroupInternal &sg, size_t) { return backend.getSynapticMatrixRowStride(sg); });
     env.addField(Uint32, "_col_stride", "colStride", 
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
                         
     // Postsynaptic model fields         
     env.addField(env.getGroup().getScalarType().createPointer(), "_out_post", "outPost",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
     env.addField(env.getGroup().getScalarType().createPointer(), "_den_delay", "denDelay",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay"); });
     env.addField(Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
-                 [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr"); });
                        
     // Presynaptic output fields
     env.addField(env.getGroup().getScalarType().createPointer(), "_out_pre", "outPre",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
                         
     // Source neuron fields
     env.addField(Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
-                 [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkCnt"); });
     env.addField(Uint32.createPointer(), "_src_spk", "srcSpk",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spk"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt_evnt", "srcSpkCntEvnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCntEvnt" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkCntEvnt"); });
     env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkEvnt" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkEvnt"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "seT" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "seT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevSET" + g.getSrcNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevSET" ); });
     
     // Target neuron fields
     env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
-                 [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "spkQuePtr" + g.getTrgNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpkCnt" + g.getTrgNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkCnt"); });
     env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "glbSpk" + g.getTrgNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spk"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "sT" + g.getTrgNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "sT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
-                 [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "prevST" + g.getTrgNeuronGroup()->getName(); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "prevST"); });
 
     // Connectivity fields
     if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         env.addField(Uint32.createPointer(), "_gp", "gp",
-                     [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "gp" + sg.getName(); });
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "gp"); });
     }
     else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         env.addField(Uint32.createPointer(), "_row_length", "rowLength",
-                     [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + sg.getName(); });
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "rowLength"); });
         env.addField(env.getGroup().getArchetype().getSparseIndType().createPointer(), "_ind", "ind",
-                     [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "ind" + sg.getName(); });
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "ind"); });
         env.addField(Uint32.createPointer(), "_col_length", "colLength", 
-                     [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "colLength" + sg.getName(); });
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "colLength"); });
         env.addField(Uint32.createPointer(), "_remap", "remap", 
-                     [&backend](const auto &sg, size_t) { return backend.getDeviceVarPrefix() + "remap" + sg.getName(); });
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "remap"); });
     }
     else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // **TODO** automatic heterogeneity detection on all fields would make this much nicer
@@ -255,7 +259,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
                 env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                                [d](const auto &g, size_t) { return std::to_string(g.getKernelSize().at(d)); });
+                                [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
             }
 
             // Multiply size by dimension
@@ -386,9 +390,9 @@ void buildStandardCustomUpdateEnvironment(const BackendBase &backend, Environmen
     if(env.getGroup().getArchetype().getDelayNeuronGroup() != nullptr) {
         // Add spike queue pointer field
         env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr", 
-                     [&backend](const auto &cg, size_t) 
+                     [](const auto &runtime, const auto &cg, size_t) 
                      { 
-                         return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                         return runtime.getArray(*cg.getDelayNeuronGroup(), "spkQuePtr"); 
                      });
 
         // We should read from delay slot pointed to be spkQuePtr 
@@ -426,28 +430,28 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
     // Add fields for number of pre and postsynaptic neurons
     env.addField(Type::Uint32.addConst(), "num_pre",
                  Type::Uint32, "numSrcNeurons", 
-                 [](const auto &cg, size_t) 
+                 [](const auto&, const auto &cg, size_t) 
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons());
+                     return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                  });
     env.addField(Type::Uint32.addConst(), "num_post",
                  Type::Uint32, "numTrgNeurons", 
-                 [](const auto &cg, size_t) 
+                 [](const auto&, const auto &cg, size_t) 
                  { 
                      const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons());
+                     return sgInternal->getTrgNeuronGroup()->getNumNeurons();
                  });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
     
     // Connectivity fields
     auto *sg = env.getGroup().getArchetype().getSynapseGroup();
     if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
-                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); });
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "rowLength"); });
         env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
-                     [&backend](const auto &cg, size_t) { return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); });
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "ind"); });
     }
 
     // If there are delays on presynaptic variable references
@@ -624,9 +628,9 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 {
     env.addField(Type::Uint32.addConst(), "size", 
                  Type::Uint32, "size",
-                 [](const auto &c, size_t) 
+                 [](const auto &, const auto &c, size_t) 
                  { 
-                     return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+                     return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });
 
 }
@@ -635,9 +639,9 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 {
     env.addField(Type::Uint32.addConst(), "size", 
                  Type::Uint32, "size",
-                 [](const auto &c, size_t) 
+                 [](const auto &, const auto &c, size_t) 
                  { 
-                     return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); 
+                     return c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); 
                  });
 }
 //-----------------------------------------------------------------------

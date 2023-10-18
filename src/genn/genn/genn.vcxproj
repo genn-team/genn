@@ -165,7 +165,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>

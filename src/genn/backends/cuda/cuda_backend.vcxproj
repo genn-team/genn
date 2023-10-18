@@ -60,7 +60,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\cuda;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\cuda;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>

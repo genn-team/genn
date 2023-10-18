@@ -402,14 +402,6 @@ public:
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
 
-    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getDeviceVarPrefix() const{ return ""; }
-
-    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getHostVarPrefix() const { return ""; }
-
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
@@ -448,12 +440,6 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    //! Get the prefix for accessing the address of 'scalar' variables
-    std::string getScalarAddressPrefix() const
-    {
-        return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
-    }
-
     //! Get the type to use for synaptic indices within a merged synapse group
     Type::ResolvedType getSynapseIndexType(const GroupMerged<SynapseGroupInternal> &sg) const;
 

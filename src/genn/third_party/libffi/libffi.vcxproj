@@ -37,6 +37,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
     <LinkIncremental Condition=" $(Configuration.Contains('Debug')) ">true</LinkIncremental>
     <OutDir>..\..\..\..\lib\</OutDir>
   </PropertyGroup>
@@ -91,7 +92,7 @@
     <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\tramp.h" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="x86\win64_intel.asm"/>
+    <MASM Include="x86\win64_intel.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

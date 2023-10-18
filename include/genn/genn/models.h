@@ -30,6 +30,16 @@ class CustomUpdateWUInternal;
 class CustomConnectivityUpdateInternal;
 }
 
+namespace GeNN::CodeGenerator
+{
+class ArrayBase;
+}
+
+namespace GeNN::Runtime
+{
+class Runtime;
+}
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
@@ -165,9 +175,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get name of variable
-    const std::string &getVarName() const;
-
     // Get type of variable
     const Type::UnresolvedType &getVarType() const;
 
@@ -181,8 +188,8 @@ public:
     NeuronGroup *getDelayNeuronGroup() const;
     
     //! Get suffix to use when accessing target variable names
-    // **TODO** rename to getNameSuffix
-    const std::string &getTargetName() const;
+    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
+    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -240,9 +247,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get name of variable
-    const std::string &getVarName() const;
-
     // Get type of variable
     const Type::UnresolvedType &getVarType() const;
 
@@ -250,21 +254,20 @@ public:
     VarAccessDim getVarDims() const;
     
     //! Get suffix to use when accessing target variable names
-    // **TODO** rename to getNameSuffix
-    const std::string &getTargetName() const;
+    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
+    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
     
     SynapseGroup *getSynapseGroup() const;
     
-    //! Get name of tranpose variable
-    std::optional<std::string> getTransposeVarName() const;
-
     // Get type of transpose variable
     std::optional<Type::UnresolvedType> getTransposeVarType() const;
 
     //! Get dimensions of transpose variable being referenced
     std::optional<VarAccessDim> getTransposeVarDims() const;
 
-    std::optional<std::string> getTransposeTargetName() const;
+    //! Get suffix to use when accessing target variable names
+    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
+    const CodeGenerator::ArrayBase *getTransposeTargetArray(const Runtime::Runtime &runtime) const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
 

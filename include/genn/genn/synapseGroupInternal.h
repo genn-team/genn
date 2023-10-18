@@ -48,17 +48,17 @@ public:
     using SynapseGroup::getPSApplyInputCodeTokens;
     using SynapseGroup::getPSDecayCodeTokens;
     using SynapseGroup::setEventThresholdReTestRequired;
-    using SynapseGroup::setFusedPSVarSuffix;
-    using SynapseGroup::setFusedPreOutputSuffix;
-    using SynapseGroup::setFusedWUPreVarSuffix;
-    using SynapseGroup::setFusedWUPostVarSuffix;
+    using SynapseGroup::setFusedPSTarget;
+    using SynapseGroup::setFusedPreOutputTarget;
+    using SynapseGroup::setFusedWUPreTarget;
+    using SynapseGroup::setFusedWUPostTarget;
     using SynapseGroup::finalise;
     using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::isEventThresholdReTestRequired;
-    using SynapseGroup::getFusedPSVarSuffix;
-    using SynapseGroup::getFusedPreOutputSuffix;
-    using SynapseGroup::getFusedWUPreVarSuffix;
-    using SynapseGroup::getFusedWUPostVarSuffix;
+    using SynapseGroup::getFusedPSTarget;
+    using SynapseGroup::getFusedPreOutputTarget;
+    using SynapseGroup::getFusedWUPreTarget;
+    using SynapseGroup::getFusedWUPostTarget;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::getCustomConnectivityUpdateReferences;
     using SynapseGroup::getCustomUpdateReferences;
@@ -114,7 +114,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
 
-    const std::string &getNameSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+    const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
@@ -168,7 +168,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
-    const std::string &getNameSuffix() const{ return m_SG.getName(); }
+    const SynapseGroup &getTarget() const{ return m_SG; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -197,7 +197,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
-    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
@@ -228,7 +228,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
-    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 

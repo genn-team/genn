@@ -21,6 +21,10 @@ namespace GeNN::CodeGenerator
 class CodeStream;
 }
 
+namespace GeNN::Runtime
+{
+class Runtime;
+}
 
 //------------------------------------------------------------------------
 // GeNN::CodeGenerator::GroupMergedFieldType
@@ -58,7 +62,8 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+    typedef std::variant<Type::NumericValue, const ArrayBase*> FieldValue;
+    typedef std::function<FieldValue(const Runtime::Runtime &, const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
     ChildGroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)

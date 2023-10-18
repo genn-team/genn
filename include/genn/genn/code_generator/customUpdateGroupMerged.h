@@ -132,9 +132,9 @@ protected:
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
-                             [&backend, v](const auto &g, size_t) 
+                             [&backend, v](const auto &runtime, const auto &g, size_t) 
                              {
-                                 return backend.getDeviceVarPrefix() + v.name + g.getName(); 
+                                 return runtime.getArray(g, v.name); 
                              });
             }
         }
@@ -142,13 +142,14 @@ protected:
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
+                assert(false);
+                /*const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
                              [&backend, v](const auto &g, size_t) 
                              {
                                  const auto varRef = g.getVarReferences().at(v.name);
                                  return backend.getDeviceVarPrefix() + v.name + varRef.getTargetName(); 
-                             });
+                             });*/
             }
         }
     }

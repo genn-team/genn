@@ -51,33 +51,34 @@ private:
     bool isDerivedParamHeterogeneous(const std::string &name) const;
 
     template<typename A>
-    void addPrivateVarPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env, const std::string &arrayPrefix)
+    void addPrivateVarPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env)
     {
         // Loop through variables and add private pointer field 
         const A archetypeAdaptor(getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(getTypeContext());
             env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                         [arrayPrefix, v](const auto &g, size_t) 
+                         [v](const auto &runtime, const auto &g, size_t) 
                          { 
-                             return arrayPrefix + v.name + A(g).getNameSuffix();
+                             return runtime.getArray(g, v.name);
                          });
         }
     }
 
     template<typename A>
-    void addPrivateVarRefPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env, const std::string &arrayPrefix)
+    void addPrivateVarRefPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env)
     {
         // Loop through variable references and add private pointer field 
         const A archetypeAdaptor(getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(getTypeContext());
-            env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+            assert(false);
+            /*env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                          [arrayPrefix, v](const auto &g, size_t) 
                          { 
                              const auto varRef = A(g).getInitialisers().at(v.name);
                              return arrayPrefix + varRef.getVarName() + varRef.getTargetName(); 
-                         });
+                         });*/
         }
     }
     
@@ -181,9 +182,9 @@ private:
                 const auto resolvedType = v.type.resolve(getTypeContext());
                 const auto pointerType = resolvedType.createPointer();
                 env.addField(pointerType, "_" + v.name, v.name,
-                             [v](const auto &g, size_t) 
+                             [v](const auto &runtime, const auto &g, size_t) 
                              { 
-                                 return  v.name + g.getName();
+                                 return runtime.getArray(g, v.name);
                              },
                              "", GroupMergedFieldType::HOST);
 
@@ -191,13 +192,13 @@ private:
                 env.add(pointerType, v.name, "$(_" + v.name + ")");
 
                 // If backend has device variables, also add hidden pointer field with device pointer
-                if(!backend.getDeviceVarPrefix().empty())  {
+                /*if(!backend.getDeviceVarPrefix().empty())  {
                     env.addField(pointerType, "_" + backend.getDeviceVarPrefix() + v.name, backend.getDeviceVarPrefix() + v.name,
                                  [v, &backend](const auto &g, size_t)
                                  {
                                      return backend.getDeviceVarPrefix() + v.name + g.getName();
                                  });
-                }
+                }*/
 
                 // Generate code to push this variable
                 std::stringstream pushStream;

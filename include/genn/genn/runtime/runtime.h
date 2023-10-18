@@ -21,15 +21,23 @@ extern "C"
 #include "gennExport.h"
 #include "type.h"
 #include "varAccess.h"
+#include "variableMode.h"
 
-// GeNN code generator includes
-#include "code_generator/modelSpecMerged.h"
+namespace GeNN
+{
+class CurrentSource;
+class NeuronGroup;
+class SynapseGroup;
+class CustomUpdateBase;
+class CustomConnectivityUpdate;
+}
 
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
 class ArrayBase;
 class BackendBase;
+class ModelSpecMerged;
 }
 
 namespace filesystem
@@ -44,6 +52,11 @@ namespace GeNN::Runtime
 {
 class GENN_EXPORT Runtime
 {
+    using ArrayMap = std::unordered_map<std::string, std::unique_ptr<CodeGenerator::ArrayBase>>;
+    
+    template<typename G>
+    using GroupArrayMap = std::unordered_map<const G*, ArrayMap>;
+
 public:
     Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
             const CodeGenerator::BackendBase &backend);
@@ -64,39 +77,92 @@ public:
     //! Simulate one timestep
     void stepTime();
 
-    void allocateExtraGlobalParam(const std::string &groupName, const std::string &varName,
-                                  size_t count);
-                                  
     //! Get current simulation timestep
     uint64_t getTimestep() const{ return m_Timestep; }
 
     //! Get current simulation time
-    double getTime() const{ return m_Timestep * m_ModelMerged.get().getModel().getDT(); }
+    double getTime() const;
+
+    //! Get array associated with current source variable
+    CodeGenerator::ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
+    {
+        return m_CurrentSourceArrays.at(&group).at(varName).get();   
+    }
+
+    //! Get array associated with neuron group variable
+    CodeGenerator::ArrayBase *getArray(const NeuronGroup &group, const std::string &varName) const
+    {
+        return m_NeuronGroupArrays.at(&group).at(varName).get();   
+    }
+
+    //! Get array associated with synapse group variable
+    CodeGenerator::ArrayBase *getArray(const SynapseGroup &group, const std::string &varName) const
+    {
+        return m_SynapseGroupArrays.at(&group).at(varName).get();   
+    }
+
+    //! Get array associated with custom update variable
+    CodeGenerator::ArrayBase *getArray(const CustomUpdateBase &group, const std::string &varName) const
+    {
+        return m_CustomUpdateArrays.at(&group).at(varName).get();   
+    }
+
+    //! Get array associated with custom connectivity update variable
+    CodeGenerator::ArrayBase *getArray(const CustomConnectivityUpdate &group, const std::string &varName) const
+    {
+        return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
+    }
 
 private:
     //----------------------------------------------------------------------------
     // Private API
     //----------------------------------------------------------------------------
-    //! Helper to allocate array in m_Arrays data structure
-    /*! \param groupName    name of group owning array e.g. a NeuronGroup
-        \param varName      name of variable this array is representing
-        \param type         data type of array
-        \param count        number of elements in array
-        \param location     location of array e.g. device-only
-        \param memAlloc     MemAlloc object for tracking memory usage*/
-    void createArray(const std::string &groupName, const std::string &varName,
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location);
-    
+    void *getSymbol(const std::string &symbolName) const;
+
+    void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
+                     size_t count, VarLocation location);
+
+    void createArray(const CurrentSource *currentSource, const std::string &varName, 
+                     const Type::ResolvedType &type, size_t count, VarLocation location)
+    {
+        createArray(m_CurrentSourceArrays[currentSource], varName, type, count, location);
+    }
+
+    void createArray(const NeuronGroup *neuronGroup, const std::string &varName, 
+                     const Type::ResolvedType &type, size_t count, VarLocation location)
+    {
+        createArray(m_NeuronGroupArrays[neuronGroup], varName, type, count, location);
+    }
+
+    void createArray(const SynapseGroup *synapseGroup, const std::string &varName, 
+                     const Type::ResolvedType &type, size_t count, VarLocation location)
+    {
+        createArray(m_SynapseGroupArrays[synapseGroup], varName, type, count, location);
+    }
+
+    void createArray(const CustomUpdateBase *customUpdate, const std::string &varName, 
+                     const Type::ResolvedType &type, size_t count, VarLocation location)
+    {
+        createArray(m_CustomUpdateArrays[customUpdate], varName, type, count, location);
+    }
+
+
+    void createArray(const CustomConnectivityUpdate *customConnectivityUpdate, const std::string &varName, 
+                     const Type::ResolvedType &type, size_t count, VarLocation location)
+    {
+        createArray(m_CustomConnectivityUpdateArrays[customConnectivityUpdate],
+                    varName, type, count, location);
+    }
+
     //! Helper to allocate array in m_Arrays data structure
     /*! \tparam A           Adaptor class used to access 
         \tparam G           Type of group variables are associated with
         \param memAlloc     MemAlloc object for tracking memory usage*/
     template<typename A, typename G>
-    void allocateNeuronVars(const G &group, size_t numNeurons, size_t batchSize, 
+    void allocateNeuronVars(const G *group, size_t numNeurons, size_t batchSize, 
                             size_t delaySlots, bool batched)
     {
-        A adaptor(group);
+        A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
             const auto resolvedType = var.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
             const auto varDims = adaptor.getVarDims(var);
@@ -104,10 +170,13 @@ private:
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
             const size_t numDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
-            createArray(adaptor.getNameSuffix(), var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
+            createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
                         adaptor.getLoc(var.name));
         }
     }
+
+    void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
+                                 
 
     //----------------------------------------------------------------------------
     // Members
@@ -133,7 +202,11 @@ private:
     //! Delay queue pointers associated with neuron group names
     std::unordered_map<std::string, unsigned int> m_DelayQueuePointer;
 
-    //! Map of population names to named arrays
-    std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<CodeGenerator::ArrayBase>>> m_Arrays;
+    //! Maps of population pointers to named arrays
+    GroupArrayMap<CurrentSource> m_CurrentSourceArrays;
+    GroupArrayMap<NeuronGroup> m_NeuronGroupArrays;
+    GroupArrayMap<SynapseGroup> m_SynapseGroupArrays;
+    GroupArrayMap<CustomUpdateBase> m_CustomUpdateArrays;
+    GroupArrayMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateArrays;
 };
 }

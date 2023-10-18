@@ -208,7 +208,7 @@ public:
 
     bool isVarDelayed(const std::string &) const { return false; }
 
-    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+    const CustomUpdateBase &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
     { 
