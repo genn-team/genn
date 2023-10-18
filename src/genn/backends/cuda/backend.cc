@@ -283,11 +283,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
-    // Give a warning if automatic copy is used on pre-Pascal devices
-    if(getPreferences().automaticCopy && m_ChosenDevice.major < 6) {
-        LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
-    }
-
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
     // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
@@ -1553,9 +1548,8 @@ void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
-    // Synchronise if automatic copying or zero-copy are in use
-    // **THINK** Is this only required with automatic copy on older SM, CUDA and on non-Linux?
-    if(getPreferences().automaticCopy || modelMerged.getModel().zeroCopyInUse()) {
+    // Synchronise if zero-copy are in use
+    if(modelMerged.getModel().zeroCopyInUse()) {
         os << "CHECK_CUDA_ERRORS(cudaDeviceSynchronize());" << std::endl;
     }
 
@@ -1579,23 +1573,19 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os,
     const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
     const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
     const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+   
+    if(loc & VarLocation::HOST) {
+        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
     }
-    else {
-        if(loc & VarLocation::HOST) {
-            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
-        }
 
-        // If variable is present on device at all
-        if(loc & VarLocation::DEVICE) {
-            if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
-            }
+    // If variable is present on device at all
+    if(loc & VarLocation::DEVICE) {
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
         }
     }
 }

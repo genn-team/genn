@@ -120,10 +120,6 @@ public:
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
-    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getDeviceVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
-
     virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
     virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
     virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final

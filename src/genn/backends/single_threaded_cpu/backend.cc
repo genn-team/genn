@@ -1431,14 +1431,12 @@ void Backend::genLazyVariableDynamicPush(CodeStream&,
                                          const Type::ResolvedType&, const std::string&,
                                          VarLocation, const std::string&) const
 {
-     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicPull(CodeStream&, 
                                          const Type::ResolvedType&, const std::string&,
                                          VarLocation, const std::string&) const
 {
-    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 

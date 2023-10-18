@@ -86,9 +86,6 @@ struct PreferencesBase
     //! Improve performance but break backward compatibility due to word-padding each row
     bool enableBitmaskOptimisations = false;
 
-    //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
-    bool automaticCopy = false;
-
     //! Should GeNN generate empty state push and pull functions
     bool generateEmptyStatePushPull = true;
 
@@ -110,7 +107,6 @@ struct PreferencesBase
 
         //! Update hash with preferences
         Utils::updateHash(enableBitmaskOptimisations, hash);
-        Utils::updateHash(automaticCopy, hash);
         Utils::updateHash(generateEmptyStatePushPull, hash);
         Utils::updateHash(generateExtraGlobalParamPull, hash);
     }

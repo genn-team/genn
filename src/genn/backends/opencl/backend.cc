@@ -196,11 +196,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
-    // Throw exceptions if unsupported preferences are selected
-    if(preferences.automaticCopy) {
-        throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
-    }
-
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -2018,8 +2013,6 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
     const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
     const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
@@ -2039,8 +2032,6 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
     const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
     const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
@@ -2119,8 +2110,6 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
 void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2153,8 +2142,6 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
 void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2436,8 +2423,6 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const
 {
-    assert(!getPreferences().automaticCopy);
-
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?
