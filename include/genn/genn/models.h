@@ -45,6 +45,7 @@ class Runtime;
 //----------------------------------------------------------------------------
 #define SET_VARS(...) virtual std::vector<Var> getVars() const override{ return __VA_ARGS__; }
 #define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
+#define DEFINE_EGP_REF_DETAIL_STRUCT(NAME, GROUP_TYPE) using NAME = Detail<GROUP_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
 // GeNN::Models::Base
@@ -187,7 +188,7 @@ public:
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
-    //! Get suffix to use when accessing target variable names
+    //! Get array associated with referenced variable
     // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
     const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
@@ -253,7 +254,7 @@ public:
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
     
-    //! Get suffix to use when accessing target variable names
+    //! Get array associated with referenced variable
     // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
     const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
     
@@ -265,7 +266,7 @@ public:
     //! Get dimensions of transpose variable being referenced
     std::optional<VarAccessDim> getTransposeVarDims() const;
 
-    //! Get suffix to use when accessing target variable names
+    //! Get array associated with referenced transpose variable
     // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
     const CodeGenerator::ArrayBase *getTransposeTargetArray(const Runtime::Runtime &runtime) const;
 
@@ -335,31 +336,56 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const Models::Base::EGP &getEGP() const { return m_EGP; }
-    size_t getEGPIndex() const { return m_EGPIndex; }
-    std::string getTargetName() const { return m_TargetName; }
+    const Models::Base::EGP &getEGP() const;
+    
+    //! Get array associated with referenced EGP
+    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
+    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
-    static EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName);
-    static EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName);
-    static EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName);
-    static EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName);
-    static EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName);
-    static EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName);
+    static EGPReference createEGPRef(NeuronGroup *ng, const std::string &egpName);
+    static EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName);
+    static EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName);
+    static EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName);
+    static EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName);
+    static EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName);
 
 private:
-    EGPReference(size_t egpIndex, const Models::Base::EGPVec &egpVec, 
-                 const std::string &targetName)
-    :   m_EGPIndex(egpIndex), m_EGP(egpVec.at(egpIndex)), m_TargetName(targetName)
+    //------------------------------------------------------------------------
+    // Detail
+    //------------------------------------------------------------------------
+    //! Minimal helper class for definining unique struct 
+    //! wrappers around group pointers for use with std::variant
+    template<typename G, typename Tag>
+    struct Detail
+    {
+        G *group;
+        Models::Base::EGP egp;
+    };
+
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    DEFINE_EGP_REF_DETAIL_STRUCT(NGRef, NeuronGroup);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CSRef, CurrentSource);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CURef, CustomUpdate);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CUWURef, CustomUpdateWU);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdate);
+    DEFINE_EGP_REF_DETAIL_STRUCT(PSMRef, SynapseGroup);
+    DEFINE_EGP_REF_DETAIL_STRUCT(WURef, SynapseGroup);
+
+    //! Variant type used to store 'detail'
+    using DetailType = std::variant<NGRef, CSRef, CURef, CUWURef, CCURef, PSMRef, WURef>;
+
+    EGPReference(const DetailType &detail) : m_Detail(detail)
     {}
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t m_EGPIndex;
-    Models::Base::EGP m_EGP;
-    std::string m_TargetName;
+    DetailType m_Detail;
 };
 
 //----------------------------------------------------------------------------

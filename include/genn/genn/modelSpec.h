@@ -191,37 +191,37 @@ inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const
 }
 
 //! Creates a reference to a neuron group extra global parameter
-inline Models::EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName)
+inline Models::EGPReference createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(ng, egpName);
 }
 
 //! Creates a reference to a current source extra global parameter
-inline Models::EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cs, egpName);
 }
 
 //! Creates a reference to a custom update extra global parameter
-inline Models::EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
 //! Creates a reference to a custom weight update extra global parameter
-inline Models::EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
 //! Creates a reference to a postsynaptic model extra global parameter
-inline Models::EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName)
+inline Models::EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createPSMEGPRef(sg, egpName);
 }
 
 //! Creates a reference to a weight update model extra global parameter
-inline Models::EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName)
+inline Models::EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createWUEGPRef(sg, egpName);
 }
