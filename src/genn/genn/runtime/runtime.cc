@@ -117,10 +117,10 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // Loop through neuron groups
     const auto &model = m_ModelMerged.get().getModel();
-    const unsigned int batchSize = model.getBatchSize();
+    const size_t batchSize = model.getBatchSize();
     for(const auto &n : model.getNeuronGroups()) {
         // True spike variables
-        const size_t numNeuronDelaySlots = batchSize * (size_t)n.second.getNumNeurons() * (size_t)n.second.getNumDelaySlots();
+        const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
         
         // If spikes are required, allocate arrays for counts and spikes
         if(n.second.isTrueSpikeRequired()) {
@@ -160,8 +160,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If neuron group has axonal or back-propagation delays, add delay queue pointer
         if (n.second.isDelayRequired()) {
+            createArray(&n.second, "spkQuePtr", Type::Uint32, 1, VarLocation::DEVICE);
             m_DelayQueuePointer.try_emplace(n.first, 0);
-            // **TODO** also make device version
         }
         
         // If neuron group needs to record its spike times
@@ -194,16 +194,20 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                                      "rng" + n.first, batchSize * n.second.getNumNeurons(), mem);
         }*/
 
-        // Allocate neuron state variables
-        allocateNeuronVars<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 
-                                             batchSize, n.second.getNumDelaySlots(), true);
+        // Create arrays for neuron state variables
+        createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 
+                                                batchSize, n.second.getNumDelaySlots(), true);
         
-        // Allocate current source variables
+        // Create arrays for neuron extra global parameters
+        createEGPArrays<NeuronEGPAdapter>(&n.second);
+
+        // Create arrays for current source variables and extra global parameters
         for (const auto *cs : n.second.getCurrentSources()) {
-            allocateNeuronVars<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
+            createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
+            createEGPArrays<CurrentSourceEGPAdapter>(cs);
         }
 
-        // Allocate postsynaptic model variables from incoming populations
+        // Loop through fused postsynaptic model from incoming populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
             createArray(sg, "outPost", model.getPrecision(), 
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
@@ -213,30 +217,30 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 createArray(sg, "denDelay", model.getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                             sg->getDendriticDelayLocation());
-                //genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                //                    Type::Uint32, "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
+                createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE);
             }
 
-            allocateNeuronVars<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
+            // Create arrays for postsynaptic model state variables
+            createNeuronVarArrays<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
         }
 
-        // Allocate fused pre-output variables
+        // Create arrays for fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
             createArray(sg, "outPre", model.getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getInSynLocation());
         }
         
-        // Allocate fused postsynaptic weight update variables from incoming synaptic populations
+        // Create arrays for variables from fused incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
+            createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
         }
         
-        // Loop through merged postsynaptic weight updates of incoming synaptic populations
+        // Create arrays for variables from fused outgoing synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
-            allocateNeuronVars<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
+            createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
         }  
     }
 
@@ -289,7 +293,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // Allocate custom update variables
     for(const auto &c : model.getCustomUpdates()) {
-        allocateNeuronVars<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
+        createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
                                                    c.second.getDims() & VarAccessDim::BATCH);
     }
 

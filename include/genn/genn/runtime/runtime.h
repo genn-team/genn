@@ -191,13 +191,27 @@ private:
     std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
                                                                                 CodeGenerator::ArrayBase *array) const;
 
-    //! Helper to allocate array in m_Arrays data structure
+    template<typename A, typename G>
+    void createEGPArrays(const G *group)
+    {
+        A adaptor(*group);
+        for(const auto &egp : adaptor.getDefs()) {
+            const auto resolvedType = egp.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
+            createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name));
+        }
+    }
+
+    //! Helper to create arrays for neuron state variables
     /*! \tparam A           Adaptor class used to access 
         \tparam G           Type of group variables are associated with
-        \param memAlloc     MemAlloc object for tracking memory usage*/
+        \param group        Group array is to be associatd with
+        \param numNeuron    Number of neurons in group
+        \param batchSize    Batch size of model
+        \param delaySlots   Number of delay slots in group
+        \param batched      Should these variables ever be batched*/
     template<typename A, typename G>
-    void allocateNeuronVars(const G *group, size_t numNeurons, size_t batchSize, 
-                            size_t delaySlots, bool batched)
+    void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
+                               size_t delaySlots, bool batched)
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
@@ -209,6 +223,13 @@ private:
             const size_t numDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
             createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
                         adaptor.getLoc(var.name));
+
+            // Loop through EGPs required to initialize neuron variable and create
+            const auto &varInit = adaptor.getInitialisers().at(var.name);
+            for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
+                const auto resolvedEGPType = egp.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
+                createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);
+            }
         }
     }
 
