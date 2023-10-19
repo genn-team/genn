@@ -2,6 +2,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 // Standard C++ includes
@@ -68,13 +69,6 @@ public:
     template<typename T>
     T get() const{ return std::get<T>(m_Value); }
     const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }
-    
-    template<typename T>
-    T cast() const
-    {
-        return std::visit(Utils::Overload{[](auto v){ return static_cast<T>(v); }},
-                          m_Value);
-    }
 
     //----------------------------------------------------------------------------
     // Operators
@@ -144,7 +138,7 @@ struct GENN_EXPORT ResolvedType
     {
         std::string name;
         size_t size;
-        ffi_type *ffi_type;
+        ffi_type *ffiType;
         bool device;
         std::optional<Numeric> numeric;
         
@@ -318,20 +312,20 @@ struct GENN_EXPORT ResolvedType
     // Static API
     //------------------------------------------------------------------------
     template<typename T>
-    static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffi_type, 
+    static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffiType, 
                                       const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0}, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffi_type, device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                                             std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                                                             std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                                                            std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                                                            std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
                             qualifiers};
     }
 
     template<typename T>
     static ResolvedType createValue(const std::string &name, Qualifier qualifiers = Qualifier{0}, 
-                                    ffi_type *ffi_type = nullptr, bool device = false)
+                                    ffi_type *ffiType = nullptr, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffi_type, device, std::nullopt}, qualifiers};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, qualifiers};
     }
 
     static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false)

@@ -275,9 +275,9 @@ private:
 
                 std::visit(
                     Utils::Overload{
-                        [&argumentStorage, &f](const ArrayBase *array)
+                        [&argumentStorage, &f](const CodeGenerator::ArrayBase *array)
                         {
-                            if(std::get<3>(f) & GroupMergedFieldType::HOST) {
+                            if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST) {
                                 array->serialiseHost(argumentStorage);
                             }
                             else {

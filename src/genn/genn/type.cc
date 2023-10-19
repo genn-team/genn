@@ -24,6 +24,13 @@ const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
     {Type::Int8, Type::Uint8},
     {Type::Int16, Type::Uint16},
     {Type::Int32, Type::Uint32}};
+
+template<typename T>
+T cast(const Type::NumericValue &value)
+{
+    return std::visit(Utils::Overload{[](auto v){ return static_cast<T>(v); }},
+                      value.get());
+}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -183,8 +190,8 @@ ffi_type *ResolvedType::getFFIType() const
         Utils::Overload{
             [](const Type::ResolvedType::Value &value)
             {
-                if(value.ffi_type) {
-                    return value.ffi_type;
+                if(value.ffiType) {
+                    return value.ffiType;
                 }
                 else {
                     throw std::runtime_error("Value type '" + value.name + "'cannot be passed via FFI");
@@ -352,23 +359,23 @@ void serialiseNumeric(const NumericValue &value, const ResolvedType &type, std::
 {
     #define SERIALISE(TYPE, GENN_TYPE)                                                  \
         if(type == GENN_TYPE) {                                                         \
-            const TYPE v = value.cast<TYPE>();                                          \
+            const TYPE v = cast<TYPE>(value);                                           \
             std::byte vBytes[sizeof(TYPE)];                                             \
             std::memcpy(vBytes, &v, sizeof(TYPE));                                      \
             std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes)); \
             return;                                                                     \
         } else
 
-    SERIALISE(int8_t, Int8);
-    SERIALISE(int16_t, Int16);
-    SERIALISE(int32_t, Int32);
-    SERIALISE(int64_t, Int64);
-    SERIALISE(uint8_t, Uint8);
-    SERIALISE(uint16_t, Uint16);
-    SERIALISE(uint32_t, Uint32);
-    SERIALISE(uint64_t, Uint64);
-    SERIALISE(float, Float);
-    SERIALISE(double, Double);
+    SERIALISE(int8_t, Int8)
+    SERIALISE(int16_t, Int16)
+    SERIALISE(int32_t, Int32)
+    SERIALISE(int64_t, Int64)
+    SERIALISE(uint8_t, Uint8)
+    SERIALISE(uint16_t, Uint16)
+    SERIALISE(uint32_t, Uint32)
+    SERIALISE(uint64_t, Uint64)
+    SERIALISE(float, Float)
+    SERIALISE(double, Double)
     {
         throw std::runtime_error("Unable to serialse type '" + type.getName() + "'");
     }

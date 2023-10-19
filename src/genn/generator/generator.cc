@@ -1,5 +1,6 @@
 // Standard C++ includes
 #include <fstream>
+#include <thread>
 
 #ifdef _WIN32
 #include <Objbase.h>
