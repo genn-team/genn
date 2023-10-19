@@ -279,15 +279,20 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
             // **TODO** remap is not always required
             if(m_Backend.get().isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                // Allocate column lengths
+                // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();
                 createArray(&s.second, "colLength", Type::Uint32, numPost, VarLocation::DEVICE);
                 
-                // Allocate remap
+                // Create remap array
                 createArray(&s.second, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
             }
         }
+
+        // Create arrays for extra-global parameters
+        // **NOTE** postsynaptic models with EGPs can't be fused so no need to worry about that
+        createEGPArrays<SynapseWUEGPAdapter>(&s.second);
+        createEGPArrays<SynapsePSMEGPAdapter>(&s.second);
     }
 
     // Allocate custom update variables
@@ -423,7 +428,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
         pushMergedGroup(m);
     }
-
 }
 //----------------------------------------------------------------------------
 void Runtime::initialize()
