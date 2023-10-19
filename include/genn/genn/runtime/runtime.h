@@ -204,16 +204,16 @@ private:
     }
 
     //! Helper to create arrays for neuron state variables
-    /*! \tparam A           Adaptor class used to access 
-        \tparam G           Type of group variables are associated with
-        \param group        Group array is to be associatd with
-        \param numNeuron    Number of neurons in group
-        \param batchSize    Batch size of model
-        \param delaySlots   Number of delay slots in group
-        \param batched      Should these variables ever be batched*/
+    /*! \tparam A               Adaptor class used to access 
+        \tparam G               Type of group variables are associated with
+        \param group            Group array is to be associatd with
+        \param numNeuron        Number of neurons in group
+        \param batchSize        Batch size of model
+        \param numDelaySlots    Number of delay slots in group
+        \param batched          Should these variables ever be batched*/
     template<typename A, typename G>
     void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
-                               size_t delaySlots, bool batched)
+                               size_t numDelaySlots, bool batched)
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
@@ -222,8 +222,8 @@ private:
 
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
-            const size_t numDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
-            createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numDelaySlots,
+            const size_t numVarDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
+            createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numVarDelaySlots,
                         adaptor.getLoc(var.name));
 
             // Loop through EGPs required to initialize neuron variable and create
