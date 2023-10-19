@@ -22,6 +22,7 @@ extern "C"
 
 // GeNN includes
 #include "gennExport.h"
+#include "modelSpecInternal.h"
 #include "type.h"
 #include "varAccess.h"
 #include "variableMode.h"
@@ -151,6 +152,7 @@ private:
     //----------------------------------------------------------------------------
     // Private API
     //----------------------------------------------------------------------------
+    const ModelSpecInternal &getModel() const;
     void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
@@ -196,7 +198,7 @@ private:
     {
         A adaptor(*group);
         for(const auto &egp : adaptor.getDefs()) {
-            const auto resolvedType = egp.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
+            const auto resolvedType = egp.type.resolve(getModel().getTypeContext());
             createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name));
         }
     }
@@ -215,7 +217,7 @@ private:
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
-            const auto resolvedType = var.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
+            const auto resolvedType = var.type.resolve(getModel().getTypeContext());
             const auto varDims = adaptor.getVarDims(var);
 
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
@@ -227,7 +229,7 @@ private:
             // Loop through EGPs required to initialize neuron variable and create
             const auto &varInit = adaptor.getInitialisers().at(var.name);
             for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
-                const auto resolvedEGPType = egp.type.resolve(m_ModelMerged.get().getModel().getTypeContext());
+                const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
                 createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);
             }
         }

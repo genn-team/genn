@@ -116,9 +116,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     m_NumRecordingTimesteps = numRecordingTimesteps;
 
     // Loop through neuron groups
-    const auto &model = m_ModelMerged.get().getModel();
-    const size_t batchSize = model.getBatchSize();
-    for(const auto &n : model.getNeuronGroups()) {
+    const size_t batchSize = getModel().getBatchSize();
+    for(const auto &n : getModel().getNeuronGroups()) {
         // True spike variables
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
         
@@ -166,25 +165,25 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
-            createArray(&n.second, "sT", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeTimeLocation());
         }
 
         // If neuron group needs to record its previous spike times
         if (n.second.isPrevSpikeTimeRequired()) {
-            createArray(&n.second, "prevST", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeTimeLocation());
         }
 
         // If neuron group needs to record its spike-like-event times
         if (n.second.isSpikeEventTimeRequired()) {
-            createArray(&n.second, "seT", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeEventTimeLocation());
         }
 
         // If neuron group needs to record its previous spike-like-event times
         if (n.second.isPrevSpikeEventTimeRequired()) {
-            createArray(&n.second, "prevSET", model.getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeEventTimeLocation());
         }
 
@@ -209,12 +208,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Loop through fused postsynaptic model from incoming populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
-            createArray(sg, "outPost", model.getPrecision(), 
+            createArray(sg, "outPost", getModel().getPrecision(), 
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getInSynLocation());
             
             if (sg->isDendriticDelayRequired()) {
-                createArray(sg, "denDelay", model.getPrecision(), 
+                createArray(sg, "denDelay", getModel().getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                             sg->getDendriticDelayLocation());
                 createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE);
@@ -226,7 +225,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Create arrays for fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
-            createArray(sg, "outPre", model.getPrecision(), 
+            createArray(sg, "outPre", getModel().getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getInSynLocation());
         }
@@ -245,13 +244,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     }
 
     // Loop through synapse groups
-    for(const auto &s : model.getSynapseGroups()) {
+    for(const auto &s : getModel().getSynapseGroups()) {
         // If synapse group has individual or kernel weights
         const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
         if (individualWeights || kernelWeights) {
             for(const auto &var : s.second.getWUModel()->getVars()) {
-                const auto resolvedType = var.type.resolve(model.getTypeContext());
+                const auto resolvedType = var.type.resolve(getModel().getTypeContext());
                 const auto varDims = getVarAccessDim(var.access);
                 const size_t numVarCopies = (varDims & VarAccessDim::BATCH) ? batchSize : 1;
                 const size_t numVarElements = getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
@@ -292,7 +291,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     }
 
     // Allocate custom update variables
-    for(const auto &c : model.getCustomUpdates()) {
+    for(const auto &c : getModel().getCustomUpdates()) {
         createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
                                                    c.second.getDims() & VarAccessDim::BATCH);
     }
@@ -466,7 +465,7 @@ void Runtime::stepTime()
 //----------------------------------------------------------------------------
 double Runtime::getTime() const
 { 
-    return m_Timestep * m_ModelMerged.get().getModel().getDT();
+    return m_Timestep * getModel().getDT();
 }
 //----------------------------------------------------------------------------
 void Runtime::pullRecordingBuffersFromDevice() const
@@ -476,7 +475,7 @@ void Runtime::pullRecordingBuffersFromDevice() const
     }
 
     // Loop through neuron groups
-    for(const auto &n : m_ModelMerged.get().getModel().getNeuronGroups()) {
+    for(const auto &n : getModel().getNeuronGroups()) {
         // If spike recording is enabled, pull array from device
         if(n.second.isSpikeRecordingEnabled()) {
             getArray(n.second, "recordSpk")->pullFromDevice();
@@ -487,6 +486,11 @@ void Runtime::pullRecordingBuffersFromDevice() const
             getArray(n.second, "recordSpk")->pullFromDevice();
         }
     }
+}
+//----------------------------------------------------------------------------
+const ModelSpecInternal &Runtime::getModel() const
+{
+    return m_ModelMerged.get().getModel();
 }
 //----------------------------------------------------------------------------
 void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
@@ -539,7 +543,7 @@ std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEv
     }
     
     // Calculate start time
-    const double dt = m_ModelMerged.get().getModel().getDT();
+    const double dt = getModel().getDT();
     const double startTime = (m_Timestep - timestepWords) * dt;
 
     // Loop through
