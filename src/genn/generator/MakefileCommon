@@ -23,7 +23,7 @@ CXX_STANDARD			?=c++17
 CXXFLAGS		+=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
-LDFLAGS			+= -L$(LIBRARY_DIRECTORY)  -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX)
+LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -ldl $(shell pkg-config libffi --libs)
 CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/$(BACKEND_NAME) -DMODEL=\"$(MODEL)\" -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
 # Determine full path to generator and backend
