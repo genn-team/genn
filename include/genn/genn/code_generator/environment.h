@@ -666,22 +666,20 @@ public:
     template<typename A>
     void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        assert(false);
         // Loop through variable references
-        /*const A archetypeAdaptor(this->getGroup().getArchetype());
+        const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
-                     [arrayPrefix, v](const auto &g, size_t) 
+                     [v](const auto &runtime, const auto &g, size_t) 
                      { 
-                         const auto varRef = A(g).getInitialisers().at(v.name);
-                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                         return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
                      },
                      getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
-        }*/
+        }
     }
 
     template<typename A>
@@ -748,7 +746,7 @@ public:
         return m_GetWriteIndex(var.name, var.access);
     }
 
-    ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
+    const ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
         return runtime.getArray(A(g).getTarget(), var.name);
     }
@@ -802,10 +800,9 @@ protected:
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
+    const ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
-        assert(false);
-        return nullptr;
+        return A(g).getInitialisers().at(var.name).getTargetArray(runtime);
     }
 
 private:

@@ -238,13 +238,11 @@ std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendB
         // If variable has a transpose, add field with transpose suffix, pointing to transpose var
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             const auto fieldType = v.type.resolve(getTypeContext()).createPointer();
-            assert(false);
-            /*env.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
-                         [&backend, v](const auto &runtime, const auto &g, size_t)
+            env.addField(fieldType, v.name + "_transpose", v.name + "Transpose",
+                         [v](const auto &runtime, const auto &g, size_t)
                          {
-                             const auto varRef = g.getVarReferences().at(v.name);
-                             return backend.getDeviceVarPrefix() + *varRef.getTransposeVarName() + *varRef.getTransposeTargetName();
-                         });*/
+                             return g.getVarReferences().at(v.name).getTransposeTargetArray(runtime);
+                         });
 
             // Return name of transpose variable
             return v.name;

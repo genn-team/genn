@@ -124,15 +124,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
 
             // Add field
-            assert(false);
-            /*updateEnv.addField(qualifiedType, v.name,
+            updateEnv.addField(qualifiedType, v.name,
                        resolvedType.createPointer(), v.name,
-                       [&backend, v](const auto &runtime, const auto &g, size_t) 
+                       [v](const auto &runtime, const auto &g, size_t) 
                        { 
-                           const auto varRef = g.getPreVarReferences().at(v.name);
-                           return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
+                           return g.getPreVarReferences().at(v.name).getTargetArray(runtime);
                        },
-                       index);*/
+                       index);
         }
     }
 
@@ -146,13 +144,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
         auto resolvedType = getSortedArchetypeDependentVars().at(i).getVarType().resolve(getTypeContext());
-        assert(false);
-        /*updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
+        updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
                            [i, this](const auto &runtime, const auto&, size_t g) 
                            { 
-                               const auto &varRef = m_SortedDependentVars[g][i];
-                               return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
-                           });*/
+                               return m_SortedDependentVars[g][i].getTargetArray(runtime);
+                           });
     }
 
     
@@ -431,9 +427,9 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 // If backend has device variables, also add hidden pointer field with device pointer
                 /*if(!backend.getDeviceVarPrefix().empty()) {
                     groupEnv.addField(pointerType, "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
-                                      [egp, &backend](const auto &g, size_t)
+                                      [&backend](const auto &runtime,const auto &g, size_t)
                                       {
-                                          return backend.getDeviceVarPrefix() + egp.name + g.getName();
+                                          return runtime.getArray(g, egp.name);
                                       },
                                       "", GroupMergedFieldType::DYNAMIC);
                 }*/
