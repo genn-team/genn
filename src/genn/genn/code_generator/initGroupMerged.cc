@@ -764,32 +764,28 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 const auto pointerToPointerType = pointerType.createPointer();
 
                 // Add field for host pointer
-                assert(false);
-                /*groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
-                                  [egp](const auto &g, size_t) { return "&" + egp.name + g.getName(); },
-                                  "", GroupMergedFieldType::HOST_DYNAMIC);
+                // **NOTE** none of these need to be dynamic as they are allocated once and pushed with all other merged groups
+                groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
+                                  [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); },
+                                  "", GroupMergedFieldType::HOST);
 
                 // Add substitution for direct access to field
                 groupEnv.add(pointerType, egp.name, "*$(_" + egp.name + ")");
 
-                // If backend requires seperate device variables, add additional (private) field)
-                if(!backend.getDeviceVarPrefix().empty()) {
-                    groupEnv.addField(pointerToPointerType, "_" + backend.getDeviceVarPrefix() + egp.name,
-                                      backend.getDeviceVarPrefix() + egp.name,
-                                      [egp, &backend](const auto &g, size_t) { return "&" + backend.getDeviceVarPrefix() + egp.name + g.getName(); },
-                                      "", GroupMergedFieldType::DYNAMIC);
+                // If backend requires seperate device objects, add additional (private) field)
+                if(backend.isArrayDeviceObjectRequired()) {
+                    groupEnv.addField(pointerToPointerType, "_d_" + egp.name,
+                                      "d_" + egp.name,
+                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); });
                 }
 
-                // If backend requires seperate host variables, add additional (private) field)
-                if(!backend.getHostVarPrefix().empty()) {
-                    groupEnv.addField(pointerToPointerType, "_" + backend.getHostVarPrefix() + egp.name,
-                                      backend.getHostVarPrefix() + egp.name,
-                                      [egp, &backend](const SynapseGroupInternal &g, size_t)
-                                      {
-                                          return "&" + backend.getHostVarPrefix() + egp.name + g.getName();
-                                      },
-                                      "", GroupMergedFieldType::DYNAMIC);
-                }*/
+                // If backend requires seperate host objects, add additional (private) field)
+                if(backend.isArrayHostObjectRequired()) {
+                    groupEnv.addField(pointerToPointerType, "_h_" + egp.name,
+                                      "h_" + egp.name,
+                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); },
+                                      "", GroupMergedFieldType::HOST_OBJECT);
+                }
 
                 // Generate code to allocate this EGP with count specified by $(0)
                 // **NOTE** we generate these with a pointer type as the fields are pointer to pointer

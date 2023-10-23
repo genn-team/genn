@@ -345,8 +345,10 @@ protected:
                 definitions << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }
 
-            // Raise error if this field is a host field but this isn't a host structure
-            assert(!(std::get<3>(f) & GroupMergedFieldType::HOST) || host);
+            // If field is a pointer, assert that this is a host structure if field is a host or host object field
+            if(std::get<0>(f).isPointer()) {
+                assert((!(std::get<3>(f) & GroupMergedFieldType::HOST) && !(std::get<3>(f) & GroupMergedFieldType::HOST_OBJECT)) || host);
+            }
         }
     }
 
