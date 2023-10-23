@@ -97,7 +97,7 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
 
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest)) {
+    if(true/*forceRebuild || shouldRebuildModel(outputPath, hashDigest)*/) {
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
         auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
