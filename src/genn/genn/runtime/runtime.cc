@@ -570,13 +570,13 @@ std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEv
     // Calculate number of words per-timestep
     const size_t timestepWords = ceilDivide(group.getNumNeurons(), 32);
 
-    if(m_Timestep < timestepWords) {
+    if(m_Timestep < *m_NumRecordingTimesteps) {
         throw std::runtime_error("Event recording data can only be accessed once buffer is full");
     }
     
     // Calculate start time
     const double dt = getModel().getDT();
-    const double startTime = (m_Timestep - timestepWords) * dt;
+    const double startTime = (m_Timestep - *m_NumRecordingTimesteps) * dt;
 
     // Loop through
     const uint32_t *spkRecordWords = reinterpret_cast<const uint32_t*>(array->getHostPointer());
@@ -626,7 +626,6 @@ void Runtime::writeRecordedEvents(const NeuronGroup &group, CodeGenerator::Array
     // Open file and write header
     std::ofstream file(path);
     file << "Time [ms], Neuron ID" << std::endl;
-
 
     // Write events to file
     auto t = eventTimes.cbegin();
