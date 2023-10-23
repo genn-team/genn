@@ -234,6 +234,10 @@ public:
     virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
                                                    VarLocation location) const final;
 
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<ArrayBase> createPopulationRNG(size_t count) const final;
+
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 

@@ -189,10 +189,16 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }
 
         // If neuron group needs per-neuron RNGs
-        /*if(n.second.isSimRNGRequired()) {
-            backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     "rng" + n.first, batchSize * n.second.getNumNeurons(), mem);
-        }*/
+        if(n.second.isSimRNGRequired()) {
+            auto rng = m_Backend.get().createPopulationRNG(batchSize * n.second.getNumNeurons());
+            if(rng) {
+                const auto r = m_NeuronGroupArrays[&n.second].try_emplace("rng", std::move(rng));
+                if(!r.second) {
+                    throw std::runtime_error("Unable to allocate array with " 
+                                             "duplicate name 'rng'");
+                }
+            }
+        }
 
         // Create arrays for neuron state variables
         createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 

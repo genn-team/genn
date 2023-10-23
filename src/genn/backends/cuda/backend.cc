@@ -1539,6 +1539,11 @@ std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, 
     return std::make_unique<Array>(type, count, location);
 }
 //--------------------------------------------------------------------------
+std::unique_ptr<ArrayBase> Backend::createPopulationRNG(size_t count) const
+{
+    return createArray(CURandState, count, VarLocation::DEVICE);
+}
+//--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
                                                const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                const std::string &countVarName) const
