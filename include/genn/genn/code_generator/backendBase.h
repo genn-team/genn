@@ -207,8 +207,11 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() = 0;
 
-    //! Serialise device pointer to bytes
-    virtual void serialiseDevice(std::vector<std::byte> &bytes) const = 0;
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const = 0;
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const = 0;
 
     //------------------------------------------------------------------------
     // Public API
@@ -217,7 +220,7 @@ public:
     std::byte *getHostPointer() const{ return m_HostPointer; }
 
     //! Serialise host pointer to bytes
-    void serialiseHost(std::vector<std::byte> &bytes) const;
+    void serialiseHostPointer(std::vector<std::byte> &bytes) const;
 
 protected:
     ArrayBase(const Type::ResolvedType &type, size_t count, 
@@ -407,8 +410,11 @@ public:
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
-    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
-    virtual bool isDeviceScalarRequired() const = 0;
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const = 0;
+
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const = 0;

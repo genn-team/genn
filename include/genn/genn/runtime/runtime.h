@@ -277,15 +277,31 @@ private:
 
                 std::visit(
                     Utils::Overload{
-                        [&argumentStorage, &f](const CodeGenerator::ArrayBase *array)
+                        // If field contains array
+                        // **TODO** pointer-to-pointer
+                        [&argumentStorage, &f, this](const CodeGenerator::ArrayBase *array)
                         {
+                            // If this field should contain host pointer
                             if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST) {
-                                array->serialiseHost(argumentStorage);
+                                array->serialiseHostPointer(argumentStorage);
                             }
+                            // Otherwise, if it should contain host object
+                            else if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST_OBJECT) {
+                                array->serialiseHostObject(argumentStorage);
+                            }
+                            // Otherwise
                             else {
-                                array->serialiseDevice(argumentStorage);
+                                // Serialise device object if backend requires it
+                                if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                                    array->serialiseDeviceObject(argumentStorage);
+                                }
+                                // Otherwise, host pointer
+                                else {
+                                    array->serialiseHostPointer(argumentStorage);
+                                }
                             }
                         },
+                        // Otherwise, if field contains numeric value
                         [&argumentStorage, &f](const Type::NumericValue &value)
                         { 
                             Type::serialiseNumeric(value, std::get<0>(f), argumentStorage);

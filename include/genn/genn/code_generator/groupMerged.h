@@ -36,9 +36,10 @@ namespace GeNN::CodeGenerator
 {
 enum class GroupMergedFieldType : unsigned int
 {
-    STANDARD        = 0,
-    HOST            = (1 << 0),
-    DYNAMIC         = (1 << 1),
+    STANDARD        = 0,                //! Field contains device object on platforms where they are used, otherwise host pointer
+    HOST            = (1 << 0),         //! Field should contain host pointer 
+    HOST_OBJECT     = (1 << 1),         //! Field should contain host object
+    DYNAMIC         = (1 << 2),         //! Field is dynamic i.e. needs push methods
 
     HOST_DYNAMIC    = HOST | DYNAMIC,
 };
@@ -337,10 +338,9 @@ protected:
         generateStructFieldArgumentDefinitions(definitions, backend);
         definitions << ");" << std::endl;
 
-        // Loop through fields again to generate any EGP pushing functions that are require
+        // Loop through fields again to generate any dynamic field pushing functions that are required
         for(const auto &f : m_Fields) {
-            // If this field is a dynamic pointer
-            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC) && std::get<0>(f).isPointer()) {
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
                 definitions << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitions << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
             }

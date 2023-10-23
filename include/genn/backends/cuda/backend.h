@@ -140,8 +140,14 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() final;
 
-    //! Serialise device pointer to bytes
-    virtual void serialiseDevice(std::vector<std::byte> &bytes) const final;
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const final;
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const
+    {
+        throw std::runtime_error("CUDA arrays have no host objects");
+    }
 
     //------------------------------------------------------------------------
     // Public API
@@ -282,6 +288,12 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
+
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const final{ return true; }
+
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const final{ return false; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const final { return true; }

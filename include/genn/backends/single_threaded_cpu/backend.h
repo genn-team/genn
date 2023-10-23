@@ -61,12 +61,18 @@ public:
     {
     }
 
-    //! Serialise device pointer to bytes
-    virtual void serialiseDevice(std::vector<std::byte> &bytes) const final
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const final
     {
-        serialiseHost(bytes);
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
     }
 
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -162,10 +168,11 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
 
-    virtual std::string getDeviceVarPrefix() const final{ return ""; }
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const final{ return false; }
 
-    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
-    virtual bool isDeviceScalarRequired() const final { return false; }
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const final{ return false; }
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;

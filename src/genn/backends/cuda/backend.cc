@@ -268,7 +268,7 @@ void Array::pullFromDevice()
     }
 }
 //--------------------------------------------------------------------------
-void Array::serialiseDevice(std::vector<std::byte> &bytes) const
+void Array::serialiseDeviceObject(std::vector<std::byte> &bytes) const
 {
     std::byte vBytes[sizeof(void*)];
     std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
