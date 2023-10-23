@@ -495,9 +495,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {
             LOGW_BACKEND << "Cannot remove dry-run source file";
         }
-        if(std::remove((outputPath / ("definitionsInternal" + dryRunSuffix + ".h")).str().c_str())) {
-            LOGW_BACKEND << "Cannot remove dry-run source file";
-        }
     }
 
     // Destroy context
