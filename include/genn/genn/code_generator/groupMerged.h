@@ -375,26 +375,6 @@ protected:
 
 private:
     //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    void generateStructFieldArguments(CodeStream &os, size_t groupIndex, 
-                                      const std::vector<typename ChildGroupMerged<G>::Field> &sortedFields) const
-    {
-        // Get group by index
-        const auto &g = this->getGroups()[groupIndex];
-
-        // Loop through fields
-        for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-            const auto &f = sortedFields[fieldIndex];
-            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
-            os << fieldInitVal;
-            if(fieldIndex != (sortedFields.size() - 1)) {
-                os << ", ";
-            }
-        }
-    }
-
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::string m_MemorySpace;
