@@ -142,6 +142,16 @@ public:
        return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
    }
 
+   void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
+   {
+       return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
+   }
+
+   void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
+   {
+       return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
+   }
+
 private:
     //----------------------------------------------------------------------------
     // Typedefines
@@ -192,6 +202,8 @@ private:
 
     std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
                                                                                 CodeGenerator::ArrayBase *array) const;
+
+    void writeRecordedEvents(const NeuronGroup &group, CodeGenerator::ArrayBase *array, const std::string &path) const;
 
     template<typename A, typename G>
     void createEGPArrays(const G *group)

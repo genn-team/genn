@@ -1,5 +1,7 @@
 #include "runtime/runtime.h"
 
+// Standard C++ includes
+#include <fstream>
 // PLOG includes
 #include <plog/Log.h>
 
@@ -614,6 +616,24 @@ std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEv
 
     // Return vectors
     return std::make_pair(eventTimes, eventIDs);
+}
+//----------------------------------------------------------------------------
+void Runtime::writeRecordedEvents(const NeuronGroup &group, CodeGenerator::ArrayBase *array, const std::string &path) const
+{
+    // Get events
+    const auto [eventTimes, eventIDs] = getRecordedEvents(group, array);
+
+    // Open file and write header
+    std::ofstream file(path);
+    file << "Time [ms], Neuron ID" << std::endl;
+
+
+    // Write events to file
+    auto t = eventTimes.cbegin();
+    auto i = eventIDs.cbegin();
+    for(;t < eventTimes.cend(); t++, i++) {
+        file << *t << ", " << *i << std::endl;
+    }
 }
 //----------------------------------------------------------------------------
 void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName,
