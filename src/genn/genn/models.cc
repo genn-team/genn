@@ -183,6 +183,24 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
     return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
                                   wum->getPostVars()[wum->getPostVarIndex(varName)]});
 }
+//----------------------------------------------------------------------------
+const std::string &VarReference::getVarName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+const std::string &VarReference::getTargetName() const 
+{ 
+    return std::visit(
+        Utils::Overload{
+            [](const PSMRef &ref) { return std::cref(ref.group->getFusedPSTarget().getName()); },
+            [](const WUPreRef &ref) { return std::cref(ref.group->getFusedWUPreTarget().getName()); },
+            [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostTarget().getName()); },
+            [](const auto &ref) { return std::cref(ref.group->getName()); }},
+        m_Detail);
+}
 
 //----------------------------------------------------------------------------
 // WUVarReference
@@ -354,25 +372,6 @@ WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *cc
                                  ccum->getVars()[ccum->getVarIndex(varName)]});
 }
 //------------------------------------------------------------------------
-SynapseGroupInternal *WUVarReference::getSynapseGroupInternal() const
-{
-    return std::visit(
-        Utils::Overload{
-            [](const WURef &ref) { return ref.group; },
-            [](const auto &ref) { return ref.group->getSynapseGroup(); }},
-        m_Detail);
-}
-//------------------------------------------------------------------------
-SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
-{
-    return std::visit(
-        Utils::Overload{
-            [](const WURef &ref)->SynapseGroupInternal* { return ref.transposeGroup; },
-            [](const auto&)->SynapseGroupInternal* { return nullptr; }},
-        m_Detail);
-}
-
-//------------------------------------------------------------------------
 WUVarReference::WUVarReference(const DetailType &detail)
 :   m_Detail(detail)
 {
@@ -413,6 +412,66 @@ WUVarReference::WUVarReference(const DetailType &detail)
         {
             throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
         }
+    }
+}
+//------------------------------------------------------------------------
+SynapseGroupInternal *WUVarReference::getSynapseGroupInternal() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref) { return ref.group; },
+            [](const auto &ref) { return ref.group->getSynapseGroup(); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref)->SynapseGroupInternal* { return ref.transposeGroup; },
+            [](const auto&)->SynapseGroupInternal* { return nullptr; }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+const std::string &WUVarReference::getVarName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+const std::string &WUVarReference::getTargetName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref) { return std::cref(ref.group->getName()); }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+std::optional<std::string> WUVarReference::getTransposeVarName() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const WURef &ref)->std::optional<std::string>
+            { 
+                if(ref.transposeVar) {
+                    return ref.transposeVar->name;
+                }
+                else {
+                    return std::nullopt;
+                }
+            },
+            [](const auto&)->std::optional<std::string>{ return std::nullopt; }},
+        m_Detail);
+}
+//------------------------------------------------------------------------
+std::optional<std::string> WUVarReference::getTransposeTargetName() const
+{
+    const auto *transposeSG = getTransposeSynapseGroup();
+    if(transposeSG) {
+        return transposeSG->getName();
+    }
+    else {
+        return std::nullopt;
     }
 }
 
@@ -469,6 +528,21 @@ EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &e
     const auto *wum = sg->getWUModel();
     return EGPReference(WURef{sg, wum->getExtraGlobalParams()[wum->getExtraGlobalParamIndex(egpName)]});
 }
+//----------------------------------------------------------------------------
+const std::string &EGPReference::getEGPName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.egp.name); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+const std::string &EGPReference::getTargetName() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const auto &ref) { return std::cref(ref.group->getName()); }},
+        m_Detail);
+}
 
 //----------------------------------------------------------------------------
 // Free functions
@@ -498,28 +572,5 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(e.name, hash);
     Type::updateHash(e.type, hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
-{
-    //Utils::updateHash(v.getTargetName(), hash);
-    //Utils::updateHash(v.getVarName(), hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
-{
-    //Utils::updateHash(v.getTargetName(), hash);
-    //Utils::updateHash(v.getVarName(), hash);
-
-    if(v.getTransposeSynapseGroup() != nullptr) {
-        //Utils::updateHash(v.getTransposeTargetName(), hash);
-        //Utils::updateHash(v.getTransposeVarName(), hash);
-    }
-}
-//----------------------------------------------------------------------------
-void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash)
-{
-    //Utils::updateHash(v.getTargetName(), hash);
-    //Utils::updateHash(v.getEGPIndex(), hash);
 }
 }   // namespace GeNN::Models

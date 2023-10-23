@@ -234,6 +234,21 @@ private:
     {}
 
     //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    const std::string &getVarName() const;
+    const std::string &getTargetName() const;
+
+    //------------------------------------------------------------------------
+    // Friends
+    //------------------------------------------------------------------------
+    friend void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getVarName(), hash);
+    }
+
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     DetailType m_Detail;
@@ -313,13 +328,31 @@ private:
      //! Variant type used to store 'detail'
     using DetailType = std::variant<WURef, CURef, CCURef>;
 
+    WUVarReference(const DetailType &detail);
+
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
     SynapseGroupInternal *getSynapseGroupInternal() const;
     SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
+    const std::string &getVarName() const;
+    const std::string &getTargetName() const;
+    std::optional<std::string> getTransposeVarName() const;
+    std::optional<std::string> getTransposeTargetName() const;
 
-    WUVarReference(const DetailType &detail);
+    //------------------------------------------------------------------------
+    // Friends
+    //------------------------------------------------------------------------
+    friend void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getVarName(), hash);
+
+        if(v.getTransposeSynapseGroup() != nullptr) {
+            Utils::updateHash(v.getTransposeTargetName(), hash);
+            Utils::updateHash(v.getTransposeVarName(), hash);
+        }
+    }
 
     //------------------------------------------------------------------------
     // Members
@@ -383,6 +416,21 @@ private:
     {}
 
     //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    const std::string &getEGPName() const;
+    const std::string &getTargetName() const;
+
+    //----------------------------------------------------------------------------
+    // Friends
+    //----------------------------------------------------------------------------
+    friend void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getEGPName(), hash);
+    }
+
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     DetailType m_Detail;
@@ -395,9 +443,6 @@ GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash
 GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
 
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
