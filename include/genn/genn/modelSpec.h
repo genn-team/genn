@@ -324,6 +324,9 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
 
+    //! Find a neuron group by name
+    const NeuronGroup *findNeuronGroup(const std::string &name) const{ return static_cast<const NeuronGroup*>(findNeuronGroupInternal(name)); }
+
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
@@ -352,7 +355,10 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Find a synapse group by name
-    SynapseGroup *findSynapseGroup(const std::string &name);    
+    SynapseGroup *findSynapseGroup(const std::string &name){ return static_cast<SynapseGroup*>(findSynapseGroupInternal(name)); }
+    
+    //! Find a synapse group by name
+    const SynapseGroup *findSynapseGroup(const std::string &name) const{ return static_cast<const SynapseGroup*>(findSynapseGroupInternal(name)); }
 
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                         string containing unique name of synapse population.
@@ -721,8 +727,14 @@ private:
     //! Find a neuron group by name
     NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
     
+    //! Find a neuron group by name
+    const NeuronGroupInternal *findNeuronGroupInternal(const std::string &name) const;
+
     //! Find a synapse group by name
     SynapseGroupInternal *findSynapseGroupInternal(const std::string &name);
+
+    //! Find a synapse group by name
+    const SynapseGroupInternal *findSynapseGroupInternal(const std::string &name) const;
 
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string &src, const std::string &trg,
                                        const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,

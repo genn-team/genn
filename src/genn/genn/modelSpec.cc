@@ -176,19 +176,6 @@ NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned in
     }
 }
 // ---------------------------------------------------------------------------
-SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
-{
-    // If a matching local synapse group is found, return it
-    auto localSynapseGroup = m_LocalSynapseGroups.find(name);
-    if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
-        return &localSynapseGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
-    }
-}
-// ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it
@@ -461,7 +448,20 @@ NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
     }
     // Otherwise, error
     else {
-        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
+        throw std::runtime_error("neuron group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+const NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name) const
+{
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("neuron group '" + name + "' not found");
     }
 }
 // ---------------------------------------------------------------------------
@@ -474,7 +474,20 @@ SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &nam
     }
     // Otherwise, error
     else {
-        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
+        throw std::runtime_error("synapse group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+const SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name) const
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("synapse group '" + name + "' not found");
     }
 }
 // ---------------------------------------------------------------------------
