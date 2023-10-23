@@ -270,10 +270,10 @@ public:
     void genHostMergedStructArrayPush(CodeStream &os, const BackendBase &backend, const std::string &name) const
     {
         // Implement merged group
-        os << "static Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+        os << "static Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
 
         // Write function to update
-        os << "void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
+        os << "void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
         generateStructFieldArgumentDefinitions(os, backend);
         os << ")";
         {
@@ -282,7 +282,7 @@ public:
             // Loop through sorted fields and set array entry
             const auto sortedFields = getSortedFields(backend);
             for(const auto &f : sortedFields) {
-                os << "merged" << name << "Group" << getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                os << "merged" << name << "Group" << this->getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
             }
         }
     }
