@@ -43,10 +43,8 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());
-    std::ofstream definitionsInternalStream((outputPath / ("definitionsInternal" + suffix + ".h")).str());
     std::ofstream runnerStream((outputPath / ("runner" + suffix + ".cc")).str());
     CodeStream definitions(definitionsStream);
-    CodeStream definitionsInternal(definitionsInternalStream);
     CodeStream runner(runnerStream);
 
     // Write definitions preamble
@@ -65,17 +63,12 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     definitions << "#define EXPORT_FUNC" << std::endl;
 #endif
     backend.genDefinitionsPreamble(definitions, modelMerged);
-
-    // Write definitions internal preamble
-    definitionsInternal << "#pragma once" << std::endl;
-    definitionsInternal << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;
-    backend.genDefinitionsInternalPreamble(definitionsInternal, modelMerged);
     
     // Write ranges of scalar and time types
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Write runner preamble
-    runner << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl << std::endl;
+    runner << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;
 
     // Create codestreams to generate different sections of runner and definitions
 	std::stringstream runnerVarDeclStream;
@@ -84,24 +77,19 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     std::stringstream runnerStepTimeFinaliseStream;
     std::stringstream definitionsVarStream;
     std::stringstream definitionsFuncStream;
-    std::stringstream definitionsInternalVarStream;
-    std::stringstream definitionsInternalFuncStream;
     CodeStream runnerVarDecl(runnerVarDeclStream);
     CodeStream runnerVarAlloc(runnerVarAllocStream);
     CodeStream runnerVarFree(runnerVarFreeStream);
     CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
     CodeStream definitionsVar(definitionsVarStream);
     CodeStream definitionsFunc(definitionsFuncStream);
-    CodeStream definitionsInternalVar(definitionsInternalVarStream);
-    CodeStream definitionsInternalFunc(definitionsInternalFuncStream);
-
+    
     // Create a teestream to allow simultaneous writing to all streams
-    TeeStream allVarStreams(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
+    TeeStream allVarStreams(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
 
     // Begin extern C block around variable declarations
     runnerVarDecl << "extern \"C\" {" << std::endl;
     definitionsVar << "extern \"C\" {" << std::endl;
-    definitionsInternalVar << "extern \"C\" {" << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// global variables" << std::endl;
@@ -109,20 +97,19 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
 
     // If backend requires a global device RNG to simulate (or initialize) this model
     if(backend.isGlobalDeviceRNGRequired(model)) {
-        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, 
-                                   runnerVarDecl, runnerVarAlloc, runnerVarFree);
+        backend.genGlobalDeviceRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
     if(backend.isGlobalHostRNGRequired(model)) {
         // Define standard RNG
-        definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
+        definitionsVar << "extern " << "std::mt19937 hostRNG;" << std::endl;
         runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
 
         // Define standard host distributions as recreating them each call is slow
-        definitionsVar << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
-        definitionsVar << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
-        definitionsVar << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
+        definitionsVar << "extern " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
+        definitionsVar << "extern " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
+        definitionsVar << "extern " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
         definitionsVar << std::endl;
         runnerVarDecl << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
         runnerVarDecl << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
@@ -190,42 +177,42 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     // If timing is actually enabled
     if(model.isTimingEnabled()) {
         // Create neuron timer
-        backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+        backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                          runnerStepTimeFinalise, "neuronUpdate", true);
 
         // Add presynaptic update timer
         if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "presynapticUpdate", true);
         }
 
         // Add postsynaptic update timer if required
         if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "postsynapticUpdate", true);
         }
 
         // Add synapse dynamics update timer if required
         if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "synapseDynamics", true);
         }
 
         // Add timers for each custom update group
         for(const auto &g : customUpdateGroups) {
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "customUpdate" + g, false);
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "customUpdate" + g + "Transpose", false);
         }
 
         // Create init timer
-        backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+        backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                          runnerStepTimeFinalise, "init", false);
 
         // Add sparse initialisation timer
         if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "initSparse", false);
         }
 
@@ -235,18 +222,6 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
     runnerVarDecl << "// merged group arrays" << std::endl;
     runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
-
-    definitionsInternal << "// ------------------------------------------------------------------------" << std::endl;
-    definitionsInternal << "// merged group structures" << std::endl;
-    definitionsInternal << "// ------------------------------------------------------------------------" << std::endl;
-
-    definitionsInternalVar << "// ------------------------------------------------------------------------" << std::endl;
-    definitionsInternalVar << "// merged group arrays for host initialisation" << std::endl;
-    definitionsInternalVar << "// ------------------------------------------------------------------------" << std::endl;
-
-    definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
-    definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
-    definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
 
     // End extern C block around variable declarations
     runnerVarDecl << "}  // extern \"C\"" << std::endl;
@@ -314,8 +289,6 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     // Write variable and function definitions to header
     definitions << definitionsVarStream.str();
     definitions << definitionsFuncStream.str();
-    definitionsInternal << definitionsInternalVarStream.str();
-    definitionsInternal << definitionsInternalFuncStream.str();
 
     // ---------------------------------------------------------------------
     // Function definitions
@@ -468,5 +441,4 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
 
     // End extern C block around definitions
     definitions << "}  // extern \"C\"" << std::endl;
-    definitionsInternal << "}  // extern \"C\"" << std::endl;
 }

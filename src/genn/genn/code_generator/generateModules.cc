@@ -165,7 +165,7 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
     CodeStream neuronUpdate(neuronUpdateStream);
 
-    neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    neuronUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     neuronUpdate << std::endl;
 
     // Neuron update kernel
@@ -186,7 +186,7 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
     CodeStream customUpdate(customUpdateStream);
 
-    customUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    customUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     customUpdate << std::endl;
 
     // Neuron update kernel
@@ -209,7 +209,7 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
     std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
     CodeStream synapseUpdate(synapseUpdateStream);
 
-    synapseUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    synapseUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     synapseUpdate << std::endl;
 
     // Synaptic update kernels
@@ -231,7 +231,7 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
     std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
     CodeStream init(initStream);
 
-    init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 
     // Generate merged synapse connectivity host init code
     // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT

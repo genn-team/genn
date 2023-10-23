@@ -1356,17 +1356,8 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
-{
-    os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
 
-    // CUDA and OpenCL both provide generic min and max functions 
-    // to match this, bring std::min and std::max into global namespace
-    os << "using std::min;" << std::endl;
-    os << "using std::max;" << std::endl;
-
+    
     // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
 #ifdef _WIN32
     os << "#include <intrin.h>" << std::endl;
@@ -1391,6 +1382,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "#define gennCLZ __builtin_clz" << std::endl;
 #endif
     os << std::endl;
+
+    // CUDA and OpenCL both provide generic min and max functions 
+    // to match this, bring std::min and std::max into global namespace
+    os << "using std::min;" << std::endl;
+    os << "using std::max;" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
@@ -1511,12 +1507,12 @@ void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, Cu
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
 }
 //--------------------------------------------------------------------------
-void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
+void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
 {
     // Timing single-threaded CPU backends don't require any additional state
 }

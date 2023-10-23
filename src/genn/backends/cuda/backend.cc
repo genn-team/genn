@@ -1126,19 +1126,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
 
-    // If NCCL is enabled, export ncclGetUniqueId function
-    if(getPreferences<Preferences>().enableNCCLReductions) {
-        os << "extern \"C\" {" << std::endl;
-        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
-        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
-        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
-        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
-        os << "}" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
-{
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
     if(getRuntimeVersion() >= 9000) {
@@ -1150,9 +1137,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         // Include NCCL header
         os << "#include <nccl.h>" << std::endl;
         os << std::endl;
-        // Define NCCL ID and communicator
-        os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
-        os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
+
         os << std::endl;
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Helper macro for error-checking NCCL calls" << std::endl;
@@ -1162,6 +1147,18 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
         os << "    }\\" << std::endl;
         os << "}" << std::endl;
+
+        // Define NCCL ID and communicator
+        os << "extern ncclUniqueId ncclID;" << std::endl;
+        os << "extern ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Export ncclGetUniqueId function
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "}" << std::endl;
     }
 
     os << std::endl;
@@ -1170,17 +1167,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
     os << "    cudaError_t error = call;\\" << std::endl;
     os << "    if (error != cudaSuccess) {\\" << std::endl;
-    if(getPreferences<Preferences>().generateSimpleErrorHandling) {
-        os << "        std::abort();\\" << std::endl;
-    }
-    else {
-        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
-    }
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
     os << "    }\\" << std::endl;
     os << "}" << std::endl;
     os << std::endl;
-    os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
-    os << std::endl;
+
 
     // If device is older than SM 6 or we're using a version of CUDA older than 8
     if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
@@ -1615,23 +1606,23 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &t
     return type.getName();
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner,
+void Backend::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,
                                  CodeStream &, CodeStream &) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
-    definitionsInternal << "EXPORT_VAR __device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
+    definitions << "extern __device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+void Backend::genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                        CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const
 {
     // Define CUDA start and stop events in internal defintions (as they use CUDA-specific types)
-    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Start;" << std::endl;
-    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Stop;" << std::endl;
+    definitions << "extern cudaEvent_t " << name << "Start;" << std::endl;
+    definitions << "extern cudaEvent_t " << name << "Stop;" << std::endl;
 
     // Implement start and stop event variables
     runner << "cudaEvent_t " << name << "Start;" << std::endl;

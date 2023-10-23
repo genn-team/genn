@@ -71,11 +71,6 @@ struct Preferences : public PreferencesBase
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
     
-    //! By default, GeNN generates CUDA error-handling code that generates exceptions with line numbers etc.
-    //! This can make compilation of large models very slow and require a large amount of memory.
-    //! Turning on this option generates much simpler error-handling code that simply raises an abort signal.
-    bool generateSimpleErrorHandling = false;
-    
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
@@ -110,7 +105,6 @@ struct Preferences : public PreferencesBase
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
         Utils::updateHash(enableNCCLReductions, hash);
-        Utils::updateHash(generateSimpleErrorHandling, hash);
     }
 };
 
@@ -228,7 +222,6 @@ public:
                          HostHandler preambleHandler) const final;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
@@ -266,12 +259,10 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free) const final;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
 
-    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                          CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
-                          const std::string &name, bool updateInStepTime) const final;
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, 
+                          CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
