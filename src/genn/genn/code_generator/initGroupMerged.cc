@@ -696,7 +696,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "ConnectInit", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
     const std::string context = rowNotColumns ? "row" : "column";
     Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");

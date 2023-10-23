@@ -305,7 +305,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }
 
         // Loop through toeplitz connectivity initialiser EGPs        
-        const auto &toeplitzConnectInit = s.second.getConnectivityInitialiser();
+        const auto &toeplitzConnectInit = s.second.getToeplitzConnectivityInitialiser();
         for(const auto &egp : toeplitzConnectInit.getSnippet()->getExtraGlobalParams()) {
             const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
             createArray(&s.second, egp.name + "ToeplitzConnect", resolvedEGPType, 0, VarLocation::HOST_DEVICE);
