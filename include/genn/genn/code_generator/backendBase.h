@@ -86,12 +86,6 @@ struct PreferencesBase
     //! Improve performance but break backward compatibility due to word-padding each row
     bool enableBitmaskOptimisations = false;
 
-    //! Should GeNN generate empty state push and pull functions
-    bool generateEmptyStatePushPull = true;
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    bool generateExtraGlobalParamPull = true;
-
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -107,8 +101,6 @@ struct PreferencesBase
 
         //! Update hash with preferences
         Utils::updateHash(enableBitmaskOptimisations, hash);
-        Utils::updateHash(generateEmptyStatePushPull, hash);
-        Utils::updateHash(generateExtraGlobalParamPull, hash);
     }
 };
 
