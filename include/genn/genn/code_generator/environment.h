@@ -509,7 +509,7 @@ public:
         }
     }
 
-    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &varName = "", const std::string &fieldSuffix = "")
+    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", const std::string &fieldSuffix = "")
     {
         // Loop through EGPs
         for(const auto &e : egps) {
@@ -517,10 +517,10 @@ public:
             assert(!resolvedType.isPointer());
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
-                     pointerType, e.name + varName + fieldSuffix,
-                     [e, varName](const auto &runtime, const auto &g, size_t) 
+                     pointerType, e.name + arraySuffix + fieldSuffix,
+                     [e, arraySuffix](const auto &runtime, const auto &g, size_t) 
                      {
-                         return runtime.getArray(g, e.name + varName); 
+                         return runtime.getArray(g, e.name + arraySuffix); 
                      },
                      "", GroupMergedFieldType::DYNAMIC);
         }

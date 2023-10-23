@@ -493,10 +493,16 @@ Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMe
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-void ArrayBase::serialiseHostPointer(std::vector<std::byte> &bytes) const
+void ArrayBase::serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const
 {
     std::byte vBytes[sizeof(void*)];
-    std::memcpy(vBytes, &m_HostPointer, sizeof(void*));
+    if(pointerToPointer) {
+        std::byte* const *hostPointerPointer = &m_HostPointer;
+        std::memcpy(vBytes, &hostPointerPointer, sizeof(void*));
+    }
+    else {
+        std::memcpy(vBytes, &m_HostPointer, sizeof(void*));
+    }
     std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
 }
 //--------------------------------------------------------------------------

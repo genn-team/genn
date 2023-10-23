@@ -312,9 +312,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -539,9 +539,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
+    modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseDynamicsGroupHostStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -863,10 +863,10 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    modelMerged.genMergedCustomUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateHostStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -1307,16 +1307,16 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     modelMerged.genMergedCustomConnectivityUpdateSparseInitStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
+    modelMerged.genMergedNeuronInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseSparseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateSparseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePreInitHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePostInitHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateSparseInitHostStructArrayPush(os, *this);
     
     // Generate preamble
     preambleHandler(os);

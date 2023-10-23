@@ -240,6 +240,34 @@ public:
     void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
     void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
 
+
+    void genMergedNeuronUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedNeuronUpdateGroups); }
+    void genMergedPresynapticUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPresynapticUpdateGroups); }
+    void genMergedPostsynapticUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPostsynapticUpdateGroups); }
+    void genMergedSynapseDynamicsGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseDynamicsGroups); }
+    void genMergedNeuronInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedNeuronInitGroups); }
+    void genMergedCustomUpdateInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateInitGroups); }
+    void genMergedCustomWUUpdateInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomWUUpdateInitGroups); }
+    void genMergedSynapseInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseInitGroups); }
+    void genMergedSynapseConnectivityInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseConnectivityInitGroups); }
+    void genMergedSynapseSparseInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseSparseInitGroups); }
+    void genMergedCustomWUUpdateSparseInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
+    void genMergedCustomConnectivityUpdatePreInitHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityUpdatePreInitGroups); }
+    void genMergedCustomConnectivityUpdatePostInitHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityUpdatePostInitGroups); }
+    void genMergedCustomConnectivityUpdateSparseInitHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityUpdateSparseInitGroups); }
+    void genMergedNeuronSpikeQueueUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const{ genHostMergedStructArrayPush(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
+    void genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const{ genHostMergedStructArrayPush(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
+    void genMergedSynapseDendriticDelayUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
+    void genMergedSynapseConnectivityHostInitStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseConnectivityHostInitGroups); }
+    void genMergedCustomUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateGroups); }
+    void genMergedCustomUpdateWUHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateWUGroups); }
+    void genMergedCustomUpdateTransposeWUHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateTransposeWUGroups); }
+    void genMergedCustomUpdateHostReductionHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateHostReductionGroups); }
+    void genMergedCustomWUUpdateHostReductionHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
+    void genMergedCustomConnectivityUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityUpdateGroups); }
+    void genMergedCustomConnectivityHostUpdateStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
+
+
     //! Get hash digest of entire model
     boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
 
@@ -326,6 +354,15 @@ private:
         // Loop through all merged groups and generate struct
         for(const auto &g : mergedGroups) {
             g.generateStruct(os, backend, T::name);
+        }
+    }
+
+     template<typename T>
+    void genHostMergedStructArrayPush(CodeStream &os, const BackendBase &backend, const std::vector<T> &mergedGroups) const
+    {
+        // Loop through all merged groups and generate host arrays and push functions
+        for(const auto &g : mergedGroups) {
+            g.genHostMergedStructArrayPush(os, backend, T::name);
         }
     }
 

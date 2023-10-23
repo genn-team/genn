@@ -63,13 +63,13 @@ public:
 
 
     //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const final
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool) const final
     {
         throw std::runtime_error("Single-threaded CPU arrays have no device objects");
     }
 
     //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool) const
     {
         throw std::runtime_error("Single-threaded CPU arrays have no host objects");
     }
@@ -205,33 +205,6 @@ private:
                               double dt, bool trueSpike) const;
 
     void genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const;
-
-    template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
-    {
-        // Loop through groups
-        for(const auto &g : groups) {
-            // Check there's no memory space assigned as single-threaded CPU backend doesn't support them
-            assert(g.getMemorySpace().empty());
-
-            // Implement merged group
-            os << "static Merged" << T::name << "Group" << g.getIndex() << " merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
-
-            // Write function to update
-            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
-            g.generateStructFieldArgumentDefinitions(os, *this);
-            os << ")";
-            {
-                CodeStream::Scope b(os);
-
-                // Loop through sorted fields and set array entry
-                const auto sortedFields = g.getSortedFields(*this);
-                for(const auto &f : sortedFields) {
-                    os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
-                }
-            }
-        }
-    }
 
     //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */

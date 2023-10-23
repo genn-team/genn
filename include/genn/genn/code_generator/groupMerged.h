@@ -267,6 +267,27 @@ public:
         }
     }
 
+    void genHostMergedStructArrayPush(CodeStream &os, const BackendBase &backend, const std::string &name) const
+    {
+        // Implement merged group
+        os << "static Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+
+        // Write function to update
+        os << "void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
+        generateStructFieldArgumentDefinitions(os, backend);
+        os << ")";
+        {
+            CodeStream::Scope b(os);
+
+            // Loop through sorted fields and set array entry
+            const auto sortedFields = getSortedFields(backend);
+            for(const auto &f : sortedFields) {
+                os << "merged" << name << "Group" << getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+            }
+        }
+    }
+
+
     size_t getStructArraySize(const BackendBase &backend) const
     {
         // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size

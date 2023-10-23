@@ -208,10 +208,10 @@ public:
     virtual void pullFromDevice() = 0;
 
     //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const = 0;
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
 
     //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const = 0;
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
 
     //------------------------------------------------------------------------
     // Public API
@@ -220,7 +220,7 @@ public:
     std::byte *getHostPointer() const{ return m_HostPointer; }
 
     //! Serialise host pointer to bytes
-    void serialiseHostPointer(std::vector<std::byte> &bytes) const;
+    void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;
 
 protected:
     ArrayBase(const Type::ResolvedType &type, size_t count, 

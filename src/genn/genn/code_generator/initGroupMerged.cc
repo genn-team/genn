@@ -696,7 +696,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "ConnectInit", "");
 
     const std::string context = rowNotColumns ? "row" : "column";
     Transpiler::ErrorHandler errorHandler("Synapse group sparse connectivity '" + getArchetype().getName() + "' " + context + " build code");
@@ -766,7 +766,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 // Add field for host pointer
                 // **NOTE** none of these need to be dynamic as they are allocated once and pushed with all other merged groups
                 groupEnv.addField(pointerToPointerType, "_" + egp.name, egp.name,
-                                  [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); },
+                                  [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name + "SparseConnect"); },
                                   "", GroupMergedFieldType::HOST);
 
                 // Add substitution for direct access to field
@@ -776,14 +776,14 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                 if(backend.isArrayDeviceObjectRequired()) {
                     groupEnv.addField(pointerToPointerType, "_d_" + egp.name,
                                       "d_" + egp.name,
-                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); });
+                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name + "SparseConnect"); });
                 }
 
                 // If backend requires seperate host objects, add additional (private) field)
                 if(backend.isArrayHostObjectRequired()) {
                     groupEnv.addField(pointerToPointerType, "_h_" + egp.name,
                                       "h_" + egp.name,
-                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name); },
+                                      [egp](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, egp.name  + "SparseConnect"); },
                                       "", GroupMergedFieldType::HOST_OBJECT);
                 }
 

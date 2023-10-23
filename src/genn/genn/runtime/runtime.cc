@@ -56,7 +56,7 @@ namespace GeNN::Runtime
 Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
                  const CodeGenerator::BackendBase &backend)
 :   m_Timestep(0), m_ModelMerged(modelMerged), m_Backend(backend), m_AllocateMem(nullptr), m_FreeMem(nullptr),
-    m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
+    m_Initialize(nullptr), m_InitializeSparse(nullptr), m_InitializeHost(nullptr), m_StepTime(nullptr)
 {
     // Load library
 #ifdef _WIN32
@@ -76,6 +76,7 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 
         m_Initialize = (VoidFunction)getSymbol("initialize");
         m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
+        m_InitializeHost = (VoidFunction)getSymbol("initializeHost");
 
         m_StepTime = (StepTimeFunction)getSymbol("stepTime");
 
@@ -289,6 +290,21 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
         }
 
+        // Loop through sparse connectivity initialiser EGPs
+        // **THINK** should any of these have locations? if they're not initialised in host code not much scope to do so
+        const auto &sparseConnectInit = s.second.getConnectivityInitialiser();
+        for(const auto &egp : sparseConnectInit.getSnippet()->getExtraGlobalParams()) {
+            const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
+            createArray(&s.second, egp.name + "SparseConnect", resolvedEGPType, 0, s.second.getSparseConnectivityExtraGlobalParamLocation(egp.name));
+        }
+
+        // Loop through toeplitz connectivity initialiser EGPs        
+        const auto &toeplitzConnectInit = s.second.getConnectivityInitialiser();
+        for(const auto &egp : toeplitzConnectInit.getSnippet()->getExtraGlobalParams()) {
+            const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
+            createArray(&s.second, egp.name + "ToeplitzConnect", resolvedEGPType, 0, VarLocation::HOST_DEVICE);
+        }
+
         // Create arrays for extra-global parameters
         // **NOTE** postsynaptic models with EGPs can't be fused so no need to worry about that
         createEGPArrays<SynapseWUEGPAdapter>(&s.second);
@@ -304,127 +320,131 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // **TODO** custom update WU
 
     // **TODO** custom connectivity update
-
+    
+    // Push merged synapse host connectivity initialisation groups 
     for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityHostInitGroups()) {
        pushMergedGroup(m);
     }
 
-    // Generate merged neuron initialisation groups
+    // Perform host initialisation
+    m_InitializeHost();
+
+    // Push merged neuron initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedNeuronInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through merged synapse init groups
+    // Push merged synapse init groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseInitGroups()) {
          pushMergedGroup(m);
     }
 
-    // Loop through merged synapse connectivity initialisation groups
+    // Push merged synapse connectivity initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through merged sparse synapse init groups
+    // Push merged sparse synapse init groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseSparseInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Generate merged custom update initialisation groups
+    // Push merged custom update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Generate merged custom WU update initialisation groups
+    // Push merged custom WU update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Generate merged custom sparse WU update initialisation groups
+    // Push merged custom sparse WU update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateSparseInitGroups()) {
        pushMergedGroup(m);
     }
 
-    // Generate merged custom connectivity update presynaptic initialisation groups
+    // Push merged custom connectivity update presynaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePreInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Generate merged custom connectivity update postsynaptic initialisation groups
+    // Push merged custom connectivity update postsynaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePostInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Generate merged custom connectivity update synaptic initialisation groups
+    // Push merged custom connectivity update synaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateSparseInitGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through merged neuron update groups
+    // Push merged neuron update groups
     for(const auto &m : m_ModelMerged.get().getMergedNeuronUpdateGroups()) {        
         pushMergedGroup(m);
     }
 
-    // Loop through merged presynaptic update groups
+    // Push merged presynaptic update groups
     for(const auto &m : m_ModelMerged.get().getMergedPresynapticUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through merged postsynaptic update groups
+    // Push merged postsynaptic update groups
     for(const auto &m : m_ModelMerged.get().getMergedPostsynapticUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through synapse dynamics groups
+    // Push synapse dynamics groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseDynamicsGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through neuron groups whose previous spike times need resetting
+    // Push neuron groups whose previous spike times need resetting
     for(const auto &m : m_ModelMerged.get().getMergedNeuronPrevSpikeTimeUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through neuron groups whose spike queues need resetting
+    // Push neuron groups whose spike queues need resetting
     for(const auto &m : m_ModelMerged.get().getMergedNeuronSpikeQueueUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through synapse groups whose dendritic delay pointers need updating
+    // Push synapse groups whose dendritic delay pointers need updating
     for(const auto &m : m_ModelMerged.get().getMergedSynapseDendriticDelayUpdateGroups()) {
         pushMergedGroup(m);
     }
     
-    // Loop through custom variable update groups
+    // Push custom variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom WU variable update groups
+    // Push custom WU variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateWUGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom WU transpose variable update groups
+    // Push custom WU transpose variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateTransposeWUGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom update host reduction groups
+    // Push custom update host reduction groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateHostReductionGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom weight update host reduction groups
+    // Push custom weight update host reduction groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateHostReductionGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom connectivity update groups
+    // Push custom connectivity update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateGroups()) {
         pushMergedGroup(m);
     }
 
-    // Loop through custom connectivity host update groups
+    // Push custom connectivity host update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
         pushMergedGroup(m);
     }

@@ -282,22 +282,23 @@ private:
                         [&argumentStorage, &f, this](const CodeGenerator::ArrayBase *array)
                         {
                             // If this field should contain host pointer
+                            const bool pointerToPointer = std::get<0>(f).isPointerToPointer();
                             if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST) {
-                                array->serialiseHostPointer(argumentStorage);
+                                array->serialiseHostPointer(argumentStorage, pointerToPointer);
                             }
                             // Otherwise, if it should contain host object
                             else if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST_OBJECT) {
-                                array->serialiseHostObject(argumentStorage);
+                                array->serialiseHostObject(argumentStorage, pointerToPointer);
                             }
                             // Otherwise
                             else {
                                 // Serialise device object if backend requires it
                                 if(m_Backend.get().isArrayDeviceObjectRequired()) {
-                                    array->serialiseDeviceObject(argumentStorage);
+                                    array->serialiseDeviceObject(argumentStorage, pointerToPointer);
                                 }
                                 // Otherwise, host pointer
                                 else {
-                                    array->serialiseHostPointer(argumentStorage);
+                                    array->serialiseHostPointer(argumentStorage, pointerToPointer);
                                 }
                             }
                         },
@@ -355,6 +356,7 @@ private:
     VoidFunction m_FreeMem;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
+    VoidFunction m_InitializeHost;
     StepTimeFunction m_StepTime;
 };
 }

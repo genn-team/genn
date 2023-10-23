@@ -268,10 +268,16 @@ void Array::pullFromDevice()
     }
 }
 //--------------------------------------------------------------------------
-void Array::serialiseDeviceObject(std::vector<std::byte> &bytes) const
+void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
 {
     std::byte vBytes[sizeof(void*)];
-    std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
+    if(pointerToPointer) {
+        std::byte* const *devicePointerPointer = &m_DevicePointer;
+        std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
+    }
+    else {
+        std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
+    }
     std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
 }
 

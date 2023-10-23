@@ -233,25 +233,9 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
 
     init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 
-    // Generate merged synapse connectivity host init code
-    // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
-    // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
-    // get copied straight into subsequent structures and merged EGP system isn't required
-    init << "void initConnectivityHost()";
-    {
-        CodeStream::Scope b(init);
-        modelMerged.genMergedSynapseConnectivityHostInitGroups(
-            backend, memorySpaces,
-            [&backend, &modelMerged, &init](auto &sg)
-            {
-                EnvironmentExternal env(init);
-                sg.generateInit(backend, env);
-            });
-    }
-
     backend.genInit(init, modelMerged, memorySpaces,
         // Preamble handler
-        [&modelMerged, &backend](CodeStream &os)
+        [&modelMerged, &memorySpaces, &backend](CodeStream &os)
         {
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
@@ -266,6 +250,34 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+
+            // Generate merged synapse connectivity host init code
+            // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
+            // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
+            // get copied straight into subsequent structures and merged EGP system isn't required
+            // Generate stream with neuron update code
+            std::ostringstream initStream;
+            CodeStream init(initStream);
+            init << "void initializeHost()";
+            {
+                CodeStream::Scope b(init);
+                modelMerged.genMergedSynapseConnectivityHostInitGroups(
+                    backend, memorySpaces,
+                    [&backend, &modelMerged, &init](auto &sg)
+                    {
+                        EnvironmentExternal env(init);
+                        sg.generateInit(backend, env);
+                    });
+            }
+
+            // Generate host connectivity init structures and write function afterwards
+            modelMerged.genMergedSynapseConnectivityHostInitStructs(os, backend);
+
+            // Generate arrays
+            modelMerged.genMergedSynapseConnectivityHostInitStructArrayPush(os, backend);
+
+            // Insert generated initialisation function
+            os << initStream.str();
         });
 }
 }   // namespace GeNN::CodeGenerator

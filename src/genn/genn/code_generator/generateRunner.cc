@@ -306,6 +306,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     definitions << "EXPORT_FUNC void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t);" << std::endl;
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
+    definitions << "EXPORT_FUNC void initializeHost();" << std::endl;
     
     // Generate function definitions for each custom update
     for(const auto &g : customUpdateGroups) {

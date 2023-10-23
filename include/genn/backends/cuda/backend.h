@@ -135,10 +135,10 @@ public:
     virtual void pullFromDevice() final;
 
     //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes) const final;
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
 
     //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte> &bytes) const
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool) const
     {
         throw std::runtime_error("CUDA arrays have no host objects");
     }
