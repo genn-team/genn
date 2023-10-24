@@ -265,7 +265,7 @@ private:
         // Loop through maps of groups to variables
         for(auto &g : groups) {
             // Loop through maps of variable names to arrays
-            for(auto &a : groups.second) {
+            for(auto &a : g.second) {
                 // If array is uninitialized, push to device
                 if(a.second->isUninitialized()) {
                     a.second->pushToDevice();

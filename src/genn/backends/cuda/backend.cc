@@ -193,33 +193,34 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
-Array::Array(size_t size, VarLocation location, bool uninitialized)
-:   ArrayBase(size, location, uninitialized), m_DevicePointer(nullptr)
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, bool uninitialized)
+:   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
 {
-    // Allocate if size is specified
-    if(size > 0) {
-        allocate(size);
+    // Allocate if count is specified
+    if(count > 0) {
+        allocate(count);
     }
 }
 //--------------------------------------------------------------------------
 Array::~Array()
 {
-    if(getSize() > 0) {
+    if(getCount() > 0) {
         free();
     }
 }
 //--------------------------------------------------------------------------
-void Array::allocate(size_t size)
+void Array::allocate(size_t count)
 {
-    // Set size
-    setSize(size);
+    // Set count
+    setCount(count);
 
     // Malloc host pointer
     if(getLocation() & VarLocation::HOST) {
         const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
 
         std::byte *hostPointer = nullptr;
-        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSize(), flags));
+        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
         setHostPointer(hostPointer);
     }
 
@@ -230,7 +231,7 @@ void Array::allocate(size_t size)
             CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
         }
         else {
-            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSize()));
+            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
         }
     }
 }
@@ -249,21 +250,21 @@ void Array::free()
         m_DevicePointer = nullptr;
     }
 
-    // Zero size
-    setSize(0);
+    // Zero count
+    setCount(0);
 }
 //--------------------------------------------------------------------------
 void Array::pushToDevice()
 {
     if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSize(), cudaMemcpyHostToDevice));
+        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
     }
 }
 //--------------------------------------------------------------------------
 void Array::pullFromDevice()
 {
     if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSize(), cudaMemcpyDeviceToHost));
+        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
     }
 }
 //--------------------------------------------------------------------------
@@ -1532,16 +1533,15 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::createArray(size_t size, VarLocation location, 
-                                                bool uninitialized) const
+std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                VarLocation location, bool uninitialized) const
 {
-    return std::make_unique<Array>(size, location, uninitialized);
+    return std::make_unique<Array>(type, count, location, uninitialized);
 }
 //--------------------------------------------------------------------------
 std::unique_ptr<ArrayBase> Backend::createPopulationRNG(size_t count) const
 {
-    return createArray(CURandState.getValue().size * count,
-                       VarLocation::DEVICE, false);
+    return createArray(CURandState, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 

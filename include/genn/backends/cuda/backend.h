@@ -115,7 +115,8 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Array : public ArrayBase
 {
 public:
-    Array(size_t size, VarLocation location, bool uninitialized);
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized);
     virtual ~Array();
     
     //------------------------------------------------------------------------
@@ -230,8 +231,8 @@ public:
     /*! \param type         data type of array
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
-    virtual std::unique_ptr<ArrayBase> createArray(size_t size, VarLocation location, 
-                                                   bool uninitialized) const final;
+    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                   VarLocation location, bool uninitialized) const final;
 
     //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
     /*! \param count        number of RNGs required*/

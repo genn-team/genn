@@ -102,33 +102,34 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
 //--------------------------------------------------------------------------
-Array::Array(size_t size, VarLocation location, bool uninitialized)
-:   ArrayBase(size, location, uninitialized)
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, bool uninitialized)
+:   ArrayBase(type, count, location, uninitialized)
 {
-    if(size > 0) {
-        allocate(size);
+    if(count > 0) {
+        allocate(count);
     }
 }
 //--------------------------------------------------------------------------
 Array::~Array()
 {
-    if(getSize() > 0) {
+    if(getCount() > 0) {
         free();
     }
 }
 //--------------------------------------------------------------------------
-void Array::allocate(size_t size)
+void Array::allocate(size_t count)
 {
     // Malloc host pointer
-    setSize(size);
-    setHostPointer(new std::byte[getSize()]);
+    setCount(count);
+    setHostPointer(new std::byte[getSizeBytes()]);
 }
 //--------------------------------------------------------------------------
 void Array::free()
 {
     delete [] getHostPointer();
     setHostPointer(nullptr);
-    setSize(0);
+    setCount(0);
 }
 
 //--------------------------------------------------------------------------
@@ -1404,10 +1405,10 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 {
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::createArray(size_t size, VarLocation location, 
-                                                bool uninitialized) const
+std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                VarLocation location, bool uninitialized) const
 {
-    return std::make_unique<Array>(size, location, uninitialized);
+    return std::make_unique<Array>(type, count, location, uninitialized);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
