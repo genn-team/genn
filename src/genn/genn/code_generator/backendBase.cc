@@ -487,27 +487,11 @@ Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMe
 }
 }   // Anonymous namespace
 
-
-//--------------------------------------------------------------------------
-// GeNN::CodeGenerator::ArrayBase
-//--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator
-{
-void ArrayBase::serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const
-{
-    std::byte vBytes[sizeof(void*)];
-    if(pointerToPointer) {
-        std::byte* const *hostPointerPointer = &m_HostPointer;
-        std::memcpy(vBytes, &hostPointerPointer, sizeof(void*));
-    }
-    else {
-        std::memcpy(vBytes, &m_HostPointer, sizeof(void*));
-    }
-    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
-}
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator
+{
 BackendBase::BackendBase(const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char *)), m_Preferences(preferences)
 {

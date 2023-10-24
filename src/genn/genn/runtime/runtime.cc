@@ -52,10 +52,26 @@ size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// GeNN::Runtime::Runtime
+// GeNN::Runtime::ArrayBase
 //--------------------------------------------------------------------------
 namespace GeNN::Runtime
 {
+void ArrayBase::serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const
+{
+    std::byte vBytes[sizeof(void*)];
+    if(pointerToPointer) {
+        std::byte* const *hostPointerPointer = &m_HostPointer;
+        std::memcpy(vBytes, &hostPointerPointer, sizeof(void*));
+    }
+    else {
+        std::memcpy(vBytes, &m_HostPointer, sizeof(void*));
+    }
+    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
+}
+
+//--------------------------------------------------------------------------
+// GeNN::Runtime::Runtime
+//--------------------------------------------------------------------------
 Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
                  const CodeGenerator::BackendBase &backend)
 :   m_Timestep(0), m_ModelMerged(modelMerged), m_Backend(backend), m_AllocateMem(nullptr), m_FreeMem(nullptr),
@@ -659,7 +675,7 @@ std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEv
     return std::make_pair(eventTimes, eventIDs);
 }
 //----------------------------------------------------------------------------
-void Runtime::writeRecordedEvents(const NeuronGroup &group, CodeGenerator::ArrayBase *array, const std::string &path) const
+void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const
 {
     // Get events
     const auto [eventTimes, eventIDs] = getRecordedEvents(group, array);

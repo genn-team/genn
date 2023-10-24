@@ -35,7 +35,7 @@ struct Preferences : public PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Array
 //--------------------------------------------------------------------------
-class BACKEND_EXPORT Array : public ArrayBase
+class BACKEND_EXPORT Array : public Runtime::ArrayBase
 {
 public:
     Array(const Type::ResolvedType &type, size_t count, 
@@ -113,12 +113,12 @@ public:
     /*! \param type         data type of array
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
-    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
-                                                   VarLocation location, bool uninitialized) const final;
+    virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                            VarLocation location, bool uninitialized) const final;
 
     //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
     /*! \param count        number of RNGs required*/
-    virtual std::unique_ptr<ArrayBase> createPopulationRNG(size_t) const final{ return std::unique_ptr<ArrayBase>(); }
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t) const final{ return std::unique_ptr<Runtime::ArrayBase>(); }
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 

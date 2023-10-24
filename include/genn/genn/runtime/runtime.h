@@ -43,7 +43,6 @@ class CustomConnectivityUpdate;
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
-class ArrayBase;
 class BackendBase;
 class ModelSpecMerged;
 }
@@ -54,13 +53,89 @@ class path;
 }
 
 //--------------------------------------------------------------------------
-// GeNN::Runtime::Runtime
+// GeNN::Runtime::ArrayBase
 //--------------------------------------------------------------------------
 namespace GeNN::Runtime
 {
+class GENN_EXPORT ArrayBase
+{
+public:
+    virtual ~ArrayBase()
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) = 0;
+
+    //! Free array
+    virtual void free() = 0;
+
+    //! Copy array to device
+    virtual void pushToDevice() = 0;
+
+    //! Copy array from device
+    virtual void pullFromDevice() = 0;
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const Type::ResolvedType &getType() const{ return m_Type; }
+    size_t getCount() const{ return m_Count; };
+    VarLocation getLocation() const{ return m_Location; }
+    bool isUninitialized() const{ return m_Uninitialized; }
+
+    //! Get array host pointer
+    std::byte *getHostPointer() const{ return m_HostPointer; }
+
+    template<typename T>
+    T *getHostPointer() const{ return reinterpret_cast<T*>(m_HostPointer); }
+
+    //! Serialise host pointer to bytes
+    void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;
+
+protected:
+    ArrayBase(const Type::ResolvedType &type, size_t count,
+              VarLocation location, bool uninitialized)
+    :   m_Type(type), m_Count(count), m_Location(location), m_Uninitialized(uninitialized),
+        m_HostPointer(nullptr)
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
+
+    void setCount(size_t count) { m_Count = count; }
+    void setHostPointer(std::byte *hostPointer) { m_HostPointer = hostPointer; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    Type::ResolvedType m_Type;
+    size_t m_Count;
+    VarLocation m_Location;
+    bool m_Uninitialized;
+
+    std::byte *m_HostPointer;
+};
+
+//--------------------------------------------------------------------------
+// GeNN::Runtime::Runtime
+//--------------------------------------------------------------------------
 class GENN_EXPORT Runtime
 {
-    using ArrayMap = std::unordered_map<std::string, std::unique_ptr<CodeGenerator::ArrayBase>>;
+    using ArrayMap = std::unordered_map<std::string, std::unique_ptr<ArrayBase>>;
     
     template<typename G>
     using GroupArrayMap = std::unordered_map<const G*, ArrayMap>;
@@ -88,6 +163,9 @@ public:
     //! Get current simulation timestep
     uint64_t getTimestep() const{ return m_Timestep; }
 
+    //! Set current simulation timestep
+    void setTimestep(uint64_t timestep){ m_Timestep = timestep; }
+
     //! Get current simulation time
     double getTime() const;
 
@@ -97,37 +175,37 @@ public:
     double getPostsynapticUpdateTime() const{ return *(double*)getSymbol("postsynapticUpdateTime"); }
     double getSynapseDynamicsTime() const{ return *(double*)getSymbol("synapseDynamicsTime"); }
     double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
-    double getCustomUpdateTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
-    double getCustomUpdateTransposeTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
+    double getCustomUpdateTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
+    double getCustomUpdateTransposeTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
     
     void pullRecordingBuffersFromDevice() const;
 
     //! Get array associated with current source variable
-    CodeGenerator::ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
+    ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
     {
         return m_CurrentSourceArrays.at(&group).at(varName).get();   
     }
 
     //! Get array associated with neuron group variable
-    CodeGenerator::ArrayBase *getArray(const NeuronGroup &group, const std::string &varName) const
+    ArrayBase *getArray(const NeuronGroup &group, const std::string &varName) const
     {
         return m_NeuronGroupArrays.at(&group).at(varName).get();   
     }
 
     //! Get array associated with synapse group variable
-    CodeGenerator::ArrayBase *getArray(const SynapseGroup &group, const std::string &varName) const
+    ArrayBase *getArray(const SynapseGroup &group, const std::string &varName) const
     {
         return m_SynapseGroupArrays.at(&group).at(varName).get();   
     }
 
     //! Get array associated with custom update variable
-    CodeGenerator::ArrayBase *getArray(const CustomUpdateBase &group, const std::string &varName) const
+    ArrayBase *getArray(const CustomUpdateBase &group, const std::string &varName) const
     {
         return m_CustomUpdateArrays.at(&group).at(varName).get();   
     }
 
     //! Get array associated with custom connectivity update variable
-    CodeGenerator::ArrayBase *getArray(const CustomConnectivityUpdate &group, const std::string &varName) const
+    ArrayBase *getArray(const CustomConnectivityUpdate &group, const std::string &varName) const
     {
         return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
     }
@@ -229,7 +307,7 @@ private:
     //! Map of arrays to their locations within merged structures
     // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
     typedef std::unordered_multimap<std::string, MergedDynamicField> MergedDynamicArrayDestinations;
-    typedef std::map<const CodeGenerator::ArrayBase*, MergedDynamicArrayDestinations> MergedDynamicArrayMap;
+    typedef std::map<const ArrayBase*, MergedDynamicArrayDestinations> MergedDynamicArrayMap;
 
     
     //----------------------------------------------------------------------------
@@ -283,18 +361,17 @@ private:
     }
 
     std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
-                                                                                CodeGenerator::ArrayBase *array) const;
+                                                                                ArrayBase *array) const;
 
-    void writeRecordedEvents(const NeuronGroup &group, CodeGenerator::ArrayBase *array, const std::string &path) const;
+    void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
 
     template<typename G>
     void addMergedArrays(const G &mergedGroup, bool host = false)
     {
-        using namespace CodeGenerator;
         // Loop through fields
         for(const auto &f : mergedGroup.getFields()) {
             // If field is dynamic
-            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+            if((std::get<3>(f) & CodeGenerator::GroupMergedFieldType::DYNAMIC)) {
                 // Loop through groups within newly-created merged group
                 for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
                     const auto &g = mergedGroup.getGroups()[groupIndex];
@@ -416,7 +493,7 @@ private:
                     Utils::Overload{
                         // If field contains array
                         // **TODO** pointer-to-pointer
-                        [&argumentStorage, &f, this](const CodeGenerator::ArrayBase *array)
+                        [&argumentStorage, &f, this](const ArrayBase *array)
                         {
                             // If this field should contain host pointer
                             const bool pointerToPointer = std::get<0>(f).isPointerToPointer();

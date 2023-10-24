@@ -744,7 +744,7 @@ public:
         return m_GetWriteIndex(var.name, var.access);
     }
 
-    const ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
+    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
         return runtime.getArray(A(g).getTarget(), var.name);
     }
@@ -798,7 +798,7 @@ protected:
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    const ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
+    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
         return A(g).getInitialisers().at(var.name).getTargetArray(runtime);
     }

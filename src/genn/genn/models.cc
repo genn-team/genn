@@ -92,7 +92,7 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-const CodeGenerator::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &runtime) const
+const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &runtime) const
 { 
     return std::visit(
         Utils::Overload{
@@ -229,7 +229,7 @@ VarAccessDim WUVarReference::getVarDims() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-const CodeGenerator::ArrayBase *WUVarReference::getTargetArray(const Runtime::Runtime &runtime) const
+const Runtime::ArrayBase *WUVarReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
         Utils::Overload{
@@ -298,11 +298,11 @@ SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
     return getTransposeSynapseGroupInternal();
 }
 //------------------------------------------------------------------------
-const CodeGenerator::ArrayBase *WUVarReference::getTransposeTargetArray(const Runtime::Runtime &runtime) const
+const Runtime::ArrayBase *WUVarReference::getTransposeTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
         Utils::Overload{
-            [this, &runtime](const WURef &ref)->CodeGenerator::ArrayBase*
+            [this, &runtime](const WURef &ref)->Runtime::ArrayBase*
             { 
                 if(ref.transposeVar) {
                     return runtime.getArray(*getTransposeSynapseGroup(), ref.transposeVar->name);
@@ -311,7 +311,7 @@ const CodeGenerator::ArrayBase *WUVarReference::getTransposeTargetArray(const Ru
                     return nullptr;
                 }
             },
-            [](const auto&)->CodeGenerator::ArrayBase*{ return nullptr; }},
+            [](const auto&)->Runtime::ArrayBase*{ return nullptr; }},
         m_Detail);
    
 }
@@ -479,7 +479,7 @@ const Models::Base::EGP &EGPReference::getEGP() const
         m_Detail);
 }
  //----------------------------------------------------------------------------
-const CodeGenerator::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &runtime) const
+const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
         Utils::Overload{

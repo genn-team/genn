@@ -23,6 +23,7 @@ class CodeStream;
 
 namespace GeNN::Runtime
 {
+class ArrayBase;
 class Runtime;
 }
 
@@ -63,7 +64,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
-    typedef std::variant<Type::NumericValue, const ArrayBase*> FieldValue;
+    typedef std::variant<Type::NumericValue, const Runtime::ArrayBase*> FieldValue;
     typedef std::function<FieldValue(const Runtime::Runtime &, const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 

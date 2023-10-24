@@ -66,6 +66,11 @@ class CustomConnectivityUpdateSparseInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
 }
+
+namespace Runtime
+{
+class ArrayBase;
+}
 }
 
 //--------------------------------------------------------------------------
@@ -187,82 +192,6 @@ inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::ArrayBase
-//--------------------------------------------------------------------------
-class ArrayBase
-{
-public:
-    virtual ~ArrayBase()
-    {
-    }
-
-    //------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    //! Allocate array
-    virtual void allocate(size_t count) = 0;
-
-    //! Free array
-    virtual void free() = 0;
-
-    //! Copy array to device
-    virtual void pushToDevice() = 0;
-
-    //! Copy array from device
-    virtual void pullFromDevice() = 0;
-
-    //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
-
-    //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    const Type::ResolvedType &getType() const{ return m_Type; }
-    size_t getCount() const{ return m_Count; };
-    VarLocation getLocation() const{ return m_Location; }
-    bool isUninitialized() const{ return m_Uninitialized; }
-
-    //! Get array host pointer
-    std::byte *getHostPointer() const{ return m_HostPointer; }
-
-    template<typename T>
-    T *getHostPointer() const{ return reinterpret_cast<T*>(m_HostPointer); }
-
-    //! Serialise host pointer to bytes
-    void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;
-
-protected:
-    ArrayBase(const Type::ResolvedType &type, size_t count,
-              VarLocation location, bool uninitialized)
-    :   m_Type(type), m_Count(count), m_Location(location), m_Uninitialized(uninitialized),
-        m_HostPointer(nullptr)
-    {
-    }
-
-    //------------------------------------------------------------------------
-    // Protected API
-    //------------------------------------------------------------------------
-    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
-
-    void setCount(size_t count) { m_Count = count; }
-    void setHostPointer(std::byte *hostPointer) { m_HostPointer = hostPointer; }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    Type::ResolvedType m_Type;
-    size_t m_Count;
-    VarLocation m_Location;
-    bool m_Uninitialized;
-
-    std::byte *m_HostPointer;
-};
-
-//--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 class GENN_EXPORT BackendBase
@@ -339,12 +268,12 @@ public:
     /*! \param type         data type of array
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
-    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
-                                                   VarLocation locatio, bool uninitializedn) const = 0;
+    virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                                  VarLocation location, bool uninitializedn) const = 0;
 
     //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
     /*! \param count        number of RNGs required*/
-    virtual std::unique_ptr<ArrayBase> createPopulationRNG(size_t count) const = 0;
+    virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createPopulationRNG(size_t count) const = 0;
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 

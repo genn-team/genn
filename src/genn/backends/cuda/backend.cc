@@ -1535,13 +1535,13 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
-                                                VarLocation location, bool uninitialized) const
+std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                         VarLocation location, bool uninitialized) const
 {
     return std::make_unique<Array>(type, count, location, uninitialized);
 }
 //--------------------------------------------------------------------------
-std::unique_ptr<ArrayBase> Backend::createPopulationRNG(size_t count) const
+std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) const
 {
     return createArray(CURandState, count, VarLocation::DEVICE, false);
 }

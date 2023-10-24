@@ -30,13 +30,9 @@ class CustomUpdateWUInternal;
 class CustomConnectivityUpdateInternal;
 }
 
-namespace GeNN::CodeGenerator
-{
-class ArrayBase;
-}
-
 namespace GeNN::Runtime
 {
+class ArrayBase;
 class Runtime;
 }
 
@@ -189,8 +185,7 @@ public:
     NeuronGroup *getDelayNeuronGroup() const;
     
     //! Get array associated with referenced variable
-    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
-    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -270,8 +265,7 @@ public:
     VarAccessDim getVarDims() const;
     
     //! Get array associated with referenced variable
-    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
-    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
     
     SynapseGroup *getSynapseGroup() const;
     
@@ -282,8 +276,7 @@ public:
     std::optional<VarAccessDim> getTransposeVarDims() const;
 
     //! Get array associated with referenced transpose variable
-    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
-    const CodeGenerator::ArrayBase *getTransposeTargetArray(const Runtime::Runtime &runtime) const;
+    const Runtime::ArrayBase *getTransposeTargetArray(const Runtime::Runtime &runtime) const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
 
@@ -373,7 +366,7 @@ public:
     
     //! Get array associated with referenced EGP
     // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
-    const CodeGenerator::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
     //------------------------------------------------------------------------
     // Static API
