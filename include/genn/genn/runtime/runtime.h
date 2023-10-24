@@ -102,7 +102,6 @@ public:
     
     void pullRecordingBuffersFromDevice() const;
 
-
     //! Get array associated with current source variable
     CodeGenerator::ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
     {
@@ -133,25 +132,56 @@ public:
         return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
     }
 
-   std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikes(const NeuronGroup &group) const
-   {
-       return getRecordedEvents(group, getArray(group, "recordSpk"));
-   }
+    //! Allocate dynamic array associated with current source variable
+    void allocateArray(const CurrentSource &group, const std::string &varName, size_t count)
+    {
+        allocateExtraGlobalParam(m_CurrentSourceArrays.at(&group), varName, count);
+    }
 
-   std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikeEvents(const NeuronGroup &group) const
-   {
-       return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
-   }
+    //! Allocate dynamic array associated with neuron group variable
+    void allocateArray(const NeuronGroup &group, const std::string &varName, size_t count)
+    {
+        allocateExtraGlobalParam(m_NeuronGroupArrays.at(&group), varName, count); 
+    }
 
-   void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
-   {
-       return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
-   }
+    //! Allocate dynamic array associated with synapse group variable
+    void allocateArray(const SynapseGroup &group, const std::string &varName, size_t count)
+    {
+        allocateExtraGlobalParam(m_SynapseGroupArrays.at(&group), varName, count);
+    }
 
-   void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
-   {
-       return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
-   }
+    //! Allocate dynamic array associated with custom update variable
+    void allocateArray(const CustomUpdateBase &group, const std::string &varName, size_t count)
+    {
+        allocateExtraGlobalParam(m_CustomUpdateArrays.at(&group), varName, count);
+    }
+
+    //! Allocate dynamic array associated with custom connectivity update variable
+    void allocateArray(const CustomConnectivityUpdate &group, const std::string &varName, size_t count)
+    {
+         allocateExtraGlobalParam(m_CustomConnectivityUpdateArrays.at(&group), 
+                                  varName, count);
+    }
+
+    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikes(const NeuronGroup &group) const
+    {
+        return getRecordedEvents(group, getArray(group, "recordSpk"));
+    }
+
+    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikeEvents(const NeuronGroup &group) const
+    {
+        return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
+    }
+
+    void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
+    {
+        return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
+    }
+
+    void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
+    {
+        return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
+    }
 
 private:
     //----------------------------------------------------------------------------
