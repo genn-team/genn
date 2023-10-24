@@ -61,6 +61,7 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 :   m_Timestep(0), m_ModelMerged(modelMerged), m_Backend(backend), m_AllocateMem(nullptr), m_FreeMem(nullptr),
     m_Initialize(nullptr), m_InitializeSparse(nullptr), m_InitializeHost(nullptr), m_StepTime(nullptr)
 {
+
     // Load library
 #ifdef _WIN32
     const std::string runnerName = "runner_" + modelMerged.getModel().getName();
@@ -346,121 +347,145 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // Push merged neuron initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedNeuronInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged synapse init groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseInitGroups()) {
+         addMergedArrays(m);
          pushMergedGroup(m);
     }
 
     // Push merged synapse connectivity initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged sparse synapse init groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseSparseInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged custom update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged custom WU update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged custom sparse WU update initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateSparseInitGroups()) {
-       pushMergedGroup(m);
+        addMergedArrays(m);
+        pushMergedGroup(m);
     }
 
     // Push merged custom connectivity update presynaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePreInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged custom connectivity update postsynaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdatePostInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged custom connectivity update synaptic initialisation groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateSparseInitGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged neuron update groups
     for(const auto &m : m_ModelMerged.get().getMergedNeuronUpdateGroups()) {        
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged presynaptic update groups
     for(const auto &m : m_ModelMerged.get().getMergedPresynapticUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push merged postsynaptic update groups
     for(const auto &m : m_ModelMerged.get().getMergedPostsynapticUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push synapse dynamics groups
     for(const auto &m : m_ModelMerged.get().getMergedSynapseDynamicsGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push neuron groups whose previous spike times need resetting
     for(const auto &m : m_ModelMerged.get().getMergedNeuronPrevSpikeTimeUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push neuron groups whose spike queues need resetting
     for(const auto &m : m_ModelMerged.get().getMergedNeuronSpikeQueueUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push synapse groups whose dendritic delay pointers need updating
     for(const auto &m : m_ModelMerged.get().getMergedSynapseDendriticDelayUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
     
     // Push custom variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom WU variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateWUGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom WU transpose variable update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateTransposeWUGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom update host reduction groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomUpdateHostReductionGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom weight update host reduction groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomWUUpdateHostReductionGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom connectivity update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 
     // Push custom connectivity host update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
+        addMergedArrays(m);
         pushMergedGroup(m);
     }
 }
@@ -654,11 +679,47 @@ void Runtime::writeRecordedEvents(const NeuronGroup &group, CodeGenerator::Array
 void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName,
                                        size_t count)
 {
-    // Allocate array
-    // **TODO** dynamic flag determines whether this is allowed
-    groupArrays.at(varName)->allocate(count);
+    // Find array
+    auto *array = groupArrays.at(varName).get();
 
-    // **TODO** call push functions
-    // **TODO** signature of push function will vary depending on backend and type
+    // Allocate array
+    array->allocate(count);
+
+    // Serialise device object if backend requires it
+    std::vector<std::byte> arrayData;
+    if(m_Backend.get().isArrayDeviceObjectRequired()) {
+        array->serialiseDeviceObject(arrayData, false);
+    }
+    // Otherwise, host pointer
+    else {
+        array->serialiseHostPointer(arrayData, false);
+    }
+
+    // Build FFI arguments
+    // **TODO** allow backend to override type
+    ffi_type *argumentTypes[2]{&ffi_type_uint, &ffi_type_pointer};
+
+    // Prepare an FFI Call InterFace for calls to push merged
+    // **TODO** cache - these are the same for all EGP calls
+    ffi_cif cif;
+    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 2,
+                                     &ffi_type_void, argumentTypes);
+    if (status != FFI_OK) {
+        throw std::runtime_error("ffi_prep_cif failed: " + std::to_string(status));
+    }
+    
+    // Loop through merged destinations of this array
+    const auto &mergedDestinations = m_MergedDynamicArrays.at(array);
+    for(const auto &d : mergedDestinations) {
+        // Get push function
+        // **TODO** cache in structure
+        void *pushFunction = getSymbol("pushMerged" + d.first + std::to_string(d.second.mergedGroupIndex) 
+                                       + d.second.fieldName + "ToDevice");
+
+        // Call function
+        unsigned int groupIndex = d.second.groupIndex;
+        void *argumentPointers[2]{&groupIndex, arrayData.data()};
+        ffi_call(&cif, FFI_FN(pushFunction), nullptr, argumentPointers);
+    }
 }
 }   // namespace GeNN::Runtime

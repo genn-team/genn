@@ -225,7 +225,7 @@ void ModelSpecMerged::genMergedCustomConnectivityHostUpdateGroups(const BackendB
                                                                   const std::string &updateGroupName, GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup)
 {
     genMergedCustomUpdateGroups(backend, memorySpaces, m_MergedCustomConnectivityHostUpdateGroups, 
-                                updateGroupName, generateGroup, true);
+                                updateGroupName, generateGroup);
 }
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -309,7 +309,7 @@ void ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups(const Ba
 void ModelSpecMerged::genMergedSynapseConnectivityHostInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                                                  GenMergedGroupFn<SynapseConnectivityHostInitGroupMerged> generateGroup)
 {
-    genMergedGroups(backend, memorySpaces, m_MergedSynapseConnectivityHostInitGroups, generateGroup, true);
+    genMergedGroups(backend, memorySpaces, m_MergedSynapseConnectivityHostInitGroups, generateGroup);
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const

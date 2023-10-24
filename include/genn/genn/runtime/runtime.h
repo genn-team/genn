@@ -184,12 +184,54 @@ public:
     }
 
 private:
+    //--------------------------------------------------------------------------
+    // GeNN::Runtime::Runtime::DynamicField
+    //--------------------------------------------------------------------------
+    //! Immutable structure for tracking fields of merged group structure
+    //! with dynamic values i.e. those that can be modified at runtime
+    struct DynamicField
+    {
+        DynamicField(size_t m, const Type::ResolvedType &t, const std::string &f, bool h)
+        :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
+
+        size_t mergedGroupIndex;
+        Type::ResolvedType type;
+        std::string fieldName;
+        bool hostGroup;
+
+        //! Less than operator (used for std::set::insert), 
+        //! lexicographically compares all three struct members
+        bool operator < (const DynamicField &other) const
+        {
+            return (std::make_tuple(mergedGroupIndex, type, fieldName, hostGroup) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.hostGroup));
+        }
+    };
+    
+    //--------------------------------------------------------------------------
+    // GeNN::Runtime::MergedDynamicField
+    //--------------------------------------------------------------------------
+    //! Immutable structure for tracking where an extra global variable ends up after merging
+    struct MergedDynamicField : public DynamicField
+    {
+        MergedDynamicField(size_t m, size_t g, const Type::ResolvedType &t, const std::string &f, bool h)
+        :   DynamicField(m, t, f, h), groupIndex(g) {}
+
+        size_t groupIndex;
+    };
+
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
     typedef void (*StepTimeFunction)(unsigned long long, unsigned long long);
 
+    //! Map of arrays to their locations within merged structures
+    // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
+    typedef std::unordered_multimap<std::string, MergedDynamicField> MergedDynamicArrayDestinations;
+    typedef std::map<const CodeGenerator::ArrayBase*, MergedDynamicArrayDestinations> MergedDynamicArrayMap;
+
+    
     //----------------------------------------------------------------------------
     // Private API
     //----------------------------------------------------------------------------
@@ -244,6 +286,31 @@ private:
                                                                                 CodeGenerator::ArrayBase *array) const;
 
     void writeRecordedEvents(const NeuronGroup &group, CodeGenerator::ArrayBase *array, const std::string &path) const;
+
+    template<typename G>
+    void addMergedArrays(const G &mergedGroup, bool host = false)
+    {
+        using namespace CodeGenerator;
+        // Loop through fields
+        for(const auto &f : mergedGroup.getFields()) {
+            // If field is dynamic
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+                // Loop through groups within newly-created merged group
+                for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
+                    const auto &g = mergedGroup.getGroups()[groupIndex];
+
+                    // Add reference to this group's variable to data structure
+                    // **NOTE** this works fine with EGP references because the function to
+                    // get their value will just return the array associated with the referenced EGP
+                    const auto *array = std::get<const ArrayBase*>(std::get<2>(f)(*this, g, groupIndex));
+                    m_MergedDynamicArrays[array].emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(G::name),
+                        std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), std::get<1>(f), host));
+                }
+            }
+        }
+    }
 
     template<typename A, typename G>
     void createEGPArrays(const G *group)
@@ -414,6 +481,9 @@ private:
 
     //! Delay queue pointers associated with neuron group names
     std::unordered_map<std::string, unsigned int> m_DelayQueuePointer;
+
+    //! Map containing mapping of dynamic arrays to their locations within merged groups
+    MergedDynamicArrayMap m_MergedDynamicArrays;
 
     //! Maps of population pointers to named arrays
     GroupArrayMap<CurrentSource> m_CurrentSourceArrays;
