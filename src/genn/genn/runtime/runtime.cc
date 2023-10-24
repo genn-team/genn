@@ -273,20 +273,24 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // If connectivity is bitmask
         const size_t numPre = s.second.getSrcNeuronGroup()->getNumNeurons();
         const size_t rowStride = m_Backend.get().getSynapticMatrixRowStride(s.second);
+        const auto &connectInit = s.second.getConnectivityInitialiser();
+        const bool uninitialized = (Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens()) 
+                                    && Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
+
         if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ceilDivide((size_t)numPre * rowStride, 32);
             createArray(&s.second, "gp", Type::Uint32, gpSize,
-                        s.second.getSparseConnectivityLocation());
+                        s.second.getSparseConnectivityLocation(), uninitialized);
         }
         // Otherwise, if connectivity is sparse
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             // Row lengths
             createArray(&s.second, "rowLength", Type::Uint32, numPre,
-                        s.second.getSparseConnectivityLocation());
+                        s.second.getSparseConnectivityLocation(), uninitialized);
 
             // Target indices
             createArray(&s.second, "ind", s.second.getSparseIndType(), numPre * rowStride,
-                        s.second.getSparseConnectivityLocation());
+                        s.second.getSparseConnectivityLocation(), uninitialized);
         
             // **TODO** remap is not always required
             if(m_Backend.get().isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -467,8 +471,12 @@ void Runtime::initialize()
 //----------------------------------------------------------------------------
 void Runtime::initializeSparse()
 {
-    //initEnv.getStream() << "copyStateToDevice(true);" << std::endl;
-    //initEnv.getStream() << "copyConnectivityToDevice(true);" << std::endl << std::endl;
+    // Push uninitialized arrays to device
+    pushUninitialized(m_CurrentSourceArrays);
+    pushUninitialized(m_NeuronGroupArrays);
+    pushUninitialized(m_SynapseGroupArrays);
+    pushUninitialized(m_CustomUpdateArrays);
+    pushUninitialized(m_CustomConnectivityUpdateArrays);
 
     m_InitializeSparse();
 }

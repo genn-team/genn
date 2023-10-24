@@ -258,7 +258,22 @@ private:
     }
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
-                                 
+
+    template<typename G>
+    void pushUninitialized(GroupArrayMap<G> &groups)
+    {
+        // Loop through maps of groups to variables
+        for(auto &g : groups) {
+            // Loop through maps of variable names to arrays
+            for(auto &a : groups.second) {
+                // If array is uninitialized, push to device
+                if(a.second->isUninitialized()) {
+                    a.second->pushToDevice();
+                }
+            }
+        }
+    }
+
     template<typename G>
     void pushMergedGroup(const G &g) const
     {
