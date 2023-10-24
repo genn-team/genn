@@ -521,12 +521,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                         // Emit true spikes
                                         [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, "", ng.getArchetype().isSpikeRecordingEnabled());
+                                            genEmitSpike(env, "", ng.getArchetype().isTrueSpikeRequired(),
+                                                         ng.getArchetype().isSpikeRecordingEnabled());
                                         },
                                         // Emit spike-like events
                                         [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, "_evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
+                                            genEmitSpike(env, "_evnt", ng.getArchetype().isSpikeEventRequired(),
+                                                         ng.getArchetype().isSpikeEventRecordingEnabled());
                                         });
 
                 // Copy local stream back to local
@@ -539,7 +541,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             genSharedMemBarrier(groupEnv.getStream());
 
             // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
-            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
+            if(ng.getArchetype().isTrueSpikeRequired() &&
+               !Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) 
+            {
                 groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -589,7 +593,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             // Copy spikes into block of $(_spk)
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
                                                                 VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
+            if(ng.getArchetype().isTrueSpikeRequired() &&
+               !Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) 
+            {
                 const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
                                                                            batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
@@ -1797,11 +1803,13 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, bool recordingEnabled) const
+void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, 
+                               bool spikeRequired, bool recordingEnabled) const
 {
-    env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
-    env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");
-    
+    if(spikeRequired) {
+        env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
+        env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");
+    }
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {
         if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {

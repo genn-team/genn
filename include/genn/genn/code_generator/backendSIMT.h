@@ -463,7 +463,8 @@ private:
         }
     }
 
-    void genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, bool recordingEnabled) const;
+    void genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, 
+                      bool spikeRequired, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 

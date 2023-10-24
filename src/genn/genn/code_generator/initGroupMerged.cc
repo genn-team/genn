@@ -432,8 +432,7 @@ void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, Enviro
                                               bool spikeEvent, unsigned int batchSize)
 {
     // Is initialisation required at all
-    const bool required = spikeEvent ? getArchetype().isSpikeEventRequired() : true;
-    if(required) {
+    if(spikeEvent ? getArchetype().isSpikeEventRequired() : getArchetype().isTrueSpikeRequired()) {
         // Add spike count field
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeCountEnv(env, *this);
@@ -461,14 +460,12 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
                                           bool spikeEvent, unsigned int batchSize)
 {
     // Is initialisation required at all
-    const bool required = spikeEvent ? getArchetype().isSpikeEventRequired() : true;
-    if(required) {
+    if(spikeEvent ? getArchetype().isSpikeEventRequired() : getArchetype().isTrueSpikeRequired()) {
         // Add spike count field
         const std::string suffix = spikeEvent ? "Evnt" : "";
         EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeEnv(env, *this);
         spikeEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + suffix,
                           [suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk" + suffix); });
-
 
         // Generate variable initialisation code
         backend.genVariableInit(spikeEnv, "num_neurons", "id",

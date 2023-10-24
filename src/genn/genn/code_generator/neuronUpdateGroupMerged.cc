@@ -828,15 +828,17 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(Environmen
         }
     }
 
-    if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
-        env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
-        if(batchSize > 1) {
-            env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+    if(getArchetype().isTrueSpikeRequired()) {
+        if(getArchetype().isDelayRequired()) {
+            env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
+            if(batchSize > 1) {
+                env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            }
+            env.getStream() << "] = 0; " << std::endl;
         }
-        env.getStream() << "] = 0; " << std::endl;
-    }
-    else {
-        env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+        else {
+            env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+        }
     }
 }
 

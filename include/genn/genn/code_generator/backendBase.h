@@ -228,6 +228,9 @@ public:
     //! Get array host pointer
     std::byte *getHostPointer() const{ return m_HostPointer; }
 
+    template<typename T>
+    T *getHostPointer() const{ return reinterpret_cast<T*>(m_HostPointer); }
+
     //! Serialise host pointer to bytes
     void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;
 

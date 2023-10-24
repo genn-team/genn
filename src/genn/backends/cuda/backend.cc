@@ -448,15 +448,17 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idNeuronSpikeQueueUpdate = 0;
-    neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
-    {
-        CodeStream::Scope b(neuronUpdateEnv.getStream());
+    if(!modelMerged.getMergedNeuronSpikeQueueUpdateGroups().empty()) {
+        neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
+        {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
 
-        neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, memorySpaces, idNeuronSpikeQueueUpdate);
+            genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, memorySpaces, idNeuronSpikeQueueUpdate);
+        }
+        neuronUpdateEnv.getStream() << std::endl;
     }
-    neuronUpdateEnv.getStream() << std::endl;
 
     size_t idStart = 0;
     neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t";
