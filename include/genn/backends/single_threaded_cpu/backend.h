@@ -63,13 +63,13 @@ public:
 
 
     //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool) const final
+    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
     {
         throw std::runtime_error("Single-threaded CPU arrays have no device objects");
     }
 
     //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte> &bytes, bool) const
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
     {
         throw std::runtime_error("Single-threaded CPU arrays have no host objects");
     }
@@ -115,6 +115,10 @@ public:
         \param location     location of array e.g. device-only*/
     virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
                                                    VarLocation location, bool uninitialized) const final;
+
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<ArrayBase> createPopulationRNG(size_t) const final{ return std::unique_ptr<ArrayBase>(); }
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 

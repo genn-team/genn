@@ -290,7 +290,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
                                                {
                                                    // Insert code to update WU vars
-                                                   ng.generateWUVarUpdate(*this, env, 1);
+                                                   ng.generateWUVarUpdate(env, 1);
 
                                                    // Insert code to emit true spikes
                                                    genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
@@ -1722,10 +1722,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeUpdate(preUpdateEnv, 1, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeEventUpdate(preUpdateEnv, 1, dt);
             }
         }
 
@@ -1744,7 +1744,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate toeplitz connectivity generation code using custom for_each_synapse loop
             sg.generateToeplitzConnectivity(
-                *this, toeplitzEnv,
+                toeplitzEnv,
                 // Within for_each_synapse loops, define addSynapse function and id_pre
                 [addSynapseType](auto &env, auto &errorHandler)
                 {
@@ -1803,7 +1803,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 groupEnv.getStream() << "if(";
 
                 // Generate weight update threshold condition
-                sg.generateSpikeEventThreshold(*this, groupEnv, 1);
+                sg.generateSpikeEventThreshold(groupEnv, 1);
 
                 groupEnv.getStream() << ")";
                 groupEnv.getStream() << CodeStream::OB(10);
@@ -1830,10 +1830,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(synEnv, 1, dt);
                     }
                 }
             }
@@ -1880,10 +1880,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeUpdate(groupEnv, 1, dt);
                             }
                             else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeEventUpdate(groupEnv, 1, dt);
                             }
                         }
 
@@ -1918,10 +1918,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     }
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(synEnv, 1, dt);
                     }
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1939,22 +1939,22 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const
 {
-    // Determine if delay is required and thus, at what offset we should write into the spike queue
-    const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
-    const std::string spikeQueueOffset = spikeDelayRequired ? "$(_write_delay_offset) + " : "";
+    // Determine at what offset we should write into the spike queue
+    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
 
     const std::string suffix = trueSpike ? "" : "_evnt";
-    env.print("$(_spk" + suffix + ")[" + spikeQueueOffset + "$(_spk_cnt" + suffix + ")");
-    if(spikeDelayRequired) { // WITH DELAY
-        env.print("[*$(_spk_que_ptr)]++]");
+    if(trueSpike ? ng.getArchetype().isTrueSpikeRequired() : ng.getArchetype().isSpikeEventRequired()) {
+        env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
+        if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
+            env.print("[*$(_spk_que_ptr)]++]");
+        }
+        else { // NO DELAY
+            env.getStream() << "[0]++]";
+        }
+        env.printLine(" = $(id);");
     }
-    else { // NO DELAY
-        env.getStream() << "[0]++]";
-    }
-    env.printLine(" = $(id);");
 
     // Reset spike and spike-like-event times
-    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
         env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
     }
