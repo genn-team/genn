@@ -541,7 +541,6 @@ public:
                      },
                      "", GroupMergedFieldType::DYNAMIC);
         }
-        assert(false);
     }
 
     template<typename I>
