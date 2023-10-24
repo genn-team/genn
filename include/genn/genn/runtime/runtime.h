@@ -166,38 +166,47 @@ private:
     void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
-                     size_t count, VarLocation location);
+                     size_t count, VarLocation location, bool uninitialized = false);
 
     void createArray(const CurrentSource *currentSource, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, VarLocation location)
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location, bool uninitialized = false)
     {
-        createArray(m_CurrentSourceArrays[currentSource], varName, type, count, location);
+        createArray(m_CurrentSourceArrays[currentSource], 
+                    varName, type, count, location, uninitialized);
     }
 
     void createArray(const NeuronGroup *neuronGroup, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, VarLocation location)
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location, bool uninitialized = false)
     {
-        createArray(m_NeuronGroupArrays[neuronGroup], varName, type, count, location);
+        createArray(m_NeuronGroupArrays[neuronGroup], 
+                    varName, type, count, location, uninitialized);
     }
 
     void createArray(const SynapseGroup *synapseGroup, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, VarLocation location)
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location, bool uninitialized = false)
     {
-        createArray(m_SynapseGroupArrays[synapseGroup], varName, type, count, location);
+        createArray(m_SynapseGroupArrays[synapseGroup], 
+                    varName, type, count, location, uninitialized);
     }
 
     void createArray(const CustomUpdateBase *customUpdate, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, VarLocation location)
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location, bool uninitialized = false)
     {
-        createArray(m_CustomUpdateArrays[customUpdate], varName, type, count, location);
+        createArray(m_CustomUpdateArrays[customUpdate], 
+                    varName, type, count, location, uninitialized);
     }
 
 
     void createArray(const CustomConnectivityUpdate *customConnectivityUpdate, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, VarLocation location)
+                     const Type::ResolvedType &type, size_t count, 
+                     VarLocation location, bool uninitialized = false)
     {
         createArray(m_CustomConnectivityUpdateArrays[customConnectivityUpdate],
-                    varName, type, count, location);
+                    varName, type, count, location, uninitialized);
     }
 
     std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
@@ -229,6 +238,8 @@ private:
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
+            const auto &varInit = adaptor.getInitialisers().at(var.name);
+            const bool uninitialized = Utils::areTokensEmpty(varInit.getCodeTokens());
             const auto resolvedType = var.type.resolve(getModel().getTypeContext());
             const auto varDims = adaptor.getVarDims(var);
 
@@ -236,10 +247,9 @@ private:
             const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
             const size_t numVarDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
             createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numVarDelaySlots,
-                        adaptor.getLoc(var.name));
+                        adaptor.getLoc(var.name), uninitialized);
 
             // Loop through EGPs required to initialize neuron variable and create
-            const auto &varInit = adaptor.getInitialisers().at(var.name);
             for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
                 const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
                 createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);

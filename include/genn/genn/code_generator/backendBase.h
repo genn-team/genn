@@ -208,6 +208,11 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    bool isUninitialized() const{ return m_Uninitialized; }
+    VarLocation getLocation() const{ return m_Location; }
+    
+    size_t getSize() const{ return m_Size; };
+
     //! Get array host pointer
     std::byte *getHostPointer() const{ return m_HostPointer; }
 
@@ -215,31 +220,25 @@ public:
     void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;
 
 protected:
-    ArrayBase(const Type::ResolvedType &type, size_t count, 
-              VarLocation location)
-    :   m_Type(type), m_Count(count), m_Location(location), m_HostPointer(nullptr)
+    ArrayBase(size_t size, VarLocation location, bool uninitialized)
+    :   m_Size(size), m_Location(location), m_Uninitialized(uninitialized), 
+        m_HostPointer(nullptr)
     {
     }
 
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    const Type::ResolvedType &getType() const{ return m_Type; }
-    size_t getCount() const{ return m_Count; }
-    VarLocation getLocation() const{ return m_Location; }
-
-    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
-
-    void setCount(size_t count) { m_Count = count; }
+    void setSize(size_t size) { m_Size = size; }
     void setHostPointer(std::byte *hostPointer) { m_HostPointer = hostPointer; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    Type::ResolvedType m_Type;
-    size_t m_Count;
+    size_t m_Size;
     VarLocation m_Location;
+    bool m_Uninitialized;
 
     std::byte *m_HostPointer;
 };
@@ -321,8 +320,8 @@ public:
     /*! \param type         data type of array
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
-    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
-                                                   VarLocation location) const = 0;
+    virtual std::unique_ptr<ArrayBase> createArray(size_t size, VarLocation location, 
+                                                   bool uninitialized) const = 0;
 
     //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
     /*! \param count        number of RNGs required*/

@@ -38,8 +38,7 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Array : public ArrayBase
 {
 public:
-    Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location);
+    Array(size_t size, VarLocation location, bool uninitialized);
     virtual ~Array();
     
     //------------------------------------------------------------------------
@@ -113,8 +112,8 @@ public:
     /*! \param type         data type of array
         \param count        number of elements in array, if non-zero will allocate
         \param location     location of array e.g. device-only*/
-    virtual std::unique_ptr<ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
-                                                   VarLocation location) const final;
+    virtual std::unique_ptr<ArrayBase> createArray(size_t size, VarLocation location, 
+                                                   bool uninitialized) const final;
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 

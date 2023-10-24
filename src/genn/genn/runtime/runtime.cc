@@ -259,12 +259,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
         if (individualWeights || kernelWeights) {
             for(const auto &var : s.second.getWUModel()->getVars()) {
+                const auto &varInit = s.second.getWUVarInitialisers().at(var.name);
+                const bool uninitialized = Utils::areTokensEmpty(varInit.getCodeTokens());
                 const auto resolvedType = var.type.resolve(getModel().getTypeContext());
                 const auto varDims = getVarAccessDim(var.access);
                 const size_t numVarCopies = (varDims & VarAccessDim::BATCH) ? batchSize : 1;
                 const size_t numVarElements = getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
                 createArray(&s.second, var.name, resolvedType, numVarCopies * numVarElements,
-                            s.second.getWUVarLocation(var.name));
+                            s.second.getWUVarLocation(var.name), uninitialized);
             }
         }
 
@@ -551,9 +553,11 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 }
 //----------------------------------------------------------------------------
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
-                          size_t count, VarLocation location)
+                          size_t count, VarLocation location, bool uninitialized)
 {
-    const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location));
+    const size_t size = count * type.getValue().size;
+    const auto r = groupArrays.try_emplace(varName, 
+                                           m_Backend.get().createArray(size, location, uninitialized));
     if(!r.second) {
         throw std::runtime_error("Unable to allocate array with " 
                                  "duplicate name '" + varName + "'");
