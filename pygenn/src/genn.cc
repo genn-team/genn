@@ -29,6 +29,7 @@
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
+#include "code_generator/modelSpecMerged.h"
 
 using namespace GeNN;
 using namespace pybind11::literals;
@@ -192,34 +193,35 @@ public:
     virtual std::vector<Models::Base::Var> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_post_vars", getPostVars); }
 };
 
-CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
+void generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
                                      const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
 {
     const filesystem::path outputPath(outputPathStr);
 
-    // Generate code, returning list of module names that must be build
+    // Create merged model and generate code
+    CodeGenerator::ModelSpecMerged modelMerged(backend, model);
     const auto output = CodeGenerator::generateAll(
-        model, backend, 
+        modelMerged, backend, 
         filesystem::path(sharePathStr), outputPath, 
         forceRebuild);
 
 #ifdef _WIN32
     // Create MSBuild project to compile and link all generated modules
     std::ofstream makefile((outputPath / "runner.vcxproj").str());
-    CodeGenerator::generateMSBuild(makefile, model, backend, "", output.first);
+    CodeGenerator::generateMSBuild(makefile, model, backend, "", output);
 #else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
-    CodeGenerator::generateMakefile(makefile, backend, output.first);
+    CodeGenerator::generateMakefile(makefile, backend, output);
 #endif
-    return output.second;
 }
 
-void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, plog::Severity transpilerLevel)
+void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, 
+                 plog::Severity runtimeLevel, plog::Severity transpilerLevel)
 {
     auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;
-    Logging::init(gennLevel, codeGeneratorLevel, transpilerLevel,
-                  consoleAppender, consoleAppender, consoleAppender);
+    Logging::init(gennLevel, codeGeneratorLevel, runtimeLevel, transpilerLevel,
+                  consoleAppender, consoleAppender, consoleAppender, consoleAppender);
 }
 }
 
@@ -343,12 +345,12 @@ PYBIND11_MODULE(genn, m)
           "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", pybind11::return_value_policy::move);
     m.def("create_wu_var_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
     m.def("create_wu_var_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_psm_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
-    m.def("create_wu_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_psm_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
+    m.def("create_wu_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
     m.def("get_var_access_dim", pybind11::overload_cast<VarAccess>(&getVarAccessDim));
     m.def("get_var_access_dim", pybind11::overload_cast<CustomUpdateVarAccess, VarAccessDim>(&getVarAccessDim));
 
@@ -849,8 +851,10 @@ PYBIND11_MODULE(genn, m)
         .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
         .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
         .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
-        .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
-        .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
+        .def_readwrite("genn_log_level", &CodeGenerator::PreferencesBase::gennLogLevel)
+        .def_readwrite("code_generator_log_level", &CodeGenerator::PreferencesBase::codeGeneratorLogLevel)
+        .def_readwrite("transpiler_log_level", &CodeGenerator::PreferencesBase::transpilerLogLevel)
+        .def_readwrite("runtime_log_level", &CodeGenerator::PreferencesBase::runtimeLogLevel);
 
     //------------------------------------------------------------------------
     // genn.BackendBase

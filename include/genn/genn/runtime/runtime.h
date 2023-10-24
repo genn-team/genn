@@ -90,6 +90,8 @@ public:
     //------------------------------------------------------------------------
     const Type::ResolvedType &getType() const{ return m_Type; }
     size_t getCount() const{ return m_Count; };
+    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
+
     VarLocation getLocation() const{ return m_Location; }
     bool isUninitialized() const{ return m_Uninitialized; }
 
@@ -112,9 +114,7 @@ protected:
 
     //------------------------------------------------------------------------
     // Protected API
-    //------------------------------------------------------------------------
-    size_t getSizeBytes() const{ return m_Count * m_Type.getValue().size; };
-
+    //------------------------------------------------------------------------    
     void setCount(size_t count) { m_Count = count; }
     void setHostPointer(std::byte *hostPointer) { m_HostPointer = hostPointer; }
 

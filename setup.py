@@ -76,30 +76,26 @@ for root, _, filenames in os.walk(pygenn_share):
             package_data.append(f_path)
 
 # Define standard kwargs for building all extensions
-extension_kwargs = {
-    "include_dirs": [pygenn_include],
+genn_extension_kwargs = {
+    "include_dirs": [pygenn_include, genn_include, genn_third_party_include],
     "library_dirs": [pygenn_path],
+    "libraries": ["genn" + genn_lib_suffix],
     "cxx_std": 17,
     "extra_compile_args": [],
-    "extra_link_args": []}
+    "extra_link_args": [],
+    "define_macros": [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]}
 
 # If this is Windows, turn off warnings about dll-interface being required 
 # for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
 if WIN:
-    extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+    genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
 
 if coverage_build:
     if LINUX:
-        extension_kwargs["extra_compile_args"].extend(["--coverage"])
-        extension_kwargs["extra_link_args"].extend(["--coverage"])
+        genn_extension_kwargs["extra_compile_args"].extend(["--coverage"])
+        genn_extension_kwargs["extra_link_args"].extend(["--coverage"])
     elif MAC:
-        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-
-# Extend these kwargs for extensions which link against GeNN
-genn_extension_kwargs = deepcopy(extension_kwargs)
-genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
-genn_extension_kwargs["libraries"] = ["genn" + genn_lib_suffix]
-genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
+        genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
 
 # On Linux, we want to add extension directory i.e. $ORIGIN to runtime
 # directories so libGeNN and backends can be found wherever package is installed
@@ -153,8 +149,8 @@ if opencl_installed:
 
 ext_modules = [
     Pybind11Extension("shared_library_model",
-                      [os.path.join(pygenn_src, "sharedLibraryModel.cc")],
-                      **extension_kwargs),
+                      [os.path.join(pygenn_src, "runtime.cc")],
+                      **genn_extension_kwargs),
     Pybind11Extension("genn",
                       [os.path.join(pygenn_src, "genn.cc")],
                       **genn_extension_kwargs),
