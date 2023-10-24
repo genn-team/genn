@@ -52,8 +52,9 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, 
-                      &consoleAppender, &consoleAppender, &consoleAppender);
+        Logging::init(GENN_PREFERENCES.gennLogLevel, GENN_PREFERENCES.codeGeneratorLogLevel, 
+                      GENN_PREFERENCES.transpilerLogLevel, GENN_PREFERENCES.runtimeLogLevel, 
+                      &consoleAppender, &consoleAppender, &consoleAppender, &consoleAppender);
 
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
@@ -72,7 +73,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Create backend
         auto backend = Optimiser::createBackend(model, outputPath,
-                                                GENN_PREFERENCES.logLevel, &consoleAppender,
+                                                GENN_PREFERENCES.backendLogLevel, &consoleAppender,
                                                 GENN_PREFERENCES);
 
         // Create merged model and generate code

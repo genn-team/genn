@@ -92,8 +92,20 @@ struct PreferencesBase
     //! NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
     std::string userNvccFlagsGNU = "";
 
+    //! Logging level to use for model description
+    plog::Severity gennLogLevel = plog::info;
+
     //! Logging level to use for code generation
-    plog::Severity logLevel = plog::info;
+    plog::Severity codeGeneratorLogLevel = plog::info;
+
+    //! Logging level to use for transpiler
+    plog::Severity transpilerLogLevel = plog::info;
+
+    //! Logging level to use for runtime
+    plog::Severity runtimeLogLevel = plog::info;
+
+    //! Logging level to use for backend
+    plog::Severity backendLogLevel = plog::info;
 
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {

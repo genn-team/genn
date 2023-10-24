@@ -48,6 +48,13 @@ class IAppender;
 #define LOGE_BACKEND LOGE_(GeNN::Logging::CHANNEL_BACKEND)
 #define LOGF_BACKEND LOGF_(GeNN::Logging::CHANNEL_BACKEND)
 
+// Shorthand macros for logging to 'runtime' channel
+#define LOGV_RUNTIME LOGV_(GeNN::Logging::CHANNEL_RUNTIME)
+#define LOGD_RUNTIME LOGD_(GeNN::Logging::CHANNEL_RUNTIME)
+#define LOGI_RUNTIME LOGI_(GeNN::Logging::CHANNEL_RUNTIME)
+#define LOGW_RUNTIME LOGW_(GeNN::Logging::CHANNEL_RUNTIME)
+#define LOGE_RUNTIME LOGE_(GeNN::Logging::CHANNEL_RUNTIME)
+#define LOGF_RUNTIME LOGF_(GeNN::Logging::CHANNEL_RUNTIME)
 
 //----------------------------------------------------------------------------
 // GeNN::Logging
@@ -60,9 +67,12 @@ enum Channel
     CHANNEL_CODE_GEN    = 1,
     CHANNEL_TRANSPILER  = 2,
     CHANNEL_BACKEND     = 3,
+    CHANNEL_RUNTIME     = 4,
     CHANNEL_MAX
 };
 
-GENN_EXPORT void init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, plog::Severity transpilerLevel, 
-                      plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender, plog::IAppender *transpilerAppender);
+GENN_EXPORT void init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, 
+                      plog::Severity transpilerLevel, plog::Severity runtimeLevel,
+                      plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender, 
+                      plog::IAppender *transpilerAppender, plog::IAppender *runtimeAppender);
 }

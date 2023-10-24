@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <fstream>
+
 // PLOG includes
 #include <plog/Log.h>
 
@@ -472,10 +473,15 @@ void Runtime::initialize()
 void Runtime::initializeSparse()
 {
     // Push uninitialized arrays to device
+    LOGD_RUNTIME << "Pushing uninitialized current source variables";
     pushUninitialized(m_CurrentSourceArrays);
+    LOGD_RUNTIME << "Pushing uninitialized neuron group variables";
     pushUninitialized(m_NeuronGroupArrays);
+    LOGD_RUNTIME << "Pushing uninitialized synapse group variables";
     pushUninitialized(m_SynapseGroupArrays);
+    LOGD_RUNTIME << "Pushing uninitialized custom update variables";
     pushUninitialized(m_CustomUpdateArrays);
+    LOGD_RUNTIME << "Pushing uninitialized custom connectivity update variables";
     pushUninitialized(m_CustomConnectivityUpdateArrays);
 
     m_InitializeSparse();

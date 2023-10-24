@@ -22,6 +22,7 @@ extern "C"
 
 // GeNN includes
 #include "gennExport.h"
+#include "logging.h"
 #include "modelSpecInternal.h"
 #include "type.h"
 #include "varAccess.h"
@@ -265,9 +266,11 @@ private:
         // Loop through maps of groups to variables
         for(auto &g : groups) {
             // Loop through maps of variable names to arrays
+            LOGD_RUNTIME << "\t" << g.first->getName();
             for(auto &a : g.second) {
                 // If array is uninitialized, push to device
                 if(a.second->isUninitialized()) {
+                    LOGD_RUNTIME << "\t\t" << a.first;
                     a.second->pushToDevice();
                 }
             }
