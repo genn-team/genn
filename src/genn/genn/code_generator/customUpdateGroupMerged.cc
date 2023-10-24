@@ -44,7 +44,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                                                    BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -171,7 +171,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                                                          BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -230,7 +230,7 @@ const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
 //----------------------------------------------------------------------------
 const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
 // ----------------------------------------------------------------------------
-std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env)
+std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env)
 {
     // Loop through variable references
     const auto varRefs = getArchetype().getCustomUpdateModel()->getVarRefs();
@@ -256,7 +256,7 @@ std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendB
 //----------------------------------------------------------------------------
 const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHostReduction";
 //----------------------------------------------------------------------------
-void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
+void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
                  [](const auto &, const auto &c, size_t) { return c.getSize(); });
@@ -267,14 +267,14 @@ void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBas
                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getDelayNeuronGroup(), "spkQuePtr"); });
     }
 
-    generateCustomUpdateBase(backend, env);
+    generateCustomUpdateBase(env);
 }
 // ----------------------------------------------------------------------------
 // CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdateHostReduction";
 //----------------------------------------------------------------------------
-void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
+void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
                  [](const auto &, const auto &c, size_t) 
@@ -282,5 +282,5 @@ void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(const BackendB
                      return c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });
 
-    generateCustomUpdateBase(backend, env);
+    generateCustomUpdateBase(env);
 }

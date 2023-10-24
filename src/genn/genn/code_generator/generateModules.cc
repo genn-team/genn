@@ -108,7 +108,7 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
         generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateInit(outputPath, modelMerged, backend, memorySpaces);
-        generateRunner(outputPath, modelMerged, backend, memorySpaces);
+        generateRunner(outputPath, modelMerged, backend);
 
         // Get list of files to copy into generated code
         const auto backendSharePath = sharePath / "backends";

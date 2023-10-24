@@ -115,17 +115,13 @@ CustomUpdate *VarReference::getReferencedCustomUpdate() const
 bool VarReference::operator < (const VarReference &other) const
 {
     // **NOTE** variable and target names are enough to guarantee uniqueness
-    //const std::string targetName = getTargetName();
-    //const std::string otherTargetName = other.getTargetName();
+    const std::string &varName = getVarName();
+    const std::string &targetName = getTargetName();
+    const std::string &otherVarName = other.getVarName();
+    const std::string &otherTargetName = other.getTargetName();
 
-    return std::visit(
-        Utils::Overload{
-            [/*&targetName, &otherTargetName*/](const auto &detail, const auto &otherDetail)
-            { 
-                return (std::tie(detail.var.name/*, targetName*/) 
-                        < std::tie(otherDetail.var.name/*, otherTargetName*/)); 
-            }},
-            m_Detail, other.m_Detail);
+    return (std::tie(varName, targetName) 
+            < std::tie(otherVarName, otherTargetName)); 
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
@@ -331,14 +327,12 @@ CustomUpdateWU *WUVarReference::getReferencedCustomUpdate() const
 //------------------------------------------------------------------------
 bool WUVarReference::operator < (const WUVarReference &other) const
 {
-    /*const auto transposeVarName = getTransposeVarName();
+    const auto transposeVarName = getTransposeVarName();
     const auto transposeTargetName = getTransposeTargetName();
     const auto otherTransposeVarName = other.getTransposeVarName();
     const auto otherTransposeTargetName = other.getTransposeTargetName();
     return (std::tie(getVarName(), getTargetName(), transposeVarName, transposeTargetName) 
-            < std::tie(other.getVarName(), other.getTargetName(), otherTransposeVarName, otherTransposeTargetName));*/
-    assert(false);
-    return true;
+            < std::tie(other.getVarName(), other.getTargetName(), otherTransposeVarName, otherTransposeTargetName));
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std::string &varName, 
@@ -481,7 +475,7 @@ std::optional<std::string> WUVarReference::getTransposeTargetName() const
 const Models::Base::EGP &EGPReference::getEGP() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return ref.egp; }},
+        Utils::Overload{[](const auto &ref) { return std::cref(ref.egp); }},
         m_Detail);
 }
  //----------------------------------------------------------------------------

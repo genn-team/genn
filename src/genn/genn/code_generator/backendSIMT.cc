@@ -601,7 +601,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     EnvironmentExternal wuEnv(groupEnv);
                     wuEnv.add(Type::Uint32.addConst(), "id", "n");
-                    ng.generateWUVarUpdate(*this, wuEnv, batchSize);
+                    ng.generateWUVarUpdate(wuEnv, batchSize);
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
                     if(ng.getArchetype().isSpikeTimeRequired()) {
@@ -848,7 +848,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
 
                         synEnv.add(Type::AddToPre, "addToPre", getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
-                        sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
+                        sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             synEnv.getStream() << CodeStream::CB(1540);
@@ -914,7 +914,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 synEnv.add(Type::AddToPre, "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
-                sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
+                sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(1);
@@ -965,7 +965,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, batchEnv, batchSize,
+                            batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1013,7 +1013,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, batchEnv, batchSize,
+                            batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1068,8 +1068,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 batchEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(batchEnv.getStream());
-                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
-                                            [](auto&, auto&){});
+                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
             // Otherwise
@@ -1085,8 +1084,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
                     buildStandardEnvironment(batchEnv, batchSize);
 
-                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
-                                            [](auto&, auto&){});
+                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
         });
@@ -1185,10 +1183,10 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     buildStandardEnvironment(batchEnv, batchSize);
 
                     cg.generateCustomUpdate(
-                        *this, batchEnv, batchSize,
+                        batchEnv, batchSize,
                         [&reductionTargets, this](auto &env, auto &cg)
                         {
-                                // If this is a reduction
+                            // If this is a reduction
                             if(cg.getArchetype().isBatchReduction()) {
                                 // Loop through reduction targets and generate reduction
                                 for(const auto &r : reductionTargets) {
@@ -1260,7 +1258,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
             buildStandardEnvironment(batchEnv, batchSize);
 
             // Add field for transpose field and get its name
-            const std::string transposeVarName = cg.addTransposeField(*this, batchEnv);
+            const std::string transposeVarName = cg.addTransposeField(batchEnv);
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here
@@ -1292,7 +1290,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
                                        {synEnv.addInitialiser("const unsigned int idx = ((y + j) * $(num_post)) + x;")});
                             cg.generateCustomUpdate(
-                                *this, synEnv, batchSize,
+                                synEnv, batchSize,
                                 [&transposeVarName, this](auto &env, const auto&)
                                 {        
                                     // Write forward weight to shared memory
@@ -1644,7 +1642,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                             }
 
                             // Call handler to initialize variables
-                            sg.generateKernelInit(*this, kernelInitEnv, 1);
+                            sg.generateKernelInit(kernelInitEnv, 1);
                         }
                     }
                     // Otherwise, if it's bitmask
@@ -1685,12 +1683,12 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     }
 
                     // Call row-based connectivity handler
-                    sg.generateSparseRowInit(*this, groupEnv);
+                    sg.generateSparseRowInit(groupEnv);
                 }
                 // Otherwise, call column-based connectivity handler
                 // **NOTE** in this case, row length gets zeroed by a memset call in backend
                 else {
-                    sg.generateSparseColumnInit(*this, groupEnv);
+                    sg.generateSparseColumnInit(groupEnv);
                 }
             }
         });

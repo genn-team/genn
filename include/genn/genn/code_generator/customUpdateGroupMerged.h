@@ -25,7 +25,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -60,7 +60,7 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -106,7 +106,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    std::string addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
+    std::string addTransposeField(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -124,7 +124,7 @@ protected:
     using GroupMerged<G>::GroupMerged;
 
     template<typename M>
-    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentGroupMergedField<M> &env)
+    void generateCustomUpdateBase(EnvironmentGroupMergedField<M> &env)
     {
         // Loop through variables and add pointers if they are reduction targets
         const auto *cm = this->getArchetype().getCustomUpdateModel();
@@ -132,7 +132,7 @@ protected:
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
-                             [&backend, v](const auto &runtime, const auto &g, size_t) 
+                             [v](const auto &runtime, const auto &g, size_t) 
                              {
                                  return runtime.getArray(g, v.name); 
                              });
@@ -142,14 +142,12 @@ protected:
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                assert(false);
-                /*const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
+                const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
-                             [&backend, v](const auto &g, size_t) 
+                             [v](const auto &runtime, const auto &g, size_t) 
                              {
-                                 const auto varRef = g.getVarReferences().at(v.name);
-                                 return backend.getDeviceVarPrefix() + v.name + varRef.getTargetName(); 
-                             });*/
+                                 return g.getVarReferences().at(v.name).getTargetArray(runtime);
+                             });
             }
         }
     }
@@ -171,7 +169,7 @@ public:
         generateRunnerBase(backend, definitions, name, true);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
+    void generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -195,7 +193,7 @@ public:
         generateRunnerBase(backend, definitions, name, true);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
+    void generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants

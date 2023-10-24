@@ -23,8 +23,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
+                      unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -87,8 +87,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
@@ -138,7 +138,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
@@ -179,7 +179,7 @@ public:
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
-    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;

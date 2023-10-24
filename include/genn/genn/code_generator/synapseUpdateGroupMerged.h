@@ -119,13 +119,13 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
-    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+    void generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                   unsigned int batchSize, double dt);
-    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+    void generateSpikeUpdate(EnvironmentExternalBase &env, 
                              unsigned int batchSize, double dt);
-    void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env,
+    void generateProceduralConnectivity(EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(EnvironmentExternalBase &env,
                                       Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                                       Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);
 
@@ -148,7 +148,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+    void generateSynapseUpdate(EnvironmentExternalBase &env, 
                                unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
@@ -170,7 +170,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+    void generateSynapseUpdate(EnvironmentExternalBase &env, 
                                unsigned int batchSize, double dt);
 
     //----------------------------------------------------------------------------

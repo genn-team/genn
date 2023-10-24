@@ -39,7 +39,7 @@ void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
 void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
-                                             const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
+                                             const BackendBase &backend, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());

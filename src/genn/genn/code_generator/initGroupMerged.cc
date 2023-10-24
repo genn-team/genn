@@ -144,7 +144,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 template<typename A, typename G, typename V>
-void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, G &group,
+void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
                       const std::string &stride, unsigned int batchSize, bool kernel,
                       V genSynapseVariableRowInitFn)
 {
@@ -544,7 +544,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
 
     // Generate initialisation code
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
-    genInitWUVarCode<SynapseWUVarAdapter>(backend, groupEnv, *this, stride, batchSize, false,
+    genInitWUVarCode<SynapseWUVarAdapter>(groupEnv, *this, stride, batchSize, false,
                                           [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
                                           {
                                               if (kernel) {
@@ -589,7 +589,7 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Envi
 {
     // Create environment for group
     genInitWUVarCode<SynapseWUVarAdapter>(
-        backend, env, *this, "$(num_pre) * $(_row_stride)", batchSize, false,
+        env, *this, "$(num_pre) * $(_row_stride)", batchSize, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
@@ -628,17 +628,17 @@ boost::uuids::detail::sha1::digest_type SynapseConnectivityInitGroupMerged::getH
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env)
+void SynapseConnectivityInitGroupMerged::generateSparseRowInit(EnvironmentExternalBase &env)
 {
-    genInitConnectivity(backend, env, true);
+    genInitConnectivity(env, true);
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env)
+void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(EnvironmentExternalBase &env)
 {
-    genInitConnectivity(backend, env, false);
+    genInitConnectivity(env, false);
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void SynapseConnectivityInitGroupMerged::generateKernelInit(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
@@ -650,7 +650,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
 
     // Initialise single (hence empty lambda function) synapse variable
     genInitWUVarCode<SynapseWUVarAdapter>(
-        backend, groupEnv, *this, "$(num_pre) * $(_row_stride)", batchSize, true,
+        groupEnv, *this, "$(num_pre) * $(_row_stride)", batchSize, true,
         [](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             handler(varInitEnv);
@@ -685,7 +685,7 @@ bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHet
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns)
+void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns)
 {
     // Create environment for group
     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
@@ -908,7 +908,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
     // Loop through rows
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        backend, groupEnv, *this, stride, (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
+        groupEnv, *this, stride, (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             if (kernel) {
@@ -962,7 +962,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        backend, env, *this, "$(num_pre) * $(_row_stride)",
+        env, *this, "$(num_pre) * $(_row_stride)",
         (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
@@ -1067,7 +1067,7 @@ void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBa
 {
     // Initialise custom connectivity update variables
     genInitWUVarCode<CustomConnectivityUpdateVarAdapter>(
-        backend, env, *this, "$(num_pre) * $(_row_stride)", 1, false,
+        env, *this, "$(num_pre) * $(_row_stride)", 1, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler);

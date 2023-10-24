@@ -413,7 +413,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
+                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                     }
@@ -524,7 +524,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
             
-                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
+                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                         groupEnv.getStream() << std::endl;
@@ -629,7 +629,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 }
                                 {
                                     CodeStream::Scope b(memberEnv.getStream());
-                                    c.generateCustomUpdate(*this, memberEnv, 1,
+                                    c.generateCustomUpdate(memberEnv, 1,
                                                            [&reductionTargets, this](auto &env, auto&)
                                                            {        
                                                                // Loop through reduction targets and generate reduction
@@ -659,7 +659,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, memberEnv, 1,
+                                    c.generateCustomUpdate(memberEnv, 1,
                                                            [this](auto &env, auto &c)
                                                            {        
                                                                // Write back reductions
@@ -697,7 +697,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                    [&c, this](EnvironmentExternalBase &env)
                                                    {
                                                        // Call custom update handler
-                                                       c.generateCustomUpdate(*this, env, 1,
+                                                       c.generateCustomUpdate(env, 1,
                                                                               [this](auto &env, CustomUpdateWUGroupMergedBase &c)
                                                                               {        
                                                                                   // Write back reductions
@@ -747,7 +747,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         }
 
                                         // Generate custom update
-                                        c.generateCustomUpdate(*this, synEnv, 1,
+                                        c.generateCustomUpdate(synEnv, 1,
                                                                [this](auto &env, auto &c)
                                                                {        
                                                                    // Write back reductions
@@ -818,7 +818,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             buildStandardEnvironment(groupEnv, 1);
 
                             // Add field for transpose field and get its name
-                            const std::string transposeVarName = c.addTransposeField(*this, groupEnv);
+                            const std::string transposeVarName = c.addTransposeField(groupEnv);
 
                             // Loop through presynaptic neurons
                             groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
@@ -841,8 +841,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 
                                     // Generate custom update
                                     c.generateCustomUpdate(
-                                        *this, synEnv, 1,
-                                        [&transposeVarName, this](auto &env, const auto&)
+                                        synEnv, 1,
+                                        [&transposeVarName](auto &env, const auto&)
                                         {        
                                             // Update transpose variable
                                             env.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = $(" + transposeVarName + ");");
@@ -1122,7 +1122,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                     }
 
                                     // Call handler to initialize variables
-                                    s.generateKernelInit(*this, kernelInitEnv, 1);
+                                    s.generateKernelInit(kernelInitEnv, 1);
                                 }
 
                                 // Add synapse to data structure
@@ -1154,10 +1154,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                         // Call appropriate connectivity handler
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            s.generateSparseRowInit(*this, groupEnv);
+                            s.generateSparseRowInit(groupEnv);
                         }
                         else {
-                            s.generateSparseColumnInit(*this, groupEnv);
+                            s.generateSparseColumnInit(groupEnv);
                         }
                     }
                 }

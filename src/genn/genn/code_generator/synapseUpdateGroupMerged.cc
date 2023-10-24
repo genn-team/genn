@@ -319,7 +319,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
 
@@ -348,19 +348,19 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
     prettyPrintStatements(getArchetype().getWUEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env)
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExternalBase &env)
 {
     // Create environment for group
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
@@ -377,7 +377,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExternalBase &env, 
                                                                 Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                                                                 Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
@@ -403,7 +403,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBas
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+void PostsynapticUpdateGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
                                                           unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
@@ -414,7 +414,7 @@ void PostsynapticUpdateGroupMerged::generateSynapseUpdate(const BackendBase &bac
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);

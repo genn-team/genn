@@ -282,9 +282,9 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
-    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSparseRowInit(EnvironmentExternalBase &env);
+    void generateSparseColumnInit(EnvironmentExternalBase &env);
+    void generateKernelInit(EnvironmentExternalBase &env, unsigned int batchSize);
 
     //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
@@ -308,7 +308,7 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Generate either row or column connectivity init code
-    void genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns);
+    void genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns);
 };
 
 

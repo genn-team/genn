@@ -467,7 +467,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
         generateInit(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
-        generateRunner(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
 
         // Loop through modules
         std::vector<std::thread> threads;

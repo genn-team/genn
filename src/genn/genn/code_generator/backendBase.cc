@@ -97,7 +97,7 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
+void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     using namespace Type;
 
@@ -375,7 +375,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardCustomUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
+void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // If batching is enabled, calculate batch offset
     const bool batched = (env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1);
@@ -557,17 +557,17 @@ void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateT
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(*this, env, batchSize);
+    buildStandardNeuronEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(*this, env, batchSize);
+    buildStandardNeuronEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(*this, env, batchSize);
+    buildStandardNeuronEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> &env, unsigned int batchSize) const
@@ -592,7 +592,7 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDe
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardCustomUpdateEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const
@@ -612,7 +612,7 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(*this, env, batchSize);
+    buildStandardNeuronEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const
@@ -623,7 +623,7 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseIn
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildCustomUpdateSizeEnvironment(env);
-    buildStandardCustomUpdateEnvironment(*this, env, batchSize);
+    buildStandardCustomUpdateEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env, unsigned int batchSize) const

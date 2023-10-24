@@ -1508,7 +1508,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------

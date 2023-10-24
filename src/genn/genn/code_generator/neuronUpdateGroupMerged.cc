@@ -17,8 +17,8 @@ using namespace GeNN::Transpiler;
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                                                      NeuronUpdateGroupMerged &ng, unsigned int batchSize)
+void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                      unsigned int batchSize)
 {
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
     const auto *cm = getArchetype().getCurrentSourceModel();
@@ -91,9 +91,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     if (getArchetype().isDendriticDelayRequired()) {
         // Add dendritic delay buffer and pointer into it
         psmEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
-                        [&backend](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay");});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay");});
         psmEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                        [&backend](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr");});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr");});
 
         // Get reference to dendritic delay buffer input for this timestep
         psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
@@ -156,8 +156,8 @@ bool NeuronUpdateGroupMerged::InSynPSM::isDerivedParamHeterogeneous( const std::
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                                        NeuronUpdateGroupMerged &ng, unsigned int batchSize)
+void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                        unsigned int batchSize)
 {
     const std::string fieldSuffix =  "OutSyn" + std::to_string(getIndex());
     
@@ -178,7 +178,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "InSynWUMPost" + std::to_string(getIndex());
@@ -270,7 +270,7 @@ bool NeuronUpdateGroupMerged::InSynWUMPostCode::isDerivedParamHeterogeneous( con
  //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "OutSynWUMPre" + std::to_string(getIndex());
@@ -537,13 +537,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize);
+        sg.generate(neuronVarEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        cs.generate(backend, neuronVarEnv, *this, batchSize);
+        cs.generate(neuronVarEnv, *this, batchSize);
     }
 
 
@@ -575,13 +575,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize, true);
+        sg.generate(neuronVarEnv, *this, batchSize, true);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize, true);
+        sg.generate(neuronVarEnv, *this, batchSize, true);
     }
 
     // look for spike type events first.
@@ -726,18 +726,18 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void NeuronUpdateGroupMerged::generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(backend, env, *this, batchSize, false);
+        sg.generate(env, *this, batchSize, false);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(backend, env, *this, batchSize, false);
+        sg.generate(env, *this, batchSize, false);
     }
 }
 //--------------------------------------------------------------------------

@@ -72,13 +72,11 @@ private:
         const A archetypeAdaptor(getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(getTypeContext());
-            assert(false);
-            /*env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                         [arrayPrefix, v](const auto &g, size_t) 
+            env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+                         [v](const auto &runtime, const auto &g, size_t) 
                          { 
-                             const auto varRef = A(g).getInitialisers().at(v.name);
-                             return arrayPrefix + varRef.getVarName() + varRef.getTargetName(); 
-                         });*/
+                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
+                         });
         }
     }
     
