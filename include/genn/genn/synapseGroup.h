@@ -306,11 +306,11 @@ protected:
     
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPreModelFused() const { return m_FusedWUPreTarget != this; }
+    bool isWUPreModelFused() const { return m_FusedWUPreTarget != nullptr; }
 
     //! Has the postsynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPostModelFused() const { return m_FusedWUPostTarget != this; }
+    bool isWUPostModelFused() const { return m_FusedWUPostTarget != nullptr; }
 
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
