@@ -111,6 +111,7 @@ class Variable(object):
         self.type = variable_type
         self.group = proxy(group)
         self._view = None
+        self._array = None
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
@@ -154,11 +155,31 @@ class Variable(object):
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.extra_global_params = {}
-    
+
+    def set_array(self, array, view_shape):
+        self._array = array
+        
+        # Get numpy data type corresponding to type
+        model = self.group._model
+        resolved_type = self.type.resolve(model.type_context)
+        dtype = model.genn_types[resolved_type]
+        
+        # Get dtype view of host memoryview
+        self._view = np.asarray(array.host_view).view(dtype)
+        assert not self._view.flags["OWNDATA"]
+
+        # Reshape view if shape is provided
+        if view_shape is not None:
+            self._view = np.reshape(self._view, view_shape)
+
     def _unload(self):
         self._view = None
         for e in itervalues(self.extra_global_params):
             e._unload()
+
+    @property
+    def array(self):
+        return self._array
 
     @property
     def view(self):
@@ -184,6 +205,7 @@ class ExtraGlobalParameter(object):
         self.group = group if type(group) in ProxyTypes else proxy(group)
         self.name = variable_name
         self._view = None
+        self._array = None
         self.set_values(values)
 
     def set_values(self, values):
@@ -204,8 +226,24 @@ class ExtraGlobalParameter(object):
                 raise ValueError("extra global variables can only be "
                                  "initialised with iterables")
 
+    def set_array(self, array):
+        self._array = array
+        
+        # Get numpy data type corresponding to type
+        model = self.group._model
+        resolved_type = self.type.resolve(model.type_context)
+        dtype = model.genn_types[resolved_type]
+        
+        # Get dtype view of host memoryview
+        self._view = np.asarray(array.host_view).view(dtype)
+        assert not self._view.flags["OWNDATA"]
+
     def _unload(self):
         self._view = None
+
+    @property
+    def array(self):
+        return self._array
 
     @property
     def view(self):

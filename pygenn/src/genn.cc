@@ -31,6 +31,9 @@
 #include "code_generator/generateMSBuild.h"
 #include "code_generator/modelSpecMerged.h"
 
+// GeNN runtime includes
+#include "runtime/runtime.h"
+
 using namespace GeNN;
 using namespace pybind11::literals;
 
@@ -193,15 +196,15 @@ public:
     virtual std::vector<Models::Base::Var> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_post_vars", getPostVars); }
 };
 
-void generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
-                                     const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
+const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
+                                                   const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
 {
     const filesystem::path outputPath(outputPathStr);
 
     // Create merged model and generate code
-    CodeGenerator::ModelSpecMerged modelMerged(backend, model);
+    auto *modelMerged = new CodeGenerator::ModelSpecMerged(backend, model);
     const auto output = CodeGenerator::generateAll(
-        modelMerged, backend, 
+        *modelMerged, backend, 
         filesystem::path(sharePathStr), outputPath, 
         forceRebuild);
 
@@ -214,6 +217,7 @@ void generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend,
     std::ofstream makefile((outputPath / "Makefile").str());
     CodeGenerator::generateMakefile(makefile, backend, output);
 #endif
+    return modelMerged;
 }
 
 void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, 
@@ -331,7 +335,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
+    m.def("generate_code", &generateCode, pybind11::return_value_policy::take_ownership);
     m.def("init_logging", &initLogging);
     m.def("create_var_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
     m.def("create_var_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
@@ -860,6 +864,11 @@ PYBIND11_MODULE(genn, m)
     // genn.BackendBase
     //------------------------------------------------------------------------
     pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
+    
+    //------------------------------------------------------------------------
+    // genn.BackendBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CodeGenerator::ModelSpecMerged>(m, "ModelSpecMerged");
     
     //------------------------------------------------------------------------
     // genn.MemAlloc

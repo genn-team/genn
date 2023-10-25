@@ -64,13 +64,6 @@ class GroupMixin(object):
         self.vars = {}
         self.extra_global_params = {}
 
-    def pull_state_from_device(self):
-        """Pull state from the device for a given population"""
-        if not self._model._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
-
-        self._model._slm.pull_state_from_device(self.name)
-
     def pull_var_from_device(self, var_name):
         """Pull variable from the device for a given population
 
@@ -127,42 +120,14 @@ class GroupMixin(object):
         Raises ValueError if variable type is not supported
         """
 
-        internal_var_name = var_name + self.name
-
         # Get numpy data type corresponding to type
         dtype = self._model.genn_types[var_type]
         
-        # Calculate bytes
-        num_bytes = np.dtype(dtype).itemsize * var_size
-        
-        # Get dtype view of array memoryview
-        array = np.asarray(self._model._slm.get_array(
-            internal_var_name, num_bytes)).view(dtype)
-        assert not array.flags["OWNDATA"]
-        return array
-
-    def _assign_ext_ptr_single(self, var_name, var_type):
-        """Assign a variable to an external scalar value containing one element
-
-        Args:
-        var_name    --  string a fully qualified name of the variable to assign
-        var_type    --  ResolvedType object
-
-        Returns numpy array of type var_type
-
-        Raises ValueError if variable type is not supported
-        """
-
-        internal_var_name = var_name + self.name
-
-        # Get numpy data type corresponding to type
-        dtype = self._model.genn_types[var_type]
-        
-        # Get dtype view of array memoryview
-        array = np.asarray(self._model._slm.get_scalar(
-            internal_var_name, np.dtype(dtype).itemsize)).view(dtype)
-        assert not array.flags["OWNDATA"]
-        return array
+        # Get dtype view of host memoryview
+        array = self._model._runtime.get_array(self, var_name)
+        view = np.asarray(array.host_view).view(dtype)
+        assert not view.flags["OWNDATA"]
+        return view
 
     def _push_extra_global_param_to_device(self, egp_name, egp_dict=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
@@ -218,13 +183,11 @@ class GroupMixin(object):
             if var_loc & VarLocation.HOST:
                 # Determine shape of this variable
                 var_shape = get_shape_fn(v)
-
-                # Get view
-                resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data._view = self._assign_ext_ptr_array(
-                    v.name, np.prod(var_shape), resolved_type)
-
-                var_data._view = np.reshape(var_data._view, var_shape)
+                
+                # Set array from runtime
+                var_data.set_array(
+                    self._model._runtime.get_array(self, v.name),
+                    var_shape)
 
                 # If manual initialisation is required, copy over variables
                 if var_data.init_required:
@@ -246,10 +209,9 @@ class GroupMixin(object):
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
 
-                # Assign view
-                egp_data._view = self._assign_ext_ptr_array(
-                    egp_name + egp_suffix, len(egp_data.values), 
-                    resolved_type)
+                # Set array from runtime
+                egp_data.set_array(
+                    self._model._runtime.get_array(self, egp_name + egp_suffix))
 
                 # Copy values
                 egp_data.view[:] = egp_data.values
@@ -296,7 +258,6 @@ class NeuronGroupMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(NeuronGroupMixin, self)._init_group(model)
-        self.spike_que_ptr = None
         self._spike_recording_data = None
         self._spike_event_recording_data = None
 
@@ -340,10 +301,6 @@ class NeuronGroupMixin(GroupMixin):
             self._spike_event_recording_data = self._assign_ext_ptr_array(
                 "recordSpkEvent", recording_words, types.Uint32)
 
-        if self.num_delay_slots > 1:
-            self.spike_que_ptr = self._assign_ext_ptr_single(
-                "spkQuePtr", types.Uint32)
-
         # Load neuron state variables
         # **TODO** delay slots
         self._load_vars(
@@ -356,7 +313,6 @@ class NeuronGroupMixin(GroupMixin):
         self._load_egp()
 
     def unload(self):
-        self.spike_que_ptr = None
         self._spike_recording_data = None
         self._spike_event_recording_data = None
 
@@ -650,13 +606,11 @@ class SynapseGroupMixin(GroupMixin):
                     var_shape = _get_synapse_var_shape(
                         get_var_access_dim(v.access), 
                         self, self._model.batch_size)
-                    
-                    # Get view
-                    resolved_type = var_data.type.resolve(self._model.type_context)
-                    var_data._view = self._assign_ext_ptr_array(
-                        v.name, np.prod(var_shape), resolved_type)
 
-                    var_data._view = np.reshape(var_data._view, var_shape)
+                    # Set array from runtime
+                    var_data.set_array(
+                        self._model._runtime.get_array(self, v.name),
+                        var_shape)
 
                     # Initialise variable if necessary
                     self._init_wum_var(var_data)
@@ -915,12 +869,10 @@ class CustomUpdateWUMixin(GroupMixin):
                     get_var_access_dim(v.access, self._dims), 
                     self.synapse_group, batch_size)
                 
-                # Get view
-                resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data._view = self._assign_ext_ptr_array(
-                    v.name, np.prod(var_shape), resolved_type)
-
-                var_data._view = np.reshape(var_data._view, var_shape)
+                # Set array from runtime
+                var_data.set_array(
+                    self._model._runtime.get_array(self, v.name),
+                    var_shape)
 
                 # Initialise variable if necessary
                 self.synapse_group._init_wum_var(var_data)
@@ -988,13 +940,11 @@ class CustomConnectivityUpdateMixin(GroupMixin):
                     get_var_access_dim(v.access), 
                     self.synapse_group, 1)
 
-                resolved_type = var_data.type.resolve(self._model.type_context)
-                var_data._view = self._assign_ext_ptr_array(
-                    v.name, np.prod(var_shape), resolved_type)
-                
-                # **TODO** do this in assign_ext_ptr_array
-                var_data._view = np.reshape(var_data._view, var_shape)
-                
+                # Set array from runtime
+                var_data.set_array(
+                    self._model._runtime.get_array(self, v.name),
+                    var_shape)
+
                 # Initialise variable if necessary
                 self.synapse_group._init_wum_var(var_data)
 

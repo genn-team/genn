@@ -1,9 +1,13 @@
 // PyBind11 includes
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 // GeNN includes
 #include "runtime/runtime.h"
+
+// GeNN code generator includes
+#include "code_generator/modelSpecMerged.h"
 
 using namespace GeNN::Runtime;
 using namespace pybind11::literals;
@@ -37,6 +41,9 @@ PYBIND11_MODULE(runtime, m)
     // runtime.Runtime
     //------------------------------------------------------------------------
     pybind11::class_<Runtime>(m, "Runtime")
+        .def(pybind11::init<const std::string&, const GeNN::CodeGenerator::ModelSpecMerged&, 
+                            const GeNN::CodeGenerator::BackendBase&>())
+
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
@@ -60,20 +67,22 @@ PYBIND11_MODULE(runtime, m)
         .def("initialize_sparse", &Runtime::initializeSparse)
         .def("step_time", &Runtime::stepTime)
         //.def("custom_update", &Runtime::customUpdate)
+        
+        .def("get_array", pybind11::overload_cast<const GeNN::CurrentSource&, const std::string&>(&Runtime::getArray, pybind11::const_))
+        .def("get_array", pybind11::overload_cast<const GeNN::NeuronGroup&, const std::string&>(&Runtime::getArray, pybind11::const_))
+        .def("get_array", pybind11::overload_cast<const GeNN::SynapseGroup&, const std::string&>(&Runtime::getArray, pybind11::const_))
+        .def("get_array", pybind11::overload_cast<const GeNN::CustomUpdateBase&, const std::string&>(&Runtime::getArray, pybind11::const_))
+        .def("get_array", pybind11::overload_cast<const GeNN::CustomConnectivityUpdate&, const std::string&>(&Runtime::getArray, pybind11::const_))
+        
+        .def("allocate_array", pybind11::overload_cast<const GeNN::CurrentSource&, const std::string&, size_t>(&Runtime::allocateArray))
+        .def("allocate_array", pybind11::overload_cast<const GeNN::NeuronGroup&, const std::string&, size_t>(&Runtime::allocateArray))
+        .def("allocate_array", pybind11::overload_cast<const GeNN::SynapseGroup&, const std::string&, size_t>(&Runtime::allocateArray))
+        .def("allocate_array", pybind11::overload_cast<const GeNN::CustomUpdateBase&, const std::string&, size_t>(&Runtime::allocateArray))
+        .def("allocate_array", pybind11::overload_cast<const GeNN::CustomConnectivityUpdate&, const std::string&, size_t>(&Runtime::allocateArray))
+        
+        
         .def("pull_recording_buffers_from_device", &Runtime::pullRecordingBuffersFromDevice)
-        //.def("allocate_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&, unsigned int>(&SharedLibraryModel<T>::allocateExtraGlobalParam))
-        //.def("free_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&>(&SharedLibraryModel<T>::freeExtraGlobalParam))
-         /*.def("pull_state_from_device", &SharedLibraryModel<T>::pullStateFromDevice)
-        .def("pull_connectivity_from_device", &SharedLibraryModel<T>::pullConnectivityFromDevice)
-        .def("pull_var_from_device", &SharedLibraryModel<T>::pullVarFromDevice)
-        .def("pull_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&, unsigned int>(&SharedLibraryModel<T>::pullExtraGlobalParam))
-        .def("push_state_to_device", &SharedLibraryModel<T>::pushStateToDevice,
-            "pop_name"_a, "uninitialised_only"_a = false)
-        .def("push_connectivity_to_device", &SharedLibraryModel<T>::pushConnectivityToDevice,
-            "pop_name"_a, "uninitialised_only"_a = false)
-        .def("push_var_to_device", &SharedLibraryModel<T>::pushVarToDevice,
-            "pop_name"_a, "var_name"_a, "uninitialised_only"_a = false)
-        .def("push_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&, unsigned int>(&SharedLibraryModel<T>::pushExtraGlobalParam))*/
+
         .def("get_custom_update_time", &Runtime::getCustomUpdateTime)
         .def("get_custom_update_transpose_time", &Runtime::getCustomUpdateTransposeTime);
         /*.def("get_nccl_unique_id", 

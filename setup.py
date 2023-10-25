@@ -89,18 +89,19 @@ genn_extension_kwargs = {
 # for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
 if WIN:
     genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+# Otherwise, if this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
+# directories so libGeNN and backends can be found wherever package is installed
+elif LINUX:
+    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+    genn_extension_kwargs["libraries"].append("ffi")
 
 if coverage_build:
     if LINUX:
-        genn_extension_kwargs["extra_compile_args"].extend(["--coverage"])
-        genn_extension_kwargs["extra_link_args"].extend(["--coverage"])
+        genn_extension_kwargs["extra_compile_args"].append("--coverage")
+        genn_extension_kwargs["extra_link_args"].append("--coverage")
     elif MAC:
         genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-
-# On Linux, we want to add extension directory i.e. $ORIGIN to runtime
-# directories so libGeNN and backends can be found wherever package is installed
-if LINUX:
-    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+    
 
 # By default build single-threaded CPU backend
 backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
@@ -148,7 +149,7 @@ if opencl_installed:
                       "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
 
 ext_modules = [
-    Pybind11Extension("shared_library_model",
+    Pybind11Extension("runtime",
                       [os.path.join(pygenn_src, "runtime.cc")],
                       **genn_extension_kwargs),
     Pybind11Extension("genn",
