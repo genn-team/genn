@@ -691,7 +691,8 @@ class GeNNModel(ModelSpecInternal):
             pop_data.unload()
 
         # Close shared library model
-        self._slm.close()
+        assert False
+        #self._slm.close()
 
         # Clear loaded flag
         self._loaded = False
@@ -701,14 +702,14 @@ class GeNNModel(ModelSpecInternal):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before stepping")
 
-        self._slm.step_time()
+        self._runtime.step_time()
     
     def custom_update(self, name):
         """Perform custom update"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before performing custom update")
             
-        self._slm.custom_update(name)
+        self._runtime.custom_update(name)
    
 
     def pull_recording_buffers_from_device(self):
@@ -720,20 +721,7 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("Cannot pull recording buffer if recording system is not in use")
 
         # Pull recording buffers from device
-        self._slm.pull_recording_buffers_from_device()
-
-    def end(self):
-        """Free memory"""
-        for group in [self.neuron_populations, self.synapse_populations,
-                      self.current_sources, self.custom_connectivity_updates, 
-                      self.custom_updates]:
-            for g_name, g_dat in iteritems(group):
-                for egp_name, egp_dat in iteritems(g_dat.extra_global_params):
-                    # if auto allocation is not enabled, let the user care
-                    # about freeing of the EGP
-                    if egp_dat.needsAllocation:
-                        self._slm.free_extra_global_param(g_name, egp_name)
-        # "normal" variables are freed when SharedLibraryModel is destoyed
+        self._runtime.pull_recording_buffers_from_device()
 
     def _validate_neuron_group(self, group, context):
         # If group is a string
