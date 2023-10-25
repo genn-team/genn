@@ -84,7 +84,24 @@ PYBIND11_MODULE(runtime, m)
         .def("pull_recording_buffers_from_device", &Runtime::pullRecordingBuffersFromDevice)
 
         .def("get_custom_update_time", &Runtime::getCustomUpdateTime)
-        .def("get_custom_update_transpose_time", &Runtime::getCustomUpdateTransposeTime);
+        .def("get_custom_update_transpose_time", &Runtime::getCustomUpdateTransposeTime)
+        
+        .def("get_recorded_spikes", 
+             [](const Runtime &r, const GeNN::NeuronGroup &group)
+             {
+                 const auto spikes = r.getRecordedSpikes(group);
+                 const pybind11::array_t<double> times = pybind11::cast(spikes.first);
+                 const pybind11::array_t<int> ids = pybind11::cast(spikes.second);
+                 return std::make_pair(times, ids);
+             })
+        .def("get_recorded_spike_events", 
+             [](const Runtime &r, const GeNN::NeuronGroup &group)
+             {
+                 const auto spikes = r.getRecordedSpikeEvents(group);
+                 const pybind11::array_t<double> times = pybind11::cast(spikes.first);
+                 const pybind11::array_t<int> ids = pybind11::cast(spikes.second);
+                 return std::make_pair(times, ids);
+             });
         /*.def("get_nccl_unique_id", 
             [](SharedLibraryModel<T> &s) 
             { 

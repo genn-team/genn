@@ -66,6 +66,8 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     
     // Write ranges of scalar and time types
     const ModelSpecInternal &model = modelMerged.getModel();
+    genTypeRange(definitions, model.getPrecision(), "SCALAR");
+    genTypeRange(definitions, model.getTimePrecision(), "TIME");
 
     // Write runner preamble
     runner << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;

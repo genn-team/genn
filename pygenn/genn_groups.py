@@ -17,7 +17,8 @@ from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDim, VarLocation)
 from .genn import get_var_access_dim
-from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
+from .model_preprocessor import (prepare_model, Array, 
+                                 ExtraGlobalParameter, Variable)
 
 def _get_num_var_copies(var_dims, batch_size):
     if (var_dims & VarAccessDim.BATCH):
@@ -64,104 +65,58 @@ class GroupMixin(object):
         self.vars = {}
         self.extra_global_params = {}
 
+    @deprecated("Please call pull_from_device directly on variable")
     def pull_var_from_device(self, var_name):
         """Pull variable from the device for a given population
 
         Args:
         var_name    --  string with the name of the variable
         """
-        if not self._model._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
+        self.vars[var_name].pull_from_device()
 
-        self._model._slm.pull_var_from_device(self.name, var_name)
-
+    @deprecated("Please call pull_from_device directly on extra global parameter")
     def pull_extra_global_param_from_device(self, egp_name):
         """Pull extra global parameter from device
 
         Args:
         egp_name    --  string with the name of the variable
-        size        --  number of entries in EGP array
         """
-        self._pull_extra_global_param_from_device(egp_name)
+        self.extra_global_params[egp_name].pull_from_device()
 
-    def push_state_to_device(self):
-        """Push all population state variables to the device"""
-        if not self._model._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-        
-        self._model._slm.push_state_to_device(self.name)
-
+    @deprecated("Please call push_to_device directly on variable")
     def push_var_to_device(self, var_name):
         """Push population state variable to the device
 
         Args:
         var_name    --  string with the name of the variable
         """
-        self._model._slm.push_var_to_device(self.name, var_name)
+        self.vars[var_name].push_to_device()
 
+    @deprecated("Please call push_to_device directly on extra global parameter")
     def push_extra_global_param_to_device(self, egp_name):
         """Push extra global parameter to device
 
         Args:
         egp_name    --  string with the name of the variable
         """
-        self._push_extra_global_param_to_device(egp_name)
+        self.extra_global_params[egp_name].push_to_device()
 
-    def _assign_ext_ptr_array(self, var_name, var_size, var_type):
+    def _get_array(self, array_name, array_type, shape=None):
         """Assign a variable to an external numpy array
 
         Args:
         var_name    --  string a fully qualified name of the variable to assign
-        var_size    --  int the size of the variable
         var_type    --  ResolvedType object
 
         Returns numpy array of type var_type
 
         Raises ValueError if variable type is not supported
         """
-
-        # Get numpy data type corresponding to type
-        dtype = self._model.genn_types[var_type]
         
-        # Get dtype view of host memoryview
-        array = self._model._runtime.get_array(self, var_name)
-        view = np.asarray(array.host_view).view(dtype)
-        assert not view.flags["OWNDATA"]
-        return view
-
-    def _push_extra_global_param_to_device(self, egp_name, egp_dict=None):
-        """Wrapper around GeNNModel.push_extra_global_param_to_device
-
-        Args:
-        egp_name    --  string with the name of the variable
-        """
-        # If no extra global parameters dictionary
-        # is specified, use standard one
-        if egp_dict is None:
-            egp_dict = self.extra_global_params
-
-        # Retrieve EGP from dictionary
-        egp = egp_dict[egp_name]
-
-        self._model._slm.push_extra_global_param_to_device(self.name, egp_name,
-                                                           len(egp.values))
-
-    def _pull_extra_global_param_from_device(self, egp_name, egp_dict=None):
-        """Wrapper around GeNNModel.pull_extra_global_param_from_device
-
-        Args:
-        egp_name    --  string with the name of the variable
-        """
-        # If no extra global parameters dictionary
-        # is specified, use standard one
-        if egp_dict is None:
-            egp_dict = self.extra_global_params
-
-        # Retrieve EGP from dictionary
-        egp = egp_dict[egp_name]
-
-        self._model._slm.pull_extra_global_param_from_device(self.name, egp_name,
-                                                             len(egp.values))
+        array = Array(array_type, self)
+        array.set_array(self._model._runtime.get_array(self, array_name),
+                        shape)
+        return array
 
     def _load_vars(self, vars, get_shape_fn, var_dict=None,
                    get_location_fn=None):
@@ -206,8 +161,8 @@ class GroupMixin(object):
             resolved_type = egp_data.type.resolve(self._model.type_context)
             if egp_data.values is not None:
                 # Allocate memory
-                self._model._slm.allocate_extra_global_param(
-                    self.name, egp_name + egp_suffix, len(egp_data.values))
+                self._model._runtime.allocate_array(
+                    self, egp_name + egp_suffix, len(egp_data.values))
 
                 # Set array from runtime
                 egp_data.set_array(
@@ -217,8 +172,7 @@ class GroupMixin(object):
                 egp_data.view[:] = egp_data.values
 
                 # Push egp_data
-                self._model._slm.push_extra_global_param(
-                    self.name, egp_name + egp_suffix, len(egp_data.values))
+                egp_data.push_to_device()
 
     def _load_var_init_egps(self, var_dict=None):
         # If no variable dictionary is specified, use standard one
@@ -258,19 +212,17 @@ class NeuronGroupMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(NeuronGroupMixin, self)._init_group(model)
-        self._spike_recording_data = None
-        self._spike_event_recording_data = None
 
         self.vars, self.extra_global_params = prepare_model(
             self.neuron_model, self, var_space)
 
     @property
     def spike_recording_data(self):
-        return self._get_event_recording_data(True)
+        return self._model._runtime.get_recorded_spikes(self)
 
     @property
     def spike_event_recording_data(self):
-        return self._get_event_recording_data(False)
+        return self._model._runtime.get_recorded_spike_events(self)
 
     @property
     def size(self):
@@ -280,26 +232,6 @@ class NeuronGroupMixin(GroupMixin):
         """Loads neuron group"""
         # If spike data is present on the host
         batch_size = self._model.batch_size
-
-        # If spike recording is enabled
-        if self.spike_recording_enabled:
-            # Calculate spike recording words
-            recording_words = (self._event_recording_words * num_recording_timesteps 
-                               * batch_size)
-
-            # Assign pointer to recording data
-            self._spike_recording_data = self._assign_ext_ptr_array(
-                "recordSpk", recording_words, types.Uint32)
-
-        # If spike-event recording is enabled
-        if self.spike_event_recording_enabled:
-            # Calculate spike recording words
-            recording_words = (self._event_recording_words * num_recording_timesteps 
-                               * batch_size)
-
-            # Assign pointer to recording data
-            self._spike_event_recording_data = self._assign_ext_ptr_array(
-                "recordSpkEvent", recording_words, types.Uint32)
 
         # Load neuron state variables
         # **TODO** delay slots
@@ -313,71 +245,12 @@ class NeuronGroupMixin(GroupMixin):
         self._load_egp()
 
     def unload(self):
-        self._spike_recording_data = None
-        self._spike_event_recording_data = None
-
         self._unload_vars()
         self._unload_egps()
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
-
-    @property
-    def _event_recording_words(self):
-        return ((self.size + 31) // 32)
-        
-    def _get_event_time_view(self, name):
-        # Get view
-        batch_size = self._model.batch_size
-        view = self._assign_ext_ptr_array(
-            name, self.size * self.num_delay_slots * batch_size,
-            self._model.time_precision)
-
-        # Reshape to expose delay slots and batches
-        view = np.reshape(view, (batch_size, self.num_delay_slots,
-                                 self.size))
-        return view
-
-    def _get_event_recording_data(self, true_spike):
-        # Get byte view of data
-        recording_data = (self._spike_recording_data if true_spike 
-                          else self._spike_event_recording_data)
-        data_bytes = recording_data.view(dtype=np.uint8)
-
-        # Reshape view into a tensor with time, batches and recording bytes
-        event_recording_bytes = self._event_recording_words * 4
-        data_bytes = np.reshape(data_bytes, (-1, self._model.batch_size, 
-                                                event_recording_bytes))
-
-        # Calculate start time of recording
-        start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dt
-        if start_time_ms < 0.0:
-            raise Exception("spike_recording_data can only be "
-                            "accessed once buffer is full.")
-
-        # Unpack data (results in one byte per bit)
-        # **THINK** is there a way to avoid this step?
-        data_unpack = np.unpackbits(data_bytes, axis=2, 
-                                    count=self.size,
-                                    bitorder="little")
-
-        # Loop through batches
-        event_data = []
-        for b in range(self._model.batch_size):
-            # Calculate indices where there are events
-            events = np.where(data_unpack[:,b,:] == 1)
-
-            # Convert event times to ms
-            event_times = start_time_ms + (events[0] * self._model.dt)
-
-            # Add to list
-            event_data.append((event_times, events[1]))
-
-        # If batch size is 1, return 1st population's events otherwise list
-        # **TODO** API fiddling
-        return event_data[0] if self._model.batch_size == 1 else event_data
-
 
 class SynapseGroupMixin(GroupMixin):
 
@@ -471,7 +344,8 @@ class SynapseGroupMixin(GroupMixin):
         ndarray of presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            rl = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
+            rl = (self._row_lengths.view if self._connectivity_initialiser_provided
+                  else self.row_lengths)
 
             if rl is None:
                 raise Exception("problem accessing connectivity ")
@@ -504,46 +378,52 @@ class SynapseGroupMixin(GroupMixin):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind[i * self.max_connections: (i * self.max_connections) + r]
-                        for i, r in enumerate(self._row_lengths)])
+                    self._ind.view[i * self.max_connections: (i * self.max_connections) + r]
+                        for i, r in enumerate(self._row_lengths.view)])
 
         else:
             raise Exception("get_sparse_post_inds only supports"
                             "ragged format sparse connectivity")
 
     def pull_connectivity_from_device(self):
-        """Wrapper around GeNNModel.pull_connectivity_from_device"""
-        self._model._slm.pull_connectivity_from_device(self.name)
+        """Pull extra variables associated with connectivity from device"""
+        if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
+            self._ind.pull_from_device()
+            self._row_lengths.pull_from_device()
 
     def push_connectivity_to_device(self):
-        """Wrapper around GeNNModel.push_connectivity_to_device"""
-        self._model._slm.push_connectivity_to_device(self.name)
+        """Push extra variables associated with connectivity to device"""
+        if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
+            self._ind.push_to_device()
+            self._row_lengths.push_to_device()
     
+    @deprecated("Please call pull_from_device directly on out_post")
     def pull_in_syn_from_device(self):
         """Pull synaptic input current from device"""
-        self.pull_var_from_device("outPost")
-
+        self.out_post.pull_from_device()
+    
+    @deprecated("Please call push_to_device directly on out_post")
     def push_in_syn_to_device(self):
         """Push synaptic input current to device"""
-        self.push_var_to_device("outPost")
-        
+        self.out_post.push_to_device()
+
+    @deprecated("Please call pull_from_device directly on extra global parameter")
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         egp_name    --  string with the name of the variable
         """
-        self._pull_extra_global_param_from_device(
-            egp_name, size, egp_dict=self.psm_extra_global_params)
+        self.psm_extra_global_params[egp_name].pull_from_device()
 
+    @deprecated("Please call push_to_device directly on extra global parameter")
     def push_psm_extra_global_param_to_device(self, egp_name):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
         Args:
         egp_name    --  string with the name of the variable
         """
-        self._push_extra_global_param_to_device(
-            egp_name, self.psm_extra_global_params)
+        self.psm_extra_global_params[egp_name].push_to_device()
 
     def load(self):
         # If synapse population has non-dense connectivity
@@ -554,20 +434,14 @@ class SynapseGroupMixin(GroupMixin):
                 conn_loc = self.sparse_connectivity_location
                 if conn_loc & VarLocation.HOST:
                     # Get pointers to ragged data structure members
-                    ind = self._assign_ext_ptr_array("ind",
-                                                     self.weight_update_var_size,
-                                                     self._sparse_ind_type)
-                    row_length = self._assign_ext_ptr_array("rowLength",
-                                                            self.src.size,
-                                                            types.Uint32)
-                    # add pointers to the object
-                    self._ind = ind
-                    self._row_lengths = row_length
+                    self._ind = self._get_array("ind", self._sparse_ind_type)
+                    self._row_lengths = self._get_array("rowLength",
+                                                        types.Uint32)
 
                     # If data is available
                     if self.connections_set:
                         # Copy in row length
-                        row_length[:] = self.row_lengths
+                        self._row_lengths.view[:] = self.row_lengths
 
                         # Create (x)range containing the index where each row starts in ind
                         row_start_idx = xrange(0, self.weight_update_var_size,
@@ -577,7 +451,7 @@ class SynapseGroupMixin(GroupMixin):
                         syn = 0
                         for i, r in zip(row_start_idx, self.row_lengths):
                             # Copy row from non-padded indices into correct location
-                            ind[i:i + r] = self.ind[syn:syn + r]
+                            self._ind.view[i:i + r] = self.ind[syn:syn + r]
                             syn += r
                     elif not self._connectivity_initialiser_provided:
                         raise Exception("For sparse projections, the connections"
@@ -655,14 +529,10 @@ class SynapseGroupMixin(GroupMixin):
                 
             # If it's inSyn is accessible on the host
             if self.in_syn_location & VarLocation.HOST:
-                # Get view
-                self.out_post = self._assign_ext_ptr_array(
-                    "outPost", self.trg.size * self._model.batch_size,
-                    self._model.precision)
-
-                # Reshape to expose batches
-                self.out_post = np.reshape(self.out_post, (self._model.batch_size,
-                                                           self.trg.size))
+                # Get array
+                self.out_post = self._get_array(
+                    "outPost", self._model.precision,
+                    (self._model.batch_size, self.trg.size))
 
         # Load extra global parameters
         self._load_egp()
@@ -710,7 +580,8 @@ class SynapseGroupMixin(GroupMixin):
             return np.copy(var_view)
         elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             max_rl = self.max_connections
-            row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
+            row_ls = (self._row_lengths.view if self._connectivity_initialiser_provided 
+                      else self.row_lengths)
 
             # Create range containing the index where each row starts in ind
             row_start_idx = xrange(0, self.weight_update_var_size, max_rl)

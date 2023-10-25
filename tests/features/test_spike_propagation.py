@@ -213,7 +213,7 @@ def test_forward(backend, precision):
         # Loop through output populations
         for pop in output_populations:
             # Pull state variable
-            pop.pull_var_from_device("x")
+            pop.vars["x"].pull_from_device()
 
             # Convert to binary mask
             output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
@@ -284,7 +284,7 @@ def test_forward_den_delay(backend, precision):
         correct = 10.0 if model.timestep == 11 else 0.0
         for pop in output_populations:
             # Pull state variable
-            pop.pull_var_from_device("x")
+            pop.vars["x"].pull_from_device()
 
             # If not close to correct value, error
             if not np.isclose(pop.vars["x"].view[0], correct):
@@ -337,7 +337,7 @@ def test_forward_procedural(backend, precision):
         # Loop through output populations
         for pop in output_populations:
             # Pull state variable
-            pop.pull_var_from_device("x")
+            pop.vars["x"].pull_from_device()
 
             # Convert to binary mask
             output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
@@ -427,10 +427,10 @@ def test_forward_kernel(backend, precision):
     model.step_time()
     
     # Download output variables from device
-    post_toeplitz_horiz_pop.pull_var_from_device("x")
-    post_toeplitz_vert_pop.pull_var_from_device("x")
-    post_sparse_horiz_pop.pull_var_from_device("x")
-    post_sparse_vert_pop.pull_var_from_device("x")
+    post_toeplitz_horiz_pop.vars["x"].pull_from_device()
+    post_toeplitz_vert_pop.vars["x"].pull_from_device()
+    post_sparse_horiz_pop.vars["x"].pull_from_device()
+    post_sparse_vert_pop.vars["x"].pull_from_device()
 
     # Check against correct convolutions
     correct_horizontal = np.load("horizontal_output.npy") 
@@ -496,8 +496,8 @@ def test_forward_kernel_procedural(backend, precision):
     model.step_time()
     
     # Download output variables from device
-    post_horiz_pop.pull_var_from_device("x")
-    post_vert_pop.pull_var_from_device("x")
+    post_horiz_pop.vars["x"].pull_from_device()
+    post_vert_pop.vars["x"].pull_from_device()
     
     # Check against correct convolutions
     assert np.allclose(post_horiz_pop.vars["x"].view, 
@@ -594,8 +594,8 @@ def test_reverse(backend, precision):
     while model.timestep < 16:
         model.step_time()
         
-        pre_n_pop.pull_var_from_device("x")
-        pre_pre_n_pop.pull_var_from_device("x")
+        pre_n_pop.vars["x"].pull_from_device()
+        pre_pre_n_pop.vars["x"].pull_from_device()
         
         assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
@@ -679,7 +679,7 @@ def test_reverse_post(backend, precision):
         # Loop through output populations
         for pop in output_populations:
             # Pull state variable
-            pop.pull_var_from_device("x")
+            pop.vars["x"].pull_from_device("x")
 
             # Convert to binary mask
             output_binary = np.isclose(np.ones(4), pop.vars["x"].view)

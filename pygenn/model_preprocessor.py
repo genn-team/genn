@@ -8,7 +8,7 @@ from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iteritems, iterkeys, itervalues, string_types
 
-from .genn import VarInit
+from .genn import ResolvedType, VarInit
 from .init_var_snippets import Uninitialised
 
 def prepare_model(model, group, var_space):
@@ -93,7 +93,45 @@ def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     else:
         raise Exception("Invalid snippet")
 
-class Variable(object):
+class Array:
+    def __init__(self, variable_type, group):
+        self.type = variable_type
+        self.group = group if type(group) in ProxyTypes else proxy(group)
+        self._view = None
+        self._array = None
+    
+    def set_array(self, array, view_shape=None):
+        self._array = array
+        
+        # Get numpy data type corresponding to type
+        model = self.group._model
+        resolved_type = (self.type if isinstance(self.type, ResolvedType)
+                         else self.type.resolve(model.type_context))
+        dtype = model.genn_types[resolved_type]
+        
+        # Get dtype view of host memoryview
+        self._view = np.asarray(array.host_view).view(dtype)
+        assert not self._view.flags["OWNDATA"]
+
+        # Reshape view if shape is provided
+        if view_shape is not None:
+            self._view = np.reshape(self._view, view_shape)
+
+    def push_to_device(self):
+        self._array.push_to_device()
+
+    def pull_from_device(self):
+        self._array.pull_from_device()
+
+    def _unload(self):
+        self._view = None
+        self._array = None
+
+    @property
+    def view(self):
+        return self._view
+
+class Variable(Array):
 
     """Class holding information about GeNN variables"""
 
@@ -107,11 +145,9 @@ class Variable(object):
         group           -- pygenn.genn_groups.Group this  
                            variable is associated with
         """
+        super(Variable, self).__init__(variable_type, group)
+        
         self.name = variable_name
-        self.type = variable_type
-        self.group = proxy(group)
-        self._view = None
-        self._array = None
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
@@ -156,36 +192,13 @@ class Variable(object):
             except TypeError:
                 self.extra_global_params = {}
 
-    def set_array(self, array, view_shape):
-        self._array = array
-        
-        # Get numpy data type corresponding to type
-        model = self.group._model
-        resolved_type = self.type.resolve(model.type_context)
-        dtype = model.genn_types[resolved_type]
-        
-        # Get dtype view of host memoryview
-        self._view = np.asarray(array.host_view).view(dtype)
-        assert not self._view.flags["OWNDATA"]
-
-        # Reshape view if shape is provided
-        if view_shape is not None:
-            self._view = np.reshape(self._view, view_shape)
-
     def _unload(self):
-        self._view = None
+        super(Variable, self)._unload()
         for e in itervalues(self.extra_global_params):
             e._unload()
 
-    @property
-    def array(self):
-        return self._array
 
-    @property
-    def view(self):
-        return self._view
-
-class ExtraGlobalParameter(object):
+class ExtraGlobalParameter(Array):
 
     """Class holding information about GeNN extra global parameter"""
 
@@ -201,11 +214,8 @@ class ExtraGlobalParameter(object):
         Keyword args:
         values          --  iterable
         """
-        self.type = variable_type
-        self.group = group if type(group) in ProxyTypes else proxy(group)
+        super(ExtraGlobalParameter, self).__init__(variable_type, group)
         self.name = variable_name
-        self._view = None
-        self._array = None
         self.set_values(values)
 
     def set_values(self, values):
@@ -225,26 +235,3 @@ class ExtraGlobalParameter(object):
             except TypeError:
                 raise ValueError("extra global variables can only be "
                                  "initialised with iterables")
-
-    def set_array(self, array):
-        self._array = array
-        
-        # Get numpy data type corresponding to type
-        model = self.group._model
-        resolved_type = self.type.resolve(model.type_context)
-        dtype = model.genn_types[resolved_type]
-        
-        # Get dtype view of host memoryview
-        self._view = np.asarray(array.host_view).view(dtype)
-        assert not self._view.flags["OWNDATA"]
-
-    def _unload(self):
-        self._view = None
-
-    @property
-    def array(self):
-        return self._array
-
-    @property
-    def view(self):
-        return self._view
