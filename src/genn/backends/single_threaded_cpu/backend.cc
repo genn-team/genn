@@ -1043,16 +1043,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
-                    // If matrix connectivity is ragged
-                    if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        // Zero row lengths
-                        groupEnv.printLine("std::fill_n($(_row_length), $(num_pre), 0);");
-                    }
-                    else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        groupEnv.printLine("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);");
-                        groupEnv.printLine("std::fill($(_gp), gpSize, 0);");
-                    }
-                    else {
+                    // If matrix connectivity is neither sparse or bitmask, give error
+                    if(!(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                       && !(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) 
+                    {
                         throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                     }
 
@@ -1187,12 +1181,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
-
-                    // If postsynaptic learning is required, initially zero column lengths
-                    if (!Utils::areTokensEmpty(s.getArchetype().getWUPostLearnCodeTokens())) {
-                        groupEnv.getStream() << "// Zero column lengths" << std::endl;
-                        groupEnv.printLine("std::fill_n($(_col_length), $(num_post), 0);");
-                    }
 
                     groupEnv.printLine("// Loop through presynaptic neurons");
                     groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");

@@ -56,6 +56,11 @@ size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend
 //--------------------------------------------------------------------------
 namespace GeNN::Runtime
 {
+void ArrayBase::memsetHostPointer(int value)
+{
+    std::memset(m_HostPointer, value, getSizeBytes());
+}
+//--------------------------------------------------------------------------
 void ArrayBase::serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const
 {
     std::byte vBytes[sizeof(void*)];
@@ -299,6 +304,17 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             const size_t gpSize = ceilDivide((size_t)numPre * rowStride, 32);
             createArray(&s.second, "gp", Type::Uint32, gpSize,
                         s.second.getSparseConnectivityLocation(), uninitialized);
+            
+            // If this isn't uninitialised i.e. it will be 
+            // initialised using initialization kernel, zero bitmask
+            if(!uninitialized) {
+                if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                    getArray(s.second, "gp")->memsetDeviceObject(0);
+                }
+                else {
+                    getArray(s.second, "gp")->memsetHostPointer(0);
+                }
+            }
         }
         // Otherwise, if connectivity is sparse
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -309,9 +325,20 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             // Target indices
             createArray(&s.second, "ind", s.second.getSparseIndType(), numPre * rowStride,
                         s.second.getSparseConnectivityLocation(), uninitialized);
-        
+            
+            // If this isn't uninitialised i.e. it will be 
+            // initialised using initialization kernel, zero row length
+            if(!uninitialized) {
+                if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                    getArray(s.second, "rowLength")->memsetDeviceObject(0);
+                }
+                else {
+                    getArray(s.second, "rowLength")->memsetHostPointer(0);
+                }
+            }
+
             // **TODO** remap is not always required
-            if(m_Backend.get().isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
+            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
                 // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();
@@ -319,6 +346,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 
                 // Create remap array
                 createArray(&s.second, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
+
+                // Zero column length array
+                if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                    getArray(s.second, "colLength")->memsetDeviceObject(0);
+                }
+                else {
+                    getArray(s.second, "colLength")->memsetHostPointer(0);
+                }
             }
         }
 

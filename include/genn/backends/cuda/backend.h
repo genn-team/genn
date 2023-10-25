@@ -134,6 +134,9 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() final;
 
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int value) final;
+
     //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
 

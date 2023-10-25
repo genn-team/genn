@@ -79,6 +79,9 @@ public:
     //! Copy array from device
     virtual void pullFromDevice() = 0;
 
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int value) = 0;
+
     //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
 
@@ -100,6 +103,9 @@ public:
 
     template<typename T>
     T *getHostPointer() const{ return reinterpret_cast<T*>(m_HostPointer); }
+
+    //! Memset the host pointer
+    void memsetHostPointer(int value);
 
     //! Serialise host pointer to bytes
     void serialiseHostPointer(std::vector<std::byte> &bytes, bool pointerToPointer) const;

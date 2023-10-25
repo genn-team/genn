@@ -268,6 +268,11 @@ void Array::pullFromDevice()
     }
 }
 //--------------------------------------------------------------------------
+void Array::memsetDeviceObject(int value)
+{
+    CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+}
+//--------------------------------------------------------------------------
 void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
 {
     std::byte vBytes[sizeof(void*)];
@@ -315,10 +320,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
         // Set map host device flag
         CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));
     }
-
-    // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
-    
-    //addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -1012,28 +1013,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
             if (globalDeviceRNGRequired) {
                 initEnv.getStream() << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
                 initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-            }
-        }
-
-        // Loop through all synapse groups
-        // **TODO** this logic belongs in BackendSIMT
-        // **TODO** apply merging to this process - large models could generate thousands of lines of code here
-        for(const auto &s : model.getSynapseGroups()) {
-            // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
-            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-            }
-            
-            // If this synapse population has SPARSE connectivity and column-based on device connectivity, insert a call to cudaMemset to zero row lengths
-            // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !Utils::areTokensEmpty(s.second.getConnectivityInitialiser().getColBuildCodeTokens())) {
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_rowLength" << s.first << ", 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-
-            // If this synapse population has SPARSE connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
             }
         }
 

@@ -60,7 +60,12 @@ public:
     virtual void pullFromDevice() final
     {
     }
-
+    
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int) final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
 
     //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
