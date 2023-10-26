@@ -150,6 +150,7 @@ public:
     Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
             const CodeGenerator::BackendBase &backend);
     Runtime(const Runtime&) = delete;
+    Runtime(Runtime&&) = delete;
     ~Runtime();
 
     //----------------------------------------------------------------------------
