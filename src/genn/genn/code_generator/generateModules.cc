@@ -250,6 +250,7 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend);
 
             // Generate merged synapse connectivity host init code
             // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT

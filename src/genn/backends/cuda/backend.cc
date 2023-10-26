@@ -886,12 +886,14 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
     
     // Generate preamble
     preambleHandler(os);
