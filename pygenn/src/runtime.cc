@@ -66,7 +66,7 @@ PYBIND11_MODULE(runtime, m)
         .def("initialize", &Runtime::initialize)
         .def("initialize_sparse", &Runtime::initializeSparse)
         .def("step_time", &Runtime::stepTime)
-        //.def("custom_update", &Runtime::customUpdate)
+        .def("custom_update", &Runtime::customUpdate)
         
         .def("get_array", pybind11::overload_cast<const GeNN::CurrentSource&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
         .def("get_array", pybind11::overload_cast<const GeNN::NeuronGroup&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)

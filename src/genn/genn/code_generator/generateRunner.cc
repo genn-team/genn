@@ -312,7 +312,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     
     // Generate function definitions for each custom update
     for(const auto &g : customUpdateGroups) {
-        definitions << "EXPORT_FUNC void update" << g << "();" << std::endl;
+        definitions << "EXPORT_FUNC void update" << g << "(unsigned long long timestep);" << std::endl;
     }
     definitions << std::endl;
 

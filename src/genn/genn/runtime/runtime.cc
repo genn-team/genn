@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <fstream>
+#include <unordered_set>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -109,6 +110,26 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
         m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
         m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
         m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);*/
+
+        // Build set of custom update group names
+        std::unordered_set<std::string> customUpdateGroupNames;
+        std::transform(getModel().getCustomUpdates().cbegin(), getModel().getCustomUpdates().cend(),
+                       std::inserter(customUpdateGroupNames, customUpdateGroupNames.end()),
+                       [](const auto &v) { return v.second.getUpdateGroupName(); });
+        std::transform(getModel().getCustomWUUpdates().cbegin(), getModel().getCustomWUUpdates().cend(),
+                       std::inserter(customUpdateGroupNames, customUpdateGroupNames.end()),
+                       [](const auto &v) { return v.second.getUpdateGroupName(); });
+        std::transform(getModel().getCustomConnectivityUpdates().cbegin(), getModel().getCustomConnectivityUpdates().cend(),
+                       std::inserter(customUpdateGroupNames, customUpdateGroupNames.end()),
+                       [](const auto &v) { return v.second.getUpdateGroupName(); });
+
+        // Get function pointers to custom update functions for each group
+        std::transform(customUpdateGroupNames.cbegin(), customUpdateGroupNames.cend(), 
+                       std::inserter(m_CustomUpdateFunctions, m_CustomUpdateFunctions.end()),
+                       [this](const auto &n)
+                       { 
+                           return std::make_pair(n, (CustomUpdateFunction)getSymbol("update" + n)); 
+                       });
     }
     else {
 #ifdef _WIN32

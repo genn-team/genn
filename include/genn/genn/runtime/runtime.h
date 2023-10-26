@@ -168,6 +168,12 @@ public:
     //! Simulate one timestep
     void stepTime();
 
+    //! Perform named custom update
+    void customUpdate(const std::string &name)
+    { 
+        m_CustomUpdateFunctions.at(name)(getTimestep());
+    }
+
     //! Get current simulation timestep
     uint64_t getTimestep() const{ return m_Timestep; }
 
@@ -311,6 +317,7 @@ private:
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
     typedef void (*StepTimeFunction)(unsigned long long, unsigned long long);
+    typedef void (*CustomUpdateFunction)(unsigned long long);
 
     //! Map of arrays to their locations within merged structures
     // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
@@ -581,6 +588,9 @@ private:
 
     //! Delay queue pointers associated with neuron group names
     std::unordered_map<std::string, unsigned int> m_DelayQueuePointer;
+
+    //! Functions to perform custom updates
+    std::unordered_map<std::string, CustomUpdateFunction> m_CustomUpdateFunctions;
 
     //! Map containing mapping of dynamic arrays to their locations within merged groups
     MergedDynamicArrayMap m_MergedDynamicArrays;
