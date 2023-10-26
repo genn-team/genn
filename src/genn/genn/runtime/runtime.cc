@@ -281,16 +281,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
         if (individualWeights || kernelWeights) {
-            for(const auto &var : s.second.getWUModel()->getVars()) {
-                const auto &varInit = s.second.getWUVarInitialisers().at(var.name);
-                const bool uninitialized = Utils::areTokensEmpty(varInit.getCodeTokens());
-                const auto resolvedType = var.type.resolve(getModel().getTypeContext());
-                const auto varDims = getVarAccessDim(var.access);
-                const size_t numVarCopies = (varDims & VarAccessDim::BATCH) ? batchSize : 1;
-                const size_t numVarElements = getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
-                createArray(&s.second, var.name, resolvedType, numVarCopies * numVarElements,
-                            s.second.getWUVarLocation(var.name), uninitialized);
-            }
+            createVarArrays<SynapseWUVarAdapter>(
+                &s.second, batchSize, true, 
+                [&s, this](const std::string&, VarAccessDim varDims)
+                {
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
+                });
         }
 
         // If connectivity is bitmask
@@ -381,12 +377,41 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Allocate custom update variables
     for(const auto &c : getModel().getCustomUpdates()) {
         createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
-                                                   c.second.getDims() & VarAccessDim::BATCH);
+                                                      c.second.getDims() & VarAccessDim::BATCH);
     }
 
-    // **TODO** custom update WU
+    // Allocate custom update WU variables
+    for(const auto &c : getModel().getCustomWUUpdates()) {
+        createVarArrays<CustomUpdateVarAdapter>(
+                &c.second, batchSize, (c.second.getDims() & VarAccessDim::BATCH), 
+                [&c, this](const std::string&, VarAccessDim varDims)
+                {
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), 
+                                                    *c.second.getSynapseGroup());
+                });
+    }
 
-    // **TODO** custom connectivity update
+    // Loop through custom connectivity update variables
+    for(const auto &c : getModel().getCustomConnectivityUpdates()) {
+        // Allocate presynaptic variables
+        createNeuronVarArrays<CustomConnectivityUpdatePreVarAdapter>(
+            &c.second, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(),
+            batchSize, 1, false);
+        
+        // Allocate postsynaptic variables
+        createNeuronVarArrays<CustomConnectivityUpdatePostVarAdapter>(
+            &c.second, c.second.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(),
+            batchSize, 1, false);
+
+        // Allocate variables
+        createVarArrays<CustomConnectivityUpdateVarAdapter>(
+                &c.second, batchSize, false, 
+                [&c, this](const std::string&, VarAccessDim varDims)
+                {
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), 
+                                                    *c.second.getSynapseGroup());
+                });
+    }
     
     // Push merged synapse host connectivity initialisation groups 
     for(const auto &m : m_ModelMerged.get().getMergedSynapseConnectivityHostInitGroups()) {

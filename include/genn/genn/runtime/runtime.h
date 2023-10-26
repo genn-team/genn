@@ -407,17 +407,8 @@ private:
         }
     }
 
-    //! Helper to create arrays for neuron state variables
-    /*! \tparam A               Adaptor class used to access 
-        \tparam G               Type of group variables are associated with
-        \param group            Group array is to be associatd with
-        \param numNeuron        Number of neurons in group
-        \param batchSize        Batch size of model
-        \param numDelaySlots    Number of delay slots in group
-        \param batched          Should these variables ever be batched*/
-    template<typename A, typename G>
-    void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
-                               size_t numDelaySlots, bool batched)
+    template<typename A, typename G, typename S>
+    void createVarArrays(const G *group, size_t batchSize, bool batched, S getSizeFn)
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
@@ -427,9 +418,8 @@ private:
             const auto varDims = adaptor.getVarDims(var);
 
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
-            const size_t numVarElements = (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
-            const size_t numVarDelaySlots = adaptor.isVarDelayed(var.name) ? numDelaySlots : 1;
-            createArray(group, var.name, resolvedType, numVarCopies * numVarElements * numVarDelaySlots,
+            const size_t varSize = getSizeFn(var.name, varDims);
+            createArray(group, var.name, resolvedType, numVarCopies * varSize,
                         adaptor.getLoc(var.name), uninitialized);
 
             // Loop through EGPs required to initialize neuron variable and create
@@ -438,6 +428,31 @@ private:
                 createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);
             }
         }
+    }
+
+    //! Helper to create arrays for neuron state variables
+    /*! \tparam A               Adaptor class used to access 
+        \tparam G               Type of group variables are associated with
+        \param group            Group array is to be associatd with
+        \param numNeurons       Number of neurons in group
+        \param batchSize        Batch size of model
+        \param numDelaySlots    Number of delay slots in group
+        \param batched          Should these variables ever be batched*/
+    template<typename A, typename G>
+    void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
+                               size_t numDelaySlots, bool batched)
+    {
+        A adaptor(*group);
+        createVarArrays<A>(
+            group, batchSize, batched,
+            [&adaptor, group, numDelaySlots, numNeurons]
+            (const std::string &varName, VarAccessDim varDims)
+            {
+                const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;
+                const size_t numElements = ((varDims & VarAccessDim::NEURON) ? numNeurons : 1);
+                return numVarDelaySlots * numElements;
+            });
+                  
     }
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
