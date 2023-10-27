@@ -267,7 +267,8 @@ public:
     }*/
 
     template<typename T>
-    void genDynamicFieldPush(CodeStream &os, const std::vector<T> &groups, const BackendBase &backend) const
+    void genDynamicFieldPush(CodeStream &os, const std::vector<T> &groups, 
+                             const BackendBase &backend, bool host = false) const
     {
         // Loop through merged groups
         for(size_t g = 0; g < groups.size(); g++) {
@@ -283,7 +284,12 @@ public:
                     os << "void pushMerged" << T::name << g << std::get<1>(f) << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value)";
                     {
                         CodeStream::Scope b(os);
-                        backend.genMergedDynamicVariablePush(os, T::name, g, "idx", std::get<1>(f), "value");
+                        if(host) {
+                            os << "merged" << T::name << "Group" << g << "[idx]." << std::get<1>(f) << " = value;" << std::endl;
+                        }
+                        else {
+                            backend.genMergedDynamicVariablePush(os, T::name, g, "idx", std::get<1>(f), "value");
+                        }
                     }
                 }
             }

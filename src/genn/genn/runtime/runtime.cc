@@ -399,6 +399,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     for(const auto &c : getModel().getCustomUpdates()) {
         createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
                                                       c.second.getDims() & VarAccessDim::BATCH);
+        // Create arrays for custom update extra global parameters
+        createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
     }
 
     // Allocate custom update WU variables
@@ -410,6 +412,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                     return getNumSynapseVarElements(varDims, m_Backend.get(), 
                                                     *c.second.getSynapseGroup());
                 });
+        
+        // Create arrays for custom update extra global parameters
+        createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
     }
 
     // Loop through custom connectivity update variables
@@ -433,6 +438,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                                                     *c.second.getSynapseGroup());
                 });
         
+        // Create arrays for custom connectivity update extra global parameters
+        createEGPArrays<CustomConnectivityUpdateEGPAdapter>(&c.second);
+
         // If custom connectivity update group needs per-row RNGs
         if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
             auto rng = m_Backend.get().createPopulationRNG(

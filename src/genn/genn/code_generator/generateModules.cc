@@ -199,6 +199,7 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend, true);
         });
 }
 //--------------------------------------------------------------------------
@@ -250,7 +251,6 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
-            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend);
 
             // Generate merged synapse connectivity host init code
             // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
