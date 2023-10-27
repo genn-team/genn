@@ -803,14 +803,20 @@ void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string 
     // Allocate array
     array->allocate(count);
 
-    // Serialise device object if backend requires it
-    std::vector<std::byte> arrayData;
+    // Serialise host pointer
+    std::vector<std::byte> serialisedHostPointer;
+    array->serialiseHostPointer(serialisedHostPointer, false);
+
+    // If backend requires it, serialise device object
+    std::vector<std::byte> serialisedDeviceObject;
     if(m_Backend.get().isArrayDeviceObjectRequired()) {
-        array->serialiseDeviceObject(arrayData, false);
+        array->serialiseDeviceObject(serialisedDeviceObject, false);
     }
-    // Otherwise, host pointer
-    else {
-        array->serialiseHostPointer(arrayData, false);
+    
+    // If backend requires it, serialise host object
+    std::vector<std::byte> serialisedHostObject;
+    if(m_Backend.get().isArrayHostObjectRequired()) {
+        array->serialiseHostObject(serialisedHostObject, false);
     }
 
     // Build FFI arguments
@@ -836,7 +842,27 @@ void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string 
 
         // Call function
         unsigned int groupIndex = d.second.groupIndex;
-        void *argumentPointers[2]{&groupIndex, arrayData.data()};
+        void *argumentPointers[2]{&groupIndex, nullptr};
+        if(d.second.fieldType & GroupMergedFieldType::HOST) {
+            assert(!serialisedHostPointer.empty());
+            argumentPointers[1] = serialisedHostPointer.data();
+        }
+        else if(d.second.fieldType & GroupMergedFieldType::HOST_OBJECT) {
+            assert(!serialisedHostObject.empty());
+            argumentPointers[1] = serialisedHostObject.data();
+        }
+        // Serialise device object if backend requires it
+        else {
+            if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                assert(!serialisedDeviceObject.empty());
+                argumentPointers[1] = serialisedDeviceObject.data();
+            }
+            // Otherwise, host pointer
+            else {
+                assert(!serialisedHostPointer.empty());
+                argumentPointers[1] = serialisedHostPointer.data();
+            }
+        }
         ffi_call(&cif, FFI_FN(pushFunction), nullptr, argumentPointers);
     }
 }

@@ -283,20 +283,21 @@ private:
     //! with dynamic values i.e. those that can be modified at runtime
     struct DynamicField
     {
-        DynamicField(size_t m, const Type::ResolvedType &t, const std::string &f, bool h)
-        :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
+        DynamicField(size_t m, const Type::ResolvedType &t, const std::string &f,
+                     CodeGenerator::GroupMergedFieldType g)
+        :   mergedGroupIndex(m), type(t), fieldName(f), fieldType(g) {}
 
         size_t mergedGroupIndex;
         Type::ResolvedType type;
         std::string fieldName;
-        bool hostGroup;
+        CodeGenerator::GroupMergedFieldType fieldType;
 
         //! Less than operator (used for std::set::insert), 
         //! lexicographically compares all three struct members
         bool operator < (const DynamicField &other) const
         {
-            return (std::make_tuple(mergedGroupIndex, type, fieldName, hostGroup) 
-                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.hostGroup));
+            return (std::make_tuple(mergedGroupIndex, type, fieldName, fieldType) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.fieldType));
         }
     };
     
@@ -306,8 +307,9 @@ private:
     //! Immutable structure for tracking where an extra global variable ends up after merging
     struct MergedDynamicField : public DynamicField
     {
-        MergedDynamicField(size_t m, size_t g, const Type::ResolvedType &t, const std::string &f, bool h)
-        :   DynamicField(m, t, f, h), groupIndex(g) {}
+        MergedDynamicField(size_t m, size_t i, const Type::ResolvedType &t, 
+                           const std::string &f, CodeGenerator::GroupMergedFieldType g)
+        :   DynamicField(m, t, f, g), groupIndex(i) {}
 
         size_t groupIndex;
     };
@@ -381,7 +383,7 @@ private:
     void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
 
     template<typename G>
-    void addMergedArrays(const G &mergedGroup, bool host = false)
+    void addMergedArrays(const G &mergedGroup)
     {
         // Loop through fields
         for(const auto &f : mergedGroup.getFields()) {
@@ -398,7 +400,8 @@ private:
                     m_MergedDynamicArrays[array].emplace(
                         std::piecewise_construct,
                         std::forward_as_tuple(G::name),
-                        std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), std::get<1>(f), host));
+                        std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
+                                              std::get<1>(f), std::get<3>(f)));
                 }
             }
         }
