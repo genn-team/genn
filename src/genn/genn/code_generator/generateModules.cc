@@ -174,8 +174,8 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         [&modelMerged, &backend](CodeStream &os)
         {
             // Generate functions to push merged neuron group structures
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -195,10 +195,10 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         [&modelMerged, &backend](CodeStream &os)
         {
             // Generate functions to push merged neuron group structures
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -217,10 +217,10 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -237,20 +237,20 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
         // Preamble handler
         [&modelMerged, &memorySpaces, &backend](CodeStream &os)
         {
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
 
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
 
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
             
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend);
 
             // Generate merged synapse connectivity host init code
             // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT

@@ -267,7 +267,7 @@ public:
     }*/
 
     template<typename T>
-    void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const BackendBase &backend) const
+    void genDynamicFieldPush(CodeStream &os, const std::vector<T> &groups, const BackendBase &backend) const
     {
         // Loop through merged groups
         for(size_t g = 0; g < groups.size(); g++) {
