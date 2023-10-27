@@ -432,6 +432,19 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                     return getNumSynapseVarElements(varDims, m_Backend.get(), 
                                                     *c.second.getSynapseGroup());
                 });
+        
+        // If custom connectivity update group needs per-row RNGs
+        if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
+            auto rng = m_Backend.get().createPopulationRNG(
+                c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons());
+            if(rng) {
+                const auto r = m_CustomConnectivityUpdateArrays[&c.second].try_emplace("rowRNG", std::move(rng));
+                if(!r.second) {
+                    throw std::runtime_error("Unable to allocate array with " 
+                                             "duplicate name 'rowRNG'");
+                }
+            }
+        }
     }
     
     // Push merged synapse host connectivity initialisation groups 

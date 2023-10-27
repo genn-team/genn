@@ -189,14 +189,14 @@ private:
                 // Add substitution for direct access to field
                 env.add(pointerType, v.name, "$(_" + v.name + ")");
 
-                // If backend has device variables, also add hidden pointer field with device pointer
-                /*if(!backend.getDeviceVarPrefix().empty())  {
-                    env.addField(pointerType, "_" + backend.getDeviceVarPrefix() + v.name, backend.getDeviceVarPrefix() + v.name,
-                                 [v, &backend](const auto &g, size_t)
+                 // If backend requires seperate device objects, add additional (private) field)
+                if(backend.isArrayDeviceObjectRequired()) {
+                    env.addField(pointerType, "_d_" + v.name, "d_" + v.name,
+                                 [v](const auto &runtime, const auto &g, size_t)
                                  {
-                                     return backend.getDeviceVarPrefix() + v.name + g.getName();
+                                     return runtime.getArray(g, v.name);
                                  });
-                }*/
+                }
 
                 // Generate code to push this variable
                 std::stringstream pushStream;

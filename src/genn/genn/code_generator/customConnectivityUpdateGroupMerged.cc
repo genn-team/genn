@@ -424,15 +424,15 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                 // **NOTE** we don't just directly expose the field as genLazyVariableDynamicXXX functions expect underscoring
                 groupEnv.add(pointerType, egp.name, "$(_" + egp.name + ")");
 
-                // If backend has device variables, also add hidden pointer field with device pointer
-                /*if(!backend.getDeviceVarPrefix().empty()) {
-                    groupEnv.addField(pointerType, "_" + backend.getDeviceVarPrefix() + egp.name, backend.getDeviceVarPrefix() + egp.name,
-                                      [&backend](const auto &runtime,const auto &g, size_t)
+                // If backend requires seperate device objects, add additional (private) field)
+                if(backend.isArrayDeviceObjectRequired()) {
+                    groupEnv.addField(pointerType, "_d_" + egp.name, "d_" + egp.name,
+                                      [egp](const auto &runtime, const auto &g, size_t)
                                       {
                                           return runtime.getArray(g, egp.name);
                                       },
                                       "", GroupMergedFieldType::DYNAMIC);
-                }*/
+                }
 
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
