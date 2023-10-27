@@ -648,7 +648,7 @@ public:
                      resolvedType.createPointer(), v.name + fieldSuffix, 
                      [v](const auto &runtime, const auto &g, size_t) 
                      { 
-                         return runtime.getArray(g, v.name);
+                         return runtime.getArray(A(g).getTarget(), v.name);
                      },
                      getIndexFn(v.access, v.name));
         }
