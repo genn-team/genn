@@ -609,6 +609,8 @@ PYBIND11_MODULE(genn, m)
                  memcpy(&hash, &shaDigest[0], sizeof(size_t));
                  return hash;
              })
+        .def("__copy__",
+             [](const Type::ResolvedType &a) { return Type::ResolvedType(a); })
         .def("__eq__", 
              [](const Type::ResolvedType &a, Type::ResolvedType b) { return a == b; });
 
@@ -619,6 +621,9 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<const std::string&>())
         .def(pybind11::init<const Type::ResolvedType&>())
         .def("resolve", &Type::UnresolvedType::resolve)
+
+        .def("__copy__",
+             [](const Type::UnresolvedType &a) { return Type::UnresolvedType(a); })
         .def("__eq__", 
              [](const Type::UnresolvedType &a, Type::UnresolvedType b) { return a == b; });
 

@@ -158,7 +158,6 @@ class GroupMixin(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            resolved_type = egp_data.type.resolve(self._model.type_context)
             if egp_data.values is not None:
                 # Allocate memory
                 self._model._runtime.allocate_array(

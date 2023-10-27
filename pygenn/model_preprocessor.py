@@ -3,6 +3,7 @@
 This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
+from copy import copy
 from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
@@ -95,7 +96,8 @@ def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
 
 class Array:
     def __init__(self, variable_type, group):
-        self.type = variable_type
+        # Make copy of type as e.g. a reference to model.precision would result in circular dependency
+        self.type = copy(variable_type)
         self.group = group if type(group) in ProxyTypes else proxy(group)
         self._view = None
         self._array = None

@@ -691,8 +691,7 @@ class GeNNModel(ModelSpecInternal):
             pop_data.unload()
 
         # Close shared library model
-        assert False
-        #self._slm.close()
+        self._runtime = None
 
         # Clear loaded flag
         self._loaded = False
