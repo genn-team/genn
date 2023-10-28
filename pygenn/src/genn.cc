@@ -327,7 +327,7 @@ PYBIND11_MODULE(genn, m)
         .def("__and__", [](VarLocation a, VarLocation b){ return a & b; }, 
              pybind11::is_operator());
         
-    //! Paralllelism hints for synapse groups
+    //! Parallelism hints for synapse groups
     pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
         .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
         .value("PRESYNAPTIC", SynapseGroup::SpanType::PRESYNAPTIC);
@@ -539,7 +539,9 @@ PYBIND11_MODULE(genn, m)
         // Methods
         //--------------------------------------------------------------------
         .def("set_var_location", &NeuronGroup::setVarLocation)
-        .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_));
+        .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_))
+        // **NOTE** we use the 'publicist' pattern to expose some protected methods
+        .def("_is_var_queue_required", &NeuronGroupInternal::isVarQueueRequired);
     
     //------------------------------------------------------------------------
     // genn.SynapseGroup
@@ -549,6 +551,7 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &SynapseGroup::getName)
+        .def_property_readonly("delay_steps", &SynapseGroupInternal::getDelaySteps)
         .def_property_readonly("wu_model", &SynapseGroup::getWUModel)
         .def_property_readonly("wu_params", &SynapseGroup::getWUParams)
         .def_property_readonly("wu_var_initialisers", &SynapseGroup::getWUVarInitialisers)
