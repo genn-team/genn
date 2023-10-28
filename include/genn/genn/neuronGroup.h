@@ -254,7 +254,6 @@ protected:
     const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
-    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
     //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
