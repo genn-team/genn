@@ -65,7 +65,7 @@ package_data = ["genn" + genn_lib_suffix + ".*" if WIN
                 else "libgenn" + genn_lib_suffix + ".*"]
 
 
-# Copy GeNN 'share' tree into pygenn and add all files to pacakge
+# Copy GeNN 'share' tree into pygenn and add all files to package
 # **THINK** this could be done on a per-backend basis
 rmtree(pygenn_share, ignore_errors=True)
 copytree(genn_share, pygenn_share)
@@ -83,12 +83,20 @@ genn_extension_kwargs = {
     "cxx_std": 17,
     "extra_compile_args": [],
     "extra_link_args": [],
-    "define_macros": [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]}
+    "define_macros": [("LINKING_GENN_DLL", 1), ("LINKING_BACKEND_DLL", 1)]}
 
-# If this is Windows, turn off warnings about dll-interface being required 
-# for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
+# If this is Windows
 if WIN:
+    # Turn off warnings about dll-interface being required for stuff to be 
+    # used by clients and prevent windows.h exporting TOO many awful macros
     genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+
+    # Add include directory for FFI as it's built from source
+    genn_extension_kwargs["include_dirs"].append(os.path.join(genn_third_party_include, "libffi"))
+
+    # Add FFI library with correct suffix
+    # **TODO** just call this ffi
+    genn_extension_kwargs["libraries"].append("libffi" + genn_lib_suffix)
 # Otherwise, if this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
 # directories so libGeNN and backends can be found wherever package is installed
 elif LINUX:
