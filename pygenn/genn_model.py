@@ -177,10 +177,11 @@ class GeNNModel(ModelSpecInternal):
         self._built = False
         self._loaded = False
         self._runtime = None
+        self._preferences = None
         self._model_merged = None
         self._backend = None
         self.backend_name = backend
-        self._preferences = preference_kwargs
+        self._preference_kwargs = preference_kwargs
         self.backend_log_level = backend_log_level
 
         # Set model properties
@@ -574,16 +575,16 @@ class GeNNModel(ModelSpecInternal):
         self.finalise()
 
         # Create suitable preferences object for backend
-        preferences = self._backend_module.Preferences()
+        self._preferences = self._backend_module.Preferences()
 
-        # Set attributes on preferences object
-        for k, v in iteritems(self._preferences):
-            if hasattr(preferences, k):
-                setattr(preferences, k, v)
+        # Set attributes on preferences object from kwargs
+        for k, v in iteritems(self._preference_kwargs):
+            if hasattr(self._preferences, k):
+                setattr(self._preferences, k, v)
         
         # Create backend
         self._backend = self._backend_module.create_backend(
-            self, output_path, self.backend_log_level, preferences)
+            self, output_path, self.backend_log_level, self._preferences)
 
         # Generate code
         self._model_merged = generate_code(self, self._backend, share_path,
@@ -690,7 +691,7 @@ class GeNNModel(ModelSpecInternal):
         for pop_data in itervalues(self.neuron_populations):
             pop_data.unload()
 
-        # Close shared library model
+        # Close runtime
         self._runtime = None
 
         # Clear loaded flag
