@@ -182,20 +182,22 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     buildStandardEnvironment(groupEnv, 1);
 
                     if(n.getArchetype().isDelayRequired()) {
+                        groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                        groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
                         if(n.getArchetype().isPrevSpikeTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[$(_read_delay_slot)]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = $(t) - $(dt);");
+                                groupEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[$(_read_delay_slot)]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[lastTimestepDelaySlot]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = $(t) - $(dt);");
+                                groupEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
                             }
                         }
                     }
