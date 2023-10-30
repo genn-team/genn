@@ -166,6 +166,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     const size_t batchSize = getModel().getBatchSize();
     for(const auto &n : getModel().getNeuronGroups()) {
         // True spike variables
+        LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
         
         // If spikes are required, allocate arrays for counts and spikes
@@ -299,6 +300,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Loop through synapse groups
     for(const auto &s : getModel().getSynapseGroups()) {
         // If synapse group has individual or kernel weights
+        LOGD_RUNTIME << "Allocating memory for synapse group '" << s.first << "'";
         const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
         if (individualWeights || kernelWeights) {
@@ -346,6 +348,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             // If this isn't uninitialised i.e. it will be 
             // initialised using initialization kernel, zero row length
             if(!uninitialized) {
+                LOGD_RUNTIME << "\tZeroing 'rowLength'";
                 if(m_Backend.get().isArrayDeviceObjectRequired()) {
                     getArray(s.second, "rowLength")->memsetDeviceObject(0);
                 }
@@ -365,6 +368,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 createArray(&s.second, "remap", Type::Uint32, numPost * colStride, VarLocation::DEVICE);
 
                 // Zero column length array
+                LOGD_RUNTIME << "\tZeroing 'colLength'";
                 if(m_Backend.get().isArrayDeviceObjectRequired()) {
                     getArray(s.second, "colLength")->memsetDeviceObject(0);
                 }
@@ -397,6 +401,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // Allocate custom update variables
     for(const auto &c : getModel().getCustomUpdates()) {
+        LOGD_RUNTIME << "Allocating memory for custom update '" << c.first << "'";
         createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
                                                       c.second.getDims() & VarAccessDim::BATCH);
         // Create arrays for custom update extra global parameters
@@ -405,6 +410,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
     // Allocate custom update WU variables
     for(const auto &c : getModel().getCustomWUUpdates()) {
+        LOGD_RUNTIME << "Allocating memory for custom WU update '" << c.first << "'";
         createVarArrays<CustomUpdateVarAdapter>(
                 &c.second, batchSize, (c.second.getDims() & VarAccessDim::BATCH), 
                 [&c, this](const std::string&, VarAccessDim varDims)
@@ -420,6 +426,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Loop through custom connectivity update variables
     for(const auto &c : getModel().getCustomConnectivityUpdates()) {
         // Allocate presynaptic variables
+        LOGD_RUNTIME << "Allocating memory for custom connectivity update '" << c.first << "'";
         createNeuronVarArrays<CustomConnectivityUpdatePreVarAdapter>(
             &c.second, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(),
             batchSize, 1, false);
@@ -712,6 +719,7 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                           size_t count, VarLocation location, bool uninitialized)
 {
+    LOGD_RUNTIME << "\t'" << varName << "' = " << count << " * " << type.getSize(m_Backend.get().getPointerBytes()) << " bytes (" << type.getName() << ")";
     const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location, uninitialized));
     if(!r.second) {
         throw std::runtime_error("Unable to allocate array with " 
