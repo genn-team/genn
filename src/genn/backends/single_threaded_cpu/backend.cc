@@ -581,7 +581,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
              EnvironmentExternal funcEnv(customUpdateEnv);
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
-                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()))});
+                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
              funcEnv.add(Type::Uint32.addConst(), "batch", "0");
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
