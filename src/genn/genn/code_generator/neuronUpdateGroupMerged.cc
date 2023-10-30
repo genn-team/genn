@@ -813,8 +813,16 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const
+void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const
 {
+    // Update spike queue
+    if(getArchetype().isDelayRequired()) {
+        env.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(getArchetype().getNumDelaySlots()) + ";");
+    }
+
+    if(batchSize > 1) {
+        env.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+    }
     if(getArchetype().isSpikeEventRequired()) {
         if(getArchetype().isDelayRequired()) {
             env.getStream() << env["_spk_cnt_evnt"] << "[*" << env["_spk_que_ptr"];
@@ -839,6 +847,10 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(Environmen
         else {
             env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
+    }
+
+    if(batchSize > 1) {
+        env.getStream() << CodeStream::CB(1);
     }
 }
 

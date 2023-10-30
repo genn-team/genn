@@ -237,7 +237,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     buildStandardEnvironment(groupEnv, 1);
 
                     // Generate spike count reset
-                    n.genMergedGroupSpikeCountReset(groupEnv, 1);
+                    n.genSpikeQueueUpdate(groupEnv, 1);
                 }
             });
 

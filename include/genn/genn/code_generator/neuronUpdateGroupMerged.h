@@ -230,7 +230,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
+    void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants

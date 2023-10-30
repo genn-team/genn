@@ -421,18 +421,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
                 // Create matching environment
                 EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, n);
                 buildStandardEnvironment(neuronEnv, batchSize);
-
-                if(n.getArchetype().isDelayRequired()) { // with delay
-                    neuronEnv.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(n.getArchetype().getNumDelaySlots()) + ";");
-                }
-
-                if(batchSize > 1) {
-                    neuronEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
-                }
-                n.genMergedGroupSpikeCountReset(neuronEnv, batchSize);
-                if(batchSize > 1) {
-                    neuronEnv.getStream() << CodeStream::CB(1);
-                }
+                n.genSpikeQueueUpdate(neuronEnv, batchSize);
             }
             idStart += n.getGroups().size();
         });
