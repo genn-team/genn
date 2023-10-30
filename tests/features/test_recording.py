@@ -63,11 +63,8 @@ def test_spike_recording(backend, precision, batch_size):
     
     # Download recording data and decode
     model.pull_recording_buffers_from_device()
-    if batch_size == 1:
-        rec_spikes = [ss.spike_recording_data]
-    else:
-        rec_spikes = ss.spike_recording_data
-    
+    rec_spikes = ss.spike_recording_data
+
     # Loop through batches
     for b, (batch_rec_spike_times, batch_rec_spike_ids) in enumerate(rec_spikes):
         # Re-order batch spikes to match spike source array order
