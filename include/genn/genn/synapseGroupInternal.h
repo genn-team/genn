@@ -74,7 +74,10 @@ public:
     using SynapseGroup::isPostsynapticOutputRequired;
     using SynapseGroup::isProceduralConnectivityRNGRequired;
     using SynapseGroup::isWUInitRNGRequired;
+    using SynapseGroup::isPSVarInitRequired;
     using SynapseGroup::isWUVarInitRequired;
+    using SynapseGroup::isWUPreVarInitRequired;
+    using SynapseGroup::isWUPostVarInitRequired;
     using SynapseGroup::isSparseConnectivityInitRequired;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;

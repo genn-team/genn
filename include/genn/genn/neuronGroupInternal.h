@@ -48,6 +48,7 @@ public:
     using NeuronGroup::isSimRNGRequired;
     using NeuronGroup::isInitRNGRequired;
     using NeuronGroup::isRecordingEnabled;
+    using NeuronGroup::isVarInitRequired;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;

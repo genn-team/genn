@@ -256,9 +256,57 @@ bool NeuronGroup::isRecordingEnabled() const
     }
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isVarInitRequired() const
+{
+    // Returns true if any neuron variables require initialisation
+    if(std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                   [](const auto &init)
+                   { 
+                       return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                   }))
+    {
+        return true;
+    }
+
+    // Return true if any current sources variables require initialisation
+    if(std::any_of(getCurrentSources().cbegin(), getCurrentSources().cend(),
+                   [](const auto *cs){ return cs->isVarInitRequired(); }))
+    {
+        return true;
+    }
+    
+    // Return true if any incoming synapse groups have 
+    // postsynaptic model variables which require initialisation
+    if(std::any_of(getFusedPSMInSyn().cbegin(), getFusedPSMInSyn().cend(),
+                   [](const auto *sg){ return sg->isPSVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any incoming synapse groups have postsynaptic
+    // weight update model variables which require initialisation
+    const auto fusedInSynWithPostVars = getFusedInSynWithPostVars();
+    if(std::any_of(fusedInSynWithPostVars.cbegin(), fusedInSynWithPostVars.cend(),
+                   [](const auto *sg){ return sg->isWUPostVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups have presynaptic
+    // weight update model variables which require initialisation
+    const auto fusedOutSynWithPreVars = getFusedOutSynWithPreVars();
+    if(std::any_of(fusedOutSynWithPreVars.cbegin(), fusedOutSynWithPreVars.cend(),
+                   [](const auto *sg){ return sg->isWUPreVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
-    m_MergedCurrentSourceGroups.push_back(src);
+    m_CurrentSourceGroups.push_back(src);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSimRNGRequired() const
@@ -272,7 +320,7 @@ bool NeuronGroup::isSimRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for simulation
-    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getInjectionCodeTokens()); }))
     {
         return true;
@@ -296,7 +344,7 @@ bool NeuronGroup::isInitRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for initialisation
-    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getVarInitialisers()); }))
     {
         return true;
@@ -415,7 +463,7 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
-        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn,"presynaptic weight update",
+        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
                           &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
                           &SynapseGroupInternal::setFusedWUPreTarget);
     }

@@ -26,6 +26,7 @@ public:
     using CurrentSource::finalise;
     using CurrentSource::getDerivedParams;
     using CurrentSource::isZeroCopyEnabled;
+    using CurrentSource::isVarInitRequired;
     using CurrentSource::getHashDigest;
     using CurrentSource::getInitHashDigest;
     using CurrentSource::getVarLocationHashDigest;

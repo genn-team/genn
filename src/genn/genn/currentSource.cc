@@ -71,6 +71,15 @@ bool CurrentSource::isZeroCopyEnabled() const
                        [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
+bool CurrentSource::isVarInitRequired() const
+{
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
 {
     return getCurrentSourceModel()->getHashDigest();

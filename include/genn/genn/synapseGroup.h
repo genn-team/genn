@@ -327,8 +327,17 @@ protected:
     //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired() const;
 
+    //! Is var init code required for any variables in this synapse group's postsynaptic update model?
+    bool isPSVarInitRequired() const;
+
     //! Is var init code required for any variables in this synapse group's weight update model?
     bool isWUVarInitRequired() const;
+
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model?
+    bool isWUPreVarInitRequired() const;
+
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model?
+    bool isWUPostVarInitRequired() const;
 
     //! Is sparse connectivity initialisation code required for this synapse group?
     bool isSparseConnectivityInitRequired() const;

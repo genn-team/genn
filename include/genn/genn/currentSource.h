@@ -85,6 +85,9 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
+    //! Is var init code required for any variables in this current source?
+    bool isVarInitRequired() const;
+
     //! Updates hash with current source
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;

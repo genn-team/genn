@@ -768,6 +768,15 @@ bool SynapseGroup::isWUInitRNGRequired() const
             && m_SparseConnectivityInitialiser.isRNGRequired());
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPSVarInitRequired() const
+{
+    return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
     // If this synapse group has per-synapse or kernel state variables, 
@@ -782,6 +791,24 @@ bool SynapseGroup::isWUVarInitRequired() const
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPreVarInitRequired() const
+{
+    return std::any_of(m_WUPreVarInitialisers.cbegin(), m_WUPreVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPostVarInitRequired() const
+{
+    return std::any_of(m_WUPostVarInitialisers.cbegin(), m_WUPostVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const

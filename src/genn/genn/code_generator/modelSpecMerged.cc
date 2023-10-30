@@ -85,7 +85,13 @@ using namespace GeNN::CodeGenerator;
     }
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal&){ return true; },
+                       [](const NeuronGroupInternal &ng)
+                       { 
+                           return (ng.isSpikeEventRequired() || ng.isTrueSpikeRequired()
+                                   || ng.isSpikeTimeRequired() || ng.isPrevSpikeTimeRequired()
+                                   || ng.isSpikeEventTimeRequired() || ng.isPrevSpikeEventTimeRequired()
+                                   || ng.isVarInitRequired());
+                       },
                        &NeuronGroupInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateInitGroups,
