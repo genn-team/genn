@@ -64,7 +64,7 @@ using namespace GeNN::CodeGenerator;
                        &CustomConnectivityUpdateInternal::getHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                       [](const NeuronGroupInternal &g){ return (g.isTrueSpikeRequired() || g.isSpikeEventRequired()); },
+                       [](const NeuronGroupInternal &g){ return (g.isDelayRequired() || g.isTrueSpikeRequired() || g.isSpikeEventRequired()); },
                        &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
