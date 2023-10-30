@@ -679,7 +679,7 @@ def test_reverse_post(backend, precision):
         # Loop through output populations
         for pop in output_populations:
             # Pull state variable
-            pop.vars["x"].pull_from_device("x")
+            pop.vars["x"].pull_from_device()
 
             # Convert to binary mask
             output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
