@@ -146,6 +146,7 @@ class GENN_EXPORT Runtime
     template<typename G>
     using GroupArrayMap = std::unordered_map<const G*, ArrayMap>;
 
+    using BatchEventArray = std::vector<std::pair<std::vector<double>, std::vector<unsigned int>>>;
 public:
     Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
             const CodeGenerator::BackendBase &backend);
@@ -255,12 +256,12 @@ public:
                                   varName, count);
     }
 
-    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikes(const NeuronGroup &group) const
+    BatchEventArray getRecordedSpikes(const NeuronGroup &group) const
     {
         return getRecordedEvents(group, getArray(group, "recordSpk"));
     }
 
-    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedSpikeEvents(const NeuronGroup &group) const
+    BatchEventArray getRecordedSpikeEvents(const NeuronGroup &group) const
     {
         return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
     }
@@ -377,8 +378,7 @@ private:
                     varName, type, count, location, uninitialized);
     }
 
-    std::pair<std::vector<double>, std::vector<unsigned int>> getRecordedEvents(const NeuronGroup &group, 
-                                                                                ArrayBase *array) const;
+    BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
 
     void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
 

@@ -719,8 +719,7 @@ void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, con
     }
 }
 //----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEvents(const NeuronGroup &group, 
-                                                                                     ArrayBase *array) const
+Runtime::BatchEventArray Runtime::getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const
 {
     if(!m_NumRecordingTimesteps) {
         throw std::runtime_error("Recording buffer not allocated - cannot get recorded events");
@@ -737,60 +736,76 @@ std::pair<std::vector<double>, std::vector<unsigned int>> Runtime::getRecordedEv
     const double dt = getModel().getDT();
     const double startTime = (m_Timestep - *m_NumRecordingTimesteps) * dt;
 
-    // Loop through
+    // Loop through timesteps
     const uint32_t *spkRecordWords = reinterpret_cast<const uint32_t*>(array->getHostPointer());
-    std::vector<double> eventTimes;
-    std::vector<unsigned int> eventIDs;
+    BatchEventArray events(getModel().getBatchSize());
     for(size_t t = 0; t < m_NumRecordingTimesteps.value(); t++) {
-        // Loop through words representing timestep
+        // Loop through batched
         const double time = startTime + (t * dt);
-        for(size_t w = 0; w < timestepWords; w++) {
-            // Get word
-            uint32_t spikeWord = spkRecordWords[(t * timestepWords) + w];
+        for(size_t b = 0; b < getModel().getBatchSize(); b++) {
+            // Loop through words representing timestep
+            auto &batchEvents = events[b];
+            for(size_t w = 0; w < timestepWords; w++) {
+                // Get word
+                uint32_t spikeWord = *spkRecordWords++;
             
-            // Calculate neuron id of highest bit of this word
-            unsigned int neuronID = (w * 32) + 31;
+                // Calculate neuron id of highest bit of this word
+                unsigned int neuronID = (w * 32) + 31;
             
-            // While bits remain
-            while(spikeWord != 0) {
-                // Calculate leading zeros
-                const int numLZ = Utils::clz(spikeWord);
+                // While bits remain
+                while(spikeWord != 0) {
+                    // Calculate leading zeros
+                    const int numLZ = Utils::clz(spikeWord);
                 
-                // If all bits have now been processed, zero spike word
-                // Otherwise shift past the spike we have found
-                spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
+                    // If all bits have now been processed, zero spike word
+                    // Otherwise shift past the spike we have found
+                    spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
                 
-                // Subtract number of leading zeros from neuron ID
-                neuronID -= numLZ;
+                    // Subtract number of leading zeros from neuron ID
+                    neuronID -= numLZ;
                 
-                // Add time and ID to vectors
-                eventTimes.push_back(time);
-                eventIDs.push_back(neuronID);
+                    // Add time and ID to vectors
+                    batchEvents.first.push_back(time);
+                    batchEvents.second.push_back(neuronID);
                 
-                // New neuron id of the highest bit of this word
-                neuronID--;
+                    // New neuron id of the highest bit of this word
+                    neuronID--;
+                }
             }
         }
     }
 
     // Return vectors
-    return std::make_pair(eventTimes, eventIDs);
+    return events;
 }
 //----------------------------------------------------------------------------
 void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const
 {
     // Get events
-    const auto [eventTimes, eventIDs] = getRecordedEvents(group, array);
+    const auto events = getRecordedEvents(group, array);
 
     // Open file and write header
     std::ofstream file(path);
-    file << "Time [ms], Neuron ID" << std::endl;
+    file << "Time [ms], Neuron ID";
+    if(getModel().getBatchSize() > 1) {
+        file << ", Batch";
+    }
+    file << std::endl;
 
-    // Write events to file
-    auto t = eventTimes.cbegin();
-    auto i = eventIDs.cbegin();
-    for(;t < eventTimes.cend(); t++, i++) {
-        file << *t << ", " << *i << std::endl;
+    // Loop through batches;
+    for(size_t b = 0; b < getModel().getBatchSize(); b++) {
+        // Loop through events
+        const auto &batchEvents = events[b];
+        auto t = batchEvents.first.cbegin();
+        auto i = batchEvents.second.cbegin();
+        for(;t < batchEvents.first.cend(); t++, i++) {
+            // Write to file
+            file << *t << ", " << *i;
+            if(getModel().getBatchSize() > 1) {
+                file << ", " << b;
+            }
+            file << std::endl;
+        }
     }
 }
 //----------------------------------------------------------------------------
