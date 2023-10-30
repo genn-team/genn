@@ -195,6 +195,8 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
+    void generateSynapseUpdate(EnvironmentExternalBase &env);
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------

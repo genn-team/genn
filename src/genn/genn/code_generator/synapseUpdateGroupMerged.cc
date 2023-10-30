@@ -425,3 +425,8 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
+//----------------------------------------------------------------------------
+void SynapseDendriticDelayUpdateGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env)
+{
+    env.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ";");
+}

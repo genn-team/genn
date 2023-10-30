@@ -346,6 +346,25 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
+        // Dendritic delay update
+        modelMerged.genMergedSynapseDendriticDelayUpdateGroups(
+            *this, memorySpaces,
+            [&funcEnv, &modelMerged, this](auto &sg)
+            {
+                // Loop through groups
+                funcEnv.getStream() << "// merged synapse dendritic delay update group " << sg.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Use this to get reference to merged group structure
+                    funcEnv.getStream() << "const auto *group = &mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(funcEnv, sg);
+                    buildStandardEnvironment(groupEnv, 1);
+                    sg.generateSynapseUpdate(groupEnv);
+                }
+            });
+
         // Synapse dynamics
         {
             Timer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
@@ -534,11 +553,13 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     }
 
     // Generate struct definitions
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
     modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
+    modelMerged.genMergedSynapseDendriticDelayUpdateHostStructArrayPush(os, *this);
     modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupHostStructArrayPush(os, *this);

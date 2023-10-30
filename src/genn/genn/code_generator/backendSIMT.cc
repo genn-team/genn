@@ -695,7 +695,7 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
                 env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
                 EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(env, sg);
                 buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
-                groupEnv.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(sg.getArchetype().getMaxDendriticDelayTimesteps()) + ";");
+                sg.generateSynapseUpdate(groupEnv);
             }
             idStart += sg.getGroups().size();
         });

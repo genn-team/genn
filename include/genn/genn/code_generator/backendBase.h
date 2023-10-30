@@ -369,9 +369,6 @@ public:
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
     virtual bool isHostReductionRequired() const = 0;
 
-    //! Is a dendritic delay update beside from the host one in stepTime required?
-    virtual bool isDendriticDelayUpdateRequired() const = 0;
-
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 

@@ -71,18 +71,16 @@ using namespace GeNN::CodeGenerator;
                        [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
                        &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
 
-    if(backend.isDendriticDelayUpdateRequired()) {
-        std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
-        for(const auto &n : getModel().getNeuronGroups()) {
-            for(const auto *sg : n.second.getFusedPSMInSyn()) {
-                if(sg->isDendriticDelayRequired()) {
-                    synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
-                }
+    std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
+    for(const auto &n : getModel().getNeuronGroups()) {
+        for(const auto *sg : n.second.getFusedPSMInSyn()) {
+            if(sg->isDendriticDelayRequired()) {
+                synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
             }
         }
-        createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
     }
+    createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                        &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
                        [](const NeuronGroupInternal &ng)
