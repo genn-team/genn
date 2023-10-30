@@ -591,7 +591,7 @@ class GeNNModel(ModelSpecInternal):
 
         # Build code
         if system() == "Windows":
-            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:minimal",
+            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:quiet",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])

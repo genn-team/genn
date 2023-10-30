@@ -125,7 +125,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
         
         // Generate command to build using msbuild
         const std::string config = GENN_PREFERENCES.debugCode ? "Debug" : "Release";
-        const std::string buildCommand = "msbuild /m /p:Configuration=" + config + " /verbosity:minimal \"" + (outputPath / "runner.vcxproj").str() + "\"";
+        const std::string buildCommand = "msbuild /m /p:Configuration=" + config + " /verbosity:quiet \"" + (outputPath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
         {
