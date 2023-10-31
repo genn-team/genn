@@ -100,7 +100,7 @@ class PyCurrentSourceModelBase : public PySnippet<CurrentSourceModels::Base>
     using Base = CurrentSourceModels::Base;
 public:
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
-    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
 };
 
 //----------------------------------------------------------------------------
@@ -111,9 +111,9 @@ class PyCustomConnectivityUpdateModelBase : public PySnippet<CustomConnectivityU
 {
     using Base = CustomConnectivityUpdateModels::Base;
 public:
-    virtual std::vector<Models::Base::SynapseVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::SynapseVar>, Base, "get_vars", getVars); }
-    virtual std::vector<Models::Base::NeuronVar> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_pre_vars", getPreVars); }
-    virtual std::vector<Models::Base::NeuronVar> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_post_vars", getPostVars); }
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::Var> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_pre_vars", getPreVars); }
+    virtual std::vector<Models::Base::Var> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_post_vars", getPostVars); }
     
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
     virtual VarRefVec getPreVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_pre_var_refs", getPreVarRefs); }
@@ -149,7 +149,7 @@ public:
     virtual std::string getThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_threshold_condition_code", getThresholdConditionCode); }
     virtual std::string getResetCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_reset_code", getResetCode); }
 
-    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual Models::Base::ParamValVec getAdditionalInputVars() const override { PYBIND11_OVERRIDE_NAME(Models::Base::ParamValVec, Base, "get_additional_input_vars", getAdditionalInputVars); }
 
     virtual bool isAutoRefractoryRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_auto_refractory_required", isAutoRefractoryRequired); }
@@ -163,7 +163,7 @@ class PyPostsynapticModelBase : public PySnippet<PostsynapticModels::Base>
 {
     using Base = PostsynapticModels::Base;
 public:
-    virtual std::vector<Models::Base::NeuronVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
 
     virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
     virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
@@ -187,9 +187,9 @@ public:
     virtual std::string getPreDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_dynamics_code", getPreDynamicsCode); }
     virtual std::string getPostDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_dynamics_code", getPostDynamicsCode); }
     
-    virtual std::vector<Models::Base::SynapseVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::SynapseVar>, Base, "get_vars", getVars); }
-    virtual std::vector<Models::Base::NeuronVar> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_pre_vars", getPreVars); }
-    virtual std::vector<Models::Base::NeuronVar> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::NeuronVar>, Base, "get_post_vars", getPostVars); }
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
+    virtual std::vector<Models::Base::Var> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_pre_vars", getPreVars); }
+    virtual std::vector<Models::Base::Var> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_post_vars", getPostVars); }
 };
 
 CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
@@ -285,36 +285,25 @@ PYBIND11_MODULE(genn, m)
     
     //! Flags defining dimensions this variables has
     pybind11::enum_<VarAccessDim>(m, "VarAccessDim")
-        .value("NEURON", VarAccessDim::NEURON)
-        .value("PRE_NEURON", VarAccessDim::PRE_NEURON)
-        .value("POST_NEURON", VarAccessDim::POST_NEURON)
+        .value("ELEMENT", VarAccessDim::ELEMENT)
         .value("BATCH", VarAccessDim::BATCH)
         
         .def("__and__", [](VarAccessDim a, VarAccessDim b){ return a & b; }, 
              pybind11::is_operator());
     
     //! Supported combinations of access mode and dimension for neuron variables
-    pybind11::enum_<NeuronVarAccess>(m, "NeuronVarAccess")
-        .value("READ_WRITE", NeuronVarAccess::READ_WRITE)
-        .value("READ_ONLY", NeuronVarAccess::READ_ONLY)
-        .value("READ_ONLY_DUPLICATE", NeuronVarAccess::READ_ONLY_DUPLICATE)
-        .value("READ_ONLY_SHARED_NEURON", NeuronVarAccess::READ_ONLY_SHARED_NEURON);
-
-    //! Supported combinations of access mode and dimension for synapse variables
-    pybind11::enum_<SynapseVarAccess>(m, "SynapseVarAccess")
-        .value("READ_WRITE", SynapseVarAccess::READ_WRITE)
-        .value("READ_ONLY", SynapseVarAccess::READ_ONLY)
-        .value("READ_ONLY_DUPLICATE", SynapseVarAccess::READ_ONLY_DUPLICATE);
-
+    pybind11::enum_<VarAccess>(m, "VarAccess")
+        .value("READ_WRITE", VarAccess::READ_WRITE)
+        .value("READ_ONLY", VarAccess::READ_ONLY)
+        .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
+        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON);
 
     //! Supported combinations of access mode and dimension for custom update variables
     /*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
     pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess")
         .value("READ_WRITE", CustomUpdateVarAccess::READ_WRITE)
         .value("READ_ONLY", CustomUpdateVarAccess::READ_ONLY)
-        .value("READ_WRITE_SHARED", CustomUpdateVarAccess::READ_WRITE_SHARED)
         .value("READ_ONLY_SHARED", CustomUpdateVarAccess::READ_ONLY_SHARED)
-        .value("READ_WRITE_SHARED_NEURON", CustomUpdateVarAccess::READ_WRITE_SHARED_NEURON)
         .value("READ_ONLY_SHARED_NEURON", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON)
         .value("REDUCE_BATCH_SUM", CustomUpdateVarAccess::REDUCE_BATCH_SUM)
         .value("REDUCE_BATCH_MAX", CustomUpdateVarAccess::REDUCE_BATCH_MAX)
@@ -360,8 +349,7 @@ PYBIND11_MODULE(genn, m)
     m.def("create_egp_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_psm_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
     m.def("create_wu_egp_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
-    m.def("get_var_access_dim", pybind11::overload_cast<NeuronVarAccess>(&getVarAccessDim));
-    m.def("get_var_access_dim", pybind11::overload_cast<SynapseVarAccess>(&getVarAccessDim));
+    m.def("get_var_access_dim", pybind11::overload_cast<VarAccess>(&getVarAccessDim));
     m.def("get_var_access_dim", pybind11::overload_cast<CustomUpdateVarAccess, VarAccessDim>(&getVarAccessDim));
 
     //------------------------------------------------------------------------
@@ -693,29 +681,17 @@ PYBIND11_MODULE(genn, m)
         .def("get_code", &InitVarSnippet::Base::getCode);
 
     //------------------------------------------------------------------------
-    // genn.NeuronVar
+    // genn.Var
     //------------------------------------------------------------------------
-    pybind11::class_<Models::Base::NeuronVar>(m, "NeuronVar")
-        .def(pybind11::init<const std::string&, const std::string&, NeuronVarAccess>())
+    pybind11::class_<Models::Base::Var>(m, "Var")
+        .def(pybind11::init<const std::string&, const std::string&, VarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
-        .def(pybind11::init<const std::string&, const Type::ResolvedType&, NeuronVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, VarAccess>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
-        .def_readonly("name", &Models::Base::NeuronVar::name)
-        .def_readonly("type", &Models::Base::NeuronVar::type)
-        .def_readonly("access", &Models::Base::NeuronVar::access);
-    
-    //------------------------------------------------------------------------
-    // genn.SynapseVar
-    //------------------------------------------------------------------------
-    pybind11::class_<Models::Base::SynapseVar>(m, "SynapseVar")
-        .def(pybind11::init<const std::string&, const std::string&, SynapseVarAccess>())
-        .def(pybind11::init<const std::string&, const std::string&>())
-        .def(pybind11::init<const std::string&, const Type::ResolvedType&, SynapseVarAccess>())
-        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
-        .def_readonly("name", &Models::Base::SynapseVar::name)
-        .def_readonly("type", &Models::Base::SynapseVar::type)
-        .def_readonly("access", &Models::Base::SynapseVar::access);
-    
+        .def_readonly("name", &Models::Base::Var::name)
+        .def_readonly("type", &Models::Base::Var::type)
+        .def_readonly("access", &Models::Base::Var::access);
+
     //------------------------------------------------------------------------
     // genn.CustomUpdateVar
     //------------------------------------------------------------------------

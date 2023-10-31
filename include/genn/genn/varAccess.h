@@ -60,13 +60,13 @@ enum class CustomUpdateVarAccess : unsigned int
     READ_ONLY_SHARED            = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
     // Variables which will be shared across neurons if per-element
-    READ_ONLY_SHARED_ELEMENT    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+    READ_ONLY_SHARED_NEURON    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
 
     // Reduction variables
     REDUCE_BATCH_SUM            = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::BATCH),
     REDUCE_BATCH_MAX            = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::BATCH),
-    REDUCE_ELEMENT_SUM          = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
-    REDUCE_ELEMENT_MAX          = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+    REDUCE_NEURON_SUM          = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+    REDUCE_NEURON_MAX          = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
 };
 
 //----------------------------------------------------------------------------

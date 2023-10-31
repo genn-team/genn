@@ -65,10 +65,10 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    DerivedParam, EGP, EGPRef, 
                    InitSparseConnectivitySnippetBase, 
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase, NeuronVar,
-                   ParamVal, PlogSeverity, PostsynapticModelBase,
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase, ParamVal,
+                   PlogSeverity, PostsynapticModelBase,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   SynapseVar, ToeplitzConnectivityInit, UnresolvedType, 
+                   ToeplitzConnectivityInit, UnresolvedType, Var,
                    VarInit, VarLocation, VarRef, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
@@ -959,7 +959,7 @@ def create_neuron_model(class_name, param_names=None,
 
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in var_name_types]
 
     if is_auto_refractory_required is not None:
         body["is_auto_refractory_required"] = \
@@ -1006,7 +1006,7 @@ def create_postsynaptic_model(class_name, param_names=None,
 
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in var_name_types]
 
     return create_model(class_name, PostsynapticModelBase, param_names,
                         derived_params, extra_global_params, body)
@@ -1101,15 +1101,15 @@ def create_weight_update_model(class_name, param_names=None,
     
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: [SynapseVar(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in var_name_types]
     
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in pre_var_name_types]
+            lambda self: [Var(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in post_var_name_types]
+            lambda self: [Var(*vn) for vn in post_var_name_types]
 
     return create_model(class_name, WeightUpdateModelBase, param_names,
                         derived_params, extra_global_params, body)
@@ -1149,7 +1149,7 @@ def create_current_source_model(class_name, param_names=None,
 
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in var_name_types]
 
     return create_model(class_name, CurrentSourceModelBase, param_names,
                         derived_params, extra_global_params, body)
@@ -1258,15 +1258,15 @@ def create_custom_connectivity_update_model(class_name,
 
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: [SynapseVar(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in var_name_types]
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in pre_var_name_types]
+            lambda self: [Var(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: [NeuronVar(*vn) for vn in post_var_name_types]
+            lambda self: [Var(*vn) for vn in post_var_name_types]
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]

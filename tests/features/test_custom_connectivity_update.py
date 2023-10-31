@@ -3,7 +3,7 @@ import pytest
 from pygenn import types
 
 from pygenn import GeNNModel
-from pygenn.genn import SynapseVarAccess, VarAccessMode
+from pygenn.genn import VarAccessMode, VarAccess
 
 from bitarray import bitarray
 from bitarray.util import hex2ba
@@ -26,8 +26,8 @@ neuron_model = create_neuron_model(
 
 weight_update_model = create_weight_update_model(
     "weight_update",
-    var_name_types=[("g", "scalar", SynapseVarAccess.READ_ONLY_DUPLICATE),
-                    ("d", "unsigned int", SynapseVarAccess.READ_ONLY)])
+    var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+                    ("d", "unsigned int", VarAccess.READ_ONLY)])
 
 
 # Snippet to initialise variable to hold its column-major index

@@ -26,7 +26,7 @@ def _get_num_var_copies(var_dims, batch_size):
         return ()
 
 def _get_num_neuron_var_elements(var_dims, num_elements):
-    if (var_dims & VarAccessDim.NEURON):
+    if (var_dims & VarAccessDim.ELEMENT):
         return (num_elements,)
     else:
         return (1,)
@@ -40,20 +40,12 @@ def _get_neuron_var_shape(var_dims, num_elements, batch_size,
 
 def _get_synapse_var_shape(var_dims, sg, batch_size):
     num_copies = _get_num_var_copies(var_dims, batch_size)
-    pre = (var_dims & VarAccessDim.PRE_NEURON)
-    post = (var_dims & VarAccessDim.POST_NEURON)
-    num_pre = sg.src.size
-    num_post = sg.trg.size
-    if pre and post:
+    if (var_dims & VarAccessDim.ELEMENT):
         if sg.matrix_type & SynapseMatrixWeight.KERNEL:
             return num_copies + (np.product(sg.kernel_size),)
         else:
             # **YUCK** this isn't correct - only backend knows correct stride
-            return num_copies + (num_pre * sg.max_connections,)
-    elif pre:
-        return num_copies + (num_pre,)
-    elif post:
-        return num_copies + (num_post,)
+            return num_copies + (sg.src.size * sg.max_connections,)
     else:
         return num_copies + (1,)
 
