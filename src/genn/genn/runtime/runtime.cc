@@ -27,24 +27,13 @@ namespace
 {
 size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg)
 {
-    const bool pre = (varDims & VarAccessDim::PRE_NEURON);
-    const bool post = (varDims & VarAccessDim::POST_NEURON);
-    const size_t numPre = sg.getSrcNeuronGroup()->getNumNeurons();
-    const size_t numPost = sg.getTrgNeuronGroup()->getNumNeurons();
-    const size_t rowStride = backend.getSynapticMatrixRowStride(sg);
-    if(pre && post) {
+    if(varDims & VarAccessDim::ELEMENT) {
         if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
             return sg.getKernelSizeFlattened();
         }
         else {
-            return numPre * rowStride;
+            return sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg);
         }
-    }
-    else if(pre) {
-        return numPre;
-    }
-    else if(post) {
-        return numPost;
     }
     else {
         return 1;

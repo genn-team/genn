@@ -469,7 +469,7 @@ private:
             (const std::string &varName, VarAccessDim varDims)
             {
                 const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;
-                const size_t numElements = ((varDims & VarAccessDim::NEURON) ? numNeurons : 1);
+                const size_t numElements = ((varDims & VarAccessDim::ELEMENT) ? numNeurons : 1);
                 return numVarDelaySlots * numElements;
             });
                   
