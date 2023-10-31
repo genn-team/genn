@@ -128,11 +128,21 @@ public:
     //! Free array
     virtual void free() final;
 
-    //! Copy array to device
+    //! Copy entire array to device
     virtual void pushToDevice() final;
 
-    //! Copy array from device
+    //! Copy entire array from device
     virtual void pullFromDevice() final;
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
 
     //! Memset the host pointer
     virtual void memsetDeviceObject(int value) final;

@@ -35,7 +35,9 @@ PYBIND11_MODULE(runtime, m)
         // Methods
         //--------------------------------------------------------------------
         .def("push_to_device", &ArrayBase::pushToDevice)
-        .def("pull_from_device", &ArrayBase::pullFromDevice);
+        .def("pull_from_device", &ArrayBase::pullFromDevice)
+        .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice)
+        .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice);
         
     //------------------------------------------------------------------------
     // runtime.Runtime

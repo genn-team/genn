@@ -256,6 +256,10 @@ void Array::free()
 //--------------------------------------------------------------------------
 void Array::pushToDevice()
 {
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot push array that isn't present on host and device");
+    }
+
     if(!(getLocation() & VarLocation::ZERO_COPY)) {
         CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
     }
@@ -263,9 +267,54 @@ void Array::pushToDevice()
 //--------------------------------------------------------------------------
 void Array::pullFromDevice()
 {
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot pull array that isn't present on host and device");
+    }
+
     if(!(getLocation() & VarLocation::ZERO_COPY)) {
         CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
     }
+}
+//--------------------------------------------------------------------------
+void Array::pushSlice1DToDevice(size_t offset, size_t count)
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot push array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        // If end of slice overflows array, give error
+        if((offset + count) > getCount()) {
+            throw std::runtime_error("Cannot pull slice that overflows array");
+        }
+
+        // Convert offset and count to bytes and copy
+        const size_t offsetBytes = offset * getType().getValue().size;
+        const size_t countBytes = count * getType().getValue().size;
+        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                     countBytes, cudaMemcpyHostToDevice));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pullSlice1DFromDevice(size_t offset, size_t count)
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot pull array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        // If end of slice overflows array, give error
+        if((offset + count) > getCount()) {
+            throw std::runtime_error("Cannot pull slice that overflows array");
+        }
+
+        // Convert offset and count to bytes and copy
+        const size_t offsetBytes = offset * getType().getValue().size;
+        const size_t countBytes = count * getType().getValue().size;
+        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                     countBytes, cudaMemcpyDeviceToHost));
+    }
+
 }
 //--------------------------------------------------------------------------
 void Array::memsetDeviceObject(int value)
