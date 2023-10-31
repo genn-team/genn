@@ -34,7 +34,6 @@ class CustomConnectivityUpdateInternal;
 // Macros
 //----------------------------------------------------------------------------
 #define SET_VARS(...) virtual std::vector<Var> getVars() const override{ return __VA_ARGS__; }
-#define SET_CUSTOM_UPDATE_VARS(...) virtual std::vector<CustomUpdateVar> getVars() const override{ return __VA_ARGS__; }
 #define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
