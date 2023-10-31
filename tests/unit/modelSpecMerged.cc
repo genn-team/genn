@@ -32,7 +32,7 @@ public:
 
     SET_PARAM_NAMES({"tau"});
 
-    SET_NEURON_VARS({{"x", "scalar"}});
+    SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
         {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
@@ -53,7 +53,7 @@ public:
       "Wmin",     // 4 - Minimum weight
       "Wmax"});   // 5 - Maximum weight
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
 
@@ -127,7 +127,7 @@ class RemoveSynapsePrePost : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapsePrePost);
     
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preThresh", "scalar"}});
     SET_POST_VARS({{"postThresh", "scalar"}});
     SET_ROW_UPDATE_CODE(

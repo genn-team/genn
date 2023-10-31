@@ -85,7 +85,7 @@ std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
     const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
-    if (!(varDims & VarAccessDim::NEURON)) {
+    if (!(varDims & VarAccessDim::ELEMENT)) {
         return batched ? "$(batch)" : "0";
     }
     else if (batched) {
@@ -103,7 +103,7 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int bat
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
         const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
-        if (!(varDims & VarAccessDim::NEURON)) {
+        if (!(varDims & VarAccessDim::ELEMENT)) {
             return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
         }
         else if (batched) {

@@ -26,7 +26,7 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     //! Gets model variables
-    virtual std::vector<NeuronVar> getVars() const{ return {}; }
+    virtual std::vector<Var> getVars() const{ return {}; }
 
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }

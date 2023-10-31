@@ -17,8 +17,8 @@
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
 #define SET_POST_DYNAMICS_CODE(POST_DYNAMICS_CODE) virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }
 
-#define SET_PRE_VARS(...) virtual std::vector<NeuronVar> getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual std::vector<NeuronVar> getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<Var> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<Var> getPostVars() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
@@ -72,15 +72,15 @@ public:
     virtual std::string getPostDynamicsCode() const{ return ""; }
 
     //! Gets model variables
-    virtual std::vector<SynapseVar> getVars() const{ return {}; }
+    virtual std::vector<Var> getVars() const{ return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
-    virtual std::vector<NeuronVar> getPreVars() const{ return {}; }
+    virtual std::vector<Var> getPreVars() const{ return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
-    virtual std::vector<NeuronVar> getPostVars() const{ return {}; }
+    virtual std::vector<Var> getPostVars() const{ return {}; }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -140,7 +140,7 @@ class StaticPulse : public Base
 public:
     DECLARE_SNIPPET(StaticPulse);
 
-    SET_SYNAPSE_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPost(g);\n");
 };
@@ -191,7 +191,7 @@ class StaticPulseDendriticDelay : public Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelay);
 
-    SET_SYNAPSE_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}, {"d", "uint8_t", SynapseVarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
@@ -228,7 +228,7 @@ public:
     DECLARE_SNIPPET(StaticGraded);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
-    SET_SYNAPSE_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
 
@@ -299,7 +299,7 @@ public:
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_SYNAPSE_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
+    SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
         "addToPost(g);\n"

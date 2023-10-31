@@ -26,7 +26,7 @@ public:
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     
@@ -58,7 +58,7 @@ public:
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"Wmin", "scalar"}, {"Wmax", "scalar"}});
@@ -92,7 +92,7 @@ public:
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"S", "scalar"}});
@@ -122,7 +122,7 @@ class STDPAdditiveEGPDynamics : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(STDPAdditiveEGPDynamics);
     SET_PARAM_NAMES({"Aplus", "Aminus", "Wmin", "Wmax"});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"tauPlusDecay", "scalar"}, {"tauMinusDecay", "scalar"}});
@@ -152,7 +152,7 @@ class Continuous : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Continuous);
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE("addToPost(g * V_pre);\n");
 };
@@ -196,7 +196,7 @@ class StaticPulseDynamics : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDynamics);
 
-    SET_SYNAPSE_VARS({ {"g", "scalar"} });
+    SET_VARS({ {"g", "scalar"} });
 
     SET_SIM_CODE("addToPost(g);\n");
     SET_SYNAPSE_DYNAMICS_CODE("g *= 0.99;\n");
@@ -208,7 +208,7 @@ class StaticPulsePostLearn : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulsePostLearn);
 
-    SET_SYNAPSE_VARS({ {"g", "scalar"} });
+    SET_VARS({ {"g", "scalar"} });
 
     SET_SIM_CODE("addToPost(g);\n");
     SET_LEARN_POST_CODE("g *= 0.99;\n");
@@ -284,7 +284,7 @@ public:
         {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("TauM")); }},
         {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
 
-    SET_NEURON_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
 IMPLEMENT_SNIPPET(LIFAdditional);
 }   // Anonymous namespace

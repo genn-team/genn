@@ -7,8 +7,8 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_PRE_VARS(...) virtual std::vector<NeuronVar> getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual std::vector<NeuronVar> getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<Var> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<Var> getPostVars() const override{ return __VA_ARGS__; }
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_PRE_VAR_REFS(...) virtual VarRefVec getPreVarRefs() const override{ return __VA_ARGS__; }
@@ -31,14 +31,14 @@ public:
     //----------------------------------------------------------------------------
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
-    virtual std::vector<NeuronVar> getPreVars() const { return {}; }
+    virtual std::vector<Var> getPreVars() const { return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
-    virtual std::vector<NeuronVar> getPostVars() const { return {}; }
+    virtual std::vector<Var> getPostVars() const { return {}; }
 
     //! Gets model variables
-    virtual std::vector<SynapseVar> getVars() const{ return {}; }
+    virtual std::vector<Var> getVars() const{ return {}; }
 
     //! Gets names and types (as strings) of synapse variable references
     virtual VarRefVec getVarRefs() const { return {}; }

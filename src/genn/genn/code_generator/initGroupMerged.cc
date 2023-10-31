@@ -88,7 +88,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
             // If variable has NEURON axis
             const VarAccessDim varDims = adaptor.getVarDims(var);
-            if (varDims & VarAccessDim::NEURON) {
+            if (varDims & VarAccessDim::ELEMENT) {
                 backend.genVariableInit(
                     varEnv, count, "id",
                     [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots, varDims]
@@ -222,7 +222,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         [batchSize, this] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, "_out_post", Type::writeNumeric(0.0, getScalarType()), 
-                            "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::NEURON, batchSize);
+                            "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, batchSize);
 
         });
 
@@ -235,7 +235,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
             [batchSize, this](EnvironmentExternalBase &varEnv)
             {
                 genVariableFill(varEnv, "_den_delay", Type::writeNumeric(0.0, getScalarType()),
-                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::NEURON, 
+                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                                 batchSize, true, getArchetype().getMaxDendriticDelayTimesteps());
             });
 
@@ -269,7 +269,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {
                                 genVariableFill(varEnv, "_out_pre", Type::writeNumeric(0.0, getScalarType()),
-                                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::NEURON, batchSize);
+                                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, batchSize);
                             });
 }
 
@@ -450,7 +450,7 @@ void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, Enviro
                     (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::NEURON, 
+                genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                               batchSize, delayRequired, getArchetype().getNumDelaySlots());
             });
     }
@@ -481,7 +481,7 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
                     (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::NEURON,
+                genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT,
                                 batchSize, delayRequired, getArchetype().getNumDelaySlots());
             });
     }
@@ -500,7 +500,7 @@ void NeuronInitGroupMerged::genInitSpikeTime(const BackendBase &backend, Environ
     backend.genVariableInit(env, "num_neurons", "id",
         [batchSize, varName, this] (EnvironmentExternalBase &varEnv)
         {
-            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::NEURON, 
+            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                             batchSize, getArchetype().isDelayRequired(), getArchetype().getNumDelaySlots());
         });
 }

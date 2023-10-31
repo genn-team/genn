@@ -17,7 +17,7 @@ class PiecewiseSTDPCopy : public WeightUpdateModels::Base
 public:
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_SYNAPSE_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
+    SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
         "addToPost(g);\n"
@@ -65,7 +65,7 @@ public:
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     

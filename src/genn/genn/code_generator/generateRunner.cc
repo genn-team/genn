@@ -34,7 +34,7 @@ size_t getNumVarCopies(VarAccessDim varDims, size_t batchSize, bool batched = tr
 //--------------------------------------------------------------------------
 size_t getNumNeuronVarElements(VarAccessDim varDims, size_t numNeurons)
 {
-    return (varDims & VarAccessDim::NEURON) ? numNeurons : 1;
+    return (varDims & VarAccessDim::ELEMENT) ? numNeurons : 1;
 }
 //--------------------------------------------------------------------------
 size_t getNeuronVarSize(VarAccessDim varDims, size_t numElements, size_t batchSize, 
@@ -46,25 +46,14 @@ size_t getNeuronVarSize(VarAccessDim varDims, size_t numElements, size_t batchSi
 size_t getSynapseVarSize(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg, 
                          size_t batchSize, bool batched = true)
 {
-    const bool pre = (varDims & VarAccessDim::PRE_NEURON);
-    const bool post = (varDims & VarAccessDim::POST_NEURON);
-    const unsigned int numPre = sg.getSrcNeuronGroup()->getNumNeurons();
-    const unsigned int numPost = sg.getTrgNeuronGroup()->getNumNeurons();
-    const unsigned int rowStride = backend.getSynapticMatrixRowStride(sg);
     const size_t numCopies = getNumVarCopies(varDims, batchSize, batched);
-    if(pre && post) {
+    if(varDims & VarAccessDim::ELEMENT) {
         if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
             return sg.getKernelSizeFlattened() * numCopies;
         }
         else {
-            return numPre * rowStride * numCopies;
+            return sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg) * numCopies;
         }
-    }
-    else if(pre) {
-        return numPre * numCopies;
-    }
-    else if(post) {
-        return numPost * numCopies;
     }
     else {
         return numCopies;

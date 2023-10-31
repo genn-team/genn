@@ -35,7 +35,7 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     //! Gets model variables
-    virtual std::vector<NeuronVar> getVars() const{ return {}; }
+    virtual std::vector<Var> getVars() const{ return {}; }
 
     //! Gets the code that defines the execution of one timestep of integration of the neuron model.
     /*! The code will refer to $(NN) for the value of the variable with name "NN".
@@ -128,7 +128,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(ip2)");
 
     SET_PARAM_NAMES({"Vspike", "alpha", "y", "beta"});
-    SET_NEURON_VARS({{"V","scalar"}, {"preV", "scalar"}});
+    SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
         {"ip0", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
@@ -177,7 +177,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
 
     SET_PARAM_NAMES({"a", "b", "c", "d"});
-    SET_NEURON_VARS({{"V","scalar"}, {"U", "scalar"}});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"}});
 
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
@@ -205,9 +205,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::IzhikevichVariable);
 
     SET_PARAM_NAMES({});
-    SET_NEURON_VARS({{"V","scalar"}, {"U", "scalar"},
-                     {"a", "scalar", NeuronVarAccess::READ_ONLY}, {"b", "scalar", NeuronVarAccess::READ_ONLY},
-                     {"c", "scalar", NeuronVarAccess::READ_ONLY}, {"d", "scalar", NeuronVarAccess::READ_ONLY}});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"},
+              {"a", "scalar", VarAccess::READ_ONLY}, {"b", "scalar", VarAccess::READ_ONLY},
+              {"c", "scalar", VarAccess::READ_ONLY}, {"d", "scalar", VarAccess::READ_ONLY}});
 };
 
 //----------------------------------------------------------------------------
@@ -247,7 +247,7 @@ public:
         {"ExpTC", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
         {"Rmembrane", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
-    SET_NEURON_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
@@ -291,7 +291,7 @@ public:
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
-    SET_NEURON_VARS({{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", NeuronVarAccess::READ_ONLY_DUPLICATE}});
+    SET_VARS({{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}});
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
@@ -351,7 +351,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
 
     SET_PARAM_NAMES({"trefract", "tspike", "Vspike", "Vrest"});
-    SET_NEURON_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"firingProb", "scalar*"}, {"offset", "unsigned int"}});
 };
 
@@ -387,7 +387,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
 
     SET_PARAM_NAMES({"rate"});
-    SET_NEURON_VARS({{"timeStepToSpike", "scalar"}});
+    SET_VARS({{"timeStepToSpike", "scalar"}});
     SET_DERIVED_PARAMS({{"isi", [](const std::unordered_map<std::string, double> &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
@@ -485,7 +485,7 @@ public:
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 0.0");
 
     SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
-    SET_NEURON_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
 };
 
 //----------------------------------------------------------------------------

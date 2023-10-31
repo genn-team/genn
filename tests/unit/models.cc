@@ -24,7 +24,7 @@ public:
 
     SET_PARAM_NAMES({"tau"});
 
-    SET_NEURON_VARS({{"x", "scalar"}});
+    SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
         {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
@@ -48,7 +48,7 @@ class Cont : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Cont);
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_pre);\n");
@@ -60,7 +60,7 @@ class ContPrePost : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(ContPrePost);
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
 

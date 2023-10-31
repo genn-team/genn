@@ -42,7 +42,7 @@ public:
         {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
         {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
-    SET_NEURON_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
     SET_NEEDS_AUTO_REFRACTORY(false);
 };

@@ -19,7 +19,7 @@ class StaticPulseDendriticDelayReverse : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelayReverse);
 
-    SET_SYNAPSE_VARS({{"d", "uint8_t", SynapseVarAccess::READ_ONLY}, {"g", "scalar", SynapseVarAccess::READ_ONLY}});
+    SET_VARS({{"d", "uint8_t", VarAccess::READ_ONLY}, {"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
@@ -41,7 +41,7 @@ class RemoveSynapse : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapse);
     
-    SET_SYNAPSE_VARS({{"a", "scalar"}});
+    SET_VARS({{"a", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"
         "   if(id_post == (id_pre + 1)) {\n"
@@ -57,7 +57,7 @@ class RemoveSynapseVarRef : public CustomConnectivityUpdateModels::Base
 public:
     DECLARE_SNIPPET(RemoveSynapseVarRef);
     
-    SET_SYNAPSE_VARS({{"a", "scalar"}});
+    SET_VARS({{"a", "scalar"}});
     SET_VAR_REFS({{"b", "scalar"}});
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"
@@ -108,7 +108,7 @@ class Cont : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(Cont);
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_pre);\n");
@@ -120,7 +120,7 @@ class ContPost : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(ContPost);
 
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "addToPost(g * V_post);\n");

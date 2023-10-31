@@ -701,7 +701,7 @@ std::string BackendBase::getReductionOperation(const std::string &reduction, con
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, 
                                                                                unsigned int batchSize, const std::string &idx) const
 {
-    return genInitReductionTargets<NeuronVarAccess>(
+    return genInitReductionTargets<VarAccess>(
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
@@ -713,7 +713,7 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
 std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, 
                                                                                unsigned int batchSize, const std::string &idx) const
 {
-    return genInitReductionTargets<SynapseVarAccess>(
+    return genInitReductionTargets<VarAccess>(
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::WUVarReference &varRef, const std::string &index)
         {

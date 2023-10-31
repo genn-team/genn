@@ -19,7 +19,7 @@ class StaticPulseBack : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseBack);
 
-    SET_SYNAPSE_VARS({{"g", "scalar", SynapseVarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE(
         "$(addToInSyn, $(g));\n"
@@ -79,7 +79,7 @@ public:
 
     SET_PARAM_NAMES({"tau"});
 
-    SET_NEURON_VARS({{"x", "scalar"}});
+    SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
         {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
@@ -122,7 +122,7 @@ public:
         {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("TauM")); }},
         {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
 
-    SET_NEURON_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
 IMPLEMENT_SNIPPET(LIFAdditional);
 
@@ -163,7 +163,7 @@ public:
         {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
         {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
-    SET_NEURON_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
 IMPLEMENT_SNIPPET(LIFRandom);
 
@@ -176,7 +176,7 @@ public:
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
-    SET_SYNAPSE_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     

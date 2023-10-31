@@ -272,7 +272,7 @@ protected:
     // Protected const methods
     //------------------------------------------------------------------------
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
-    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::NEURON); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::ELEMENT); }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 

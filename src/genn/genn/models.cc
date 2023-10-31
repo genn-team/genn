@@ -456,14 +456,7 @@ EGPReference EGPReference::createWUEGPRef(const SynapseGroup *sg, const std::str
 //----------------------------------------------------------------------------
 // Free functions
 //----------------------------------------------------------------------------
-void updateHash(const Base::NeuronVar &v, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(v.name, hash);
-    Type::updateHash(v.type, hash);
-    Utils::updateHash(v.access, hash);
-}
-//----------------------------------------------------------------------------
-void updateHash(const Base::SynapseVar &v, boost::uuids::detail::sha1 &hash)
+void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);

@@ -33,8 +33,7 @@ class CustomConnectivityUpdateInternal;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_NEURON_VARS(...) virtual std::vector<NeuronVar> getVars() const override{ return __VA_ARGS__; }
-#define SET_SYNAPSE_VARS(...) virtual std::vector<SynapseVar> getVars() const override{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual std::vector<Var> getVars() const override{ return __VA_ARGS__; }
 #define SET_CUSTOM_UPDATE_VARS(...) virtual std::vector<CustomUpdateVar> getVars() const override{ return __VA_ARGS__; }
 #define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
 
@@ -76,27 +75,15 @@ public:
         A access;
     };
 
-    struct NeuronVar : public VarBase<NeuronVarAccess>
+    struct Var : public VarBase<VarAccess>
     {
-        using VarBase<NeuronVarAccess>::VarBase;
+        using VarBase<VarAccess>::VarBase;
 
-        NeuronVar(const std::string &n, const Type::ResolvedType &t) 
-        :   VarBase(n, t, NeuronVarAccess::READ_WRITE)
+        Var(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
         {}
-        NeuronVar(const std::string &n, const std::string &t) 
-        :   VarBase(n, t, NeuronVarAccess::READ_WRITE)
-        {}
-    };
-
-    struct SynapseVar : public VarBase<SynapseVarAccess>
-    {
-        using VarBase<SynapseVarAccess>::VarBase;
-
-        SynapseVar(const std::string &n, const Type::ResolvedType &t) 
-        :   VarBase(n, t, SynapseVarAccess::READ_WRITE)
-        {}
-        SynapseVar(const std::string &n, const std::string &t) 
-        :   VarBase(n, t, SynapseVarAccess::READ_WRITE)
+        Var(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
         {}
     };
 
@@ -223,14 +210,14 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::Var);
     DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
-    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
-    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::NeuronVar);
+    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::Var);
 
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
@@ -310,15 +297,15 @@ private:
         SynapseGroupInternal *group;
         SynapseGroupInternal *transposeGroup;
 
-        Base::SynapseVar var;
-        std::optional<Base::SynapseVar> transposeVar;
+        Base::Var var;
+        std::optional<Base::Var> transposeVar;
     };
 
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal, Base::CustomUpdateVar);
-    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::SynapseVar);
+    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::Var);
 
      //! Variant type used to store 'detail'
     using DetailType = std::variant<WURef, CURef, CCURef>;
@@ -376,8 +363,7 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-GENN_EXPORT void updateHash(const Base::NeuronVar &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const Base::SynapseVar &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
