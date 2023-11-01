@@ -176,7 +176,8 @@ public:
     const std::unordered_map<std::string, InitVarSnippet::Init> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
-    const std::unordered_map<std::string, double> getWUConstInitVals() const;
+    const std::unordered_map<std::string, Models::VarReference> &getWUPreNeuronVarReferences() const{ return m_WUPreNeuronVarReferences;  }
+    const std::unordered_map<std::string, Models::VarReference> &getWUPostNeuronVarReferences() const{ return m_WUPostNeuronVarReferences;  }
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
@@ -223,8 +224,11 @@ public:
 
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
+                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, 
+                 const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                 const std::unordered_map<std::string, Models::VarReference> &wuPreNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &wuPostNeuronVarReferences,
+                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, 
+                 const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -489,6 +493,12 @@ private:
     //! Initialisers for weight update model post-presynaptic neuron variables
     std::unordered_map<std::string, InitVarSnippet::Init> m_WUPostVarInitialisers;
     
+    //! References to presynaptic neuron variables used by weight update model
+    std::unordered_map<std::string, Models::VarReference> m_WUPreNeuronVarReferences;
+
+    //! References to postsynaptic neuron variables used by weight update model
+    std::unordered_map<std::string, Models::VarReference> m_WUPostNeuronVarReferences;
+
     //! Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
 

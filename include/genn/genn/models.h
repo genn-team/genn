@@ -184,6 +184,7 @@ public:
     //! Get size of variable
     unsigned int getSize() const;
     
+    //! Does this variable reference's target belong to neuron group
     bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
     
     //! If variable is delayed, get neuron group which manages its delay

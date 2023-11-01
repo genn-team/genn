@@ -12,33 +12,6 @@
 #include "synapseGroupInternal.h"
 #include "type.h"
 
-//----------------------------------------------------------------------------
-// Anonymous namespace
-//----------------------------------------------------------------------------
-namespace
-{
-std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, GeNN::InitVarSnippet::Init> &varInitialisers)
-{
-    // Reserve initial values to match initialisers
-    std::unordered_map<std::string, double> initVals;
-
-    // Transform variable initialisers into a vector of doubles
-    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::inserter(initVals, initVals.end()),
-                   [](const auto &v)
-                   {
-                       // Check
-                       if(dynamic_cast<const GeNN::InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr) {
-                           throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
-                       }
-
-                       // Return the first parameter (the value)
-                       return std::make_pair(v.first, v.second.getParams().at("constant"));
-                   });
-
-    return initVals;
-}
-}   // Anonymous namespace
-
 // ------------------------------------------------------------------------
 // GeNN::SynapseGroup
 // ------------------------------------------------------------------------
@@ -262,11 +235,6 @@ bool SynapseGroup::isPrevPostSpikeTimeRequired() const
     return isPostTimeReferenced("prev_st_post");
 }
 //----------------------------------------------------------------------------
-const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals() const
-{
-    return getConstInitVals(m_WUVarInitialisers);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isZeroCopyEnabled() const
 {
     // If there are any postsynaptic variables implemented in zero-copy mode return true
@@ -336,8 +304,11 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
+                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, 
+                           const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                           const std::unordered_map<std::string, Models::VarReference> &wuPreNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &wuPostNeuronVarReferences,
+                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, 
+                           const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -347,7 +318,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), 
+        m_WUPostVarInitialisers(wuPostVarInitialisers), m_WUPreNeuronVarReferences(wuPreNeuronVarReferences), m_WUPostNeuronVarReferences(wuPostNeuronVarReferences),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers), m_PSNeuronVarReferences(psNeuronVarReferences),
         m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
@@ -358,17 +330,25 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), getWUPreVarInitialisers(), getWUPostVarInitialisers(), 
+    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), 
+                           getWUPreVarInitialisers(), getWUPostVarInitialisers(),
+                           getWUPreNeuronVarReferences(), getWUPostNeuronVarReferences(),
                            "Synapse group " + getName() + " weight update model ");
     getPSModel()->validate(getPSParams(), getPSVarInitialisers(), getPSNeuronVarReferences(),
                            "Synapse group " + getName() + " postsynaptic model ");
 
     // Check variable reference types
     Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs());
+    Models::checkVarReferenceTypes(getWUPreNeuronVarReferences(), getWUModel()->getPreNeuronVarRefs());
+    Models::checkVarReferenceTypes(getWUPostNeuronVarReferences(), getWUModel()->getPostNeuronVarRefs());
     
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.");
+    Models::checkLocalVarReferences(getWUPreNeuronVarReferences(), getWUModel()->getPreNeuronVarRefs(),
+                                    getSrcNeuronGroup(), "Weight update model presynaptic variable references can only point to presynaptic neuron group.");
+    Models::checkLocalVarReferences(getWUPostNeuronVarReferences(), getWUModel()->getPostNeuronVarRefs(),
+                                    getTrgNeuronGroup(), "Weight update model postsynaptic variable references can only point to postsynaptic neuron group.");
     
      // Scan weight update model code strings
     m_WUSimCodeTokens = Utils::scanCode(
@@ -577,7 +557,6 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-   
     // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
     if (!Utils::areTokensEmpty(m_WUSimCodeTokens)) {
         getSrcNeuronGroup()->updatePreVarQueues(m_WUSimCodeTokens);

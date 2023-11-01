@@ -15,16 +15,22 @@ public:
     using GroupExternal = SynapseGroup;
 
     SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
+                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, 
+                         const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                         const std::unordered_map<std::string, Models::VarReference> &wuPreNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &wuPostNeuronVarReferences,
+                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, 
+                         const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                          VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
-                     ps, psParams, psVarInitialisers, psNeuronVarReferences, srcNeuronGroup, trgNeuronGroup,
-                     connectivityInitialiser, toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
+    :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers, 
+                     wuPreVarInitialisers, wuPostVarInitialisers,
+                     wuPreNeuronVarReferences, wuPostNeuronVarReferences,
+                     ps, psParams, psVarInitialisers, psNeuronVarReferences, 
+                     srcNeuronGroup, trgNeuronGroup, connectivityInitialiser, 
+                     toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
                      defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)
     {
         // Add references to target and source neuron groups
@@ -145,6 +151,31 @@ public:
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSExtraGlobalParamLocation(varName); }
     
     Snippet::Base::EGPVec getDefs() const{ return m_SG.getPSModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapsePSMNeuronVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapsePSMNeuronVarRefAdapter
+{
+public:
+    SynapsePSMNeuronVarRefAdapter(const SynapseGroupInternal &cs) : m_SG(cs)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getPSModel()->getNeuronVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getPSNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

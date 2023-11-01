@@ -29,11 +29,11 @@ public:
     //! Gets model variables
     virtual std::vector<Var> getVars() const{ return {}; }
 
-    virtual std::string getDecayCode() const{ return ""; }
-    virtual std::string getApplyInputCode() const{ return ""; }
-
     //! Gets names and types of model variable references
     virtual VarRefVec getNeuronVarRefs() const{ return {}; }
+    
+    virtual std::string getDecayCode() const{ return ""; }
+    virtual std::string getApplyInputCode() const{ return ""; }
     
     //----------------------------------------------------------------------------
     // Public API

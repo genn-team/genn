@@ -33,6 +33,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPreVars(), hash);
     Utils::updateHash(getPostVars(), hash);
+    Utils::updateHash(getPreNeuronVarRefs(), hash);
+    Utils::updateHash(getPostNeuronVarRefs(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -47,6 +49,7 @@ boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
     Utils::updateHash(getPreSpikeCode(), hash);
     Utils::updateHash(getPreDynamicsCode(), hash);
     Utils::updateHash(getPreVars(), hash);
+    Utils::updateHash(getPreNeuronVarRefs(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -60,6 +63,7 @@ boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPostVars(), hash);
+    Utils::updateHash(getPostNeuronVarRefs(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -69,6 +73,8 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
+                    const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
+                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
                     const std::string &description) const
 {
     // Superclass
@@ -85,5 +91,13 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateInitialisers(vars, varValues, "variable", description);
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
+
+    // Validate variable reference initialisers
+    const auto preVarRefs = getPreNeuronVarRefs();
+    const auto postVarRefs = getPostNeuronVarRefs();
+    Utils::validateVecNames(preVarRefs, "Presynaptic neuron variable reference");
+    Utils::validateVecNames(postVarRefs, "Postsynaptic neuron variable reference");
+    Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", description);
+    Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", description);
 }
 }   // namespace WeightUpdateModels

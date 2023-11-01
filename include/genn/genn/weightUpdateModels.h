@@ -20,6 +20,9 @@
 #define SET_PRE_VARS(...) virtual std::vector<Var> getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual std::vector<Var> getPostVars() const override{ return __VA_ARGS__; }
 
+#define SET_PRE_NEURON_VAR_REFS(...) virtual VarRefVec getPreNeuronVarRefs() const override{ return __VA_ARGS__; }
+#define SET_POST_NEURON_VAR_REFS(...) virtual VarRefVec getPostNeuronVarRefs() const override{ return __VA_ARGS__; }
+
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
@@ -82,6 +85,12 @@ public:
     //! across all synapses going to the same postsynaptic neuron
     virtual std::vector<Var> getPostVars() const{ return {}; }
 
+    //! Gets names and types of variable references to presynaptic neuron
+    virtual VarRefVec getPreNeuronVarRefs() const{ return {}; }
+
+    //! Gets names and types of variable references to postsynaptic neuron
+    virtual VarRefVec getPostNeuronVarRefs() const{ return {}; }
+
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -117,6 +126,8 @@ public:
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
+                  const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
+                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
                   const std::string &description) const;
 };
 
