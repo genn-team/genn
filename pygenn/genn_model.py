@@ -778,6 +778,12 @@ def init_var(init_var_snippet, param_space={}):
     # Use add function to create suitable VarInit
     return VarInit(init_var_snippet, param_space)
 
+def init_psm(psm, params={}, vars={}, neuron_var_refs={}):
+    pass
+
+def init_wum(wum, params={}, vars={}, pre_vars={}, 
+             post_vars={}, pre_var_refs={}, post_var_refs={}):
+    pass
 
 def init_sparse_connectivity(init_sparse_connect_snippet, param_space={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
