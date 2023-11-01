@@ -113,6 +113,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.addDerivedParams(psm->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getPSDerivedParams, &InSynPSM::isDerivedParamHeterogeneous);
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
+    // Add neuron variable references
+    psmEnv.addLocalVarRefs<SynapsePSMNeuronVarRefAdapter>();
+
     // **TODO** naming convention
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
         
@@ -515,19 +518,19 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(backend, neuronChildEnv, *this, batchSize);
+        sg.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
 
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(neuronChildEnv, *this, batchSize);
+        sg.generate(neuronChildVarEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        cs.generate(neuronChildEnv, *this, batchSize);
+        cs.generate(neuronChildVarEnv, *this, batchSize);
     }
 
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this); 
