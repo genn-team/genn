@@ -66,7 +66,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs(),
-                                    {getTrgNeuronGroup()->getName()}, "Variable references to in current source can only point to target neuron group.");
+                                    getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.");
     
     // Scan current source model code string
     m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
@@ -114,7 +114,7 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getNeuronVarReferences()) {
-        Utils::updateHash(v.second.getVar().name, hash);
+        Utils::updateHash(v.second.getVarName(), hash);
     };
     return hash.get_digest();
 }

@@ -60,6 +60,13 @@ VarAccessDim VarReference::getVarDims() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
+const std::string &VarReference::getVarName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
 unsigned int VarReference::getSize() const
 {
     return std::visit(
@@ -72,6 +79,15 @@ unsigned int VarReference::getSize() const
             [](const CURef &ref) { return ref.group->getSize(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+bool VarReference::isTargetNeuronGroup(const NeuronGroupInternal *ng) const
+{
+    return std::visit(
+        Utils::Overload{
+            [ng](const NGRef &ref){ return (ref.group == ng); },
+            [](const auto&) { return false; }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -178,13 +194,6 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
     const auto *wum = sg->getWUModel();
     return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
                                   wum->getPostVars()[wum->getPostVarIndex(varName)]});
-}
-//----------------------------------------------------------------------------
-const std::string &VarReference::getVarName() const
-{
-    return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
-        m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -566,5 +575,28 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(e.name, hash);
     Type::updateHash(e.type, hash);
+}
+//----------------------------------------------------------------------------
+void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                             const NeuronGroupInternal *ng, const std::string &targetErrorDescription)
+{
+    // Loop through all variable references
+    for(const auto &modelVarRef : modelVarRefs) {
+        const auto &varRef = varRefs.at(modelVarRef.name);
+
+        // If (neuron) variable being targetted doesn't have BATCH or ELEMENT axis,
+        // check it's only accessed read-only
+        const auto varDims = varRef.getVarDims();
+        if((!(varDims & VarAccessDim::BATCH) || !(varDims & VarAccessDim::ELEMENT))
+            && (modelVarRef.access != VarAccessMode::READ_ONLY))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
+        }
+
+        // If variable reference target doesn't belong to neuron group, give error
+        if(!varRef.isTargetNeuronGroup(ng)) {
+            throw std::runtime_error(targetErrorDescription);
+        }
+    }
 }
 }   // namespace GeNN::Models

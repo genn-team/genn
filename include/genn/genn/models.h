@@ -178,9 +178,14 @@ public:
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
 
+    //! Get name of targetted variable
+    const std::string &getVarName() const;
+
     //! Get size of variable
     unsigned int getSize() const;
-
+    
+    bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
+    
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
@@ -231,7 +236,6 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    const std::string &getVarName() const;
     const std::string &getTargetName() const;
 
     //------------------------------------------------------------------------
@@ -437,6 +441,12 @@ GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 
+//----------------------------------------------------------------------------
+// Free functions
+//----------------------------------------------------------------------------
+//! Helper function to check if local variable references are configured correctly
+GENN_EXPORT void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                                         const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
 void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
@@ -453,28 +463,4 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
     }
 }
 
-//! Helper function to check if local variable references are configured correctly
-template<typename V>
-void checkLocalVarReferences(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs,
-                             const std::vector<std::string> &targetNames, const std::string &targetErrorDescription)
-{
-    // Loop through all variable references
-    // **TODO** move into helper
-    for(const auto &modelVarRef : modelVarRefs) {
-        const auto &varRef = varRefs.at(modelVarRef.name);
-
-        // If neuron var reference point to any SHARED_NEURON or SHARED variables, check that access is read-only
-        if(((varRef.getVar().access & VarAccessDuplication::SHARED_NEURON) || (varRef.getVar().access & VarAccessDuplication::SHARED))
-            && (modelVarRef.access != VarAccessMode::READ_ONLY))
-        {
-            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
-        }
-
-        // Check variable reference points to target neuron
-        // **YUCK** this check works but is a bit gross
-        if(std::find(targetNames.cbegin(), targetNames.cend(), varRef.getTargetName()) == targetNames.cend()) {
-            throw std::runtime_error(targetErrorDescription);
-        }
-    }
-}
 } // GeNN::Models

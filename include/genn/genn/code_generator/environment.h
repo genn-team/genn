@@ -722,7 +722,7 @@ public:
             const auto varRef = archetypeAdaptor.getInitialisers().at(v.name);
 
             // Add alias from variable reference name to hidden variable name
-            add(qualifiedType, v.name, "$(_" + varRef.getVar().name + ")");
+            add(qualifiedType, v.name, "$(_" + varRef.getVarName() + ")");
         }
     }
 

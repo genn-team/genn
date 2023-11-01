@@ -368,7 +368,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs(),
-                                    {getTrgNeuronGroup()->getName()}, "Postsynaptic model variable references can only point to postsynaptic neuron group.");
+                                    getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.");
     
      // Scan weight update model code strings
     m_WUSimCodeTokens = Utils::scanCode(
@@ -938,7 +938,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getPSNeuronVarReferences()) {
-        Utils::updateHash(v.second.getVar().name, hash);
+        Utils::updateHash(v.second.getVarName(), hash);
     };
 
     return hash.get_digest();
@@ -965,7 +965,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getPSNeuronVarReferences()) {
-        Utils::updateHash(v.second.getVar().name, hash);
+        Utils::updateHash(v.second.getVarName(), hash);
     };
     
     return hash.get_digest();
