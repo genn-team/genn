@@ -62,7 +62,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
 
     // Check variable reference types
-    Models::checkVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs());
+    Models::checkVarReferenceTypes(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs());
 
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs(),

@@ -364,7 +364,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            "Synapse group " + getName() + " postsynaptic model ");
 
     // Check variable reference types
-    Models::checkVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs());
+    Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs());
     
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs(),
