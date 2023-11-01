@@ -103,10 +103,10 @@ class PyCurrentSourceModelBase : public PySnippet<CurrentSourceModels::Base>
 {
     using Base = CurrentSourceModels::Base;
 public:
+    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
 
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
-    virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
 };
 
 //----------------------------------------------------------------------------
@@ -140,6 +140,7 @@ public:
     virtual std::vector<Models::Base::CustomUpdateVar> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::CustomUpdateVar>, Base, "get_vars", getVars); }
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
     virtual EGPRefVec getExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_extra_global_param_refs", getExtraGlobalParamRefs); }
+    
     virtual std::string getUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_update_code", getUpdateCode); }
 };
 
@@ -170,7 +171,8 @@ class PyPostsynapticModelBase : public PySnippet<PostsynapticModels::Base>
     using Base = PostsynapticModels::Base;
 public:
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
-
+    virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
+    
     virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
     virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
 };
@@ -778,6 +780,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_vars", &CustomUpdateModels::Base::getVars)
         .def("get_var_refs", &CustomUpdateModels::Base::getVarRefs)
         .def("get_extra_global_param_refs", &CustomUpdateModels::Base::getExtraGlobalParamRefs)
+
         .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
     
     //------------------------------------------------------------------------
@@ -787,10 +790,12 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
         
         .def("get_vars", &NeuronModels::Base::getVars)
+
         .def("get_sim_code", &NeuronModels::Base::getSimCode)
         .def("get_threshold_condition_code", &NeuronModels::Base::getThresholdConditionCode)
         .def("get_reset_code", &NeuronModels::Base::getResetCode)
         .def("get_additional_input_vars", &NeuronModels::Base::getAdditionalInputVars)
+        
         .def("is_auto_refractory_required", &NeuronModels::Base::isAutoRefractoryRequired);
         
     //------------------------------------------------------------------------
@@ -800,6 +805,8 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
         
         .def("get_vars", &PostsynapticModels::Base::getVars)
+        .def("get_neuron_var_refs", &PostsynapticModels::Base::getNeuronVarRefs)
+        
         .def("get_decay_code", &PostsynapticModels::Base::getDecayCode)
         .def("get_apply_input_code", &PostsynapticModels::Base::getApplyInputCode);
     
