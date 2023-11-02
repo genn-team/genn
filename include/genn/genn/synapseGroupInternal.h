@@ -275,7 +275,6 @@ private:
     const SynapseGroupInternal &m_SG;
 };
 
-
 //----------------------------------------------------------------------------
 // SynapseWUEGPAdapter
 //----------------------------------------------------------------------------
@@ -291,6 +290,56 @@ public:
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
     
     Snippet::Base::EGPVec getDefs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPreNeuronVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPreNeuronVarRefAdapter
+{
+public:
+    SynapseWUPreNeuronVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUModel()->getPreNeuronVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUPreNeuronVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPostNeuronVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPostNeuronVarRefAdapter
+{
+public:
+    SynapseWUPostNeuronVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUModel()->getPostNeuronVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUPostNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
