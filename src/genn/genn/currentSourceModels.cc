@@ -22,6 +22,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getVars(), hash);
+    Utils::updateHash(getNeuronVarRefs(), hash);
     Utils::updateHash(getInjectionCode(), hash);
     return hash.get_digest();
 }
