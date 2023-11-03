@@ -420,15 +420,17 @@ PYBIND11_MODULE(genn, m)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
                 const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
-                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&,
-                const PostsynapticModels::Base*, const ParamValues&, const VarValues&,
+                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&,
+                const VarValues&, const VarValues&, const VarReferences&, const VarReferences&,
+                const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&,
                 const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
                 const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
-                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&,
-                const PostsynapticModels::Base*, const ParamValues&, const VarValues&,
+                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&,
+                const VarValues&, const VarValues&, const VarReferences&, const VarReferences&,
+                const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&,
                 const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
             pybind11::return_value_policy::reference)
 
@@ -569,7 +571,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("sparse_connectivity_initialiser", &SynapseGroup::getConnectivityInitialiser)
         .def_property_readonly("toeplitz_connectivity_initialiser", &SynapseGroup::getToeplitzConnectivityInitialiser)
     
-        .def_property("ps_target_var", &SynapseGroup::getPSTargetVar, &SynapseGroup::setPSTargetVar)
+        .def_property("post_target_var", &SynapseGroup::getPostTargetVar, &SynapseGroup::setPostTargetVar)
         .def_property("pre_target_var", &SynapseGroup::getPreTargetVar, &SynapseGroup::setPreTargetVar)
         .def_property("in_syn_location", &SynapseGroup::getInSynLocation, &SynapseGroup::setInSynVarLocation)
         .def_property("sparse_connectivity_location", &SynapseGroup::getSparseConnectivityLocation, &SynapseGroup::setSparseConnectivityLocation)

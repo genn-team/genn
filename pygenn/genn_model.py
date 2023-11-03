@@ -325,8 +325,9 @@ class GeNNModel(ModelSpecInternal):
     def add_synapse_population(self, pop_name, matrix_type, delay_steps,
                                source, target, w_update_model, wu_param_space,
                                wu_var_space, wu_pre_var_space,
-                               wu_post_var_space, postsyn_model,
-                               ps_param_space, ps_var_space,
+                               wu_post_var_space, wu_pre_var_ref_space,
+                               wu_post_var_ref_space, postsyn_model,
+                               ps_param_space, ps_var_space, ps_var_ref_space,
                                connectivity_initialiser=None):
         """Add a synapse population to the GeNN model
 
@@ -369,36 +370,38 @@ class GeNNModel(ModelSpecInternal):
         # **TODO** remove once underlying 
         source = self._validate_neuron_group(source, "source")
         target = self._validate_neuron_group(target, "target")
-        
+
         # If matrix type is a string, loop up enumeration value
         if isinstance(matrix_type, string_types):
             matrix_type = getattr(SynapseMatrixType, matrix_type)
-        
+
         # If no connectivity initialiser is passed, 
         # use unitialised sparse connectivity
         if connectivity_initialiser is None:
             connectivity_initialiser = init_sparse_connectivity(
                 init_sparse_connectivity_snippets.Uninitialised(), {})
-        
+
         # Resolve postsynaptic and weight update models
         postsyn_model = get_snippet(postsyn_model, PostsynapticModelBase, 
                                     postsynaptic_models)
         w_update_model = get_snippet(w_update_model, WeightUpdateModelBase, 
                                      weight_update_models)
-        
+
         # Extract parts of var spaces which should be initialised by GeNN
         ps_var_init = get_var_init(ps_var_space)
         wu_var_init = get_var_init(wu_var_space)
         wu_pre_var_init = get_var_init(wu_pre_var_space)
         wu_post_var_init = get_var_init(wu_post_var_space)
-        
+
         # Use superclass to add population
         s_group = super(GeNNModel, self).add_synapse_population(
             pop_name, matrix_type, delay_steps, source.name, target.name, 
-            w_update_model, wu_param_space, wu_var_init, wu_pre_var_init, wu_post_var_init,
-            postsyn_model, ps_param_space, ps_var_init,
+            w_update_model, wu_param_space, wu_var_init,
+            wu_pre_var_init, wu_post_var_init,
+            wu_pre_var_space, wu_post_var_ref_space,
+            postsyn_model, ps_param_space, ps_var_init, ps_var_ref_space,
             connectivity_initialiser)
-        
+
         # Initialise group, store group in dictionary and return
         s_group._init_group(self, ps_var_space, wu_var_space, wu_pre_var_space,
                             wu_post_var_space, source, target)
@@ -1355,15 +1358,15 @@ def create_sparse_connect_init_snippet(class_name,
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
-            lambda self: make_cmlf(calc_max_row_len_func)
+            lambda self: calc_max_row_len_func
 
     if calc_max_col_len_func is not None:
         body["get_calc_max_col_length_func"] = \
-            lambda self: make_cmlf(calc_max_col_len_func)
+            lambda self: calc_max_col_len_func
 
     if calc_kernel_size_func is not None:
         body["get_calc_kernel_size_func"] = \
-            lambda self: make_cksf(calc_kernel_size_func)
+            lambda self: calc_kernel_size_func
 
     return create_model(class_name, InitSparseConnectivitySnippetBase, param_names,
                         derived_params, extra_global_params, body)
