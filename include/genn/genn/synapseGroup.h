@@ -212,7 +212,7 @@ public:
 
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
+    const std::string &getPostTargetVar() const{ return m_PostTargetVar; }
 
     //! Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
@@ -562,7 +562,7 @@ private:
 
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    std::string m_PSTargetVar;
+    std::string m_PostTargetVar;
 
     //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */

@@ -50,7 +50,7 @@ void SynapseGroup::setPostTargetVar(const std::string &varName)
        std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
                     [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
     {
-        m_PSTargetVar = varName;
+        m_PostTargetVar = varName;
     }
     else {
         throw std::runtime_error("Target neuron group has no input variable '" + varName + "'");
@@ -326,7 +326,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
+        m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -911,7 +911,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash(getPSTargetVar(), hash);
+    Utils::updateHash(getPostTargetVar(), hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
@@ -928,7 +928,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash(getPSTargetVar(), hash);
+    Utils::updateHash(getPostTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
     
