@@ -694,6 +694,38 @@ public:
     }
 
     template<typename A>
+    void addVarPointers(bool hidden = false)
+    {
+        // Loop through variables and add private pointer field 
+        const A archetypeAdaptor(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto name = hidden ? ("_" + v.name) : v.name;
+            addField(resolvedType.createPointer(), name, v.name,
+                     [v](const auto &runtime, const auto &g, size_t) 
+                     { 
+                         return runtime.getArray(g, v.name);
+                     });
+        }
+    }
+
+    template<typename A>
+    void addVarRefPointers(bool hidden = false)
+    {
+        // Loop through variable references and add private pointer field 
+        const A archetypeAdaptor(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor.getDefs()) {
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto name = hidden ? ("_" + v.name) : v.name;
+            addField(resolvedType.createPointer(), name, v.name,
+                     [v](const auto &runtime, const auto &g, size_t) 
+                     { 
+                         return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
+                     });
+        }
+    }
+
+    template<typename A>
     void addVarExposeAliases(bool readOnly = false)
     {
         // Loop through variables and add unhiding aliases
@@ -998,5 +1030,142 @@ using EnvironmentLocalVarCache = EnvironmentLocalCacheBase<VarCachePolicy<A, G>,
 
 template<typename A, typename G, typename F = G>
 using EnvironmentLocalVarRefCache = EnvironmentLocalCacheBase<VarRefCachePolicy<A, G>, A, G, F>;
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentLocalFieldCacheBase
+//----------------------------------------------------------------------------
+//! Pretty printing environment which caches used fields in local variables
+template<typename P, typename A, typename G>
+class EnvironmentLocalFieldCacheBase : public EnvironmentExternalBase, public P
+{
+public:
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+
+    template<typename... PolicyArgs>
+    EnvironmentLocalFieldCacheBase(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
+                                   const std::string &localPrefix, bool hidden, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group),
+        m_Context(context), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_Hidden(hidden)
+    {
+        // Copy variables into variables referenced, alongside boolean
+        const auto defs = A(m_Group.get().getArchetype()).getDefs();
+        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+                       [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
+    }
+
+    EnvironmentLocalFieldCacheBase(const EnvironmentLocalFieldCacheBase&) = delete;
+
+    ~EnvironmentLocalFieldCacheBase()
+    {
+        A archetypeAdapter(m_Group.get().getArchetype());
+
+        // Copy definitions of variables which have been referenced into new vector or all if always copy set
+        const auto varDefs = archetypeAdapter.getDefs();
+        std::vector<AdapterDef> referencedDefs;
+        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
+                     [this](const auto &v)
+                     {
+                        const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v); 
+                        return (alwaysCopy || m_VariablesReferenced.at(v.name).first);
+                     });
+
+        // Loop through referenced definitions
+        for(const auto &v : referencedDefs) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+
+            if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
+                getContextStream() << "const ";
+            }
+            getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
+
+            // If this isn't a reduction, read value from memory
+            // **NOTE** by not initialising these variables for reductions, 
+            // compilers SHOULD emit a warning if user code doesn't set it to something
+            if(!(v.access & VarAccessModeAttribute::REDUCE)) {
+                getContextStream() << " = " << getContextName("_" + v.name, std::nullopt) << "[" << printSubs(this->getReadIndex(m_Group.get(), v), *this) << "]";
+            }
+            getContextStream() << ";" << std::endl;
+        }
+
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
+
+        // Loop through referenced definitions again
+        for(const auto &v : referencedDefs) {
+            // If we should always copy variable or variable is read-write
+            if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
+                getContextStream() << getContextName("_" + v.name, std::nullopt)  << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
+                getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
+    {
+        // If name isn't found in environment
+        const std::string suffixedName = m_Hidden ? ("_" + name.lexeme) : name.lexeme;
+        auto var = m_VariablesReferenced.find(suffixedName);
+        if (var == m_VariablesReferenced.end()) {
+            return getContextTypes(name, errorHandler);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second.first = true;
+
+            // Resolve type, add qualifier if required and return
+            const auto resolvedType = var->second.second.type.resolve(m_Context.get());
+            const auto qualifiedType = (var->second.second.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            return {qualifiedType};
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
+    {
+        // If variable with this name isn't found, try and get name from context
+        const std::string suffixedName = m_Hidden ? ("_" + name) : name;
+        auto var = m_VariablesReferenced.find(suffixedName);
+        if(var == m_VariablesReferenced.end()) {
+            return getContextName(name, type);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second.first = true;
+
+            // Add underscore and local prefix to variable name
+            return "_" + m_LocalPrefix + name;
+        }
+    }
+
+    virtual CodeStream &getStream() final
+    {
+        return m_Contents;
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::reference_wrapper<G> m_Group;
+    std::reference_wrapper<const Type::TypeContext> m_Context;
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+    std::string m_LocalPrefix;
+    bool m_Hidden;
+    std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
+};
+
+template<typename A, typename G>
+using EnvironmentLocalFieldVarCache = EnvironmentLocalFieldCacheBase<VarCachePolicy<A, G>, A, G>;
+
+template<typename A, typename G>
+using EnvironmentLocalFieldVarRefCache = EnvironmentLocalFieldCacheBase<VarRefCachePolicy<A, G>, A, G>;
 
 }   // namespace GeNN::CodeGenerator

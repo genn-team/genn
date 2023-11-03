@@ -495,6 +495,11 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
             buildStandardEnvironment(groupEnv, batchSize);
             
+            // Add fields for neuron variables to environment
+            // **NOTE** these are hidden and not indexed as SIMT backend
+            // will index these differently in time-driven and spike-driven code
+            groupEnv.addVarPointers<NeuronVarAdapter>(true);
+
             // Call handler to generate generic neuron code
             groupEnv.print("if($(id) < $(num_neurons))");
             {
@@ -596,6 +601,22 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     EnvironmentExternal wuEnv(groupEnv);
                     wuEnv.add(Type::Uint32.addConst(), "id", "n");
+
+                    // Create an environment which caches neuron variable fields in local variables if they are accessed
+                    // **NOTE** we do this right at the top so that local copies can be used by child groups
+                    // **NOTE** always copy variables if variable is delayed
+                    EnvironmentLocalFieldVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
+                        ng, ng.getTypeContext(), wuEnv, "l", true,
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
+                        {
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        },
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
+                        {
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        });
                     ng.generateWUVarUpdate(wuEnv, batchSize);
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");

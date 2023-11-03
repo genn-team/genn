@@ -259,6 +259,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
+                    // Add fields for neuron variables to environment
+                    // **NOTE** these are hidden and not indexed as SIMT backend
+                    // will index these differently in time-driven and spike-driven code
+                    groupEnv.addVarPointers<NeuronVarAdapter>(true);
+                    
                     // If spike or spike-like event recording is in use
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
                         // Calculate number of words which will be used to record this population's spikes
