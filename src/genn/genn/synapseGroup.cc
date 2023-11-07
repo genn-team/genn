@@ -887,6 +887,25 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     if(getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
         Utils::updateHash(getToeplitzConnectivityInitialiser().getHashDigest(), hash);
     }
+
+    // Loop through presynaptic neuron variable references
+    for(const auto &v : getWUPreNeuronVarReferences()) {
+        // Update hash with whether variable references require delay
+        Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
+
+        // Update hash with target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getVarDims(), hash);
+    }
+
+    // Loop through postsynapatic neuron variable references
+    for(const auto &v : getWUPostNeuronVarReferences()) {
+        // Update hash with whether variable references require delay
+        Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
+
+        // Update hash with target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getVarDims(), hash);
+    }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -895,6 +914,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash((getDelaySteps() != 0), hash);
+
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    for(const auto &v : getWUPreNeuronVarReferences()) {
+        Utils::updateHash(v.second.getVarName(), hash);
+    };
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -903,6 +930,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() cons
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash((getBackPropDelaySteps() != 0), hash);
+
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    for(const auto &v : getWUPostNeuronVarReferences()) {
+        Utils::updateHash(v.second.getVarName(), hash);
+    };
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
