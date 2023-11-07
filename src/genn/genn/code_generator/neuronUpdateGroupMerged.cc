@@ -109,8 +109,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     }
 
     // Add parameters, derived parameters and extra global parameters to environment
-    psmEnv.addParams(psm->getParamNames(), fieldSuffix, &SynapseGroupInternal::getPSParams, &InSynPSM::isParamHeterogeneous);
-    psmEnv.addDerivedParams(psm->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getPSDerivedParams, &InSynPSM::isDerivedParamHeterogeneous);
+    psmEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, &InSynPSM::isParamHeterogeneous);
+    psmEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, &InSynPSM::isDerivedParamHeterogeneous);
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
     // Add neuron variable references
@@ -197,8 +197,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         synEnv.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
         
         // Add parameters, derived parameters and extra global parameters to environment
-        synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &InSynWUMPostCode::isParamHeterogeneous);
-        synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &InSynWUMPostCode::isDerivedParamHeterogeneous);
+        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &InSynWUMPostCode::isParamHeterogeneous);
+        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &InSynWUMPostCode::isDerivedParamHeterogeneous);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
@@ -280,8 +280,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         synEnv.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
         
         // Add parameters, derived parameters and extra global parameters to environment
-        synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &OutSynWUMPreCode::isParamHeterogeneous);
-        synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
+        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isParamHeterogeneous);
+        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references

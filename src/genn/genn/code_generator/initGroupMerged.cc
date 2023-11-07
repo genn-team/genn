@@ -689,9 +689,9 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternal
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
-    groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
-    groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
@@ -745,9 +745,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                           [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
         groupEnv.add(Type::Uint32.addConst(), "num_threads", std::to_string(numThreads));
 
-        groupEnv.addConnectInitParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+        groupEnv.addInitialiserParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                       &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
-        groupEnv.addConnectInitDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+        groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                              &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
         // Loop through EGPs
