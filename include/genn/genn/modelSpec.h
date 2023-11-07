@@ -119,7 +119,7 @@ inline PostsynapticModels::Init initPostsynapticModel(const ParamValues &params 
     \param postNeuronVarRefs    postsynaptic neuron variable references for snippet wrapped in VarReferences object.
     \return                     PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
-inline WeightUpdateModels::Init initWeightUpdateodel(const ParamValues &params = {}, const VarValues &vars = {}, 
+inline WeightUpdateModels::Init initWeightUpdateModel(const ParamValues &params = {}, const VarValues &vars = {}, 
                                                      const VarValues &preVars = {}, const VarValues &postVars = {}, 
                                                      const VarReferences &preNeuronVarRefs = {}, 
                                                      const VarReferences &postNeuronVarRefs = {})
