@@ -557,28 +557,30 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-    // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
-    if (!Utils::areTokensEmpty(m_WUSimCodeTokens)) {
-        getSrcNeuronGroup()->updatePreVarQueues(m_WUSimCodeTokens);
-        getTrgNeuronGroup()->updatePostVarQueues(m_WUSimCodeTokens);
+    // Loop through presynaptic variable references
+    for(const auto &v : m_WUPreNeuronVarReferences) {
+        // If variable reference is referenced in synapse code, mark variable 
+        // reference target as requiring queuing on source neuron group
+        if(Utils::isIdentifierReferenced(v.first, m_WUSimCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUEventCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUPostLearnCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUSynapseDynamicsCodeTokens))
+        {
+            getSrcNeuronGroup()->setVarQueueRequired(v.second.getVarName());
+        }
     }
-
-    // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
-    if (!Utils::areTokensEmpty(m_WUEventCodeTokens)) {
-        getSrcNeuronGroup()->updatePreVarQueues(m_WUEventCodeTokens);
-        getTrgNeuronGroup()->updatePostVarQueues(m_WUEventCodeTokens);
-    }
-
-    // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
-    if (!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
-        getSrcNeuronGroup()->updatePreVarQueues(m_WUPostLearnCodeTokens);
-        getTrgNeuronGroup()->updatePostVarQueues(m_WUPostLearnCodeTokens);
-    }
-
-    // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
-    if (!Utils::areTokensEmpty(m_WUSynapseDynamicsCodeTokens)) {
-        getSrcNeuronGroup()->updatePreVarQueues(m_WUSynapseDynamicsCodeTokens);
-        getTrgNeuronGroup()->updatePostVarQueues(m_WUSynapseDynamicsCodeTokens);
+    
+    // Loop through postsynaptic variable references
+    for(const auto &v : m_WUPostNeuronVarReferences) {
+        // If variable reference is referenced in synapse code, mark variable 
+        // reference target as requiring queuing on target neuron group
+        if(Utils::isIdentifierReferenced(v.first, m_WUSimCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUEventCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUPostLearnCodeTokens)
+           || Utils::isIdentifierReferenced(v.first, m_WUSynapseDynamicsCodeTokens))
+        {
+            getTrgNeuronGroup()->setVarQueueRequired(v.second.getVarName());
+        }
     }
 }
 //----------------------------------------------------------------------------

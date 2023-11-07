@@ -399,14 +399,9 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePreVarQueues(const std::vector<Transpiler::Token> &tokens)
+void NeuronGroup::setVarQueueRequired(const std::string &varName)
 {
-    updateVarQueues(tokens, "_pre");
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::updatePostVarQueues(const std::vector<Transpiler::Token> &tokens)
-{
-    updateVarQueues(tokens, "_post");
+    m_VarQueueRequired[getNeuronModel()->getVarIndex(varName)] = true;
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::finalise(double dt)
@@ -655,17 +650,5 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
     Utils::updateHash(m_VarLocation, hash);
     Utils::updateHash(m_ExtraGlobalParamLocation, hash);
     return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::updateVarQueues(const std::vector<Transpiler::Token> &tokens, const std::string &suffix)
-{
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        // If the code contains a reference to this variable, set corresponding flag
-        if(Utils::isIdentifierReferenced(vars[i].name + suffix, tokens)) {
-            m_VarQueueRequired[i] = true;
-        }
-    }
 }
 }   // namespace GeNN

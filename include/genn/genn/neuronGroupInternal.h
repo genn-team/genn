@@ -22,8 +22,7 @@ public:
     }
     
     using NeuronGroup::checkNumDelaySlots;
-    using NeuronGroup::updatePreVarQueues;
-    using NeuronGroup::updatePostVarQueues;
+    using NeuronGroup::setVarQueueRequired;
     using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
