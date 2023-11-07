@@ -347,7 +347,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // **TODO** remap is not always required
-            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
+            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUInitialiser().getPostLearnCodeTokens())) {
                 // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();

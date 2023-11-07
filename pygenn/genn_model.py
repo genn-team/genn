@@ -958,9 +958,9 @@ def create_neuron_model(class_name, param_names=None,
 
 
 def create_postsynaptic_model(class_name, param_names=None,
-                              var_name_types=None, derived_params=None,
-                              decay_code=None, apply_input_code=None,
-                              extra_global_params=None):
+                              var_name_types=None, neuron_var_refs=None,
+                              derived_params=None, decay_code=None,
+                              apply_input_code=None, extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_neuron_model
@@ -976,6 +976,7 @@ def create_postsynaptic_model(class_name, param_names=None,
     param_names         --  list of strings with param names of the model
     var_name_types      --  list of pairs of strings with varible names and
                             types of the model
+    neuron_var_refs     --  references to neuron variables
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
                             should be a functor returned by create_dpf_class
@@ -995,6 +996,10 @@ def create_postsynaptic_model(class_name, param_names=None,
     if var_name_types is not None:
         body["get_vars"] = \
             lambda self: [Var(*vn) for vn in var_name_types]
+    
+    if neuron_var_refs is not None:
+        body["get_neuron_var_refs"] =\
+            lambda self: [VarRef(*v) for v in var_refs]
 
     return create_model(class_name, PostsynapticModelBase, param_names,
                         derived_params, extra_global_params, body)
@@ -1004,6 +1009,8 @@ def create_weight_update_model(class_name, param_names=None,
                                var_name_types=None,
                                pre_var_name_types=None,
                                post_var_name_types=None,
+                               pre_neuron_var_refs=None,
+                               post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
                                event_code=None, learn_post_code=None,
                                synapse_dynamics_code=None,
@@ -1022,40 +1029,42 @@ def create_weight_update_model(class_name, param_names=None,
     create_sparse_connect_init_snippet
 
     Args:
-    class_name                              --  name of the new class
+    class_name                      --  name of the new class
 
     Keyword args:
-    param_names                             --  list of strings with param names of
-                                                the model
-    var_name_types                          --  list of pairs of strings with variable
-                                                names and types of the model
-    pre_var_name_types                      --  list of pairs of strings with
-                                                presynaptic variable names and
-                                                types of the model
-    post_var_name_types                     --  list of pairs of strings with
-                                                postsynaptic variable names and
-                                                types of the model
-    derived_params                          --  list of pairs, where the first member
-                                                is string with name of the derived
-                                                parameter and the second should be 
-                                                a functor returned by create_dpf_class
-    sim_code                                --  string with the simulation code
-    event_code                              --  string with the event code
-    learn_post_code                         --  string with the code to include in
-                                                learn_synapse_post kernel/function
-    synapse_dynamics_code                   --  string with the synapse dynamics code
-    event_threshold_condition_code          --  string with the event threshold
-                                                condition code
-    pre_spike_code                          --  string with the code run once per
-                                                spiking presynaptic neuron
-    post_spike_code                         --  string with the code run once per
-                                                spiking postsynaptic neuron
-    pre_dynamics_code                       --  string with the code run every
-                                                timestep on presynaptic neuron
-    post_dynamics_code                      --  string with the code run every
-                                                timestep on postsynaptic neuron
-    extra_global_params                     --  list of pairs of strings with names and
-                                                types of additional parameters
+    param_names                     --  list of strings with param names of
+                                        the model
+    var_name_types                  --  list of pairs of strings with variable
+                                        names and types of the model
+    pre_var_name_types              --  list of pairs of strings with
+                                        presynaptic variable names and
+                                        types of the model
+    post_var_name_types             --  list of pairs of strings with
+                                        postsynaptic variable names and
+                                        types of the model
+    pre_neuron_var_refs             --  references to presynaptic neuron variables
+    post_neuron_var_refs            --  references to postsynaptic neuron variables
+    derived_params                  --  list of pairs, where the first member
+                                        is string with name of the derived
+                                        parameter and the second should be 
+                                        a functor returned by create_dpf_class
+    sim_code                        --  string with the simulation code
+    event_code                      --  string with the event code
+    learn_post_code                 --  string with the code to include in
+                                        learn_synapse_post kernel/function
+    synapse_dynamics_code           --  string with the synapse dynamics code
+    event_threshold_condition_code  --  string with the event threshold
+                                        condition code
+    pre_spike_code                  --  string with the code run once per
+                                        spiking presynaptic neuron
+    post_spike_code                 --  string with the code run once per
+                                        spiking postsynaptic neuron
+    pre_dynamics_code               --  string with the code run every
+                                        timestep on presynaptic neuron
+    post_dynamics_code              --  string with the code run every
+                                        timestep on postsynaptic neuron
+    extra_global_params             --  list of pairs of strings with names and
+                                        types of additional parameters
     """
     body = {}
 
@@ -1098,6 +1107,14 @@ def create_weight_update_model(class_name, param_names=None,
     if post_var_name_types is not None:
         body["get_post_vars"] = \
             lambda self: [Var(*vn) for vn in post_var_name_types]
+    
+    if pre_neuron_var_refs is not None:
+        body["get_pre_neuron_var_refs"] =\
+            lambda self: [VarRef(*v) for v in pre_neuron_var_refs]
+
+    if post_neuron_var_refs is not None:
+        body["get_post_neuron_var_refs"] =\
+            lambda self: [VarRef(*v) for v in psot_neuron_var_refs]
 
     return create_model(class_name, WeightUpdateModelBase, param_names,
                         derived_params, extra_global_params, body)
@@ -1105,6 +1122,7 @@ def create_weight_update_model(class_name, param_names=None,
 
 def create_current_source_model(class_name, param_names=None,
                                 var_name_types=None,
+                                neuron_var_refs=None,
                                 derived_params=None,
                                 injection_code=None,
                                 extra_global_params=None):
@@ -1123,6 +1141,7 @@ def create_current_source_model(class_name, param_names=None,
     param_names         --  list of strings with param names of the model
     var_name_types      --  list of pairs of strings with varible names and
                             types of the model
+    neuron_var_refs     --  references to neuron variables
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
                             should be a functor returned by create_dpf_class
@@ -1138,6 +1157,10 @@ def create_current_source_model(class_name, param_names=None,
     if var_name_types is not None:
         body["get_vars"] = \
             lambda self: [Var(*vn) for vn in var_name_types]
+    
+    if neuron_var_refs is not None:
+        body["get_neuron_var_refs"] =\
+            lambda self: [VarRef(*v) for v in var_refs]
 
     return create_model(class_name, CurrentSourceModelBase, param_names,
                         derived_params, extra_global_params, body)

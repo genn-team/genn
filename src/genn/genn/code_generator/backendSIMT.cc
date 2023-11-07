@@ -1742,7 +1742,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 [this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
                 {
                     // If postsynaptic learning is required
-                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUPostLearnCodeTokens())) {
+                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPostLearnCodeTokens())) {
                         CodeStream::Scope b(env.getStream());
 
                         // Extract index of synapse's postsynaptic target

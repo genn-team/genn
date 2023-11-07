@@ -1417,8 +1417,8 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cbegin(),
                    [](const ModelSpec::SynapseGroupValueType &sg)
                    {
-                       const auto *wum = sg.second.getWUModel();
-                       const auto *psm = sg.second.getPSModel();
+                       const auto *wum = sg.second.getWUInitialiser().getSnippet();
+                       const auto *psm = sg.second.getPSInitialiser().getSnippet();
                        return (!wum->getSimSupportCode().empty() || !wum->getLearnPostSupportCode().empty()
                                || !wum->getSynapseDynamicsSuppportCode().empty() || !psm->getSupportCode().empty());
                    }))

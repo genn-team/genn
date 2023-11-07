@@ -15,20 +15,13 @@ public:
     using GroupExternal = SynapseGroup;
 
     SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, 
-                         const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                         const std::unordered_map<std::string, Models::VarReference> &wuPreNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &wuPostNeuronVarReferences,
-                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, 
-                         const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
+                         const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                          VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers, 
-                     wuPreVarInitialisers, wuPostVarInitialisers,
-                     wuPreNeuronVarReferences, wuPostNeuronVarReferences,
-                     ps, psParams, psVarInitialisers, psNeuronVarReferences, 
+    :   SynapseGroup(name, matrixType, delaySteps, wumInitialiser, psmInitialiser,
                      srcNeuronGroup, trgNeuronGroup, connectivityInitialiser, 
                      toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
                      defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)
@@ -40,19 +33,6 @@ public:
 
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
-    using SynapseGroup::getWUDerivedParams;
-    using SynapseGroup::getPSDerivedParams;
-    using SynapseGroup::getWUSimCodeTokens;
-    using SynapseGroup::getWUEventCodeTokens;
-    using SynapseGroup::getWUPostLearnCodeTokens;
-    using SynapseGroup::getWUSynapseDynamicsCodeTokens;
-    using SynapseGroup::getWUEventThresholdCodeTokens;
-    using SynapseGroup::getWUPreSpikeCodeTokens;
-    using SynapseGroup::getWUPostSpikeCodeTokens;
-    using SynapseGroup::getWUPreDynamicsCodeTokens;
-    using SynapseGroup::getWUPostDynamicsCodeTokens;
-    using SynapseGroup::getPSApplyInputCodeTokens;
-    using SynapseGroup::getPSDecayCodeTokens;
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setFusedPSTarget;
     using SynapseGroup::setFusedPreOutputTarget;
@@ -119,9 +99,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getPSModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getPSInitialiser().getVarInitialisers(); }
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
 
@@ -150,7 +130,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSExtraGlobalParamLocation(varName); }
     
-    Snippet::Base::EGPVec getDefs() const{ return m_SG.getPSModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -173,9 +153,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_SG.getPSModel()->getNeuronVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getPSNeuronVarReferences(); }
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getPSInitialiser().getNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -198,9 +178,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
     
-    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUInitialiser().getVarInitialisers(); }
 
     const SynapseGroup &getTarget() const{ return m_SG; }
 
@@ -227,9 +207,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUInitialiser().getPreVarInitialisers(); }
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
 
@@ -258,9 +238,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUInitialiser().getPostVarInitialisers(); }
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
@@ -289,7 +269,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
     
-    Snippet::Base::EGPVec getDefs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -312,9 +292,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUModel()->getPreNeuronVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUPreNeuronVarReferences(); }
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -337,9 +317,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUModel()->getPostNeuronVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUPostNeuronVarReferences(); }
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

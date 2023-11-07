@@ -337,7 +337,7 @@ void ModelSpec::finalise()
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_LocalNeuronGroups) {
         for(auto *sg : n.second.getOutSyn()) {
-            const auto *wu = sg->getWUModel();
+            const auto *wu = sg->getWUInitialiser().getSnippet();
 
             if(!wu->getEventThresholdConditionCode().empty()) {
                 assert(false);
@@ -363,7 +363,7 @@ void ModelSpec::finalise()
                 LOGW << "Neuron group '" << n.first << "' records spike-like-event times but, it has outgoing synapse groups with multiple spike-like-event conditions so the recorded times may be ambiguous.";
             }
             for(auto *sg : n.second.getOutSyn()) {
-                if (!sg->getWUModel()->getEventCode().empty()) {
+                if (!sg->getWUInitialiser().getSnippet()->getEventCode().empty()) {
                     sg->setEventThresholdReTestRequired(true);
                 }
             }
@@ -492,11 +492,8 @@ const SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::strin
 }
 // ---------------------------------------------------------------------------
 SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                              const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, 
-                                              const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
-                                              const VarReferences &weightPreNeuronVarReferences, const VarReferences &weightPostNeuronVarReferences,
-                                              const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers, 
-                                              const VarReferences &postsynapticNeuronVarReferences, const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
+                                              const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser, 
+                                              const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
                                               const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
 {
     // Get source and target neuron groups
@@ -507,11 +504,8 @@ SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMa
     auto result = m_LocalSynapseGroups.try_emplace(
         name,
         name, mtype, delaySteps,
-        wum, weightParamValues, weightVarInitialisers, 
-        weightPreVarInitialisers, weightPostVarInitialisers,
-        weightPreNeuronVarReferences, weightPostNeuronVarReferences,
-        psm, postsynapticParamValues, postsynapticVarInitialisers, 
-        postsynapticNeuronVarReferences, srcNeuronGrp, trgNeuronGrp,
+        wumInitialiser, psmInitialiser, 
+        srcNeuronGrp, trgNeuronGrp,
         connectivityInitialiser, toeplitzConnectivityInitialiser, 
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
         m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled);

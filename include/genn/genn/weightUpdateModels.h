@@ -127,8 +127,65 @@ public:
                   const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                   const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
-                  const std::string &description) const;
+                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets) const;
+};
+
+
+//----------------------------------------------------------------------------
+// Init
+//----------------------------------------------------------------------------
+class GENN_EXPORT Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params, 
+         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
+         const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
+         const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+         const std::unordered_map<std::string, Models::VarReference> &preNeuronVarReferences, 
+         const std::unordered_map<std::string, Models::VarReference> &postNeuronVarReferences);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    bool isRNGRequired() const;
+
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const{ return m_PreVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const{ return m_PostVarInitialisers; }
+    const std::unordered_map<std::string, Models::VarReference> &getPreNeuronVarReferences() const{ return m_PreNeuronVarReferences;  }
+    const std::unordered_map<std::string, Models::VarReference> &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
+    
+    const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
+    const std::vector<Transpiler::Token> &getEventCodeTokens() const{ return m_EventCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostLearnCodeTokens() const{ return m_PostLearnCodeTokens; }
+    const std::vector<Transpiler::Token> &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getEventThresholdCodeTokens() const{ return m_EventThresholdCodeTokens; }
+    const std::vector<Transpiler::Token> &getPreSpikeCodeTokens() const{ return m_PreSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostSpikeCodeTokens() const{ return m_PostSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getPreDynamicsCodeTokens() const{ return m_PreDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
+
+    void finalise(double dt);
+    
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_SimCodeTokens;
+    std::vector<Transpiler::Token> m_EventCodeTokens;
+    std::vector<Transpiler::Token> m_PostLearnCodeTokens;
+    std::vector<Transpiler::Token> m_SynapseDynamicsCodeTokens;
+    std::vector<Transpiler::Token> m_EventThresholdCodeTokens;
+    std::vector<Transpiler::Token> m_PreSpikeCodeTokens;
+    std::vector<Transpiler::Token> m_PostSpikeCodeTokens;
+    std::vector<Transpiler::Token> m_PreDynamicsCodeTokens;
+    std::vector<Transpiler::Token> m_PostDynamicsCodeTokens;
+
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
+    std::unordered_map<std::string, Models::VarReference> m_PreNeuronVarReferences;
+    std::unordered_map<std::string, Models::VarReference> m_PostNeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------

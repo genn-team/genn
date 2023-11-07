@@ -18,7 +18,7 @@ template<typename G>
 void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
                                G &sg, unsigned int batchSize, double dt)
 {
-    const auto *wu = sg.getArchetype().getWUModel();
+    const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
 
     EnvironmentGroupMergedField<G> synEnv(env, sg);
 
@@ -100,7 +100,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
         for(const auto &var : wu->getVars()) {
             // If this variable has any initialisation code
-            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
+            const auto &varInit = sg.getArchetype().getWUInitialiser().getVarInitialisers().at(var.name);
             if(!Utils::areTokensEmpty(varInit.getCodeTokens())) {
                 // Declare variable
                 const auto resolvedType = var.type.resolve(sg.getTypeContext());
@@ -151,22 +151,22 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg){ return sg.getWUVarInitialisers().at(varName).getParams(); });
+    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg){ return sg.getWUInitialiser().getVarInitialisers().at(varName).getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varName).getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getVarInitialisers().at(varName).getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
@@ -298,8 +298,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
     updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
 
     // Update hash with weight update model parameters and derived parameters
-    updateHash([](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
-    updateHash([](const SynapseGroupInternal &g) { return g.getWUDerivedParams(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getParams(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getDerivedParams(); }, hash);
 
     // If we're updating a hash for a group with procedural connectivity or initialising connectivity
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
@@ -340,7 +340,7 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExtern
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const auto *wum = getArchetype().getWUModel();
+    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
     synEnv.addParams(wum->getParamNames(), "", &SynapseGroupInternal::getWUParams, &PresynapticUpdateGroupMerged::isWUParamHeterogeneous);
     synEnv.addDerivedParams(wum->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wum->getExtraGlobalParams());
@@ -361,19 +361,19 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExtern
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' weight update model event threshold code");
-    prettyPrintStatements(getArchetype().getWUEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
+    prettyPrintStatements(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUEventCodeTokens(), "event code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getEventCodeTokens(), "event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUSimCodeTokens(), "sim code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getSimCodeTokens(), "sim code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExternalBase &env)
@@ -422,7 +422,7 @@ const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 void PostsynapticUpdateGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
                                                           unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
 }
 
 //----------------------------------------------------------------------------
@@ -433,7 +433,7 @@ const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 void SynapseDynamicsGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
 }
 
 

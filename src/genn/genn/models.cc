@@ -177,21 +177,21 @@ VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *psm = sg->getPSModel();
+    const auto *psm = sg->getPSInitialiser().getSnippet();
     return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg),
                                psm->getVars()[psm->getVarIndex(varName)]});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg),
                                  wum->getPreVars()[wum->getPreVarIndex(varName)]});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
                                   wum->getPostVars()[wum->getPostVarIndex(varName)]});
 }
@@ -347,11 +347,11 @@ bool WUVarReference::operator < (const WUVarReference &other) const
 WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std::string &varName, 
                                                     SynapseGroup *transposeSG, const std::string &transposeVarName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
     const auto var = wum->getVars()[wum->getVarIndex(varName)];
     if(transposeSG) {
-        const auto *transposeWUM = transposeSG->getWUModel();
+        const auto *transposeWUM = transposeSG->getWUInitialiser().getSnippet();
         return WUVarReference(WURef{sgInternal, static_cast<SynapseGroupInternal*>(transposeSG),
                                     var, transposeWUM->getVars()[transposeWUM->getVarIndex(transposeVarName)]});
     }
@@ -522,13 +522,13 @@ EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &e
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
-    const auto *psm = sg->getPSModel();
+    const auto *psm = sg->getPSInitialiser().getSnippet();
     return EGPReference(PSMRef{sg, psm->getExtraGlobalParams()[psm->getExtraGlobalParamIndex(egpName)]});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return EGPReference(WURef{sg, wum->getExtraGlobalParams()[wum->getExtraGlobalParamIndex(egpName)]});
 }
 //----------------------------------------------------------------------------

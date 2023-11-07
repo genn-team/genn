@@ -50,8 +50,42 @@ public:
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
-                  const std::string &description) const;
+                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets) const;
+};
+
+//----------------------------------------------------------------------------
+// Init
+//----------------------------------------------------------------------------
+class GENN_EXPORT Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params, 
+         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
+         const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    bool isRNGRequired() const;
+    bool isVarInitRequired() const;
+
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
+    
+    const std::vector<Transpiler::Token> &getDecayCodeTokens() const{ return m_DecayCodeTokens; }
+    const std::vector<Transpiler::Token> &getApplyInputCodeTokens() const{ return m_ApplyInputCodeTokens; }
+
+    void finalise(double dt);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_DecayCodeTokens;
+    std::vector<Transpiler::Token> m_ApplyInputCodeTokens;
+
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------

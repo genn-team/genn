@@ -198,6 +198,9 @@ public:
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual std::vector<Models::Base::Var> getPreVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_pre_vars", getPreVars); }
     virtual std::vector<Models::Base::Var> getPostVars() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_post_vars", getPostVars); }
+    
+    virtual std::vector<Models::Base::VarRef> getPreNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::VarRef> , Base, "get_pre_neuron_var_refs", getPreNeuronVarRefs); }
+    virtual std::vector<Models::Base::VarRef> getPostNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::VarRef> , Base, "get_post_neuron_var_refs", getPostNeuronVarRefs); }
 };
 
 const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
@@ -829,7 +832,9 @@ PYBIND11_MODULE(genn, m)
         .def("get_post_dynamics_code", &WeightUpdateModels::Base::getPostDynamicsCode)
         .def("get_vars", &WeightUpdateModels::Base::getVars)
         .def("get_pre_vars", &WeightUpdateModels::Base::getPreVars)
-        .def("get_post_vars", &WeightUpdateModels::Base::getPostVars);
+        .def("get_post_vars", &WeightUpdateModels::Base::getPostVars)
+        .def("get_pre_neuron_var_refs", &WeightUpdateModels::Base::getPreNeuronVarRefs)
+        .def("get_post_neuron_var_refs", &WeightUpdateModels::Base::getPostNeuronVarRefs);
 
     //------------------------------------------------------------------------
     // genn.SparseConnectivityInit

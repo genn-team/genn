@@ -74,11 +74,10 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                     const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
-                    const std::string &description) const
+                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets) const
 {
     // Superclass
-    Snippet::Base::validate(paramValues, description);
+    Snippet::Base::validate(paramValues, "Weight update model");
 
     const auto vars = getVars();
     const auto preVars = getPreVars();
@@ -88,16 +87,68 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
 
     // Validate variable initialisers
-    Utils::validateInitialisers(vars, varValues, "variable", description);
-    Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
-    Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
+    Utils::validateInitialisers(vars, varValues, "variable", "Weight update model");
+    Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", "Weight update model");
+    Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", "Weight update model");
 
     // Validate variable reference initialisers
     const auto preVarRefs = getPreNeuronVarRefs();
     const auto postVarRefs = getPostNeuronVarRefs();
     Utils::validateVecNames(preVarRefs, "Presynaptic neuron variable reference");
     Utils::validateVecNames(postVarRefs, "Postsynaptic neuron variable reference");
-    Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", description);
-    Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", description);
+    Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", "Weight update model");
+    Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", "Weight update model");
+}
+
+
+//----------------------------------------------------------------------------
+// GeNN::WeightUpdateModels::Init
+//----------------------------------------------------------------------------
+Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
+           const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+           const std::unordered_map<std::string, Models::VarReference> &preNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &postNeuronVarReferences)
+:   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers), 
+    m_PreNeuronVarReferences(preNeuronVarReferences), m_PostNeuronVarReferences(postNeuronVarReferences)
+{
+    // Validate
+    getSnippet()->validate(getParams(), getVarInitialisers(), getPreVarInitialisers(), getPostVarInitialisers(),
+                           getPreNeuronVarReferences(), getPostNeuronVarReferences());
+
+    // Check variable reference types
+    Models::checkVarReferenceTypes(getPreNeuronVarReferences(), getSnippet()->getPreNeuronVarRefs());
+    Models::checkVarReferenceTypes(getPostNeuronVarReferences(), getSnippet()->getPostNeuronVarRefs());
+
+    // Scan code tokens
+    m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Weight update model sim code");
+    m_EventCodeTokens = Utils::scanCode(getSnippet()->getEventCode(), "Weight update model event code");
+    m_PostLearnCodeTokens = Utils::scanCode(getSnippet()->getLearnPostCode(), "Weight update model learn post code");
+    m_SynapseDynamicsCodeTokens = Utils::scanCode(getSnippet()->getSynapseDynamicsCode(), "Weight update model synapse dynamics code");
+    m_EventThresholdCodeTokens = Utils::scanCode(getSnippet()->getEventThresholdConditionCode(), "Weight update model event threshold code");
+    m_PreSpikeCodeTokens = Utils::scanCode(getSnippet()->getPreSpikeCode(), "Weight update model pre spike code");
+    m_PostSpikeCodeTokens = Utils::scanCode(getSnippet()->getPostSpikeCode(), "Weight update model post spike code");
+    m_PreDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPreDynamicsCode(), "Weight update model pre dynamics code");
+    m_PostDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPostDynamicsCode(), "Weight update model post dynamics code");
+    
+}
+//----------------------------------------------------------------------------
+void Init::finalise(double dt)
+{
+    // Superclass
+    Snippet::Init<Base>::finalise(dt);
+
+    // Initialise derived parameters for WU variable initialisers
+    for(auto &v : m_VarInitialisers) {
+        v.second.finalise(dt);
+    }
+
+    // Initialise derived parameters for WU presynaptic variable initialisers
+    for(auto &v : m_PreVarInitialisers) {
+        v.second.finalise(dt);
+    }
+    
+    // Initialise derived parameters for WU postsynaptic variable initialisers
+    for(auto &v : m_PostVarInitialisers) {
+        v.second.finalise(dt);
+    }
 }
 }   // namespace WeightUpdateModels

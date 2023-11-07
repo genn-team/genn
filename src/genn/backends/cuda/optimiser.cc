@@ -222,11 +222,11 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
             groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
-        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+        if(!s.second.getWUInitialiser().getSnippet()->getLearnPostCode().empty()) {
             groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
-        if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+        if(!s.second.getWUInitialiser().getSnippet()->getSynapseDynamicsCode().empty()) {
             groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
         }
 

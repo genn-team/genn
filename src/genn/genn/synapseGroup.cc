@@ -19,27 +19,27 @@ namespace GeNN
 {
 void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
+    m_WUVarLocation[getWUInitialiser().getSnippet()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUPreVarLocation[getWUModel()->getPreVarIndex(varName)] = loc;
+    m_WUPreVarLocation[getWUInitialiser().getSnippet()->getPreVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUPostVarLocation[getWUModel()->getPostVarIndex(varName)] = loc;
+    m_WUPostVarLocation[getWUInitialiser().getSnippet()->getPostVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)] = loc;
+    m_WUExtraGlobalParamLocation[getWUInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_PSVarLocation[getPSModel()->getVarIndex(varName)] = loc;
+    m_PSVarLocation[getPSInitialiser().getSnippet()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setPostTargetVar(const std::string &varName)
@@ -74,7 +74,7 @@ void SynapseGroup::setPreTargetVar(const std::string &varName)
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    m_PSExtraGlobalParamLocation[getPSModel()->getExtraGlobalParamIndex(paramName)] = loc;
+    m_PSExtraGlobalParamLocation[getPSInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
@@ -197,12 +197,12 @@ VarLocation SynapseGroup::getSparseConnectivityLocation() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
 {
-    return !Utils::areTokensEmpty(getWUSimCodeTokens());
+    return !Utils::areTokensEmpty(getWUInitialiser().getSimCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSpikeEventRequired() const
 {
-     return !Utils::areTokensEmpty(getWUEventCodeTokens());
+     return !Utils::areTokensEmpty(getWUInitialiser().getEventCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreSpikeTimeRequired() const
@@ -270,32 +270,32 @@ bool SynapseGroup::isZeroCopyEnabled() const
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
 {
-    return m_WUVarLocation[getWUModel()->getVarIndex(var)];
+    return m_WUVarLocation[getWUInitialiser().getSnippet()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
 {
-    return m_WUPreVarLocation[getWUModel()->getPreVarIndex(var)];
+    return m_WUPreVarLocation[getWUInitialiser().getSnippet()->getPreVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
 {
-    return m_WUPostVarLocation[getWUModel()->getPostVarIndex(var)];
+    return m_WUPostVarLocation[getWUInitialiser().getSnippet()->getPostVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &paramName) const
 {
-    return m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)];
+    return m_WUExtraGlobalParamLocation[getWUInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
 {
-    return m_PSVarLocation[getPSModel()->getVarIndex(var)];
+    return m_PSVarLocation[getWUInitialiser().getSnippet()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getPSExtraGlobalParamLocation(const std::string &paramName) const
 {
-    return m_PSExtraGlobalParamLocation[getPSModel()->getExtraGlobalParamIndex(paramName)];
+    return m_PSExtraGlobalParamLocation[getWUInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const
@@ -304,11 +304,7 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, 
-                           const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                           const std::unordered_map<std::string, Models::VarReference> &wuPreNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &wuPostNeuronVarReferences,
-                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers, 
-                           const std::unordered_map<std::string, Models::VarReference> &psNeuronVarReferences,
+                           const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -318,64 +314,26 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), 
-        m_WUPostVarInitialisers(wuPostVarInitialisers), m_WUPreNeuronVarReferences(wuPreNeuronVarReferences), m_WUPostNeuronVarReferences(wuPostNeuronVarReferences),
-        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers), m_PSNeuronVarReferences(psNeuronVarReferences),
-        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
-        m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
+        m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), 
+        m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation), m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), 
+        m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), 
+        m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_SparseConnectivityInitialiser(connectivityInitialiser), 
+        m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
         m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), 
-                           getWUPreVarInitialisers(), getWUPostVarInitialisers(),
-                           getWUPreNeuronVarReferences(), getWUPostNeuronVarReferences(),
-                           "Synapse group " + getName() + " weight update model ");
-    getPSModel()->validate(getPSParams(), getPSVarInitialisers(), getPSNeuronVarReferences(),
-                           "Synapse group " + getName() + " postsynaptic model ");
-
-    // Check variable reference types
-    Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs());
-    Models::checkVarReferenceTypes(getWUPreNeuronVarReferences(), getWUModel()->getPreNeuronVarRefs());
-    Models::checkVarReferenceTypes(getWUPostNeuronVarReferences(), getWUModel()->getPostNeuronVarRefs());
+  
     
     // Check additional local variable reference constraints
-    Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSModel()->getNeuronVarRefs(),
+    Models::checkLocalVarReferences(getPSInitialiser().getNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.");
-    Models::checkLocalVarReferences(getWUPreNeuronVarReferences(), getWUModel()->getPreNeuronVarRefs(),
+    Models::checkLocalVarReferences(getWUInitialiser().getPreNeuronVarReferences(), getWUInitialiser().getSnippet()->getPreNeuronVarRefs(),
                                     getSrcNeuronGroup(), "Weight update model presynaptic variable references can only point to presynaptic neuron group.");
-    Models::checkLocalVarReferences(getWUPostNeuronVarReferences(), getWUModel()->getPostNeuronVarRefs(),
+    Models::checkLocalVarReferences(getWUInitialiser().getPostNeuronVarReferences(), getWUInitialiser().getSnippet()->getPostNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Weight update model postsynaptic variable references can only point to postsynaptic neuron group.");
     
-     // Scan weight update model code strings
-    m_WUSimCodeTokens = Utils::scanCode(
-        getWUModel()->getSimCode(), "Synapse group '" + getName() + "' weight update model sim code");
-    m_WUEventCodeTokens = Utils::scanCode(
-        getWUModel()->getEventCode(), "Synapse group '" + getName() + "' weight update model event code");
-    m_WUPostLearnCodeTokens = Utils::scanCode(
-        getWUModel()->getLearnPostCode(), "Synapse group '" + getName() + "' weight update model learn post code");
-    m_WUSynapseDynamicsCodeTokens = Utils::scanCode(
-        getWUModel()->getSynapseDynamicsCode(), "Synapse group '" + getName() + "' weight update model synapse dynamics code");
-    m_WUEventThresholdCodeTokens = Utils::scanCode(
-        getWUModel()->getEventThresholdConditionCode(), "Synapse group '" + getName() + "' weight update model event threshold code");
-    m_WUPreSpikeCodeTokens = Utils::scanCode(
-        getWUModel()->getPreSpikeCode(), "Synapse group '" + getName() + "' weight update model pre spike code");
-    m_WUPostSpikeCodeTokens = Utils::scanCode(
-        getWUModel()->getPostSpikeCode(), "Synapse group '" + getName() + "' weight update model post spike code");
-    m_WUPreDynamicsCodeTokens = Utils::scanCode(
-        getWUModel()->getPreDynamicsCode(), "Synapse group '" + getName() + "' weight update model pre dynamics code");
-    m_WUPostDynamicsCodeTokens = Utils::scanCode(
-        getWUModel()->getPostDynamicsCode(), "Synapse group '" + getName() + "' weight update model post dynamics code");
-    
-    // Scan postsynaptic update model code strings
-    m_PSApplyInputCodeTokens = Utils::scanCode(
-        getPSModel()->getApplyInputCode(), "Synapse group '" + getName() + "' postsynaptic update model apply input code");
-    m_PSDecayCodeTokens = Utils::scanCode(
-        getPSModel()->getDecayCode(), "Synapse group '" + getName() + "' postsynaptic update model decay code");
-
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
         // If there's a toeplitz initialiser, give an error
@@ -394,19 +352,19 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
 
         // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
+        if(!Utils::areTokensEmpty(getWUInitialiser().getPostLearnCodeTokens())) {
             throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
         }
 
         // If weight update model has code for continuous synapse dynamics, give error
         // **THINK** this would actually be pretty trivial to implement
-        if (!Utils::areTokensEmpty(m_WUSynapseDynamicsCodeTokens)) {
+        if (!Utils::areTokensEmpty(getWUInitialiser().getSynapseDynamicsCodeTokens())) {
             throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
         }
     }
     // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
     else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
-        if(Utils::isRNGRequired(m_WUVarInitialisers)) {
+        if(Utils::isRNGRequired(getWUInitialiser().getVarInitialisers())) {
             throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
         }
     }
@@ -431,7 +389,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
 
         // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!Utils::areTokensEmpty(m_WUPostLearnCodeTokens)) {
+        if(!Utils::areTokensEmpty(getWUInitialiser().getPostLearnCodeTokens())) {
             throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
         }
 
@@ -508,7 +466,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE) || (m_MatrixType == SynapseMatrixType::PROCEDURAL)) &&
-       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+       m_KernelSize.empty() && std::any_of(getWUInitialiser().getVarInitialisers().cbegin(), getWUInitialiser().getVarInitialisers().cend(), 
                                            [](const auto &v) { return v.second.isKernelRequired(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
@@ -520,64 +478,33 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 //----------------------------------------------------------------------------
 void SynapseGroup::finalise(double dt)
 {
-    auto wuDerivedParams = getWUModel()->getDerivedParams();
-    auto psDerivedParams = getPSModel()->getDerivedParams();
-
-    // Loop through WU derived parameters
-    for(const auto &d : wuDerivedParams) {
-        m_WUDerivedParams.emplace(d.name, d.func(m_WUParams, dt));
-    }
-
-    // Loop through PSM derived parameters
-    for(const auto &d : psDerivedParams) {
-        m_PSDerivedParams.emplace(d.name, d.func(m_PSParams, dt));
-    }
-
-    // Initialise derived parameters for WU variable initialisers
-    for(auto &v : m_WUVarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Initialise derived parameters for PSM variable initialisers
-    for(auto &v : m_PSVarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Initialise derived parameters for WU presynaptic variable initialisers
-    for(auto &v : m_WUPreVarInitialisers) {
-        v.second.finalise(dt);
-    }
-    
-    // Initialise derived parameters for WU postsynaptic variable initialisers
-    for(auto &v : m_WUPostVarInitialisers) {
-        v.second.finalise(dt);
-    }
-
-    // Initialise any derived connectivity initialiser parameters
+    // Finalise derived parameters in Init objects
+    m_PSInitialiser.finalise(dt);
+    m_WUInitialiser.finalise(dt);
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
     // Loop through presynaptic variable references
-    for(const auto &v : m_WUPreNeuronVarReferences) {
+    for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on source neuron group
-        if(Utils::isIdentifierReferenced(v.first, m_WUSimCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUEventCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUPostLearnCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUSynapseDynamicsCodeTokens))
+        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSimCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getEventCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostLearnCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
         {
             getSrcNeuronGroup()->setVarQueueRequired(v.second.getVarName());
         }
     }
     
     // Loop through postsynaptic variable references
-    for(const auto &v : m_WUPostNeuronVarReferences) {
+    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on target neuron group
-        if(Utils::isIdentifierReferenced(v.first, m_WUSimCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUEventCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUPostLearnCodeTokens)
-           || Utils::isIdentifierReferenced(v.first, m_WUSynapseDynamicsCodeTokens))
+        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSimCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getEventCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostLearnCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
         {
             getTrgNeuronGroup()->setVarQueueRequired(v.second.getVarName());
         }
@@ -588,7 +515,7 @@ bool SynapseGroup::canPSBeFused() const
 {
     // If any postsynaptic model variables aren't initialised to constant values, this synapse group's postsynaptic model can't be merged
     // **NOTE** hash check will compare these constant values
-    if(std::any_of(getPSVarInitialisers().cbegin(), getPSVarInitialisers().cend(), 
+    if(std::any_of(getPSInitialiser().getVarInitialisers().cbegin(), getPSInitialiser().getVarInitialisers().cend(), 
                    [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
@@ -597,14 +524,14 @@ bool SynapseGroup::canPSBeFused() const
     // Loop through EGPs
     // **NOTE** this is kind of silly as, if it's not referenced in either of 
     // these code strings, there wouldn't be a lot of point in a PSM EGP existing!
-    for(const auto &egp : getPSModel()->getExtraGlobalParams()) {
+    for(const auto &egp : getPSInitialiser().getSnippet()->getExtraGlobalParams()) {
         // If this EGP is referenced in decay code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getPSDecayCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getPSInitialiser().getDecayCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in apply input code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getPSApplyInputCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getPSInitialiser().getApplyInputCodeTokens())) {
             return false;
         }
     }
@@ -616,21 +543,21 @@ bool SynapseGroup::canWUMPreUpdateBeFused() const
 {
     // If any presynaptic variables aren't initialised to constant values, this synapse group's presynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
-    if(std::any_of(getWUPreVarInitialisers().cbegin(), getWUPreVarInitialisers().cend(), 
+    if(std::any_of(getWUInitialiser().getPreVarInitialisers().cbegin(), getWUInitialiser().getPreVarInitialisers().cend(), 
                    [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
     
     // Loop through EGPs
-    for(const auto &egp : getWUModel()->getExtraGlobalParams()) {
+    for(const auto &egp : getWUInitialiser().getSnippet()->getExtraGlobalParams()) {
         // If this EGP is referenced in presynaptic spike code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getWUPreSpikeCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUInitialiser().getPreSpikeCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in presynaptic dynamics code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getWUPreDynamicsCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUInitialiser().getPreDynamicsCodeTokens())) {
             return false;
         }
     }
@@ -641,21 +568,21 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
 {
     // If any postsynaptic variables aren't initialised to constant values, this synapse group's postsynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
-    if(std::any_of(getWUPostVarInitialisers().cbegin(), getWUPostVarInitialisers().cend(), 
+    if(std::any_of(getWUInitialiser().getPostVarInitialisers().cbegin(), getWUInitialiser().getPostVarInitialisers().cend(), 
                    [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
     
     // Loop through EGPs
-    for(const auto &egp : getWUModel()->getExtraGlobalParams()) {
+    for(const auto &egp : getWUInitialiser().getSnippet()->getExtraGlobalParams()) {
         // If this EGP is referenced in postsynaptic spike code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getWUPostSpikeCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUInitialiser().getPostSpikeCodeTokens())) {
             return false;
         }
         
         // If this EGP is referenced in postsynaptic dynamics code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getWUPostDynamicsCodeTokens())) {
+        if(Utils::isIdentifierReferenced(egp.name, getWUInitialiser().getPostDynamicsCodeTokens())) {
             return false;
         }
     }
@@ -665,17 +592,17 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
 bool SynapseGroup::isDendriticDelayRequired() const
 {
     // If addToPostDelay function is used in sim code, return true
-    if(Utils::isIdentifierReferenced("addToPostDelay", getWUSimCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSimCodeTokens())) {
         return true;
     }
 
     // If addToPostDelay function is used in event code, return true
-    if(Utils::isIdentifierReferenced("addToPostDelay", getWUEventCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getEventCodeTokens())) {
         return true;
     }
 
     // If addToPostDelay function is used in synapse dynamics, return tru
-    if(Utils::isIdentifierReferenced("addToPostDelay", getWUSynapseDynamicsCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSynapseDynamicsCodeTokens())) {
         return true;
     }
 
@@ -685,22 +612,22 @@ bool SynapseGroup::isDendriticDelayRequired() const
 bool SynapseGroup::isPresynapticOutputRequired() const
 {
     // If addToPre function is used in sim code, return true
-    if(Utils::isIdentifierReferenced("addToPre", getWUSimCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getSimCodeTokens())) {
         return true;
     }
 
     // If addToPre function is used in event code, return true
-    if(Utils::isIdentifierReferenced("addToPre", getWUEventCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getEventCodeTokens())) {
         return true;
     }
 
     // If addToPre function is used in learn post code, return true
-    if(Utils::isIdentifierReferenced("addToPre", getWUPostLearnCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostLearnCodeTokens())) {
         return true;
     }
 
     // If addToPre function is used in synapse dynamics, return tru
-    if(Utils::isIdentifierReferenced("addToPre", getWUSynapseDynamicsCodeTokens())) {
+    if(Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getSynapseDynamicsCodeTokens())) {
         return true;
     }
 
@@ -714,17 +641,17 @@ bool SynapseGroup::isPostsynapticOutputRequired() const
     }
     else {
         // If addToPost function is used in sim code, return true
-        if(Utils::isIdentifierReferenced("addToPost", getWUSimCodeTokens())) {
+        if(Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getSimCodeTokens())) {
             return true;
         }
 
         // If addToPost function is used in event code, return true
-        if(Utils::isIdentifierReferenced("addToPost", getWUEventCodeTokens())) {
+        if(Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getEventCodeTokens())) {
             return true;
         }
 
         // If addToPost function is used in synapse dynamics, return tru
-        if(Utils::isIdentifierReferenced("addToPost", getWUSynapseDynamicsCodeTokens())) {
+        if(Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getSynapseDynamicsCodeTokens())) {
             return true;
         }
 
@@ -748,7 +675,7 @@ bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 bool SynapseGroup::isWUInitRNGRequired() const
 {
     // If initialising the weight update variables require an RNG, return true
-    if(Utils::isRNGRequired(m_WUVarInitialisers)) {
+    if(Utils::isRNGRequired(getWUInitialiser().getVarInitialisers())) {
         return true;
     }
 
@@ -759,7 +686,7 @@ bool SynapseGroup::isWUInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPSVarInitRequired() const
 {
-    return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
+    return std::any_of(getPSInitialiser().getVarInitialisers().cbegin(), getPSInitialiser().getVarInitialisers().cend(),
                        [](const auto &init)
                        { 
                            return !Utils::areTokensEmpty(init.second.getCodeTokens());
@@ -771,7 +698,7 @@ bool SynapseGroup::isWUVarInitRequired() const
     // If this synapse group has per-synapse or kernel state variables, 
     // return true if any of them have initialisation code which doesn't require a kernel
     if ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || (getMatrixType() & SynapseMatrixWeight::KERNEL)) {
-        return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
+        return std::any_of(getWUInitialiser().getVarInitialisers().cbegin(), getWUInitialiser().getVarInitialisers().cend(),
                            [](const auto &init)
                            { 
                                return !Utils::areTokensEmpty(init.second.getCodeTokens()) && !init.second.isKernelRequired();
@@ -784,7 +711,7 @@ bool SynapseGroup::isWUVarInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUPreVarInitRequired() const
 {
-    return std::any_of(m_WUPreVarInitialisers.cbegin(), m_WUPreVarInitialisers.cend(),
+    return std::any_of(getWUInitialiser().getPreVarInitialisers().cbegin(), getWUInitialiser().getPreVarInitialisers().cend(),
                        [](const auto &init)
                        { 
                            return !Utils::areTokensEmpty(init.second.getCodeTokens());
@@ -793,7 +720,7 @@ bool SynapseGroup::isWUPreVarInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUPostVarInitRequired() const
 {
-    return std::any_of(m_WUPostVarInitialisers.cbegin(), m_WUPostVarInitialisers.cend(),
+    return std::any_of(getWUInitialiser().getPostVarInitialisers().cbegin(), getWUInitialiser().getPostVarInitialisers().cend(),
                        [](const auto &init)
                        { 
                            return !Utils::areTokensEmpty(init.second.getCodeTokens());
@@ -811,24 +738,24 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
 {
-    return (Utils::isIdentifierReferenced(identifier, getWUEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUEventThresholdCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPostLearnCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPreDynamicsCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPreSpikeCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUSimCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUSynapseDynamicsCodeTokens()));
+    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreDynamicsCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostTimeReferenced(const std::string &identifier) const
 {
-    return (Utils::isIdentifierReferenced(identifier, getWUEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUEventThresholdCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPostLearnCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPostDynamicsCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUPostSpikeCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUSimCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUSynapseDynamicsCodeTokens()));
+    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostDynamicsCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPreOutputBeFused() const
@@ -859,7 +786,7 @@ const Type::ResolvedType &SynapseGroup::getSparseIndType() const
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
@@ -874,7 +801,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 
     // If weights are procedural, include variable initialiser hashes
     if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        for(const auto &w : getWUVarInitialisers()) {
+        for(const auto &w : getWUInitialiser().getVarInitialisers()) {
             Utils::updateHash(w.first, hash);
             Utils::updateHash(w.second.getHashDigest(), hash);
         }
@@ -891,7 +818,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     }
 
     // Loop through presynaptic neuron variable references
-    for(const auto &v : getWUPreNeuronVarReferences()) {
+    for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         // Update hash with whether variable references require delay
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
@@ -900,7 +827,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     }
 
     // Loop through postsynapatic neuron variable references
-    for(const auto &v : getWUPostNeuronVarReferences()) {
+    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         // Update hash with whether variable references require delay
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
 
@@ -914,13 +841,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash((getDelaySteps() != 0), hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getWUPreNeuronVarReferences()) {
+    for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
 
@@ -930,13 +857,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash((getBackPropDelaySteps() != 0), hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getWUPostNeuronVarReferences()) {
+    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
 
@@ -946,14 +873,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() cons
 boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getPSModel()->getHashDigest(), hash);
+    Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPostTargetVar(), hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getPSNeuronVarReferences()) {
+    for(const auto &v : getPSInitialiser().getNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
 
@@ -963,16 +890,16 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
 boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getPSModel()->getHashDigest(), hash);
+    Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPostTargetVar(), hash);
-    Utils::updateHash(getPSParams(), hash);
-    Utils::updateHash(getPSDerivedParams(), hash);
+    Utils::updateHash(getPSInitialiser().getParams(), hash);
+    Utils::updateHash(getPSInitialiser().getDerivedParams(), hash);
     
     // Loop through PSM variable initialisers and hash first parameter.
     // Due to SynapseGroup::canPSBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
-    for(const auto &w : getPSVarInitialisers()) {
+    for(const auto &w : getPSInitialiser().getVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
         Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
@@ -980,7 +907,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getPSNeuronVarReferences()) {
+    for(const auto &v : getPSInitialiser().getNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
     
@@ -997,34 +924,34 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() c
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getPreHashDigest(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getPreHashDigest(), hash);
     Utils::updateHash(getDelaySteps(), hash);
 
     // Loop through presynaptic variable initialisers and hash first parameter.
     // Due to SynapseGroup::canWUMPreUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
-    for(const auto &w : getWUPreVarInitialisers()) {
+    for(const auto &w : getWUInitialiser().getPreVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
         Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &p : getWUModel()->getParamNames()) {
-        if(Utils::isIdentifierReferenced(p, getWUPreSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(p, getWUPreDynamicsCodeTokens())) 
+    for(const auto &p : getWUInitialiser().getSnippet()->getParamNames()) {
+        if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPreSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p, getWUInitialiser().getPreDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUParams().at(p), hash);
+            Utils::updateHash(getWUInitialiser().getParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &d : getWUModel()->getDerivedParams()) {
-        if(Utils::isIdentifierReferenced(d.name, getWUPreSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(d.name, getWUPreDynamicsCodeTokens()))
+    for(const auto &d : getWUInitialiser().getSnippet()->getDerivedParams()) {
+        if(Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPreSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPreDynamicsCodeTokens()))
         {
-            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
+            Utils::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
         }
     }
 
@@ -1034,34 +961,34 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getPostHashDigest(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
 
     // Loop through postsynaptic variable initialisers and hash first parameter.
     // Due to SynapseGroup::canWUMPostUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
-    for(const auto &w : getWUPostVarInitialisers()) {
+    for(const auto &w : getWUInitialiser().getPostVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
         Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &p : getWUModel()->getParamNames()) {
-       if(Utils::isIdentifierReferenced(p, getWUPostSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(p, getWUPostDynamicsCodeTokens())) 
+    for(const auto &p : getWUInitialiser().getSnippet()->getParamNames()) {
+       if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPostSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p, getWUInitialiser().getPostDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUParams().at(p), hash);
+            Utils::updateHash(getWUInitialiser().getParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &d : getWUModel()->getDerivedParams()) {
-        if(Utils::isIdentifierReferenced(d.name, getWUPostSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(d.name, getWUPostDynamicsCodeTokens())) 
+    for(const auto &d : getWUInitialiser().getSnippet()->getDerivedParams()) {
+        if(Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPostSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPostDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
+            Utils::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
         }
     }
 
@@ -1080,13 +1007,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMatrixType(), hash);
     Type::updateHash(getSparseIndType(), hash);
-    Utils::updateHash(getWUModel()->getVars(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getVars(), hash);
 
-    Utils::updateHash(Utils::areTokensEmpty(getWUSynapseDynamicsCodeTokens()), hash);
-    Utils::updateHash(Utils::areTokensEmpty(getWUPostLearnCodeTokens()), hash);
+    Utils::updateHash(Utils::areTokensEmpty(getWUInitialiser().getSynapseDynamicsCodeTokens()), hash);
+    Utils::updateHash(Utils::areTokensEmpty(getWUInitialiser().getPostLearnCodeTokens()), hash);
 
     // Include variable initialiser hashes
-    for(const auto &w : getWUVarInitialisers()) {
+    for(const auto &w : getWUInitialiser().getVarInitialisers()) {
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
@@ -1096,10 +1023,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getPreVars(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getPreVars(), hash);
 
     // Include presynaptic variable initialiser hashes
-    for(const auto &w : getWUPreVarInitialisers()) {
+    for(const auto &w : getWUInitialiser().getPreVarInitialisers()) {
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
@@ -1109,10 +1036,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() c
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUModel()->getPostVars(), hash);
+    Utils::updateHash(getWUInitialiser().getSnippet()->getPostVars(), hash);
 
     // Include postsynaptic variable initialiser hashes
-    for(const auto &w : getWUPostVarInitialisers()) {
+    for(const auto &w : getWUInitialiser().getPostVarInitialisers()) {
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
@@ -1123,10 +1050,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash(getPSModel()->getVars(), hash);
+    Utils::updateHash(getPSInitialiser().getSnippet()->getVars(), hash);
 
     // Include postsynaptic model variable initialiser hashes
-    for(const auto &p : getPSVarInitialisers()) {
+    for(const auto &p : getPSInitialiser().getVarInitialisers()) {
         Utils::updateHash(p.first, hash);
         Utils::updateHash(p.second.getHashDigest(), hash);
     }

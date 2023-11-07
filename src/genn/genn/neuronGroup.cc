@@ -207,7 +207,7 @@ bool NeuronGroup::isTrueSpikeRequired() const
 
     // If any INCOMING synapse groups require postsynaptic learning, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroupInternal *sg){ return !Utils::areTokensEmpty(sg->getWUPostLearnCodeTokens()); }))
+        [](SynapseGroupInternal *sg){ return !Utils::areTokensEmpty(sg->getWUInitialiser().getPostLearnCodeTokens()); }))
     {
         return true;
     }
@@ -219,7 +219,7 @@ bool NeuronGroup::isSpikeEventRequired() const
 {
     // Spike like events are required if any OUTGOING synapse groups has a spike like event threshold
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getEventThresholdConditionCode().empty(); });
+                       [](SynapseGroupInternal *sg){ return !sg->getWUInitialiser().getSnippet()->getEventThresholdConditionCode().empty(); });
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const
@@ -331,8 +331,8 @@ bool NeuronGroup::isSimRNGRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroupInternal *sg)
                        {
-                           return (Utils::isRNGRequired(sg->getPSApplyInputCodeTokens()) ||
-                                   Utils::isRNGRequired(sg->getPSDecayCodeTokens()));
+                           return (Utils::isRNGRequired(sg->getPSInitialiser().getApplyInputCodeTokens()) ||
+                                   Utils::isRNGRequired(sg->getPSInitialiser().getDecayCodeTokens()));
                        });
 }
 //----------------------------------------------------------------------------
@@ -352,14 +352,14 @@ bool NeuronGroup::isInitRNGRequired() const
 
     // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUPostVarInitialisers()); }))
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUInitialiser().getPostVarInitialisers()); }))
     {
         return true;
     }
 
     // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUPreVarInitialisers()); }))
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUInitialiser().getPreVarInitialisers()); }))
     {
         return true;
     }
@@ -367,7 +367,7 @@ bool NeuronGroup::isInitRNGRequired() const
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroupInternal *sg){ return Utils::isRNGRequired(sg->getPSVarInitialisers()); });
+                       [](const SynapseGroupInternal *sg){ return Utils::isRNGRequired(sg->getPSInitialiser().getVarInitialisers()); });
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
@@ -433,9 +433,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
         std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(inSynWithPostUpdate),
                      [](SynapseGroupInternal *sg)
                      {
-                         return (!Utils::areTokensEmpty(sg->getWUPostSpikeCodeTokens())
-                                 || !Utils::areTokensEmpty(sg->getWUPostDynamicsCodeTokens())
-                                 || !sg->getWUModel()->getPostVars().empty());
+                         return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPostSpikeCodeTokens())
+                                 || !Utils::areTokensEmpty(sg->getWUInitialiser().getPostDynamicsCodeTokens())
+                                 || !sg->getWUInitialiser().getSnippet()->getPostVars().empty());
                      });
 
         // If there are any, merge
@@ -451,9 +451,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreUpdate),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!Utils::areTokensEmpty(sg->getWUPreSpikeCodeTokens())
-                             || !Utils::areTokensEmpty(sg->getWUPreDynamicsCodeTokens())
-                             || !sg->getWUModel()->getPreVars().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPreDynamicsCodeTokens())
+                             || !sg->getWUInitialiser().getSnippet()->getPreVars().empty());
                  });
 
      // If there are any
@@ -486,8 +486,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() cons
     std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!Utils::areTokensEmpty(sg->getWUPostSpikeCodeTokens())
-                             || !Utils::areTokensEmpty(sg->getWUPostDynamicsCodeTokens()));
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPostSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPostDynamicsCodeTokens()));
                  });
     return vec;
 }
@@ -498,8 +498,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreCode() cons
     std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!Utils::areTokensEmpty(sg->getWUPreSpikeCodeTokens())
-                             || !Utils::areTokensEmpty(sg->getWUPreDynamicsCodeTokens()));
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPreDynamicsCodeTokens()));
                 });
     return vec;
 }
@@ -508,7 +508,7 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostVars() cons
 {
     std::vector<SynapseGroupInternal *> vec;
     std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPostVars().empty(); });
+                 [](SynapseGroupInternal *sg) { return !sg->getWUInitialiser().getSnippet()->getPostVars().empty(); });
     return vec;
 }
 //----------------------------------------------------------------------------
@@ -516,14 +516,14 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreVars() cons
 {
     std::vector<SynapseGroupInternal *> vec;
     std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPreVars().empty(); });
+                 [](SynapseGroupInternal *sg) { return !sg->getWUInitialiser().getSnippet()->getPreVars().empty(); });
     return vec;
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup)
 {
     assert(false);
-    /*const auto *wu = synapseGroup->getWUModel();
+    /*const auto *wu = synapseGroup->getWUInitialiser().getSnippet();
 
     // Determine if any EGPs are required by threshold code
     const auto wuEGPs = wu->getExtraGlobalParams();
