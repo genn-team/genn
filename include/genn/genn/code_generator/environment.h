@@ -897,13 +897,13 @@ public:
                               const std::string &fieldSuffix, const std::string &localPrefix,
                               bool hidden, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
-        m_Context(context), m_Contents(m_ContentsStream),
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_Hidden(hidden)
+        m_Context(context), m_Contents(m_ContentsStream), m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
         std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
-                       [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
+                       [hidden](const auto &v){ return std::make_pair(hidden ? "_" + v.name : v.name, 
+                                                                      std::make_pair(false, v)); });
     }
 
     EnvironmentLocalCacheBase(const EnvironmentLocalCacheBase&) = delete;
@@ -913,14 +913,13 @@ public:
         A archetypeAdapter(m_Group.get().getArchetype());
 
         // Copy definitions of variables which have been referenced into new vector or all if always copy set
-        const auto varDefs = archetypeAdapter.getDefs();
         std::vector<AdapterDef> referencedDefs;
-        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
-                     [this](const auto &v)
-                     {
-                        const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v); 
-                        return (alwaysCopy || m_VariablesReferenced.at(v.name).first);
-                     });
+        for(const auto &v : m_VariablesReferenced) {
+            const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v.second.second); 
+            if(alwaysCopy || v.second.first) {
+                referencedDefs.push_back(v.second.second);
+            }
+        }
 
         // Loop through referenced definitions
         for(const auto &v : referencedDefs) {
@@ -967,8 +966,7 @@ public:
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
     {
         // If name isn't found in environment
-        const std::string suffixedName = m_Hidden ? ("_" + name.lexeme) : name.lexeme;
-        auto var = m_VariablesReferenced.find(suffixedName);
+        auto var = m_VariablesReferenced.find(name.lexeme);
         if (var == m_VariablesReferenced.end()) {
             return getContextTypes(name, errorHandler);
         }
@@ -990,8 +988,7 @@ public:
     virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
     {
         // If variable with this name isn't found, try and get name from context
-        const std::string suffixedName = m_Hidden ? ("_" + name) : name;
-        auto var = m_VariablesReferenced.find(suffixedName);
+        auto var = m_VariablesReferenced.find(name);
         if(var == m_VariablesReferenced.end()) {
             return getContextName(name, type);
         }
@@ -1001,7 +998,8 @@ public:
             var->second.first = true;
 
             // Add underscore and local prefix to variable name
-            return "_" + m_LocalPrefix + name;
+            // **NOTE** we use variable name here not, 'name' which could have an underscore
+            return "_" + m_LocalPrefix + var->second.second.name;
         }
     }
 
@@ -1021,7 +1019,6 @@ private:
     CodeStream m_Contents;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    bool m_Hidden;
     std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
 };
 
@@ -1045,12 +1042,12 @@ public:
     EnvironmentLocalFieldCacheBase(G &group, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
                                    const std::string &localPrefix, bool hidden, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group),
-        m_Context(context), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix), m_Hidden(hidden)
+        m_Context(context), m_Contents(m_ContentsStream), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
         std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
-                       [](const auto &v){ return std::make_pair(v.name, std::make_pair(false, v)); });
+                       [hidden](const auto &v){ return std::make_pair(hidden ? "_" + v.name : v.name, std::make_pair(false, v)); });
     }
 
     EnvironmentLocalFieldCacheBase(const EnvironmentLocalFieldCacheBase&) = delete;
@@ -1059,15 +1056,13 @@ public:
     {
         A archetypeAdapter(m_Group.get().getArchetype());
 
-        // Copy definitions of variables which have been referenced into new vector or all if always copy set
-        const auto varDefs = archetypeAdapter.getDefs();
         std::vector<AdapterDef> referencedDefs;
-        std::copy_if(varDefs.cbegin(), varDefs.cend(), std::back_inserter(referencedDefs),
-                     [this](const auto &v)
-                     {
-                        const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v); 
-                        return (alwaysCopy || m_VariablesReferenced.at(v.name).first);
-                     });
+        for(const auto &v : m_VariablesReferenced) {
+            const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v.second.second); 
+            if(alwaysCopy || v.second.first) {
+                referencedDefs.push_back(v.second.second);
+            }
+        }
 
         // Loop through referenced definitions
         for(const auto &v : referencedDefs) {
@@ -1106,8 +1101,7 @@ public:
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
     {
         // If name isn't found in environment
-        const std::string suffixedName = m_Hidden ? ("_" + name.lexeme) : name.lexeme;
-        auto var = m_VariablesReferenced.find(suffixedName);
+        auto var = m_VariablesReferenced.find(name.lexeme);
         if (var == m_VariablesReferenced.end()) {
             return getContextTypes(name, errorHandler);
         }
@@ -1129,8 +1123,7 @@ public:
     virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
     {
         // If variable with this name isn't found, try and get name from context
-        const std::string suffixedName = m_Hidden ? ("_" + name) : name;
-        auto var = m_VariablesReferenced.find(suffixedName);
+        auto var = m_VariablesReferenced.find(name);
         if(var == m_VariablesReferenced.end()) {
             return getContextName(name, type);
         }
@@ -1140,7 +1133,8 @@ public:
             var->second.first = true;
 
             // Add underscore and local prefix to variable name
-            return "_" + m_LocalPrefix + name;
+            // **NOTE** we use variable name here not, 'name' which could have an underscore
+            return "_" + m_LocalPrefix + var->second.second.name;
         }
     }
 
