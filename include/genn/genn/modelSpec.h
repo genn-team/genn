@@ -106,7 +106,7 @@ template<typename S>
 inline PostsynapticModels::Init initPostsynapticModel(const ParamValues &params = {}, const VarValues &vars = {}, 
                                                       const VarReferences &neuronVarRefs = {})
 {
-    return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarReferences);
+    return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs);
 }
 
 //! Initialise weight update model
@@ -120,9 +120,9 @@ inline PostsynapticModels::Init initPostsynapticModel(const ParamValues &params 
     \return                     PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline WeightUpdateModels::Init initWeightUpdateModel(const ParamValues &params = {}, const VarValues &vars = {}, 
-                                                     const VarValues &preVars = {}, const VarValues &postVars = {}, 
-                                                     const VarReferences &preNeuronVarRefs = {}, 
-                                                     const VarReferences &postNeuronVarRefs = {})
+                                                      const VarValues &preVars = {}, const VarValues &postVars = {}, 
+                                                      const VarReferences &preNeuronVarRefs = {}, 
+                                                      const VarReferences &postNeuronVarRefs = {})
 {
     return WeightUpdateModels::Init(S::getInstance(), params, vars, preVars, postVars, 
                                     preNeuronVarRefs, postNeuronVarRefs);
