@@ -314,11 +314,11 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-        m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), 
-        m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation), m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), 
-        m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), 
-        m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_SparseConnectivityInitialiser(connectivityInitialiser), 
-        m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
+        m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_WUVarLocation(wumInitialiser.getVarInitialisers().size(), defaultVarLocation), 
+        m_WUPreVarLocation(wumInitialiser.getPreVarInitialisers().size(), defaultVarLocation), m_WUPostVarLocation(wumInitialiser.getPostVarInitialisers().size(), defaultVarLocation), 
+        m_WUExtraGlobalParamLocation(wumInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
+        m_PSVarLocation(psmInitialiser.getVarInitialisers().size(), defaultVarLocation),  m_PSExtraGlobalParamLocation(psmInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
+        m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
         m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
