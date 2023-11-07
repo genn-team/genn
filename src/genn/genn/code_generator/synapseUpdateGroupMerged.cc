@@ -27,6 +27,22 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.addDerivedParams(wu->getDerivedParams(), "", &SynapseGroupInternal::getWUDerivedParams, &G::isWUDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
+    // Add referenced pre and postsynaptic neuron variables
+    synEnv.addVarRefs<SynapseWUPreNeuronVarRefAdapter>(
+        [&sg, batchSize](VarAccessMode a, const Models::VarReference &v)
+        {
+            return sg.getPreVarIndex(batchSize, v.getDelayNeuronGroup() != nullptr, 
+                                     v.getVarDims(), "$(id_pre)");
+        }, 
+        "", true);
+    synEnv.addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
+        [&sg, batchSize](VarAccessMode a, const Models::VarReference &v)
+        {
+            return sg.getPostVarIndex(batchSize, v.getDelayNeuronGroup() != nullptr, 
+                                      v.getVarDims(), "$(id_post)");
+        }, 
+        "", true);
+
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
