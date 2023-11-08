@@ -253,12 +253,12 @@ void testSynapseVarLocation(S setVarLocationFn)
              ParamValues psmParams{{"tau", 5.0}};
              VarValues psmVarValues{{"x", 0.0}};
 
-             auto *sg = model.addSynapsePopulation<STDPAdditive, AlphaCurr>(
-                 "Synapse", SynapseMatrixType::SPARSE, NO_DELAY,
-                 "Pre", "Post",
-                 params, varValues, preVarValues, postVarValues,
-                 psmParams, psmVarValues,
-                 initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
+             auto *sg = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
+        initPostsynaptic<AlphaCurr>(psmParams, psmVarValues),
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
              setVarLocationFn(sg, varLocation);
          });
 }
@@ -283,11 +283,11 @@ void testCustomConnectivityUpdateVarLocation(S setVarLocationFn)
             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
-            model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
-                {{"g", 1.0}}, {},
-                {}, {});
+            model.addSynapsePopulation(
+        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",
@@ -1196,11 +1196,11 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateParamChanges)
             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
-            auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
-                {}, {{"g", 1.0}},
-                {}, {});
+            auto *syn = model.addSynapsePopulation(
+        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             WUVarReferences varRefs{{"g", createWUVarRef(syn, "g")}};
             model.addCustomConnectivityUpdate<RemoveSynapseParam>(
@@ -1235,11 +1235,11 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
-            model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
-                {{"g", 1.0}}, {},
-                {}, {});
+            model.addSynapsePopulation(
+        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",
