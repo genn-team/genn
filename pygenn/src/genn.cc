@@ -423,17 +423,13 @@ PYBIND11_MODULE(genn, m)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
                 const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
-                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&,
-                const VarValues&, const VarValues&, const VarReferences&, const VarReferences&,
-                const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&,
+                const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
                 const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
-                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&,
-                const VarValues&, const VarValues&, const VarReferences&, const VarReferences&,
-                const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&,
+                const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
             pybind11::return_value_policy::reference)
 
@@ -561,14 +557,14 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &SynapseGroup::getName)
         .def_property_readonly("delay_steps", &SynapseGroupInternal::getDelaySteps)
-        .def_property_readonly("wu_model", &SynapseGroup::getWUModel)
-        .def_property_readonly("wu_params", &SynapseGroup::getWUParams)
-        .def_property_readonly("wu_var_initialisers", &SynapseGroup::getWUVarInitialisers)
-        .def_property_readonly("wu_pre_var_initialisers", &SynapseGroup::getWUPreVarInitialisers)
-        .def_property_readonly("wu_post_var_initialisers", &SynapseGroup::getWUPostVarInitialisers)
-        .def_property_readonly("ps_model", &SynapseGroup::getPSModel)
-        .def_property_readonly("ps_params", &SynapseGroup::getPSParams)
-        .def_property_readonly("ps_var_initialisers", &SynapseGroup::getPSVarInitialisers)
+        //.def_property_readonly("wu_model", &SynapseGroup::getWUModel)
+        //.def_property_readonly("wu_params", &SynapseGroup::getWUParams)
+        //.def_property_readonly("wu_var_initialisers", &SynapseGroup::getWUVarInitialisers)
+        //.def_property_readonly("wu_pre_var_initialisers", &SynapseGroup::getWUPreVarInitialisers)
+        //.def_property_readonly("wu_post_var_initialisers", &SynapseGroup::getWUPostVarInitialisers)
+        //.def_property_readonly("ps_model", &SynapseGroup::getPSModel)
+        //.def_property_readonly("ps_params", &SynapseGroup::getPSParams)
+        //.def_property_readonly("ps_var_initialisers", &SynapseGroup::getPSVarInitialisers)
         .def_property_readonly("kernel_size", &SynapseGroup::getKernelSize)
         .def_property_readonly("matrix_type", &SynapseGroup::getMatrixType)
         .def_property_readonly("sparse_connectivity_initialiser", &SynapseGroup::getConnectivityInitialiser)
@@ -857,6 +853,20 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
+    
+    //------------------------------------------------------------------------
+    // genn.WeightUpdateInit
+    //------------------------------------------------------------------------
+    pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
+        .def(pybind11::init<const WeightUpdateModels::Base*, const std::unordered_map<std::string, double>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
+    
+    //------------------------------------------------------------------------
+    // genn.PostsynapticInit
+    //------------------------------------------------------------------------
+    pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
+        .def(pybind11::init<const PostsynapticModels::Base*, const std::unordered_map<std::string, double>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.VarReference

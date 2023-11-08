@@ -66,10 +66,11 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    InitSparseConnectivitySnippetBase, 
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase, ParamVal,
-                   PlogSeverity, PostsynapticModelBase,
+                   PlogSeverity, PostsynapticInit, PostsynapticModelBase,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
                    ToeplitzConnectivityInit, UnresolvedType, Var,
-                   VarInit, VarLocation, VarRef, WeightUpdateModelBase)
+                   VarInit, VarLocation, VarRef, WeightUpdateInit, 
+                   WeightUpdateModelBase)
 from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
@@ -323,12 +324,8 @@ class GeNNModel(ModelSpecInternal):
         return n_group
 
     def add_synapse_population(self, pop_name, matrix_type, delay_steps,
-                               source, target, w_update_model, wu_param_space,
-                               wu_var_space, wu_pre_var_space,
-                               wu_post_var_space, wu_pre_var_ref_space,
-                               wu_post_var_ref_space, postsyn_model,
-                               ps_param_space, ps_var_space, ps_var_ref_space,
-                               connectivity_initialiser=None):
+                               source, target, weight_update_init,
+                               postsynaptic_init, connectivity_init=None):
         """Add a synapse population to the GeNN model
 
         Args:
@@ -337,28 +334,7 @@ class GeNNModel(ModelSpecInternal):
         delay_steps                 --  delay in number of steps
         source                      --  source neuron group (either name or NeuronGroup object)
         target                      --  target neuron group (either name or NeuronGroup object)
-        w_update_model              --  type of the WeightUpdateModels class
-                                        as string or instance of weight update
-                                        model class derived from
-                                        ``WeightUpdateModelBase`` (see also
-                                        pygenn.create_custom_weight_update_class)
-        wu_param_space              --  dict with param values for the
-                                        WeightUpdateModels class
-        wu_var_space                --  dict with initial values for
-                                        WeightUpdateModels state variables
-        wu_pre_var_space            --  dict with initial values for
-                                        WeightUpdateModels presynaptic variables
-        wu_post_var_space           --  dict with initial values for
-                                        WeightUpdateModels postsynaptic variables
-        postsyn_model               --  type of the PostsynapticModels class
-                                        as string or instance of postsynaptic
-                                        model class derived from
-                                        ``PostsynapticModelBase`` (see also
-                                        pygenn.create_custom_postsynaptic_class)
-        ps_param_space              --  dict with param values for the
-                                        PostsynapticModels class
-        ps_var_space                --  dict with initial variable values for
-                                        the PostsynapticModels class
+        
         connectivity_initialiser    --  SparseConnectivityInit or 
                                         ToeplitzConnectivityInit used to 
                                         configure connectivity
@@ -388,6 +364,7 @@ class GeNNModel(ModelSpecInternal):
                                      weight_update_models)
 
         # Extract parts of var spaces which should be initialised by GeNN
+        # **HMM** this is a little trickier - do we need a python-derived WUMInit etc?
         ps_var_init = get_var_init(ps_var_space)
         wu_var_init = get_var_init(wu_var_space)
         wu_pre_var_init = get_var_init(wu_pre_var_space)
@@ -763,48 +740,56 @@ class GeNNModel(ModelSpecInternal):
         else:
             raise ValueError("'%s' must be a SynapseGroup or string" % context)
 
-def init_var(init_var_snippet, param_space={}):
+def init_var(snippet, params={}):
     """This helper function creates a VarInit object
     to easily initialise a variable using a snippet.
 
     Args:
-    init_var_snippet    --  type of the InitVarSnippet class as string or
-                            instance of class derived from
-                            InitVarSnippetBase class.
-    param_space         --  dict with param values for the InitVarSnippet class
+    snippet -- type of the InitVarSnippet class as string or
+               instance of class derived from
+               InitVarSnippetBase class.
+    params  --  dict with param values for the InitVarSnippet class
     """
     # Get snippet and wrap in VarInit object
-    init_var_snippet = get_snippet(init_var_snippet,
-                                   InitVarSnippetBase,
-                                   init_var_snippets)
+    snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return VarInit(init_var_snippet, param_space)
+    return VarInit(init_var_snippet, params)
 
-def init_psm(psm, params={}, vars={}, neuron_var_refs={}):
-    pass
-
-def init_wum(wum, params={}, vars={}, pre_vars={}, 
-             post_vars={}, pre_var_refs={}, post_var_refs={}):
-    pass
-
-def init_sparse_connectivity(init_sparse_connect_snippet, param_space={}):
+def init_sparse_connectivity(snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
     Args:
-    init_sparse_connect_snippet --  type of the InitSparseConnectivitySnippet
-                                    class as string or instance of class
-                                    derived from
-                                    InitSparseConnectivitySnippetBase
-    param_space                 --  dict with param values for the
-                                    InitSparseConnectivitySnippet class
+    snippet -- type of the InitSparseConnectivitySnippet
+               class as string or instance of class
+               derived from
+               InitSparseConnectivitySnippetBase
+    params  -- dict with param values for the
+               InitSparseConnectivitySnippet class
     """
     # Get snippet and wrap in SparseConnectivityInit object
-    init_sparse_connect_snippet = get_snippet(init_sparse_connect_snippet,
-                                              InitSparseConnectivitySnippetBase,
-                                              init_sparse_connectivity_snippets)
-    return SparseConnectivityInit(init_sparse_connect_snippet, param_space)
+    snippet = get_snippet(snippet, InitSparseConnectivitySnippetBase,
+                          init_sparse_connectivity_snippets)
+    return SparseConnectivityInit(snippet, params)
+
+                                              
+
+def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
+    # Get snippet and wrap in PostsynapticInit object
+    snippet = get_snippet(snippet, PostsynapticModelBase,
+                          postsynaptic_models)
+
+    return PostsynapticInit(snippet, params, vars, var_refs)
+
+def init_weight_update(snippet, params={}, vars={}, pre_vars={},
+                       post_vars={}, pre_var_refs={}, post_var_refs={}):
+    # Get snippet and wrap in WeightUpdateInit object
+    snippet = get_snippet(snippet, WeightUpdateModelBase,
+                          weight_update_models)
+
+    return WeightUpdateInit(snippet, params, vars, pre_vars, post_vars,
+                            pre_var_refs, pre_var_refs)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
 def init_connectivity(init_sparse_connect_snippet, param_space={}):
