@@ -132,9 +132,10 @@ public:
     DECLARE_SNIPPET(Cont);
 
     SET_VARS({{"g", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_pre);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -144,9 +145,10 @@ public:
     DECLARE_SNIPPET(Cont2);
 
     SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost((g + x) * V_pre);\n");
+        "addToPost((g + x) * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont2);
 

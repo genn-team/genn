@@ -109,9 +109,10 @@ public:
     DECLARE_SNIPPET(Cont);
 
     SET_VARS({{"g", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_pre);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -121,9 +122,10 @@ public:
     DECLARE_SNIPPET(ContPost);
 
     SET_VARS({{"g", "scalar"}});
+    SET_POST_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_post);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(ContPost);
 
@@ -560,14 +562,14 @@ TEST(CustomConnectivityUpdate, MixedPreDelayGroups)
     auto *syn1 = model.addSynapsePopulation(
         "Synapses1", SynapseMatrixType::SPARSE, 5,
         "Pre1", "Post1",
-        initWeightUpdate<Cont>({}, {{"g", 1.0}}),
+        initWeightUpdate<Cont>({}, {{"g", 1.0}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with global weights
     model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::SPARSE, 10,
         "Pre2", "Post2",
-        initWeightUpdate<Cont>({}, {{"g", 1.0}}),
+        initWeightUpdate<Cont>({}, {{"g", 1.0}}, {}, {}, {{"V", createVarRef(pre2, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create custom update with both presynaptic var references to same (delay) group
@@ -607,7 +609,7 @@ TEST(CustomConnectivityUpdate, MixedPostDelayGroups)
     auto *syn1 = model.addSynapsePopulation(
         "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
         "Pre1", "Post1",
-        initWeightUpdate<ContPost>({}, {{"g", 1.0}}),
+        initWeightUpdate<ContPost>({}, {{"g", 1.0}}, {}, {}, {}, {{"V", createVarRef(post1, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     syn1->setBackPropDelaySteps(5);
     
@@ -615,7 +617,7 @@ TEST(CustomConnectivityUpdate, MixedPostDelayGroups)
     auto *syn2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::SPARSE, NO_DELAY,
         "Pre2", "Post2",
-        initWeightUpdate<ContPost>({}, {{"g", 1.0}}),
+        initWeightUpdate<ContPost>({}, {{"g", 1.0}}, {}, {}, {}, {{"V", createVarRef(post2, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     syn2->setBackPropDelaySteps(10);
     
