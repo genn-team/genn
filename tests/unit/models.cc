@@ -49,9 +49,10 @@ public:
     DECLARE_SNIPPET(Cont);
 
     SET_VARS({{"g", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_pre);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -63,6 +64,7 @@ public:
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_PRE_SPIKE_CODE(
         "scalar dt = t - sT_pre;\n"
@@ -73,7 +75,7 @@ public:
         "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_pre);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(ContPrePost);
 
@@ -85,6 +87,7 @@ public:
     SET_PARAM_NAMES({"g"});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_PRE_SPIKE_CODE(
         "scalar dt = t - sT_pre;\n"
@@ -135,7 +138,7 @@ TEST(Models, NeuronVarReferenceDelay)
     model.addSynapsePopulation(
         "Syn", SynapseMatrixType::DENSE, 10,
         "Neurons0", "Neurons1",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     auto neuronV = createVarRef(pre, "V");
@@ -216,13 +219,15 @@ TEST(Models, WUPreVarReference)
     auto *sg1 = model.addSynapsePopulation(
         "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}}),
+        initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
+                                      {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sg2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::DENSE, 5,
         "Pre", "Post",
-        initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}}),
+        initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
+                                                    {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto wuPre = createWUPreVarRef(sg1, "preTrace");
@@ -251,19 +256,21 @@ TEST(Models, WUPostVarReference)
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation(
         "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}}),
+        initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
+                                      {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sg2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}}),
+        initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
+                                                    {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto wuPost = createWUPostVarRef(sg1, "postTrace");

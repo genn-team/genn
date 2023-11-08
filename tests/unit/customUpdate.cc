@@ -398,7 +398,7 @@ TEST(CustomUpdates, VarDelayChecks)
     model.addSynapsePopulation(
         "Syn1", SynapseMatrixType::DENSE, 10,
         "Pre1", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}};
@@ -425,12 +425,12 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     model.addSynapsePopulation(
         "Syn1", SynapseMatrixType::DENSE, 10,
         "Pre1", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
         "Syn2", SynapseMatrixType::DENSE, 5,
         "Pre2", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre2, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}};
@@ -870,22 +870,22 @@ TEST(CustomUpdates, CompareDifferentDelay)
     model.addSynapsePopulation(
         "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre1", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
         "Syn2", SynapseMatrixType::DENSE, 5,
         "Pre2", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre2, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
         "Syn3", SynapseMatrixType::DENSE, 5,
         "Pre3", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre3, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
         "Syn4", SynapseMatrixType::DENSE, 10,
         "Pre4", "Post",
-        initWeightUpdate<Cont>({}, {{"g", 0.1}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre4, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
 
@@ -982,19 +982,19 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
     auto *fwdSyn = model.addSynapsePopulation(
         "fwdSyn", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}),
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     auto *backSyn = model.addSynapsePopulation(
         "backSyn", SynapseMatrixType::DENSE, NO_DELAY,
         "Post", "Pre",
-        initWeightUpdate<Cont>({}, {{"g", 0.0}}),
+        initWeightUpdate<Cont>({}, {{"g", 0.0}}, {}, {}, {{"V", createVarRef(post, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add two custom updates which transpose different forward variables into backward population
@@ -1037,19 +1037,19 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add a sparse and a dense synapse group
     auto *syn1 = model.addSynapsePopulation(
         "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}),
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     auto *syn2 = model.addSynapsePopulation(
         "Syn2", SynapseMatrixType::SPARSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}),
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>(),
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
 
