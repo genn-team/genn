@@ -284,10 +284,10 @@ void testCustomConnectivityUpdateVarLocation(S setVarLocationFn)
 
             // Create synapse group with global weights
             model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Pre", "Post",
-        initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
-        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",
@@ -599,11 +599,11 @@ TEST(ModelSpecMerged, CompareSynapseNameChanges)
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
                                                                  neuronParamVals, neuronVarVals);
 
-             model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+             model.addSynapsePopulation(
                 name, SynapseMatrixType::DENSE, NO_DELAY,
                 "Pre", "Post",
-                {}, {{"g", 1.0}},
-                {}, {});
+                initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
          });
 }
 //--------------------------------------------------------------------------
@@ -637,11 +637,11 @@ TEST(ModelSpecMerged, ComparePSMParamChanges)
                  model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                      neuronParamVals, neuronVarVals);
 
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    {}, {{"g", 1.0}},
-                    psmParams[p], {});
+                    initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                    initPostsynaptic<PostsynapticModels::ExpCurr>(psmParams[p]));
              }
          });
 }
@@ -678,11 +678,11 @@ TEST(ModelSpecMerged, ComparePSMVarInitParamChanges)
 
                  ParamValues params{{"tau", 5.0}};
                  VarValues varValues{{"x", initVar<InitVarSnippet::Uniform>(psmVarInitParams[p])}};
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    {}, {{"g", 1.0}},
-                    params, varValues);
+                    initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                    initPostsynaptic<AlphaCurr>(params, varValues));
              }
          });
 }
@@ -726,11 +726,11 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
                                                                      neuronParamVals, neuronVarVals);
 
                  VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
-                 model.addSynapsePopulation<WeightUpdateModels::PiecewiseSTDP, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    wumParams[p], varInit,
-                    {}, {});
+                    initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(wumParams[p], varInit),
+                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
 }
@@ -765,11 +765,11 @@ TEST(ModelSpecMerged, CompareWUMGlobalGVarChanges)
                  model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                      neuronParamVals, neuronVarVals);
 
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    wumParamVals[p], {}, 
-                    {}, {});
+                    initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(wumParamVals[p]),
+                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
 }
@@ -805,11 +805,11 @@ TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
                                                                      neuronParamVals, neuronVarVals);
 
                  VarValues varValues{{"g", initVar<InitVarSnippet::Uniform>(wumVarInitParams[p])}};
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    {}, varValues,
-                    {}, {});
+                    initWeightUpdate<WeightUpdateModels::StaticPulse>({}, varValues),
+                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
 }
@@ -854,11 +854,11 @@ TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
                  VarValues preVarValues{{"preTrace", initVar<InitVarSnippet::Uniform>(wumPreVarInitParams[p])}};
                  VarValues postVarValues{{"postTrace", 0.0}};
                 
-                 model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    params, varValues, preVarValues, postVarValues,
-                    {}, {});
+                    initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
+                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
 }
@@ -903,11 +903,11 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
                  VarValues preVarValues{{"preTrace", 0.0}};
                  VarValues postVarValues{{"postTrace", initVar<InitVarSnippet::Uniform>(wumPostVarInitParams[p])}};
                  
-                 model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
                     "Pre", "Post" + std::to_string(p),
-                    params, varValues, preVarValues, postVarValues,
-                    {}, {});
+                    initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
+                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
 }
@@ -947,11 +947,11 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
                  model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                      neuronParamVals, neuronVarVals);
 
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                      "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE, NO_DELAY,
                      "Pre", "Post" + std::to_string(p),
-                     {{"g", 1.0}}, {},
-                     {}, {},
+                     initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+                     initPostsynaptic<PostsynapticModels::DeltaCurr>(),
                      initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectivityParams[p]));
              }
          });
@@ -986,11 +986,11 @@ TEST(ModelSpecMerged, CompareConnectivityModelChanges)
                  model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                      neuronParamVals, neuronVarVals);
 
-                 model.addSynapsePopulation<WeightUpdateModels::StaticPulseConstantWeight, PostsynapticModels::DeltaCurr>(
+                 model.addSynapsePopulation(
                      "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE, NO_DELAY,
                      "Pre", "Post" + std::to_string(p),
-                     {{"g", 1.0}}, {},
-                     {}, {},
+                     initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+                     initPostsynaptic<PostsynapticModels::DeltaCurr>(),
                      InitSparseConnectivitySnippet::Init(connectivityModels[p], {}));
              }
          });
@@ -1197,10 +1197,10 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateParamChanges)
 
             // Create synapse group with global weights
             auto *syn = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Pre", "Post",
-        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
-        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             WUVarReferences varRefs{{"g", createWUVarRef(syn, "g")}};
             model.addCustomConnectivityUpdate<RemoveSynapseParam>(
@@ -1236,10 +1236,10 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
 
             // Create synapse group with global weights
             model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Pre", "Post",
-        initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
-        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",

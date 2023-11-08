@@ -115,30 +115,36 @@ TEST(WeightUpdateModels, ValidateParamValues)
     const VarValues varVals{{"g", uninitialisedVar()}};
     const VarValues preVarVals{{"preTrace", uninitialisedVar()}};
     const VarValues postVarVals{{"postTrace", uninitialisedVar()}};
+    const VarReferences preNeuronVarRefs{};
+    const VarReferences postNeuronVarRefs{};
 
     const std::unordered_map<std::string, double> paramValsCorrect{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const std::unordered_map<std::string, double> paramValsMisSpelled{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"APlus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const std::unordered_map<std::string, double> paramValsMissing{{"tauPlus", 10.0}, {"tauMinus", 10.0},{"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const std::unordered_map<std::string, double> paramValsExtra{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Bminus", 0.01},{"Wmin", 0.0}, {"Wmax", 1.0}};
 
-    STDPAdditive::getInstance()->validate(paramValsCorrect, varVals, preVarVals, postVarVals, "Synapse group");
+    STDPAdditive::getInstance()->validate(paramValsCorrect, varVals, preVarVals, postVarVals, 
+                                          preNeuronVarRefs, postNeuronVarRefs);
 
     try {
-        STDPAdditive::getInstance()->validate(paramValsMisSpelled, varVals, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramValsMisSpelled, varVals, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramValsMissing, varVals, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramValsMissing, varVals, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramValsExtra, varVals, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramValsExtra, varVals, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -150,30 +156,36 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarValues preVarVals{{"preTrace", 0.0}};
     const VarValues postVarVals{{"postTrace", 0.0}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const VarReferences preNeuronVarRefs{};
+    const VarReferences postNeuronVarRefs{};
     
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"g", uninitialisedVar()}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"G", uninitialisedVar()}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
 
-    STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, "Synapse group");
+    STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, 
+                                          preNeuronVarRefs, postNeuronVarRefs);
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varValsMisSpelled, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varValsMisSpelled, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varValsMissing, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varValsMissing, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varValsExtra, preVarVals, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varValsExtra, preVarVals, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -185,30 +197,36 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
     const VarValues postVarVals{{"postTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const VarReferences preNeuronVarRefs{};
+    const VarReferences postNeuronVarRefs{};
     
     const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsCorrect{{"preTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMisSpelled{{"prETrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMissing{};
     const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
 
-    STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, "Synapse group");
+    STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, 
+                                          preNeuronVarRefs, postNeuronVarRefs);
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMisSpelled, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMisSpelled, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMissing, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMissing, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsExtra, postVarVals, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsExtra, postVarVals, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -220,30 +238,36 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
     const VarValues preVarVals{{"preTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const VarReferences preNeuronVarRefs{};
+    const VarReferences postNeuronVarRefs{};
     
     const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsCorrect{{"postTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMisSpelled{{"PostTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMissing{};
     const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
 
-    STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, "Synapse group");
+    STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, 
+                                          preNeuronVarRefs, postNeuronVarRefs);
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMisSpelled, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMisSpelled, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMissing, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMissing, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
     } 
 
     try {
-        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsExtra, "Synapse group");
+        STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsExtra, 
+                                              preNeuronVarRefs, postNeuronVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
