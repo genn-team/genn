@@ -16,7 +16,7 @@ from pygenn import (create_custom_connectivity_update_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
-                    init_postsynaptic
+                    init_postsynaptic,
                     init_sparse_connectivity,
                     init_var, init_weight_update)
 
@@ -192,22 +192,22 @@ def test_custom_connectivity_update(backend, precision, batch_size):
     s_pop_1 = model.add_synapse_population(
         "Syn1", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
     s_pop_2 = model.add_synapse_population(
         "Syn2", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
     
     s_pop_3 = model.add_synapse_population(
         "Syn3", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
     # Create custom connectivity updates

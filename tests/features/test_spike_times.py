@@ -70,15 +70,15 @@ def test_spike_times(backend, precision):
     s_pre_pop = model.add_synapse_population(
         "PreSynapses", "SPARSE", 20,
         pre_n_pop, post_n_pop,
-        pre_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     
     s_post_pop = model.add_synapse_population(
         "PostSynapses", "SPARSE", 0,
         post_n_pop, pre_n_pop,
-        post_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_pop.back_prop_delay_steps = 20
 

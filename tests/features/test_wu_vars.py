@@ -138,46 +138,46 @@ def test_wu_var(backend, precision, fuse, delay):
     s_pre_learn_post_sparse_pop = model.add_synapse_population(
         "PreLearnPostSparseSynapses", "SPARSE", delay,
         post_n_pop, pre_n_pop,
-        pre_learn_post_weight_update_model, {}, {"w": float_min}, {"s": float_min}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_learn_post_weight_update_model, {}, {"w": float_min}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
 
     s_pre_sim_sparse_pop = model.add_synapse_population(
         "PreSimSparseSynapses", "SPARSE", delay,
         post_n_pop, pre_n_pop,
-        pre_sim_weight_update_model, {}, {"w": float_min}, {"s": float_min}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_sim_weight_update_model, {}, {"w": float_min}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
 
     s_pre_synapse_dynamics_sparse_pop = model.add_synapse_population(
         "PreSynapseDynamicsSparseSynapses", "SPARSE", delay,
         post_n_pop, pre_n_pop,
-        pre_synapse_dynamics_weight_update_model, {}, {"w": float_min}, {"s": float_min}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_synapse_dynamics_weight_update_model, {}, {"w": float_min}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     
     # Add synapse models testing various ways of reading post WU vars
     s_post_learn_post_sparse_pop = model.add_synapse_population(
         "PostLearnPostSparseSynapses", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        post_learn_post_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_learn_post_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_learn_post_sparse_pop.back_prop_delay_steps = delay
     
     s_post_sim_sparse_pop = model.add_synapse_population(
         "PostSimSparseSynapses", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        post_sim_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_sim_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
     
     s_post_synapse_dynamics_sparse_pop = model.add_synapse_population(
         "PostSynapseDynamicsSparseSynapses", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        post_synapse_dynamics_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_synapse_dynamics_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_synapse_dynamics_sparse_pop.back_prop_delay_steps = delay
 
@@ -296,29 +296,29 @@ def test_wu_var_cont(backend, precision, fuse, delay):
     s_pre_learn_post_sparse_pop = model.add_synapse_population(
         "PreLearnPostSparseSynapses", "SPARSE", delay,
         post_n_pop, pre_n_pop,
-        pre_learn_post_weight_update_model, {}, {"w": float_min}, {"s": float_min, "shift": shift}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_learn_post_weight_update_model, {}, {"w": float_min}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_pre_sim_sparse_pop = model.add_synapse_population(
         "PreSimSparseSynapses", "SPARSE", delay,
-        pre_n_pop, post_n_pop, 
-        pre_sim_weight_update_model, {}, {"w": float_min}, {"s": float_min, "shift": shift}, {},
-        "DeltaCurr", {}, {},
+        pre_n_pop, post_n_pop,
+        init_weight_update(pre_sim_weight_update_model, {}, {"w": float_min}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
         
     # Add synapse models testing various ways of reading post WU vars
     s_post_learn_post_sparse_pop = model.add_synapse_population(
         "PostLearnPostSparseSynapses", "SPARSE", 0,
         post_n_pop, pre_n_pop,
-        post_learn_post_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min, "shift": shift},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_learn_post_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_learn_post_sparse_pop.back_prop_delay_steps = delay
     s_post_sim_sparse_pop = model.add_synapse_population(
         "PostSimSparseSynapses", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        post_sim_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min, "shift": shift},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_sim_weight_update_model, {}, {"w": float_min}, {}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
 

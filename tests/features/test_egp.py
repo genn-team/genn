@@ -81,8 +81,8 @@ def test_egp_var_init(backend, precision):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        nop_weight_update_model, {}, {"repeat": init_var(pre_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)},
-        nop_postsynaptic_update_model, {}, {"psm_repeat": init_var(repeat_var_init_snippet)})
+        init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(pre_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
+        init_postsynaptic(nop_postsynaptic_update_model, {}, {"psm_repeat": init_var(repeat_var_init_snippet)}))
     dense_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
     dense_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)
     dense_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_values(correct)
@@ -91,8 +91,8 @@ def test_egp_var_init(backend, precision):
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)},
-        "DeltaCurr", {}, {},
+        init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     sparse_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
     sparse_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)

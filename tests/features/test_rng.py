@@ -73,11 +73,12 @@ def test_sim(backend, precision, batch_size):
     # Add second neuron and synapse population to hang custom connectivity update off
     post_n_pop = model.add_neuron_population("PostNeurons", 1000, "SpikeSource", 
                                              {}, {})
-    s_pop = model.add_synapse_population("Synapses", "SPARSE", 0,
-                                         n_pop, post_n_pop,
-                                         "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-                                         "DeltaCurr", {}, {},
-                                         init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
+    s_pop = model.add_synapse_population(
+        "Synapses", "SPARSE", 0,
+        n_pop, post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
 
     # Add custom connectivity update
     ccu = model.add_custom_connectivity_update(

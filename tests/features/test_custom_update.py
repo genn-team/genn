@@ -86,13 +86,13 @@ def test_custom_update(backend, precision, batch_size):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0})
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic(postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0}))
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
     
     conv_params = {"conv_kh": 3, "conv_kw": 3,
@@ -101,8 +101,8 @@ def test_custom_update(backend, precision, batch_size):
     kernel_s_pop = model.add_synapse_population(
         "ToeplitzSynapses", "TOEPLITZ", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_toeplitz_connectivity("Conv2D", conv_params))
     
     cu = model.add_custom_update(
@@ -237,13 +237,13 @@ def test_custom_update_transpose(backend, precision, batch_size):
     forward_s_pop = model.add_synapse_population(
         "ForwardSynapses", "DENSE", 0,
         pre_n_pop, post_n_pop,
-        static_pulse_duplicate_model, {}, {"g": g}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(static_pulse_duplicate_model, {}, {"g": g}),
+        init_postsynaptic("DeltaCurr"))
     transpose_s_pop = model.add_synapse_population(
         "TransposeSynapses", "DENSE", 0,
         post_n_pop, pre_n_pop,
-        static_pulse_duplicate_model, {}, {"g": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(static_pulse_duplicate_model, {}, {"g": 0.0}),
+        init_postsynaptic("DeltaCurr"))
     
     # Create custom update to calculate transpose
     transpose_cu = model.add_custom_update(
@@ -390,8 +390,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}),
+        init_postsynaptic("DeltaCurr"))
 
     x_sparse_s = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=100))
@@ -400,8 +400,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {}),
+        init_postsynaptic("DeltaCurr", {}, {}))
     sparse_s_pop.set_sparse_connections(pre_ind_sparse, post_ind_sparse)
     
     x_kern_s = (np.random.uniform(high=100.0, size=(batch_size, 9)) if batch_size > 1
@@ -412,8 +412,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     kern_s_pop = model.add_synapse_population(
         "ToeplitzSynapses", "TOEPLITZ", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_toeplitz_connectivity("Conv2D", conv_params))
 
     # Create reduction custom updates
