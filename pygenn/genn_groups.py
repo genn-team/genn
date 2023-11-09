@@ -256,8 +256,8 @@ class SynapseGroupMixin(GroupMixin):
 
     """Class representing synaptic connection between two groups of neurons"""
     
-    def _init_group(self, model, ps_var_space, wu_var_space, wu_pre_var_space,
-                    wu_post_var_space, source, target):
+    def _init_group(self, model, ps_vars, wu_vars, wu_pre_vars, wu_post_vars,
+                    source, target):
         """Init SynapseGroupMixin
 
         Args:
@@ -270,17 +270,19 @@ class SynapseGroupMixin(GroupMixin):
         self.in_syn = None
         self.connections_set = False
         
+        wu_snippet = self.wu_initialiser.snippet
+        ps_snippet = self.ps_initialiser.snippet
         self.vars, self.extra_global_params = prepare_model(
-            self.wu_model, self, wu_var_space)
+            wu_snippet, self, wu_vars)
         self.psm_vars, self.psm_extra_global_params = prepare_model(
-            self.ps_model, self, ps_var_space)
+            ps_snippet, self, ps_vars)
         
         self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                            wu_pre_var_space[vnt.name], self)
-                         for vnt in self.wu_model.get_pre_vars()}
+                                            wu_pre_vars[vnt.name], self)
+                         for vnt in wu_snippet.get_pre_vars()}
         self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                             wu_post_var_space[vnt.name], self)
-                          for vnt in self.wu_model.get_post_vars()}
+                                             wu_post_vars[vnt.name], self)
+                          for vnt in wu_snippet.get_post_vars()}
         
         if self.matrix_type & SynapseMatrixConnectivity.TOEPLITZ:
             connect_init = self.toeplitz_connectivity_initialiser
@@ -466,7 +468,8 @@ class SynapseGroupMixin(GroupMixin):
                 raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
-        for v in self.wu_model.get_vars():
+        wu_snippet = self.wu_initialiser.snippet
+        for v in wu_snippet.get_vars():
             # Get corresponding data from dictionary
             var_data = self.vars[v.name]
 
@@ -501,7 +504,7 @@ class SynapseGroupMixin(GroupMixin):
             pre_delay_slots = (1 if (self.delay_steps == 0)
                                else self.src.num_delay_slots)
             self._load_vars(
-                self.wu_model.get_pre_vars(),
+                wu_snippet.get_pre_vars(),
                 lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.src.size,
                                                 self._model.batch_size,
@@ -514,7 +517,7 @@ class SynapseGroupMixin(GroupMixin):
             post_delay_slots = (1 if (self.back_prop_delay_steps == 0)
                                 else self.trg.num_delay_slots)
             self._load_vars(
-                self.wu_model.get_post_vars(),
+                wu_snippet.get_post_vars(),
                 lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.trg.size,
                                                 self._model.batch_size,
@@ -525,7 +528,7 @@ class SynapseGroupMixin(GroupMixin):
         if not self._ps_model_fused:
             # Load postsynaptic update model variables
             self._load_vars(
-                self.ps_model.get_vars(),
+                self.ps_initialiser.snippet.get_vars(),
                 lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.trg.size,
                                                 self._model.batch_size),

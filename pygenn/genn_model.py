@@ -329,15 +329,15 @@ class GeNNModel(ModelSpecInternal):
         """Add a synapse population to the GeNN model
 
         Args:
-        pop_name                    --  name of the new population
-        matrix_type                 --  SynapseMatrixType describing type of the matrix
-        delay_steps                 --  delay in number of steps
-        source                      --  source neuron group (either name or NeuronGroup object)
-        target                      --  target neuron group (either name or NeuronGroup object)
+        pop_name             --  name of the new population
+        matrix_type          --  SynapseMatrixType describing type of the matrix
+        delay_steps          --  delay in number of steps
+        source               --  source neuron group (either name or NeuronGroup object)
+        target               --  target neuron group (either name or NeuronGroup object)
         
-        connectivity_initialiser    --  SparseConnectivityInit or 
-                                        ToeplitzConnectivityInit used to 
-                                        configure connectivity
+        connectivity_init    --  SparseConnectivityInit or 
+                                 ToeplitzConnectivityInit used to 
+                                 configure connectivity
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -353,35 +353,20 @@ class GeNNModel(ModelSpecInternal):
 
         # If no connectivity initialiser is passed, 
         # use unitialised sparse connectivity
-        if connectivity_initialiser is None:
-            connectivity_initialiser = init_sparse_connectivity(
+        if connectivity_init is None:
+            connectivity_init = init_sparse_connectivity(
                 init_sparse_connectivity_snippets.Uninitialised(), {})
-
-        # Resolve postsynaptic and weight update models
-        postsyn_model = get_snippet(postsyn_model, PostsynapticModelBase, 
-                                    postsynaptic_models)
-        w_update_model = get_snippet(w_update_model, WeightUpdateModelBase, 
-                                     weight_update_models)
-
-        # Extract parts of var spaces which should be initialised by GeNN
-        # **HMM** this is a little trickier - do we need a python-derived WUMInit etc?
-        ps_var_init = get_var_init(ps_var_space)
-        wu_var_init = get_var_init(wu_var_space)
-        wu_pre_var_init = get_var_init(wu_pre_var_space)
-        wu_post_var_init = get_var_init(wu_post_var_space)
 
         # Use superclass to add population
         s_group = super(GeNNModel, self).add_synapse_population(
             pop_name, matrix_type, delay_steps, source.name, target.name, 
-            w_update_model, wu_param_space, wu_var_init,
-            wu_pre_var_init, wu_post_var_init,
-            wu_pre_var_space, wu_post_var_ref_space,
-            postsyn_model, ps_param_space, ps_var_init, ps_var_ref_space,
-            connectivity_initialiser)
+            weight_update_init[0], postsynaptic_init[0],
+            connectivity_init)
 
         # Initialise group, store group in dictionary and return
-        s_group._init_group(self, ps_var_space, wu_var_space, wu_pre_var_space,
-                            wu_post_var_space, source, target)
+        s_group._init_group(self, postsynaptic_init[1], weight_update_init[1],
+                            weight_update_init[2], weight_update_init[3],
+                            source, target)
         self.synapse_populations[pop_name] = s_group
         return s_group
 
@@ -754,7 +739,7 @@ def init_var(snippet, params={}):
     snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return VarInit(init_var_snippet, params)
+    return VarInit(snippet, params)
 
 def init_sparse_connectivity(snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
@@ -779,17 +764,27 @@ def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
     # Get snippet and wrap in PostsynapticInit object
     snippet = get_snippet(snippet, PostsynapticModelBase,
                           postsynaptic_models)
-
-    return PostsynapticInit(snippet, params, vars, var_refs)
+    
+    # Extract parts of var spaces which should be initialised by GeNN
+    var_init = get_var_init(vars)
+    
+    return (PostsynapticInit(snippet, params, var_init, var_refs),
+            vars)
 
 def init_weight_update(snippet, params={}, vars={}, pre_vars={},
                        post_vars={}, pre_var_refs={}, post_var_refs={}):
     # Get snippet and wrap in WeightUpdateInit object
     snippet = get_snippet(snippet, WeightUpdateModelBase,
                           weight_update_models)
-
-    return WeightUpdateInit(snippet, params, vars, pre_vars, post_vars,
-                            pre_var_refs, pre_var_refs)
+    
+    var_init = get_var_init(vars)
+    pre_var_init = get_var_init(pre_vars)
+    post_var_init = get_var_init(post_vars)
+    
+    return (WeightUpdateInit(snippet, params, var_init, 
+                             pre_var_init, post_var_init,
+                             pre_var_refs, pre_var_refs),
+            vars, pre_vars, post_vars)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
 def init_connectivity(init_sparse_connect_snippet, param_space={}):
