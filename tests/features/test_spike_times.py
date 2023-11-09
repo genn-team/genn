@@ -8,9 +8,10 @@ from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
                     create_weight_update_model,
+                    init_postsynaptic,
                     init_sparse_connectivity, 
                     init_toeplitz_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 # Neuron model which fires every timestep
 # **NOTE** this is just so sim_code fires every timestep

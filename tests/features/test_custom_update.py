@@ -16,9 +16,10 @@ from pygenn import (create_current_source_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
+                    init_postsynaptic,
                     init_sparse_connectivity,
                     init_toeplitz_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 

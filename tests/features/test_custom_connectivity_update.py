@@ -16,8 +16,9 @@ from pygenn import (create_custom_connectivity_update_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
+                    init_postsynaptic
                     init_sparse_connectivity,
-                    init_var)
+                    init_var, init_weight_update)
 
 
 neuron_model = create_neuron_model(

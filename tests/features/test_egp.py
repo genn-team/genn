@@ -13,8 +13,9 @@ from pygenn import (create_current_source_model,
                     create_var_init_snippet,
                     create_var_ref,
                     create_weight_update_model,
+                    init_postsynaptic,
                     init_sparse_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])

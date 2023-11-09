@@ -12,8 +12,9 @@ from pygenn import (create_current_source_model,
                     create_postsynaptic_model,
                     create_weight_update_model,
                     create_neuron_model,
+                    init_postsynaptic,
                     init_sparse_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 

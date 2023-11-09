@@ -5,7 +5,8 @@ from scipy import stats
 
 from pygenn import GeNNModel
 
-from pygenn import init_sparse_connectivity
+from pygenn import (init_postsynaptic, init_sparse_connectivity,
+                    init_weight_update)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
