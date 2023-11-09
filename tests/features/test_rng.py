@@ -177,14 +177,14 @@ def test_init(backend, precision):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss1_pop, n_pop,
-        nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_"),
-        nop_postsynaptic_update_model, {}, init_vars("psm_"))
+        init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
+        init_postsynaptic(nop_postsynaptic_update_model, {}, init_vars("psm_")))
         
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss2_pop, n_pop,
-        nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_"),
-        "DeltaCurr", {}, {},
+        init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     
     # Build model and load
