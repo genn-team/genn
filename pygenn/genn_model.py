@@ -783,7 +783,7 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
     
     return (WeightUpdateInit(snippet, params, var_init, 
                              pre_var_init, post_var_init,
-                             pre_var_refs, pre_var_refs),
+                             pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
