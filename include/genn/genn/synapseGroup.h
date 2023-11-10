@@ -444,6 +444,19 @@ private:
     //! Variable mode used for this synapse group's dendritic delay buffers
     VarLocation m_DendriticDelayLocation;
 
+    //! Initialiser used for creating weight update model
+    WeightUpdateModels::Init m_WUInitialiser;
+
+    //! Initialiser used for creating postsynaptic update model
+    PostsynapticModels::Init m_PSInitialiser;
+
+    //! Initialiser used for creating sparse connectivity
+    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
+
+    //! Initialiser used for creating toeplitz connectivity
+    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
+
+
     //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;
 
@@ -461,18 +474,6 @@ private:
 
     //! Location of postsynaptic model extra global parameters
     std::vector<VarLocation> m_PSExtraGlobalParamLocation;
-
-    //! Initialiser used for creating postsynaptic update model
-    PostsynapticModels::Init m_PSInitialiser;
-
-    //! Initialiser used for creating weight update model
-    WeightUpdateModels::Init m_WUInitialiser;
-
-    //! Initialiser used for creating sparse connectivity
-    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
-
-    //! Initialiser used for creating toeplitz connectivity
-    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
