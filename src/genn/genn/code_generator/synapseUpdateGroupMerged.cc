@@ -31,14 +31,14 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.template addVarRefs<SynapseWUPreNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
-            return sg.getPreVarIndex(batchSize, v.getDelayNeuronGroup() != nullptr, 
+            return sg.getPreVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize, 
                                      v.getVarDims(), "$(id_pre)");
         }, 
         "", true);
     synEnv.template addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
-            return sg.getPostVarIndex(batchSize, v.getDelayNeuronGroup() != nullptr, 
+            return sg.getPostVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
                                       v.getVarDims(), "$(id_post)");
         }, 
         "", true);
