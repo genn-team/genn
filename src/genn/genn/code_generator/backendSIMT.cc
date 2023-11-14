@@ -896,7 +896,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 groupEnv.print("if ($(id) < ($(num_pre) * $(_row_stride)))");
             }
             else {
-                groupEnv.print("if ($(id( < ($(num_pre) * $(num_post)))");
+                groupEnv.print("if ($(id) < ($(num_pre) * $(num_post)))");
             }
             {
                 CodeStream::Scope b(groupEnv.getStream());
@@ -916,9 +916,9 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 else {
                     // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                               {synEnv.addInitialiser("const unsigned int idPre = ($(id) / $(_row_stride))")});
+                               {synEnv.addInitialiser("const unsigned int idPre = ($(id) / $(_row_stride));")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                               {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride)")});    
+                               {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride));")});    
                 }
 
                 synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
