@@ -233,13 +233,14 @@ def test_forward(backend, precision):
     model.load()
 
     # Simulate 16 timesteps
+    output_place_values = 2 ** np.arange(4)
     output_populations = [sparse_constant_weight_n_pop,
                           sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
                           sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
                           manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
                           manual_dense_n_pop]
-    while model.timestep < 10:
+    while model.timestep < 15:
         # Set input
         pre_pop.vars["x"].view[:] = 0.0
         pre_pop.vars["x"].view[model.timestep] = 1.0
@@ -257,7 +258,7 @@ def test_forward(backend, precision):
 
             # Sum up active place values
             output_value = np.sum(output_place_values[output_binary])
-            if output_value != (model.timestep - 1):
+            if output_value != model.timestep:
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
