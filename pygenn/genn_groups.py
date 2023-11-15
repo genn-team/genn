@@ -2,11 +2,6 @@
 This module provides classes which automate model checks and parameter
 conversions for GeNN Groups
 """
-try:
-    xrange
-except NameError:  # Python 3
-    xrange = range
-
 from deprecated import deprecated
 from six import iteritems, iterkeys, itervalues
 from warnings import warn
@@ -18,7 +13,8 @@ from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDim, VarLocation)
 from .genn import get_var_access_dim
 from .model_preprocessor import (prepare_egps, prepare_vars, Array,
-                                 ExtraGlobalParameter, Variable)
+                                 ExtraGlobalParameter, SynapseVariable,
+                                 Variable)
 
 def _get_num_var_copies(var_dims, batch_size):
     if (var_dims & VarAccessDim.BATCH):
@@ -144,12 +140,11 @@ class GroupMixin(object):
                     self._model._runtime.get_array(self, v.name),
                     var_shape)
 
-                # If manual initialisation is required, copy over variables
+                # If manual initialisation is required, copy in init_values
                 if var_data.init_required:
-                    var_data.view[:] = var_data.values
+                    var_data.values = var_data.init_values
             else:
                 assert not var_data.init_required
-                var_data._view = None
 
     def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
@@ -158,17 +153,17 @@ class GroupMixin(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.values is not None:
+            if egp_data.init_values is not None:
                 # Allocate memory
                 self._model._runtime.allocate_array(
-                    self, egp_name + egp_suffix, len(egp_data.values))
+                    self, egp_name + egp_suffix, len(egp_data.init_values))
 
                 # Set array from runtime
                 egp_data.set_array(
                     self._model._runtime.get_array(self, egp_name + egp_suffix))
 
                 # Copy values
-                egp_data.view[:] = egp_data.values
+                egp_data.values = egp_data.init_values
 
                 # Push egp_data
                 egp_data.push_to_device()
@@ -275,7 +270,7 @@ class SynapseGroupMixin(GroupMixin):
         # Prepare weight update model variables and EGPS
         wu_snippet = self.wu_initialiser.snippet
         self.vars = prepare_vars(wu_snippet.get_vars(),
-                                 wu_vars, self)
+                                 wu_vars, self, SynapseVariable)
         self.pre_vars = prepare_vars(wu_snippet.get_pre_vars(), 
                                      wu_pre_vars, self)
         self.post_vars = prepare_vars(wu_snippet.get_post_vars(), 
@@ -310,8 +305,9 @@ class SynapseGroupMixin(GroupMixin):
         else:
             raise Exception("Matrix format not supported")
 
+    @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
-        return self._get_view_values(self.vars[var_name].view)
+        return self.vars[var_name].values
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
@@ -352,7 +348,7 @@ class SynapseGroupMixin(GroupMixin):
         ndarray of presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            rl = (self._row_lengths.view if self._connectivity_initialiser_provided
+            rl = (self._row_lengths._view if self._connectivity_initialiser_provided
                   else self.row_lengths)
 
             if rl is None:
@@ -386,8 +382,8 @@ class SynapseGroupMixin(GroupMixin):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind.view[i * self.max_connections: (i * self.max_connections) + r]
-                        for i, r in enumerate(self._row_lengths.view)])
+                    self._ind._view[i * self.max_connections: (i * self.max_connections) + r]
+                        for i, r in enumerate(self._row_lengths._view)])
 
         else:
             raise Exception("get_sparse_post_inds only supports"
@@ -449,17 +445,17 @@ class SynapseGroupMixin(GroupMixin):
                     # If data is available
                     if self.connections_set:
                         # Copy in row length
-                        self._row_lengths.view[:] = self.row_lengths
+                        self._row_lengths._view[:] = self.row_lengths
 
                         # Create (x)range containing the index where each row starts in ind
-                        row_start_idx = xrange(0, self.weight_update_var_size,
-                                               self.max_connections)
+                        row_start_idx = range(0, self.weight_update_var_size,
+                                              self.max_connections)
 
                         # Loop through ragged matrix rows
                         syn = 0
                         for i, r in zip(row_start_idx, self.row_lengths):
                             # Copy row from non-padded indices into correct location
-                            self._ind.view[i:i + r] = self.ind[syn:syn + r]
+                            self._ind._view[i:i + r] = self.ind[syn:syn + r]
                             syn += r
                     elif not self._connectivity_initialiser_provided:
                         raise Exception("For sparse projections, the connections"
@@ -473,36 +469,17 @@ class SynapseGroupMixin(GroupMixin):
             elif self.connections_set:
                 raise Exception("Matrix format not supported")
 
-        # Loop through weight update model state variables
+        # If population has individual synapse variables, 
+        # load weight update model variables
         wu_snippet = self.wu_initialiser.snippet
-        for v in wu_snippet.get_vars():
-            # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
-
-            # If population has individual synapse variables
-            if ((self.matrix_type & SynapseMatrixWeight.INDIVIDUAL) or 
-                    (self.matrix_type & SynapseMatrixWeight.KERNEL)):
-                # If variable is located on host
-                var_loc = self.get_wu_var_location(v.name) 
-                if var_loc & VarLocation.HOST:
-                    # Determine shape of this variable
-                    var_shape = _get_synapse_var_shape(
+        if ((self.matrix_type & SynapseMatrixWeight.INDIVIDUAL) or 
+                (self.matrix_type & SynapseMatrixWeight.KERNEL)):
+            self._load_vars(
+                    wu_snippet.get_vars(),
+                    lambda v: _get_synapse_var_shape(
                         get_var_access_dim(v.access), 
-                        self, self._model.batch_size)
-
-                    # Set array from runtime
-                    var_data.set_array(
-                        self._model._runtime.get_array(self, v.name),
-                        var_shape)
-
-                    # Initialise variable if necessary
-                    self._init_wum_var(var_data)
-                else:
-                    assert not var_data.init_required
-                    var_data._view = None
-
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, v.name)
+                        self, self._model.batch_size),
+                    self.vars, self.get_wu_var_location)
 
         # If population's presynaptic weight update hasn't been 
         # fused, load weight update model presynaptic variables
@@ -573,6 +550,10 @@ class SynapseGroupMixin(GroupMixin):
         return (len(snippet.get_row_build_code()) > 0 
                 or len(snippet.get_col_build_code()) > 0)
 
+    @property
+    def synapse_group(self):
+        return self
+
     def unload(self):
         self._ind = None
         self._row_lengths = None
@@ -585,65 +566,6 @@ class SynapseGroupMixin(GroupMixin):
         self._unload_egps()
         self._unload_egps(self.psm_extra_global_params)
         self._unload_egps(self.connectivity_extra_global_params)
-    
-    def _get_view_values(self, var_view):
-        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixWeight.KERNEL:
-            return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = self.max_connections
-            row_ls = (self._row_lengths.view if self._connectivity_initialiser_provided 
-                      else self.row_lengths)
-
-            # Create range containing the index where each row starts in ind
-            row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
-
-            # Build list of subviews representing each row
-            if len(var_view.shape) == 1:
-                rows = [var_view[i:i + r] 
-                        for i, r in zip(row_start_idx, row_ls)]
-            else:
-                rows = [var_view[:,i:i + r] 
-                        for i, r in zip(row_start_idx, row_ls)]
-            
-            # Stack all rows together into single array
-            return np.hstack(rows)
-        else:
-            raise Exception("Matrix format not supported")
-            
-    def _init_wum_var(self, var_data):
-        # If initialisation is required
-        if var_data.init_required:
-            # If connectivity is dense,
-            # copy variables  directly into view
-            # **NOTE** we assume order is row-major
-            if ((self.matrix_type & SynapseMatrixConnectivity.DENSE) or
-                (self.matrix_type & SynapseMatrixWeight.KERNEL)):
-                var_data.view[:] = var_data.values
-            elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
-                # Sort variable to match GeNN order
-                if len(var_data.view.shape) == 1:
-                    sorted_var = var_data.values[self.synapse_order]
-                else:
-                    sorted_var = var_data.values[:,self.synapse_order]
-
-                # Create (x)range containing the index
-                # where each row starts in ind
-                row_start_idx = xrange(0, self.weight_update_var_size,
-                                       self.max_connections)
-
-                # Loop through ragged matrix rows
-                syn = 0
-                for i, r in zip(row_start_idx, self.row_lengths):
-                    # Copy row from non-padded indices into correct location
-                    if len(var_data.view.shape) == 1:
-                        var_data.view[i:i + r] = sorted_var[syn:syn + r]
-                    else:
-                        var_data.view[:,i:i + r] = sorted_var[:,syn:syn + r]
-                    syn += r
-            else:
-                raise Exception("Matrix format not supported")
 
 class CurrentSourceMixin(GroupMixin):
 
@@ -734,7 +656,7 @@ class CustomUpdateWUMixin(GroupMixin):
         """
         super(CustomUpdateWUMixin, self)._init_group(model)
         self.vars = prepare_vars(self.custom_update_model.get_vars(),
-                                 var_space, self)
+                                 var_space, self, SynapseVariable)
         self.extra_global_params = prepare_egps(
             self.custom_update_model.get_extra_global_params(), self)
 
@@ -743,38 +665,22 @@ class CustomUpdateWUMixin(GroupMixin):
         assert not (self.synapse_group.matrix_type 
                     & SynapseMatrixConnectivity.PROCEDURAL)
 
-        # Loop through state variables
+        # Load variables
         batch_size = (self._model.batch_size
                       if self._dims & VarAccessDim.BATCH
                       else 1)
-        for v in self.custom_update_model.get_vars():
-            # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
-
-            # If variable is located on host
-            var_loc = self.get_var_location(v.name) 
-            if var_loc & VarLocation.HOST:
-                 # Determine shape of this variable
-                var_shape = _get_synapse_var_shape(
-                    get_var_access_dim(v.access, self._dims), 
-                    self.synapse_group, batch_size)
-                
-                # Set array from runtime
-                var_data.set_array(
-                    self._model._runtime.get_array(self, v.name),
-                    var_shape)
-
-                # Initialise variable if necessary
-                self.synapse_group._init_wum_var(var_data)
-
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, v.name)
+        self._load_vars(
+            self.custom_update_model.get_vars(),
+            lambda v: _get_synapse_var_shape(get_var_access_dim(v.access, self._dims),
+                                             self.synapse_group, batch_size),
+            self.vars, self.get_var_location)
 
         # Load custom update extra global parameters
         self._load_egp()
     
+    @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
-        return self.synapse_group._get_view_values(self.vars[var_name].view)
+        return self.vars[var_name].values
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
@@ -805,7 +711,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         super(CustomConnectivityUpdateMixin, self)._init_group(model)
         self.synapse_group = synapse_group
         self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self)
+                                 var_space, self, SynapseVariable)
         self.pre_vars = prepare_vars(self.model.get_pre_vars(),
                                      pre_var_space, self)
         self.post_vars = prepare_vars(self.model.get_post_vars(),
@@ -813,33 +719,17 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         self.extra_global_params = prepare_egps(
             self.model.get_extra_global_params(), self)
     
+    @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
-        return self.synapse_group._get_view_values(self.vars[var_name].view)
+        return self.vars[var_name].values
 
     def load(self):
-        # Loop through state variables
-        for v in self.model.get_vars():
-            # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
-
-            # If variable is located on host
-            var_loc = self.get_var_location(v.name) 
-            if var_loc & VarLocation.HOST:
-                # Determine shape of this variable
-                var_shape = _get_synapse_var_shape(
-                    get_var_access_dim(v.access), 
-                    self.synapse_group, 1)
-
-                # Set array from runtime
-                var_data.set_array(
-                    self._model._runtime.get_array(self, v.name),
-                    var_shape)
-
-                # Initialise variable if necessary
-                self.synapse_group._init_wum_var(var_data)
-
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, v.name)
+        # Load variables
+        self._load_vars(
+            self.model.get_vars(),
+            lambda v: _get_synapse_var_shape(get_var_access_dim(v.access),
+                                             self.synapse_group, 1),
+            self.vars, self.get_var_location)
   
         # Load pre and postsynaptic variables
         self._load_vars(

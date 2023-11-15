@@ -4,12 +4,13 @@ This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
 from copy import copy
+from deprecated import deprecated
 from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iteritems, iterkeys, itervalues, string_types
-
-from .genn import ResolvedType, VarInit
+from .genn import (ResolvedType, SynapseMatrixConnectivity,
+                   SynapseMatrixWeight, VarInit)
 from .init_var_snippets import Uninitialised
 
 class Array:
@@ -51,20 +52,20 @@ class VariableBase(Array):
 
     """Base class holding information about GeNN variables"""
 
-    def __init__(self, variable_name, variable_type, values, group):
+    def __init__(self, variable_name, variable_type, init_values, group):
         """Init Variable
 
         Args:
         variable_name   -- string name of the variable
         variable_type   -- string type of the variable
-        values          -- iterable, single value or VarInit instance
+        init_values     -- iterable, single value or VarInit instance
         group           -- pygenn.genn_groups.Group this  
                            variable is associated with
         """
         super(VariableBase, self).__init__(variable_type, group)
         
         self.name = variable_name
-        self.set_values(values)
+        self.set_init_values(init_values)
 
     def set_extra_global_init_param(self, param_name, param_values):
         """Set values of extra global parameter associated with
@@ -74,34 +75,38 @@ class VariableBase(Array):
         param_name      -- string, name of parameter
         param_values    -- iterable or single value
         """
-        self.extra_global_params[param_name].set_values(param_values)
+        self.extra_global_params[param_name].set_init_values(param_values)
 
+    @deprecated("Please use set_init_values method instead")
     def set_values(self, values):
-        """Set Variable's values
+        self.set_init_values(values)
+
+    def set_init_values(self, init_values):
+        """Set values variable is initialised with
 
         Args:
-        values -- iterable, single value or VarInit instance
+        valinit_valuesues -- iterable, single value or VarInit instance
 
         """
         # By default variable doesn't need initialising
         self.init_required = False
 
         # If an var initialiser is specified
-        if isinstance(values, VarInit):
+        if isinstance(init_values, VarInit):
             # Build extra global parameters dictionary from var init snippet
             self.extra_global_params =\
                 {egp.name: ExtraGlobalParameter(egp.name, egp.type, self.group)
-                 for egp in values.snippet.get_extra_global_params()}
+                 for egp in init_values.snippet.get_extra_global_params()}
         # If no values are specified - mark as uninitialised
-        elif values is None:
+        elif init_values is None:
             self.extra_global_params = {}
         # Otherwise
         else:
             # Try and iterate values - if they are iterable
             # they must be loaded at simulate time
             try:
-                iter(values)
-                self.values = np.asarray(values)
+                iter(init_values)
+                self.init_values = np.asarray(init_values)
                 self.init_required = True
                 self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
@@ -135,19 +140,19 @@ class SynapseVariable(Variable):
 
     @property
     def values(self):
-        matrix_type = self.group.matrix_type
-        if matrix_type & SynapseMatrixConnectivity.DENSE:
+        sg = self.group.synapse_group
+        if sg.matrix_type & SynapseMatrixConnectivity.DENSE:
             return np.copy(self._view)
-        elif matrix_type & SynapseMatrixWeight.KERNEL:
+        elif sg.matrix_type & SynapseMatrixWeight.KERNEL:
             return np.copy(self._view)
-        elif matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = self.max_connections
-            row_ls = (self.group._row_lengths.view 
-                      if self.group._connectivity_initialiser_provided
-                      else self.group.row_lengths)
+        elif sg.matrix_type & SynapseMatrixConnectivity.SPARSE:
+            max_rl = sg.max_connections
+            row_ls = (sg._row_lengths._view 
+                      if sg._connectivity_initialiser_provided
+                      else sg.row_lengths)
 
             # Create range containing the index where each row starts in ind
-            row_start_idx = xrange(0, self.group.weight_update_var_size, max_rl)
+            row_start_idx = range(0, sg.weight_update_var_size, max_rl)
 
             # Build list of subviews representing each row
             if len(self._view.shape) == 1:
@@ -167,25 +172,25 @@ class SynapseVariable(Variable):
         # If connectivity is dense,
         # copy variables  directly into view
         # **NOTE** we assume order is row-major
-        matrix_type = self.group.matrix_type
-        if ((matrix_type & SynapseMatrixConnectivity.DENSE) or
-            (matrix_type & SynapseMatrixWeight.KERNEL)):
+        sg = self.group.synapse_group
+        if ((sg.matrix_type & SynapseMatrixConnectivity.DENSE) or
+            (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
             self._view[:] = vals
-        elif (matrix_type & SynapseMatrixConnectivity.SPARSE):
+        elif (sg.matrix_type & SynapseMatrixConnectivity.SPARSE):
             # Sort variable to match GeNN order
             if len(self._view.shape) == 1:
-                sorted_var = vals[self.group.synapse_order]
+                sorted_var = vals[sg.synapse_order]
             else:
-                sorted_var = vals[:,self.group.synapse_order]
+                sorted_var = vals[:,sg.synapse_order]
 
-            # Create (x)range containing the index
+            # Create range containing the index
             # where each row starts in ind
-            row_start_idx = xrange(0, self.group.weight_update_var_size,
-                                   self.group.max_connections)
+            row_start_idx = range(0, sg.weight_update_var_size,
+                                  sg.max_connections)
 
             # Loop through ragged matrix rows
             syn = 0
-            for i, r in zip(row_start_idx, self.group.row_lengths):
+            for i, r in zip(row_start_idx, sg.row_lengths):
                 # Copy row from non-padded indices into correct location
                 if len(self._view.shape) == 1:
                     self._view[i:i + r] = sorted_var[syn:syn + r]
@@ -199,7 +204,7 @@ class ExtraGlobalParameter(Array):
 
     """Class holding information about GeNN extra global parameter"""
 
-    def __init__(self, variable_name, variable_type, group, values=None):
+    def __init__(self, variable_name, variable_type, group, init_values=None):
         """Init Variable
 
         Args:
@@ -209,25 +214,29 @@ class ExtraGlobalParameter(Array):
                             variable is associated with
 
         Keyword args:
-        values          --  iterable
+        init_values     --  iterable
         """
         super(ExtraGlobalParameter, self).__init__(variable_type, group)
         self.name = variable_name
-        self.set_values(values)
+        self.set_init_values(init_values)
 
+    @deprecated("Please use set_init_values method instead")
     def set_values(self, values):
+        self.set_init_values(values)
+
+    def set_init_values(self, init_values):
         """Set Variable's values
 
         Args:
         values -- iterable or None
         """
-        if values is None:
-            self.values = None
+        if init_values is None:
+            self.init_values = None
         else:
             # Try and iterate values
             try:
-                iter(values)
-                self.values = np.asarray(values)
+                iter(init_values)
+                self.init_values = np.asarray(init_values)
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "
