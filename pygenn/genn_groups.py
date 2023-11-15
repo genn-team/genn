@@ -17,7 +17,7 @@ from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDim, VarLocation)
 from .genn import get_var_access_dim
-from .model_preprocessor import (prepare_model, Array, 
+from .model_preprocessor import (prepare_egps, prepare_vars, Array,
                                  ExtraGlobalParameter, Variable)
 
 def _get_num_var_copies(var_dims, batch_size):
@@ -212,8 +212,10 @@ class NeuronGroupMixin(GroupMixin):
         """
         super(NeuronGroupMixin, self)._init_group(model)
 
-        self.vars, self.extra_global_params = prepare_model(
-            self.neuron_model, self, var_space)
+        self.vars = prepare_vars(self.neuron_model.get_vars(),
+                                 var_space, self)
+        self.extra_global_params = prepare_egps(
+            self.neuron_model.get_extra_global_params(), self)
 
     @property
     def spike_recording_data(self):
@@ -269,28 +271,32 @@ class SynapseGroupMixin(GroupMixin):
         self.trg = target
         self.in_syn = None
         self.connections_set = False
-        
+
+        # Prepare weight update model variables and EGPS
         wu_snippet = self.wu_initialiser.snippet
+        self.vars = prepare_vars(wu_snippet.get_vars(),
+                                 wu_vars, self)
+        self.pre_vars = prepare_vars(wu_snippet.get_pre_vars(), 
+                                     wu_pre_vars, self)
+        self.post_vars = prepare_vars(wu_snippet.get_post_vars(), 
+                                      wu_post_vars, self)
+        self.extra_global_params = prepare_egps(
+            wu_snippet.get_extra_global_params(), self)
+
+        # Prepare postsynaptic model variables and EGPS
         ps_snippet = self.ps_initialiser.snippet
-        self.vars, self.extra_global_params = prepare_model(
-            wu_snippet, self, wu_vars)
-        self.psm_vars, self.psm_extra_global_params = prepare_model(
-            ps_snippet, self, ps_vars)
-        
-        self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                            wu_pre_vars[vnt.name], self)
-                         for vnt in wu_snippet.get_pre_vars()}
-        self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                             wu_post_vars[vnt.name], self)
-                          for vnt in wu_snippet.get_post_vars()}
-        
+        self.psm_vars = prepare_vars(ps_snippet.get_vars(),
+                                     ps_vars, self)
+        self.psm_extra_global_params = prepare_egps(
+            ps_snippet.get_extra_global_params(), self)
+
+        # Prepare connectivity init EGPS
         if self.matrix_type & SynapseMatrixConnectivity.TOEPLITZ:
             connect_init = self.toeplitz_connectivity_initialiser
         else:
             connect_init = self.sparse_connectivity_initialiser
-        self.connectivity_extra_global_params =\
-            {egp.name: ExtraGlobalParameter(egp.name, egp.type, self)
-            for egp in connect_init.snippet.get_extra_global_params()}
+        self.connectivity_extra_global_params = prepare_egps(
+            connect_init.snippet.get_extra_global_params(), self)
 
     @property
     def weight_update_var_size(self):
@@ -652,8 +658,10 @@ class CurrentSourceMixin(GroupMixin):
         """
         super(CurrentSourceMixin, self)._init_group(model)
         self.target_pop = target_pop
-        self.vars, self.extra_global_params = prepare_model(
-            self.current_source_model, self, var_space)
+        self.vars = prepare_vars(self.current_source_model.get_vars(),
+                                 var_space, self)
+        self.extra_global_params = prepare_egps(
+            self.current_source_model.get_extra_global_params(), self)
         
     @property
     def size(self):
@@ -691,8 +699,10 @@ class CustomUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateMixin, self)._init_group(model)
-        self.vars, self.extra_global_params = prepare_model(
-            self.custom_update_model, self, var_space)
+        self.vars = prepare_vars(self.custom_update_model.get_vars(),
+                                 var_space, self)
+        self.extra_global_params = prepare_egps(
+            self.custom_update_model.get_extra_global_params(), self)
  
     def load(self):
         batch_size = (self._model.batch_size
@@ -723,8 +733,10 @@ class CustomUpdateWUMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateWUMixin, self)._init_group(model)
-        self.vars, self.extra_global_params = prepare_model(
-            self.custom_update_model, self, var_space)
+        self.vars = prepare_vars(self.custom_update_model.get_vars(),
+                                 var_space, self)
+        self.extra_global_params = prepare_egps(
+            self.custom_update_model.get_extra_global_params(), self)
 
     def load(self):
         # Assert that population doesn't have procedural connectivity
@@ -792,14 +804,14 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         """
         super(CustomConnectivityUpdateMixin, self)._init_group(model)
         self.synapse_group = synapse_group
-        self.vars, self.extra_global_params = prepare_model(
-            self.model, self, var_space)
-        self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                            pre_var_space[vnt.name], self)
-                         for vnt in self.model.get_pre_vars()}
-        self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
-                                             post_var_space[vnt.name], self)
-                          for vnt in self.model.get_post_vars()}
+        self.vars = prepare_vars(self.model.get_vars(),
+                                 var_space, self)
+        self.pre_vars = prepare_vars(self.model.get_pre_vars(),
+                                     pre_var_space, self)
+        self.post_vars = prepare_vars(self.model.get_post_vars(),
+                                      post_var_space, self)
+        self.extra_global_params = prepare_egps(
+            self.model.get_extra_global_params(), self)
     
     def get_var_values(self, var_name):
         return self.synapse_group._get_view_values(self.vars[var_name].view)
