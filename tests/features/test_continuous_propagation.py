@@ -16,6 +16,10 @@ from pygenn import (create_neuron_model,
 
 pre_neuron_model = create_neuron_model(
     "pre_neuron",
+    sim_code=
+    """
+    x = (id == (int)t) ? 1.0 : 0.0;
+    """,
     var_name_types=[("x", "scalar")])
 
 post_neuron_model = create_neuron_model(
@@ -25,24 +29,6 @@ post_neuron_model = create_neuron_model(
     x = Isyn;
     """,
     var_name_types=[("x", "scalar")])
-
-continous_weight_update_model = create_weight_update_model(
-    "continous_weight_update",
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
-    pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
-    synapse_dynamics_code=
-    """
-    addToPost(g * x);
-    """)
-
-continous_constant_weight_update_model = create_weight_update_model(
-    "continous_constant_weight_update",
-    param_names=["g"],
-    pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
-    synapse_dynamics_code=
-    """
-    addToPost(g * x);
-    """)
 
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
@@ -64,26 +50,34 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
-# (Normalised) horizontal Sobel convolution kernel
-vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
-                              [2.0,   0.0,    -2.0],
-                              [1.0,   0.0,    -1.0]])
-
-# (Normalised) vertical Sobel convolution kernel
-horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
-                                [0.0,     0.0,    0.0],
-                                [-1.0,    -2.0,   -1.0]])
-
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward(backend, precision):    
+def test_forward(backend, precision):
+    continous_weight_update_model = create_weight_update_model(
+        "continous_weight_update",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(g * x);
+        """)
+
+    continous_constant_weight_update_model = create_weight_update_model(
+        "continous_constant_weight_update",
+        param_names=["g"],
+        pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(g * x);
+        """)
+        
     model = GeNNModel(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
-    # Create spike source array to generate one-hot pattern to decode
+    # Create neuron model to generate one-hot pattern to decode
     pre_pop = model.add_neuron_population("Pre", 16, pre_neuron_model, {},
                                           {"x": 0.0})
-    
+
     # Build sparse connectivity
     pre_inds = []
     post_inds = []
@@ -241,11 +235,6 @@ def test_forward(backend, precision):
                           manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
                           manual_dense_n_pop]
     while model.timestep < 15:
-        # Set input
-        pre_pop.vars["x"].view[:] = 0.0
-        pre_pop.vars["x"].view[model.timestep] = 1.0
-        pre_pop.vars["x"].push_to_device()
-
         model.step_time()
 
         # Loop through output populations
@@ -255,22 +244,31 @@ def test_forward(backend, precision):
 
             # Convert to binary mask
             output_binary = np.isclose(np.ones(4), pop.vars["x"].view)
-
+            
             # Sum up active place values
             output_value = np.sum(output_place_values[output_binary])
-            if output_value != model.timestep:
+            if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward_den_delay(backend, precision):
+    continous_den_delay_wum = create_weight_update_model(
+        "continous_den_delay",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY),
+                        ("d", "uint8_t", VarAccess.READ_ONLY)],
+        pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPostDelay(g * x, d);
+        """)
+
     model = GeNNModel(precision, "test_forward_den_delay", backend=backend)
     model.dt = 1.0
 
-    # Create spike source array to generate one-hot pattern to decode
-    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSourceArray",
-                                         {}, {"startSpike": np.arange(10), "endSpike": np.arange(1, 11)})
-    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(10.0))
+    # Create neuron model to generate one-hot pattern to decode
+    pre_pop = model.add_neuron_population("Pre", 10, pre_neuron_model, {},
+                                          {"x": 0.0})
 
     # Create one output neuron pop with dense decoder population
     delay = np.arange(9, -1, -1)
@@ -279,8 +277,9 @@ def test_forward_den_delay(backend, precision):
         {}, {"x": 0.0})
     dense_s_pop = model.add_synapse_population(
         "PostDenseSynapse", "DENSE", 0,
-        ss_pop, dense_n_pop,
-        init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
+        pre_pop, dense_n_pop,
+        init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
         init_postsynaptic("DeltaCurr", {}, {}))
     dense_s_pop.max_dendritic_delay_timesteps = 10
 
@@ -290,8 +289,9 @@ def test_forward_den_delay(backend, precision):
         {}, {"x": 0.0})
     sparse_s_pop = model.add_synapse_population(
         "PostSparseSynapse", "SPARSE", 0,
-        ss_pop, sparse_n_pop,
-        init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
+        pre_pop, sparse_n_pop,
+        init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
         init_postsynaptic("DeltaCurr", {}, {}))
     sparse_s_pop.max_dendritic_delay_timesteps = 10
     sparse_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
@@ -302,8 +302,9 @@ def test_forward_den_delay(backend, precision):
         {}, {"x": 0.0})
     sparse_pre_s_pop = model.add_synapse_population(
         "PostSparsePreSpanSynapse", "SPARSE", 0,
-        ss_pop, sparse_pre_n_pop, 
-        init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
+        pre_pop, sparse_pre_n_pop, 
+        init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
         init_postsynaptic("DeltaCurr", {}, {}))
     sparse_pre_s_pop.max_dendritic_delay_timesteps = 10
     sparse_pre_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
@@ -425,5 +426,5 @@ def test_reverse(backend, precision):
         assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
 
 if __name__ == '__main__':
-    test_forward("cuda", types.Float)
+    test_forward_den_delay("single_threaded_cpu", types.Float)
     
