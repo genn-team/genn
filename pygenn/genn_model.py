@@ -1094,7 +1094,7 @@ def create_weight_update_model(class_name, param_names=None,
 
     if post_neuron_var_refs is not None:
         body["get_post_neuron_var_refs"] =\
-            lambda self: [VarRef(*v) for v in psot_neuron_var_refs]
+            lambda self: [VarRef(*v) for v in post_neuron_var_refs]
 
     return create_model(class_name, WeightUpdateModelBase, param_names,
                         derived_params, extra_global_params, body)
