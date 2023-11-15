@@ -106,8 +106,8 @@ def test_spike_times(backend, precision):
             delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
             delayed_time[delayed_time < 21.0] = float_min
 
-            pop.pull_var_from_device(var_name)
-            var_value = pop.get_var_values(var_name)
+            pop.vars[var_name].pull_from_device()
+            var_value = pop.vars[var_name].values
             if not np.allclose(delayed_time, var_value):
                 assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
 

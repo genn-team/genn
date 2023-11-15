@@ -61,7 +61,7 @@ def test_forward(backend, precision):
     # Create spike source array to generate one-hot pattern to decode
     ss_pop = model.add_neuron_population("SpikeSource", 16, "SpikeSourceArray",
                                          {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
-    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    ss_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
 
     # Build sparse connectivity
     pre_inds = []
@@ -234,7 +234,7 @@ def test_forward_den_delay(backend, precision):
     # Create spike source array to generate one-hot pattern to decode
     ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSourceArray",
                                          {}, {"startSpike": np.arange(10), "endSpike": np.arange(1, 11)})
-    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(10.0))
+    ss_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(10.0))
 
     # Create one output neuron pop with dense decoder population
     delay = np.arange(9, -1, -1)
@@ -302,7 +302,7 @@ def test_forward_procedural(backend, precision):
     # Create spike source array to generate one-hot pattern to decode
     ss_pop = model.add_neuron_population("SpikeSource", 16, "SpikeSourceArray",
                                          {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
-    ss_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    ss_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
 
     # Create one output neuron pop with constant weight procedural decoder population
     procedural_constant_weight_n_pop = model.add_neuron_population(
@@ -361,7 +361,7 @@ def test_forward_kernel(backend, precision):
     start_spikes = np.concatenate(([0,], end_spikes[:-1]))
     pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
                                           {}, {"startSpike": start_spikes, "endSpike": end_spikes})
-    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
+    pre_pop.extra_global_params["spikeTimes"].set_init_values(np.zeros_like(test_pattern))
 
     # Add postsynaptic populations to receive horizontal and vertical edges
     post_toeplitz_horiz_pop = model.add_neuron_population(
@@ -412,7 +412,7 @@ def test_forward_kernel(backend, precision):
         init_weight_update("StaticPulse", {}, {"g": init_var("Kernel")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("Conv2D", conv_params))
-    sparse_horiz_s_pop.vars["g"].extra_global_params["kernel"].set_values(horizontal_kernel.flatten())
+    sparse_horiz_s_pop.vars["g"].extra_global_params["kernel"].set_init_values(horizontal_kernel.flatten())
 
     sparse_vert_s_pop = model.add_synapse_population(
         "SparseVertSynapse", "SPARSE", 0,
@@ -421,7 +421,7 @@ def test_forward_kernel(backend, precision):
         init_weight_update("StaticPulse", {}, {"g": init_var("Kernel")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("Conv2D", conv_params))
-    sparse_vert_s_pop.vars["g"].extra_global_params["kernel"].set_values(vertical_kernel.flatten())
+    sparse_vert_s_pop.vars["g"].extra_global_params["kernel"].set_init_values(vertical_kernel.flatten())
 
     # Build model and load
     model.build()
@@ -462,7 +462,7 @@ def test_forward_kernel_procedural(backend, precision):
     start_spikes = np.concatenate(([0,], end_spikes[:-1]))
     pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, "SpikeSourceArray",
                                           {}, {"startSpike": start_spikes, "endSpike": end_spikes})
-    pre_pop.extra_global_params["spikeTimes"].set_values(np.zeros_like(test_pattern))
+    pre_pop.extra_global_params["spikeTimes"].set_init_values(np.zeros_like(test_pattern))
 
     # Add two postsynaptic populations to receive horizontal and vertical edges
     post_horiz_pop = model.add_neuron_population(
@@ -549,11 +549,11 @@ def test_reverse(backend, precision):
     pre_n_pop = model.add_neuron_population(
         "SpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
-    pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    pre_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
     pre_pre_n_pop = model.add_neuron_population(
         "PreSpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
-    pre_pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    pre_pre_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
     
     # Add postsynptic population to connect to
     post_n_pop = model.add_neuron_population(
@@ -640,7 +640,7 @@ def test_reverse_post(backend, precision):
     post_n_pop = model.add_neuron_population(
         "SpikeSource", 16, "SpikeSourceArray",
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
-    post_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+    post_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
 
     # Build sparse connectivity
     pre_inds = []
