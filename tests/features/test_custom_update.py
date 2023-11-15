@@ -450,16 +450,16 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
         (x_kern_s, kern_s_pop, reduce_s_kernel)]
     for data, sum_pop, max_pop in samples:
         # Check sum
-        sum_pop.pull_var_from_device("SumX")
+        sum_pop.vars["SumX"].pull_from_device()
         sum_correct = np.sum(data, axis=0) if batch_size > 1 else data
-        sum_value = sum_pop.get_var_values("SumX") if batch_size > 1 else data
+        sum_value = sum_pop.vars["SumX"].values
         if not np.allclose(sum_correct, sum_value):
             assert False, f"{sum_pop.name} var SumX has wrong value ({sum_value} rather than {sum_correct})"
 
         # Check max
-        max_pop.pull_var_from_device("MaxX")
+        max_pop.vars["MaxX"].pull_from_device()
         max_correct = np.max(data, axis=0) if batch_size > 1 else data
-        max_value = max_pop.get_var_values("MaxX")
+        max_value = max_pop.vars["MaxX"].values
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
 

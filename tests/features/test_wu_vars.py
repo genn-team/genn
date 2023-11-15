@@ -206,8 +206,8 @@ def test_wu_var(backend, precision, fuse, delay):
         
         # Loop through synapse groups and compare value of w with delayed time
         for s in synapse_groups:
-            s.pull_var_from_device("w")
-            w_value = s.get_var_values("w")
+            s.vars["w"].pull_from_device()
+            w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 
@@ -347,8 +347,8 @@ def test_wu_var_cont(backend, precision, fuse, delay):
         
         # Loop through synapse groups and compare value of w with delayed time
         for s in synapse_groups:
-            s.pull_var_from_device("w")
-            w_value = s.get_var_values("w")
+            s.vars["w"].pull_from_device()
+            w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 

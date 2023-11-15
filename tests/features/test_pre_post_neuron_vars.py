@@ -154,7 +154,7 @@ def test_pre_post_neuron_var(backend, precision, delay):
         # Loop through synapse groups and compare value of w with delayed time
         for s in synapse_groups:
             s.vars["w"].pull_from_device()
-            w_value = s.get_var_values("w")
+            w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 

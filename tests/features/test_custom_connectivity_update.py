@@ -140,8 +140,8 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
     # Pull all variables from device and get numpy array of values
     var_values = []
     for pop, var_name, _ in var_checks:
-        pop.pull_var_from_device(var_name)
-        var_values.append(pop.get_var_values(var_name))
+        pop.vars[var_name].pull_from_device()
+        var_values.append(pop.vars[var_name].values)
 
     pre_inds = sg.get_sparse_pre_inds()
     post_inds = sg.get_sparse_post_inds()
@@ -223,7 +223,7 @@ def test_custom_connectivity_update(backend, precision, batch_size):
         {}, {}, {}, {}, 
         {}, {}, {})
     num_words = post_n_pop.size * ((pre_n_pop.size + 31) // 32)
-    remove_synapse_host_egp_ccu.extra_global_params["d"].set_values(
+    remove_synapse_host_egp_ccu.extra_global_params["d"].set_init_values(
         np.empty(num_words, dtype=np.uint32))
     
     remove_synapse_host_pre_var_ccu = model.add_custom_connectivity_update(

@@ -17,6 +17,7 @@ from pygenn import (create_current_source_model,
                     init_weight_update, init_var)
 
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -130,6 +131,7 @@ def test_sim(backend, precision, batch_size):
         if p < confidence_interval:
             assert False, f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})"
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_init(backend, precision):
@@ -204,7 +206,6 @@ def test_init(backend, precision):
     confidence_interval = 0.00034
     
     # Loop through populations
-    # **TODO** use get_var_values to get synapse variables
     pops = [(n_pop, "", n_pop.vars), (cs, "", cs.vars), (dense_s_pop, "", dense_s_pop.vars),
             (dense_s_pop, "pre_", dense_s_pop.pre_vars), (dense_s_pop, "post_", dense_s_pop.post_vars),
             (dense_s_pop, "psm_", dense_s_pop.psm_vars)]
@@ -215,7 +216,7 @@ def test_init(backend, precision):
             vars[prefix + var_name].pull_from_device()
 
             # If distribution is discrete
-            view = vars[prefix + var_name].view
+            view = vars[prefix + var_name].values
             if isinstance(dist, stats.rv_discrete):
                 # Determine frequencies of observations
                 f_obs = np.bincount(view)

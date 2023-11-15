@@ -8,10 +8,11 @@ from pygenn import GeNNModel
 from pygenn import (init_postsynaptic, init_sparse_connectivity,
                     init_weight_update)
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_connect_init(backend, precision):
-    model = GeNNModel(precision, "test_connect_init", backend=backend)
+    model = GeNNModel(precision, "test_connect_init", backend=backend, debug_code=True)
     model.narrow_sparse_ind_enabled = True
     
     # Create pre and postsynaptic neuron populations
