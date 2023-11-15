@@ -333,47 +333,36 @@ def test_forward_den_delay(backend, precision):
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(backend, precision):
-    pre_reverse_spike_source_model = create_neuron_model(
-        "pre_reverse_spike_source",
-        var_name_types=[("startSpike", "unsigned int"), 
-                        ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
-                        ("x", "scalar")],
-        extra_global_params=[("spikeTimes", "scalar*")],
+    pre_reverse_neuron_model = create_neuron_model(
+        "pre_reverse_neuron",
         sim_code=
         """
-        x = Isyn;
+        y = Isyn;
+        x = (id == (int)t) ? 1.0 : 0.0;
         """,
-        threshold_condition_code=
-        """
-        startSpike != endSpike && t >= spikeTimes[startSpike]
-        """,
-        reset_code=
-        """
-        startSpike++;
-        """)
+        var_name_types=[("x", "scalar"), ("y", "scalar")])
 
-    static_pulse_reverse_model = create_weight_update_model(
-        "static_pulse_reverse",
-        sim_code=
+    continous_reverse_model = create_weight_update_model(
+        "continous_reverse",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
         """
-        $(addToPre, $(g));
-        """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        addToPre(g * x);
+        """)
 
     model = GeNNModel(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
-    # Create spike source arrays with extra x variable 
+    # Create neuron model with extra y variable 
     # to generate one-hot pattern to decode
     pre_n_pop = model.add_neuron_population(
-        "SpikeSource", 16, pre_reverse_spike_source_model,
-        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
-    pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
+        "SpikeSource", 16, pre_reverse_neuron_model,
+        {}, {"x": 0.0, "y": 0.0})
     pre_pre_n_pop = model.add_neuron_population(
-        "PreSpikeSource", 16, pre_reverse_spike_source_model,
-        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
-    pre_pre_n_pop.extra_global_params["spikeTimes"].set_values(np.arange(16.0))
-    
+        "PreSpikeSource", 16, pre_reverse_neuron_model,
+        {}, {"x": 0.0, "y": 0.0})
+
     # Add postsynptic population to connect to
     post_n_pop = model.add_neuron_population(
         "Post", 4, post_neuron_model,
@@ -399,14 +388,16 @@ def test_reverse(backend, precision):
     s_pop = model.add_synapse_population(
         "SparseSynapse", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
+        init_weight_update(continous_reverse_model, {}, {"g": weights},
+                           pre_var_refs={"x": create_var_ref(pre_n_pop, "x")}),
         init_postsynaptic("DeltaCurr"))
     s_pop.set_sparse_connections(pre_inds, post_inds)
     
     s_pre_pop = model.add_synapse_population(
         "SparsePreSynapse", "SPARSE", 0,
         pre_pre_n_pop, post_n_pop,
-        init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
+        init_weight_update(continous_reverse_model, {}, {"g": weights},
+                           pre_var_refs={"x": create_var_ref(pre_pre_n_pop, "x")}),
         init_postsynaptic("DeltaCurr"))
     s_pre_pop.set_sparse_connections(pre_inds, post_inds)
     s_pre_pop.span_type = SpanType.PRESYNAPTIC
@@ -419,12 +410,12 @@ def test_reverse(backend, precision):
     while model.timestep < 16:
         model.step_time()
         
-        pre_n_pop.vars["x"].pull_from_device()
-        pre_pre_n_pop.vars["x"].pull_from_device()
+        pre_n_pop.vars["y"].pull_from_device()
+        pre_pre_n_pop.vars["y"].pull_from_device()
         
-        assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
-        assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
+        assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
+        assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
 
 if __name__ == '__main__':
-    test_forward_den_delay("single_threaded_cpu", types.Float)
+    test_reverse("cuda", types.Float)
     
