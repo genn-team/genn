@@ -285,7 +285,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
-        synEnv.addLocalVarRefs<SynapseWUPostNeuronVarRefAdapter>(true);
+        synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
