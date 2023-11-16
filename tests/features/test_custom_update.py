@@ -213,6 +213,103 @@ def test_custom_update(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_delay(backend, precision, batch_size):
+    neuron_model = create_neuron_model(
+        "neuron",
+        var_name_types=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+                        ("U", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
+
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(V * g);
+        """)
+    pre_weight_update_model = create_weight_update_model(
+        "pre_weight_update",
+        pre_var_name_types=[("pre", "scalar")],
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(pre * g);
+        """,
+        pre_dynamics_code=
+        """
+        pre = V;
+        """)
+
+    set_time_custom_update_model = create_custom_update_model(
+        "set_time_custom_update",
+         update_code=
+         """
+         R = (batch * 1000.0) + t;
+         """,
+         var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
+
+    model = GeNNModel(precision, "test_custom_update_delay", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+    
+    # Create a variety of models to attach custom updates to
+    pre_pop = model.add_neuron_population("Pre", 10, neuron_model,
+                                          {}, {"V": 0.0, "U": 0.0});
+    post_pop = model.add_neuron_population("Post", 10, neuron_model, 
+                                           {}, {"V": 0.0, "U": 0.0})
+    model.add_synapse_population(
+        "Syn1", "DENSE", 5,
+        pre_pop, post_pop,
+        init_weight_update(weight_update_model, {}, {"g": 0.0},
+                           pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
+        init_postsynaptic("DeltaCurr"))
+    syn2_pop = model.add_synapse_population(
+        "Syn2", "DENSE", 5,
+        pre_pop, post_pop,
+        init_weight_update(pre_weight_update_model, {}, {"g": 0.0}, {"pre": 0.0},
+                           pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
+        init_postsynaptic("DeltaCurr"))
+    
+    model.add_custom_update("NeuronDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "V")})
+    model.add_custom_update("WUPreDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_wu_pre_var_ref(syn2_pop, "pre")})
+    model.add_custom_update("NeuronNoDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "U")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 20 timesteps
+    vars = [(pre_pop, pre_pop.vars["V"]),
+            (pre_pop, pre_pop.vars["U"]),
+            #(syn2_pop, syn2_pop.pre_vars["pre"])
+            ]
+    while model.timestep < 20:
+        model.step_time()
+
+        # Every 10 timesteps, trigger custom update
+        if (model.timestep % 10) == 0:
+            model.custom_update("Test")
+
+        # Loop through variables
+        correct = [(1000 * b) + ((model.timestep // 10) * 10) 
+                   for b in range(batch_size)]
+        correct = np.reshape(correct, (batch_size, 1))
+        for pop, var in vars:
+            # Pull
+            var.pull_from_device()
+
+            # Compare to correct value
+            if not np.allclose(var.current_view, correct):
+                assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+
+
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_transpose(backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
         "static_pulse_duplicate",
@@ -463,6 +560,7 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
 
+
 if __name__ == '__main__':
-    test_custom_update("cuda", types.Float, 5)
+    test_custom_update_delay("cuda", types.Float, 5)
     
