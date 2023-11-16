@@ -6,7 +6,7 @@ and defines class Variable
 from copy import copy
 from deprecated import deprecated
 from numbers import Number
-from weakref import proxy, ProxyTypes
+from weakref import proxy, ref, ProxyTypes
 import numpy as np
 from six import iteritems, iterkeys, itervalues, string_types
 from .genn import (ResolvedType, SynapseMatrixConnectivity,
@@ -66,6 +66,11 @@ class VariableBase(Array):
         
         self.name = variable_name
         self.set_init_values(init_values)
+    
+    def set_array(self, array, view_shape, delay_group):
+        super(VariableBase, self).set_array(array, view_shape)
+        self._delay_group = (None if delay_group is None 
+                             else ref(delay_group))
 
     def set_extra_global_init_param(self, param_name, param_values):
         """Set values of extra global parameter associated with
@@ -127,6 +132,25 @@ class Variable(VariableBase):
         return self._view
     
     @property
+    def current_view(self):
+        # If there's no delay group, return full view
+        if self._delay_group is None:
+            return self._view
+        # Otherwise
+        else:
+            # Get delay pointer associated with delay group
+            runtime = self.group._model._runtime
+            delay_ptr = runtime.get_delay_pointer(self._delay_group())
+            
+            # Slice current delay slot from appropriate axis
+            num_view_dims = len(self._view.shape)
+            if num_view_dims == 2:
+                return self._view[delay_ptr,:]
+            else:
+                assert num_view_dims == 3
+                return self._view[:,delay_ptr,:]
+
+    @property
     def values(self):
         return np.copy(self._view)
     
@@ -134,9 +158,26 @@ class Variable(VariableBase):
     def values(self, vals):
         self._view[:] = vals
 
-class SynapseVariable(Variable):
+    @property
+    def current_values(self):
+        return np.copy(self.current_view)
+
+class SynapseVariable(VariableBase):
 
     """Class holding information about per-synapse GeNN variables"""
+    @property
+    def view(self):
+        if ((sg.matrix_type & SynapseMatrixConnectivity.DENSE) or
+            (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
+            return self._view
+        else:
+            raise Exception("Only variables associated with DENSE or KERNEL "
+                            "connectivity can be accessed without copying "
+                            "via 'view'. Please use 'values' instead.")
+
+    @property
+    def current_view(self):
+        return self.view
 
     @property
     def values(self):
@@ -199,6 +240,10 @@ class SynapseVariable(Variable):
                 syn += r
         else:
             raise Exception("Matrix format not supported")
+
+    @property
+    def current_values(self):
+        return self.values
 
 class ExtraGlobalParameter(Array):
 

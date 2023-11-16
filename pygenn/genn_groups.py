@@ -144,7 +144,7 @@ class GroupMixin(object):
                 # Set array from runtime
                 var_data.set_array(
                     self._model._runtime.get_array(self, v.name),
-                    var_shape)
+                    var_shape, delay_group)
 
                 # If manual initialisation is required, copy in init_values
                 if var_data.init_required:
