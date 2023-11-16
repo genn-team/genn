@@ -407,7 +407,7 @@ void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, u
 
             // Calculate current batch offset
             env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
+                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_delay_offset) + ($(_batch_offset) * " + numDelaySlotsStr + ");")});
         }
     }
 }
