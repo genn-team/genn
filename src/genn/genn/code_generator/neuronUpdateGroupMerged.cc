@@ -277,7 +277,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         // Create new environment to add out syn fields to neuron update group 
         EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
 
-        synEnv.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
+        synEnv.getStream() << "// presynaptic weight update " << getIndex() << std::endl;
         
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isParamHeterogeneous);
