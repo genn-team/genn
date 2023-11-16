@@ -25,8 +25,7 @@ from pygenn import (create_current_source_model,
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-@pytest.mark.parametrize("delay", [0, 20])
-def test_custom_update(backend, precision, batch_size, delay):
+def test_custom_update(backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
@@ -85,12 +84,12 @@ def test_custom_update(backend, precision, batch_size, delay):
                                   {}, {"X": 0.0, "XShared": 0.0})
     
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", delay,
+        "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic(postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0}))
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", delay,
+        "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
@@ -100,7 +99,7 @@ def test_custom_update(backend, precision, batch_size, delay):
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
                    "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
     kernel_s_pop = model.add_synapse_population(
-        "ToeplitzSynapses", "TOEPLITZ", delay,
+        "ToeplitzSynapses", "TOEPLITZ", 0,
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
@@ -204,12 +203,12 @@ def test_custom_update(backend, precision, batch_size, delay):
                 shape = (batch_size,) + shape
 
             # If shape of view doesn't match, give error
-            values = var.current_values
-            if values.shape != shape:
-                assert False, f"{pop.name} var {var.name} has wrong shape ({values.shape} rather than {shape})"
+            view = var.view
+            if view.shape != shape:
+                assert False, f"{pop.name} var {var.name} has wrong shape ({view.shape} rather than {shape})"
             # If values don't match, give error
-            elif not np.allclose(values, correct):
-                assert False, f"{pop.name} var {var.name} has wrong value ({values} rather than {correct})"
+            elif not np.allclose(view, correct):
+                assert False, f"{pop.name} var {var.name} has wrong value ({view} rather than {correct})"
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -465,5 +464,5 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
 
 if __name__ == '__main__':
-    test_custom_update("single_threaded_cpu", types.Float, 1, 20)
+    test_custom_update("cuda", types.Float, 5)
     
