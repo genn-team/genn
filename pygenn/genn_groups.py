@@ -29,8 +29,9 @@ def _get_num_neuron_var_elements(var_dims, num_elements):
         return (1,)
 
 def _get_neuron_var_shape(var_dims, num_elements, batch_size, 
-                          num_delay_slots=1):
-    num_delay_slots = () if num_delay_slots == 1 else (num_delay_slots,)
+                          delay_neuron_group=None):
+    num_delay_slots = (() if delay_neuron_group is None
+                       else (delay_neuron_group.num_delay_slots,))
     return (_get_num_var_copies(var_dims, batch_size)
             + num_delay_slots
             + _get_num_neuron_var_elements(var_dims, num_elements))
@@ -230,13 +231,13 @@ class NeuronGroupMixin(GroupMixin):
         batch_size = self._model.batch_size
 
         # Load neuron state variables
-        delay_slots = self.num_delay_slots
+        delay_group = self if self.num_delay_slots > 1 else None
         self._load_vars(
             self.neuron_model.get_vars(),
             lambda v: _get_neuron_var_shape(
                 get_var_access_dim(v.access), self.size,
                 self._model.batch_size,
-                delay_slots if self._is_var_queue_required(v.name) else 1))
+                delay_group if self._is_var_queue_required(v.name) else None))
 
         # Load neuron extra global params
         self._load_egp()
@@ -484,27 +485,26 @@ class SynapseGroupMixin(GroupMixin):
         # If population's presynaptic weight update hasn't been 
         # fused, load weight update model presynaptic variables
         if not self._wu_pre_model_fused:
-            pre_delay_slots = (1 if (self.delay_steps == 0)
-                               else self.src.num_delay_slots)
+            pre_delay_group = None if (self.delay_steps == 0) else self.src
             self._load_vars(
                 wu_snippet.get_pre_vars(),
                 lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.src.size,
                                                 self._model.batch_size,
-                                                pre_delay_slots),
+                                                pre_delay_group),
                 self.pre_vars, self.get_wu_pre_var_location)
 
         # If population's postsynaptic weight update hasn't been 
         # fused, load weight update model postsynaptic variables
         if not self._wu_post_model_fused:
-            post_delay_slots = (1 if (self.back_prop_delay_steps == 0)
-                                else self.trg.num_delay_slots)
+            post_delay_group = (None if (self.back_prop_delay_steps == 0)
+                                else self.trg)
             self._load_vars(
                 wu_snippet.get_post_vars(),
                 lambda v: _get_neuron_var_shape(get_var_access_dim(v.access),
                                                 self.trg.size,
                                                 self._model.batch_size,
-                                                post_delay_slots),
+                                                post_delay_group),
                 self.post_vars, self.get_wu_post_var_location)
         
         # If this synapse group's postsynaptic model hasn't been fused
