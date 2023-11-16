@@ -518,9 +518,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomUpdate::getVarReferences)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_dims", &CustomUpdateInternal::getDims)
-        .def_property_readonly("_delay_neuron_group", &CustomUpdateInternal::getDelayNeuronGroup);
-
+        .def_property_readonly("_dims", &CustomUpdateInternal::getDims);
 
     //------------------------------------------------------------------------
     // genn.CustomUpdateWU
