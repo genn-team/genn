@@ -517,7 +517,7 @@ class GeNNModel(ModelSpecInternal):
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, var_space, pre_var_space, 
-                             post_var_space, syn_group)
+                             post_var_space)
         self.custom_connectivity_updates[cu_name] = c_update
         return c_update
         

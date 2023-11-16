@@ -690,18 +690,11 @@ class CustomUpdateWUMixin(GroupMixin):
         self._unload_vars()
         self._unload_egps()
 
-    @property
-    def synapse_group(self):
-        """Get SynapseGroup associated with custom weight update"""
-        # Return Python synapse group reference from 
-        # first (arbitrarily) variable reference
-        return next(itervalues(self.var_references)).synapse_group
-
 
 class CustomConnectivityUpdateMixin(GroupMixin):
     """Class representing a custom connectivity update"""
     def _init_group(self, model, var_space, pre_var_space, 
-                    post_var_space, synapse_group):
+                    post_var_space):
         """Init CustomConnectivityUpdateGroup
 
         Args:
@@ -709,7 +702,6 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomConnectivityUpdateMixin, self)._init_group(model)
-        self.synapse_group = synapse_group
         self.vars = prepare_vars(self.model.get_vars(),
                                  var_space, self, SynapseVariable)
         self.pre_vars = prepare_vars(self.model.get_pre_vars(),

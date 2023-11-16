@@ -472,6 +472,13 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomConnectivityUpdate::getVarReferences)
         .def_property_readonly("pre_var_references", &CustomConnectivityUpdate::getPreVarReferences)
         .def_property_readonly("post_var_references", &CustomConnectivityUpdate::getPostVarReferences)
+        
+        .def_property_readonly("synapse_group", 
+            [](const CustomConnectivityUpdate &cu)
+            {
+                const auto &cuInternal = static_cast<const CustomConnectivityUpdateInternal&>(cu);
+                return static_cast<const SynapseGroup*>(cuInternal.getSynapseGroup());
+            })
 
         //--------------------------------------------------------------------
         // Methods
@@ -511,7 +518,8 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("var_references", &CustomUpdate::getVarReferences)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_dims", &CustomUpdateInternal::getDims);
+        .def_property_readonly("_dims", &CustomUpdateInternal::getDims)
+        .def_property_readonly("_delay_neuron_group", &CustomUpdateInternal::getDelayNeuronGroup);
 
 
     //------------------------------------------------------------------------
@@ -519,6 +527,12 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdateWU, CustomUpdateBase>(m, "CustomUpdateWU", pybind11::dynamic_attr())
         .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences)
+        .def_property_readonly("synapse_group", 
+            [](const CustomUpdateWU &cu)
+            {
+                const auto &cuInternal = static_cast<const CustomUpdateWUInternal&>(cu);
+                return static_cast<const SynapseGroup*>(cuInternal.getSynapseGroup());
+            })
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
         .def_property_readonly("_dims", &CustomUpdateWUInternal::getDims);
