@@ -147,7 +147,7 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
 
         // And we should WRITE to delay slot pointed to be spkQuePtr
         env.add(Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
-                {env.addInitialiser("const unsigned int writeDelaySlot = * $(_spk_que_ptr);")});
+                {env.addInitialiser("const unsigned int writeDelaySlot = *$(_spk_que_ptr);")});
         env.add(Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
                 {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
 
@@ -167,7 +167,7 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
             env.add(Uint32.addConst(), "_read_batch_delay_offset", "readBatchDelayOffset",
                     {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);")});
             env.add(Uint32.addConst(), "_write_batch_delay_offset", "writeBatchDelayOffset",
-                    {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset)+ $(_batch_delay_offset);")});
+                    {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset) + $(_batch_delay_offset);")});
         }
     }
 }
