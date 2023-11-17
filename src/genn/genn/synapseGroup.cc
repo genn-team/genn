@@ -900,7 +900,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     // will be constant and have a single parameter containing the value
     for(const auto &w : getPSInitialiser().getVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
-        Utils::updateHash(w.second.getParams().at("constant"), hash);
+        Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through neuron variable references and update hash with 
@@ -931,7 +931,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUInitialiser().getPreVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
-        Utils::updateHash(w.second.getParams().at("constant"), hash);
+        Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
@@ -940,7 +940,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
         if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPreSpikeCodeTokens())
            || Utils::isIdentifierReferenced(p, getWUInitialiser().getPreDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUInitialiser().getParams().at(p), hash);
+            Type::updateHash(getWUInitialiser().getParams().at(p), hash);
         }
     }
 
@@ -950,7 +950,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
         if(Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPreSpikeCodeTokens())
            || Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPreDynamicsCodeTokens()))
         {
-            Utils::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
+            Type::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
         }
     }
 
@@ -968,7 +968,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUInitialiser().getPostVarInitialisers()) {
         assert(w.second.getParams().size() == 1);
-        Utils::updateHash(w.second.getParams().at("constant"), hash);
+        Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
@@ -977,7 +977,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
        if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPostSpikeCodeTokens())
            || Utils::isIdentifierReferenced(p, getWUInitialiser().getPostDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUInitialiser().getParams().at(p), hash);
+            Type::updateHash(getWUInitialiser().getParams().at(p), hash);
         }
     }
 
@@ -987,7 +987,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
         if(Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPostSpikeCodeTokens())
            || Utils::isIdentifierReferenced(d.name, getWUInitialiser().getPostDynamicsCodeTokens())) 
         {
-            Utils::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
+            Type::updateHash(getWUInitialiser().getDerivedParams().at(d.name), hash);
         }
     }
 

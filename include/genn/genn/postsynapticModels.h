@@ -106,8 +106,8 @@ public:
     SET_PARAM_NAMES({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const auto &pars, double dt){ return (pars.at("tau") * (1.0 - std::exp(-dt / pars.at("tau")))) * (1.0 / dt); }}});
+        {"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const auto &pars, double dt){ return (pars.at("tau").cast<double>() * (1.0 - std::exp(-dt / pars.at("tau").cast<double>()))) * (1.0 / dt); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ public:
 
     SET_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
-    SET_DERIVED_PARAMS({{"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau")); }}});
+    SET_DERIVED_PARAMS({{"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }}});
 };
 
 //----------------------------------------------------------------------------

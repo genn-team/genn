@@ -396,12 +396,12 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const auto &pars, double){ return (1/pars.at("tPunish01") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng")); }},
-        {"lim1", [](const auto &pars, double){ return  -((1/pars.at("tPunish10") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng"))); }},
-        {"slope0", [](const auto &pars, double){ return  -2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
-        {"slope1", [](const auto &pars, double){ return  2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
-        {"off0", [](const auto &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
-        {"off1", [](const auto &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
-        {"off2", [](const auto &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
+        {"lim0", [](const auto &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
+        {"lim1", [](const auto &pars, double){ return  -((1/pars.at("tPunish10").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>())); }},
+        {"slope0", [](const auto &pars, double){ return  -2*pars.at("gMax").cast<double>() /(pars.at("tChng").cast<double>()*pars.at("tLrn").cast<double>()); }},
+        {"slope1", [](const auto &pars, double){ return  2*pars.at("gMax").cast<double>() / (pars.at("tChng").cast<double>() * pars.at("tLrn").cast<double>()); }},
+        {"off0", [](const auto &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish01").cast<double>(); }},
+        {"off1", [](const auto &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tChng").cast<double>(); }},
+        {"off2", [](const auto &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish10").cast<double>(); }}});
 };
 }   //namespace GeNN::WeightUpdateModels

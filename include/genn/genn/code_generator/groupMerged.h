@@ -101,7 +101,7 @@ protected:
     bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
     {
         // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(name);
+        const auto archetypeValue = getParamValuesFn(getArchetype()).at(name);
 
         // Return true if any parameter values differ from the archetype value
         return std::any_of(getGroups().cbegin(), getGroups().cend(),
@@ -129,7 +129,7 @@ protected:
             // Loop through groups
             for(const auto &g : getGroups()) {
                 // Update hash with parameter value
-                Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
+                Type::updateHash(getValueFn(g.get()).at(p.first), hash);
             }
         }
     }
@@ -147,7 +147,7 @@ protected:
                     const auto &values = A(g.get()).getInitialisers().at(varInit.first).getParams();
 
                     // Update hash with parameter value
-                    Utils::updateHash(values.at(p.first), hash);
+                    Type::updateHash(values.at(p.first), hash);
                 }
             }
         }
@@ -166,7 +166,7 @@ protected:
                     const auto &values = A(g.get()).getInitialisers().at(varInit.first).getDerivedParams();
 
                     // Update hash with parameter value
-                    Utils::updateHash(values.at(d.first), hash);
+                    Type::updateHash(values.at(d.first), hash);
                 }
             }
         }

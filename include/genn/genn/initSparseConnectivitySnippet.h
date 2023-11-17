@@ -27,8 +27,8 @@
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_ROW_LENGTH; }; }
-#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_COL_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_COL_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN::InitSparseConnectivitySnippet::Base
@@ -129,23 +129,23 @@ public:
     virtual std::string getRowBuildCode() const override = 0;
 
     SET_PARAM_NAMES({"prob"});
-    SET_DERIVED_PARAMS({{"probLogRecip", [](const auto &pars, double){ return 1.0 / log(1.0 - pars.at("prob")); }}});
+    SET_DERIVED_PARAMS({{"probLogRecip", [](const auto &pars, double){ return 1.0 / log(1.0 - pars.at("prob").cast<double>()); }}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
 
-            return binomialInverseCDF(quantile, numPost, pars.at("prob"));
+            return binomialInverseCDF(quantile, numPost, pars.at("prob").cast<double>());
         });
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPos times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
 
-            return binomialInverseCDF(quantile, numPre, pars.at("prob"));
+            return binomialInverseCDF(quantile, numPre, pars.at("prob").cast<double>());
         });
 };
 
@@ -247,13 +247,13 @@ public:
     SET_PARAM_NAMES({"rowLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int, unsigned int, const auto &pars)
         {
-            return (unsigned int)pars.at("rowLength");
+            return pars.at("rowLength").cast<unsigned int>();
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPost times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -261,7 +261,7 @@ public:
             // In each row the number of connections that end up in a column are distributed
             // binomially with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
             // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("rowLength") * numPre, 1.0 / (double)numPost);
+            return binomialInverseCDF(quantile, pars.at("rowLength").cast<unsigned int>() * numPre, 1.0 / (double)numPost);
         });
 };
 
@@ -332,7 +332,7 @@ public:
         "pushpreCalcRowLength(num_pre * num_threads);\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -340,11 +340,11 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("total"), (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPost times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -352,7 +352,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("total"), (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 
@@ -375,7 +375,7 @@ public:
     SET_PARAM_NAMES({"colLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int numPre, unsigned int numPost, const auto &pars)
         {
             // Calculate suitable quantile for 0.9999 chance when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -383,13 +383,13 @@ public:
             // In each column the number of connections that end up in a row are distributed
             // binomially with n=numConnections and p=1.0 / numPre. As there are numPost columns the total number
             // of connections that end up in each row are distributed binomially with n=numConnections * numPost and p=1.0 / numPre
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("colLength") * numPost, 1.0 / (double)numPre);
+            return binomialInverseCDF(quantile, pars.at("colLength").cast<unsigned int>() * numPost, 1.0 / (double)numPre);
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int, unsigned int, const auto &pars)
         {
-            return (unsigned int)pars.at("colLength");
+            return pars.at("colLength").cast<unsigned int>();
         });
 };
 
@@ -435,18 +435,18 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int, unsigned int, const auto &pars)
         {
-            return ((unsigned int)std::ceil(pars.at("conv_kh") / pars.at("conv_sh")) 
-                    * (unsigned int)std::ceil(pars.at("conv_kw") / pars.at("conv_sw")) 
-                    * (unsigned int)pars.at("conv_oc"));
+            return ((unsigned int)std::ceil(pars.at("conv_kh").cast<double>() / pars.at("conv_sh").cast<double>()) 
+                    * (unsigned int)std::ceil(pars.at("conv_kw").cast<double>() / pars.at("conv_sw").cast<double>()) 
+                    * pars.at("conv_oc").cast<unsigned int>());
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const std::unordered_map<std::string, double> &pars)->std::vector<unsigned int>
+        [](const auto &pars)->std::vector<unsigned int>
         {
-            return {(unsigned int)pars.at("conv_kh"), (unsigned int)pars.at("conv_kw"),
-                    (unsigned int)pars.at("conv_ic"), (unsigned int)pars.at("conv_oc")};
+            return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
+                    pars.at("conv_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
         });
 };
 }   // namespace GeNN::InitSparseConnectivitySnippet

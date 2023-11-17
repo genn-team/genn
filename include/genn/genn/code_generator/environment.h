@@ -404,10 +404,10 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using GroupInternal = typename G::GroupInternal;
     using GroupExternal = typename GroupInternal::GroupExternal;
     
-    using GetFieldDoubleValueFunc = std::function<double(const GroupInternal &, size_t)>;
+    using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal &, size_t)>;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
-    using GetParamValuesFn = const std::unordered_map<std::string, double> &(GroupInternal::*)(void) const;
+    using GetParamValuesFn = const std::unordered_map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
 
     template<typename A>
     using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
@@ -453,7 +453,7 @@ public:
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
 
-    void addScalar(const std::string &name, const std::string &fieldSuffix, GetFieldDoubleValueFunc getFieldValue)
+    void addScalar(const std::string &name, const std::string &fieldSuffix, GetFieldNumericValueFunc getFieldValue)
     {
         // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
         const auto &scalarType = this->getGroup().getScalarType();

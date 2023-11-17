@@ -24,7 +24,7 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN:::InitToeplitzConnectivitySnippet::Base
@@ -102,8 +102,8 @@ public:
     SET_PARAM_NAMES({"conv_kh", "conv_kw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (((int)pars.at("conv_iw") + (int)pars.at("conv_kw") - 1) - (int)pars.at("conv_ow")) / 2; }},
-                        {"conv_bh", [](const auto &pars, double){ return (((int)pars.at("conv_ih") + (int)pars.at("conv_kh") - 1) - (int)pars.at("conv_oh")) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }},
+                        {"conv_bh", [](const auto &pars, double){ return ((pars.at("conv_ih").cast<int>() + pars.at("conv_kh").cast<int>() - 1) - pars.at("conv_oh").cast<int>()) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"
@@ -128,16 +128,16 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int, unsigned int, const auto &pars)
         {
-            return ((unsigned int)pars.at("conv_kh") * (unsigned int)pars.at("conv_kw") * (unsigned int)pars.at("conv_oc"));
+            return (pars.at("conv_kh").cast<unsigned int>() * pars.at("conv_kw").cast<unsigned int>() * pars.at("conv_oc").cast<unsigned int>());
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const std::unordered_map<std::string, double> &pars)->std::vector<unsigned int>
+        [](const auto &pars)->std::vector<unsigned int>
         {
-            return {(unsigned int)pars.at("conv_kh"), (unsigned int)pars.at("conv_kw"),
-                    (unsigned int)pars.at("conv_ic"), (unsigned int)pars.at("conv_oc")};
+            return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
+                    pars.at("conv_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
         });
 };
 
@@ -157,8 +157,8 @@ public:
                      "pool_sh", "pool_sw",
                      "pool_ih", "pool_iw", "pool_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (int(ceil((pars.at("pool_iw") - pars.at("pool_kw") + 1.0) / pars.at("pool_sw"))) + (int)pars.at("conv_kw") - 1 - (int)pars.at("conv_ow")) / 2; }},
-                        {"conv_bh", [](const auto &pars, double){ return (int(ceil((pars.at("pool_ih") - pars.at("pool_kh") + 1.0) / pars.at("pool_sh"))) + (int)pars.at("conv_h") - 1 - (int)pars.at("conv_oh")) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (int(ceil((pars.at("pool_iw").cast<double>() - pars.at("pool_kw").cast<double>() + 1.0) / pars.at("pool_sw").cast<double>())) + pars.at("conv_kw").cast<int>() - 1 - pars.at("conv_ow").cast<int>()) / 2; }},
+                        {"conv_bh", [](const auto &pars, double){ return (int(ceil((pars.at("pool_ih").cast<double>() - pars.at("pool_kh").cast<double>() + 1.0) / pars.at("pool_sh").cast<double>())) + pars.at("conv_h").cast<int>() - 1 - pars.at("conv_oh").cast<int>()) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"
@@ -191,16 +191,16 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
+        [](unsigned int, unsigned int, const auto &pars)
         {
-            return ((unsigned int)pars.at("conv_kh") * (unsigned int)pars.at("conv_kw") * (unsigned int)pars.at("conv_oc"));
+            return (pars.at("conv_kh").cast<unsigned int>() * pars.at("conv_kw").cast<unsigned int>() * pars.at("conv_oc").cast<unsigned int>());
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const std::unordered_map<std::string, double> &pars)->std::vector<unsigned int>
+        [](const auto &pars)->std::vector<unsigned int>
         {
-            return {(unsigned int)pars.at("conv_kh"), (unsigned int)pars.at("conv_kw"),
-                    (unsigned int)pars.at("pool_ic"), (unsigned int)pars.at("conv_oc")};
+            return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
+                    pars.at("pool_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
         });
 };
 }   // namespace GeNN::InitToeplitzConnectivitySnippet
