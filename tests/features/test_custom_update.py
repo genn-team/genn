@@ -285,8 +285,7 @@ def test_custom_update_delay(backend, precision, batch_size):
     # Simulate 20 timesteps
     vars = [(pre_pop, pre_pop.vars["V"]),
             (pre_pop, pre_pop.vars["U"]),
-            #(syn2_pop, syn2_pop.pre_vars["pre"])
-            ]
+            (syn2_pop, syn2_pop.pre_vars["pre"])]
     while model.timestep < 20:
         model.step_time()
 
@@ -294,17 +293,17 @@ def test_custom_update_delay(backend, precision, batch_size):
         if (model.timestep % 10) == 0:
             model.custom_update("Test")
 
-        # Loop through variables
-        correct = [(1000 * b) + ((model.timestep // 10) * 10) 
-                   for b in range(batch_size)]
-        correct = np.reshape(correct, (batch_size, 1))
-        for pop, var in vars:
-            # Pull
-            var.pull_from_device()
+            # Loop through variables
+            correct = [(1000 * b) + ((model.timestep // 10) * 10) 
+                       for b in range(batch_size)]
+            correct = np.reshape(correct, (batch_size, 1))
+            for pop, var in vars:
+                # Pull
+                var.pull_from_device()
 
-            # Compare to correct value
-            if not np.allclose(var.current_view, correct):
-                assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+                # Compare to correct value
+                if not np.allclose(var.current_view, correct):
+                    assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
