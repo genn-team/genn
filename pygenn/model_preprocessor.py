@@ -167,6 +167,7 @@ class SynapseVariable(VariableBase):
     """Class holding information about per-synapse GeNN variables"""
     @property
     def view(self):
+        sg = self.group.synapse_group
         if ((sg.matrix_type & SynapseMatrixConnectivity.DENSE) or
             (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
             return self._view
