@@ -936,11 +936,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &p : getWUInitialiser().getSnippet()->getParamNames()) {
-        if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPreSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(p, getWUInitialiser().getPreDynamicsCodeTokens())) 
+    for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
+        if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPreSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPreDynamicsCodeTokens())) 
         {
-            Type::updateHash(getWUInitialiser().getParams().at(p), hash);
+            Type::updateHash(getWUInitialiser().getParams().at(p.name), hash);
         }
     }
 
@@ -973,11 +973,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    for(const auto &p : getWUInitialiser().getSnippet()->getParamNames()) {
-       if(Utils::isIdentifierReferenced(p, getWUInitialiser().getPostSpikeCodeTokens())
-           || Utils::isIdentifierReferenced(p, getWUInitialiser().getPostDynamicsCodeTokens())) 
+    for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
+       if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPostSpikeCodeTokens())
+           || Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPostDynamicsCodeTokens())) 
         {
-            Type::updateHash(getWUInitialiser().getParams().at(p), hash);
+            Type::updateHash(getWUInitialiser().getParams().at(p.name), hash);
         }
     }
 

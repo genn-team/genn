@@ -57,9 +57,6 @@ GENN_EXPORT void validateVarName(const std::string &name, const std::string &des
 //! Checks whether population name is valid? GeNN population names obey C variable naming rules but can start with a number
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
 
-//! Checks that all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
-GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
-
 //! Extra global parameters used to support both pointer and non-pointer types. Now only the behaviour that used to
 //! be provided by pointer types is provided but, internally, non-pointer types are used. This handles pointer types specified by string.
 GENN_EXPORT std::string handleLegacyEGPType(const std::string &type);

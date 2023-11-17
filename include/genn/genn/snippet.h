@@ -33,7 +33,7 @@ public:                                                 \
 
 #define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const override{ return __VA_ARGS__; }
+#define SET_PARAMS(...) virtual ParamVec getParams() const override{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
@@ -53,6 +53,25 @@ public:
     //----------------------------------------------------------------------------
     // Structs
     //----------------------------------------------------------------------------
+    //! A parameter has a name and a type
+    struct GENN_EXPORT Param
+    {
+        Param(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
+        {}
+        Param(const std::string &n, const std::string &t) : name(n), type(t)
+        {}
+        Param(const char *n) : Param(n, "scalar")
+        {}
+        
+        bool operator == (const Param &other) const
+        {
+            return (std::tie(name, type) == std::tie(other.name, other.type));
+        }
+
+        std::string name;
+        Type::UnresolvedType type;
+    };
+
     //! An extra global parameter has a name and a type
     struct GENN_EXPORT EGP
     {
@@ -106,7 +125,7 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<std::string> StringVec;
+    typedef std::vector<Param> ParamVec;
     typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
@@ -116,8 +135,8 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets names of of (independent) model parameters
-    virtual StringVec getParamNames() const{ return {}; }
+    //! Gets names and types of (independent) model parameters
+    virtual ParamVec getParams() const{ return {}; }
 
     //! Gets names of derived model parameters and the function objects to call to
     //! Calculate their value from a vector of model parameter values
@@ -212,6 +231,7 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base::Param &p, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash);

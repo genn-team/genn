@@ -99,7 +99,7 @@ class Conv2D : public Base
 public:
     DECLARE_SNIPPET(Conv2D);
 
-    SET_PARAM_NAMES({"conv_kh", "conv_kw",
+    SET_PARAMS({"conv_kh", "conv_kw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
     SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }},
@@ -152,7 +152,7 @@ class AvgPoolConv2D : public Base
 public:
     DECLARE_SNIPPET(AvgPoolConv2D);
 
-    SET_PARAM_NAMES({"conv_kh", "conv_kw",
+    SET_PARAMS({"conv_kh", "conv_kw",
                      "pool_kh", "pool_kw",
                      "pool_sh", "pool_sw",
                      "pool_ih", "pool_iw", "pool_ic",

@@ -91,7 +91,7 @@ public:
 
     SET_CODE("value = constant;");
 
-    SET_PARAM_NAMES({"constant"});
+    SET_PARAMS({"constant"});
 };
 
 //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ public:
         "const scalar scale = max - min;\n"
         "value = min + (gennrand_uniform() * scale);");
 
-    SET_PARAM_NAMES({"min", "max"});
+    SET_PARAMS({"min", "max"});
 };
 
 //----------------------------------------------------------------------------
@@ -142,7 +142,7 @@ public:
 
     SET_CODE("value = mean + (gennrand_normal() * sd);");
 
-    SET_PARAM_NAMES({"mean", "sd"});
+    SET_PARAMS({"mean", "sd"});
 };
 
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ public:
         "} while (normal > max || normal < min);\n"
         "value = normal;\n");
 
-    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+    SET_PARAMS({"mean", "sd", "min", "max"});
 };
 
 //----------------------------------------------------------------------------
@@ -198,7 +198,7 @@ public:
         "} while (normal > maxTimestep || normal < minTimestep);\n"
         "value = rint(normal);\n");
 
-    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+    SET_PARAMS({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
         {"meanTimestep", [](const auto &pars, double dt){ return pars.at("mean").cast<double>() / dt; }},
         {"sdTimestep", [](const auto &pars, double dt){ return pars.at("sd").cast<double>() / dt; }},
@@ -220,7 +220,7 @@ public:
 
     SET_CODE("value = lambda * gennrand_exponential();");
 
-    SET_PARAM_NAMES({"lambda"});
+    SET_PARAMS({"lambda"});
 };
 
 //----------------------------------------------------------------------------
@@ -238,7 +238,7 @@ public:
 
     SET_CODE("value = b * gennrand_gamma(a);");
 
-    SET_PARAM_NAMES({"a", "b"});
+    SET_PARAMS({"a", "b"});
 };
 
 //----------------------------------------------------------------------------
@@ -256,6 +256,6 @@ public:
 
     SET_CODE("value = gennrand_binomial((unsigned int)n, p);");
 
-    SET_PARAM_NAMES({"n", "p"});
+    SET_PARAMS({"n", "p"});
 };
 }   // namespace GeNN::InitVarSnippet

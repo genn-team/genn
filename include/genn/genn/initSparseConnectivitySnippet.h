@@ -128,7 +128,7 @@ class FixedProbabilityBase : public Base
 public:
     virtual std::string getRowBuildCode() const override = 0;
 
-    SET_PARAM_NAMES({"prob"});
+    SET_PARAMS({"prob"});
     SET_DERIVED_PARAMS({{"probLogRecip", [](const auto &pars, double){ return 1.0 / log(1.0 - pars.at("prob").cast<double>()); }}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
@@ -244,7 +244,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAM_NAMES({"rowLength"});
+    SET_PARAMS({"rowLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const auto &pars)
@@ -291,7 +291,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAM_NAMES({"total"});
+    SET_PARAMS({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_HOST_INIT_CODE(
@@ -372,7 +372,7 @@ public:
         "   addSynapse(idPre + id_pre_begin);\n"
         "}\n");
  
-    SET_PARAM_NAMES({"colLength"});
+    SET_PARAMS({"colLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const auto &pars)
@@ -405,7 +405,7 @@ class Conv2D : public Base
 public:
     DECLARE_SNIPPET(Conv2D);
 
-    SET_PARAM_NAMES({"conv_kh", "conv_kw",
+    SET_PARAMS({"conv_kh", "conv_kw",
                      "conv_sh", "conv_sw",
                      "conv_padh", "conv_padw",
                      "conv_ih", "conv_iw", "conv_ic",

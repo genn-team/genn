@@ -127,7 +127,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(ip2)");
 
-    SET_PARAM_NAMES({"Vspike", "alpha", "y", "beta"});
+    SET_PARAMS({"Vspike", "alpha", "y", "beta"});
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
@@ -176,7 +176,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
 
-    SET_PARAM_NAMES({"a", "b", "c", "d"});
+    SET_PARAMS({"a", "b", "c", "d"});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}});
 
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -204,7 +204,7 @@ class IzhikevichVariable : public Izhikevich
 public:
     DECLARE_SNIPPET(NeuronModels::IzhikevichVariable);
 
-    SET_PARAM_NAMES({});
+    SET_PARAMS({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
               {"a", "scalar", VarAccess::READ_ONLY}, {"b", "scalar", VarAccess::READ_ONLY},
               {"c", "scalar", VarAccess::READ_ONLY}, {"d", "scalar", VarAccess::READ_ONLY}});
@@ -234,7 +234,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -350,7 +350,7 @@ public:
         "}\n");
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
 
-    SET_PARAM_NAMES({"trefract", "tspike", "Vspike", "Vrest"});
+    SET_PARAMS({"trefract", "tspike", "Vspike", "Vrest"});
     SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"firingProb", "scalar*"}, {"offset", "unsigned int"}});
 };
@@ -386,7 +386,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
 
-    SET_PARAM_NAMES({"rate"});
+    SET_PARAMS({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
     SET_DERIVED_PARAMS({{"isi", [](const auto &pars, double dt){ return 1000.0 / (pars.at("rate").cast<double>() * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -484,7 +484,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 0.0");
 
-    SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
+    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
     SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
 };
 
@@ -606,6 +606,6 @@ public:
         "   $(V)+= Imem/$(C)*mdt;\n"
         "}\n");
 
-    SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
+    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
 };
 } // GeNN::NeuronModels

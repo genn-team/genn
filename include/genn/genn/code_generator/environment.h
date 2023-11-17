@@ -465,24 +465,27 @@ public:
                  });
     }
 
-    void addParams(const Snippet::Base::StringVec &paramNames, const std::string &fieldSuffix, 
+    void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
                    GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
-        for(const auto &p : paramNames) {
+        for(const auto &p : params) {
             // If parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, this->getGroup(), p)) {
-                addScalar(p, fieldSuffix,
-                          [p, getParamValues](const auto &g, size_t)
-                          {
-                              return std::invoke(getParamValues, g).at(p);
-                          });
+            const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+                addField(resolvedType.addConst(), p.name,
+                         resolvedType, p.name + fieldSuffix,
+                         [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t i)
+                         {
+                             return std::invoke(getParamValues, g).at(p.name);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(this->getGroup().getScalarType().addConst(), p, 
-                    Type::writeNumeric(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p),
-                                       this->getGroup().getScalarType()));
+                add(resolvedType.addConst(), p.name, 
+                    Type::writeNumeric(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p.name),
+                                       resolvedType));
             }
         }
     }
@@ -550,19 +553,22 @@ public:
         // Loop through params
         const auto &connectInit = std::invoke(getConnectivity, this->getGroup().getArchetype());
         const auto *snippet = connectInit.getSnippet();
-        for(const auto &p : snippet->getParamNames()) {
+        for(const auto &p : snippet->getParams()) {
             // If parameter is heterogeneous, add scalar field
-            if (std::invoke(isHeterogeneous, this->getGroup(), p)) {
-                addScalar(p, fieldSuffix,
-                          [p, getConnectivity](const auto &g, size_t)
-                          {
-                              return std::invoke(getConnectivity, g).getParams().at(p);
-                          });
+            const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+                addField(resolvedType.addConst(), p.name,
+                         resolvedType, p.name + fieldSuffix,
+                         [p, getConnectivity](const Runtime::Runtime&, const auto &g, size_t i)
+                         {
+                            std::invoke(getConnectivity, g).getParams().at(p.name);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
-                add(this->getGroup().getScalarType().addConst(), p, 
-                    Type::writeNumeric(connectInit.getParams().at(p), this->getGroup().getScalarType()));
+                add(resolvedType.addConst(), p.name, 
+                    Type::writeNumeric(connectInit.getParams().at(p.name), resolvedType));
             }
         }
     }

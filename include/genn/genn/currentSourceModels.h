@@ -71,7 +71,7 @@ class DC : public Base
 
     SET_INJECTION_CODE("injectCurrent(amp);\n");
 
-    SET_PARAM_NAMES({"amp"});
+    SET_PARAMS({"amp"});
 };
 
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ class GaussianNoise : public Base
 
     SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
-    SET_PARAM_NAMES({"mean", "sd"} );
+    SET_PARAMS({"mean", "sd"} );
 };
 
 //----------------------------------------------------------------------------
@@ -117,7 +117,7 @@ class PoissonExp : public Base
         "injectCurrent(current);\n"
         "current *= ExpDecay;\n");
 
-    SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
+    SET_PARAMS({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
         {"ExpDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauSyn").cast<double>()); }},

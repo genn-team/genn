@@ -233,7 +233,7 @@ class StaticPulseConstantWeight : public Base
 public:
     DECLARE_SNIPPET(StaticPulseConstantWeight);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SIM_CODE("addToPost(g);\n");
 };
@@ -295,7 +295,7 @@ class StaticGraded : public Base
 public:
     DECLARE_SNIPPET(StaticGraded);
 
-    SET_PARAM_NAMES({"Epre", "Vslope"});
+    SET_PARAMS({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
@@ -365,7 +365,7 @@ class PiecewiseSTDP : public Base
 public:
     DECLARE_SNIPPET(PiecewiseSTDP);
 
-    SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
+    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 

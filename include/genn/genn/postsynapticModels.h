@@ -103,7 +103,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_DERIVED_PARAMS({
         {"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
@@ -128,7 +128,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
 
-    SET_PARAM_NAMES({"tau", "E"});
+    SET_PARAMS({"tau", "E"});
 
     SET_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
