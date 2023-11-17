@@ -154,7 +154,10 @@ def test_custom_update(backend, precision, batch_size):
     # Build model and load
     model.build()
     model.load()
-    
+
+    # Pull sparse connectivity from device    
+    sparse_s_pop.pull_connectivity_from_device()
+
     # Simulate 20 timesteps
     samples = [
         (n_pop, n_pop.vars["X"], (100,)),
@@ -202,13 +205,13 @@ def test_custom_update(backend, precision, batch_size):
             if batch_size != 1:
                 shape = (batch_size,) + shape
 
-            # If shape of view doesn't match, give error
-            view = var.view
-            if view.shape != shape:
-                assert False, f"{pop.name} var {var.name} has wrong shape ({view.shape} rather than {shape})"
+            # If shape of values doesn't match, give error
+            values = var.values
+            if values.shape != shape:
+                assert False, f"{pop.name} var {var.name} has wrong shape ({values.shape} rather than {shape})"
             # If values don't match, give error
-            elif not np.allclose(view, correct):
-                assert False, f"{pop.name} var {var.name} has wrong value ({view} rather than {correct})"
+            elif not np.allclose(values, correct):
+                assert False, f"{pop.name} var {var.name} has wrong value ({values} rather than {correct})"
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -561,5 +564,5 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
 
 
 if __name__ == '__main__':
-    test_custom_update_delay("cuda", types.Float, 5)
+    test_custom_update("cuda", types.Float, 1)
     
