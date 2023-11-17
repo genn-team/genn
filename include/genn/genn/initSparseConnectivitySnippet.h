@@ -129,10 +129,10 @@ public:
     virtual std::string getRowBuildCode() const override = 0;
 
     SET_PARAMS({"prob"});
-    SET_DERIVED_PARAMS({{"probLogRecip", [](const auto &pars, double){ return 1.0 / log(1.0 - pars.at("prob").cast<double>()); }}});
+    SET_DERIVED_PARAMS({{"probLogRecip", [](const ParamValues &pars, double){ return 1.0 / log(1.0 - pars.at("prob").cast<double>()); }}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -140,7 +140,7 @@ public:
             return binomialInverseCDF(quantile, numPost, pars.at("prob").cast<double>());
         });
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPos times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -247,13 +247,13 @@ public:
     SET_PARAMS({"rowLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const auto &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return pars.at("rowLength").cast<unsigned int>();
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPost times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -332,7 +332,7 @@ public:
         "pushpreCalcRowLength(num_pre * num_threads);\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -344,7 +344,7 @@ public:
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPost times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -375,7 +375,7 @@ public:
     SET_PARAMS({"colLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const auto &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 chance when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -387,7 +387,7 @@ public:
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const auto &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return pars.at("colLength").cast<unsigned int>();
         });
@@ -435,7 +435,7 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const auto &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return ((unsigned int)std::ceil(pars.at("conv_kh").cast<double>() / pars.at("conv_sh").cast<double>()) 
                     * (unsigned int)std::ceil(pars.at("conv_kw").cast<double>() / pars.at("conv_sw").cast<double>()) 
@@ -443,7 +443,7 @@ public:
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const auto &pars)->std::vector<unsigned int>
+        [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
                     pars.at("conv_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};

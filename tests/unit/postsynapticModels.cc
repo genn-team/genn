@@ -20,8 +20,8 @@ public:
     SET_PARAMS({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
-        {"init", [](const auto &pars, double dt){ return (pars.at("tau").cast<double>() * (1.0 - std::exp(-dt / pars.at("tau").cast<double>()))) * (1.0 / dt); }}});
+        {"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double dt){ return (pars.at("tau").cast<double>() * (1.0 - std::exp(-dt / pars.at("tau").cast<double>()))) * (1.0 / dt); }}});
 };
 //--------------------------------------------------------------------------
 // Tests

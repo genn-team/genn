@@ -102,8 +102,8 @@ public:
     SET_PARAMS({"conv_kh", "conv_kw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }},
-                        {"conv_bh", [](const auto &pars, double){ return ((pars.at("conv_ih").cast<int>() + pars.at("conv_kh").cast<int>() - 1) - pars.at("conv_oh").cast<int>()) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }},
+                        {"conv_bh", [](const ParamValues &pars, double){ return ((pars.at("conv_ih").cast<int>() + pars.at("conv_kh").cast<int>() - 1) - pars.at("conv_oh").cast<int>()) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"
@@ -128,13 +128,13 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const auto &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return (pars.at("conv_kh").cast<unsigned int>() * pars.at("conv_kw").cast<unsigned int>() * pars.at("conv_oc").cast<unsigned int>());
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const auto &pars)->std::vector<unsigned int>
+        [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
                     pars.at("conv_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
@@ -157,8 +157,8 @@ public:
                      "pool_sh", "pool_sw",
                      "pool_ih", "pool_iw", "pool_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (int(ceil((pars.at("pool_iw").cast<double>() - pars.at("pool_kw").cast<double>() + 1.0) / pars.at("pool_sw").cast<double>())) + pars.at("conv_kw").cast<int>() - 1 - pars.at("conv_ow").cast<int>()) / 2; }},
-                        {"conv_bh", [](const auto &pars, double){ return (int(ceil((pars.at("pool_ih").cast<double>() - pars.at("pool_kh").cast<double>() + 1.0) / pars.at("pool_sh").cast<double>())) + pars.at("conv_h").cast<int>() - 1 - pars.at("conv_oh").cast<int>()) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_iw").cast<double>() - pars.at("pool_kw").cast<double>() + 1.0) / pars.at("pool_sw").cast<double>())) + pars.at("conv_kw").cast<int>() - 1 - pars.at("conv_ow").cast<int>()) / 2; }},
+                        {"conv_bh", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_ih").cast<double>() - pars.at("pool_kh").cast<double>() + 1.0) / pars.at("pool_sh").cast<double>())) + pars.at("conv_h").cast<int>() - 1 - pars.at("conv_oh").cast<int>()) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"
@@ -191,13 +191,13 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const auto &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return (pars.at("conv_kh").cast<unsigned int>() * pars.at("conv_kw").cast<unsigned int>() * pars.at("conv_oc").cast<unsigned int>());
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const auto &pars)->std::vector<unsigned int>
+        [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
                     pars.at("pool_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};

@@ -120,8 +120,8 @@ class PoissonExp : public Base
     SET_PARAMS({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauSyn").cast<double>()); }},
-        {"Init", [](const auto &pars, double dt){ return pars.at("weight").cast<double>() * (1.0 - std::exp(-dt / pars.at("tauSyn").cast<double>())) * (pars.at("tauSyn").cast<double>() / dt); }},
-        {"ExpMinusLambda", [](const auto &pars, double dt){ return std::exp(-(pars.at("rate").cast<double>() / 1000.0) * dt); }}});
+        {"ExpDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauSyn").cast<double>()); }},
+        {"Init", [](const ParamValues &pars, double dt){ return pars.at("weight").cast<double>() * (1.0 - std::exp(-dt / pars.at("tauSyn").cast<double>())) * (pars.at("tauSyn").cast<double>() / dt); }},
+        {"ExpMinusLambda", [](const ParamValues &pars, double dt){ return std::exp(-(pars.at("rate").cast<double>() / 1000.0) * dt); }}});
 };
 } // GeNN::CurrentSourceModels

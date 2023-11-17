@@ -131,9 +131,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const auto &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>(); }},
-        {"ip1", [](const auto &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("y").cast<double>(); }},
-        {"ip2", [](const auto &pars, double){ return (pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>()) + (pars.at("Vspike").cast<double>() * pars.at("y").cast<double>()); }}});
+        {"ip0", [](const ParamValues &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>(); }},
+        {"ip1", [](const ParamValues &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("y").cast<double>(); }},
+        {"ip2", [](const ParamValues &pars, double){ return (pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>()) + (pars.at("Vspike").cast<double>() * pars.at("y").cast<double>()); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -244,8 +244,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
-        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -388,7 +388,7 @@ public:
 
     SET_PARAMS({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const auto &pars, double dt){ return 1000.0 / (pars.at("rate").cast<double>() * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const ParamValues &pars, double dt){ return 1000.0 / (pars.at("rate").cast<double>() * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 

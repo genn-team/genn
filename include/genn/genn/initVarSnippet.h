@@ -200,10 +200,10 @@ public:
 
     SET_PARAMS({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const auto &pars, double dt){ return pars.at("mean").cast<double>() / dt; }},
-        {"sdTimestep", [](const auto &pars, double dt){ return pars.at("sd").cast<double>() / dt; }},
-        {"minTimestep", [](const auto &pars, double dt){ return pars.at("min").cast<double>() / dt; }},
-        {"maxTimestep", [](const auto &pars, double dt){ return pars.at("max").cast<double>() / dt; }}});
+        {"meanTimestep", [](const ParamValues &pars, double dt){ return pars.at("mean").cast<double>() / dt; }},
+        {"sdTimestep", [](const ParamValues &pars, double dt){ return pars.at("sd").cast<double>() / dt; }},
+        {"minTimestep", [](const ParamValues &pars, double dt){ return pars.at("min").cast<double>() / dt; }},
+        {"maxTimestep", [](const ParamValues &pars, double dt){ return pars.at("max").cast<double>() / dt; }}});
 };
 
 //----------------------------------------------------------------------------

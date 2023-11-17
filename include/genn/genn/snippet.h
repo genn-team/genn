@@ -41,7 +41,11 @@ public:                                                 \
 // GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
-namespace GeNN::Snippet
+namespace GeNN
+{
+using ParamValues = std::unordered_map<std::string, Type::NumericValue>;
+
+namespace Snippet
 {
 class GENN_EXPORT Base
 {
@@ -236,3 +240,4 @@ GENN_EXPORT void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash
 GENN_EXPORT void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash);
 }   // namespace GeNN::Snippet
+}   // namespace GeNN
