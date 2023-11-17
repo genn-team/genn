@@ -560,9 +560,9 @@ public:
             if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getConnectivity](const Runtime::Runtime&, const auto &g, size_t i)
+                         [p, getConnectivity](const Runtime::Runtime&, const auto &g, size_t)
                          {
-                            std::invoke(getConnectivity, g).getParams().at(p.name);
+                             return std::invoke(getConnectivity, g).getParams().at(p.name);
                          });
             }
             // Otherwise, just add a const-qualified scalar to the type environment

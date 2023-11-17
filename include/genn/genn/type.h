@@ -70,11 +70,10 @@ public:
     T cast() const
     { 
         return std::visit(
-            Utils::Overload{
-                [](auto x)->T
-                {
-                    return static_cast<T>(x);
-                }},
+            [](auto x)->T
+            {
+                return static_cast<T>(x);
+            },
             m_Value);
     }
     const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }

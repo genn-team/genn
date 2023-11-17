@@ -24,13 +24,6 @@ const std::map<Type::ResolvedType, Type::ResolvedType> unsignedType{
     {Type::Int8, Type::Uint8},
     {Type::Int16, Type::Uint16},
     {Type::Int32, Type::Uint32}};
-
-template<typename T>
-T cast(const Type::NumericValue &value)
-{
-    return std::visit(Utils::Overload{[](auto v){ return static_cast<T>(v); }},
-                      value.get());
-}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -41,22 +34,20 @@ namespace GeNN::Type
 bool NumericValue::operator == (const NumericValue &other) const
 {
     return std::visit(
-        Utils::Overload{
-            [](auto a, auto b)
-            {
-                return a == b;
-            }},
+        [](auto a, auto b)
+        {
+            return a == b;
+        },
         m_Value, other.m_Value);
 }
 //----------------------------------------------------------------------------
 bool NumericValue::operator != (const NumericValue &other) const
 {
     return std::visit(
-        Utils::Overload{
-            [](auto a, auto b)
-            {
-                return a != b;
-            }},
+        [](auto a, auto b)
+        {
+            return a != b;
+        },
         m_Value, other.m_Value);
 }
 //----------------------------------------------------------------------------
@@ -359,7 +350,7 @@ void serialiseNumeric(const NumericValue &value, const ResolvedType &type, std::
 {
     #define SERIALISE(TYPE, GENN_TYPE)                                                  \
         if(type == GENN_TYPE) {                                                         \
-            const TYPE v = cast<TYPE>(value);                                           \
+            const TYPE v = value.cast<TYPE>();                                          \
             std::byte vBytes[sizeof(TYPE)];                                             \
             std::memcpy(vBytes, &v, sizeof(TYPE));                                      \
             std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes)); \

@@ -29,7 +29,7 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 const Type::UnresolvedType &VarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
+        [](const auto &ref){ return std::cref(ref.var.type); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ VarAccessDim VarReference::getVarDims() const
 const std::string &VarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        [](const auto &ref){ return std::cref(ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -213,7 +213,7 @@ const std::string &VarReference::getTargetName() const
 const Type::UnresolvedType &WUVarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
+        [](const auto &ref){ return std::cref(ref.var.type); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -241,8 +241,7 @@ VarAccessDim WUVarReference::getVarDims() const
 const Runtime::ArrayBase *WUVarReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
-        Utils::Overload{
-            [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); }},
+        [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -439,14 +438,14 @@ SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
 const std::string &WUVarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        [](const auto &ref){ return std::cref(ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &WUVarReference::getTargetName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return std::cref(ref.group->getName()); }},
+        [](const auto &ref) { return std::cref(ref.group->getName()); },
         m_Detail);
 }
 //------------------------------------------------------------------------
@@ -484,15 +483,14 @@ std::optional<std::string> WUVarReference::getTransposeTargetName() const
 const Models::Base::EGP &EGPReference::getEGP() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return std::cref(ref.egp); }},
+        [](const auto &ref) { return std::cref(ref.egp); },
         m_Detail);
 }
  //----------------------------------------------------------------------------
 const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
-        Utils::Overload{
-            [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.egp.name); }},
+        [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.egp.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -535,15 +533,14 @@ EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &e
 const std::string &EGPReference::getEGPName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.egp.name); }},
+        [](const auto &ref){ return std::cref(ref.egp.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &EGPReference::getTargetName() const
 {
     return std::visit(
-        Utils::Overload{
-            [](const auto &ref) { return std::cref(ref.group->getName()); }},
+        [](const auto &ref) { return std::cref(ref.group->getName()); },
         m_Detail);
 }
 

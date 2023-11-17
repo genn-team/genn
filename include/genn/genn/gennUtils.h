@@ -171,11 +171,10 @@ inline void updateHash(const std::variant<T...> &variant, boost::uuids::detail::
 {
     updateHash(variant.index(), hash);
     std::visit(
-         Utils::Overload{
-             [&hash](const auto &v)
-             {
-                 updateHash(v, hash);
-             }},
+        [&hash](const auto &v)
+        {
+            updateHash(v, hash);
+        },
         variant);
 }
 

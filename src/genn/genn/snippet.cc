@@ -50,8 +50,8 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 void updateHash(const Base::Param &p, boost::uuids::detail::sha1 &hash)
 {
-    Utils::updateHash(e.name, hash);
-    Type::updateHash(e.type, hash);
+    Utils::updateHash(p.name, hash);
+    Type::updateHash(p.type, hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
