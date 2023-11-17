@@ -454,12 +454,18 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
 
     // If there are delays on presynaptic variable references
     if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_pre_spk_que_ptr", "preSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPreDelayNeuronGroup(), "spkQuePtr"); });
+    
         env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
                 {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
     }
     
     // If there are delays on postsynaptic variable references
     if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_post_spk_que_ptr", "postSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPostDelayNeuronGroup(), "spkQuePtr"); });
+
         env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
                 {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
     }
