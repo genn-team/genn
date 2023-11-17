@@ -100,7 +100,7 @@ public:
         }
 
         std::string name;
-        std::function<double(const std::unordered_map<std::string, double>&, double)> func;
+        std::function<Type::NumericValue(const std::unordered_map<std::string, Type::NumericValue>&, double)> func;
     };
 
     //----------------------------------------------------------------------------
@@ -110,8 +110,8 @@ public:
     typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
-    typedef std::function<unsigned int(unsigned int, unsigned int, const std::unordered_map<std::string, double> &)> CalcMaxLengthFunc;
-    typedef std::function<std::vector<unsigned int>(const std::unordered_map<std::string, double> &)> CalcKernelSizeFunc;
+    typedef std::function<unsigned int(unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &)> CalcMaxLengthFunc;
+    typedef std::function<std::vector<unsigned int>(const std::unordered_map<std::string, Type::NumericValue> &)> CalcKernelSizeFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -143,7 +143,7 @@ protected:
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const;
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, const std::string &description) const;
 
     //------------------------------------------------------------------------
     // Protected static helpers
@@ -173,7 +173,7 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const std::unordered_map<std::string, double> &params)
+    Init(const SnippetBase *snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
         : m_Snippet(snippet), m_Params(params)
     {
     }
@@ -182,8 +182,8 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
@@ -205,8 +205,8 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
-    std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------

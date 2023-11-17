@@ -15,7 +15,7 @@ public:
     using GroupExternal = CustomUpdate;
 
     CustomUpdateInternal(const std::string &name, const std::string &updateGroupName,
-                         const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params, 
+                         const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params, 
                          const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences, 
                          const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdate(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
@@ -73,7 +73,7 @@ public:
     using GroupExternal = CustomUpdateWU;
 
     CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params, 
+                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params, 
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences, 
                            const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 

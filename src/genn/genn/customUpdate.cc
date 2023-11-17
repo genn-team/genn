@@ -139,7 +139,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),

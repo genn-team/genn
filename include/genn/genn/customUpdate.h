@@ -39,7 +39,7 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
@@ -55,7 +55,7 @@ public:
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                     const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                      const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -66,7 +66,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -169,8 +169,8 @@ private:
     std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
     std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
@@ -259,7 +259,7 @@ public:
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                  const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -312,7 +312,7 @@ public:
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                    const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 

@@ -69,7 +69,7 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
@@ -131,9 +131,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
-        {"ip1", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("y"); }},
-        {"ip2", [](const std::unordered_map<std::string, double> &pars, double){ return (pars.at("Vspike") * pars.at("alpha")) + (pars.at("Vspike") * pars.at("y")); }}});
+        {"ip0", [](const auto &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
+        {"ip1", [](const auto &pars, double){ return pars.at("Vspike") * pars.at("y"); }},
+        {"ip2", [](const auto &pars, double){ return (pars.at("Vspike") * pars.at("alpha")) + (pars.at("Vspike") * pars.at("y")); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -244,8 +244,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -388,7 +388,7 @@ public:
 
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const std::unordered_map<std::string, double> &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const auto &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 

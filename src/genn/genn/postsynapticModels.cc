@@ -27,7 +27,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                     const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::unordered_map<std::string, Models::VarReference> &varRefTargets) const
 {
@@ -48,7 +48,7 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
 //----------------------------------------------------------------------------
 // GeNN::PostsynapticModels::Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params, 
+Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_NeuronVarReferences(neuronVarReferences)

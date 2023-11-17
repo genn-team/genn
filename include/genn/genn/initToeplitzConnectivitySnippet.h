@@ -53,7 +53,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues) const;
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
@@ -102,8 +102,8 @@ public:
     SET_PARAM_NAMES({"conv_kh", "conv_kw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const std::unordered_map<std::string, double> &pars, double){ return (((int)pars.at("conv_iw") + (int)pars.at("conv_kw") - 1) - (int)pars.at("conv_ow")) / 2; }},
-                        {"conv_bh", [](const std::unordered_map<std::string, double> &pars, double){ return (((int)pars.at("conv_ih") + (int)pars.at("conv_kh") - 1) - (int)pars.at("conv_oh")) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (((int)pars.at("conv_iw") + (int)pars.at("conv_kw") - 1) - (int)pars.at("conv_ow")) / 2; }},
+                        {"conv_bh", [](const auto &pars, double){ return (((int)pars.at("conv_ih") + (int)pars.at("conv_kh") - 1) - (int)pars.at("conv_oh")) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"
@@ -157,8 +157,8 @@ public:
                      "pool_sh", "pool_sw",
                      "pool_ih", "pool_iw", "pool_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const std::unordered_map<std::string, double> &pars, double){ return (int(ceil((pars.at("pool_iw") - pars.at("pool_kw") + 1.0) / pars.at("pool_sw"))) + (int)pars.at("conv_kw") - 1 - (int)pars.at("conv_ow")) / 2; }},
-                        {"conv_bh", [](const std::unordered_map<std::string, double> &pars, double){ return (int(ceil((pars.at("pool_ih") - pars.at("pool_kh") + 1.0) / pars.at("pool_sh"))) + (int)pars.at("conv_h") - 1 - (int)pars.at("conv_oh")) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const auto &pars, double){ return (int(ceil((pars.at("pool_iw") - pars.at("pool_kw") + 1.0) / pars.at("pool_sw"))) + (int)pars.at("conv_kw") - 1 - (int)pars.at("conv_ow")) / 2; }},
+                        {"conv_bh", [](const auto &pars, double){ return (int(ceil((pars.at("pool_ih") - pars.at("pool_kh") + 1.0) / pars.at("pool_sh"))) + (int)pars.at("conv_h") - 1 - (int)pars.at("conv_oh")) / 2; }}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / (int)conv_oc) / (int)conv_kw;\n"

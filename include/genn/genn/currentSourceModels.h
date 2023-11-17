@@ -52,7 +52,7 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
@@ -120,8 +120,8 @@ class PoissonExp : public Base
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tauSyn")); }},
-        {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
-        {"ExpMinusLambda", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
+        {"ExpDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauSyn")); }},
+        {"Init", [](const auto &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
+        {"ExpMinusLambda", [](const auto &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
 };
 } // GeNN::CurrentSourceModels

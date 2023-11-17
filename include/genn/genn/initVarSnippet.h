@@ -32,7 +32,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues) const;
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 
@@ -45,7 +45,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
     Init(double constant);
 
     //------------------------------------------------------------------------
@@ -200,10 +200,10 @@ public:
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("mean") / dt; }},
-        {"sdTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("sd") / dt; }},
-        {"minTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("min") / dt; }},
-        {"maxTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("max") / dt; }}});
+        {"meanTimestep", [](const auto &pars, double dt){ return pars.at("mean").get<double>() / dt; }},
+        {"sdTimestep", [](const auto &pars, double dt){ return pars.at("sd").get<double>() / dt; }},
+        {"minTimestep", [](const auto &pars, double dt){ return pars.at("min").get<double>() / dt; }},
+        {"maxTimestep", [](const auto &pars, double dt){ return pars.at("max").get<double>() / dt; }}});
 };
 
 //----------------------------------------------------------------------------

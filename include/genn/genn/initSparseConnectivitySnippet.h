@@ -62,7 +62,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues) const;
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
@@ -129,7 +129,7 @@ public:
     virtual std::string getRowBuildCode() const override = 0;
 
     SET_PARAM_NAMES({"prob"});
-    SET_DERIVED_PARAMS({{"probLogRecip", [](const std::unordered_map<std::string, double> &pars, double){ return 1.0 / log(1.0 - pars.at("prob")); }}});
+    SET_DERIVED_PARAMS({{"probLogRecip", [](const auto &pars, double){ return 1.0 / log(1.0 - pars.at("prob")); }}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)

@@ -46,13 +46,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const ParamValues &pars, double) { return (1 / pars.at("tPunish01") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng")); }},
-        {"lim1", [](const ParamValues &pars, double) { return  -((1 / pars.at("tPunish10") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng"))); }},
-        {"slope0", [](const ParamValues &pars, double) { return  -2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
-        {"slope1", [](const ParamValues &pars, double) { return  2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
-        {"off0", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish01"); }},
-        {"off1", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tChng"); }},
-        {"off2", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish10"); }}});
+        {"lim0", [](const auto &pars, double) { return (1 / pars.at("tPunish01") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng")); }},
+        {"lim1", [](const auto &pars, double) { return  -((1 / pars.at("tPunish10") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng"))); }},
+        {"slope0", [](const auto &pars, double) { return  -2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
+        {"slope1", [](const auto &pars, double) { return  2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
+        {"off0", [](const auto &pars, double) { return  pars.at("gMax") / pars.at("tPunish01"); }},
+        {"off1", [](const auto &pars, double) { return  pars.at("gMax") / pars.at("tChng"); }},
+        {"off2", [](const auto &pars, double) { return  pars.at("gMax") / pars.at("tPunish10"); }}});
 
 };
 
@@ -63,8 +63,8 @@ public:
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
-        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
+        {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
+        {"tauMinusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});

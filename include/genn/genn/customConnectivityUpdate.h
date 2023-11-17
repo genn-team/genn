@@ -45,7 +45,7 @@ public:
     //! Gets the custom connectivity update model used by this group
     const CustomConnectivityUpdateModels::Base *getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const { return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const { return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
@@ -75,7 +75,7 @@ public:
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
-                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                             const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                              const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
@@ -89,7 +89,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, double> &getDerivedParams() const { return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const { return m_DerivedParams; }
 
     bool isZeroCopyEnabled() const;
 
@@ -133,8 +133,8 @@ private:
     SynapseGroupInternal *m_SynapseGroup;
 
     const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
-    const std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    const std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
     std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;

@@ -61,4 +61,4 @@ def test_connect_init(backend, precision):
 
 
 if __name__ == '__main__':
-    test_connect_init("single_threaded_cpu", types.Float)
+    test_connect_init("cuda", types.Float)

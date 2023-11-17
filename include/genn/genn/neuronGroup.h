@@ -124,7 +124,7 @@ public:
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
@@ -175,7 +175,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -281,8 +281,8 @@ private:
     const unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
-    const std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    const std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
