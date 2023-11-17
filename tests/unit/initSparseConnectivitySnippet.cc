@@ -38,7 +38,7 @@ public:
         "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
-    SET_PARAM_NAMES({"total"});
+    SET_PARAMS({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(

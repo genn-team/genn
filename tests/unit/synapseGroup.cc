@@ -21,7 +21,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditive);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
@@ -54,7 +54,7 @@ class STDPAdditiveEGPWMinMax : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditiveEGPWMinMax);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus"});
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
         {"tauMinusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
@@ -87,7 +87,7 @@ class STDPAdditiveEGPSpike : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditiveEGPSpike);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
@@ -121,7 +121,7 @@ class STDPAdditiveEGPDynamics : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditiveEGPDynamics);
-    SET_PARAM_NAMES({"Aplus", "Aminus", "Wmin", "Wmax"});
+    SET_PARAMS({"Aplus", "Aminus", "Wmin", "Wmax"});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
@@ -163,7 +163,7 @@ class ContinuousDenDelay : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(ContinuousDenDelay);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SYNAPSE_DYNAMICS_CODE("addToPostDelay(g * V_pre, 1);\n");
 };
@@ -174,7 +174,7 @@ class GradedDenDelay : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(GradedDenDelay);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
     SET_EVENT_THRESHOLD_CONDITION_CODE("V_pre >= 0.1");
     SET_EVENT_CODE("addToPostDelay(g * V_pre, 1);");
 };
@@ -185,7 +185,7 @@ class StaticPulseDendriticDelayConstantWeight : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseDendriticDelayConstantWeight);
 
-    SET_PARAM_NAMES({"g", "d"});
+    SET_PARAMS({"g", "d"});
 
     SET_SIM_CODE("addToPostDelay(g, (uint8_t)d);\n");
 };
@@ -271,7 +271,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]

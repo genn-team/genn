@@ -13,7 +13,7 @@ class GaussianNoiseCopy : public CurrentSourceModels::Base
 {
     SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
-    SET_PARAM_NAMES({"mean", "sd"} );
+    SET_PARAMS({"mean", "sd"} );
 };
 
 //--------------------------------------------------------------------------

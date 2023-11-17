@@ -29,7 +29,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]

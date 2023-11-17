@@ -30,7 +30,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("x");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
@@ -45,7 +45,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(STDPAdditive);
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
       "tauPlus",  // 0 - Potentiation time constant (ms)
       "tauMinus", // 1 - Depression time constant (ms)
       "Aplus",    // 2 - Rate of potentiation
@@ -90,7 +90,7 @@ class Sum : public CustomUpdateModels::Base
     SET_UPDATE_CODE("sum = a + b;\n");
 
     SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
-    SET_PARAM_NAMES({"b"});
+    SET_PARAMS({"b"});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(Sum);
@@ -146,7 +146,7 @@ public:
     DECLARE_SNIPPET(RemoveSynapseParam);
     
     SET_VAR_REFS({{"g", "scalar"}});
-    SET_PARAM_NAMES({"thresh"});
+    SET_PARAMS({"thresh"});
     
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"

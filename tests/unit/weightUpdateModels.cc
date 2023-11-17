@@ -15,7 +15,7 @@ namespace
 class PiecewiseSTDPCopy : public WeightUpdateModels::Base
 {
 public:
-    SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
+    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
@@ -60,7 +60,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditive);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},

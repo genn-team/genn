@@ -22,7 +22,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("x");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
@@ -37,7 +37,7 @@ class StaticPulseUInt : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseUInt);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SIM_CODE("addToPost(g);\n");
 };
@@ -84,7 +84,7 @@ class ContPrePostConstantWeight : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(ContPrePostConstantWeight);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});

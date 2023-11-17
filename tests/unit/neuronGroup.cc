@@ -32,7 +32,7 @@ class StaticPulseBackConstantWeight : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseBackConstantWeight);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SIM_CODE(
         "$(addToInSyn, $(g));\n"
@@ -45,7 +45,7 @@ class WeightUpdateModelPost : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(WeightUpdateModelPost);
 
-    SET_PARAM_NAMES({"w", "p"});
+    SET_PARAMS({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -58,7 +58,7 @@ class WeightUpdateModelPre : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(WeightUpdateModelPre);
 
-    SET_PARAM_NAMES({"w", "p"});
+    SET_PARAMS({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -77,7 +77,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(x)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
@@ -109,7 +109,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -150,7 +150,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -171,7 +171,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditive);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},

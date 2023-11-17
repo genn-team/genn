@@ -22,7 +22,7 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(x)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
