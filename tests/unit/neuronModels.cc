@@ -39,8 +39,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -70,10 +70,10 @@ TEST(NeuronModels, ValidateParamValues)
 {
     const VarValues varVals{{"V", uninitialisedVar()}, {"U", uninitialisedVar()}};
 
-    const std::unordered_map<std::string, double> paramValsCorrect{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    const std::unordered_map<std::string, double> paramValsMisSpelled{{"a", 0.02}, {"B", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    const std::unordered_map<std::string, double> paramValsMissing{{"a", 0.02}, {"b", 0.2}, {"d", 8.0}};
-    const std::unordered_map<std::string, double> paramValsExtra{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}, {"e", 8.0}};
+    const ParamValues paramValsCorrect{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const ParamValues paramValsMisSpelled{{"a", 0.02}, {"B", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const ParamValues paramValsMissing{{"a", 0.02}, {"b", 0.2}, {"d", 8.0}};
+    const ParamValues paramValsExtra{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}, {"e", 8.0}};
 
     NeuronModels::Izhikevich::getInstance()->validate(paramValsCorrect, varVals, "Neuron group");
 
@@ -101,7 +101,7 @@ TEST(NeuronModels, ValidateParamValues)
 //--------------------------------------------------------------------------
 TEST(NeuronModels, ValidateVarValues) 
 {
-    const std::unordered_map<std::string, double> paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"V", 0.0}, {"U", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"V", 0.0}, {"u", 0.0}};

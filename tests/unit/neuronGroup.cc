@@ -82,8 +82,8 @@ public:
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const auto &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const auto &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
+        {"expDecay", [](const auto &pars, double dt) { return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const auto &pars, double) { return (std::exp(1) / pars.at("tau").cast<double>()); }}});
 };
 IMPLEMENT_SNIPPET(AlphaCurr);
 
@@ -119,8 +119,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const auto &pars, double dt) { return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const auto &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const auto &pars, double dt) { return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const auto &pars, double) { return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
@@ -160,8 +160,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const auto &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
@@ -174,8 +174,8 @@ public:
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
-        {"tauMinusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
+        {"tauPlusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
+        {"tauMinusDecay", [](const auto &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
