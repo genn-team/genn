@@ -291,7 +291,7 @@ class GeNNModel(ModelSpecInternal):
         return self._runtime.get_custom_update_transpose_time(name)
 
     def add_neuron_population(self, pop_name, num_neurons, neuron,
-                              param_space, var_space):
+                              params={}, vars={}):
         """Add a neuron population to the GeNN model
 
         Args:
@@ -301,8 +301,8 @@ class GeNNModel(ModelSpecInternal):
                         neuron class derived from
                         ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also
                         pygenn.genn_model.create_custom_neuron_class)
-        param_space --  dict with param values for the NeuronModels class
-        var_space   --  dict with initial variable values for the
+        params      --  dict with param values for the NeuronModels class
+        vars        --  dict with initial variable values for the
                         NeuronModels class
         """
         if self._built:
@@ -311,15 +311,15 @@ class GeNNModel(ModelSpecInternal):
         # Resolve neuron model
         neuron = get_snippet(neuron, NeuronModelBase, neuron_models)
         
-        # Extract parts of var_space which should be initialised by GeNN
-        var_init = get_var_init(var_space)
+        # Extract parts of vars which should be initialised by GeNN
+        var_init = get_var_init(vars)
         
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), neuron, param_space, var_init)
+            pop_name, int(num_neurons), neuron, params, var_init)
         
         # Initialise group, store group in dictionary and return
-        n_group._init_group(self, var_space)
+        n_group._init_group(self, vars)
         self.neuron_populations[pop_name] = n_group
         return n_group
 
@@ -371,7 +371,7 @@ class GeNNModel(ModelSpecInternal):
         return s_group
 
     def add_current_source(self, cs_name, current_source_model, pop,
-                           param_space, var_space, var_ref_space = {}):
+                           params={}, vars={}, var_refs = {}):
         """Add a current source to the GeNN model
 
         Args:
@@ -383,11 +383,11 @@ class GeNNModel(ModelSpecInternal):
                                     pygenn.genn_model.create_custom_current_source_class)
         pop                     --  population into which the current source 
                                     should be injected (either name or NeuronGroup object)
-        param_space             --  dict with param values for the
+        params                  --  dict with param values for the
                                     CurrentSourceModel class
-        var_space               --  dict with initial variable values for the
+        vars                    --  dict with initial variable values for the
                                     CurrentSourceModel class
-        var_ref_space           --  dict with variable references to pop for the
+        var_refs                --  dict with variable references to pop for the
                                     CurrentSourceModel class
         """
         if self._built:
@@ -401,21 +401,21 @@ class GeNNModel(ModelSpecInternal):
         current_source_model = get_snippet(current_source_model, CurrentSourceModelBase,
                                            current_source_models)
         
-        # Extract parts of var_space which should be initialised by GeNN
-        var_init = get_var_init(var_space)
+        # Extract parts of vars which should be initialised by GeNN
+        var_init = get_var_init(vars)
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop.name, param_space,
-            var_init, var_ref_space)
+            cs_name, current_source_model, pop.name, params,
+            var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
-        c_source._init_group(self, var_space, pop)
+        c_source._init_group(self, vars, pop)
         self.current_sources[cs_name] = c_source
         return c_source
     
     def add_custom_update(self, cu_name, group_name, custom_update_model,
-                          param_space, var_space, var_ref_space, egp_ref_space={}):
+                          params={}, vars={}, var_refs={}, egp_refs={}):
         """Add a current source to the GeNN model
 
         Args:
@@ -427,13 +427,13 @@ class GeNNModel(ModelSpecInternal):
                                    class derived from
                                    ``CustomUpdateModelBase`` (see also
                                    pygenn.genn_model.create_custom_custom_update_class)
-        param_space             -- dict with param values for the
+        params                  -- dict with param values for the
                                    CustomUpdateModel class
-        var_space               -- dict with initial variable values for the
+        vars                    -- dict with initial variable values for the
                                    CustomUpdateModel class
-        var_ref_space           -- dict with variable references for the
+        var_refs                -- dict with variable references for the
                                    CustomUpdateModel class
-        egp_ref_space           -- dict with extra global parameter references 
+        egp_refs                -- dict with extra global parameter references 
                                    for the CustomUpdateModel class
         """
         if self._built:
@@ -443,24 +443,24 @@ class GeNNModel(ModelSpecInternal):
         custom_update_model = get_snippet(custom_update_model, CustomUpdateModelBase,
                                           custom_update_models)
         
-        # Extract parts of var_space which should be initialised by GeNN
-        var_init = get_var_init(var_space)
+        # Extract parts of vars which should be initialised by GeNN
+        var_init = get_var_init(vars)
 
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            param_space, var_init, var_ref_space, egp_ref_space)
+            params, var_init, var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
-        c_update._init_group(self, var_space)
+        c_update._init_group(self, vars)
         self.custom_updates[cu_name] = c_update
         return c_update
     
     def add_custom_connectivity_update(self, cu_name, group_name, syn_group,
                                        custom_conn_update_model,
-                                       param_space, var_space, pre_var_space,
-                                       post_var_space, var_ref_space,
-                                       pre_var_ref_space, post_var_ref_space):
+                                       params={}, vars={}, pre_vars={},
+                                       post_vars={}, var_refs={},
+                                       pre_var_refs={}, post_var_refs={}):
         """Add a custom connectivity update to the GeNN model
 
         Args:
@@ -476,22 +476,22 @@ class GeNNModel(ModelSpecInternal):
                                        derived from 
                                        ``pygenn.genn_wrapper.CustomConnectivityUpdateModel.Custom``
                                        (see also pygenn.genn_model.create_custom_custom_connectivity_update_class)
-        param_space                 -- dict with param values for the
+        params                      -- dict with param values for the
                                        CustomConnectivityUpdateModel class
-        var_space                   -- dict with initial variable values for the
+        vars                        -- dict with initial variable values for the
                                        CustomConnectivityUpdateModel class
-        pre_var_space               -- dict with initial presynaptic variable
+        pre_vars                    -- dict with initial presynaptic variable
                                        values for the 
                                        CustomConnectivityUpdateModel class
-        post_var_space              -- dict with initial postsynaptic variable
+        post_vars                   -- dict with initial postsynaptic variable
                                        values for the
                                        CustomConnectivityUpdateModel class
-        var_ref_space               -- dict with variable references for the
+        var_refs                    -- dict with variable references for the
                                        CustomConnectivityUpdateModel class
-        pre_var_ref_space           -- dict with presynaptic variable
+        pre_var_refs                -- dict with presynaptic variable
                                        references for the 
                                        CustomConnectivityUpdateModel class
-        post_var_ref_space          -- dict with postsynaptic variable
+        post_var_refs               -- dict with postsynaptic variable
                                        references for the
                                        CustomConnectivityUpdateModel class
         """
@@ -503,21 +503,20 @@ class GeNNModel(ModelSpecInternal):
             custom_conn_update_model, CustomConnectivityUpdateModelBase,
             custom_connectivity_update_models)
         
-        # Extract parts of var_space which should be initialised by GeNN
-        var_init = get_var_init(var_space)
-        pre_var_init = get_var_init(pre_var_space)
-        post_var_init = get_var_init(post_var_space)
+        # Extract parts of vars which should be initialised by GeNN
+        var_init = get_var_init(vars)
+        pre_var_init = get_var_init(pre_vars)
+        post_var_init = get_var_init(post_vars)
 
         # Use superclass to add population
         syn_group = self._validate_synapse_group(syn_group, "syn_group")
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
             cu_name, group_name, syn_group.name, custom_connectivity_update_model,
-            param_space, var_init, pre_var_init, post_var_init,
-            var_ref_space, pre_var_ref_space, post_var_ref_space)
+            params, var_init, pre_var_init, post_var_init,
+            var_refs, pre_var_refs, post_var_refs)
 
         # Setup back-reference, store group in dictionary and return
-        c_update._init_group(self, var_space, pre_var_space, 
-                             post_var_space)
+        c_update._init_group(self, vars, pre_vars, post_vars)
         self.custom_connectivity_updates[cu_name] = c_update
         return c_update
         
@@ -787,7 +786,7 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
             vars, pre_vars, post_vars)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
-def init_connectivity(init_sparse_connect_snippet, param_space={}):
+def init_connectivity(init_sparse_connect_snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
@@ -796,12 +795,12 @@ def init_connectivity(init_sparse_connect_snippet, param_space={}):
                                     class as string or instance of class
                                     derived from
                                     InitSparseConnectivitySnippetBase
-    param_space                 --  dict with param values for the
+    params                      --  dict with param values for the
                                     InitSparseConnectivitySnippet class
     """
-    return init_sparse_connectivity(init_sparse_connect_snippet, param_space)
+    return init_sparse_connectivity(init_sparse_connect_snippet, params)
 
-def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space={}):
+def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     """This helper function creates a InitToeplitzConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
@@ -810,14 +809,14 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space={}):
                                        class as string or instance of class
                                        derived from
                                        InitSparseConnectivitySnippetBase
-    param_space                     -- dict with param values for the
+    params                          -- dict with param values for the
                                        InitToeplitzConnectivitySnippet class
     """
     # Get snippet and wrap in InitToeplitzConnectivitySnippet object
     init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
                                                 InitToeplitzConnectivitySnippetBase,
                                                 init_toeplitz_connectivity_snippets)
-    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, param_space)
+    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, params)
 
 
 def create_model(class_name, base, param_names, derived_params, 
