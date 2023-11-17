@@ -72,11 +72,11 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct GENN_EXPORT ParamVal
     {
-        ParamVal(const std::string &n, const Type::ResolvedType &t, double v)
+        ParamVal(const std::string &n, const Type::ResolvedType &t, Type::NumericValue v)
         :   name(n), type(t), value(v)
         {}
 
-        ParamVal(const std::string &n, const std::string &t, double v)
+        ParamVal(const std::string &n, const std::string &t, Type::NumericValue v)
         :   name(n), type(t), value(v)
         {}
 
@@ -88,7 +88,7 @@ public:
 
         std::string name;
         Type::UnresolvedType type;
-        double value;
+        Type::NumericValue value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value

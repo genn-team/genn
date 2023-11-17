@@ -58,7 +58,7 @@ void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(p.name, hash);
     Type::updateHash(p.type, hash);
-    Utils::updateHash(p.value, hash);
+    Type::updateHash(p.value, hash);
 }
 //----------------------------------------------------------------------------
 void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
