@@ -244,7 +244,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({"rowLength"});
+    SET_PARAMS({{"rowLength", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
@@ -291,7 +291,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({"total"});
+    SET_PARAMS({{"total", "unsigned int"}});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_HOST_INIT_CODE(
@@ -372,7 +372,7 @@ public:
         "   addSynapse(idPre + id_pre_begin);\n"
         "}\n");
  
-    SET_PARAMS({"colLength"});
+    SET_PARAMS({{"colLength", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
@@ -405,29 +405,29 @@ class Conv2D : public Base
 public:
     DECLARE_SNIPPET(Conv2D);
 
-    SET_PARAMS({"conv_kh", "conv_kw",
-                     "conv_sh", "conv_sw",
-                     "conv_padh", "conv_padw",
-                     "conv_ih", "conv_iw", "conv_ic",
-                     "conv_oh", "conv_ow", "conv_oc"});
+    SET_PARAMS({{"conv_kh", "int"}, {"conv_kw", "int"},
+                {"conv_sh", "int"}, {"conv_sw", "int"},
+                {"conv_padh", "int"}, {"conv_padw", "int"},
+                {"conv_ih", "int"}, {"conv_iw", "int"}, {"conv_ic", "int"},
+                {"conv_oh", "int"}, {"conv_ow", "int"}, {"conv_oc", "int"}});
 
     SET_ROW_BUILD_CODE(
-        "const int inRow = (id_pre / (int)conv_ic) / (int)conv_iw;\n"
-        "const int inCol = (id_pre / (int)conv_ic) % (int)conv_iw;\n"
-        "const int inChan = id_pre % (int)conv_ic;\n"
-        "const int maxOutRow = min((int)conv_oh, max(0, 1 + ((inRow + (int)conv_padh) / (int)conv_sh)));\n"
-        "const int minOutCol = min((int)conv_ow, max(0, 1 + (int)floor((inCol + conv_padw - conv_kw) / conv_sw)));\n"
-        "const int maxOutCol = min((int)conv_ow, max(0, 1 + ((inCol + (int)conv_padw) / (int)conv_sw)));\n"
-        "int outRow = min((int)conv_oh, max(0, 1 + (int)floor((inRow + conv_padh - conv_kh) / conv_sh)));\n"
+        "const int inRow = (id_pre / conv_ic) / conv_iw;\n"
+        "const int inCol = (id_pre / conv_ic) % conv_iw;\n"
+        "const int inChan = id_pre % conv_ic;\n"
+        "const int maxOutRow = min(conv_oh, max(0, 1 + ((inRow + conv_padh) / conv_sh)));\n"
+        "const int minOutCol = min(conv_ow, max(0, 1 + (int)floor((inCol + conv_padw - conv_kw) / (scalar)conv_sw)));\n"
+        "const int maxOutCol = min(conv_ow, max(0, 1 + ((inCol + conv_padw) / conv_sw)));\n"
+        "int outRow = min(conv_oh, max(0, 1 + (int)floor((inRow + conv_padh - conv_kh) / (scalar)conv_sh)));\n"
         "for(;outRow < maxOutRow; outRow++) {\n"
-        "   const int strideRow = (outRow * (int)conv_sh) - (int)conv_padh;\n"
+        "   const int strideRow = (outRow * conv_sh) - conv_padh;\n"
         "   const int kernRow = inRow - strideRow;\n"
         "   for(int outCol = minOutCol; outCol < maxOutCol; outCol++) {\n"
-        "       const int strideCol = (outCol * (int)conv_sw) - (int)conv_padw;\n"
+        "       const int strideCol = (outCol * conv_sw) - conv_padw;\n"
         "       const int kernCol = inCol - strideCol;\n"
-        "       for(unsigned int outChan = 0; outChan < (unsigned int)conv_oc; outChan++) {\n"
-        "           const int idPost = ((outRow * (int)conv_ow * (int)conv_oc) +\n"
-        "                                (outCol * (int)conv_oc) +\n"
+        "       for(int outChan = 0; outChan < conv_oc; outChan++) {\n"
+        "           const int idPost = ((outRow * conv_ow * conv_oc) +\n"
+        "                                (outCol * conv_oc) +\n"
         "                                outChan);\n"
         "            addSynapse(idPost, kernRow, kernCol, inChan, outChan);\n"
         "       }\n"
