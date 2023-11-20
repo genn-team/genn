@@ -476,7 +476,7 @@ public:
             if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t i)
+                         [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t)
                          {
                              return std::invoke(getParamValues, g).at(p.name);
                          });
