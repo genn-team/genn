@@ -52,7 +52,9 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
+    cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
+                    &CustomUpdateGroupMerged::isParamHeterogeneous,
+                    &CustomUpdateInternal::isParamDynamic);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
@@ -179,8 +181,10 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
-    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
+    cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
+                    &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
+                    &CustomUpdateWUInternal::isParamDynamic);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateWUInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 

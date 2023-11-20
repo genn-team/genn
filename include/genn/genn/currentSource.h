@@ -65,7 +65,7 @@ public:
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
     //! Is parameter dynamic i.e. it can be changed at runtime
-    bool isParameterDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Get name of neuron input variable current source model will inject into
     /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */

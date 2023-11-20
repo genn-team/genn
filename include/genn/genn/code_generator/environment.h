@@ -406,6 +406,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     
     using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal &, size_t)>;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
+    using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::unordered_map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
 
@@ -466,20 +467,22 @@ public:
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
-                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous)
+                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous, IsDynamicFn isDynamic)
     {
         // Loop through params
         for(const auto &p : params) {
-            // If parameter is heterogeneous, add scalar field
+            // If parameter is heterogeneous or dynamic, add scalar field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
-                addField(resolvedType.addConst(), p.name,
-                         resolvedType, p.name + fieldSuffix,
-                         [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t)
-                         {
-                             return std::invoke(getParamValues, g).at(p.name);
-                         });
+            const bool dynamic = std::invoke(isDynamic, this->getGroup().getArchetype(), p.name);
+            if (dynamic || std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+                addField(
+                    resolvedType.addConst(), p.name, resolvedType, p.name + fieldSuffix,
+                    [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t)
+                    {
+                        return std::invoke(getParamValues, g).at(p.name);
+                    },
+                    "", dynamic ? GroupMergedFieldType::DYNAMIC : GroupMergedFieldType::STANDARD);
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -547,52 +550,54 @@ public:
     }
 
     template<typename I>
-    void addInitialiserParams(const std::string &fieldSuffix, GetInitialiserFn<I> getConnectivity, 
-                              IsHeterogeneousFn isHeterogeneous)
+    void addInitialiserParams(const std::string &fieldSuffix, GetInitialiserFn<I> getInitialiser, 
+                              IsHeterogeneousFn isHeterogeneous, std::optional<IsDynamicFn> isDynamic = std::nullopt)
     {
         // Loop through params
-        const auto &connectInit = std::invoke(getConnectivity, this->getGroup().getArchetype());
-        const auto *snippet = connectInit.getSnippet();
+        const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
+        const auto *snippet = initialiser.getSnippet();
         for(const auto &p : snippet->getParams()) {
-            // If parameter is heterogeneous, add scalar field
+            // If parameter is dynamic or heterogeneous, add scalar field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if (std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+            const bool dynamic = isDynamic.value() ? std::invoke(*isDynamic, this->getGroup().getArchetype(), p.name) : false;
+            if (dynamic || std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getConnectivity](const Runtime::Runtime&, const auto &g, size_t)
+                         [p, getInitialiser](const Runtime::Runtime&, const auto &g, size_t)
                          {
-                             return std::invoke(getConnectivity, g).getParams().at(p.name);
-                         });
+                             return std::invoke(getInitialiser, g).getParams().at(p.name);
+                         },
+                         "", dynamic ? GroupMergedFieldType::DYNAMIC : GroupMergedFieldType::STANDARD);
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(resolvedType.addConst(), p.name, 
-                    Type::writeNumeric(connectInit.getParams().at(p.name), resolvedType));
+                    Type::writeNumeric(initialiser.getParams().at(p.name), resolvedType));
             }
         }
     }
 
     template<typename I>
-    void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getConnectivity, 
+    void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getInitialiser, 
                                      IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
-        const auto &connectInit = std::invoke(getConnectivity, this->getGroup().getArchetype());
-        const auto *snippet = connectInit.getSnippet();
+        const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
+        const auto *snippet = initialiser.getSnippet();
         for(const auto &d : snippet->getDerivedParams()) {
             // If parameter is heterogeneous, add scalar field
             if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
                 addScalar(d.name, fieldSuffix,
-                          [d, getConnectivity](const auto &g, size_t)
+                          [d, getInitialiser](const auto &g, size_t)
                           {
-                              return std::invoke(getConnectivity, g).getDerivedParams().at(d.name);
+                              return std::invoke(getInitialiser, g).getDerivedParams().at(d.name);
                           });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
                 add(this->getGroup().getScalarType().addConst(), d.name, 
-                    Type::writeNumeric(connectInit.getDerivedParams().at(d.name), this->getGroup().getScalarType()));
+                    Type::writeNumeric(initialiser.getDerivedParams().at(d.name), this->getGroup().getScalarType()));
             }
         }
     }

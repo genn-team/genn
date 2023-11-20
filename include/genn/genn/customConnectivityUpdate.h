@@ -74,7 +74,7 @@ public:
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
     //! Is parameter dynamic i.e. it can be changed at runtime
-    bool isParameterDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is var init code required for any synaptic variables in this custom connectivity update group?
     bool isVarInitRequired() const;

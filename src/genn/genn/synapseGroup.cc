@@ -497,7 +497,7 @@ bool SynapseGroup::canPSBeFused() const
     // Loop through parameters
     for(const auto &p : getPSInitialiser().getSnippet()->getParams()) {
         // If parameter is dynamic
-        if(isPSParameterDynamic(p.name)) {
+        if(isPSParamDynamic(p.name)) {
             // If this parameter is referenced in decay code, return false
             if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getDecayCodeTokens())) {
                 return false;
@@ -539,7 +539,7 @@ bool SynapseGroup::canWUMPreUpdateBeFused() const
     // Loop through parameters
     for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
         // If parameter is dynamic
-        if(isWUParameterDynamic(p.name)) {
+        if(isWUParamDynamic(p.name)) {
             // If this parameter is referenced in presynaptic spike code, return false
             if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPreSpikeCodeTokens())) {
                 return false;
@@ -581,7 +581,7 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     // Loop through parameters
     for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
         // If parameter is dynamic
-        if(isWUParameterDynamic(p.name)) {
+        if(isWUParamDynamic(p.name)) {
             // If this parameter is referenced in postsynaptic spike code, return false
             if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPostSpikeCodeTokens())) {
                 return false;

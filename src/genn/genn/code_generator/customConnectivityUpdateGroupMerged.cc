@@ -103,7 +103,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous);
+                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
+                        &CustomConnectivityUpdateInternal::isParamDynamic);
     updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
@@ -401,7 +402,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous);
+                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
+                           &CustomConnectivityUpdateInternal::isParamDynamic);
         groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                   &CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous);
 

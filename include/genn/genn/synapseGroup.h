@@ -168,10 +168,10 @@ public:
     VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const{ return m_PSExtraGlobalParamLocation.get(paramName); }
 
     //! Is postsynaptic model parameter dynamic i.e. it can be changed at runtime
-    bool isPSParameterDynamic(const std::string &paramName) const{ return m_PSDynamicParams.get(paramName); }
+    bool isPSParamDynamic(const std::string &paramName) const{ return m_PSDynamicParams.get(paramName); }
 
     //! Is weight update model parameter dynamic i.e. it can be changed at runtime
-    bool isWUParameterDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
+    bool isWUParamDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
 
     //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;

@@ -23,7 +23,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     EnvironmentGroupMergedField<G> synEnv(env, sg);
 
     // Substitute parameter and derived parameter names
-    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUParamHeterogeneous);
+    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
+                                &G::isWUParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
     synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
@@ -344,7 +345,9 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExtern
 
     // Substitute parameter and derived parameter names
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
-    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, &PresynapticUpdateGroupMerged::isWUParamHeterogeneous);
+    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
+                                &PresynapticUpdateGroupMerged::isWUParamHeterogeneous,
+                                &SynapseGroupInternal::isWUParamDynamic);
     synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wum->getExtraGlobalParams());
 
