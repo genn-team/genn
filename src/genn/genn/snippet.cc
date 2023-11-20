@@ -66,6 +66,11 @@ bool DynamicParameterContainer::get(const std::string &name) const
 {
     return (m_Dynamic.count(name) == 0) ? false : true;
 }
+//----------------------------------------------------------------------------
+void DynamicParameterContainer::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash(m_Dynamic, hash);
+}
 
 //----------------------------------------------------------------------------
 // Free functions

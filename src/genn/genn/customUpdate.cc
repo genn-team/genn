@@ -125,6 +125,7 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(getDims(), hash);
+    m_DynamicParams.updateHash(hash);
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const

@@ -493,6 +493,22 @@ bool SynapseGroup::canPSBeFused() const
             return false;
         }
     }
+
+    // Loop through parameters
+    for(const auto &p : getPSInitialiser().getSnippet()->getParams()) {
+        // If parameter is dynamic
+        if(isPSParameterDynamic(p.name)) {
+            // If this parameter is referenced in decay code, return false
+            if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getDecayCodeTokens())) {
+                return false;
+            }
+        
+            // If this parameter is referenced in apply input code, return false
+            if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getApplyInputCodeTokens())) {
+                return false;
+            }
+        }
+    }
     
     return true;
 }
@@ -519,6 +535,23 @@ bool SynapseGroup::canWUMPreUpdateBeFused() const
             return false;
         }
     }
+
+    // Loop through parameters
+    for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
+        // If parameter is dynamic
+        if(isWUParameterDynamic(p.name)) {
+            // If this parameter is referenced in presynaptic spike code, return false
+            if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPreSpikeCodeTokens())) {
+                return false;
+            }
+        
+            // If this parameter is referenced in presynaptic dynamics code, return false
+            if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPreDynamicsCodeTokens())) {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 //----------------------------------------------------------------------------
@@ -542,6 +575,22 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
         // If this EGP is referenced in postsynaptic dynamics code, return false
         if(Utils::isIdentifierReferenced(egp.name, getWUInitialiser().getPostDynamicsCodeTokens())) {
             return false;
+        }
+    }
+
+    // Loop through parameters
+    for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
+        // If parameter is dynamic
+        if(isWUParameterDynamic(p.name)) {
+            // If this parameter is referenced in postsynaptic spike code, return false
+            if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPostSpikeCodeTokens())) {
+                return false;
+            }
+        
+            // If this parameter is referenced in postsynaptic dynamics code, return false
+            if(Utils::isIdentifierReferenced(p.name, getWUInitialiser().getPostDynamicsCodeTokens())) {
+                return false;
+            }
         }
     }
     return true;
@@ -756,6 +805,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getMatrixType(), hash);
+    m_WUDynamicParams.updateHash(hash);
 
     // If weights are procedural, include variable initialiser hashes
     if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -801,6 +851,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash((getDelaySteps() != 0), hash);
+    m_WUDynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
@@ -817,6 +868,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() cons
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash((getBackPropDelaySteps() != 0), hash);
+    m_WUDynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
@@ -834,6 +886,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPostTargetVar(), hash);
+    m_PSDynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group

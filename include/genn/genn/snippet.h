@@ -244,10 +244,18 @@ private:
 class DynamicParameterContainer
 {
 public:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
     void set(const std::string &name, bool value);
     bool get(const std::string &name) const;
 
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
 private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
     const Base *m_Snippet;
     std::unordered_set<std::string> m_Dynamic;
 };

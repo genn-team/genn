@@ -111,6 +111,7 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCurrentSourceModel()->getHashDigest(), hash);
     Utils::updateHash(getTargetVar(), hash);
+    m_DynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
