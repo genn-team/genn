@@ -17,31 +17,6 @@
 // ------------------------------------------------------------------------
 namespace GeNN
 {
-void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_WUVarLocation[getWUInitialiser().getSnippet()->getVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_WUPreVarLocation[getWUInitialiser().getSnippet()->getPreVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_WUPostVarLocation[getWUInitialiser().getSnippet()->getPostVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    m_WUExtraGlobalParamLocation[getWUInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_PSVarLocation[getPSInitialiser().getSnippet()->getVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
 void SynapseGroup::setPostTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store
@@ -70,21 +45,6 @@ void SynapseGroup::setPreTargetVar(const std::string &varName)
     else {
         throw std::runtime_error("Presynaptic neuron group has no input variable '" + varName + "'");
     }
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    m_PSExtraGlobalParamLocation[getPSInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)] = loc;
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setSparseConnectivityLocation(VarLocation loc)
-{ 
-    m_SparseConnectivityLocation = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
@@ -175,24 +135,9 @@ void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
     }
 }
 //----------------------------------------------------------------------------
-unsigned int SynapseGroup::getMaxConnections() const
-{ 
-    return m_MaxConnections; 
-}
-//----------------------------------------------------------------------------
-unsigned int SynapseGroup::getMaxSourceConnections() const
-{ 
-    return m_MaxSourceConnections;
-}
-//----------------------------------------------------------------------------
 size_t SynapseGroup::getKernelSizeFlattened() const
 {
     return std::accumulate(getKernelSize().cbegin(), getKernelSize().cend(), 1, std::multiplies<unsigned int>());
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getSparseConnectivityLocation() const
-{ 
-    return m_SparseConnectivityLocation;
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
@@ -237,70 +182,22 @@ bool SynapseGroup::isPrevPostSpikeTimeRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isZeroCopyEnabled() const
 {
-    // If there are any postsynaptic variables implemented in zero-copy mode return true
-    if(std::any_of(m_PSVarLocation.begin(), m_PSVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
+    if(m_InSynLocation & VarLocation::ZERO_COPY) {
         return true;
     }
 
-    // If there are any weight update variables implemented in zero-copy mode return true
-    if(std::any_of(m_WUVarLocation.begin(), m_WUVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
+    if(m_DendriticDelayLocation & VarLocation::ZERO_COPY) {
+        return true;
+    }
+    
+    if(m_SparseConnectivityLocation & VarLocation::ZERO_COPY) {
         return true;
     }
 
-    // If there are any weight update variables implemented in zero-copy mode return true
-    if(std::any_of(m_WUPreVarLocation.begin(), m_WUPreVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    // If there are any weight update variables implemented in zero-copy mode return true
-    if(std::any_of(m_WUPostVarLocation.begin(), m_WUPostVarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
-{
-    return m_WUVarLocation[getWUInitialiser().getSnippet()->getVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
-{
-    return m_WUPreVarLocation[getWUInitialiser().getSnippet()->getPreVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
-{
-    return m_WUPostVarLocation[getWUInitialiser().getSnippet()->getPostVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &paramName) const
-{
-    return m_WUExtraGlobalParamLocation[getWUInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
-{
-    return m_PSVarLocation[getPSInitialiser().getSnippet()->getVarIndex(var)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getPSExtraGlobalParamLocation(const std::string &paramName) const
-{
-    return m_PSExtraGlobalParamLocation[getPSInitialiser().getSnippet()->getExtraGlobalParamIndex(paramName)];
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const
-{
-    return m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
+    // If there are any variables or EGPs implemented in zero-copy mode return true
+    return (m_PSVarLocation.anyZeroCopy() || m_PSExtraGlobalParamLocation.anyZeroCopy()
+            || m_WUVarLocation.anyZeroCopy() || m_WUPreVarLocation.anyZeroCopy() 
+            || m_WUPostVarLocation.anyZeroCopy() || m_WUExtraGlobalParamLocation.anyZeroCopy());
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
@@ -315,10 +212,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
-        m_WUVarLocation(wumInitialiser.getVarInitialisers().size(), defaultVarLocation), m_WUPreVarLocation(wumInitialiser.getPreVarInitialisers().size(), defaultVarLocation), 
-        m_WUPostVarLocation(wumInitialiser.getPostVarInitialisers().size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wumInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_PSVarLocation(psmInitialiser.getVarInitialisers().size(), defaultVarLocation),  m_PSExtraGlobalParamLocation(psmInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_SparseConnectivityLocation(defaultSparseConnectivityLocation), m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
+        m_WUVarLocation(defaultVarLocation), m_WUPreVarLocation(defaultVarLocation), m_WUPostVarLocation(defaultVarLocation), m_WUExtraGlobalParamLocation(defaultExtraGlobalParamLocation), 
+        m_PSVarLocation(defaultVarLocation),  m_PSExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
@@ -1085,12 +980,12 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
     Utils::updateHash(getInSynLocation(), hash);
     Utils::updateHash(getDendriticDelayLocation(), hash);
     Utils::updateHash(getSparseConnectivityLocation(), hash);
-    Utils::updateHash(m_WUVarLocation, hash);
-    Utils::updateHash(m_WUPreVarLocation, hash);
-    Utils::updateHash(m_WUPostVarLocation, hash);
-    Utils::updateHash(m_PSVarLocation, hash);
-    Utils::updateHash(m_WUExtraGlobalParamLocation, hash);
-    Utils::updateHash(m_PSExtraGlobalParamLocation, hash);
+    m_WUVarLocation.updateHash(hash);
+    m_WUPreVarLocation.updateHash(hash);
+    m_WUPostVarLocation.updateHash(hash);
+    m_PSVarLocation.updateHash(hash);
+    m_WUExtraGlobalParamLocation.updateHash(hash);
+    m_PSExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
 }   // namespace GeNN

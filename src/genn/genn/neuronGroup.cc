@@ -102,26 +102,6 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, boo
 // ------------------------------------------------------------------------
 namespace GeNN
 {
-void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_VarLocation.at(getNeuronModel()->getVarIndex(varName)) = loc;
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    m_ExtraGlobalParamLocation.at(getNeuronModel()->getExtraGlobalParamIndex(paramName)) = loc;
-}
-//----------------------------------------------------------------------------
-VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
-{
-    return m_VarLocation.at(getNeuronModel()->getVarIndex(varName));
-}
-//----------------------------------------------------------------------------
-VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
-{
-    return m_ExtraGlobalParamLocation.at(getNeuronModel()->getExtraGlobalParamIndex(paramName));
-}
-//----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
@@ -225,18 +205,15 @@ bool NeuronGroup::isSpikeEventRequired() const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY)) {
-        return true;
-    }
-
-    // If there are any variables implemented in zero-copy mode return true
-    if(std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
+    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) 
+       || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY)
+       || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
     {
         return true;
     }
 
-    return false;
+    // If there are any variables implemented in zero-copy mode return true
+    return (m_VarLocation.anyZeroCopy() || m_ExtraGlobalParamLocation.anyZeroCopy());
 }
 
 //----------------------------------------------------------------------------
@@ -374,9 +351,9 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
-    m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_NumDelaySlots(1), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
+    m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
     // Validate names
@@ -397,11 +374,6 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     if (requiredDelay >= getNumDelaySlots()) {
         m_NumDelaySlots = requiredDelay + 1;
     }
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::setVarQueueRequired(const std::string &varName)
-{
-    m_VarQueueRequired[getNeuronModel()->getVarIndex(varName)] = true;
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::finalise(double dt)
@@ -547,8 +519,7 @@ void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInte
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
-    // Return flag corresponding to variable
-    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
+    return (m_VarQueueRequired.count(var) == 0) ? false : true;
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
@@ -647,8 +618,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
     Utils::updateHash(getPrevSpikeTimeLocation(), hash);
     Utils::updateHash(getSpikeEventTimeLocation(), hash);
     Utils::updateHash(getPrevSpikeEventTimeLocation(), hash);
-    Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    m_VarLocation.updateHash(hash);
+    m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
 }   // namespace GeNN

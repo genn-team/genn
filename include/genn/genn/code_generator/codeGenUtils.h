@@ -13,7 +13,7 @@
 #include "gennUtils.h"
 #include "neuronGroupInternal.h"
 #include "type.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // GeNN code generator includes
 #include "backendBase.h"

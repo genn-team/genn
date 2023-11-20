@@ -408,7 +408,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
             // If EGP is located on the host
-            const auto loc = VarLocation::HOST_DEVICE;//getArchetype().getExtraGlobalParamLocation(egp.name);
+            const auto loc = getArchetype().getExtraGlobalParamLocation(egp.name);
             if(loc & VarLocation::HOST) {
                 // Add pointer field to allow user code to access
                 const auto resolvedType = egp.type.resolve(getTypeContext());

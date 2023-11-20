@@ -9,6 +9,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -152,6 +153,15 @@ inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail
     for(const auto &v : map) {
         updateHash(v.first, hash);
         updateHash(v.second, hash);
+    }
+}
+
+//! Hash unordered sets of types which can, themselves, be hashed
+template<typename V>
+inline void updateHash(const std::unordered_set<V> set, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : set) {
+        updateHash(v, hash);
     }
 }
 

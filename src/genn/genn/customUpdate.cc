@@ -16,16 +16,6 @@
 //------------------------------------------------------------------------
 namespace GeNN
 {
-void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)] = loc;
-}
-//----------------------------------------------------------------------------
-VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
-{
-    return m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)];
-}
-//----------------------------------------------------------------------------
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
@@ -36,9 +26,8 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
                                    const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                    const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_Dims{0}
+    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(defaultVarLocation),
+    m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_Dims{0}
 {
     // Validate names
     Utils::validatePopName(name, "Custom update");
@@ -82,9 +71,7 @@ bool CustomUpdateBase::isInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isZeroCopyEnabled() const
 {
-    // If there are any variables implemented in zero-copy mode return true
-    return std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
-                       [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
+    return (m_VarLocation.anyZeroCopy() || m_ExtraGlobalParamLocation.anyZeroCopy());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isModelReduction() const
@@ -130,8 +117,8 @@ void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    m_VarLocation.updateHash(hash);
+    m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
 

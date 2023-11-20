@@ -8,7 +8,7 @@
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customConnectivityUpdateModels.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 //------------------------------------------------------------------------
 // GeNN::CustomConnectivityUpdate
@@ -26,15 +26,19 @@ public:
     //------------------------------------------------------------------------
     //! Set location of synaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setVarLocation(const std::string &varName, VarLocation loc);
+    void setVarLocation(const std::string &varName, VarLocation loc){ m_VarLocation.set(varName, loc); }
 
     //! Set location of presynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setPreVarLocation(const std::string &varName, VarLocation loc);
+    void setPreVarLocation(const std::string &varName, VarLocation loc){ m_PreVarLocation.set(varName, loc); }
 
     //! Set location of postsynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setPostVarLocation(const std::string &varName, VarLocation loc);
+    void setPostVarLocation(const std::string &varName, VarLocation loc){ m_PostVarLocation.set(varName, loc); }
+
+    //! Set location of extra global parameter
+    /*! This is ignored for simulations on hardware with a single memory space. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -55,13 +59,16 @@ public:
     const std::unordered_map<std::string, Models::VarReference> &getPostVarReferences() const{ return m_PostVarReferences;  }
 
     //! Get variable location for synaptic state variable
-    VarLocation getVarLocation(const std::string &varName) const;
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
 
     //! Get variable location for presynaptic state variable
-    VarLocation getPreVarLocation(const std::string &varName) const;
+    VarLocation getPreVarLocation(const std::string &varName) const{ return m_PreVarLocation.get(varName); }
     
     //! Get variable location for postsynaptic state variable
-    VarLocation getPostVarLocation(const std::string &varName) const;
+    VarLocation getPostVarLocation(const std::string &varName) const{ return m_PostVarLocation.get(varName); }
+
+    //! Get location of neuron model extra global parameter by name
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
     //! Is var init code required for any synaptic variables in this custom connectivity update group?
     bool isVarInitRequired() const;
@@ -140,12 +147,12 @@ private:
     std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
-    std::vector<VarLocation> m_PreVarLocation;
-    std::vector<VarLocation> m_PostVarLocation;
+    LocationContainer m_VarLocation;
+    LocationContainer m_PreVarLocation;
+    LocationContainer m_PostVarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
 
     const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     const std::unordered_map<std::string, Models::VarReference> m_PreVarReferences;

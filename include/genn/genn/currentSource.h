@@ -10,7 +10,7 @@
 // GeNN includes
 #include "currentSourceModels.h"
 #include "gennExport.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // Forward declarations
 namespace GeNN
@@ -33,12 +33,11 @@ public:
     // Public methods
     //------------------------------------------------------------------------
     //! Set location of current source state variable
-    void setVarLocation(const std::string &varName, VarLocation loc);
+    void setVarLocation(const std::string &varName, VarLocation loc) { m_VarLocation.set(varName, loc); }
 
     //! Set location of extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
-    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+    /*! This is ignored for simulations on hardware with a single memory space. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
 
     //! Set name of neuron input variable current source model will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -57,18 +56,10 @@ public:
     const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
 
     //! Get variable location for current source model state variable
-    VarLocation getVarLocation(const std::string &varName) const;
-
-    //! Get variable location for current source model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
 
     //! Get location of neuron model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
-
-    //! Get location of neuron model extra global parameter by omdex
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
     //! Get name of neuron input variable current source model will inject into
     /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -124,10 +115,10 @@ private:
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
 
     //! Name of neuron input variable current source will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */

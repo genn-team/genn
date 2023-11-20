@@ -10,7 +10,7 @@
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customUpdateModels.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 //------------------------------------------------------------------------
 // GeNN::CustomUpdateBase
@@ -28,7 +28,11 @@ public:
     //------------------------------------------------------------------------
     //! Set location of state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setVarLocation(const std::string &varName, VarLocation loc);
+    void setVarLocation(const std::string &varName, VarLocation loc){ m_VarLocation.set(varName, loc); }
+
+    //! Set location of extra global parameter
+    /*! This is ignored for simulations on hardware with a single memory space. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -45,7 +49,10 @@ public:
     const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
 
     //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(const std::string &varName) const;
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
+
+    //! Get location of neuron model extra global parameter by name
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
@@ -176,10 +183,10 @@ private:
     std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
 
     //! Tokens produced by scanner from update code
     std::vector<Transpiler::Token> m_UpdateCodeTokens;
@@ -234,7 +241,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
     Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
 

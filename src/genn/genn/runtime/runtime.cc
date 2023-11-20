@@ -372,7 +372,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         const auto &sparseConnectInit = s.second.getConnectivityInitialiser();
         for(const auto &egp : sparseConnectInit.getSnippet()->getExtraGlobalParams()) {
             const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
-            createArray(&s.second, egp.name + "SparseConnect", resolvedEGPType, 0, s.second.getSparseConnectivityExtraGlobalParamLocation(egp.name));
+            createArray(&s.second, egp.name + "SparseConnect", resolvedEGPType, 0, VarLocation::HOST_DEVICE);
         }
 
         // Loop through toeplitz connectivity initialiser EGPs        

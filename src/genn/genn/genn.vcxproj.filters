@@ -90,7 +90,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varLocation.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
     <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />

@@ -26,7 +26,7 @@ extern "C"
 #include "modelSpecInternal.h"
 #include "type.h"
 #include "varAccess.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"

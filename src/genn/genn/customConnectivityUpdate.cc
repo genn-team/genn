@@ -42,36 +42,6 @@ void updateVarRefDelayHash(const NeuronGroup *delayGroup, const std::unordered_m
 //------------------------------------------------------------------------
 // CustomConnectivityUpdate
 //------------------------------------------------------------------------
-void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)] = loc;
-}
-//------------------------------------------------------------------------
-void CustomConnectivityUpdate::setPreVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)] = loc;
-}
-//------------------------------------------------------------------------
-void CustomConnectivityUpdate::setPostVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)] = loc;
-}
-//------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdate::getVarLocation(const std::string &varName) const
-{
-    return m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)];
-}
-//------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdate::getPreVarLocation(const std::string &varName) const
-{
-    return m_PreVarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)];
-}
-//------------------------------------------------------------------------
-VarLocation CustomConnectivityUpdate::getPostVarLocation(const std::string &varName) const
-{
-    return m_PostVarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)];
-}
-//------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
@@ -99,10 +69,9 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
                                                    VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_SynapseGroup(synapseGroup), m_CustomConnectivityUpdateModel(customConnectivityUpdateModel),
     m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
-    m_VarLocation(varInitialisers.size(), defaultVarLocation), m_PreVarLocation(preVarInitialisers.size(), defaultVarLocation), m_PostVarLocation(postVarInitialisers.size(), defaultVarLocation), 
-    m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences),
-    m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
+    m_VarLocation(defaultVarLocation), m_PreVarLocation(defaultVarLocation), m_PostVarLocation(defaultVarLocation), 
+    m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), 
+    m_PostVarReferences(postVarReferences), m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
 {
     
     // Validate names
@@ -204,28 +173,9 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isZeroCopyEnabled() const
 {
-    // If there are any synaptic variables implemented in zero-copy mode return true
-    if (std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
-                    [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    // If there are any presynaptic variables implemented in zero-copy mode return true
-    if (std::any_of(m_PreVarLocation.begin(), m_PreVarLocation.end(),
-                    [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    // If there are any presynaptic variables implemented in zero-copy mode return true
-    if (std::any_of(m_PostVarLocation.begin(), m_PostVarLocation.end(),
-                    [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    return false;
+    // If there are any variables or EGPs implemented in zero-copy mode return true
+    return (m_VarLocation.anyZeroCopy() || m_PreVarLocation.anyZeroCopy() 
+            || m_PostVarLocation.anyZeroCopy() || m_ExtraGlobalParamLocation.anyZeroCopy());
 }
 //------------------------------------------------------------------------
 std::vector<Models::WUVarReference> CustomConnectivityUpdate::getDependentVariables() const
@@ -362,10 +312,10 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getInitHashDig
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getVarLocationHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_PreVarLocation, hash);
-    Utils::updateHash(m_PostVarLocation, hash);
-    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    m_VarLocation.updateHash(hash);
+    m_PreVarLocation.updateHash(hash);
+    m_PostVarLocation.updateHash(hash);
+    m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
 //------------------------------------------------------------------------

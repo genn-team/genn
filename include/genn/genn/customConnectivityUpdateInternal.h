@@ -62,7 +62,7 @@ public:
     const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
-
+     
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -145,7 +145,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
     Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
 
