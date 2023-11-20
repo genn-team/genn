@@ -559,6 +559,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
+    m_DynamicParams.updateHash(hash);
 
     // Update hash with hash list built from current sources
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
