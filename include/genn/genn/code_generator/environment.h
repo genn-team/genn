@@ -560,7 +560,7 @@ public:
             // If parameter is dynamic or heterogeneous, add scalar field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            const bool dynamic = isDynamic.value() ? std::invoke(*isDynamic, this->getGroup().getArchetype(), p.name) : false;
+            const bool dynamic = isDynamic ? std::invoke(*isDynamic, this->getGroup().getArchetype(), p.name) : false;
             if (dynamic || std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
