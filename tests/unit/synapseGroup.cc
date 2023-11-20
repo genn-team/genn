@@ -50,52 +50,18 @@ public:
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 
-class STDPAdditiveEGPWMinMax : public WeightUpdateModels::Base
+class STDPAdditiveSpikeParam : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_SNIPPET(STDPAdditiveEGPWMinMax);
-    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus"});
-    SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
-        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
-    SET_VARS({{"g", "scalar"}});
-    SET_PRE_VARS({{"preTrace", "scalar"}});
-    SET_POST_VARS({{"postTrace", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"Wmin", "scalar"}, {"Wmax", "scalar"}});
-    
-    SET_SIM_CODE(
-        "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
-        "if (dt > 0) {\n"
-        "    const scalar newWeight = g - (Aminus * postTrace);\n"
-        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
-        "}\n");
-    SET_LEARN_POST_CODE(
-        "const scalar dt = t - sT_pre;\n"
-        "if (dt > 0) {\n"
-        "    const scalar newWeight = g + (Aplus * preTrace);\n"
-        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
-        "}\n");
-    SET_PRE_SPIKE_CODE("preTrace += 1.0;\n");
-    SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
-    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
-};
-IMPLEMENT_SNIPPET(STDPAdditiveEGPWMinMax);
-
-class STDPAdditiveEGPSpike : public WeightUpdateModels::Base
-{
-public:
-    DECLARE_SNIPPET(STDPAdditiveEGPSpike);
+    DECLARE_SNIPPET(STDPAdditiveSpikeParam);
     SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
-                     "Wmin", "Wmax"});
+                "Wmin", "Wmax", "S"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"S", "scalar"}});
     
     SET_SIM_CODE(
         "addToPost(g);\n"
@@ -110,22 +76,21 @@ public:
         "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
         "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += $(S);\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += $(S);\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += S;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += S;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= tauMinusDecay;\n");
 };
-IMPLEMENT_SNIPPET(STDPAdditiveEGPSpike);
+IMPLEMENT_SNIPPET(STDPAdditiveSpikeParam);
 
-class STDPAdditiveEGPDynamics : public WeightUpdateModels::Base
+class STDPAdditiveDecayParam : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_SNIPPET(STDPAdditiveEGPDynamics);
-    SET_PARAMS({"Aplus", "Aminus", "Wmin", "Wmax"});
+    DECLARE_SNIPPET(STDPAdditiveDecayParam);
+    SET_PARAMS({"Aplus", "Aminus", "Wmin", "Wmax", "tauPlusDecay", "tauMinusDecay"});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"tauPlusDecay", "scalar"}, {"tauMinusDecay", "scalar"}});
     
     SET_SIM_CODE(
         "addToPost(g);\n"
@@ -142,10 +107,10 @@ public:
         "}\n");
     SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
     SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= tauMinusDecay;\n");
 };
-IMPLEMENT_SNIPPET(STDPAdditiveEGPDynamics);
+IMPLEMENT_SNIPPET(STDPAdditiveDecayParam);
 
 class Continuous : public WeightUpdateModels::Base
 {
@@ -1047,8 +1012,8 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    ParamValues wumEGPWMinMaxParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}};
-    ParamValues wumEGPDynamicsParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    ParamValues wumSpikeParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}, {"S", 1.0}};
+    ParamValues wumDecayParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}, {"tauPlusDecay", 0.9}, {"tauMinusDecay", 0.9}};
     VarValues wumVarVals{{"g", 0.0}};
     VarValues wumConstPreVarVals{{"preTrace", 0.0}};
     VarValues wumNonConstPreVarVals{{"preTrace", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})}};
@@ -1066,29 +1031,34 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumNonConstPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
-    auto *egpWMinMax = model.addSynapsePopulation(
-        "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE, NO_DELAY,
+    auto *dynamicWMinMax = model.addSynapsePopulation(
+        "Pre_Post_DynamicWMinMax", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPWMinMax>(wumEGPWMinMaxParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
+        initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
-    /*auto *egpSpike = model.addSynapsePopulation(
-        "Pre_Post_EGPSpike", SynapseMatrixType::DENSE, NO_DELAY,
+    dynamicWMinMax->setWUParamDynamic("Wmin", true);
+    dynamicWMinMax->setWUParamDynamic("Wmax", true);
+
+    auto *dynamicSpike = model.addSynapsePopulation(
+        "Pre_Post_DynamicSpike", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPSpike>(wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
+        initWeightUpdate<STDPAdditiveSpikeParam>(wumSpikeParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
-    auto *egpDynamics = model.addSynapsePopulation(
-        "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE, NO_DELAY,
+    dynamicSpike->setWUParamDynamic("S", true);
+
+    auto *dynamicDecay = model.addSynapsePopulation(
+        "Pre_Post_DynamicDecay", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPDynamics>(wumEGPDynamicsParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
-        initPostsynaptic<PostsynapticModels::DeltaCurr>());*/
+        initWeightUpdate<STDPAdditiveDecayParam>(wumDecayParams, wumVarVals, wumConstPreVarVals, wumPostVarVals),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
+    dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
     ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeFused());
     ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeFused());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPreUpdateBeFused());
-    //ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPreUpdateBeFused());
-    //ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPreUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPreUpdateBeFused());
 }
 
 TEST(SynapseGroup, CanWUMPostUpdateBeFused)
@@ -1102,8 +1072,8 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    ParamValues wumEGPWMinMaxParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}};
-    ParamValues wumEGPDynamicsParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    ParamValues wumSpikeParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}, {"S", 1.0}};
+    ParamValues wumDecayParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}, {"tauPlusDecay", 0.9}, {"tauMinusDecay", 0.9}};
     VarValues wumVarVals{{"g", 0.0}};
     VarValues wumPreVarVals{{"preTrace", 0.0}};
     VarValues wumConstPostVarVals{{"postTrace", 0.0}};
@@ -1121,29 +1091,34 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumNonConstPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
-    auto *egpWMinMax = model.addSynapsePopulation(
-        "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE, NO_DELAY,
+    auto *dynamicWMinMax = model.addSynapsePopulation(
+        "Pre_Post_DynamicWMinMax", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPWMinMax>(wumEGPWMinMaxParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
+        initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
-    auto *egpSpike = model.addSynapsePopulation(
-        "Pre_Post_EGPSpike", SynapseMatrixType::DENSE, NO_DELAY,
+    dynamicWMinMax->setWUParamDynamic("Wmin", true);
+    dynamicWMinMax->setWUParamDynamic("Wmax", true);
+
+    auto *dynamicSpike = model.addSynapsePopulation(
+        "Pre_Post_DynamicSpike", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPSpike>(wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
+        initWeightUpdate<STDPAdditiveSpikeParam>(wumSpikeParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
-    auto *egpDynamics = model.addSynapsePopulation(
-        "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE, NO_DELAY,
+    dynamicSpike->setWUParamDynamic("S", true);
+
+    auto *dynamicDecay = model.addSynapsePopulation(
+        "Pre_Post_DynamicDecay", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        initWeightUpdate<STDPAdditiveEGPDynamics>(wumEGPDynamicsParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
+        initWeightUpdate<STDPAdditiveDecayParam>(wumDecayParams, wumVarVals, wumPreVarVals, wumConstPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
+    dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
     ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeFused());
     ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeFused());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPostUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPostUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPostUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPostUpdateBeFused());
 }
 
 TEST(SynapseGroup, InvalidPSOutputVar)
