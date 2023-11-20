@@ -340,9 +340,13 @@ private:
 
     //! Map of arrays to their locations within merged structures
     // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
-    typedef std::unordered_multimap<std::string, MergedDynamicField> MergedDynamicArrayDestinations;
-    typedef std::map<const ArrayBase*, MergedDynamicArrayDestinations> MergedDynamicArrayMap;
-
+    // **THINK** why is the outer one unordered? pointers hash fine?
+    typedef std::unordered_multimap<std::string, MergedDynamicField> MergedDynamicFieldDestinations;
+    typedef std::map<const ArrayBase*, MergedDynamicFieldDestinations> MergedDynamicArrayMap;
+    
+    //! Map of groups to names of dynamic parameters and their destinations
+    template<typename G>
+    using MergedDynamicParameterMap = std::unordered_map<const G*, std::unordered_map<std::string, MergedDynamicFieldDestinations>>;
     
     //----------------------------------------------------------------------------
     // Private API
@@ -394,6 +398,36 @@ private:
                     varName, type, count, location, uninitialized);
     }
 
+    //! Get dynamic field destinations associated with current source parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CurrentSource &group, const std::string &paramName)
+    {
+        return m_CurrentSourceDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with neuron group parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const NeuronGroup &group, const std::string &paramName)
+    {
+        return m_NeuronGroupDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with synapse group parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const SynapseGroup &group, const std::string &paramName)
+    {
+        return m_SynapseGroupDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with custom update parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomUpdateBase &group, const std::string &paramName)
+    {
+        return m_CustomUpdateDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with custom connectivity update parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomConnectivityUpdate &group, const std::string &paramName)
+    {
+        return m_CustomConnectivityUpdateDynamicParameters[&group][paramName];
+    }
+
     BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
 
     void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
@@ -407,17 +441,30 @@ private:
             if((std::get<3>(f) & CodeGenerator::GroupMergedFieldType::DYNAMIC)) {
                 // Loop through groups within newly-created merged group
                 for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
-                    const auto &g = mergedGroup.getGroups()[groupIndex];
-
-                    // Add reference to this group's variable to data structure
-                    // **NOTE** this works fine with EGP references because the function to
-                    // get their value will just return the array associated with the referenced EGP
-                    const auto *array = std::get<const ArrayBase*>(std::get<2>(f)(*this, g, groupIndex));
-                    m_MergedDynamicArrays[array].emplace(
-                        std::piecewise_construct,
-                        std::forward_as_tuple(G::name),
-                        std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
-                                              std::get<1>(f), std::get<3>(f)));
+                    auto g = mergedGroup.getGroups()[groupIndex];
+                    std::visit(
+                        Utils::Overload{
+                            // If field contains an array
+                            [&f, &mergedGroup, groupIndex, this](const ArrayBase *array) 
+                            { 
+                                // Add reference to this group's variable to data structure
+                                // **NOTE** this works fine with EGP references because the function to
+                                // get their value will just return the array associated with the referenced EGP
+                                m_MergedDynamicArrays[array].emplace(
+                                    std::piecewise_construct,
+                                    std::forward_as_tuple(G::name),
+                                    std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
+                                                          std::get<1>(f), std::get<3>(f)));
+                            },
+                            // Otherwise, if it contains a parameter value
+                            [&f, &g, this](const Type::NumericValue &value) 
+                            {
+                                // Use overloading on &g to call function to add to correct
+                                assert(false);
+                                //mergedDynamicParams[&g]
+                            }},
+                        std::get<2>(f)(*this, g, groupIndex));
+                    
                 }
             }
         }
@@ -620,6 +667,13 @@ private:
     GroupArrayMap<SynapseGroup> m_SynapseGroupArrays;
     GroupArrayMap<CustomUpdateBase> m_CustomUpdateArrays;
     GroupArrayMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateArrays;
+
+    //! Maps of dynamic parameters in populations to their locations within merged groups
+    MergedDynamicParameterMap<CurrentSource> m_CurrentSourceDynamicParameters;
+    MergedDynamicParameterMap<NeuronGroup> m_NeuronGroupDynamicParameters;
+    MergedDynamicParameterMap<SynapseGroup> m_SynapseGroupDynamicParameters;
+    MergedDynamicParameterMap<CustomUpdateBase> m_CustomUpdateDynamicParameters;
+    MergedDynamicParameterMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateDynamicParameters;
 
     VoidFunction m_AllocateMem;
     VoidFunction m_FreeMem;
