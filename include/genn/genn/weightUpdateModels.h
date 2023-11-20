@@ -103,13 +103,13 @@ public:
     //! Find the named presynaptic variable
     std::optional<Var> getPreVar(const std::string &varName) const
     {
-        return getNamed(varName, getVars());
+        return getNamed(varName, getPreVars());
     }
 
     //! Find the named postsynaptic variable
     std::optional<Var> getPostVar(const std::string &varName) const
     {
-        return getNamed(varName, getVars());
+        return getNamed(varName, getPostVars());
     }
 
     //! Update hash from model

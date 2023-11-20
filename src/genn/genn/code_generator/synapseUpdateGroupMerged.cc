@@ -291,6 +291,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 {
     boost::uuids::detail::sha1 hash;
 
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getWUHashDigest(), hash);
+
     // Update hash with number of neurons in pre and postsynaptic population
     updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
     updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
