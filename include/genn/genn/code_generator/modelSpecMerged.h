@@ -280,7 +280,6 @@ public:
                     // Add reference to this group's variable to data structure
                     // **NOTE** this works fine with EGP references because the function to
                     // get their value will just return the name of the referenced EGP
-                    assert(std::get<0>(f).isPointer());
                     os << "void pushMerged" << T::name << g << std::get<1>(f) << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value)";
                     {
                         CodeStream::Scope b(os);
