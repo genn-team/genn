@@ -102,6 +102,30 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, boo
 // ------------------------------------------------------------------------
 namespace GeNN
 {
+void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getNeuronModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown neuron model variable '" + varName + "'");
+    }
+    m_VarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getNeuronModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown neuron model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void NeuronGroup::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getNeuronModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown neuron model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true

@@ -101,12 +101,14 @@ public:
 
     //! Set variable location of neuron model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setVarLocation(const std::string &varName, VarLocation loc) { m_VarLocation.set(varName, loc); }
-
+    void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of neuron model extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space. */
-    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic);
 
     //! Enables and disable spike recording for this population
     void setSpikeRecordingEnabled(bool enabled) { m_SpikeRecordingEnabled = enabled; }
@@ -162,6 +164,9 @@ public:
 
     //! Get location of neuron model extra global parameter by name
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const { return m_ExtraGlobalParamLocation.get(paramName); }
+
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParameterDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is spike recording enabled for this population?
     bool isSpikeRecordingEnabled() const { return m_SpikeRecordingEnabled; }
@@ -316,6 +321,9 @@ private:
 
     //! Location of extra global parameters
     LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     //! Tokens produced by scanner from simc ode
     std::vector<Transpiler::Token> m_SimCodeTokens;

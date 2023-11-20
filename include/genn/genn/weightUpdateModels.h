@@ -94,22 +94,22 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamed(varName, getVars());
     }
 
-    //! Find the index of a named presynaptic variable
-    size_t getPreVarIndex(const std::string &varName) const
+    //! Find the named presynaptic variable
+    std::optional<Var> getPreVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getPreVars());
+        return getNamed(varName, getVars());
     }
 
-    //! Find the index of a named postsynaptic variable
-    size_t getPostVarIndex(const std::string &varName) const
+    //! Find the named postsynaptic variable
+    std::optional<Var> getPostVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getPostVars());
+        return getNamed(varName, getVars());
     }
 
     //! Update hash from model

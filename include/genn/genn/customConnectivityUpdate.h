@@ -26,19 +26,22 @@ public:
     //------------------------------------------------------------------------
     //! Set location of synaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setVarLocation(const std::string &varName, VarLocation loc){ m_VarLocation.set(varName, loc); }
+    void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of presynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setPreVarLocation(const std::string &varName, VarLocation loc){ m_PreVarLocation.set(varName, loc); }
+    void setPreVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of postsynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setPostVarLocation(const std::string &varName, VarLocation loc){ m_PostVarLocation.set(varName, loc); }
+    void setPostVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space. */
-    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -69,6 +72,9 @@ public:
 
     //! Get location of neuron model extra global parameter by name
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
+
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParameterDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is var init code required for any synaptic variables in this custom connectivity update group?
     bool isVarInitRequired() const;
@@ -153,6 +159,9 @@ private:
 
     //! Location of extra global parameters
     LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     const std::unordered_map<std::string, Models::VarReference> m_PreVarReferences;

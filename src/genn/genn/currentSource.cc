@@ -13,6 +13,30 @@
 //------------------------------------------------------------------------
 namespace GeNN
 {
+void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCurrentSourceModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown current source model variable '" + varName + "'");
+    }
+    m_VarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getCurrentSourceModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown current source model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void CurrentSource::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getCurrentSourceModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown current source model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
+}
+//----------------------------------------------------------------------------
 void CurrentSource::setTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store

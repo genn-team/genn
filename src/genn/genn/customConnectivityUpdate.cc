@@ -42,6 +42,46 @@ void updateVarRefDelayHash(const NeuronGroup *delayGroup, const std::unordered_m
 //------------------------------------------------------------------------
 // CustomConnectivityUpdate
 //------------------------------------------------------------------------
+void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCustomConnectivityUpdateModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown custom connectivity update model variable '" + varName + "'");
+    }
+    m_VarLocation.set(varName, loc); 
+}
+//------------------------------------------------------------------------
+void CustomConnectivityUpdate::setPreVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCustomConnectivityUpdateModel()->getPreVar(varName)) {
+        throw std::runtime_error("Unknown custom connectivity update model presynaptic variable '" + varName + "'");
+    }
+    m_PreVarLocation.set(varName, loc); 
+}
+//------------------------------------------------------------------------
+void CustomConnectivityUpdate::setPostVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCustomConnectivityUpdateModel()->getPostVar(varName)) {
+        throw std::runtime_error("Unknown custom connectivity update model postsynaptic variable '" + varName + "'");
+    }
+    m_PostVarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityUpdate::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getCustomConnectivityUpdateModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown custom connectivity update model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityUpdate::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getCustomConnectivityUpdateModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown custom connectivity update model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
+}
+//------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),

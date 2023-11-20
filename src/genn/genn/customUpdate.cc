@@ -16,6 +16,31 @@
 //------------------------------------------------------------------------
 namespace GeNN
 {
+//------------------------------------------------------------------------
+void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCustomUpdateModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown custom update model variable '" + varName + "'");
+    }
+    m_VarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void CustomUpdateBase::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getCustomUpdateModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown custom update model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void CustomUpdateBase::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getCustomUpdateModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown custom update model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
+}
+//------------------------------------------------------------------------
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),

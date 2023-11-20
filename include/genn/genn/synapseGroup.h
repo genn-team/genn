@@ -48,27 +48,33 @@ public:
     //------------------------------------------------------------------------
     //! Set location of weight update model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setWUVarLocation(const std::string &varName, VarLocation loc){ m_WUVarLocation.set(varName, loc); }
+    void setWUVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of weight update model presynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setWUPreVarLocation(const std::string &varName, VarLocation loc){ m_WUPreVarLocation.set(varName, loc); }
+    void setWUPreVarLocation(const std::string &varName, VarLocation loc);
     
     //! Set location of weight update model postsynaptic state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setWUPostVarLocation(const std::string &varName, VarLocation loc){ m_WUPostVarLocation.set(varName, loc); }
+    void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
     //! Set location of weight update model extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space. */
-    void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc){ m_WUExtraGlobalParamLocation.set(paramName, loc); }
+    void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of postsynaptic model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setPSVarLocation(const std::string &varName, VarLocation loc){ m_PSVarLocation.set(varName, loc); }
+    void setPSVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of postsynaptic model extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space. */
-    void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc){ m_PSExtraGlobalParamLocation.set(paramName, loc); }
+    void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
+    void setWUParamDynamic(const std::string &paramName, bool dynamic);
+
+    //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
+    void setPSParamDynamic(const std::string &paramName, bool dynamic);
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
@@ -143,6 +149,30 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
+    //! Get location of weight update model per-synapse state variable by name
+    VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
+
+    //! Get location of weight update model presynaptic state variable by name
+    VarLocation getWUPreVarLocation(const std::string &varName) const{ return m_WUPreVarLocation.get(varName); }
+
+    //! Get location of weight update model postsynaptic state variable by name
+    VarLocation getWUPostVarLocation(const std::string &varName) const{ return m_WUPostVarLocation.get(varName); }
+
+    //! Get location of weight update model extra global parameter by name
+    VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const{ return m_WUExtraGlobalParamLocation.get(paramName); }
+
+    //! Get location of postsynaptic model state variable
+    VarLocation getPSVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
+
+    //! Get location of postsynaptic model extra global parameter by name
+    VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const{ return m_PSExtraGlobalParamLocation.get(paramName); }
+
+    //! Is postsynaptic model parameter dynamic i.e. it can be changed at runtime
+    bool isPSParameterDynamic(const std::string &paramName) const{ return m_PSDynamicParams.get(paramName); }
+
+    //! Is weight update model parameter dynamic i.e. it can be changed at runtime
+    bool isWUParameterDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
+
     //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;
 
@@ -175,24 +205,7 @@ public:
 
     bool isZeroCopyEnabled() const;
 
-    //! Get location of weight update model per-synapse state variable by name
-    VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
-
-    //! Get location of weight update model presynaptic state variable by name
-    VarLocation getWUPreVarLocation(const std::string &varName) const{ return m_WUPreVarLocation.get(varName); }
-
-    //! Get location of weight update model postsynaptic state variable by name
-    VarLocation getWUPostVarLocation(const std::string &varName) const{ return m_WUPostVarLocation.get(varName); }
-
-    //! Get location of weight update model extra global parameter by name
-    VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const{ return m_WUExtraGlobalParamLocation.get(paramName); }
-
-    //! Get location of postsynaptic model state variable
-    VarLocation getPSVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
-
-    //! Get location of postsynaptic model extra global parameter by name
-    VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const{ return m_PSExtraGlobalParamLocation.get(paramName); }
-
+   
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     const std::string &getPostTargetVar() const{ return m_PostTargetVar; }
@@ -382,6 +395,7 @@ protected:
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
     
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -463,10 +477,16 @@ private:
     LocationContainer m_PSVarLocation;
 
     //! Location of postsynaptic model extra global parameters
-   LocationContainer m_PSExtraGlobalParamLocation;
+    LocationContainer m_PSExtraGlobalParamLocation;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
+
+    //! Data structure tracking whether postsynaptic model parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_PSDynamicParams;
+
+    //! Data structure tracking whether weight update model parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_WUDynamicParams;
 
     //! Suffix for postsynaptic model variable names
     /*! This may not be the name of this synapse group if it has been fused */

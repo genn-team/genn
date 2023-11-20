@@ -33,11 +33,14 @@ public:
     // Public methods
     //------------------------------------------------------------------------
     //! Set location of current source state variable
-    void setVarLocation(const std::string &varName, VarLocation loc) { m_VarLocation.set(varName, loc); }
+    void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space. */
-    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) { m_ExtraGlobalParamLocation.set(paramName, loc); }
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic);
 
     //! Set name of neuron input variable current source model will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -60,6 +63,9 @@ public:
 
     //! Get location of neuron model extra global parameter by name
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
+
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParameterDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Get name of neuron input variable current source model will inject into
     /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -119,6 +125,9 @@ private:
 
     //! Location of extra global parameters
     LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     //! Name of neuron input variable current source will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */

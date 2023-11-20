@@ -14,7 +14,7 @@ Base::EGP::EGP(const std::string &n, const std::string &t)
 {
 }
 
- //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
@@ -43,6 +43,28 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
             throw std::runtime_error(description + " missing value for parameter: '" + n.name + "'");
         }
     }
+}
+
+//----------------------------------------------------------------------------
+// GeNN::Snippet::DynamicParameterContainer
+//----------------------------------------------------------------------------
+void DynamicParameterContainer::set(const std::string &name, bool value)
+{
+    // If we're setting, insert name into set
+    // **NOTE** we don't care if it's there already
+    if(value) {
+        m_Dynamic.insert(name);
+    }
+    // Otherwise, remove
+    // **NOTE** again, we don't care if it's there already
+    else {
+        m_Dynamic.erase(name);
+    }
+}
+//----------------------------------------------------------------------------
+bool DynamicParameterContainer::get(const std::string &name) const
+{
+    return (m_Dynamic.count(name) == 0) ? false : true;
 }
 
 //----------------------------------------------------------------------------

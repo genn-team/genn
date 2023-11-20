@@ -17,6 +17,70 @@
 // ------------------------------------------------------------------------
 namespace GeNN
 {
+void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getWUInitialiser().getSnippet()->getVar(varName)) {
+        throw std::runtime_error("Unknown weight update model variable '" + varName + "'");
+    }
+    m_WUVarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getWUInitialiser().getSnippet()->getPreVar(varName)) {
+        throw std::runtime_error("Unknown weight update model presynaptic variable '" + varName + "'");
+    }
+    m_WUPreVarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getWUInitialiser().getSnippet()->getPostVar(varName)) {
+        throw std::runtime_error("Unknown weight update model postsynaptic variable '" + varName + "'");
+    }
+    m_WUPostVarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getWUInitialiser().getSnippet()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown weight update model extra global parameter '" + paramName + "'");
+    }
+    m_WUExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getPSInitialiser().getSnippet()->getVar(varName)) {
+        throw std::runtime_error("Unknown postsynaptic model variable '" + varName + "'");
+    }
+    m_PSVarLocation.set(varName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getPSInitialiser().getSnippet()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown postsynaptic model extra global parameter '" + paramName + "'");
+    }
+    m_PSExtraGlobalParamLocation.set(paramName, loc); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setPSParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getPSInitialiser().getSnippet()->getParam(paramName)) {
+        throw std::runtime_error("Unknown postsynaptic model parameter '" + paramName + "'");
+    }
+    m_PSDynamicParams.set(paramName, dynamic); 
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setWUParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getWUInitialiser().getSnippet()->getParam(paramName)) {
+        throw std::runtime_error("Unknown weight update model parameter '" + paramName + "'");
+    }
+    m_WUDynamicParams.set(paramName, dynamic); 
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setPostTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store

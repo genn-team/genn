@@ -143,57 +143,49 @@ bool VarReference::operator < (const VarReference &other) const
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
 {
     const auto *nm = ng->getNeuronModel();
-    return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), 
-                              nm->getVars()[nm->getVarIndex(varName)]});
+    return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), nm->getVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &varName)
 {
     const auto *csm = cs->getCurrentSourceModel();
-    return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs),
-                              csm->getVars()[csm->getVarIndex(varName)]});
+    return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs), csm->getVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &varName)
 {
     const auto *cum = cu->getCustomUpdateModel();
-    return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu),
-                              cum->getVars()[cum->getVarIndex(varName)]});
+    return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu), cum->getVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                  ccum->getPreVars()[ccum->getPreVarIndex(varName)]});
+    return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPreVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                   ccum->getPostVars()[ccum->getPostVarIndex(varName)]});
+    return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPostVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *psm = sg->getPSInitialiser().getSnippet();
-    return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg),
-                               psm->getVars()[psm->getVarIndex(varName)]});
+    return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg), psm->getVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg),
-                                 wum->getPreVars()[wum->getPreVarIndex(varName)]});
+    return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg), wum->getPreVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
-                                  wum->getPostVars()[wum->getPostVarIndex(varName)]});
+    return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg), wum->getPostVar(varName).value()});
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -348,30 +340,27 @@ WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std:
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
-    const auto var = wum->getVars()[wum->getVarIndex(varName)];
+    const auto var = wum->getVar(varName).value();
     if(transposeSG) {
         const auto *transposeWUM = transposeSG->getWUInitialiser().getSnippet();
         return WUVarReference(WURef{sgInternal, static_cast<SynapseGroupInternal*>(transposeSG),
-                                    var, transposeWUM->getVars()[transposeWUM->getVarIndex(transposeVarName)]});
+                                    var, transposeWUM->getVar(transposeVarName).value()});
     }
     else {
-        return WUVarReference(WURef{static_cast<SynapseGroupInternal*>(sg), nullptr,
-                                    var, std::nullopt});
+        return WUVarReference(WURef{static_cast<SynapseGroupInternal*>(sg), nullptr, var, std::nullopt});
     }
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const std::string &varName)
 {
     const auto *cum = cu->getCustomUpdateModel();
-    return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu),
-                                cum->getVars()[cum->getVarIndex(varName)]});
+    return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu), cum->getVar(varName).value()});
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                 ccum->getVars()[ccum->getVarIndex(varName)]});
+    return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getVar(varName).value()});
 }
 //------------------------------------------------------------------------
 WUVarReference::WUVarReference(const DetailType &detail)
@@ -497,37 +486,37 @@ const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &r
 EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     const auto *nm = ng->getNeuronModel();
-    return EGPReference(NGRef{ng, nm->getExtraGlobalParams()[nm->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(NGRef{ng, nm->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
     const auto *cm = cs->getCurrentSourceModel();
-    return EGPReference(CSRef{cs, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(CSRef{cs, cm->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
     const auto *cm = cu->getCustomUpdateModel();
-    return EGPReference(CURef{cu, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(CURef{cu, cm->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
     const auto *cm = cu->getCustomUpdateModel();
-    return EGPReference(CUWURef{cu, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(CUWURef{cu, cm->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     const auto *psm = sg->getPSInitialiser().getSnippet();
-    return EGPReference(PSMRef{sg, psm->getExtraGlobalParams()[psm->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(PSMRef{sg, psm->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return EGPReference(WURef{sg, wum->getExtraGlobalParams()[wum->getExtraGlobalParamIndex(egpName)]});
+    return EGPReference(WURef{sg, wum->getExtraGlobalParam(egpName).value()});
 }
 //----------------------------------------------------------------------------
 const std::string &EGPReference::getEGPName() const

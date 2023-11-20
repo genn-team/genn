@@ -3,8 +3,10 @@
 // Standard C++ includes
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // Standard C includes
@@ -153,10 +155,15 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Find the index of a named extra global parameter
-    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    //! Find the named parameter
+    std::optional<Param> getParam(const std::string &paramName) const
     {
-        return getNamedVecIndex(paramName, getExtraGlobalParams());
+        return getNamed(paramName, getParams());
+    }
+    //! Find the named extra global parameter
+    std::optional<EGP> getExtraGlobalParam(const std::string &paramName) const
+    {
+        return getNamed(paramName, getExtraGlobalParams());
     }
 
 protected:
@@ -172,17 +179,16 @@ protected:
     // Protected static helpers
     //------------------------------------------------------------------------
     template<typename T>
-    static size_t getNamedVecIndex(const std::string &name, const std::vector<T> &vec)
+    static std::optional<T> getNamed(const std::string &name, const std::vector<T> &vec)
     {
         auto iter = std::find_if(vec.begin(), vec.end(),
             [name](const T &v){ return (v.name == name); });
-
-        if(iter == vec.end()) {
-            throw std::runtime_error("Cannot find variable '" + name + "'");
+        if(iter == vec.cend()) {
+            return std::nullopt;
         }
-
-        // Return 'distance' between first entry in vector and iterator i.e. index
-        return distance(vec.begin(), iter);
+        else {
+            return *iter;
+        }
     }
 };
 
@@ -230,6 +236,20 @@ private:
     const SnippetBase *m_Snippet;
     std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::Snippet::DynamicParameterContainer
+//----------------------------------------------------------------------------
+class DynamicParameterContainer
+{
+public:
+    void set(const std::string &name, bool value);
+    bool get(const std::string &name) const;
+
+private:
+    const Base *m_Snippet;
+    std::unordered_set<std::string> m_Dynamic;
 };
 
 //----------------------------------------------------------------------------
