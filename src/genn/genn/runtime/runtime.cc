@@ -795,6 +795,42 @@ void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, co
     }
 }
 //----------------------------------------------------------------------------
+void Runtime::setDynamicParam(const MergedDynamicFieldDestinations &mergedDestinations, 
+                              const Type::NumericValue &value)
+{
+    // **HACK**
+    Type::ResolvedType type = Type::Float;
+
+    std::vector<std::byte> valueStorage;
+    Type::serialiseNumeric(value, type, valueStorage);
+
+    // Build FFI arguments
+    // **TODO** allow backend to override type
+    ffi_type *argumentTypes[2]{&ffi_type_uint, type.getFFIType()};
+
+    // Prepare an FFI Call InterFace for calls to push merged
+    // **TODO** cache - these are the same for all calls with same datatype
+    ffi_cif cif;
+    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 2,
+                                     &ffi_type_void, argumentTypes);
+    if (status != FFI_OK) {
+        throw std::runtime_error("ffi_prep_cif failed: " + std::to_string(status));
+    }
+    
+    // Loop through merged destinations of this array
+    for(const auto &d : mergedDestinations.getDestinationFields()) {
+        // Get push function
+        // **TODO** cache in structure instead of mergedGroup and fieldName
+        void *pushFunction = getSymbol("pushMerged" + d.first + std::to_string(d.second.mergedGroupIndex) 
+                                       + d.second.fieldName + "ToDevice");
+
+        // Call function
+        unsigned int groupIndex = d.second.groupIndex;
+        void *argumentPointers[2]{&groupIndex, valueStorage.data()};
+        ffi_call(&cif, FFI_FN(pushFunction), nullptr, argumentPointers);
+    }
+}
+//----------------------------------------------------------------------------
 void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName,
                                        size_t count)
 {

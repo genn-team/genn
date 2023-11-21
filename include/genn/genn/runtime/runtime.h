@@ -319,6 +319,46 @@ public:
         return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
     }
 
+    //! Set dynamic parameter associated with current source
+    void setDynamicParam(const CurrentSource &group, const std::string &paramName,
+                         const Type::NumericValue &value)
+    {
+        setDynamicParam(m_CurrentSourceDynamicParameters.at(&group).at(paramName),
+                        value);
+    }
+
+    //! Set dynamic parameter associated with neuron group
+    void setDynamicParam(const NeuronGroup &group, const std::string &paramName,
+                         const Type::NumericValue &value)
+    {
+        setDynamicParam(m_NeuronGroupDynamicParameters.at(&group).at(paramName),
+                        value);
+    }
+
+    //! Set dynamic parameter associated with synapse group
+    void setDynamicParam(const SynapseGroup &group, const std::string &paramName,
+                         const Type::NumericValue &value)
+    {
+        setDynamicParam(m_SynapseGroupDynamicParameters.at(&group).at(paramName),
+                        value);
+    }
+
+    //! Set dynamic parameter associated with custom update
+    void setDynamicParam(const CustomUpdateBase &group, const std::string &paramName,
+                         const Type::NumericValue &value)
+    {
+        setDynamicParam(m_CustomUpdateDynamicParameters.at(&group).at(paramName),
+                        value);
+    }
+
+    //! Set dynamic parameter associated with custom connectivity update
+    void setDynamicParam(const CustomConnectivityUpdate &group, const std::string &paramName,
+                         const Type::NumericValue &value)
+    {
+        setDynamicParam(m_CustomConnectivityUpdateDynamicParameters.at(&group).at(paramName),
+                        value);
+    }
+
     //! Allocate dynamic array associated with current source variable
     void allocateArray(const CurrentSource &group, const std::string &varName, size_t count)
     {
@@ -572,6 +612,10 @@ private:
     }
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
+
+    //! Set dynamic parameter value in all merged field destinations
+    void setDynamicParam(const MergedDynamicFieldDestinations &mergedDestinations, 
+                         const Type::NumericValue &value);
 
     template<typename G>
     void pushUninitialized(GroupArrayMap<G> &groups)
