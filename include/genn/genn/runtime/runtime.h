@@ -146,11 +146,89 @@ private:
     std::byte *m_HostPointer;
 };
 
+//----------------------------------------------------------------------------
+// GeNN::Runtime::MergedDynamicFieldDestinations
+//----------------------------------------------------------------------------
+//! Data structure for tracking fields pointing at a dynamic variable/parameter
+class GENN_EXPORT MergedDynamicFieldDestinations
+{
+public:
+    //--------------------------------------------------------------------------
+    // GeNN::Runtime::MergedDynamicFieldDestinations::DynamicField
+    //--------------------------------------------------------------------------
+    //! Immutable structure for tracking fields of merged group structure
+    //! with dynamic values i.e. those that can be modified at runtime
+    struct DynamicField
+    {
+        DynamicField(size_t m, const Type::ResolvedType &t, const std::string &f,
+                     CodeGenerator::GroupMergedFieldType g)
+        :   mergedGroupIndex(m), type(t), fieldName(f), fieldType(g) {}
+
+        size_t mergedGroupIndex;
+        Type::ResolvedType type;
+        std::string fieldName;
+        CodeGenerator::GroupMergedFieldType fieldType;
+
+        //! Less than operator (used for std::set::insert), 
+        //! lexicographically compares all three struct members
+        bool operator < (const DynamicField &other) const
+        {
+            return (std::make_tuple(mergedGroupIndex, type, fieldName, fieldType) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.fieldType));
+        }
+    };
+    
+    //--------------------------------------------------------------------------
+    // GeNN::Runtime::MergedDynamicFieldDestinations::MergedDynamicField
+    //--------------------------------------------------------------------------
+    //! Immutable structure for tracking where an extra global variable ends up after merging
+    struct MergedDynamicField : public DynamicField
+    {
+        MergedDynamicField(size_t m, size_t i, const Type::ResolvedType &t, 
+                           const std::string &f, CodeGenerator::GroupMergedFieldType g)
+        :   DynamicField(m, t, f, g), groupIndex(i) {}
+
+        size_t groupIndex;
+    };
+
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    const std::unordered_multimap<std::string, MergedDynamicField> &getDestinationFields() const
+    { 
+        return m_DestinationFields; 
+    }
+
+    template<typename G>
+    void addDestinationField(size_t mergedGroupIndex, size_t groupIndex, 
+                             const Type::ResolvedType &fieldDataType, const std::string &fieldName, 
+                             CodeGenerator::GroupMergedFieldType fieldType)
+    {
+        // Add reference to this group's variable to data structure
+        // **NOTE** this works fine with EGP references because the function to
+        // get their value will just return the array associated with the referenced EGP
+        m_DestinationFields.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(G::name),
+            std::forward_as_tuple(mergedGroupIndex, groupIndex, fieldDataType, 
+                                  fieldName, fieldType));
+    }
+
+private:
+    // Members
+
+    //! Multimap of merged group types e.g. "PostsynapticUpdate"
+    // to fields within them that point to the dynamic variable/parameter
+    std::unordered_multimap<std::string, MergedDynamicField> m_DestinationFields;
+};
 //--------------------------------------------------------------------------
 // GeNN::Runtime::Runtime
 //--------------------------------------------------------------------------
 class GENN_EXPORT Runtime
 {
+    //--------------------------------------------------------------------------
+    // Type defines
+    //--------------------------------------------------------------------------
     using ArrayMap = std::unordered_map<std::string, std::unique_ptr<ArrayBase>>;
     
     template<typename G>
@@ -272,77 +350,70 @@ public:
                                   varName, count);
     }
 
+    //! Get dynamic field destinations associated with current source parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CurrentSource &group, const std::string &paramName)
+    {
+        return m_CurrentSourceDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with neuron group parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const NeuronGroup &group, const std::string &paramName)
+    {
+        return m_NeuronGroupDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with synapse group parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const SynapseGroup &group, const std::string &paramName)
+    {
+        return m_SynapseGroupDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with custom update parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomUpdateBase &group, const std::string &paramName)
+    {
+        return m_CustomUpdateDynamicParameters[&group][paramName];
+    }
+
+    //! Get dynamic field destinations associated with custom connectivity update parameter
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomConnectivityUpdate &group, const std::string &paramName)
+    {
+        return m_CustomConnectivityUpdateDynamicParameters[&group][paramName];
+    }
+
+    //! Get recorded spikes from neuron group
     BatchEventArray getRecordedSpikes(const NeuronGroup &group) const
     {
         return getRecordedEvents(group, getArray(group, "recordSpk"));
     }
 
+    //! Get recorded spike-like events from neuron group
     BatchEventArray getRecordedSpikeEvents(const NeuronGroup &group) const
     {
         return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
     }
 
+    //! Write recorded spikes to CSV file
     void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
     {
         return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
     }
 
+    //! Write recorded spike-like events to CSV file
     void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
     {
         return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
     }
 
 private:
-    //--------------------------------------------------------------------------
-    // GeNN::Runtime::Runtime::DynamicField
-    //--------------------------------------------------------------------------
-    //! Immutable structure for tracking fields of merged group structure
-    //! with dynamic values i.e. those that can be modified at runtime
-    struct DynamicField
-    {
-        DynamicField(size_t m, const Type::ResolvedType &t, const std::string &f,
-                     CodeGenerator::GroupMergedFieldType g)
-        :   mergedGroupIndex(m), type(t), fieldName(f), fieldType(g) {}
-
-        size_t mergedGroupIndex;
-        Type::ResolvedType type;
-        std::string fieldName;
-        CodeGenerator::GroupMergedFieldType fieldType;
-
-        //! Less than operator (used for std::set::insert), 
-        //! lexicographically compares all three struct members
-        bool operator < (const DynamicField &other) const
-        {
-            return (std::make_tuple(mergedGroupIndex, type, fieldName, fieldType) 
-                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.fieldType));
-        }
-    };
-    
-    //--------------------------------------------------------------------------
-    // GeNN::Runtime::MergedDynamicField
-    //--------------------------------------------------------------------------
-    //! Immutable structure for tracking where an extra global variable ends up after merging
-    struct MergedDynamicField : public DynamicField
-    {
-        MergedDynamicField(size_t m, size_t i, const Type::ResolvedType &t, 
-                           const std::string &f, CodeGenerator::GroupMergedFieldType g)
-        :   DynamicField(m, t, f, g), groupIndex(i) {}
-
-        size_t groupIndex;
-    };
-
     //----------------------------------------------------------------------------
-    // Typedefines
+    // Type defines
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
     typedef void (*StepTimeFunction)(unsigned long long, unsigned long long);
     typedef void (*CustomUpdateFunction)(unsigned long long);
 
-    //! Map of arrays to their locations within merged structures
-    // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
-    // **THINK** why is the outer one unordered? pointers hash fine?
-    typedef std::unordered_multimap<std::string, MergedDynamicField> MergedDynamicFieldDestinations;
-    typedef std::map<const ArrayBase*, MergedDynamicFieldDestinations> MergedDynamicArrayMap;
+    //! Map of arrays to destinations in merged structures
+    using MergedDynamicArrayMap = std::map<const ArrayBase*, MergedDynamicFieldDestinations>;
     
     //! Map of groups to names of dynamic parameters and their destinations
     template<typename G>
@@ -398,36 +469,6 @@ private:
                     varName, type, count, location, uninitialized);
     }
 
-    //! Get dynamic field destinations associated with current source parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CurrentSource &group, const std::string &paramName)
-    {
-        return m_CurrentSourceDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with neuron group parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const NeuronGroup &group, const std::string &paramName)
-    {
-        return m_NeuronGroupDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with synapse group parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const SynapseGroup &group, const std::string &paramName)
-    {
-        return m_SynapseGroupDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with custom update parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomUpdateBase &group, const std::string &paramName)
-    {
-        return m_CustomUpdateDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with custom connectivity update parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomConnectivityUpdate &group, const std::string &paramName)
-    {
-        return m_CustomConnectivityUpdateDynamicParameters[&group][paramName];
-    }
-
     BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
 
     void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
@@ -450,18 +491,20 @@ private:
                                 // Add reference to this group's variable to data structure
                                 // **NOTE** this works fine with EGP references because the function to
                                 // get their value will just return the array associated with the referenced EGP
-                                m_MergedDynamicArrays[array].emplace(
-                                    std::piecewise_construct,
-                                    std::forward_as_tuple(G::name),
-                                    std::forward_as_tuple(mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
-                                                          std::get<1>(f), std::get<3>(f)));
+                                m_MergedDynamicArrays[array].addDestinationField<G>(
+                                    mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
+                                    std::get<1>(f), std::get<3>(f));
                             },
-                            // Otherwise, if it contains a parameter value
-                            [&f, &g, this](const Type::NumericValue &value) 
+                            // Otherwise, if it cotnains a dynamic parameter
+                            [&f, &mergedGroup, groupIndex](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
                             {
-                                // Use overloading on &g to call function to add to correct
+                                value.second.addDestinationField<G>(
+                                    mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
+                                    std::get<1>(f), std::get<3>(f));
+                            },
+                            [](const Type::NumericValue&) 
+                            {
                                 assert(false);
-                                //mergedDynamicParams[&g]
                             }},
                         std::get<2>(f)(*this, g, groupIndex));
                     
@@ -548,7 +591,7 @@ private:
     }
 
     template<typename G>
-    void pushMergedGroup(const G &g) const
+    void pushMergedGroup(const G &g)
     {
         // Loop through groups
         const auto sortedFields = g.getSortedFields(m_Backend.get());
@@ -616,6 +659,10 @@ private:
                         [&argumentStorage, &f](const Type::NumericValue &value)
                         { 
                             Type::serialiseNumeric(value, std::get<0>(f), argumentStorage);
+                        },
+                        [&argumentStorage, &f](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
+                        {
+                            Type::serialiseNumeric(value.first, std::get<0>(f), argumentStorage);
                         }},
                     std::get<2>(f)(*this, g.getGroups()[groupIndex], groupIndex));
             }

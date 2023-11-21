@@ -835,7 +835,7 @@ void Runtime::allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string 
     
     // Loop through merged destinations of this array
     const auto &mergedDestinations = m_MergedDynamicArrays.at(array);
-    for(const auto &d : mergedDestinations) {
+    for(const auto &d : mergedDestinations.getDestinationFields()) {
         // Get push function
         // **TODO** cache in structure instead of mergedGroup and fieldName
         void *pushFunction = getSymbol("pushMerged" + d.first + std::to_string(d.second.mergedGroupIndex) 

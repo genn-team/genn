@@ -208,7 +208,7 @@ protected:
             // Add to field group using lambda function to potentially map from group to field
             // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
             m_FieldGroup.get().addField(std::get<0>(field), std::get<1>(field),
-                                        [field, &group](const auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        [field, &group](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
                                             return std::get<2>(field)(runtime, group.getGroups().at(i), i);
                                         },
@@ -460,7 +460,7 @@ public:
         const auto &scalarType = this->getGroup().getScalarType();
         addField(scalarType.addConst(), name,
                  scalarType, name + fieldSuffix,
-                 [getFieldValue](const Runtime::Runtime&, const auto &g, size_t i)
+                 [getFieldValue](auto&, const auto &g, size_t i)
                  {
                     return getFieldValue(g, i);
                  });
@@ -474,15 +474,26 @@ public:
             // If parameter is heterogeneous or dynamic, add scalar field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            const bool dynamic = std::invoke(isDynamic, this->getGroup().getArchetype(), p.name);
-            if (dynamic || std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+            
+            // If parameter is dynamic
+            if(std::invoke(isDynamic, this->getGroup().getArchetype(), p.name)) {
                 addField(
                     resolvedType.addConst(), p.name, resolvedType, p.name + fieldSuffix,
-                    [p, getParamValues](const Runtime::Runtime&, const auto &g, size_t)
+                    [p, getParamValues](auto &runtime, const auto &g, size_t)
+                    {
+                        return std::make_pair(std::invoke(getParamValues, g).at(p.name), 
+                                              std::ref(runtime.getMergedParamDestinations(g, p.name)));
+                    },
+                    "", GroupMergedFieldType::DYNAMIC);
+            }
+            // Otherwise, if parameter is heterogeneous across merged group
+            else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+                addField(
+                    resolvedType.addConst(), p.name, resolvedType, p.name + fieldSuffix,
+                    [p, getParamValues](auto&, const auto &g, size_t)
                     {
                         return std::invoke(getParamValues, g).at(p.name);
-                    },
-                    "", dynamic ? GroupMergedFieldType::DYNAMIC : GroupMergedFieldType::STANDARD);
+                    });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -524,7 +535,7 @@ public:
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
                      pointerType, e.name + arraySuffix + fieldSuffix,
-                     [e, arraySuffix](const auto &runtime, const auto &g, size_t) 
+                     [e, arraySuffix](auto &runtime, const auto &g, size_t) 
                      {
                          return runtime.getArray(g, e.name + arraySuffix); 
                      },
@@ -541,7 +552,7 @@ public:
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
                      pointerType, e.name + fieldSuffix,
-                     [e](const auto &runtime, const auto &g, size_t) 
+                     [e](auto &runtime, const auto &g, size_t) 
                      {
                          return g.getEGPReferences().at(e.name).getTargetArray(runtime);
                      },
@@ -560,15 +571,25 @@ public:
             // If parameter is dynamic or heterogeneous, add scalar field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            const bool dynamic = isDynamic ? std::invoke(*isDynamic, this->getGroup().getArchetype(), p.name) : false;
-            if (dynamic || std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+
+            // If parameter is dynamic
+            if(isDynamic && std::invoke(*isDynamic, this->getGroup().getArchetype(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getInitialiser](const Runtime::Runtime&, const auto &g, size_t)
+                         [p, getInitialiser](auto &runtime, const auto &g, size_t)
+                         {
+                             return std::make_pair(std::invoke(getInitialiser, g).getParams().at(p.name), 
+                                                   std::ref(runtime.getMergedParamDestinations(g, p.name)));
+                         });
+            }
+            // Otherwise, if parameter is heterogeneous across merged group
+            else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+                addField(resolvedType.addConst(), p.name,
+                         resolvedType, p.name + fieldSuffix,
+                         [p, getInitialiser](auto&, const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getParams().at(p.name);
-                         },
-                         "", dynamic ? GroupMergedFieldType::DYNAMIC : GroupMergedFieldType::STANDARD);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -659,7 +680,7 @@ public:
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
-                     [v](const auto &runtime, const auto &g, size_t) 
+                     [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(A(g).getTarget(), v.name);
                      },
@@ -688,7 +709,7 @@ public:
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
-                     [v](const auto &runtime, const auto &g, size_t) 
+                     [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
                      },
@@ -713,7 +734,7 @@ public:
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(resolvedType.createPointer(), name, v.name,
-                     [v](const auto &runtime, const auto &g, size_t) 
+                     [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(g, v.name);
                      });
@@ -729,7 +750,7 @@ public:
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(resolvedType.createPointer(), name, v.name,
-                     [v](const auto &runtime, const auto &g, size_t) 
+                     [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
                      });
@@ -939,7 +960,7 @@ public:
             // Add field to underlying field group
             const auto &group = m_Group.get();
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [v, &group, this](const auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
                                             return this->getArray(runtime, group.getGroups().at(i), v);
                                         });

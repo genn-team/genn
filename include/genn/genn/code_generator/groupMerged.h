@@ -24,6 +24,7 @@ class CodeStream;
 namespace GeNN::Runtime
 {
 class ArrayBase;
+class MergedDynamicFieldDestinations;
 class Runtime;
 }
 
@@ -64,8 +65,9 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
-    typedef std::variant<Type::NumericValue, const Runtime::ArrayBase*> FieldValue;
-    typedef std::function<FieldValue(const Runtime::Runtime &, const G &, size_t)> GetFieldValueFunc;
+    typedef std::variant<Type::NumericValue, const Runtime::ArrayBase*,
+                         std::pair<Type::NumericValue, Runtime::MergedDynamicFieldDestinations&>> FieldValue;
+    typedef std::function<FieldValue(Runtime::Runtime &, const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
 
     ChildGroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
