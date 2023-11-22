@@ -62,20 +62,21 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    CurrentSourceModelBase, CustomConnectivityUpdate,
                    CustomConnectivityUpdateModelBase, CustomUpdate,
                    CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
-                   DerivedParam, EGP, EGPRef, 
-                   InitSparseConnectivitySnippetBase, 
+                   DerivedParam, EGP, EGPRef,
+                   InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase, ParamVal,
-                   PlogSeverity, PostsynapticInit, PostsynapticModelBase,
-                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   ToeplitzConnectivityInit, UnresolvedType, Var,
-                   VarInit, VarLocation, VarRef, WeightUpdateInit, 
-                   WeightUpdateModelBase)
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase, Param,
+                   ParamVal, PlogSeverity, PostsynapticInit,
+                   PostsynapticModelBase, SparseConnectivityInit,
+                   SynapseGroup, SynapseMatrixType, ToeplitzConnectivityInit,
+                   UnresolvedType, Var, VarInit, VarLocation, VarRef,
+                   WeightUpdateInit, WeightUpdateModelBase)
+
 from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
-from .model_preprocessor import get_snippet, get_var_init
+from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
@@ -316,7 +317,8 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), neuron, params, var_init)
+            pop_name, int(num_neurons), neuron, 
+            prepare_param_vals(params), var_init)
         
         # Initialise group, store group in dictionary and return
         n_group._init_group(self, vars)
@@ -406,8 +408,8 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop.name, params,
-            var_init, var_refs)
+            cs_name, current_source_model, pop.name, 
+            prepare_param_vals(params), var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, vars, pop)
@@ -449,7 +451,7 @@ class GeNNModel(ModelSpecInternal):
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            params, var_init, var_refs, egp_refs)
+            prepare_param_vals(params), var_init, var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, vars)
@@ -512,7 +514,7 @@ class GeNNModel(ModelSpecInternal):
         syn_group = self._validate_synapse_group(syn_group, "syn_group")
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
             cu_name, group_name, syn_group.name, custom_connectivity_update_model,
-            params, var_init, pre_var_init, post_var_init,
+            prepare_param_vals(params), var_init, pre_var_init, post_var_init,
             var_refs, pre_var_refs, post_var_refs)
 
         # Setup back-reference, store group in dictionary and return
@@ -738,7 +740,7 @@ def init_var(snippet, params={}):
     snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return VarInit(snippet, params)
+    return VarInit(snippet, prepare_param_vals(params))
 
 def init_sparse_connectivity(snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
@@ -755,7 +757,7 @@ def init_sparse_connectivity(snippet, params={}):
     # Get snippet and wrap in SparseConnectivityInit object
     snippet = get_snippet(snippet, InitSparseConnectivitySnippetBase,
                           init_sparse_connectivity_snippets)
-    return SparseConnectivityInit(snippet, params)
+    return SparseConnectivityInit(snippet, prepare_param_vals(params))
 
                                               
 
@@ -767,7 +769,8 @@ def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
     # Extract parts of var spaces which should be initialised by GeNN
     var_init = get_var_init(vars)
     
-    return (PostsynapticInit(snippet, params, var_init, var_refs),
+    return (PostsynapticInit(snippet, prepare_param_vals(params), 
+                             var_init, var_refs), 
             vars)
 
 def init_weight_update(snippet, params={}, vars={}, pre_vars={},
@@ -780,7 +783,7 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
     pre_var_init = get_var_init(pre_vars)
     post_var_init = get_var_init(post_vars)
     
-    return (WeightUpdateInit(snippet, params, var_init, 
+    return (WeightUpdateInit(snippet, prepare_param_vals(params), var_init, 
                              pre_var_init, post_var_init,
                              pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
@@ -816,10 +819,11 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
                                                 InitToeplitzConnectivitySnippetBase,
                                                 init_toeplitz_connectivity_snippets)
-    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, params)
+    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
+                                    prepare_param_vals(params))
 
 
-def create_model(class_name, base, param_names, derived_params, 
+def create_model(class_name, base, params, derived_params, 
                  extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
@@ -836,8 +840,8 @@ def create_model(class_name, base, param_names, derived_params,
     Args:
     class_name      --  name of the new class
     base            --  base class
-    param_names     --  list of strings with param names of the model
-    derived_params  --  list of pairs, where the first member is string with
+    params          --  list of tuples with param names and types of the model
+    derived_params  --  list of tuples, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
     extra_global_params --  list of pairs of strings with names and types of
@@ -852,18 +856,17 @@ def create_model(class_name, base, param_names, derived_params,
         "__init__": ctor,
     }
 
-    if param_names is not None:
-        body["get_param_names"] = lambda self: param_names
+    if params is not None:
+        body["get_params"] =\
+            lambda self: [Param(*p) for p in params]
 
     if derived_params is not None:
         body["get_derived_params"] = \
-            lambda self: [DerivedParam(dp[0], dp[1]) 
-                          for dp in derived_params]
+            lambda self: [DerivedParam(*dp) for dp in derived_params]
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1])
-                          for egp in extra_global_params]
+            lambda self: [EGP(*egp) for egp in extra_global_params]
 
     if custom_body is not None:
         body.update(custom_body)
@@ -921,8 +924,7 @@ def create_neuron_model(class_name, param_names=None,
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
-            lambda self: [ParamVal(a[0], a[1], a[2])
-                                   for a in additional_input_vars]
+            lambda self: [ParamVal(*a) for a in additional_input_vars]
 
     if var_name_types is not None:
         body["get_vars"] = \

@@ -50,7 +50,7 @@ template <class SnippetBase = Snippet::Base>
 class PySnippet : public SnippetBase 
 {   
 public: 
-    virtual Snippet::Base::StringVec getParamNames() const override{ PYBIND11_OVERRIDE_NAME(Snippet::Base::StringVec, SnippetBase, "get_param_names", getParamNames); }
+    virtual Snippet::Base::ParamVec getParams() const override{ PYBIND11_OVERRIDE_NAME(Snippet::Base::ParamVec, SnippetBase, "get_params", getParams); }
     virtual Snippet::Base::DerivedParamVec getDerivedParams() const override{ PYBIND11_OVERRIDE_NAME(Snippet::Base::DerivedParamVec, SnippetBase, "get_derived_params", getDerivedParams); }
     virtual Snippet::Base::EGPVec getExtraGlobalParams() const override{ PYBIND11_OVERRIDE_NAME(Snippet::Base::EGPVec, SnippetBase, "get_extra_global_params", getExtraGlobalParams); }    
 };
@@ -607,6 +607,16 @@ PYBIND11_MODULE(genn, m)
         .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
     
     //------------------------------------------------------------------------
+    // genn.NumericValue
+    //------------------------------------------------------------------------
+    pybind11::class_<Type::NumericValue>(m, "NumericValue")
+        .def(pybind11::init<double>())
+        .def(pybind11::init<uint64_t>())
+        .def(pybind11::init<int64_t>())
+        .def(pybind11::init<int>())
+        .def(pybind11::init<unsigned int>());
+
+    //------------------------------------------------------------------------
     // genn.ResolvedType
     //------------------------------------------------------------------------
     pybind11::class_<Type::ResolvedType>(m, "ResolvedType")
@@ -642,12 +652,25 @@ PYBIND11_MODULE(genn, m)
              [](const Type::UnresolvedType &a, Type::UnresolvedType b) { return a == b; });
 
     //------------------------------------------------------------------------
+    // genn.Param
+    //------------------------------------------------------------------------
+    pybind11::class_<Snippet::Base::Param>(m, "Param")
+        .def(pybind11::init<const std::string&, const std::string&>(),
+             pybind11::arg("name"), pybind11::arg("type") = "scalar")
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
+        .def_readonly("name", &Snippet::Base::Param::name)
+        .def_readonly("type", &Snippet::Base::Param::type);
+
+    //------------------------------------------------------------------------
     // genn.DerivedParam
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::DerivedParam>(m, "DerivedParam")
-        .def(pybind11::init<const std::string&, std::function<double(const std::unordered_map<std::string, double>&, double)>&>())
+        .def(pybind11::init<const std::string&, Snippet::Base::DerivedParam::Func, const std::string&>(),
+             pybind11::arg("name"), pybind11::arg("func"), pybind11::arg("type") = "scalar")
+        .def(pybind11::init<const std::string&, Snippet::Base::DerivedParam::Func, const Type::ResolvedType&>())
         .def_readonly("name", &Snippet::Base::DerivedParam::name)
-        .def_readonly("func", &Snippet::Base::DerivedParam::func);
+        .def_readonly("func", &Snippet::Base::DerivedParam::func)
+        .def_readonly("type", &Snippet::Base::DerivedParam::type);
         
     //------------------------------------------------------------------------
     // genn.EGP
@@ -672,7 +695,7 @@ PYBIND11_MODULE(genn, m)
     // genn.SnippetBase
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base, PySnippet<>>(m, "SnippetBase")
-        .def("get_param_names", &Snippet::Base::getParamNames)
+        .def("get_params", &Snippet::Base::getParams)
         .def("get_derived_params", &Snippet::Base::getDerivedParams)
         .def("get_extra_global_params", &Snippet::Base::getExtraGlobalParams);
     
@@ -842,21 +865,21 @@ PYBIND11_MODULE(genn, m)
     // genn.SparseConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
-        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def_property_readonly("snippet", &InitSparseConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
         
     //------------------------------------------------------------------------
     // genn.ToeplitzConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
-        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def_property_readonly("snippet", &InitToeplitzConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.VarInit
     //------------------------------------------------------------------------
     pybind11::class_<InitVarSnippet::Init>(m, "VarInit")
-        .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
@@ -864,14 +887,14 @@ PYBIND11_MODULE(genn, m)
     // genn.WeightUpdateInit
     //------------------------------------------------------------------------
     pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
-        .def(pybind11::init<const WeightUpdateModels::Base*, const std::unordered_map<std::string, double>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<const WeightUpdateModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
         .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const std::unordered_map<std::string, double>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<const PostsynapticModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
