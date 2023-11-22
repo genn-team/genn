@@ -450,6 +450,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("set_param_dynamic", &CurrentSource::setParamDynamic)
         .def("set_var_location", &CurrentSource::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
     
@@ -483,6 +484,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("set_param_dynamic", &CustomConnectivityUpdate::setParamDynamic)
         .def("set_var_location", &CustomConnectivityUpdate::setVarLocation)
         .def("set_pre_var_location", &CustomConnectivityUpdate::setPreVarLocation)
         .def("set_post_var_location", &CustomConnectivityUpdate::setPostVarLocation)
@@ -507,6 +509,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("set_param_dynamic", &CustomUpdateBase::setParamDynamic)
         .def("set_var_location", &CustomUpdateBase::setVarLocation)
         .def("get_var_location", &CustomUpdateBase::getVarLocation);
     
@@ -555,6 +558,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("set_param_dynamic", &NeuronGroup::setParamDynamic)
         .def("set_var_location", &NeuronGroup::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_))
         // **NOTE** we use the 'publicist' pattern to expose some protected methods
@@ -597,12 +601,14 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("set_wu_param_dynamic", &SynapseGroup::setWUParamDynamic)
         .def("get_wu_var_location", &SynapseGroup::getWUVarLocation)
         .def("set_wu_var_location", &SynapseGroup::setWUVarLocation)
         .def("get_wu_pre_var_location", &SynapseGroup::getWUPreVarLocation)
         .def("set_wu_pre_var_location", &SynapseGroup::setWUPreVarLocation)
         .def("get_wu_post_var_location", &SynapseGroup::getWUPostVarLocation)
         .def("set_wu_post_var_location", &SynapseGroup::setWUPostVarLocation)
+        .def("set_ps_param_dynamic", &SynapseGroup::setPSParamDynamic)
         .def("get_ps_var_location", &SynapseGroup::getPSVarLocation)
         .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
     
