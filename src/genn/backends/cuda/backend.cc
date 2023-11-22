@@ -856,33 +856,36 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
         customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
-            customUpdateEnv.getStream() << "const " << model.getTimePrecision().getName() << " t = timestep * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
+
+            EnvironmentExternal funcEnv(customUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
+                        {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
 
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
                 *this, memorySpaces, g, 
-                [this, &customUpdateEnv](auto &c)
+                [this, &funcEnv](auto &c)
                 {
-                    c.generateUpdate(*this, customUpdateEnv);
+                    c.generateUpdate(*this, funcEnv);
                 });
 
             // Launch custom update kernel if required
             if(idCustomUpdateStart > 0) {
-                CodeStream::Scope b(customUpdateEnv.getStream());
-                genKernelDimensions(customUpdateEnv.getStream(), KernelCustomUpdate, idCustomUpdateStart, 1);
-                Timer t(customUpdateEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
-                customUpdateEnv.getStream() << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
-                customUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                CodeStream::Scope b(funcEnv.getStream());
+                genKernelDimensions(funcEnv.getStream(), KernelCustomUpdate, idCustomUpdateStart, 1);
+                Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
+                funcEnv.printLine(KernelNames[KernelCustomUpdate] + g + "<<<grid, threads>>>($(t));");
+                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
             }
 
             // Launch custom transpose update kernel if required
             if(idCustomTransposeUpdateStart > 0) {
-                CodeStream::Scope b(customUpdateEnv.getStream());
+                CodeStream::Scope b(funcEnv.getStream());
                 // **TODO** make block height parameterizable
-                genKernelDimensions(customUpdateEnv.getStream(), KernelCustomTransposeUpdate, idCustomTransposeUpdateStart, 1, 8);
-                Timer t(customUpdateEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
-                customUpdateEnv.getStream() << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
-                customUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                genKernelDimensions(funcEnv.getStream(), KernelCustomTransposeUpdate, idCustomTransposeUpdateStart, 1, 8);
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
+                funcEnv.printLine(KernelNames[KernelCustomTransposeUpdate]  + g + "<<<grid, threads>>>($(t));");
+                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
             }
 
             // If NCCL reductions are enabled
@@ -891,41 +894,41 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 // generate reductions for those in this custom update group
                 modelMerged.genMergedCustomUpdateHostReductionGroups(
                     *this, memorySpaces, g, 
-                    [this, &customUpdateEnv, &modelMerged](auto &cg)
+                    [this, &funcEnv, &modelMerged](auto &cg)
                     {
-                        genNCCLReduction(customUpdateEnv, cg);
+                        genNCCLReduction(funcEnv, cg);
                     });
 
                 // Loop through custom WU update host reduction groups and
                 // generate reductions for those in this custom update group
                 modelMerged.genMergedCustomWUUpdateHostReductionGroups(
                     *this, memorySpaces, g,
-                    [this, &customUpdateEnv, &modelMerged](auto &cg)
+                    [this, &funcEnv, &modelMerged](auto &cg)
                     {
-                        genNCCLReduction(customUpdateEnv, cg);
+                        genNCCLReduction(funcEnv, cg);
                     });
             }
 
             // If timing is enabled
             if(model.isTimingEnabled()) {
                 // Synchronise last event
-                customUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
+                funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
                 if(idCustomTransposeUpdateStart > 0) {
-                    customUpdateEnv.getStream() << "Transpose";
+                    funcEnv.getStream() << "Transpose";
                 }
-                customUpdateEnv.getStream() << "Stop)); " << std::endl;
+                funcEnv.getStream() << "Stop)); " << std::endl;
 
                 if(idCustomUpdateStart > 0) {
-                    CodeGenerator::CodeStream::Scope b(customUpdateEnv.getStream());
-                    customUpdateEnv.getStream() << "float tmp;" << std::endl;
-                    customUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
-                    customUpdateEnv.getStream() << "customUpdate" << g << "Time += tmp / 1000.0;" << std::endl;
+                    CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "float tmp;" << std::endl;
+                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
+                    funcEnv.getStream() << "customUpdate" << g << "Time += tmp / 1000.0;" << std::endl;
                 }
                 if(idCustomTransposeUpdateStart > 0) {
-                    CodeGenerator::CodeStream::Scope b(customUpdateEnv.getStream());
-                    customUpdateEnv.getStream() << "float tmp;" << std::endl;
-                    customUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
-                    customUpdateEnv.getStream() << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
+                    CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "float tmp;" << std::endl;
+                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
+                    funcEnv.getStream() << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
                 }
             }
         }
