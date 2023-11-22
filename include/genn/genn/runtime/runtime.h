@@ -52,6 +52,36 @@ namespace filesystem
 class path;
 }
 
+
+#define IMPLEMENT_GROUP_OVERLOADS(GROUP)                                                                            \
+public:                                                                                                             \
+    void setDynamicParam(const GROUP &group, const std::string &paramName,                                          \
+                         const Type::NumericValue &value)                                                           \
+    {                                                                                                               \
+        setDynamicParam(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
+                        value);                                                                                     \
+    }                                                                                                               \
+    MergedDynamicFieldDestinations &getMergedParamDestinations(const GROUP &group, const std::string &paramName)    \
+    {                                                                                                               \
+        return m_##GROUP##DynamicParameters[&group][paramName];                                                     \
+    }                                                                                                               \
+    ArrayBase *getArray(const GROUP &group, const std::string &varName) const                                       \
+    {                                                                                                               \
+        return m_##GROUP##Arrays.at(&group).at(varName).get();                                                      \
+    }                                                                                                               \
+    void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
+    {                                                                                                               \
+        allocateExtraGlobalParam(m_##GROUP##Arrays.at(&group), varName, count);                                     \
+    }                                                                                                               \
+private:                                                                                                            \
+    void createArray(const GROUP *group, const std::string &varName,                                                \
+                     const Type::ResolvedType &type, size_t count,                                                  \
+                     VarLocation location, bool uninitialized = false)                                              \
+    {                                                                                                               \
+        createArray(m_##GROUP##Arrays[group],                                                                       \
+                    varName, type, count, location, uninitialized);                                                 \
+    }
+
 //--------------------------------------------------------------------------
 // GeNN::Runtime::ArrayBase
 //--------------------------------------------------------------------------
@@ -221,6 +251,7 @@ private:
     // to fields within them that point to the dynamic variable/parameter
     std::unordered_multimap<std::string, MergedDynamicField> m_DestinationFields;
 };
+
 //--------------------------------------------------------------------------
 // GeNN::Runtime::Runtime
 //--------------------------------------------------------------------------
@@ -235,6 +266,12 @@ class GENN_EXPORT Runtime
     using GroupArrayMap = std::unordered_map<const G*, ArrayMap>;
 
     using BatchEventArray = std::vector<std::pair<std::vector<double>, std::vector<unsigned int>>>;
+
+    IMPLEMENT_GROUP_OVERLOADS(NeuronGroup)
+    IMPLEMENT_GROUP_OVERLOADS(CurrentSource)
+    IMPLEMENT_GROUP_OVERLOADS(SynapseGroup)
+    IMPLEMENT_GROUP_OVERLOADS(CustomUpdateBase)
+    IMPLEMENT_GROUP_OVERLOADS(CustomConnectivityUpdate)
 public:
     Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSpecMerged &modelMerged, 
             const CodeGenerator::BackendBase &backend);
@@ -289,137 +326,6 @@ public:
         return m_DelayQueuePointer.at(&group);
     }
 
-    //! Get array associated with current source variable
-    ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
-    {
-        return m_CurrentSourceArrays.at(&group).at(varName).get();   
-    }
-
-    //! Get array associated with neuron group variable
-    ArrayBase *getArray(const NeuronGroup &group, const std::string &varName) const
-    {
-        return m_NeuronGroupArrays.at(&group).at(varName).get();   
-    }
-
-    //! Get array associated with synapse group variable
-    ArrayBase *getArray(const SynapseGroup &group, const std::string &varName) const
-    {
-        return m_SynapseGroupArrays.at(&group).at(varName).get();   
-    }
-
-    //! Get array associated with custom update variable
-    ArrayBase *getArray(const CustomUpdateBase &group, const std::string &varName) const
-    {
-        return m_CustomUpdateArrays.at(&group).at(varName).get();   
-    }
-
-    //! Get array associated with custom connectivity update variable
-    ArrayBase *getArray(const CustomConnectivityUpdate &group, const std::string &varName) const
-    {
-        return m_CustomConnectivityUpdateArrays.at(&group).at(varName).get();   
-    }
-
-    //! Set dynamic parameter associated with current source
-    void setDynamicParam(const CurrentSource &group, const std::string &paramName,
-                         const Type::NumericValue &value)
-    {
-        setDynamicParam(m_CurrentSourceDynamicParameters.at(&group).at(paramName),
-                        value);
-    }
-
-    //! Set dynamic parameter associated with neuron group
-    void setDynamicParam(const NeuronGroup &group, const std::string &paramName,
-                         const Type::NumericValue &value)
-    {
-        setDynamicParam(m_NeuronGroupDynamicParameters.at(&group).at(paramName),
-                        value);
-    }
-
-    //! Set dynamic parameter associated with synapse group
-    void setDynamicParam(const SynapseGroup &group, const std::string &paramName,
-                         const Type::NumericValue &value)
-    {
-        setDynamicParam(m_SynapseGroupDynamicParameters.at(&group).at(paramName),
-                        value);
-    }
-
-    //! Set dynamic parameter associated with custom update
-    void setDynamicParam(const CustomUpdateBase &group, const std::string &paramName,
-                         const Type::NumericValue &value)
-    {
-        setDynamicParam(m_CustomUpdateDynamicParameters.at(&group).at(paramName),
-                        value);
-    }
-
-    //! Set dynamic parameter associated with custom connectivity update
-    void setDynamicParam(const CustomConnectivityUpdate &group, const std::string &paramName,
-                         const Type::NumericValue &value)
-    {
-        setDynamicParam(m_CustomConnectivityUpdateDynamicParameters.at(&group).at(paramName),
-                        value);
-    }
-
-    //! Allocate dynamic array associated with current source variable
-    void allocateArray(const CurrentSource &group, const std::string &varName, size_t count)
-    {
-        allocateExtraGlobalParam(m_CurrentSourceArrays.at(&group), varName, count);
-    }
-
-    //! Allocate dynamic array associated with neuron group variable
-    void allocateArray(const NeuronGroup &group, const std::string &varName, size_t count)
-    {
-        allocateExtraGlobalParam(m_NeuronGroupArrays.at(&group), varName, count); 
-    }
-
-    //! Allocate dynamic array associated with synapse group variable
-    void allocateArray(const SynapseGroup &group, const std::string &varName, size_t count)
-    {
-        allocateExtraGlobalParam(m_SynapseGroupArrays.at(&group), varName, count);
-    }
-
-    //! Allocate dynamic array associated with custom update variable
-    void allocateArray(const CustomUpdateBase &group, const std::string &varName, size_t count)
-    {
-        allocateExtraGlobalParam(m_CustomUpdateArrays.at(&group), varName, count);
-    }
-
-    //! Allocate dynamic array associated with custom connectivity update variable
-    void allocateArray(const CustomConnectivityUpdate &group, const std::string &varName, size_t count)
-    {
-         allocateExtraGlobalParam(m_CustomConnectivityUpdateArrays.at(&group), 
-                                  varName, count);
-    }
-
-    //! Get dynamic field destinations associated with current source parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CurrentSource &group, const std::string &paramName)
-    {
-        return m_CurrentSourceDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with neuron group parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const NeuronGroup &group, const std::string &paramName)
-    {
-        return m_NeuronGroupDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with synapse group parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const SynapseGroup &group, const std::string &paramName)
-    {
-        return m_SynapseGroupDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with custom update parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomUpdateBase &group, const std::string &paramName)
-    {
-        return m_CustomUpdateDynamicParameters[&group][paramName];
-    }
-
-    //! Get dynamic field destinations associated with custom connectivity update parameter
-    MergedDynamicFieldDestinations &getMergedParamDestinations(const CustomConnectivityUpdate &group, const std::string &paramName)
-    {
-        return m_CustomConnectivityUpdateDynamicParameters[&group][paramName];
-    }
-
     //! Get recorded spikes from neuron group
     BatchEventArray getRecordedSpikes(const NeuronGroup &group) const
     {
@@ -467,47 +373,6 @@ private:
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                      size_t count, VarLocation location, bool uninitialized = false);
-
-    void createArray(const CurrentSource *currentSource, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location, bool uninitialized = false)
-    {
-        createArray(m_CurrentSourceArrays[currentSource], 
-                    varName, type, count, location, uninitialized);
-    }
-
-    void createArray(const NeuronGroup *neuronGroup, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location, bool uninitialized = false)
-    {
-        createArray(m_NeuronGroupArrays[neuronGroup], 
-                    varName, type, count, location, uninitialized);
-    }
-
-    void createArray(const SynapseGroup *synapseGroup, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location, bool uninitialized = false)
-    {
-        createArray(m_SynapseGroupArrays[synapseGroup], 
-                    varName, type, count, location, uninitialized);
-    }
-
-    void createArray(const CustomUpdateBase *customUpdate, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location, bool uninitialized = false)
-    {
-        createArray(m_CustomUpdateArrays[customUpdate], 
-                    varName, type, count, location, uninitialized);
-    }
-
-
-    void createArray(const CustomConnectivityUpdate *customConnectivityUpdate, const std::string &varName, 
-                     const Type::ResolvedType &type, size_t count, 
-                     VarLocation location, bool uninitialized = false)
-    {
-        createArray(m_CustomConnectivityUpdateArrays[customConnectivityUpdate],
-                    varName, type, count, location, uninitialized);
-    }
 
     BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
 
@@ -610,6 +475,12 @@ private:
             });
                   
     }
+
+    /*template<typename G>
+    void createDynamicParameterArrays(const G &group, const Snippet::Base::ParamVec &params, 
+                                      bool (G::*isDynamic)(const std::string&) const)
+    {
+    }*/
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
 
@@ -756,14 +627,14 @@ private:
     GroupArrayMap<CurrentSource> m_CurrentSourceArrays;
     GroupArrayMap<NeuronGroup> m_NeuronGroupArrays;
     GroupArrayMap<SynapseGroup> m_SynapseGroupArrays;
-    GroupArrayMap<CustomUpdateBase> m_CustomUpdateArrays;
+    GroupArrayMap<CustomUpdateBase> m_CustomUpdateBaseArrays;
     GroupArrayMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateArrays;
 
     //! Maps of dynamic parameters in populations to their locations within merged groups
     MergedDynamicParameterMap<CurrentSource> m_CurrentSourceDynamicParameters;
     MergedDynamicParameterMap<NeuronGroup> m_NeuronGroupDynamicParameters;
     MergedDynamicParameterMap<SynapseGroup> m_SynapseGroupDynamicParameters;
-    MergedDynamicParameterMap<CustomUpdateBase> m_CustomUpdateDynamicParameters;
+    MergedDynamicParameterMap<CustomUpdateBase> m_CustomUpdateBaseDynamicParameters;
     MergedDynamicParameterMap<CustomConnectivityUpdate> m_CustomConnectivityUpdateDynamicParameters;
 
     VoidFunction m_AllocateMem;

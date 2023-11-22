@@ -619,7 +619,7 @@ void Runtime::initializeSparse()
     LOGD_RUNTIME << "Pushing uninitialized synapse group variables";
     pushUninitialized(m_SynapseGroupArrays);
     LOGD_RUNTIME << "Pushing uninitialized custom update variables";
-    pushUninitialized(m_CustomUpdateArrays);
+    pushUninitialized(m_CustomUpdateBaseArrays);
     LOGD_RUNTIME << "Pushing uninitialized custom connectivity update variables";
     pushUninitialized(m_CustomConnectivityUpdateArrays);
 
