@@ -823,7 +823,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
                                     prepare_param_vals(params))
 
 
-def create_model(class_name, base, params, derived_params, 
+def create_model(class_name, base, params, param_names, derived_params,
                  extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
@@ -856,9 +856,15 @@ def create_model(class_name, base, params, derived_params,
         "__init__": ctor,
     }
 
+    if param_names is not None:
+        warn("The 'param_names' parameter has been renamed to 'params' "
+             "and will be removed in future", DeprecationWarning)
+        params = param_names
+
     if params is not None:
         body["get_params"] =\
-            lambda self: [Param(*p) for p in params]
+            lambda self: [Param(p) if isinstance(p, str) else Param(*p)
+                          for p in params]
 
     if derived_params is not None:
         body["get_derived_params"] = \
@@ -873,7 +879,7 @@ def create_model(class_name, base, params, derived_params,
 
     return type(class_name, (base,), body)()
 
-def create_neuron_model(class_name, param_names=None,
+def create_neuron_model(class_name, params=None, param_names=None,
                         var_name_types=None, derived_params=None,
                         sim_code=None, threshold_condition_code=None,
                         reset_code=None, extra_global_params=None,
@@ -934,14 +940,15 @@ def create_neuron_model(class_name, param_names=None,
         body["is_auto_refractory_required"] = \
             lambda self: is_auto_refractory_required
 
-    return create_model(class_name, NeuronModelBase, param_names, 
+    return create_model(class_name, NeuronModelBase, params, param_names,
                         derived_params, extra_global_params, body)
 
 
-def create_postsynaptic_model(class_name, param_names=None,
+def create_postsynaptic_model(class_name, params=None, param_names=None,
                               var_name_types=None, neuron_var_refs=None,
                               derived_params=None, decay_code=None,
-                              apply_input_code=None, extra_global_params=None):
+                              apply_input_code=None, 
+                              extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_neuron_model
@@ -981,25 +988,23 @@ def create_postsynaptic_model(class_name, param_names=None,
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
+    
+    return create_model(class_name, PostsynapticModelBase, params, 
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-    return create_model(class_name, PostsynapticModelBase, param_names,
-                        derived_params, extra_global_params, body)
 
-
-def create_weight_update_model(class_name, param_names=None,
-                               var_name_types=None,
-                               pre_var_name_types=None,
-                               post_var_name_types=None,
+def create_weight_update_model(class_name, params=None, param_names=None,
+                               var_name_types=None, pre_var_name_types=None,
+                               post_var_name_types=None, 
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
                                event_code=None, learn_post_code=None,
                                synapse_dynamics_code=None,
                                event_threshold_condition_code=None,
-                               pre_spike_code=None,
-                               post_spike_code=None,
-                               pre_dynamics_code=None,
-                               post_dynamics_code=None,
+                               pre_spike_code=None, post_spike_code=None,
+                               pre_dynamics_code=None, post_dynamics_code=None,
                                extra_global_params=None):
     """This helper function creates a custom WeightUpdateModel class.
     See also:
@@ -1096,16 +1101,15 @@ def create_weight_update_model(class_name, param_names=None,
     if post_neuron_var_refs is not None:
         body["get_post_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in post_neuron_var_refs]
+    
+    return create_model(class_name, WeightUpdateModelBase, params, 
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-    return create_model(class_name, WeightUpdateModelBase, param_names,
-                        derived_params, extra_global_params, body)
 
-
-def create_current_source_model(class_name, param_names=None,
-                                var_name_types=None,
-                                neuron_var_refs=None,
-                                derived_params=None,
-                                injection_code=None,
+def create_current_source_model(class_name, params=None, param_names=None,
+                                var_name_types=None, neuron_var_refs=None,
+                                derived_params=None, injection_code=None,
                                 extra_global_params=None):
     """This helper function creates a custom NeuronModel class.
     See also:
@@ -1143,15 +1147,14 @@ def create_current_source_model(class_name, param_names=None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
 
-    return create_model(class_name, CurrentSourceModelBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, CurrentSourceModelBase, params,
+                        param_names, derived_params,
+                        extra_global_params, body)
 
 
-def create_custom_update_model(class_name, param_names=None,
-                               var_name_types=None,
-                               derived_params=None,
-                               var_refs=None,
-                               update_code=None,
+def create_custom_update_model(class_name, params=None, param_names=None, 
+                               var_name_types=None, derived_params=None, 
+                               var_refs=None, update_code=None, 
                                extra_global_params=None,
                                extra_global_param_refs=None):
     """This helper function creates a custom CustomUpdate class.
@@ -1197,10 +1200,11 @@ def create_custom_update_model(class_name, param_names=None,
         body["get_extra_global_param_refs"] =\
             lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
-    return create_model(class_name, CustomUpdateModelBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, CustomUpdateModelBase, params,
+                        param_names, derived_params,
+                        extra_global_params, body)
 
-def create_custom_connectivity_update_model(class_name, 
+def create_custom_connectivity_update_model(class_name, params=None, 
                                             param_names=None,
                                             var_name_types=None,
                                             pre_var_name_types=None,
@@ -1272,12 +1276,12 @@ def create_custom_connectivity_update_model(class_name,
             lambda self: [VarRef(*v) for v in post_var_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
-                        param_names, derived_params, extra_global_params, body)
+                        params, param_names, derived_params, 
+                        extra_global_params, body)
 
 
-def create_var_init_snippet(class_name, param_names=None,
-                            derived_params=None,
-                            var_init_code=None, 
+def create_var_init_snippet(class_name, params=None, param_names=None,
+                            derived_params=None, var_init_code=None, 
                             extra_global_params=None):
     """This helper function creates a custom InitVarSnippet class.
     See also:
@@ -1306,13 +1310,12 @@ def create_var_init_snippet(class_name, param_names=None,
         body["get_code"] = lambda self: dedent(var_init_code)
 
     return create_model(class_name, InitVarSnippetBase, 
-                        param_names, derived_params, 
+                        params, param_names, derived_params, 
                         extra_global_params, body)
 
 
-def create_sparse_connect_init_snippet(class_name,
-                                       param_names=None,
-                                       derived_params=None,
+def create_sparse_connect_init_snippet(class_name, params=None, 
+                                       param_names=None, derived_params=None,
                                        row_build_code=None,
                                        col_build_code=None,
                                        calc_max_row_len_func=None,
@@ -1372,10 +1375,11 @@ def create_sparse_connect_init_snippet(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: calc_kernel_size_func
 
-    return create_model(class_name, InitSparseConnectivitySnippetBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, InitSparseConnectivitySnippetBase, params,
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-def create_toeplitz_connect_init_snippet(class_name,
+def create_toeplitz_connect_init_snippet(class_name, params=None,
                                          param_names=None,
                                          derived_params=None,
                                          diagonal_build_code=None,
@@ -1427,8 +1431,9 @@ def create_toeplitz_connect_init_snippet(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: make_cksf(calc_kernel_size_func)
 
-    return create_model(class_name, InitToeplitzConnectivitySnippetBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, InitToeplitzConnectivitySnippetBase,
+                        params, param_names, derived_params,
+                        extra_global_params, body)
 
 @deprecated("this wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):
