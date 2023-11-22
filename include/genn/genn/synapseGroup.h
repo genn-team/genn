@@ -71,10 +71,10 @@ public:
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
-    void setWUParamDynamic(const std::string &paramName, bool dynamic);
+    void setWUParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
-    void setPSParamDynamic(const std::string &paramName, bool dynamic);
+    void setPSParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
