@@ -97,5 +97,6 @@ void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
 void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(d.name, hash);
+    Type::updateHash(d.type, hash);
 }
 }   // namespace GeNN::Snippet

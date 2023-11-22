@@ -119,13 +119,21 @@ public:
     //! A derived parameter has a name and a function for obtaining its value
     struct GENN_EXPORT DerivedParam
     {
+        typedef std::function<Type::NumericValue(const std::unordered_map<std::string, Type::NumericValue>&, double)> Func;
+
+        DerivedParam(const std::string &n, Func f, const Type::ResolvedType &t) : name(n), func(f), type(t)
+        {}
+        DerivedParam(const std::string &n, Func f, const std::string &t = "scalar") : name(n), func(f), type(t)
+        {}
+
         bool operator == (const DerivedParam &other) const
         {
-            return (name == other.name);
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::function<Type::NumericValue(const std::unordered_map<std::string, Type::NumericValue>&, double)> func;
+        Type::UnresolvedType type;
+        Func func;
     };
 
     //----------------------------------------------------------------------------
