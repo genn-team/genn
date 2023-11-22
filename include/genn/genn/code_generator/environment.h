@@ -564,7 +564,8 @@ public:
                          {
                              return std::make_pair(std::invoke(getInitialiser, g).getParams().at(p.name), 
                                                    std::ref(runtime.getMergedParamDestinations(g, p.name)));
-                         });
+                         },
+                         "", GroupMergedFieldType::DYNAMIC);
             }
             // Otherwise, if parameter is heterogeneous across merged group
             else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
