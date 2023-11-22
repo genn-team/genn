@@ -55,11 +55,11 @@ class path;
 
 #define IMPLEMENT_GROUP_OVERLOADS(GROUP)                                                                            \
 public:                                                                                                             \
-    void setDynamicParam(const GROUP &group, const std::string &paramName,                                          \
-                         const Type::NumericValue &value)                                                           \
+    void setDynamicParamValue(const GROUP &group, const std::string &paramName,                                          \
+                              const Type::NumericValue &value)                                                           \
     {                                                                                                               \
-        setDynamicParam(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
-                        value);                                                                                     \
+        setDynamicParamValue(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
+                             value);                                                                                     \
     }                                                                                                               \
     void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
     {                                                                                                               \
@@ -494,12 +494,13 @@ private:
         }
     }
 
+    //! Set dynamic parameter value in all merged field destinations
+    void setDynamicParamValue(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
+                              const Type::NumericValue &value);
+
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
 
-    //! Set dynamic parameter value in all merged field destinations
-    void setDynamicParam(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
-                         const Type::NumericValue &value);
-
+    
     template<typename G>
     void pushUninitialized(GroupArrayMap<G> &groups)
     {

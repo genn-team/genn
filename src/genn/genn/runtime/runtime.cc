@@ -828,8 +828,8 @@ void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, co
     }
 }
 //----------------------------------------------------------------------------
-void Runtime::setDynamicParam(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
-                              const Type::NumericValue &value)
+void Runtime::setDynamicParamValue(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
+                                   const Type::NumericValue &value)
 {
     // Serailise new value
     std::vector<std::byte> valueStorage;
