@@ -236,6 +236,10 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
         }
 
+        // Create destinations for any dynamic parameters
+        createDynamicParamDestinations<NeuronGroupInternal>(n.second, n.second.getNeuronModel()->getParams(),
+                                                            &NeuronGroup::isParamDynamic);
+
         // Create arrays for neuron state variables
         createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 
                                                 batchSize, n.second.getNumDelaySlots(), true);
@@ -247,6 +251,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         for (const auto *cs : n.second.getCurrentSources()) {
             createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
             createEGPArrays<CurrentSourceEGPAdapter>(cs);
+            createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getCurrentSourceModel()->getParams(),
+                                                                  &CurrentSourceInternal::isParamDynamic);
         }
 
         // Loop through fused postsynaptic model from incoming populations
@@ -300,6 +306,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                     return getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
                 });
         }
+
+        // Create destinations for any dynamic parameters
+        createDynamicParamDestinations<SynapseGroupInternal>(s.second, s.second.getWUInitialiser().getSnippet()->getParams(),
+                                                            &SynapseGroupInternal::isWUParamDynamic);
+        createDynamicParamDestinations<SynapseGroupInternal>(s.second, s.second.getPSInitialiser().getSnippet()->getParams(),
+                                                            &SynapseGroupInternal::isPSParamDynamic);
 
         // If connectivity is bitmask
         const size_t numPre = s.second.getSrcNeuronGroup()->getNumNeurons();
@@ -395,6 +407,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                                                       c.second.getDims() & VarAccessDim::BATCH);
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
+
+        createDynamicParamDestinations<CustomUpdateInternal>(c.second, c.second.getCustomUpdateModel()->getParams(),
+                                                            &CustomUpdateInternal::isParamDynamic);
     }
 
     // Allocate custom update WU variables
@@ -410,6 +425,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
+
+        createDynamicParamDestinations<CustomUpdateWUInternal>(c.second, c.second.getCustomUpdateModel()->getParams(),
+                                                               &CustomUpdateWUInternal::isParamDynamic);
     }
 
     // Loop through custom connectivity update variables
@@ -436,6 +454,10 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         
         // Create arrays for custom connectivity update extra global parameters
         createEGPArrays<CustomConnectivityUpdateEGPAdapter>(&c.second);
+
+        createDynamicParamDestinations<CustomConnectivityUpdateInternal>(
+            c.second, c.second.getCustomConnectivityUpdateModel()->getParams(),
+            &CustomConnectivityUpdateInternal::isParamDynamic);
 
         // If custom connectivity update group needs per-row RNGs
         if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
@@ -697,11 +719,22 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                           size_t count, VarLocation location, bool uninitialized)
 {
-    LOGD_RUNTIME << "\t'" << varName << "' = " << count << " * " << type.getSize(m_Backend.get().getPointerBytes()) << " bytes (" << type.getName() << ")";
+    LOGD_RUNTIME << "\tArray '" << varName << "' = " << count << " * " << type.getSize(m_Backend.get().getPointerBytes()) << " bytes (" << type.getName() << ")";
     const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location, uninitialized));
     if(!r.second) {
         throw std::runtime_error("Unable to allocate array with " 
                                  "duplicate name '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
+void Runtime::createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
+                                             const std::string &paramName, const Type::ResolvedType &type)
+{
+    LOGD_RUNTIME << "\tDynamic param '" << paramName << "' (" << type.getName() << ")";
+    const auto r = destinations.try_emplace(paramName, std::make_pair(type, MergedDynamicFieldDestinations()));
+    if(!r.second) {
+        throw std::runtime_error("Unable to add dynamic parameter with " 
+                                 "duplicate name '" + paramName + "'");
     }
 }
 //----------------------------------------------------------------------------
@@ -795,18 +828,15 @@ void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, co
     }
 }
 //----------------------------------------------------------------------------
-void Runtime::setDynamicParam(const MergedDynamicFieldDestinations &mergedDestinations, 
+void Runtime::setDynamicParam(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
                               const Type::NumericValue &value)
 {
-    // **HACK**
-    Type::ResolvedType type = Type::Float;
-
+    // Serailise new value
     std::vector<std::byte> valueStorage;
-    Type::serialiseNumeric(value, type, valueStorage);
+    Type::serialiseNumeric(value, mergedDestinations.first, valueStorage);
 
     // Build FFI arguments
-    // **TODO** allow backend to override type
-    ffi_type *argumentTypes[2]{&ffi_type_uint, type.getFFIType()};
+    ffi_type *argumentTypes[2]{&ffi_type_uint, mergedDestinations.first.getFFIType()};
 
     // Prepare an FFI Call InterFace for calls to push merged
     // **TODO** cache - these are the same for all calls with same datatype
@@ -818,7 +848,7 @@ void Runtime::setDynamicParam(const MergedDynamicFieldDestinations &mergedDestin
     }
     
     // Loop through merged destinations of this array
-    for(const auto &d : mergedDestinations.getDestinationFields()) {
+    for(const auto &d : mergedDestinations.second.getDestinationFields()) {
         // Get push function
         // **TODO** cache in structure instead of mergedGroup and fieldName
         void *pushFunction = getSymbol("pushMerged" + d.first + std::to_string(d.second.mergedGroupIndex) 

@@ -61,17 +61,17 @@ public:                                                                         
         setDynamicParam(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
                         value);                                                                                     \
     }                                                                                                               \
+    void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
+    {                                                                                                               \
+        allocateExtraGlobalParam(m_##GROUP##Arrays.at(&group), varName, count);                                     \
+    }                                                                                                               \
     MergedDynamicFieldDestinations &getMergedParamDestinations(const GROUP &group, const std::string &paramName)    \
     {                                                                                                               \
-        return m_##GROUP##DynamicParameters[&group][paramName];                                                     \
+        return m_##GROUP##DynamicParameters.at(&group).at(paramName).second;                                      \
     }                                                                                                               \
     ArrayBase *getArray(const GROUP &group, const std::string &varName) const                                       \
     {                                                                                                               \
         return m_##GROUP##Arrays.at(&group).at(varName).get();                                                      \
-    }                                                                                                               \
-    void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
-    {                                                                                                               \
-        allocateExtraGlobalParam(m_##GROUP##Arrays.at(&group), varName, count);                                     \
     }                                                                                                               \
 private:                                                                                                            \
     void createArray(const GROUP *group, const std::string &varName,                                                \
@@ -80,6 +80,11 @@ private:                                                                        
     {                                                                                                               \
         createArray(m_##GROUP##Arrays[group],                                                                       \
                     varName, type, count, location, uninitialized);                                                 \
+    }                                                                                                               \
+    void createDynamicParamDestinations(const GROUP *group, const std::string &paramName,                           \
+                                        const Type::ResolvedType &type)                                             \
+    {                                                                                                               \
+        createDynamicParamDestinations(m_##GROUP##DynamicParameters[group], paramName, type);                       \
     }
 
 //--------------------------------------------------------------------------
@@ -363,7 +368,7 @@ private:
     
     //! Map of groups to names of dynamic parameters and their destinations
     template<typename G>
-    using MergedDynamicParameterMap = std::unordered_map<const G*, std::unordered_map<std::string, MergedDynamicFieldDestinations>>;
+    using MergedDynamicParameterMap = std::unordered_map<const G*, std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>>>;
     
     //----------------------------------------------------------------------------
     // Private API
@@ -373,7 +378,8 @@ private:
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                      size_t count, VarLocation location, bool uninitialized = false);
-
+    void createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
+                                        const std::string &paramName, const Type::ResolvedType &type);
     BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
 
     void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
@@ -476,16 +482,22 @@ private:
                   
     }
 
-    /*template<typename G>
-    void createDynamicParameterArrays(const G &group, const Snippet::Base::ParamVec &params, 
+    template<typename G>
+    void createDynamicParamDestinations(const G &group, const Snippet::Base::ParamVec &params, 
                                       bool (G::*isDynamic)(const std::string&) const)
     {
-    }*/
+        const auto &typeContext = m_ModelMerged.get().getModel().getTypeContext();
+        for(const auto &p : params) {
+            if(std::invoke(isDynamic, group, p.name)) {
+                createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext));
+            }
+        }
+    }
 
     void allocateExtraGlobalParam(ArrayMap &groupArrays, const std::string &varName, size_t count);
 
     //! Set dynamic parameter value in all merged field destinations
-    void setDynamicParam(const MergedDynamicFieldDestinations &mergedDestinations, 
+    void setDynamicParam(const std::pair<Type::ResolvedType, MergedDynamicFieldDestinations> &mergedDestinations, 
                          const Type::NumericValue &value);
 
     template<typename G>
