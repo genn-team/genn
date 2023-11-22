@@ -486,7 +486,7 @@ private:
     void createDynamicParamDestinations(const G &group, const Snippet::Base::ParamVec &params, 
                                       bool (G::*isDynamic)(const std::string&) const)
     {
-        const auto &typeContext = m_ModelMerged.get().getModel().getTypeContext();
+        const auto &typeContext = getModel().getTypeContext();
         for(const auto &p : params) {
             if(std::invoke(isDynamic, group, p.name)) {
                 createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext));

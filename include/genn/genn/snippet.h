@@ -132,8 +132,8 @@ public:
         }
 
         std::string name;
-        Type::UnresolvedType type;
         Func func;
+        Type::UnresolvedType type;
     };
 
     //----------------------------------------------------------------------------
