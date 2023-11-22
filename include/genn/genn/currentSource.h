@@ -40,7 +40,7 @@ public:
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
-    void setParamDynamic(const std::string &paramName, bool dynamic);
+    void setParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Set name of neuron input variable current source model will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
