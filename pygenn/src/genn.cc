@@ -623,10 +623,10 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Type::NumericValue>(m, "NumericValue")
         .def(pybind11::init<double>())
-        .def(pybind11::init<uint64_t>())
         .def(pybind11::init<int64_t>())
-        .def(pybind11::init<int>())
-        .def(pybind11::init<unsigned int>());
+
+        .def_property_readonly("as_float", &Type::NumericValue::cast<double>)
+        .def_property_readonly("as_int", &Type::NumericValue::cast<int64_t>);
 
     //------------------------------------------------------------------------
     // genn.ResolvedType
@@ -697,8 +697,8 @@ PYBIND11_MODULE(genn, m)
     // genn.ParamVal
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::ParamVal>(m, "ParamVal")
-        .def(pybind11::init<const std::string&, const std::string&, double>())
-        .def(pybind11::init<const std::string&, const Type::ResolvedType&, double>())
+        .def(pybind11::init<const std::string&, const std::string&, Type::NumericValue>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, Type::NumericValue>())
         .def_readonly("name", &Snippet::Base::ParamVal::name)
         .def_readonly("type", &Snippet::Base::ParamVal::type)
         .def_readonly("value", &Snippet::Base::ParamVal::value);
