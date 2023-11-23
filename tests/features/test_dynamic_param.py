@@ -119,7 +119,7 @@ def test_dynamic_param(backend, precision):
         "Synapse", "SPARSE", 0,
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {"input": 0.0}, {"x": 0.0, "shift": shift}),
-        init_postsynaptic(postsynaptic_model, {"psmInput": 0.0}, {"psmX": 0.0, "psmShift": 0}))
+        init_postsynaptic(postsynaptic_model, {"psmInput": 0.0}, {"psmX": 0.0, "psmShift": shift}))
     s_pop.set_sparse_connections(np.arange(10), np.arange(10))
     s_pop.set_wu_param_dynamic("input")
     s_pop.set_ps_param_dynamic("psmInput")
@@ -147,6 +147,7 @@ def test_dynamic_param(backend, precision):
         for v, p in vars:
             v.pull_from_device()
             values = v.values
+
             if not np.allclose(values, correct):
                 assert False, f"{v.group.name} var {v.name} has wrong value ({values}) rather than {correct})"
 
@@ -154,4 +155,4 @@ def test_dynamic_param(backend, precision):
             v.group.set_dynamic_param_value(p, model.t ** 2)
 
 if __name__ == '__main__':
-    test_dynamic_param("single_threaded_cpu", types.Float)
+    test_dynamic_param("cuda", types.Float)
