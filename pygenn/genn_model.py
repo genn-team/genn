@@ -869,7 +869,11 @@ def create_model(class_name, base, params, param_names, derived_params,
 
     if derived_params is not None:
         body["get_derived_params"] = \
-            lambda self: [DerivedParam(*dp) for dp in derived_params]
+            lambda self: [DerivedParam(
+                              dp[0], 
+                              lambda pars, dt: NumericValue(dp[1](pars, dt),
+                              *dp[2:]))
+                          for dp in derived_params]
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
