@@ -28,6 +28,20 @@ def test_dynamic_param(backend, precision):
         params=["input"],
         var_name_types=[("x", "scalar"), ("shift", "scalar")])
     
+    postsynaptic_model = create_postsynaptic_model(
+        "postsynaptic",
+        decay_code=
+        """
+        psmX = t + psmShift + psmInput;
+        $(inSyn) = 0;
+        """,
+        apply_input_code=
+        """
+        $(Isyn) += $(inSyn);
+        """,
+        params=["psmInput"],
+        var_name_types=[("psmX", "scalar"), ("psmShift", "scalar")])
+
     weight_update_model = create_weight_update_model(
         "weight_update",
         synapse_dynamics_code=
@@ -84,11 +98,11 @@ def test_dynamic_param(backend, precision):
                                             {"input": 0.0},
                                             {"x": 0.0, "shift": shift})
     pre_n_pop.set_param_dynamic("input")
-
-    post_n_pop = model.add_neuron_population("PostNeurons", 1, neuron_model, 
+    
+    post_n_pop = model.add_neuron_population("PostNeurons", 10, neuron_model, 
                                             {"input": 0.0},
-                                            {"x": 0.0, "shift": 0})
-
+                                            {"x": 0.0, "shift": shift})
+    
     cs_pop = model.add_current_source("CurrentSource", 
                                       current_source_model, pre_n_pop,
                                       {"input": 0.0},
@@ -105,9 +119,10 @@ def test_dynamic_param(backend, precision):
         "Synapse", "SPARSE", 0,
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {"input": 0.0}, {"x": 0.0, "shift": shift}),
-        init_postsynaptic("DeltaCurr"))
+        init_postsynaptic(postsynaptic_model, {"psmInput": 0.0}, {"psmX": 0.0, "psmShift": 0}))
     s_pop.set_sparse_connections(np.arange(10), np.arange(10))
     s_pop.set_wu_param_dynamic("input")
+    s_pop.set_ps_param_dynamic("psmInput")
 
     ccu = model.add_custom_connectivity_update(
         "CustomConnectivityUpdate", "CustomUpdate", s_pop,
@@ -119,24 +134,24 @@ def test_dynamic_param(backend, precision):
     model.build()
     model.load()
     
-    vars = [pre_n_pop.vars["x"], cs_pop.vars["x"], 
-            cu.vars["x"], s_pop.vars["x"], ccu.pre_vars["xHost"],
-            ccu.pre_vars["xDevice"]]
+    vars = [(pre_n_pop.vars["x"], "input"), (cs_pop.vars["x"], "input"),
+            (cu.vars["x"], "input"), (s_pop.vars["x"], "input"), 
+            (s_pop.psm_vars["psmX"], "psmInput"), 
+            (ccu.pre_vars["xHost"], "input"), (ccu.pre_vars["xDevice"], "input")]
     while model.timestep < 10:
         correct = model.t + shift + (model.t ** 2)
         model.custom_update("CustomUpdate")
         model.step_time()
     
         # Loop through populations
-        for v in vars:
+        for v, p in vars:
             v.pull_from_device()
             values = v.values
             if not np.allclose(values, correct):
-                assert False, f"{v.group.name} var x has wrong value ({values}) rather than {correct})"
+                assert False, f"{v.group.name} var {v.name} has wrong value ({values}) rather than {correct})"
 
             # Set dynamic parameter
-            v.group.set_dynamic_param_value("input", model.t ** 2)
-        
+            v.group.set_dynamic_param_value(p, model.t ** 2)
 
 if __name__ == '__main__':
-    test_dynamic_param("cuda", types.Float)
+    test_dynamic_param("single_threaded_cpu", types.Float)
