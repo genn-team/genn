@@ -65,12 +65,13 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    DerivedParam, EGP, EGPRef,
                    InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase, Param,
-                   ParamVal, PlogSeverity, PostsynapticInit,
-                   PostsynapticModelBase, SparseConnectivityInit,
-                   SynapseGroup, SynapseMatrixType, ToeplitzConnectivityInit,
-                   UnresolvedType, Var, VarInit, VarLocation, VarRef,
-                   WeightUpdateInit, WeightUpdateModelBase)
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                   NumericValue, Param, ParamVal, PlogSeverity,
+                   PostsynapticInit, PostsynapticModelBase,
+                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
+                   ToeplitzConnectivityInit, UnresolvedType, Var, VarInit,
+                   VarLocation, VarRef, WeightUpdateInit,
+                   WeightUpdateModelBase)
 
 from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
@@ -930,7 +931,8 @@ def create_neuron_model(class_name, params=None, param_names=None,
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
-            lambda self: [ParamVal(*a) for a in additional_input_vars]
+            lambda self: [ParamVal(a[0], a[1], NumericValue(a[2]))
+                          for a in additional_input_vars]
 
     if var_name_types is not None:
         body["get_vars"] = \
