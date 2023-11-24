@@ -494,11 +494,6 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             CodeStream::Scope b(popEnv.getStream());
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
             buildStandardEnvironment(groupEnv, batchSize);
-            
-            // Add fields for neuron variables to environment
-            // **NOTE** these are hidden and not indexed as SIMT backend
-            // will index these differently in time-driven and spike-driven code
-            groupEnv.addVarPointers<NeuronVarAdapter>(true);
 
             // Call handler to generate generic neuron code
             groupEnv.print("if($(id) < $(num_neurons))");
@@ -605,8 +600,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create an environment which caches neuron variable fields in local variables if they are accessed
                     // **NOTE** we do this right at the top so that local copies can be used by child groups
                     // **NOTE** always copy variables if variable is delayed
-                    EnvironmentLocalFieldVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
-                        ng, ng.getTypeContext(), wuEnv, "l", true,
+                    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
+                        ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
                         [batchSize, &ng](const std::string &varName, VarAccess d)
                         {
                             const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
