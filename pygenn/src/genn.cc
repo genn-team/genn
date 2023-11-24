@@ -625,8 +625,7 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<double>())
         .def(pybind11::init<int64_t>())
 
-        .def_property_readonly("as_float", &Type::NumericValue::cast<double>)
-        .def_property_readonly("as_int", &Type::NumericValue::cast<int64_t>);
+        .def_property_readonly("value", &Type::NumericValue::get);
 
     //------------------------------------------------------------------------
     // genn.ResolvedType

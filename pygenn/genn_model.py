@@ -868,10 +868,13 @@ def create_model(class_name, base, params, param_names, derived_params,
                           for p in params]
 
     if derived_params is not None:
-        # Helper to wrap lambda function to add NumericValue return
+        # Helper to wrap lambda function so as to extract underlying value from NumericValue
+        # parameters and wrap the resulting derived parameter value in a NumericValue!
         # **NOTE** seperate function is required to ensure f is bound correctly
-        def wrap_lambda(f, pars, dt):
-            return NumericValue(f(pars, dt))
+        def wrap_lambda(f):
+            return lambda pars, dt: NumericValue(f({n: p.value 
+                                                    for n, p in pars.items()},
+                                                   dt))
 
         body["get_derived_params"] = \
             lambda self: [DerivedParam(dp[0], wrap_lambda(dp[1]), *dp[2:])
