@@ -184,11 +184,11 @@ protected:
         if(std::get<2>(payload)) {
             // If there is no value specified, access field directly
             if(str.empty()) {
-                 return "group->" + std::get<1>(std::get<2>(payload).value());
+                 return "group->" + std::get<2>(payload).value().name;
             }
             // Otherwise, treat value as index
             else {
-                return "group->" + std::get<1>(std::get<2>(payload).value()) + "[" + str + "]"; 
+                return "group->" + std::get<2>(payload).value().name + "[" + str + "]"; 
             }
         }
         // Otherwise, use value directly
@@ -207,12 +207,12 @@ protected:
 
             // Add to field group using lambda function to potentially map from group to field
             // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
-            m_FieldGroup.get().addField(std::get<0>(field), std::get<1>(field),
+            m_FieldGroup.get().addField(field.type, field.name, 
                                         [field, &group](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return std::get<2>(field)(runtime, group.getGroups().at(i), i);
+                                            return field.getValue(runtime, group.getGroups().at(i), i);
                                         },
-                                        std::get<3>(field));
+                                        field.fieldType);
 
             // Set flag so field doesn't get re-added
             std::get<0>(payload) = true;
@@ -441,8 +441,8 @@ public:
                   const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
                   const std::vector<size_t> &initialisers = {})
     {
-        this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, 
-                                                      std::make_optional(std::make_tuple(fieldType, fieldName, getFieldValue, mergedFieldType))),
+        G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
+        this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
 

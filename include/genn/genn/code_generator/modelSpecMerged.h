@@ -276,18 +276,18 @@ public:
             const auto &mergedGroup = groups[g];
             for(const auto &f : mergedGroup.getFields()) {
                 // If field is dynamic, add record to merged EGPS
-                if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+                if((f.fieldType & GroupMergedFieldType::DYNAMIC)) {
                     // Add reference to this group's variable to data structure
                     // **NOTE** this works fine with EGP references because the function to
                     // get their value will just return the name of the referenced EGP
-                    os << "void pushMerged" << T::name << g << std::get<1>(f) << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value)";
+                    os << "void pushMerged" << T::name << g << f.name << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
                     {
                         CodeStream::Scope b(os);
                         if(host) {
-                            os << "merged" << T::name << "Group" << g << "[idx]." << std::get<1>(f) << " = value;" << std::endl;
+                            os << "merged" << T::name << "Group" << g << "[idx]." << f.name << " = value;" << std::endl;
                         }
                         else {
-                            backend.genMergedDynamicVariablePush(os, T::name, g, "idx", std::get<1>(f), "value");
+                            backend.genMergedDynamicVariablePush(os, T::name, g, "idx", f.name, "value");
                         }
                     }
                 }

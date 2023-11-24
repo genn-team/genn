@@ -68,7 +68,24 @@ public:
     typedef std::variant<Type::NumericValue, const Runtime::ArrayBase*,
                          std::pair<Type::NumericValue, Runtime::MergedDynamicFieldDestinations&>> FieldValue;
     typedef std::function<FieldValue(Runtime::Runtime &, const G &, size_t)> GetFieldValueFunc;
-    typedef std::tuple<Type::ResolvedType, std::string, GetFieldValueFunc, GroupMergedFieldType> Field;
+
+    //------------------------------------------------------------------------
+    // Field
+    //------------------------------------------------------------------------
+    struct Field
+    {
+        std::string name;
+        Type::ResolvedType type;
+        GroupMergedFieldType fieldType;
+        GetFieldValueFunc getValue;
+
+        //! Less than operator (used for std::set::insert), 
+        //! lexicographically compares all three struct members
+        bool operator < (const Field &other) const
+        {
+            return (name < other.name);
+        }
+    };
 
     ChildGroupMerged(size_t index, const Type::TypeContext &typeContext, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
     :   m_Index(index), m_TypeContext(typeContext), m_Groups(std::move(groups))
@@ -210,14 +227,14 @@ public:
     //! Get group fields, sorted into order they will appear in struct
     std::vector<typename ChildGroupMerged<G>::Field> getSortedFields(const BackendBase &backend) const
     {
-        // Make a copy of fields and sort so largest come first. This should mean that due
+        // Copy fields into vectorand sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
         const size_t pointerBytes = backend.getPointerBytes();
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [pointerBytes](const auto &a, const auto &b)
                   {
-                      return (std::get<0>(a).getSize(pointerBytes) > std::get<0>(b).getSize(pointerBytes));
+                      return (a.type.getSize(pointerBytes) > b.type.getSize(pointerBytes));
                   });
         return sortedFields;
 
@@ -234,22 +251,21 @@ public:
             for(const auto &f : sortedFields) {
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
-                const auto &type = std::get<0>(f);
-                if(type.isPointer() && !(std::get<3>(f) & GroupMergedFieldType::HOST)) {
+                if(f.type.isPointer() && !(f.fieldType & GroupMergedFieldType::HOST)) {
                     // If we are generating a host structure, allow the backend to override the type
                     if(host) {
-                        os << backend.getMergedGroupFieldHostTypeName(type);
+                        os << backend.getMergedGroupFieldHostTypeName(f.type);
                     }
                     // Otherwise, allow the backend to add a prefix 
                     else {
-                        os << backend.getPointerPrefix() << type.getName();
+                        os << backend.getPointerPrefix() << f.type.getName();
                     }
                 }
                 // Otherwise, leave the type alone
                 else {
-                    os << type.getName();
+                    os << f.type.getName();
                 }
-                os << " " << std::get<1>(f) << ";" << std::endl;
+                os << " " << f.name << ";" << std::endl;
             }
             os << std::endl;
         }
@@ -263,7 +279,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
-            os << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " " << std::get<1>(f);
+            os << backend.getMergedGroupFieldHostTypeName(f.type) << " " << f.name;
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
             }
@@ -285,7 +301,7 @@ public:
             // Loop through sorted fields and set array entry
             const auto sortedFields = getSortedFields(backend);
             for(const auto &f : sortedFields) {
-                os << "merged" << name << "Group" << this->getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                os << "merged" << name << "Group" << this->getIndex() << "[idx]." << f.name << " = " << f.name << ";" << std::endl;
             }
         }
     }
@@ -299,7 +315,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(const auto &f : sortedFields) {
             // Add size of field to total
-            const size_t fieldSize = std::get<0>(f).getSize(backend.getPointerBytes());
+            const size_t fieldSize = f.type.getSize(backend.getPointerBytes());
             structSize += fieldSize;
 
             // Update largest field size
@@ -345,11 +361,11 @@ public:
     }
 
     void addField(const Type::ResolvedType &type, const std::string &name, typename ChildGroupMerged<G>::GetFieldValueFunc getFieldValue,
-                  GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
+                  GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD, bool allowDuplicate = false)
     {
-        // Add field to data structurChildGroupMergede
-        m_Fields.emplace_back(type, name, getFieldValue, fieldType);
-    }
+        // Add field to data structure
+        m_Fields.push_back({name, type, fieldType, getFieldValue});
+     }
 
 protected:
     //------------------------------------------------------------------------
@@ -364,14 +380,14 @@ protected:
 
         // Loop through fields again to generate any dynamic field pushing functions that are required
         for(const auto &f : m_Fields) {
-            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
-                definitions << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
-                definitions << backend.getMergedGroupFieldHostTypeName(std::get<0>(f)) << " value);" << std::endl;
+            if((f.fieldType & GroupMergedFieldType::DYNAMIC)) {
+                definitions << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << f.name << "ToDevice(unsigned int idx, ";
+                definitions << backend.getMergedGroupFieldHostTypeName(f.type) << " value);" << std::endl;
             }
 
             // If field is a pointer, assert that this is a host structure if field is a host or host object field
-            if(std::get<0>(f).isPointer()) {
-                assert((!(std::get<3>(f) & GroupMergedFieldType::HOST) && !(std::get<3>(f) & GroupMergedFieldType::HOST_OBJECT)) || host);
+            if(f.type.isPointer()) {
+                assert((!(f.fieldType & GroupMergedFieldType::HOST) && !(f.fieldType & GroupMergedFieldType::HOST_OBJECT)) || host);
             }
         }
     }

@@ -390,7 +390,7 @@ private:
         // Loop through fields
         for(const auto &f : mergedGroup.getFields()) {
             // If field is dynamic
-            if((std::get<3>(f) & CodeGenerator::GroupMergedFieldType::DYNAMIC)) {
+            if((f.fieldType & CodeGenerator::GroupMergedFieldType::DYNAMIC)) {
                 // Loop through groups within newly-created merged group
                 for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
                     auto g = mergedGroup.getGroups()[groupIndex];
@@ -403,21 +403,21 @@ private:
                                 // **NOTE** this works fine with EGP references because the function to
                                 // get their value will just return the array associated with the referenced EGP
                                 m_MergedDynamicArrays[array].addDestinationField<G>(
-                                    mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
-                                    std::get<1>(f), std::get<3>(f));
+                                    mergedGroup.getIndex(), groupIndex, f.type, 
+                                    f.name, f.fieldType);
                             },
                             // Otherwise, if it cotnains a dynamic parameter
                             [&f, &mergedGroup, groupIndex](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
                             {
                                 value.second.addDestinationField<G>(
-                                    mergedGroup.getIndex(), groupIndex, std::get<0>(f), 
-                                    std::get<1>(f), std::get<3>(f));
+                                    mergedGroup.getIndex(), groupIndex, f.type, 
+                                    f.name, f.fieldType);
                             },
                             [](const Type::NumericValue&) 
                             {
                                 assert(false);
                             }},
-                        std::get<2>(f)(*this, g, groupIndex));
+                        f.getValue(*this, g, groupIndex));
                     
                 }
             }
@@ -529,7 +529,7 @@ private:
         std::vector<ffi_type*> argumentTypes{&ffi_type_uint};
         argumentTypes.reserve(sortedFields.size() + 1);
         std::transform(sortedFields.cbegin(), sortedFields.cend(), std::back_inserter(argumentTypes),
-                        [](const auto &f){ return std::get<0>(f).getFFIType(); });
+                       [](const auto &f){ return f.type.getFFIType(); });
         
         // Prepare an FFI Call InterFace for calls to push merged
         ffi_cif cif;
@@ -563,12 +563,12 @@ private:
                         [&argumentStorage, &f, this](const ArrayBase *array)
                         {
                             // If this field should contain host pointer
-                            const bool pointerToPointer = std::get<0>(f).isPointerToPointer();
-                            if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST) {
+                            const bool pointerToPointer = f.type.isPointerToPointer();
+                            if(f.fieldType & CodeGenerator::GroupMergedFieldType::HOST) {
                                 array->serialiseHostPointer(argumentStorage, pointerToPointer);
                             }
                             // Otherwise, if it should contain host object
-                            else if(std::get<3>(f) & CodeGenerator::GroupMergedFieldType::HOST_OBJECT) {
+                            else if(f.fieldType & CodeGenerator::GroupMergedFieldType::HOST_OBJECT) {
                                 array->serialiseHostObject(argumentStorage, pointerToPointer);
                             }
                             // Otherwise
@@ -586,13 +586,13 @@ private:
                         // Otherwise, if field contains numeric value
                         [&argumentStorage, &f](const Type::NumericValue &value)
                         { 
-                            Type::serialiseNumeric(value, std::get<0>(f), argumentStorage);
+                            Type::serialiseNumeric(value, f.type, argumentStorage);
                         },
                         [&argumentStorage, &f](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
                         {
-                            Type::serialiseNumeric(value.first, std::get<0>(f), argumentStorage);
+                            Type::serialiseNumeric(value.first, f.type, argumentStorage);
                         }},
-                    std::get<2>(f)(*this, g.getGroups()[groupIndex], groupIndex));
+                    f.getValue(*this, g.getGroups()[groupIndex], groupIndex));
             }
 
             // Build vector of argument pointers
