@@ -441,7 +441,7 @@ public:
                   const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
                   const std::vector<size_t> &initialisers = {})
     {
-        G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
+        typename G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
