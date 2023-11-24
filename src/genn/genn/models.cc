@@ -190,7 +190,7 @@ VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const
     try {
         return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPostVar(varName).value()});
     }
-    catch(std::bad_optional_access &e) {
+    catch(std::bad_optional_access&) {
         throw std::runtime_error("Variable '" + varName + "' not found");
     }
 }
@@ -201,7 +201,7 @@ VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &
     try {
         return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg), psm->getVar(varName).value()});
     }
-    catch(std::bad_optional_access &e) {
+    catch(std::bad_optional_access&) {
         throw std::runtime_error("Variable '" + varName + "' not found");
     }
 }
