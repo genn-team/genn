@@ -3,6 +3,7 @@
 // Standard includes
 #include <algorithm>
 #include <functional>
+#include <set>
 #include <type_traits>
 #include <vector>
 
@@ -80,7 +81,7 @@ public:
         GetFieldValueFunc getValue;
 
         //! Less than operator (used for std::set::insert), 
-        //! lexicographically compares all three struct members
+        //! compares using only name
         bool operator < (const Field &other) const
         {
             return (name < other.name);
@@ -222,14 +223,14 @@ public:
     const std::string &getMemorySpace() const { return m_MemorySpace; }
 
     //! Get group fields
-    const std::vector<typename ChildGroupMerged<G>::Field> &getFields() const{ return m_Fields; }
+    const std::set<typename ChildGroupMerged<G>::Field> &getFields() const{ return m_Fields; }
 
     //! Get group fields, sorted into order they will appear in struct
     std::vector<typename ChildGroupMerged<G>::Field> getSortedFields(const BackendBase &backend) const
     {
         // Copy fields into vectorand sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = m_Fields;
+        std::vector<typename ChildGroupMerged<G>::Field> sortedFields(m_Fields.cbegin(), m_Fields.cend());
         const size_t pointerBytes = backend.getPointerBytes();
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [pointerBytes](const auto &a, const auto &b)
@@ -364,7 +365,22 @@ public:
                   GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD, bool allowDuplicate = false)
     {
         // Add field to data structure
-        m_Fields.push_back({name, type, fieldType, getFieldValue});
+        auto r = m_Fields.insert({name, type, fieldType, getFieldValue});
+
+        // If field wasn't successfully inserted
+        if(!r.second) {
+            // If duplicate fields are allowed
+            if(allowDuplicate) {
+                // If other properties of the field don't match
+                if(r.first->type != type || r.first->fieldType != fieldType) {
+                    throw std::runtime_error("Unable to add duplicate field '" + name + "' with different properties to merged group");
+                }
+            }
+            // Otherwise, give error
+            else {
+                throw std::runtime_error("Unable to add duplicate field '" + name + "' to merged group");
+            }
+        }
      }
 
 protected:
@@ -397,7 +413,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::string m_MemorySpace;
-    std::vector<typename ChildGroupMerged<G>::Field> m_Fields;
+    std::set<typename ChildGroupMerged<G>::Field> m_Fields;
 };
 
 //----------------------------------------------------------------------------
