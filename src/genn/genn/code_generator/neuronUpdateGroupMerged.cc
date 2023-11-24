@@ -43,7 +43,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
+        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false, false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -126,7 +126,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
+        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false, false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -209,9 +209,10 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
   
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
+        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -293,9 +294,10 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
+        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -484,7 +486,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
+        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true, true,
         [batchSize, this](const std::string &varName, VarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
