@@ -151,7 +151,8 @@ protected:
             if((m_Dims != varRef.getVarDims())
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
+                throw std::runtime_error("Variable reference '" + modelVarRef.name + "' in custom update '" + getName() + 
+                                         "' to lower-dimensional variables cannot be read-write.");
             }
         }
     }
