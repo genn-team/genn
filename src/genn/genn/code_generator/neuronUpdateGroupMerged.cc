@@ -175,7 +175,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase 
 
     // Add reverse insyn variable to 
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-    outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
+    outSynEnv.printLine("$(_" + getArchetype().getPreTargetVar() + ") += $(_out_pre)[" + idx + "];");
 
     // Zero it again
     outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + Type::writeNumeric(0.0, getScalarType()) + ";");

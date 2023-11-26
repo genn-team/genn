@@ -146,9 +146,12 @@ protected:
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If the shape of the references variable doesn't match the dimensionality 
-            // of the custom update, check its access mode isn't read-write
-            if((m_Dims != varRef.getVarDims())
+            // Determine what dimensions are 'missing' from this variable compared to update dimensionality
+            const auto missingDims = clearVarAccessDim(m_Dims, varRef.getVarDims());
+
+            // If any dimensions are missing (unless missing dimensions is BATCH and
+            // model isn't actually batched), check variable isn't accessed read-write
+            if(((missingDims != VarAccessDim{0}) && (missingDims != VarAccessDim::BATCH || batchSize > 1))
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
                 throw std::runtime_error("Variable reference '" + modelVarRef.name + "' in custom update '" + getName() + 
