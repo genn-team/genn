@@ -165,7 +165,7 @@ public:
     const G &getGroup() const{ return m_Group; }
 
 protected:
-    using Payload = std::tuple<bool, LazyString, std::optional<typename G::Field>>;
+    using Payload = std::tuple<bool, bool, LazyString, std::optional<typename G::Field>>;
 
     EnvironmentFieldPolicy(G &group, F &fieldGroup)
     :   m_Group(group), m_FieldGroup(fieldGroup)
@@ -180,15 +180,15 @@ protected:
     std::string getNameInternal(const Payload &payload)
     {
         // If a field is specified
-        const auto str = std::get<1>(payload).str();
-        if(std::get<2>(payload)) {
+        const auto str = std::get<2>(payload).str();
+        if(std::get<3>(payload)) {
             // If there is no value specified, access field directly
             if(str.empty()) {
-                 return "group->" + std::get<2>(payload).value().name;
+                 return "group->" + std::get<3>(payload).value().name;
             }
             // Otherwise, treat value as index
             else {
-                return "group->" + std::get<2>(payload).value().name + "[" + str + "]"; 
+                return "group->" + std::get<3>(payload).value().name + "[" + str + "]"; 
             }
         }
         // Otherwise, use value directly
@@ -200,9 +200,9 @@ protected:
     void setRequired(Payload &payload)
     {
         // If a field is specified but it hasn't already been added
-        if (std::get<2>(payload) && !std::get<0>(payload)) {
+        if (std::get<3>(payload) && !std::get<0>(payload)) {
             // Extract field from payload
-            const auto &field = std::get<2>(payload).value();
+            const auto &field = std::get<3>(payload).value();
             const auto &group = getGroup();
 
             // Add to field group using lambda function to potentially map from group to field
@@ -212,7 +212,7 @@ protected:
                                         {
                                             return field.getValue(runtime, group.getGroups().at(i), i);
                                         },
-                                        field.fieldType);
+                                        field.fieldType, std::get<1>(payload));
 
             // Set flag so field doesn't get re-added
             std::get<0>(payload) = true;
@@ -432,26 +432,26 @@ public:
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
              const std::vector<size_t> &initialisers = {})
     {
-        this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
+        this->addInternal(type, name, std::make_tuple(false, false, LazyString{value, *this}, std::nullopt), initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {})
+                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
+                  bool allowDuplicates = false, const std::vector<size_t> &initialisers = {})
     {
         typename G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
-        this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
+        this->addInternal(type, name, std::make_tuple(false, allowDuplicates, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
                   typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {})
+                  bool allowDuplicates = false, const std::vector<size_t> &initialisers = {})
     {
-         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
+         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, allowDuplicates, initialisers);
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
@@ -664,8 +664,9 @@ public:
 
     template<typename A>
     void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "",
-                bool readOnly = false, bool hidden = false)
+                 bool readOnly = false, bool hidden = false)
     {
+        // Loop through variables
         // Loop through variables
         // **TODO** get default access from adaptor
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -721,18 +722,19 @@ public:
     }
 
     template<typename A>
-    void addVarPointers(bool hidden = false)
+    void addVarPointers(const std::string &fieldSuffix = "", bool hidden = false, bool allowDuplicates = false)
     {
         // Loop through variables and add private pointer field 
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
-            addField(resolvedType.createPointer(), name, v.name,
+            addField(resolvedType.createPointer(), name, v.name + fieldSuffix,
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(g, v.name);
-                     });
+                     }, 
+                     "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
         }
     }
 

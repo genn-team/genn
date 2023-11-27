@@ -232,19 +232,21 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
-    const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
     if(getArchetype().getBackPropDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
+         // Create environment and add fields for variable 
+        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false, true);
+        
         // Loop through variables and copy between read and write delay slots
-        // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
+                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
+                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
         }
     }
@@ -317,19 +319,21 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
-    const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
     if(getArchetype().getDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
+        // Create environment and add fields for variable 
+        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false, true);
+
         // Loop through variables and copy between read and write delay slots
-        // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPreVars()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
+                varEnv.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
+                varEnv.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
         }
     }

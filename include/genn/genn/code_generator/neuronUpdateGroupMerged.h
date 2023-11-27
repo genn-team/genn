@@ -34,13 +34,6 @@ public:
 
         //! Should the current source derived parameter be implemented heterogeneously?
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private API
-        //----------------------------------------------------------------------------
-        //! Is the parameter referenced? **YUCK** only used for hashing
-        bool isParamReferenced(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -66,13 +59,6 @@ public:
 
         //! Should the current source derived parameter be implemented heterogeneously?
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private API
-        //----------------------------------------------------------------------------
-        //! Is the parameter referenced? **YUCK** only used for hashing
-        bool isParamReferenced(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -106,7 +92,7 @@ public:
         void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
-        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+        void genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
                                 unsigned int batchSize);
 
         //! Update hash with child groups
@@ -117,13 +103,6 @@ public:
 
         //! Should the current source derived parameter be implemented heterogeneously?
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private API
-        //----------------------------------------------------------------------------
-        //! Is the parameter referenced? **YUCK** only used for hashing
-        bool isParamReferenced(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -141,7 +120,7 @@ public:
         void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
-        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+        void genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                 unsigned int batchSize);
 
         //! Update hash with child groups
@@ -152,13 +131,6 @@ public:
 
         //! Should the current source derived parameter be implemented heterogeneously?
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    private:
-        //----------------------------------------------------------------------------
-        // Private API
-        //----------------------------------------------------------------------------
-        //! Is the parameter referenced? **YUCK** only used for hashing
-        bool isParamReferenced(const std::string &paramName) const;
     };
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
