@@ -232,7 +232,7 @@ protected:
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
     void setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &target);
-    void setFusedPreSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
@@ -256,6 +256,7 @@ protected:
 
     const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedPreSpikeTarget() const{ return m_FusedPreSpikeTarget ? *m_FusedPreSpikeTarget : *this; }
+    const SynapseGroup &getFusedPostSpikeTarget() const{ return m_FusedPostSpikeTarget ? *m_FusedPostSpikeTarget : *this; }
     const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
     const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
@@ -285,6 +286,9 @@ protected:
 
     //! Has this synapse group's presynaptic spike generation been fused with those from other synapse groups?
     bool isPreSpikeFused() const{ return m_FusedPreSpikeTarget != nullptr; }
+
+    //! Has this synapse group's postsynaptic spike generation been fused with those from other synapse groups?
+    bool isPostSpikeFused() const{ return m_FusedPostSpikeTarget != nullptr; }
 
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
@@ -349,9 +353,9 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Generate hash of presynaptic spike generation component of this synapse group 
+    //! Generate hash of presynaptic or postsynaptic spike generation component of this synapse group 
      /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPreSpikeHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getSpikeFuseHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
@@ -502,6 +506,10 @@ private:
     //! Synapse group presynaptic spike generation has been fused with
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPreSpikeTarget;
+
+    //! Synapse group postsynaptic spike generation has been fused with
+    /*! If this is nullptr, presynaptic spike generation has not been fused */
+    const SynapseGroup *m_FusedPostSpikeTarget;
 
     //! Synapse group presynaptic weight update has been fused with
     /*! If this is nullptr, presynaptic weight update has not been fused */

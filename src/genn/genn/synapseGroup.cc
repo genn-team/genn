@@ -278,7 +278,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
         m_WUVarLocation(defaultVarLocation), m_WUPreVarLocation(defaultVarLocation), m_WUPostVarLocation(defaultVarLocation), m_WUExtraGlobalParamLocation(defaultExtraGlobalParamLocation), 
         m_PSVarLocation(defaultVarLocation),  m_PSExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
-        m_FusedPSTarget(nullptr), m_FusedPreSpikeTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr),
+        m_FusedPSTarget(nullptr), m_FusedPreSpikeTarget(nullptr), m_FusedPostSpikeTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr),
         m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
@@ -441,10 +441,15 @@ void SynapseGroup::setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &t
     m_FusedPSTarget = &target; 
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::setFusedPreSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target)
+void SynapseGroup::setFusedSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target)
 { 
-    assert(ng == getSrcNeuronGroup());
-    m_FusedPreSpikeTarget = &target; 
+    if(ng == getSrcNeuronGroup()) {
+        m_FusedPreSpikeTarget = &target; 
+    }
+    else {
+        assert(ng == getTrgNeuronGroup());
+        m_FusedPostSpikeTarget = &target; 
+    }
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target)
@@ -895,8 +900,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPreSpikeHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getSpikeFuseHashDigest(const NeuronGroup *ng) const
 {
+    assert((ng == getSrcNeuronGroup()) 
+           || (ng == getTrgNeuronGroup()));
     boost::uuids::detail::sha1 hash;
     return hash.get_digest();
 }

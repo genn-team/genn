@@ -35,7 +35,7 @@ public:
     using SynapseGroup::getTrgNeuronGroup;
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setFusedPSTarget;
-    using SynapseGroup::setFusedPreSpikeTarget;
+    using SynapseGroup::setFusedSpikeTarget;
     using SynapseGroup::setFusedPreOutputTarget;
     using SynapseGroup::setFusedWUPrePostTarget;
     using SynapseGroup::finalise;
@@ -72,6 +72,7 @@ public:
     using SynapseGroup::getWUPostHashDigest;
     using SynapseGroup::getPSHashDigest;
     using SynapseGroup::getPSFuseHashDigest;
+    using SynapseGroup::getSpikeFuseHashDigest;
     using SynapseGroup::getPreOutputFuseHashDigest;
     using SynapseGroup::getPreOutputHashDigest;
     using SynapseGroup::getWUPrePostFuseHashDigest;

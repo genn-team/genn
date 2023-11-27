@@ -487,6 +487,13 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
                  {
                      return sg->isTrueSpikeRequired();
                  });
+    
+    // If there are any, fuse together
+    if(!synWithSpike.empty()) {
+        fuseSynapseGroups(this, synWithSpike, true, m_FusedSpike, "spike",
+                          &SynapseGroupInternal::canSpikeBeFused, &SynapseGroupInternal::getSpikeFuseHashDigest,
+                          &SynapseGroupInternal::setFusedSpikeTarget);
+    }
    
 }
 //----------------------------------------------------------------------------
