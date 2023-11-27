@@ -1008,7 +1008,7 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
     // Add pre and post neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -1054,11 +1054,11 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
     dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
     dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeFused());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPreUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPreUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPreUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPrePostUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPrePostUpdateBeFused(pre));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPrePostUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPrePostUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPrePostUpdateBeFused(pre));
 }
 
 TEST(SynapseGroup, CanWUMPostUpdateBeFused)
@@ -1069,7 +1069,7 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     ParamValues wumSpikeParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}, {"S", 1.0}};
@@ -1114,11 +1114,11 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
     dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
     dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeFused());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPostUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPostUpdateBeFused());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPostUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPrePostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPrePostUpdateBeFused(post));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPrePostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPrePostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPrePostUpdateBeFused(post));
 }
 
 TEST(SynapseGroup, InvalidPSOutputVar)

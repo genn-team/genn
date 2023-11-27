@@ -231,10 +231,10 @@ protected:
 
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
-    void setFusedPSTarget(const SynapseGroup &target){ m_FusedPSTarget = &target; }
-    void setFusedWUPreTarget(const SynapseGroup &target){ m_FusedWUPreTarget = &target; }
-    void setFusedWUPostTarget(const SynapseGroup &target){ m_FusedWUPostTarget = &target; }
-    void setFusedPreOutputTarget(const SynapseGroup &target){ m_FusedPreOutputTarget = &target; }
+    void setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedPreSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
     void finalise(double dt);
 
@@ -255,6 +255,7 @@ protected:
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
+    const SynapseGroup &getFusedPreSpikeTarget() const{ return m_FusedPreSpikeTarget ? *m_FusedPreSpikeTarget : *this; }
     const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
     const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
@@ -268,20 +269,23 @@ protected:
     const std::vector<CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
     
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
-    bool canPSBeFused() const;
+    bool canPSBeFused(const NeuronGroup *ng) const;
     
-    //! Can presynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
-    bool canWUMPreUpdateBeFused() const;
-
      //! Can presynaptic output component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
-    bool canPreOutputBeFused() const;   
+    bool canPreOutputBeFused(const NeuronGroup *ng) const;   
     
-    //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
-    bool canWUMPostUpdateBeFused() const;
-    
+    //! Can spike generation for this synapse group be safely fused?
+    bool canSpikeBeFused(const NeuronGroup*) const{ return true; }
+
+    //! Can presynaptic/postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const;
+
     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
     bool isPSModelFused() const{ return m_FusedPSTarget != nullptr; }
-    
+
+    //! Has this synapse group's presynaptic spike generation been fused with those from other synapse groups?
+    bool isPreSpikeFused() const{ return m_FusedPreSpikeTarget != nullptr; }
+
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
     bool isWUPreModelFused() const { return m_FusedWUPreTarget != nullptr; }
@@ -345,24 +349,23 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Generate hash of presynaptic weight update component of this synapse group with additional components to ensure those
-    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
-    /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPreFuseHashDigest() const;
+    //! Generate hash of presynaptic spike generation component of this synapse group 
+     /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreSpikeHashDigest() const;
 
-    //! Generate hash of postsynaptic weight update component of this synapse group with additional components to ensure those
+    //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPostFuseHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getWUPrePostFuseHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPSFuseHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPSFuseHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of presynaptic output update component of this synapse group 
      /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPreOutputFuseHashDigest(const NeuronGroup *ng) const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
@@ -386,6 +389,10 @@ protected:
      /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPreOutputInitHashDigest() const;
     
+    //! Generate hash of presynaptic output update component of this synapse group 
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest() const;
+
     //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
@@ -488,20 +495,24 @@ private:
     //! Data structure tracking whether weight update model parameters are dynamic or not
     Snippet::DynamicParameterContainer m_WUDynamicParams;
 
-    //! Suffix for postsynaptic model variable names
-    /*! This may not be the name of this synapse group if it has been fused */
+    //! Synapse group postsynaptic model has been fused with
+    /*! If this is nullptr, postsynaptic model has not been fused */
     const SynapseGroup *m_FusedPSTarget;
 
-    //! Suffix for weight update model presynaptic variable names
-    /*! This may not be the name of this synapse group if it has been fused */
+    //! Synapse group presynaptic spike generation has been fused with
+    /*! If this is nullptr, presynaptic spike generation has not been fused */
+    const SynapseGroup *m_FusedPreSpikeTarget;
+
+    //! Synapse group presynaptic weight update has been fused with
+    /*! If this is nullptr, presynaptic weight update has not been fused */
     const SynapseGroup *m_FusedWUPreTarget;
     
-    //! Suffix for weight update model postsynaptic variable names
-    /*! This may not be the name of this synapse group if it has been fused */
+    //! Synapse group postsynaptic weight update has been fused with
+    /*! If this is nullptr, postsynaptic weight update  has not been fused */
     const SynapseGroup *m_FusedWUPostTarget;
 
-    //! Suffix for weight update model presynaptic output variable
-    /*! This may not be the name of this synapse group if it has been fused */
+    //! Synapse group presynaptic output has been fused with
+    /*! If this is nullptr, presynaptic output has not been fused */
     const SynapseGroup *m_FusedPreOutputTarget;
 
     //! Name of neuron input variable postsynaptic model will target

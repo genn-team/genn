@@ -435,7 +435,7 @@ TEST(NeuronGroup, FusePSM)
     
     // Add two neuron groups to model
     model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation(
@@ -484,11 +484,11 @@ TEST(NeuronGroup, FusePSM)
     auto synDelayInternal = static_cast<SynapseGroupInternal*>(synDelay);
  
     // Check all groups can be fused
-    ASSERT_TRUE(synInternal->canPSBeFused());
-    ASSERT_TRUE(syn2Internal->canPSBeFused());
-    ASSERT_TRUE(synParamInternal->canPSBeFused());
-    ASSERT_TRUE(synTargetInternal->canPSBeFused());
-    ASSERT_TRUE(synDelayInternal->canPSBeFused());
+    ASSERT_TRUE(synInternal->canPSBeFused(post));
+    ASSERT_TRUE(syn2Internal->canPSBeFused(post));
+    ASSERT_TRUE(synParamInternal->canPSBeFused(post));
+    ASSERT_TRUE(synTargetInternal->canPSBeFused(post));
+    ASSERT_TRUE(synDelayInternal->canPSBeFused(post));
 
     // Check that identically configured PSMs can be merged
     ASSERT_EQ(&synInternal->getFusedPSTarget(), &syn2Internal->getFusedPSTarget());
@@ -563,10 +563,10 @@ TEST(NeuronGroup, FuseVarPSM)
     auto syn4Internal = static_cast<SynapseGroupInternal*>(syn4);
     
     // Check only groups with 'safe' model can be fused
-    ASSERT_TRUE(syn1Internal->canPSBeFused());
-    ASSERT_TRUE(syn2Internal->canPSBeFused());
-    ASSERT_TRUE(syn3Internal->canPSBeFused());
-    ASSERT_FALSE(syn4Internal->canPSBeFused());
+    ASSERT_TRUE(syn1Internal->canPSBeFused(post));
+    ASSERT_TRUE(syn2Internal->canPSBeFused(post));
+    ASSERT_TRUE(syn3Internal->canPSBeFused(post));
+    ASSERT_FALSE(syn4Internal->canPSBeFused(post));
     
     // Check that identically configured PSMs can be merged
     ASSERT_EQ(&syn1Internal->getFusedPSTarget(), &syn2Internal->getFusedPSTarget());

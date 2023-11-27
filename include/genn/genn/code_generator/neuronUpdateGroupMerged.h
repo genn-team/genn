@@ -78,6 +78,17 @@ public:
     };
 
     //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpike
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+    };
+
+    //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups with postsynaptic update/spike code
@@ -160,6 +171,8 @@ public:
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
+    const std::vector<SynSpike> &getMergedOutSynSpikeGroups() const{ return m_MergedOutSynSpikeGroups; }
+    const std::vector<SynSpike> &getMergedInSynSpikeGroups() const{ return m_MergedInSynSpikeGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
     
@@ -181,6 +194,8 @@ private:
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
+    std::vector<SynSpike> m_MergedOutSynSpikeGroups;
+    std::vector<SynSpike> m_MergedInSynSpikeGroups;
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };

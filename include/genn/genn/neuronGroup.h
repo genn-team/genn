@@ -208,12 +208,15 @@ protected:
     const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
     const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
-    
+
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
+    //! Get pointers to all synapse groups
+    const std::vector<SynapseGroupInternal*> &getFusedSpike() const{ return m_FusedSpike; }
+    
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
@@ -288,6 +291,7 @@ private:
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
+    std::vector<SynapseGroupInternal*> m_FusedSpike;
     std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;

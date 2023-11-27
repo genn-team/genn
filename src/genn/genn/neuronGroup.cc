@@ -38,7 +38,7 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
 }
 // ------------------------------------------------------------------------
 template<typename M, typename H, typename T>
-void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, bool fuse, std::vector<SynapseGroupInternal*> &fusedSyn,
+void fuseSynapseGroups(const NeuronGroup *ng, const std::vector<SynapseGroupInternal*> &unfusedSyn, bool fuse, std::vector<SynapseGroupInternal*> &fusedSyn,
                        const std::string &logDescription, M isSynFusableFunc, H getSynFusedHashFunc, T setSynFuseTargetFunc)
 {
     // Create a copy of list of synapse groups
@@ -59,22 +59,22 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, boo
         }
 
         // If this synapse group can be fused at all
-        if(!std::invoke(isSynFusableFunc, a)) {
+        if(!std::invoke(isSynFusableFunc, a, ng)) {
             continue;
         }
 
         // Get hash digest used for checking compatibility
-        const auto aHashDigest = std::invoke(getSynFusedHashFunc, a);
+        const auto aHashDigest = std::invoke(getSynFusedHashFunc, a, ng);
 
         // Loop through remainder of synapse groups
         bool anyMerged = false;
         for(auto b = syn.begin(); b != syn.end();) {
             // If synapse group b can be fused with others and it's compatible with a
-            if(std::invoke(isSynFusableFunc, *b) && (aHashDigest == std::invoke(getSynFusedHashFunc, *b))) {
+            if(std::invoke(isSynFusableFunc, *b, ng) && (aHashDigest == std::invoke(getSynFusedHashFunc, *b, ng))) {
                 LOGD_GENN << "Fusing " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "'";
 
                 // Set b's merge target to ourselves
-                std::invoke(setSynFuseTargetFunc, *b, *a);
+                std::invoke(setSynFuseTargetFunc, *b, ng, *a);
 
                 // Remove from temporary vector
                 b = syn.erase(b);
@@ -91,7 +91,7 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, boo
 
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(anyMerged) {
-            std::invoke(setSynFuseTargetFunc, a, *a);
+            std::invoke(setSynFuseTargetFunc, a, ng, *a);
         }
     }
 }
@@ -420,7 +420,7 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
         // All incoming synapse groups will have postsynaptic models so attempt to merge these directly
-        fuseSynapseGroups(getInSyn(), fusePSM, m_FusedPSMInSyn, "postsynaptic update",
+        fuseSynapseGroups(this, getInSyn(), fusePSM, m_FusedPSMInSyn, "postsynaptic update",
                           &SynapseGroupInternal::canPSBeFused, &SynapseGroupInternal::getPSFuseHashDigest,
                           &SynapseGroupInternal::setFusedPSTarget);
 
@@ -436,9 +436,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
         // If there are any, merge
         if(!inSynWithPostUpdate.empty()) {
-            fuseSynapseGroups(inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "postsynaptic weight update",
-                              &SynapseGroupInternal::canWUMPostUpdateBeFused, &SynapseGroupInternal::getWUPostFuseHashDigest,
-                              &SynapseGroupInternal::setFusedWUPostTarget);
+            fuseSynapseGroups(this, inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "postsynaptic weight update",
+                              &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
+                              &SynapseGroupInternal::setFusedWUPrePostTarget);
         }
     }
 
@@ -454,9 +454,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
-        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
-                          &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
-                          &SynapseGroupInternal::setFusedWUPreTarget);
+        fuseSynapseGroups(this, outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
+                          &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
+                          &SynapseGroupInternal::setFusedWUPrePostTarget);
     }
 
     // Copy groups with output onto the presynaptic neuron into new vector
@@ -469,10 +469,24 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
     // If there are any
     if(!outSynWithPreOutput.empty()) {
-        fuseSynapseGroups(outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "presynaptic synapse output",
-                          &SynapseGroupInternal::canPreOutputBeFused, &SynapseGroupInternal::getPreOutputHashDigest,
+        fuseSynapseGroups(this, outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "presynaptic synapse output",
+                          &SynapseGroupInternal::canPreOutputBeFused, &SynapseGroupInternal::getPreOutputFuseHashDigest,
                           &SynapseGroupInternal::setFusedPreOutputTarget);
     }
+
+    // Copy incoming synapse groups which require back-projected 
+    // spikes and outgoing groups which require spikes
+    std::vector<SynapseGroupInternal*> synWithSpike;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpike),
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return !Utils::areTokensEmpty(sg->getWUInitialiser().getPostLearnCodeTokens());
+                 });
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpike),
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return sg->isTrueSpikeRequired();
+                 });
    
 }
 //----------------------------------------------------------------------------
