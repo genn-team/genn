@@ -255,11 +255,10 @@ protected:
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
-    const SynapseGroup &getFusedPreSpikeTarget() const{ return m_FusedPreSpikeTarget ? *m_FusedPreSpikeTarget : *this; }
-    const SynapseGroup &getFusedPostSpikeTarget() const{ return m_FusedPostSpikeTarget ? *m_FusedPostSpikeTarget : *this; }
     const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
     const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
+    const SynapseGroup &getFusedSpikeTarget(const NeuronGroup *ng) const;
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */

@@ -215,12 +215,20 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Add spike count
-    // **TODO** getFusedPreSpikeTarget is not right as these might not be presynaptic
+    // **YUCK** getting of neuron group is a bit gross
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spkCnt"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) 
+                      {
+                          const auto *n = &ng.getGroups().at(i).get();
+                          return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
+                      });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spk"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i)
+                      {
+                          const auto *n = &ng.getGroups().at(i).get();
+                          return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
+                      });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",

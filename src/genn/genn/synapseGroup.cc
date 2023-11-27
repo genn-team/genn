@@ -504,6 +504,17 @@ void SynapseGroup::finalise(double dt)
     }
 }
 //----------------------------------------------------------------------------
+const SynapseGroup &SynapseGroup::getFusedSpikeTarget(const NeuronGroup *ng) const
+{ 
+    if(ng == getSrcNeuronGroup()) {
+        return m_FusedPreSpikeTarget ? *m_FusedPreSpikeTarget : *this; 
+    }
+    else {
+        assert(ng == getTrgNeuronGroup());
+        return m_FusedPostSpikeTarget ? *m_FusedPostSpikeTarget : *this;
+    }
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeFused(const NeuronGroup *ng) const
 {
     assert(ng == getTrgNeuronGroup());

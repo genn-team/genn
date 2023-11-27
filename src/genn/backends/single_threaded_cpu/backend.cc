@@ -1965,12 +1965,20 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
             const std::string suffix =  "SynSpike" + std::to_string(s.getIndex());
 
             // Add fields to environment
-            // **TODO** getFusedPreSpikeTarget is not right as these might not be presynaptic
+            // **YUCK** getting of neuron group is a bit gross
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, s, ng);
             synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
-                               [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spkCnt"); });
+                               [&ng](const auto &runtime, const auto &g, size_t i)
+                               {
+                                   const auto *n = &ng.getGroups().at(i).get();
+                                   return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
+                               });
             synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk",
-                               [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spk"); });
+                               [&ng](const auto &runtime, const auto &g, size_t i)
+                               { 
+                                   const auto *n = &ng.getGroups().at(i).get();
+                                   return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
+                               });
 
             synSpkEnv.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
             if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
