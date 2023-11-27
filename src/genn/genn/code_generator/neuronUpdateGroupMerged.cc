@@ -245,8 +245,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
-                env.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
-                env.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
+                varEnv.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
+                varEnv.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
         }
     }

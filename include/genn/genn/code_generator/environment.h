@@ -734,7 +734,7 @@ public:
                      { 
                          return runtime.getArray(g, v.name);
                      }, 
-                     "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
+                     "", GroupMergedFieldType::STANDARD, allowDuplicates);
         }
     }
 
