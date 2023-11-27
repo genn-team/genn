@@ -43,6 +43,7 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getFusedPSTarget;
     using SynapseGroup::getFusedPreSpikeTarget;
+    using SynapseGroup::getFusedPostSpikeTarget;
     using SynapseGroup::getFusedPreOutputTarget;
     using SynapseGroup::getFusedWUPreTarget;
     using SynapseGroup::getFusedWUPostTarget;

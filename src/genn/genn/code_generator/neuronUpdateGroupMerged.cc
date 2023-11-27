@@ -417,21 +417,22 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const Type::TypeC
         }
     }*/
 
-    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
+    // Build vector of child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynPSMGroups, getTypeContext(), &NeuronGroupInternal::getFusedPSMInSyn, &SynapseGroupInternal::getPSHashDigest);
 
-    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
+    // Build vector of child group's merged out syns with pre output, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedOutSynPreOutputGroups, getTypeContext(), &NeuronGroupInternal::getFusedPreOutputOutSyn, &SynapseGroupInternal::getPreOutputHashDigest);
 
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
+    // Build vector of child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedCurrentSourceGroups, getTypeContext(), &NeuronGroupInternal::getCurrentSources, &CurrentSourceInternal::getHashDigest);
 
-    // Build vector of vectors containing each child group's incoming synapse groups
-    // with postsynaptic updates, ordered to match those of the archetype group
+    // Build vector of child group's spikes
+    orderNeuronGroupChildren(m_MergedSpikeGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpike, &SynapseGroupInternal::getSpikeHashDigest);
+
+    // Build vector of hild group's incoming synapse groups with postsynaptic updates, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynWUMPostCodeGroups, getTypeContext(), &NeuronGroupInternal::getFusedInSynWithPostCode, &SynapseGroupInternal::getWUPrePostHashDigest);
 
-    // Build vector of vectors containing each child group's outgoing synapse groups
-    // with presynaptic synaptic updates, ordered to match those of the archetype group
+    // Build vector of child group's outgoing synapse groups with presynaptic synaptic updates, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedOutSynWUMPreCodeGroups, getTypeContext(), &NeuronGroupInternal::getFusedOutSynWithPreCode, &SynapseGroupInternal::getWUPrePostHashDigest);
 }
 //----------------------------------------------------------------------------

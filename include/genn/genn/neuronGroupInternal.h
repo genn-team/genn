@@ -33,6 +33,7 @@ public:
     using NeuronGroup::getFusedWUPostInSyn;
     using NeuronGroup::getFusedPreOutputOutSyn;
     using NeuronGroup::getFusedWUPreOutSyn;
+    using NeuronGroup::getFusedSpike;
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;

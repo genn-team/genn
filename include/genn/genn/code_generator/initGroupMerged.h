@@ -86,6 +86,20 @@ public:
     };
 
     //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpike
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
+    };
+
+    //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups
@@ -201,16 +215,13 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void genInitSpikeCount(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
-
-    void genInitSpikes(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
-
     void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
  
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
+    std::vector<SynSpike> m_MergedSpikeGroups;
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;

@@ -171,10 +171,11 @@ public:
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
-    const std::vector<SynSpike> &getMergedOutSynSpikeGroups() const{ return m_MergedOutSynSpikeGroups; }
-    const std::vector<SynSpike> &getMergedInSynSpikeGroups() const{ return m_MergedInSynSpikeGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
+
+    // **YUCK** lack of const indicates bad encapsulation
+    std::vector<SynSpike> &getMergedSpikeGroups(){ return m_MergedSpikeGroups; }
     
     //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(const std::string &paramName) const;
@@ -194,8 +195,7 @@ private:
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
-    std::vector<SynSpike> m_MergedOutSynSpikeGroups;
-    std::vector<SynSpike> m_MergedInSynSpikeGroups;
+    std::vector<SynSpike> m_MergedSpikeGroups;
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };

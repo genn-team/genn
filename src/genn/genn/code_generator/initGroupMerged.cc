@@ -203,6 +203,41 @@ void NeuronInitGroupMerged::CurrentSource::generate(const BackendBase &backend, 
         "num_neurons", 0, batchSize);
 }
 
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpike
+//----------------------------------------------------------------------------
+void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                               NeuronInitGroupMerged &ng, unsigned int batchSize)
+{
+    const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
+
+    // Create environment for group
+    EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng);
+
+    // Add spike count
+    // **TODO** getFusedPreSpikeTarget is not right as these might not be presynaptic
+    groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spkCnt"); });
+    
+    groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spk"); });
+
+    // Generate code to zero spikes across all delay slots and batches
+    backend.genVariableInit(groupEnv, "num_neurons", "id",
+        [batchSize, &ng, this] (EnvironmentExternalBase &varEnv)
+        {
+            genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT,
+                            batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+        });
+    
+    // Generate code to zero spike count across all delay slots and batches
+    backend.genPopVariableInit(env,
+        [batchSize, &ng, this] (EnvironmentExternalBase &spikeCountEnv)
+        {
+            genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                          batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+        });
+}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronInitGroupMerged::InSynPSM
@@ -304,28 +339,33 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeConte
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   InitGroupMergedBase<NeuronGroupMergedBase, NeuronVarAdapter>(index, typeContext, groups)
 {
-    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
+    // Build vector of child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynPSMGroups, typeContext,
                              &NeuronGroupInternal::getFusedPSMInSyn,
                              &SynapseGroupInternal::getPSInitHashDigest );
 
-    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
+    // Build vector of child group's merged out syns with pre output, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedOutSynPreOutputGroups, typeContext,
                              &NeuronGroupInternal::getFusedPreOutputOutSyn,
                              &SynapseGroupInternal::getPreOutputInitHashDigest );
 
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
+    // Build vector of child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedCurrentSourceGroups, typeContext,
                              &NeuronGroupInternal::getCurrentSources,
                              &CurrentSourceInternal::getInitHashDigest );
 
-    // Build vector of vectors containing each child group's incoming synapse groups
+    // Build vector of child group's spikes
+    orderNeuronGroupChildren(m_MergedSpikeGroups, getTypeContext(), 
+                             &NeuronGroupInternal::getFusedSpike, 
+                             &SynapseGroupInternal::getSpikeHashDigest);
+
+    // Build vector of child group's incoming synapse groups
     // with postsynaptic weight update model variable, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynWUMPostVarGroups, typeContext,
                              &NeuronGroupInternal::getFusedInSynWithPostVars,
                              &SynapseGroupInternal::getWUPrePostInitHashDigest);
 
-    // Build vector of vectors containing each child group's outgoing synapse groups
+    // Build vector of child group's outgoing synapse groups
     // with presynaptic weight update model variables, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedOutSynWUMPreVarGroups, typeContext,
                              &NeuronGroupInternal::getFusedOutSynWithPreVars,
@@ -367,14 +407,6 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     // Create environment for group
     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, *this);
 
-    // Initialise spike counts
-    genInitSpikeCount(backend, groupEnv, false, batchSize);
-    genInitSpikeCount(backend, groupEnv, true, batchSize);
-
-    // Initialise spikes
-    genInitSpikes(backend, groupEnv, false, batchSize);
-    genInitSpikes(backend, groupEnv, true, batchSize);
-
     // Initialize spike times
     if(getArchetype().isSpikeTimeRequired()) {
         genInitSpikeTime(backend, groupEnv, "_st", batchSize);
@@ -415,6 +447,9 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     for (auto &cs : m_MergedCurrentSourceGroups) {
         cs.generate(backend, groupEnv, *this, batchSize);
     }
+    for (auto &sg : m_MergedSpikeGroups) {
+        sg.generate(backend, groupEnv, *this, batchSize);
+    }
     for(auto &sg : m_MergedInSynPSMGroups) {
         sg.generate(backend, groupEnv, *this, batchSize);
     }
@@ -426,62 +461,6 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     }
     for (auto &sg : m_MergedInSynWUMPostVarGroups) {
         sg.generate(backend, groupEnv, *this, batchSize);
-    }
-}
-//--------------------------------------------------------------------------
-void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                              bool spikeEvent, unsigned int batchSize)
-{
-    // Is initialisation required at all
-    if(spikeEvent ? getArchetype().isSpikeEventRequired() : getArchetype().isTrueSpikeRequired()) {
-        // Add spike count field
-        const std::string suffix = spikeEvent ? "Evnt" : "";
-        EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeCountEnv(env, *this);
-        spikeCountEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + suffix,
-                               [&suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
-
-        // Generate variable initialisation code
-        backend.genPopVariableInit(env,
-            [batchSize, spikeEvent, this] (EnvironmentExternalBase &spikeCountEnv)
-            {
-                // Is delay required
-                const bool delayRequired = spikeEvent ?
-                    getArchetype().isDelayRequired() :
-                    (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
-
-                // Zero across all delay slots and batches
-                genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                              batchSize, delayRequired, getArchetype().getNumDelaySlots());
-            });
-    }
-
-}
-//--------------------------------------------------------------------------
-void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                          bool spikeEvent, unsigned int batchSize)
-{
-    // Is initialisation required at all
-    if(spikeEvent ? getArchetype().isSpikeEventRequired() : getArchetype().isTrueSpikeRequired()) {
-        // Add spike count field
-        const std::string suffix = spikeEvent ? "Evnt" : "";
-        EnvironmentGroupMergedField<NeuronInitGroupMerged> spikeEnv(env, *this);
-        spikeEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + suffix,
-                          [suffix](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk" + suffix); });
-
-        // Generate variable initialisation code
-        backend.genVariableInit(spikeEnv, "num_neurons", "id",
-            [batchSize, spikeEvent, this] (EnvironmentExternalBase &varEnv)
-            {
-   
-                // Is delay required
-                const bool delayRequired = spikeEvent ?
-                    getArchetype().isDelayRequired() :
-                    (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
-
-                // Zero across all delay slots and batches
-                genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT,
-                                batchSize, delayRequired, getArchetype().getNumDelaySlots());
-            });
     }
 }
 //------------------------------------------------------------------------

@@ -158,14 +158,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
         
-        // If spikes are required, allocate arrays for counts and spikes
-        if(n.second.isTrueSpikeRequired()) {
-            createArray(&n.second, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                        n.second.getSpikeLocation());
-            createArray(&n.second, "spk", Type::Uint32, numNeuronDelaySlots, 
-                        n.second.getSpikeLocation());
-        }
-
         // If spike-like events are required, allocate arrays for counts and spikes
         if(n.second.isSpikeEventRequired()) {
             createArray(&n.second, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
@@ -289,7 +281,15 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
             createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
-        }  
+        }
+
+        // Create arrays for spikes
+        for(const auto *sg: n.second.getFusedSpike()) {
+            createArray(sg, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+                        n.second.getSpikeLocation());
+            createArray(sg, "spk", Type::Uint32, numNeuronDelaySlots, 
+                        n.second.getSpikeLocation());
+        }
     }
 
     // Loop through synapse groups

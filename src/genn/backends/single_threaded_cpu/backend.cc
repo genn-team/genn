@@ -1957,15 +1957,30 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
 
     const std::string suffix = trueSpike ? "" : "_evnt";
-    if(trueSpike ? ng.getArchetype().isTrueSpikeRequired() : ng.getArchetype().isSpikeEventRequired()) {
-        env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
-        if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
-            env.print("[*$(_spk_que_ptr)]++]");
+
+    if(trueSpike) {
+        // Loop through merged spike groups
+        for(auto &s : ng.getMergedSpikeGroups()) {
+            CodeStream::Scope b(env.getStream());
+            const std::string suffix =  "SynSpike" + std::to_string(s.getIndex());
+
+            // Add fields to environment
+            // **TODO** getFusedPreSpikeTarget is not right as these might not be presynaptic
+            EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, s, ng);
+            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
+                               [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spkCnt"); });
+            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk",
+                               [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreSpikeTarget(), "spk"); });
+
+            synSpkEnv.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
+            if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
+                synSpkEnv.print("[*$(_spk_que_ptr)]++]");
+            }
+            else { // NO DELAY
+                synSpkEnv.getStream() << "[0]++]";
+            }
+            synSpkEnv.printLine(" = $(id);");
         }
-        else { // NO DELAY
-            env.getStream() << "[0]++]";
-        }
-        env.printLine(" = $(id);");
     }
 
     // Reset spike and spike-like-event times
