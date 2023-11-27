@@ -80,7 +80,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
 
         }
     };
@@ -104,7 +104,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getPSInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getPSInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
         }
     };
 
@@ -143,7 +143,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getWUPostInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getWUPrePostInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
         }
     };
 
@@ -166,7 +166,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getWUPreInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getWUPrePostInitHashDigest(getArchetype().getSrcNeuronGroup()), hash);
         }
     };
 

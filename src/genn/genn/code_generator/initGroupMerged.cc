@@ -323,13 +323,13 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const Type::TypeConte
     // with postsynaptic weight update model variable, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedInSynWUMPostVarGroups, typeContext,
                              &NeuronGroupInternal::getFusedInSynWithPostVars,
-                             &SynapseGroupInternal::getWUPostInitHashDigest);
+                             &SynapseGroupInternal::getWUPrePostInitHashDigest);
 
     // Build vector of vectors containing each child group's outgoing synapse groups
     // with presynaptic weight update model variables, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_MergedOutSynWUMPreVarGroups, typeContext,
                              &NeuronGroupInternal::getFusedOutSynWithPreVars,
-                             &SynapseGroupInternal::getWUPreInitHashDigest); 
+                             &SynapseGroupInternal::getWUPrePostInitHashDigest); 
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() const

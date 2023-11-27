@@ -848,42 +848,36 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostHashDigest(const NeuronGroup *ng) const
 {
+    const bool presynaptic = (ng == getSrcNeuronGroup());
+    assert(presynaptic || (ng == getTrgNeuronGroup()));
+
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
-    Utils::updateHash((getDelaySteps() != 0), hash);
+    if(presynaptic) {
+        Utils::updateHash((getDelaySteps() != 0), hash);
+    }
+    else {
+        Utils::updateHash((getBackPropDelaySteps() != 0), hash);
+    }
     m_WUDynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
+    const auto &neuronVarReferences = presynaptic ? getWUInitialiser().getPreNeuronVarReferences() : getWUInitialiser().getPostNeuronVarReferences();
+    for(const auto &v : neuronVarReferences) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
 
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest(const NeuronGroup *ng) const
 {
-    boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
-    Utils::updateHash((getBackPropDelaySteps() != 0), hash);
-    m_WUDynamicParams.updateHash(hash);
+    assert(ng == getTrgNeuronGroup());
 
-    // Loop through neuron variable references and update hash with 
-    // name of target variable. These must be the same across merged group
-    // as these variable references are just implemented as aliases for neuron variables
-    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
-        Utils::updateHash(v.second.getVarName(), hash);
-    };
-
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
-{
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
@@ -900,7 +894,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getSpikeFuseHashDigest(const NeuronGroup *ng) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getSpikeHashDigest(const NeuronGroup *ng) const
 {
     assert((ng == getSrcNeuronGroup()) 
            || (ng == getTrgNeuronGroup()));
@@ -934,15 +928,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest(const 
         Utils::updateHash(v.second.getVarName(), hash);
     };
     
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputFuseHashDigest(const NeuronGroup *ng) const
-{
-    assert(ng == getSrcNeuronGroup());
-
-    boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -1020,34 +1005,28 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostInitHashDigest(const NeuronGroup *ng) const
 {
+    const bool presynaptic = (ng == getSrcNeuronGroup());
+    assert(presynaptic || (ng == getTrgNeuronGroup()));
+
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUInitialiser().getSnippet()->getPreVars(), hash);
+    const auto vars = presynaptic ? getWUInitialiser().getSnippet()->getPreVars() : getWUInitialiser().getSnippet()->getPostVars();
+    Utils::updateHash(vars, hash);
 
     // Include presynaptic variable initialiser hashes
-    for(const auto &w : getWUInitialiser().getPreVarInitialisers()) {
+    const auto &varInitialisers = presynaptic ? getWUInitialiser().getPreVarInitialisers() : getWUInitialiser().getPostVarInitialisers();
+    for(const auto &w : varInitialisers) {
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest(const NeuronGroup *ng) const
 {
-    boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getWUInitialiser().getSnippet()->getPostVars(), hash);
+    assert(ng == getTrgNeuronGroup());
 
-    // Include postsynaptic variable initialiser hashes
-    for(const auto &w : getWUInitialiser().getPostVarInitialisers()) {
-        Utils::updateHash(w.first, hash);
-        Utils::updateHash(w.second.getHashDigest(), hash);
-    }
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() const
-{
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPSInitialiser().getSnippet()->getVars(), hash);
@@ -1060,14 +1039,18 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest(const NeuronGroup *ng) const
 {
+    assert(ng == getSrcNeuronGroup());
+
     boost::uuids::detail::sha1 hash;
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest(const NeuronGroup *ng) const
 {
+    assert(ng == getSrcNeuronGroup());
+
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();

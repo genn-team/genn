@@ -341,21 +341,17 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUHashDigest() const;
 
-    //! Generate hash of presynaptic update component of this synapse group
+    //! Generate hash of presynaptic or postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPreHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getWUPrePostHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPostHashDigest() const;
-
-    //! Generate hash of postsynaptic update component of this synapse group
-    /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPSHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of presynaptic or postsynaptic spike generation component of this synapse group 
-     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getSpikeFuseHashDigest(const NeuronGroup *ng) const;
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getSpikeHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
@@ -367,10 +363,6 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSFuseHashDigest(const NeuronGroup *ng) const;
 
-    //! Generate hash of presynaptic output update component of this synapse group 
-     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPreOutputFuseHashDigest(const NeuronGroup *ng) const;
-
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
     //! Generate hash of initialisation component of this synapse group
@@ -381,21 +373,21 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPreInitHashDigest() const;
 
-    //! Generate hash of postsynaptic variable initialisation component of this synapse group
+    //! Generate hash of presynaptic or postsynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPostInitHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getWUPrePostInitHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPSInitHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of presynaptic output initialization component of this synapse group 
      /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPreOutputInitHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPreOutputInitHashDigest(const NeuronGroup *ng) const;
     
     //! Generate hash of presynaptic output update component of this synapse group 
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest(const NeuronGroup *ng) const;
 
     //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */

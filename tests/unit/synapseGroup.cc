@@ -610,8 +610,8 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -645,10 +645,10 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg1Internal->getWUPrePostInitHashDigest(pre));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg2Internal->getWUPrePostInitHashDigest(pre));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg1Internal->getWUPrePostInitHashDigest(post));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg2Internal->getWUPrePostInitHashDigest(post));
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -677,8 +677,8 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -710,12 +710,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg1Internal->getWUPrePostInitHashDigest(pre));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg2Internal->getWUPrePostInitHashDigest(pre));
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg1Internal->getWUPrePostInitHashDigest(post));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg2Internal->getWUPrePostInitHashDigest(post));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPostVars)
@@ -725,8 +725,8 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -758,12 +758,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg1Internal->getWUPrePostInitHashDigest(post));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(post), sg2Internal->getWUPrePostInitHashDigest(post));
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
-    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg1Internal->getWUPrePostInitHashDigest(pre));
+    ASSERT_EQ(sg0Internal->getWUPrePostInitHashDigest(pre), sg2Internal->getWUPrePostInitHashDigest(pre));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)

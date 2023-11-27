@@ -450,7 +450,7 @@ protected:
             // Loop through children and add them and their digests to vector
             childDigests.clear();
             for(auto *c : groupChildren) {
-                childDigests.emplace_back(std::invoke(getHashDigestFunc, c), c);
+                childDigests.emplace_back(std::invoke(getHashDigestFunc, c, &g.get()), c);
             }
 
             // Sort by digest
