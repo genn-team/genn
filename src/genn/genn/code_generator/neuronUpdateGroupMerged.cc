@@ -268,7 +268,7 @@ bool NeuronUpdateGroupMerged::InSynWUMPostCode::isDerivedParamHeterogeneous( con
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
 }
 
- //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
@@ -825,23 +825,72 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
     return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
 
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::SynSpike
+//----------------------------------------------------------------------------
+void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
+                                                           unsigned int batchSize)
+{
+    const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
+    // Add spike count and spikes to environment
+    EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged::SynSpike, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
+    synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
+                        [&ng](const auto &runtime, const auto &g, size_t i)
+                        {
+                            const auto *n = &ng.getGroups().at(i).get();
+                            return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
+                        });
+    synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
+                        [&ng](const auto &runtime, const auto &g, size_t i)
+                        { 
+                            const auto *n = &ng.getGroups().at(i).get();
+                            return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
+                        });
+
+    // Update spike count
+    if(ng.getArchetype().isDelayRequired()) {
+        synSpkEnv.print("$(_spk_cnt)[*$(_spk_que_ptr)");
+        if(batchSize > 1) {
+            synSpkEnv.print(" + (batch * " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ")");
+        }
+        synSpkEnv.printLine("] = 0; ");
+    }
+    else {
+        if(batchSize > 1) {
+            synSpkEnv.printLine("$(_spk_cnt)[batch] = 0;");
+        }
+        else {
+            synSpkEnv.printLine("$(_spk_cnt)[0] = 0;");
+        }
+    }
+}
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const
+NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
+                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+:   NeuronGroupMergedBase(index, typeContext, groups)
+{
+    // Build vector of child group's spikes
+    // **TODO** correct hash
+    orderNeuronGroupChildren(m_MergedSpikeGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpike, &SynapseGroupInternal::getSpikeHashDigest);
+}
+//----------------------------------------------------------------------------
+void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Update spike queue
     if(getArchetype().isDelayRequired()) {
         env.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(getArchetype().getNumDelaySlots()) + ";");
     }
 
+    // Start loop around batches if required
     if(batchSize > 1) {
         env.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
     }
-    if(getArchetype().isSpikeEventRequired()) {
+    /*if(getArchetype().isSpikeEventRequired()) {
         if(getArchetype().isDelayRequired()) {
             env.getStream() << env["_spk_cnt_evnt"] << "[*" << env["_spk_que_ptr"];
             if(batchSize > 1) {
@@ -865,8 +914,15 @@ void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalB
         else {
             env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
+    }*/
+
+    // Loop through groups with spike conditions and generate update code
+    for (auto &sg : m_MergedSpikeGroups) {
+        CodeStream::Scope b(env.getStream());
+        sg.generate(env, *this, batchSize);
     }
 
+    // End loop around batches if required
     if(batchSize > 1) {
         env.getStream() << CodeStream::CB(1);
     }
@@ -876,4 +932,12 @@ void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalB
 // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
 const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
-
+//----------------------------------------------------------------------------
+NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
+                                                                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+:   NeuronGroupMergedBase(index, typeContext, groups)
+{
+    // Build vector of child group's spikes
+    // **TODO** correct hash
+    orderNeuronGroupChildren(m_MergedSpikeGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpike, &SynapseGroupInternal::getSpikeHashDigest);
+}

@@ -239,7 +239,7 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
         });
     
     // Generate code to zero spike count across all delay slots and batches
-    backend.genPopVariableInit(env,
+    backend.genPopVariableInit(groupEnv,
         [batchSize, &ng, this] (EnvironmentExternalBase &spikeCountEnv)
         {
             genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 

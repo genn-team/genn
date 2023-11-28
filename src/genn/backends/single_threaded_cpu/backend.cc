@@ -1962,18 +1962,19 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
         // Loop through merged spike groups
         for(auto &s : ng.getMergedSpikeGroups()) {
             CodeStream::Scope b(env.getStream());
-            const std::string suffix =  "SynSpike" + std::to_string(s.getIndex());
+            const std::string fieldSuffix =  "SynSpike" + std::to_string(s.getIndex());
 
             // Add fields to environment
             // **YUCK** getting of neuron group is a bit gross
+            // **THINK** I think this belongs in generic code with just the spike-wrangling below here
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, s, ng);
-            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt",
+            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
                                [&ng](const auto &runtime, const auto &g, size_t i)
                                {
                                    const auto *n = &ng.getGroups().at(i).get();
                                    return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
                                });
-            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk",
+            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
                                [&ng](const auto &runtime, const auto &g, size_t i)
                                { 
                                    const auto *n = &ng.getGroups().at(i).get();
@@ -1981,10 +1982,10 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
                                });
 
             synSpkEnv.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
-            if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
+            if(ng.getArchetype().isDelayRequired()) {
                 synSpkEnv.print("[*$(_spk_que_ptr)]++]");
             }
-            else { // NO DELAY
+            else {
                 synSpkEnv.getStream() << "[0]++]";
             }
             synSpkEnv.printLine(" = $(id);");

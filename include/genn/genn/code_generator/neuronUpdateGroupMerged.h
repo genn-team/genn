@@ -204,10 +204,28 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    using GroupMerged::GroupMerged;
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::SynSpike
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
+                      unsigned int batchSize);
+    };
+
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
+                                      const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -217,21 +235,39 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const;
+    void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<SynSpike> m_MergedSpikeGroups;
 };
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    using GroupMerged::GroupMerged;
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpike
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+    };
+
+    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
+                                         const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -245,5 +281,11 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<SynSpike> m_MergedSpikeGroups;
 };
 }   // namespace GeNN::CodeGenerator
