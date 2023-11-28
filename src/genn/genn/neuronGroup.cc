@@ -582,6 +582,10 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(m_VarQueueRequired, hash);
     m_DynamicParams.updateHash(hash);
 
+    // Update hash with number of fused spike conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+
     // Update hash with hash list built from current sources
     updateHashList(this, getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
@@ -618,6 +622,10 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
         Utils::updateHash(n.second.getHashDigest(), hash);
     }
 
+    // Update hash with number of fused spike conditions
+    // **NOTE** nothing else is required as logic of initialisation only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+
     // Update hash with hash list built from current sources
     updateHashList(this, getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
 
@@ -639,8 +647,11 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDige
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(isSpikeEventRequired(), hash);
-    Utils::updateHash(isTrueSpikeRequired(), hash);
+    
+    // Update hash with number of fused spike conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+    
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
