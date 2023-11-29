@@ -533,67 +533,66 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
                                                                 VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
 
-            ng.generateSpikes(
-                groupEnv,
-                [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env)
+            // If neuron update group produces spikes
+            if(!ng.getMergedSpikeGroups().empty()){
+                // Use first $(_sh_spk_count) spikes to update spike data structures and 
+                // make pre and postsynaptic spike-triggered weight updates
+                groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
                 {
-                    // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
-                    env.getStream() << "if(" << getThreadID() << " == 0)";
-                    {
-                        CodeStream::Scope b(env.getStream());
-                        env.print("if ($(_sh_spk_count) > 0)");
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.printLine("const unsigned int n = $(_sh_spk)[" + getThreadID() + "];");
+                    
+                    // Create new substition stack and explicitly replace id with 'n' and perform WU var update
+                    // **TODO** only on first group
+                    EnvironmentExternal wuEnv(groupEnv);
+                    wuEnv.add(Type::Uint32.addConst(), "id", "n");
+
+                    // Create an environment which caches neuron variable fields in local variables if they are accessed
+                    // **NOTE** we do this right at the top so that local copies can be used by child groups
+                    // **NOTE** always copy variables if variable is delayed
+                    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
+                        ng, ng, ng.getTypeContext(), wuEnv, "", "l", true, true,
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
                         {
-                            CodeStream::Scope b(env.getStream());
-                            env.print("$(_sh_spk_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt)");
-                            if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                                env.print("[*$(_spk_que_ptr)");
-                                if(batchSize > 1) {
-                                    env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        },
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
+                        {
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        });
+                    ng.generateWUVarUpdate(wuEnv, batchSize);
+
+                    ng.generateSpikes(
+                        groupEnv,
+                        [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env)
+                        {
+                            // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
+                            env.getStream() << "if(" << getThreadID() << " == 0)";
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.print("$(_sh_spk_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt)");
+                                if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
+                                    env.print("[*$(_spk_que_ptr)");
+                                    if(batchSize > 1) {
+                                        env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                                    }
+                                    env.printLine("], $(_sh_spk_count));");
                                 }
-                                env.printLine("], $(_sh_spk_count));");
-                            }
-                            else {
-                                env.printLine("[$(batch)], $(_sh_spk_count));");
-                            }
-                        }
-                    } 
-                    genSharedMemBarrier(env.getStream());
+                                else {
+                                    env.printLine("[$(batch)], $(_sh_spk_count));");
+                                }
+                            } 
+                            genSharedMemBarrier(env.getStream());
 
-                    // Copy spikes from shared memory into global memory using $(_sh_spk_count) threads
-                    env.print("if(" + getThreadID() + " < $(_sh_spk_count))");
-                    {
-                        CodeStream::Scope b(env.getStream());
-
-                        env.printLine("const unsigned int n = $(_sh_spk)[" + getThreadID() + "];");
-
-                        // Create new substition stack and explicitly replace id with 'n' and perform WU var update
-                        EnvironmentExternal wuEnv(env);
-                        wuEnv.add(Type::Uint32.addConst(), "id", "n");
-
-                        // Create an environment which caches neuron variable fields in local variables if they are accessed
-                        // **NOTE** we do this right at the top so that local copies can be used by child groups
-                        // **NOTE** always copy variables if variable is delayed
-                        EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
-                            ng, ng, ng.getTypeContext(), wuEnv, "", "l", true, true,
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
-                            {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
-                                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-                            },
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
-                            {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
-                                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-                            });
-                        ng.generateWUVarUpdate(wuEnv, batchSize);
-
-                        env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
-                        /*if(ng.getArchetype().isSpikeTimeRequired()) {
-                            env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
-                        }*/
-                    }
-                });
-            
+                            env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
+                            /*if(ng.getArchetype().isSpikeTimeRequired()) {
+                                env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+                            }*/
+                        });
+                }
+            }
 
             // Use second thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
             if(ng.getArchetype().isSpikeEventRequired()) {

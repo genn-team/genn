@@ -859,6 +859,7 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
                                                            unsigned int batchSize)
 {
+    env.getStream() << "// spike generation " << getIndex() << std::endl;
     const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
     // Add spike count and spikes to environment
