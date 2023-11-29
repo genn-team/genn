@@ -113,6 +113,9 @@ public:
         void generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                     unsigned int batchSize, BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
 
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+    
         //! Should the current source parameter be implemented heterogeneously?
         bool isParamHeterogeneous(const std::string &paramName) const;
 

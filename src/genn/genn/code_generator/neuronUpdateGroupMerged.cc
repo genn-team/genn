@@ -276,17 +276,43 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
             return delayed;
         });     
 
-    varEnv.getStream() << "if ((";
-    
+    // Generate event condition
+    varEnv.print("if((");    
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' event threshold condition");
     prettyPrintExpression(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), 
                           getTypeContext(), varEnv, errorHandler);
         
-    varEnv.getStream() << "))";
+    varEnv.print("))");
     {
         CodeStream::Scope b(varEnv.getStream());
         //genEmitSpikeLikeEventSpike(varEnv, *this);
     }
+    // If delays are required and event times are required
+    // **TODO** wrong test
+    if(ng.getArchetype().isDelayRequired() 
+       && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) 
+    {
+        varEnv.print("else");
+        {
+            CodeStream::Scope b(varEnv.getStream());
+
+            // If spike times are required, copy times from register
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                varEnv.printLine("$(_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(set);");
+            }
+
+            // If previous spike times are required, copy times from register
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                varEnv.printLine("$(_prev_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_set);");
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::SynSpikeEvent::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::SynSpikeEvent::isParamHeterogeneous(const std::string &paramName) const
@@ -471,7 +497,6 @@ bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isParamHeterogeneous(const std::
 bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isDerivedParamHeterogeneous( const std::string &paramName) const
 {
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
- 
 }
 
 //----------------------------------------------------------------------------
@@ -526,6 +551,9 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     for(const auto &sg : getMergedInSynPSMGroups()) {
         sg.updateHash(hash);
     }
+    for(const auto &sg : getMergedSpikeEventGroups()) {
+        sg.updateHash(hash);
+    }
     for (const auto &sg : getMergedInSynWUMPostCodeGroups()) {
         sg.updateHash(hash);
     }
@@ -575,7 +603,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         {
             return (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
         });
-
 
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
@@ -990,6 +1017,7 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
                                                                            const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, typeContext, groups)
 {
+    assert(false);
     // Build vector of child group's spikes
     // **TODO** correct hash
     orderNeuronGroupChildren(m_MergedSpikeGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpike, &SynapseGroupInternal::getSpikeHashDigest);

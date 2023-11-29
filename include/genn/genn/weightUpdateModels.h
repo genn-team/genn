@@ -121,7 +121,7 @@ public:
     //! Update hash from postsynaptic components of  model
     boost::uuids::detail::sha1::digest_type getPostHashDigest() const;
 
-    //! Update hash from presynaptic components of model
+    //! Update hash from presynaptic event-triggering components of model
     boost::uuids::detail::sha1::digest_type getPreEventHashDigest() const;
 
     //! Validate names of parameters etc

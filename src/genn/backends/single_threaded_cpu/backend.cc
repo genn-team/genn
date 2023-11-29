@@ -1955,9 +1955,6 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
 {
     // Determine at what offset we should write into the spike queue
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
-
-    const std::string suffix = trueSpike ? "" : "_evnt";
-
     if(trueSpike) {
         // Reset spike time
         if(ng.getArchetype().isSpikeTimeRequired()) {
@@ -2001,6 +1998,7 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     
     // If recording is enabled
     if(recordingEnabled) {
+        const std::string suffix = trueSpike ? "" : "_evnt";
         env.printLine("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
     }
 }
