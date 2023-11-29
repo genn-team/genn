@@ -162,6 +162,8 @@ public:
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
+    void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+
     void generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -171,11 +173,9 @@ public:
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
+    const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
-
-    // **YUCK** lack of const indicates bad encapsulation
-    std::vector<SynSpike> &getMergedSpikeGroups(){ return m_MergedSpikeGroups; }
     
     //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(const std::string &paramName) const;

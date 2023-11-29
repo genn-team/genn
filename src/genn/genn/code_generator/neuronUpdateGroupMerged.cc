@@ -744,6 +744,34 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     }
 }
 //--------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
+{
+    // Loop through merged spike groups
+    for(auto &s : m_MergedSpikeGroups) {
+        CodeStream::Scope b(env.getStream());
+        const std::string fieldSuffix =  "SynSpike" + std::to_string(s.getIndex());
+
+        // Add fields to environment
+        // **YUCK** getting of neuron group is a bit gross
+        EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, s, *this);
+        synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
+                            [this](const auto &runtime, const auto &g, size_t i)
+                            {
+                                const auto *n = &getGroups().at(i).get();
+                                return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
+                            });
+        synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
+                            [this](const auto &runtime, const auto &g, size_t i)
+                            { 
+                                const auto *n = &getGroups().at(i).get();
+                                return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
+                            });
+        
+        // Call callback to generate update
+        genUpdate(synSpkEnv);
+    }
+}
+//--------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code

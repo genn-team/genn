@@ -1959,37 +1959,19 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     const std::string suffix = trueSpike ? "" : "_evnt";
 
     if(trueSpike) {
-        // Loop through merged spike groups
-        for(auto &s : ng.getMergedSpikeGroups()) {
-            CodeStream::Scope b(env.getStream());
-            const std::string fieldSuffix =  "SynSpike" + std::to_string(s.getIndex());
-
-            // Add fields to environment
-            // **YUCK** getting of neuron group is a bit gross
-            // **THINK** I think this belongs in generic code with just the spike-wrangling below here
-            EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, s, ng);
-            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                               [&ng](const auto &runtime, const auto &g, size_t i)
-                               {
-                                   const auto *n = &ng.getGroups().at(i).get();
-                                   return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
-                               });
-            synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                               [&ng](const auto &runtime, const auto &g, size_t i)
-                               { 
-                                   const auto *n = &ng.getGroups().at(i).get();
-                                   return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
-                               });
-
-            synSpkEnv.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
-            if(ng.getArchetype().isDelayRequired()) {
-                synSpkEnv.print("[*$(_spk_que_ptr)]++]");
-            }
-            else {
-                synSpkEnv.getStream() << "[0]++]";
-            }
-            synSpkEnv.printLine(" = $(id);");
-        }
+        ng.generateSpikes(
+            env,
+            [&ng, &queueOffset](EnvironmentExternalBase &env)
+            {
+                env.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
+                if(ng.getArchetype().isDelayRequired()) {
+                    env.print("[*$(_spk_que_ptr)]++]");
+                }
+                else {
+                    env.getStream() << "[0]++]";
+                }
+                env.printLine(" = $(id);");
+            });
     }
 
     // Reset spike and spike-like-event times
