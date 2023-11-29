@@ -533,8 +533,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
                                                                 VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
 
-            // If neuron update group produces spikes
-            if(!ng.getMergedSpikeGroups().empty()){
+            // If neuron update group produces spikes or spikes times are required
+            if(!ng.getMergedSpikeGroups().empty() || ng.getArchetype().isSpikeTimeRequired()) 
+            {
                 // Use first $(_sh_spk_count) spikes to update spike data structures and 
                 // make pre and postsynaptic spike-triggered weight updates
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
@@ -564,6 +565,11 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         });
                     ng.generateWUVarUpdate(wuEnv, batchSize);
 
+                    // Update spike time
+                    if(ng.getArchetype().isSpikeTimeRequired()) {
+                        wuEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+                    }
+
                     ng.generateSpikes(
                         groupEnv,
                         [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env)
@@ -587,48 +593,48 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             genSharedMemBarrier(env.getStream());
 
                             env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
-                            /*if(ng.getArchetype().isSpikeTimeRequired()) {
-                                env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
-                            }*/
                         });
                 }
             }
 
-            // Use second thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
-            if(ng.getArchetype().isSpikeEventRequired()) {
-                groupEnv.getStream() << "if (" << getThreadID() << " == 1)";
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.print("if($(_sh_spk_evnt_count) > 0)");
-                    {
-                        CodeStream::Scope b(groupEnv.getStream());
-                        groupEnv.print("$(_sh_spk_evnt_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_evnt)");
-                        if(ng.getArchetype().isDelayRequired()) {
-                            groupEnv.print("[*$(_spk_que_ptr)");
-                            if(batchSize > 1) {
-                                groupEnv.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
-                            }
-                            groupEnv.printLine("], $(_sh_spk_evnt_count));");
-                        }
-                        else {
-                            groupEnv.printLine("[$(batch)], $(_sh_spk_evnt_count));");
-                        }
-                    }
-                } 
-                genSharedMemBarrier(groupEnv.getStream());
-            }
-
-            // Copy spike-like events into block of $(_spk_evnt)
-            if(ng.getArchetype().isSpikeEventRequired()) {
+            // If neuron update group produces spike events
+            // **TODO** spike event timings?
+            if(!ng.getMergedSpikeEventGroups().empty()) {
+                // Use first $(_sh_spk_count) spikes to update spike data structures and 
+                // make pre and postsynaptic spike-triggered weight updates
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_evnt_count))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.printLine("const unsigned int n = $(_sh_spk_evnt)[" + getThreadID() + "];");
 
-                    groupEnv.printLine("$(_spk_evnt)[" + queueOffset + "$(_sh_spk_evnt_pos) + " + getThreadID() + "] = n;");
-                    if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                        groupEnv.printLine("$(_set)[" + queueOffset + "n] = $(t);");
-                    }
+                    ng.generateSpikeEvents(
+                        groupEnv,
+                        [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env)
+                        {
+                            // Use first thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
+                            env.getStream() << "if (" << getThreadID() << " == 0)";
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.print("$(_sh_spk_evnt_pos) = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_evnt)");
+                                if(ng.getArchetype().isDelayRequired()) {
+                                    env.print("[*$(_spk_que_ptr)");
+                                    if(batchSize > 1) {
+                                        env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                                    }
+                                    env.printLine("], $(_sh_spk_evnt_count));");
+                                }
+                                else {
+                                    env.printLine("[$(batch)], $(_sh_spk_evnt_count));");
+                                }
+                            }
+                            
+                            genSharedMemBarrier(env.getStream());
+
+                            env.printLine("const unsigned int n = $(_sh_spk_evnt)[" + getThreadID() + "];");
+                            env.printLine("$(_spk_evnt)[" + queueOffset + "$(_sh_spk_evnt_pos) + " + getThreadID() + "] = n;");
+                            /*if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                                groupEnv.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                            }*/
+                        });
                 }
             }
 

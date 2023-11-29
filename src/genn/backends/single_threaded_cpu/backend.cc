@@ -1959,6 +1959,10 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     const std::string suffix = trueSpike ? "" : "_evnt";
 
     if(trueSpike) {
+        // Reset spike time
+        if(ng.getArchetype().isSpikeTimeRequired()) {
+            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+        }
         ng.generateSpikes(
             env,
             [&ng, &queueOffset](EnvironmentExternalBase &env)
@@ -1973,14 +1977,27 @@ void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
                 env.printLine(" = $(id);");
             });
     }
-
-    // Reset spike and spike-like-event times
-    if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+    else {
+        /* // Reset spike and spike-like-event times
+        if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
+            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
+        }*/
+        ng.generateSpikeEvents(
+            env,
+            [&ng, &queueOffset](EnvironmentExternalBase &env)
+            {
+                env.print("$(_spk_event)[" + queueOffset + "$(_spk_cnt_event)");
+                if(ng.getArchetype().isDelayRequired()) {
+                    env.print("[*$(_spk_que_ptr)]++]");
+                }
+                else {
+                    env.getStream() << "[0]++]";
+                }
+                env.printLine(" = $(id);");
+            });
+        )
     }
-    else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-        env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
-    }
+   
     
     // If recording is enabled
     if(recordingEnabled) {

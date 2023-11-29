@@ -229,10 +229,9 @@ protected:
     NeuronGroupInternal *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
     NeuronGroupInternal *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
 
-    void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
-
     void setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedSpikeEventTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
@@ -250,15 +249,12 @@ protected:
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    //!< Does the event threshold needs to be retested in the synapse kernel?
-    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
-    bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
-
     const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
     const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
     const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
     const SynapseGroup &getFusedSpikeTarget(const NeuronGroup *ng) const;
+    const SynapseGroup &getFusedSpikeEventTarget(const NeuronGroup *ng) const;
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
@@ -277,6 +273,9 @@ protected:
     //! Can spike generation for this synapse group be safely fused?
     bool canSpikeBeFused(const NeuronGroup*) const{ return true; }
 
+    //! Can spike event generation for this synapse group be safely fused?
+    bool canWUSpikeEventBeFused(const NeuronGroup *ng) const;
+
     //! Can presynaptic/postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const;
 
@@ -288,6 +287,12 @@ protected:
 
     //! Has this synapse group's postsynaptic spike generation been fused with those from other synapse groups?
     bool isPostSpikeFused() const{ return m_FusedPostSpikeTarget != nullptr; }
+
+    //! Has this synapse group's presynaptic spike event generation been fused with those from other synapse groups?
+    bool isPreSpikeEventFused() const{ return m_FusedPreSpikeEventTarget != nullptr; }
+
+    //! Has this synapse group's postsynaptic spike event generation been fused with those from other synapse groups?
+    bool isPostSpikeEventFused() const{ return m_FusedPostSpikeEventTarget != nullptr; }
 
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
@@ -352,6 +357,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getSpikeHashDigest(const NeuronGroup *ng) const;
 
+    //! Generate hash of presynaptic or postsynaptic spike event generation component of this synapse group 
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUSpikeEventHashDigest(const NeuronGroup *ng) const;
+
     //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
@@ -361,6 +370,11 @@ protected:
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSFuseHashDigest(const NeuronGroup *ng) const;
+
+    //! Generate hash of presynaptic or postsynaptic spike event generation of this synapse group with additional components to ensure PSMs 
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUSpikeEventFuseHashDigest(const NeuronGroup *ng) const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
@@ -438,10 +452,6 @@ private:
     //! Pointer to postsynaptic neuron group
     NeuronGroupInternal * const m_TrgNeuronGroup;
 
-    //! Does the event threshold needs to be retested in the synapse kernel?
-    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
-    bool m_EventThresholdReTestRequired;
-
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
@@ -501,6 +511,14 @@ private:
     //! Synapse group postsynaptic spike generation has been fused with
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPostSpikeTarget;
+
+    //! Synapse group presynaptic spike event generation has been fused with
+    /*! If this is nullptr, presynaptic spike event generation has not been fused */
+    const SynapseGroup *m_FusedPreSpikeEventTarget;
+
+    //! Synapse group postsynaptic spike event generation has been fused with
+    /*! If this is nullptr, postsynaptic spike event generation has not been fused */
+    const SynapseGroup *m_FusedPostSpikeEventTarget;
 
     //! Synapse group presynaptic weight update has been fused with
     /*! If this is nullptr, presynaptic weight update has not been fused */

@@ -80,13 +80,46 @@ public:
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpike
     //----------------------------------------------------------------------------
-    //! Child group merged for synapse groups that process spikes
+    //! Child group merged for synapse groups that process spikes or spike-events
     /*! There is no generic code to generate here as this is backend-specific */
     class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      BackendBase::HandlerEnv genUpdate);
     };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpikeEvent
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes or spike-events
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      BackendBase::HandlerEnv genUpdate);
+
+        void generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                    unsigned int batchSize, BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+    };
+
 
     //----------------------------------------------------------------------------
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
@@ -163,7 +196,8 @@ public:
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
     void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
-
+    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    
     void generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -174,6 +208,7 @@ public:
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
     const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
+    const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
     
@@ -196,6 +231,7 @@ private:
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<SynSpike> m_MergedSpikeGroups;
+    std::vector<SynSpikeEvent> m_MergedSpikeEventGroups;
     std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
     std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };
@@ -224,6 +260,23 @@ public:
                       unsigned int batchSize);
     };
 
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes events
+    /*! There is no generic code to generate here as this is backend-specific */
+    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
+                      unsigned int batchSize);
+    };
+
     NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
                                       const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
@@ -235,6 +288,9 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
+    const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
+    const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
+    
     void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
@@ -247,6 +303,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::vector<SynSpike> m_MergedSpikeGroups;
+    std::vector<SynSpikeEvent> m_MergedSpikeEventGroups;
 };
 
 //----------------------------------------------------------------------------
@@ -276,6 +333,8 @@ public:
     {
         generateRunnerBase(backend, definitions, name);
     }
+
+    void generateUpdate(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
 
     //----------------------------------------------------------------------------
     // Static constants

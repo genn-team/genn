@@ -158,14 +158,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
         
-        // If spike-like events are required, allocate arrays for counts and spikes
-        if(n.second.isSpikeEventRequired()) {
-            createArray(&n.second, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                        n.second.getSpikeEventLocation());
-            createArray(&n.second, "spkEvnt", Type::Uint32, numNeuronDelaySlots, 
-                        n.second.getSpikeEventLocation());
-        }
-        
         // If spike or spike-like event recording is enabled
         if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
             if(!numRecordingTimesteps) {
@@ -205,7 +197,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }
 
         // If neuron group needs to record its spike-like-event times
-        if (n.second.isSpikeEventTimeRequired()) {
+        /*if (n.second.isSpikeEventTimeRequired()) {
             createArray(&n.second, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeEventTimeLocation());
         }
@@ -214,7 +206,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         if (n.second.isPrevSpikeEventTimeRequired()) {
             createArray(&n.second, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeEventTimeLocation());
-        }
+        }*/
 
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
@@ -289,6 +281,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                         n.second.getSpikeLocation());
             createArray(sg, "spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation());
+        }
+
+        // Create arrays for spike events
+        for(const auto *sg: n.second.getFusedSpikeEvent()) {
+            createArray(sg, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+                        n.second.getSpikeEventLocation());
+            createArray(sg, "spkEvnt", Type::Uint32, numNeuronDelaySlots, 
+                        n.second.getSpikeEventLocation());
         }
     }
 

@@ -69,6 +69,20 @@ boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Base::getPreEventHashDigest() const
+{
+    // Superclass
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getEventThresholdConditionCode(), hash);
+    Utils::updateHash(getPreVars(), hash);
+    Utils::updateHash(getPreNeuronVarRefs(), hash);
+
+    // Return digest
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                     const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,

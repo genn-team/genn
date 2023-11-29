@@ -33,16 +33,16 @@ public:
 
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
-    using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setFusedPSTarget;
     using SynapseGroup::setFusedSpikeTarget;
+    using SynapseGroup::setFusedSpikeEventTarget;
     using SynapseGroup::setFusedPreOutputTarget;
     using SynapseGroup::setFusedWUPrePostTarget;
     using SynapseGroup::finalise;
     using SynapseGroup::addCustomUpdateReference;
-    using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getFusedPSTarget;
     using SynapseGroup::getFusedSpikeTarget;
+    using SynapseGroup::getFusedSpikeEventTarget;
     using SynapseGroup::getFusedPreOutputTarget;
     using SynapseGroup::getFusedWUPreTarget;
     using SynapseGroup::getFusedWUPostTarget;
@@ -52,6 +52,7 @@ public:
     using SynapseGroup::canPSBeFused;
     using SynapseGroup::canSpikeBeFused;
     using SynapseGroup::canWUMPrePostUpdateBeFused;
+    using SynapseGroup::canWUSpikeEventBeFused;
     using SynapseGroup::canPreOutputBeFused;
     using SynapseGroup::isPSModelFused;
     using SynapseGroup::isPreSpikeFused;
@@ -69,11 +70,13 @@ public:
     using SynapseGroup::isSparseConnectivityInitRequired;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPrePostHashDigest;
+    using SynapseGroup::getWUSpikeEventHashDigest;
     using SynapseGroup::getPSHashDigest;
     using SynapseGroup::getPSFuseHashDigest;
     using SynapseGroup::getSpikeHashDigest;
     using SynapseGroup::getPreOutputHashDigest;
     using SynapseGroup::getWUPrePostFuseHashDigest;
+    using SynapseGroup::getWUSpikeEventFuseHashDigest;
     using SynapseGroup::getDendriticDelayUpdateHashDigest;
     using SynapseGroup::getWUInitHashDigest;
     using SynapseGroup::getWUPrePostInitHashDigest;

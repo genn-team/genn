@@ -121,6 +121,9 @@ public:
     //! Update hash from postsynaptic components of  model
     boost::uuids::detail::sha1::digest_type getPostHashDigest() const;
 
+    //! Update hash from presynaptic components of model
+    boost::uuids::detail::sha1::digest_type getPreEventHashDigest() const;
+
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,

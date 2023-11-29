@@ -187,8 +187,6 @@ protected:
     
     // Set a variable as requiring queueing
     void setVarQueueRequired(const std::string &varName){ m_VarQueueRequired.insert(varName); }
-    
-    void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
@@ -214,8 +212,8 @@ protected:
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
-    //! Get pointers to all synapse groups
     const std::vector<SynapseGroupInternal*> &getFusedSpike() const{ return m_FusedSpike; }
+    const std::vector<SynapseGroupInternal*> &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
     
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
@@ -292,6 +290,7 @@ private:
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
     std::vector<SynapseGroupInternal*> m_FusedSpike;
+    std::vector<SynapseGroupInternal*> m_FusedSpikeEvent;
     std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;

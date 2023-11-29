@@ -23,7 +23,6 @@ public:
     
     using NeuronGroup::checkNumDelaySlots;
     using NeuronGroup::setVarQueueRequired;
-    using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
     using NeuronGroup::finalise;
@@ -34,6 +33,7 @@ public:
     using NeuronGroup::getFusedPreOutputOutSyn;
     using NeuronGroup::getFusedWUPreOutSyn;
     using NeuronGroup::getFusedSpike;
+    using NeuronGroup::getFusedSpikeEvent;
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;

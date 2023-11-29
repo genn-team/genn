@@ -333,42 +333,6 @@ void ModelSpec::finalise()
     for(auto &n : m_LocalNeuronGroups) {
         n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
     }
-
-    // Loop through neuron populations and their outgoing synapse populations
-    for(auto &n : m_LocalNeuronGroups) {
-        for(auto *sg : n.second.getOutSyn()) {
-            const auto *wu = sg->getWUInitialiser().getSnippet();
-
-            if(!wu->getEventThresholdConditionCode().empty()) {
-                assert(false);
-                /*using namespace CodeGenerator;
-
-                // do an early replacement of weight update model parameters and derived parameters
-                // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
-                // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
-                // **NOTE** this prevents heterogeneous parameters being allowed in event threshold conditions but I can't see any way around this
-                Substitutions thresholdSubs;
-                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
-                
-                std::string eCode = wu->getEventThresholdConditionCode();
-                thresholdSubs.apply(eCode);
-
-                // Add code and name of support code namespace to set	
-                n.second.addSpkEventCondition(eCode, sg);*/
-            }
-        }
-        if (n.second.getSpikeEventCondition().size() > 1) {
-            if(n.second.isSpikeEventTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
-                LOGW << "Neuron group '" << n.first << "' records spike-like-event times but, it has outgoing synapse groups with multiple spike-like-event conditions so the recorded times may be ambiguous.";
-            }
-            for(auto *sg : n.second.getOutSyn()) {
-                if (!sg->getWUInitialiser().getSnippet()->getEventCode().empty()) {
-                    sg->setEventThresholdReTestRequired(true);
-                }
-            }
-        }
-    }
 }
 // ---------------------------------------------------------------------------
 bool ModelSpec::zeroCopyInUse() const
