@@ -285,9 +285,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Create arrays for spike events
         for(const auto *sg: n.second.getFusedSpikeEvent()) {
-            createArray(sg, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+            createArray(sg, "spkCntEvent", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeEventLocation());
-            createArray(sg, "spkEvnt", Type::Uint32, numNeuronDelaySlots, 
+            createArray(sg, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation());
         }
     }
