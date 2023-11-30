@@ -215,20 +215,11 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Add spike count
-    // **YUCK** getting of neuron group is a bit gross
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i) 
-                      {
-                          const auto *n = &ng.getGroups().at(i).get();
-                          return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
-                      });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i)
-                      {
-                          const auto *n = &ng.getGroups().at(i).get();
-                          return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
-                      });
+                      [](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, "spk"); });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",
@@ -267,18 +258,10 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     // Add spike count
     // **YUCK** getting of neuron group is a bit gross
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i) 
-                      {
-                          const auto *n = &ng.getGroups().at(i).get();
-                          return runtime.getArray(g.getFusedSpikeTarget(n), "spkCntEvent"); 
-                      });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spkEvent" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i)
-                      {
-                          const auto *n = &ng.getGroups().at(i).get();
-                          return runtime.getArray(g.getFusedSpikeTarget(n), "spkEvent"); 
-                      });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkEvent"); });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",
@@ -320,7 +303,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 
     // Add field for InSyn and zero
     groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPost"); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
         [batchSize, this] (EnvironmentExternalBase &varEnv)
         {
@@ -333,7 +316,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     if(getArchetype().isDendriticDelayRequired()) {
         // Add field for dendritic delay buffer and zero
         groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
-                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay"); });
+                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelay"); });
         backend.genVariableInit(groupEnv, "num_neurons", "id",
             [batchSize, this](EnvironmentExternalBase &varEnv)
             {
@@ -344,7 +327,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
 
         // Add field for dendritic delay pointer and zero
         groupEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr"); });
+                          [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelayPtr"); });
         backend.genPopVariableInit(groupEnv,
             [](EnvironmentExternalBase &varEnv)
             {
@@ -367,7 +350,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
 
     // Add 
     groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPre"); });
     backend.genVariableInit(groupEnv, "num_neurons", "id",
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {

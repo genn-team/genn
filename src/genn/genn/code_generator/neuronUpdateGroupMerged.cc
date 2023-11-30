@@ -84,7 +84,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Add inSyn
     psmEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
-                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "outPost"); });
 
     // Read into local variable
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
@@ -95,9 +95,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     if (getArchetype().isDendriticDelayRequired()) {
         // Add dendritic delay buffer and pointer into it
         psmEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
-                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay");});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelay");});
         psmEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr");});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelayPtr");});
 
         // Get reference to dendritic delay buffer input for this timestep
         psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
@@ -171,7 +171,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase 
     EnvironmentGroupMergedField<OutSynPreOutput, NeuronUpdateGroupMerged> outSynEnv(env, *this, ng);
     
     outSynEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre" + fieldSuffix,
-                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
+                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPre"); });
 
     // Add reverse insyn variable to 
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
@@ -193,17 +193,9 @@ void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, N
     // Add fields to environment
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> synSpkEnv(env, *this, ng);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                       [&ng](const auto &runtime, const auto &g, size_t i)
-                       {
-                           const auto *n = &ng.getGroups().at(i).get();
-                           return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
-                       });
+                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                       [&ng](const auto &runtime, const auto &g, size_t i)
-                       { 
-                           const auto *n = &ng.getGroups().at(i).get();
-                           return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
-                       });
+                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
     
     // Call callback to generate update
     genUpdate(synSpkEnv);
@@ -219,29 +211,21 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
 
     // Add fields to environment
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synSpkEnv(env, *this, ng);
-    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
-    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
-    //groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
-    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
-    //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
+    
+    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
+    //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
+    //
+    //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent" + fieldSuffix,
     //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
-    synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
-                       [&ng](const auto &runtime, const auto &g, size_t i)
-                       {
-                           const auto *n = &ng.getGroups().at(i).get();
-                           return runtime.getArray(g.getFusedSpikeEventTarget(n), "spkCntEvent"); 
-                       });
-    synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spkEvent" + fieldSuffix,
-                       [&ng](const auto &runtime, const auto &g, size_t i)
-                       { 
-                           const auto *n = &ng.getGroups().at(i).get();
-                           return runtime.getArray(g.getFusedSpikeEventTarget(n), "spkEvent"); 
-                       });
+    groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
+    groupEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spkEvent" + fieldSuffix,
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkEvent"); });
     
     // Call callback to generate update
-    genUpdate(synSpkEnv, *this);
+    genUpdate(groupEnv, *this);
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
@@ -303,12 +287,12 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
             CodeStream::Scope b(varEnv.getStream());
 
             // If spike times are required, copy times from register
-            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+            if(getArchetype().isPreSpikeEventTimeRequired()) {
                 varEnv.printLine("$(_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(set);");
             }
 
             // If previous spike times are required, copy times from register
-            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+            if(getArchetype().isPrevPreSpikeEventTimeRequired()) {
                 varEnv.printLine("$(_prev_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_set);");
             }
         }
@@ -897,17 +881,9 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBa
     // Add spike count and spikes to environment
     EnvironmentGroupMergedField<SynSpike, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                        [&ng](const auto &runtime, const auto &g, size_t i)
-                        {
-                            const auto *n = &ng.getGroups().at(i).get();
-                            return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
-                        });
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                        [&ng](const auto &runtime, const auto &g, size_t i)
-                        { 
-                            const auto *n = &ng.getGroups().at(i).get();
-                            return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
-                        });
+                        [&ng](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
 
     // Update spike count
     if(ng.getArchetype().isDelayRequired()) {
@@ -939,17 +915,9 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExter
     // Add spike count and spikes to environment
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
-                        [&ng](const auto &runtime, const auto &g, size_t i)
-                        {
-                            const auto *n = &ng.getGroups().at(i).get();
-                            return runtime.getArray(g.getFusedSpikeEventTarget(n), "spkCntEvent"); 
-                        });
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spk_event" + fieldSuffix,
-                        [&ng](const auto &runtime, const auto &g, size_t i)
-                        { 
-                            const auto *n = &ng.getGroups().at(i).get();
-                            return runtime.getArray(g.getFusedSpikeEventTarget(n), "spkEvent"); 
-                        });
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkEvent"); });
 
     // Update spike count
     if(ng.getArchetype().isDelayRequired()) {
@@ -1040,17 +1008,9 @@ void NeuronPrevSpikeTimeUpdateGroupMerged::generateUpdate(EnvironmentExternalBas
         // **YUCK** getting of neuron group is a bit gross
         EnvironmentGroupMergedField<SynSpike, NeuronPrevSpikeTimeUpdateGroupMerged> synSpkEnv(env, s, *this);
         synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                            [this](const auto &runtime, const auto &g, size_t i)
-                            {
-                                const auto *n = &getGroups().at(i).get();
-                                return runtime.getArray(g.getFusedSpikeTarget(n), "spkCnt"); 
-                            });
+                            [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
         synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                            [this](const auto &runtime, const auto &g, size_t i)
-                            { 
-                                const auto *n = &getGroups().at(i).get();
-                                return runtime.getArray(g.getFusedSpikeTarget(n), "spk"); 
-                            });
+                            [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
         
         // Call callback to generate update
         genUpdate(synSpkEnv);
