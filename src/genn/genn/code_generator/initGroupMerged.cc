@@ -238,7 +238,7 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, "spk"); });
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",
