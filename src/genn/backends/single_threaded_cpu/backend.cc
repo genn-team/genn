@@ -194,7 +194,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[lastTimestepDelaySlot]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[lastTimestepDelaySlot]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
                                 groupEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
@@ -212,10 +212,10 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[0]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[$(_spk_evnt)[i]] = $(t) - $(dt);");
+                                groupEnv.printLine("$(_prev_set)[$(_spk_event)[i]] = $(t) - $(dt);");
                             }
                         }
                     }
@@ -1750,7 +1750,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                                    double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_event";
 
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
         // Create environment for generating presynaptic update code into seperate CodeStream

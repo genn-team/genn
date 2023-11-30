@@ -353,7 +353,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
+                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
                     }
                 }
             }
@@ -376,15 +376,15 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                 }
                 if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
                     // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                    neuronEnv.print("if($(id) < $(_spk_cnt_evnt)[$(batch)])");
+                    neuronEnv.print("if($(id) < $(_spk_cnt_event)[$(batch)])");
                     {
                         CodeStream::Scope b(neuronEnv.getStream());
                         neuronEnv.print("$(_prev_set)[");
                         if (batchSize == 1) {
-                            neuronEnv.print("$(_spk_evnt)[$(id)]");
+                            neuronEnv.print("$(_spk_event)[$(id)]");
                         }
                         else {
-                            neuronEnv.print("$(_batch_offset) + $(_spk_evnt)[$(_batch_offset) + $(id)]");
+                            neuronEnv.print("$(_batch_offset) + $(_spk_event)[$(_batch_offset) + $(id)]");
                         }
                         neuronEnv.printLine("] = $(t) - $(dt);");
                     }
@@ -499,7 +499,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
                    [](const auto &n) { return n.second.isSpikeEventRecordingEnabled(); }))
     {
-        genRecordingSharedMemInit(env.getStream(), "Evnt");
+        genRecordingSharedMemInit(env.getStream(), "Event");
     }
 
     genSharedMemBarrier(neuronEnv.getStream());
@@ -656,7 +656,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             env.getStream() << "if (" << getThreadID() << " == 0)";
                             {
                                 CodeStream::Scope b(env.getStream());
-                                env.print("$(_sh_spk_pos_event)[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_evnt)");
+                                env.print("$(_sh_spk_pos_event)[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_event)");
                                 if(ng.getArchetype().isDelayRequired()) {
                                     env.print("[*$(_spk_que_ptr)");
                                     if(batchSize > 1) {
@@ -710,7 +710,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                         // If we are recording spike-like events, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                            groupEnv.print("$(_record_spk_evnt)[" + globalIndex + "] = shSpkEvntRecord");
+                            groupEnv.print("$(_record_spk_event)[" + globalIndex + "] = shSpkEventRecord");
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
                                 groupEnv.print("[" + getThreadID() + "]");
                             }
@@ -782,8 +782,8 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // Shared memory for spikes and spike events
     kernelEnv.add(Type::Void, "_sh_spk", "shSpk",
                   {kernelEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpk[" + std::to_string(getKernelBlockSize(KernelPresynapticUpdate)) + "];")});
-    kernelEnv.add(Type::Void, "_sh_spk_evnt", "shSpkEvnt",
-                  {kernelEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvnt[" + std::to_string(getKernelBlockSize(KernelPresynapticUpdate)) + "];")});
+    kernelEnv.add(Type::Void, "_sh_spk_event", "shSpkEvent",
+                  {kernelEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvent[" + std::to_string(getKernelBlockSize(KernelPresynapticUpdate)) + "];")});
 
     // Parallelise over synapse groups
     idStart = 0;

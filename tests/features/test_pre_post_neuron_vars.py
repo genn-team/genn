@@ -157,7 +157,8 @@ def test_pre_post_neuron_var(backend, precision, delay):
     synapse_groups = [s_post_sim_sparse_pop, 
                       s_post_learn_post_sparse_pop,
                       s_pre_sim_sparse_pop, 
-                      s_pre_learn_post_sparse_pop]
+                      s_pre_learn_post_sparse_pop,
+                      s_pre_event_sparse_pop]
     for s in synapse_groups:
         s.pull_connectivity_from_device()
     
@@ -180,4 +181,4 @@ def test_pre_post_neuron_var(backend, precision, delay):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 
 if __name__ == '__main__':
-    test_pre_post_neuron_var("single_threaded_cpu", types.Float, 20)
+    test_pre_post_neuron_var("cuda", types.Float, 20)

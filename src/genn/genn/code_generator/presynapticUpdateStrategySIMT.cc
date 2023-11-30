@@ -77,7 +77,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
                         unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_eevnt";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
 
     if(numThreadsPerSpike > 1) {
@@ -232,7 +232,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                          unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_event";
 
     env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
@@ -432,7 +432,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
                                   unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_event";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
     const std::string numThreadsPerSpikeStr = std::to_string(numThreadsPerSpike);
 
@@ -619,7 +619,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                                 unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_event";
 
     // Get blocksize
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
@@ -858,7 +858,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         (auto &env, auto generateBody)
         {
             // Get suffix based on type of events
-            const std::string eventSuffix = trueSpike ? "" : "_evnt";
+            const std::string eventSuffix = trueSpike ? "" : "_event";
 
             env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
             env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
