@@ -339,37 +339,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize)
-{
-    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
-
-    // Substitute parameter and derived parameter names
-    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
-    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
-                                &PresynapticUpdateGroupMerged::isWUParamHeterogeneous,
-                                &SynapseGroupInternal::isWUParamDynamic);
-    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
-    synEnv.addExtraGlobalParams(wum->getExtraGlobalParams());
-
-    // Substitute in presynaptic neuron properties
-    /*const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-    neuronSubstitutionsInSynapticCode(synapseSubs, getArchetype().getSrcNeuronGroup(), "", "_pre", "Pre", "", "", false,
-                                      [this](const std::string &p) { return isSrcNeuronParamHeterogeneous(p); },
-                                      [this](const std::string &p) { return isSrcNeuronDerivedParamHeterogeneous(p); },
-                                      [batchSize, &synapseSubs, this](bool delay, VarAccessDuplication varDuplication) 
-                                      {
-                                          return getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      },
-                                      [batchSize, &synapseSubs, this](bool delay, VarAccessDuplication varDuplication) 
-                                      { 
-                                          return getPrePrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      });*/
-
-    // Pretty print code back to environment
-    Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' weight update model event threshold code");
-    prettyPrintStatements(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
-}
-//----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {

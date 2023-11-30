@@ -119,7 +119,6 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize);
     void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                   unsigned int batchSize, double dt);
     void generateSpikeUpdate(EnvironmentExternalBase &env, 
