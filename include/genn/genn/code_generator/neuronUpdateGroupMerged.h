@@ -15,7 +15,7 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
     //----------------------------------------------------------------------------
     //! Child group merged for current sources attached to this neuron update group
-    class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
+    class GENN_EXPORT CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -40,7 +40,7 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups
-    class InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -65,7 +65,7 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with $(addToPre) logic
-    class OutSynPreOutput : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT OutSynPreOutput : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -82,7 +82,7 @@ public:
     //----------------------------------------------------------------------------
     //! Child group merged for synapse groups that process spikes or spike-events
     /*! There is no generic code to generate here as this is backend-specific */
-    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT SynSpike : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -99,7 +99,7 @@ public:
     //----------------------------------------------------------------------------
     //! Child group merged for synapse groups that process spikes or spike-events
     /*! There is no generic code to generate here as this is backend-specific */
-    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -128,7 +128,7 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
     //----------------------------------------------------------------------------
     //! Child group merged for incoming synapse groups with postsynaptic update/spike code
-    class InSynWUMPostCode : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT InSynWUMPostCode : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -156,7 +156,7 @@ public:
     // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
     //----------------------------------------------------------------------------
     //! Child group merged for outgoing synapse groups with presynaptic update/spike code
-    class OutSynWUMPreCode : public ChildGroupMerged<SynapseGroupInternal>
+    class GENN_EXPORT OutSynWUMPreCode : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
