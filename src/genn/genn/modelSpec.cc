@@ -27,9 +27,6 @@
 #include "logging.h"
 #include "modelSpec.h"
 
-// GeNN code generator includes
-#include "code_generator/codeGenUtils.h"
-
 // GeNN transpiler includes
 #include "transpiler/parser.h"
 

@@ -37,7 +37,6 @@ public:
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;
-    using NeuronGroup::getSpikeEventCondition;
     using NeuronGroup::getFusedInSynWithPostCode;
     using NeuronGroup::getFusedOutSynWithPreCode;
     using NeuronGroup::getFusedInSynWithPostVars;

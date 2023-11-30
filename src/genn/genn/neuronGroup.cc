@@ -549,7 +549,6 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
-    //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
     Utils::updateHash(isSpikeEventRequired(), hash);
     Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSpikeRecordingEnabled(), hash);
