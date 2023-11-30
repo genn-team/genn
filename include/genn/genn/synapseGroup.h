@@ -46,18 +46,6 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of this synapse group's input spike events
-     /*! This is ignored for simulations on hardware with a single memory space */
-    void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
-    
-    //! Set location of this synapse group's output spike-like-event times
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setSpikeEventTimeLocation(VarLocation loc) { m_SpikeEventTimeLocation = loc; }
-    
-    //! Set location of this synapse group's previous output spike-like-event times
-    /*! This is ignored for simulations on hardware with a single memory space */
-    void setPrevSpikeEventTimeLocation(VarLocation loc) { m_PrevSpikeEventTimeLocation = loc; }
-
     //! Set location of weight update model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUVarLocation(const std::string &varName, VarLocation loc);
@@ -160,15 +148,6 @@ public:
 
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
-
-    //! Get location of this neuron group's output spike events
-    VarLocation getSpikeEventLocation() const{ return m_SpikeEventLocation; }
-
-    //! Get location of this neuron group's output spike-like-event times
-    VarLocation getSpikeEventTimeLocation() const { return m_SpikeEventTimeLocation;  }
-
-    //! Get location of this neuron group's previous output spike-like-event times
-    VarLocation getPrevSpikeEventTimeLocation() const { return m_PrevSpikeEventTimeLocation; }
 
     //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
@@ -481,15 +460,6 @@ private:
 
     //! Variable mode used for this synapse group's dendritic delay buffers
     VarLocation m_DendriticDelayLocation;
-
-    //! Location of spike-like events from neuron group
-    VarLocation m_SpikeEventLocation;
-
-    //! Location of spike-like-event times
-    VarLocation m_SpikeEventTimeLocation;
-
-    //! Location of previous spike-like-event times
-    VarLocation m_PrevSpikeEventTimeLocation;
 
     //! Initialiser used for creating weight update model
     WeightUpdateModels::Init m_WUInitialiser;

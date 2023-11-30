@@ -213,8 +213,9 @@ bool NeuronGroup::isSpikeEventRequired() const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY)
-       || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY)) 
+    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) 
+       || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY)
+       || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
     {
         return true;
     }
@@ -358,8 +359,10 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_SpikeLocation(defaultVarLocation), m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), 
-    m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
+    m_NumDelaySlots(1), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
+    m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
+    m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
@@ -650,8 +653,11 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getSpikeLocation(), hash);
+    Utils::updateHash(getSpikeEventLocation(), hash);
     Utils::updateHash(getSpikeTimeLocation(), hash);
     Utils::updateHash(getPrevSpikeTimeLocation(), hash);
+    Utils::updateHash(getSpikeEventTimeLocation(), hash);
+    Utils::updateHash(getPrevSpikeEventTimeLocation(), hash);
     m_VarLocation.updateHash(hash);
     m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();

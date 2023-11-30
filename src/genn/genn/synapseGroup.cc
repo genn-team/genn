@@ -246,10 +246,15 @@ bool SynapseGroup::isPrevPostSpikeTimeRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isZeroCopyEnabled() const
 {
-    if((m_InSynLocation & VarLocation::ZERO_COPY) || (m_DendriticDelayLocation & VarLocation::ZERO_COPY)
-       || (m_SparseConnectivityLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) 
-       || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY))
-    {
+    if(m_InSynLocation & VarLocation::ZERO_COPY) {
+        return true;
+    }
+
+    if(m_DendriticDelayLocation & VarLocation::ZERO_COPY) {
+        return true;
+    }
+    
+    if(m_SparseConnectivityLocation & VarLocation::ZERO_COPY) {
         return true;
     }
 
@@ -268,9 +273,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
-        m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled), m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation), 
-        m_SpikeEventLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation), 
-        m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
+        m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
+        m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
+        m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
         m_WUVarLocation(defaultVarLocation), m_WUPreVarLocation(defaultVarLocation), m_WUPostVarLocation(defaultVarLocation), m_WUExtraGlobalParamLocation(defaultExtraGlobalParamLocation), 
         m_PSVarLocation(defaultVarLocation),  m_PSExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_FusedPSTarget(nullptr), m_FusedPreSpikeTarget(nullptr), m_FusedPostSpikeTarget(nullptr), m_FusedPreSpikeEventTarget(nullptr), m_FusedPostSpikeEventTarget(nullptr),
@@ -1223,9 +1228,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
     Utils::updateHash(getInSynLocation(), hash);
     Utils::updateHash(getDendriticDelayLocation(), hash);
     Utils::updateHash(getSparseConnectivityLocation(), hash);
-    Utils::updateHash(getSpikeEventLocation(), hash);
-    Utils::updateHash(getSpikeEventTimeLocation(), hash);
-    Utils::updateHash(getPrevSpikeEventTimeLocation(), hash);
     m_WUVarLocation.updateHash(hash);
     m_WUPreVarLocation.updateHash(hash);
     m_WUPostVarLocation.updateHash(hash);
