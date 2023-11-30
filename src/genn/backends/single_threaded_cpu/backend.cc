@@ -296,11 +296,6 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Insert code to update WU vars
                                 n.generateWUVarUpdate(env, 1);
 
-                                // Reset spike time
-                                if(n.getArchetype().isSpikeTimeRequired()) {
-                                    env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-                                }
-
                                 // If recording is enabled
                                 if(n.getArchetype().isSpikeRecordingEnabled()) {
                                     env.printLine("$(_record_spk[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
@@ -311,6 +306,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     env,
                                     [&n, &queueOffset](EnvironmentExternalBase &env)
                                     {
+                                        // Update spike time
+                                        if(n.getArchetype().isSpikeTimeRequired()) {
+                                            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                        }
+
                                         env.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
                                         if(n.getArchetype().isDelayRequired()) {
                                             env.print("[*$(_spk_que_ptr)]++]");
@@ -329,9 +329,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     env, n,
                                     [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                                     {
-                                        // Reset spike time
+                                        // Update spike event time
                                         if(sg.getArchetype().isPreSpikeTimeRequired()) {
-                                            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
                                         }
 
                                         env.print("$(_spk_event)[" + queueOffset + "$(_spk_cnt_event)");

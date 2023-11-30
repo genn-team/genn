@@ -184,18 +184,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             m_DelayQueuePointer.try_emplace(&n.second, 0);
         }
         
-        // If neuron group needs to record its spike times
-        if (n.second.isSpikeTimeRequired()) {
-            createArray(&n.second, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getSpikeTimeLocation());
-        }
-
-        // If neuron group needs to record its previous spike times
-        if (n.second.isPrevSpikeTimeRequired()) {
-            createArray(&n.second, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getPrevSpikeTimeLocation());
-        }
-
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             auto rng = m_Backend.get().createPopulationRNG(batchSize * n.second.getNumNeurons());
@@ -269,6 +257,18 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                         n.second.getSpikeLocation());
             createArray(sg, "spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation());
+
+            // If NEURON group needs to record its spike times
+            if (n.second.isSpikeTimeRequired()) {
+                createArray(sg, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getSpikeTimeLocation());
+            }
+
+            // If NEURON group needs to record its previous spike times
+            if (n.second.isPrevSpikeTimeRequired()) {
+                createArray(sg, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getPrevSpikeTimeLocation());
+            }
         }
 
         // Create arrays for spike events
@@ -278,13 +278,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             createArray(sg, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation());
 
-            // If neuron group needs to record its spike-like-event times
+            // If SYNAPSE group needs to record its spike-like-event times
             if (sg->isPreSpikeEventTimeRequired()) {
                 createArray(sg, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getSpikeEventTimeLocation());
             }
 
-            // If neuron group needs to record its previous spike-like-event times
+            // If SYNAPSE group needs to record its previous spike-like-event times
             if (sg->isPrevPreSpikeEventTimeRequired()) {
                 createArray(sg, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeEventTimeLocation());

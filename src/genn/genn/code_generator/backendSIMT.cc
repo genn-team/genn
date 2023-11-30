@@ -610,11 +610,6 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         });
                     ng.generateWUVarUpdate(wuEnv, batchSize);
 
-                    // Update spike time
-                    if(ng.getArchetype().isSpikeTimeRequired()) {
-                        wuEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
-                    }
-
                     ng.generateSpikes(
                         groupEnv,
                         [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env)
@@ -638,49 +633,51 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             genSharedMemBarrier(env.getStream());
 
                             env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
+
+                            // Update spike time
+                            if(ng.getArchetype().isSpikeTimeRequired()) {
+                                env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+                            }
                         });
                 }
             }
 
-            // If neuron update group produces spike events
-            if(!ng.getMergedSpikeEventGroups().empty()) {
-                ng.generateSpikeEvents(
-                    groupEnv,
-                    [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
-                    {  
-                        const std::string indexStr = std::to_string(sg.getIndex());
-                        env.print("if(" + getThreadID() + " < $(_sh_spk_count_event)[" + indexStr + "])");
+            ng.generateSpikeEvents(
+                groupEnv,
+                [batchSize, &ng, &queueOffset, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                {  
+                    const std::string indexStr = std::to_string(sg.getIndex());
+                    env.print("if(" + getThreadID() + " < $(_sh_spk_count_event)[" + indexStr + "])");
+                    {
+                        // Use first thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
+                        CodeStream::Scope b(env.getStream());
+                        env.getStream() << "if (" << getThreadID() << " == 0)";
                         {
-                            // Use first thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
                             CodeStream::Scope b(env.getStream());
-                            env.getStream() << "if (" << getThreadID() << " == 0)";
-                            {
-                                CodeStream::Scope b(env.getStream());
-                                env.print("$(_sh_spk_pos_event)[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_event)");
-                                if(ng.getArchetype().isDelayRequired()) {
-                                    env.print("[*$(_spk_que_ptr)");
-                                    if(batchSize > 1) {
-                                        env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
-                                    }
-                                    env.printLine("], $(_sh_spk_count_event)[" + indexStr + "]);");
+                            env.print("$(_sh_spk_pos_event)[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt_event)");
+                            if(ng.getArchetype().isDelayRequired()) {
+                                env.print("[*$(_spk_que_ptr)");
+                                if(batchSize > 1) {
+                                    env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
                                 }
-                                else {
-                                    env.printLine("[$(batch)], $(_sh_spk_count_event)[" + indexStr + "]);");
-                                }
+                                env.printLine("], $(_sh_spk_count_event)[" + indexStr + "]);");
                             }
-                            
-                            genSharedMemBarrier(env.getStream());
-
-                            env.printLine("const unsigned int n = $(_sh_spk_event)[" + indexStr + "][" + getThreadID() + "];");
-                            env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + indexStr + "] + " + getThreadID() + "] = n;");
-                            
-                            // Update spike event time
-                            if(sg.getArchetype().isPreSpikeEventTimeRequired()) {
-                                env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                            else {
+                                env.printLine("[$(batch)], $(_sh_spk_count_event)[" + indexStr + "]);");
                             }
                         }
-                    });
-            }
+                            
+                        genSharedMemBarrier(env.getStream());
+
+                        env.printLine("const unsigned int n = $(_sh_spk_event)[" + indexStr + "][" + getThreadID() + "];");
+                        env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + indexStr + "] + " + getThreadID() + "] = n;");
+                            
+                        // Update spike event time
+                        if(sg.getArchetype().isPreSpikeEventTimeRequired()) {
+                            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                        }
+                    }
+                });
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {

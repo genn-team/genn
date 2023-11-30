@@ -92,6 +92,9 @@ public:
         //----------------------------------------------------------------------------
         void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       BackendBase::HandlerEnv genUpdate);
+
+        void genCopyDelayedSpikeTimes(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
+                                      unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
