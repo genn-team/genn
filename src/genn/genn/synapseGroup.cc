@@ -980,11 +980,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventHashDigest(
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreEventHashDigest(), hash);
         Utils::updateHash((getDelaySteps() != 0), hash);
+        Utils::updateHash(isPreSpikeEventTimeRequired(), hash);
+        Utils::updateHash(isPrevPreSpikeEventTimeRequired(), hash);
     }
     else {
         assert(false);
         //Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
         //Utils::updateHash((getBackPropDelaySteps() != 0), hash);
+        //Utils::updateHash(isPostSpikeEventTimeRequired(), hash);
+        //Utils::updateHash(isPrevPostSpikeEventTimeRequired(), hash);
     }
     m_WUDynamicParams.updateHash(hash);
 
@@ -1038,11 +1042,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventFuseHashDig
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreEventHashDigest(), hash);
         Utils::updateHash(getDelaySteps(), hash);
+        Utils::updateHash(isPreSpikeEventTimeRequired(), hash);
     }
     else {
         assert(false);
         //Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
         //Utils::updateHash(getBackPropDelaySteps(), hash);
+        //Utils::updateHash(isPostSpikeEventTimeRequired(), hash);
+        //Utils::updateHash(isPrevPostSpikeEventTimeRequired(), hash);
     }
 
     // Loop through variable initialisers and hash first parameter.
