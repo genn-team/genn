@@ -194,7 +194,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeTarget(g.getSrcNeuronGroup()), "spk"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt_event", "srcSpkCntEvent",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()), "spkCntEvent"); });
-    env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvent",
+    env.addField(Uint32.createPointer(), "_src_spk_event", "srcSpkEvent",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()), "spkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
