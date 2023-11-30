@@ -104,26 +104,14 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
     env.addField(Uint32.addConst(), "num_neurons",
                  Uint32, "numNeurons",
                  [](const auto&, const auto &ng, size_t) { return ng.getNumNeurons(); });
-    env.addField(Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvnt"); });
-    env.addField(Uint32.createPointer(), "_spk_evnt", "spkEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sSpkEvnt"); });
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
-
     env.addField(env.getGroup().getTimeType().createPointer(), "_st", "sT",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sT"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_set", "seT",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_prev_st", "prevST", 
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevST"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_set", "prevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
-
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); });
-    env.addField(Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                 [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
@@ -210,12 +198,12 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()), "spkEvnt"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "seT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevST"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()), "seT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevSET" ); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()), "prevSET" ); });
     
     // Target neuron fields
     env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",

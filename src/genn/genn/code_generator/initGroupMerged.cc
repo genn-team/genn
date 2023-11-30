@@ -258,6 +258,12 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     // Create environment for group
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
+    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
+    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
+    //groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
+    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
+    //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
+    //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
     // Add spike count
     // **YUCK** getting of neuron group is a bit gross
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,

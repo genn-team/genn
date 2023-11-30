@@ -220,6 +220,13 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
 
     // Add fields to environment
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synSpkEnv(env, *this, ng);
+    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
+    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
+    //groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
+    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
+    //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
+    //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
+
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                        [&ng](const auto &runtime, const auto &g, size_t i)
                        {
