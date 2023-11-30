@@ -552,7 +552,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         const std::string indexStr = std::to_string(sg.getIndex());
                         if(sg.getArchetype().isSpikeEventRequired()) {
                             env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count_event)[" + indexStr + "], 1);");
-                            env.printLine("$(_sh_spk)[" + indexStr + "][spkIdx] = $(id);");
+                            env.printLine("$(_sh_spk_event)[" + indexStr + "][spkIdx] = $(id);");
                         }
                         // If recording is enabled, set bit in recording word
                         /*if(ng.getArchetype().isSpikeRecordingEnabled()) {
@@ -652,6 +652,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         env.print("if(" + getThreadID() + " < $(_sh_spk_count_event)[" + indexStr + "])");
                         {
                             // Use first thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
+                            CodeStream::Scope b(env.getStream());
                             env.getStream() << "if (" << getThreadID() << " == 0)";
                             {
                                 CodeStream::Scope b(env.getStream());
