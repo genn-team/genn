@@ -12,7 +12,7 @@ from pygenn import (create_neuron_model, create_var_ref,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
 
- # Weight update models which copy a PRESYNAPTIC neuron variables
+# Weight update models which copy a PRESYNAPTIC neuron variables
 # into synapse during various kinds of synaptic event
 pre_learn_post_weight_update_model = create_weight_update_model(
     "pre_learn_post_weight_update",
@@ -32,6 +32,20 @@ pre_sim_weight_update_model = create_weight_update_model(
     sim_code=
     """
     w = s;
+    """)
+
+pre_event_weight_update_model = create_weight_update_model(
+    "pre_sim_weight_update",
+    var_name_types=[("w", "scalar")],
+    pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
+
+    event_code=
+    """
+    w = s;
+    """,
+    event_threshold_condition_code=
+    """
+    t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
 
 # Weight update models which copy a POSTSYNAPTIC neuron variables
@@ -106,6 +120,13 @@ def test_pre_post_neuron_var(backend, precision, delay):
         "PreSimSparseSynapses", "SPARSE", delay,
         pre_n_pop, post_n_pop,
         init_weight_update(pre_sim_weight_update_model, {}, {"w": float_min},
+                           pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_pre_event_sparse_pop = model.add_synapse_population(
+        "PreEventSparseSynapses", "SPARSE", delay,
+        pre_n_pop, post_n_pop,
+        init_weight_update(pre_event_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
