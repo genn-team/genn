@@ -239,6 +239,11 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
     synEnv.getStream() << "// spike event condition " << getIndex() << std::endl;
     
+    synEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
+    synEnv.addField(getTimeType().createPointer(), "_prev_set", "seT" + fieldSuffix,
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
+     
     // Add parameters, derived parameters and extra global parameters to environment
     synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
                                 &SynSpikeEvent::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);

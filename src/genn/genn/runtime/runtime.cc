@@ -196,18 +196,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                         n.second.getPrevSpikeTimeLocation());
         }
 
-        // If neuron group needs to record its spike-like-event times
-        /*if (n.second.isSpikeEventTimeRequired()) {
-            createArray(&n.second, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getSpikeEventTimeLocation());
-        }
-
-        // If neuron group needs to record its previous spike-like-event times
-        if (n.second.isPrevSpikeEventTimeRequired()) {
-            createArray(&n.second, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getPrevSpikeEventTimeLocation());
-        }*/
-
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             auto rng = m_Backend.get().createPopulationRNG(batchSize * n.second.getNumNeurons());
@@ -286,9 +274,21 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for spike events
         for(const auto *sg: n.second.getFusedSpikeEvent()) {
             createArray(sg, "spkCntEvent", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                        n.second.getSpikeEventLocation());
+                        sg->getSpikeEventLocation());
             createArray(sg, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
-                        n.second.getSpikeEventLocation());
+                        sg->getSpikeEventLocation());
+
+            // If neuron group needs to record its spike-like-event times
+            if (sg->isPreSpikeEventTimeRequired()) {
+                createArray(sg, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            sg->getSpikeEventTimeLocation());
+            }
+
+            // If neuron group needs to record its previous spike-like-event times
+            if (sg->isPrevPreSpikeEventTimeRequired()) {
+                createArray(sg, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            sg->getPrevSpikeEventTimeLocation());
+            }
         }
     }
 
