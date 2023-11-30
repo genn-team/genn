@@ -673,9 +673,11 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                             env.printLine("const unsigned int n = $(_sh_spk_event)[" + indexStr + "][" + getThreadID() + "];");
                             env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + indexStr + "] + " + getThreadID() + "] = n;");
-                            /*if(sg.getArchetype().isSpikeEventTimeRequired()) {
-                                groupEnv.printLine("$(_set)[" + queueOffset + "n] = $(t);");
-                            }*/
+                            
+                            // Update spike event time
+                            if(sg.getArchetype().isPreSpikeEventTimeRequired()) {
+                                env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                            }
                         }
                     });
             }

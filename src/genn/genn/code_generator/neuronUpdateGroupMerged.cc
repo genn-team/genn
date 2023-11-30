@@ -213,9 +213,8 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
     // Add fields to environment
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
     
-    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
-    //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
-    //
+    groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
+                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
     //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent" + fieldSuffix,
     //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
@@ -244,6 +243,15 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     synEnv.addField(getTimeType().createPointer(), "_prev_set", "seT" + fieldSuffix,
                     [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
      
+    // Expose spike event times to neuron code
+    const std::string timePrecision = getTimeType().getName();
+    const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                              VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+    synEnv.add(getTimeType().addConst(), "set", "lseT", 
+               {synEnv.addInitialiser("const " + timePrecision + " lseT = $(_set)[" + spikeTimeReadIndex + "];")});
+    synEnv.add(getTimeType().addConst(), "prev_set", "lprevSET", 
+               {synEnv.addInitialiser("const " + timePrecision + " lprevSET = $(_prev_set)[" + spikeTimeReadIndex + "];")});
+
     // Add parameters, derived parameters and extra global parameters to environment
     synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
                                 &SynSpikeEvent::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
@@ -641,7 +649,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     const std::string timePrecision = getTimeType().getName();
     const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-                                                        
+                                 
+    // Expose spike times to neuron code
     neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
                   {neuronEnv.addInitialiser("const " + timePrecision + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
     neuronEnv.add(getTimeType().addConst(), "prev_st", "lprevST", 
@@ -880,7 +889,7 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
                                                            unsigned int batchSize)
 {
-    env.getStream() << "// spike generation " << getIndex() << std::endl;
+    env.getStream() << "// spike queue update " << getIndex() << std::endl;
     const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
     // Add spike count and spikes to environment
@@ -914,7 +923,7 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBa
 void NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
                                                                 unsigned int batchSize)
 {
-    env.getStream() << "// spike generation " << getIndex() << std::endl;
+    env.getStream() << "// spike event queue update " << getIndex() << std::endl;
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
 
     // Add spike count and spikes to environment
