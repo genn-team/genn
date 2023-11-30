@@ -70,6 +70,20 @@ post_learn_post_weight_update_model = create_weight_update_model(
     w = s;
     """)
 
+post_event_weight_update_model = create_weight_update_model(
+    "pre_sim_weight_update",
+    var_name_types=[("w", "scalar")],
+    post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
+
+    event_code=
+    """
+    w = s;
+    """,
+    event_threshold_condition_code=
+    """
+    t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
+    """)
+    
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("delay", [0, 20])
@@ -148,6 +162,15 @@ def test_pre_post_neuron_var(backend, precision, delay):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
+    
+    s_post_event_sparse_pop = model.add_synapse_population(
+        "PostEventSparseSynapses", "SPARSE", 0,
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_event_weight_update_model, {}, {"w": float_min},
+                           post_var_refs={"s": create_var_ref(post_n_pop, "s")}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_event_sparse_pop.back_prop_delay_steps = delay
 
     # Build model and load
     model.build()
@@ -156,6 +179,7 @@ def test_pre_post_neuron_var(backend, precision, delay):
     # Pull all synaptic connectivity from device
     synapse_groups = [s_post_sim_sparse_pop, 
                       s_post_learn_post_sparse_pop,
+                      s_post_event_sparse_pop,
                       s_pre_sim_sparse_pop, 
                       s_pre_learn_post_sparse_pop,
                       s_pre_event_sparse_pop]
