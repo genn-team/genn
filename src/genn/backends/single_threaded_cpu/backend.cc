@@ -287,22 +287,68 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
 
                         // Generate neuron update
-                        n.generateNeuronUpdate(*this, rngEnv, 1,
-                                               // Emit true spikes
-                                               [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
-                                               {
-                                                   // Insert code to update WU vars
-                                                   ng.generateWUVarUpdate(env, 1);
+                        const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                        n.generateNeuronUpdate(
+                            *this, rngEnv, 1,
+                            // Emit true spikes
+                            [&n, &queueOffset, this](EnvironmentExternalBase &env)
+                            {
+                                // Insert code to update WU vars
+                                n.generateWUVarUpdate(env, 1);
 
-                                                   // Insert code to emit true spikes
-                                                   genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
-                                               },
-                                               // Emit spike-like events
-                                               [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
-                                               {
-                                                   // Insert code to emit spike-like events
-                                                   genEmitSpike(env, ng, false, ng.getArchetype().isSpikeEventRecordingEnabled());
-                                               });
+                                // Reset spike time
+                                if(n.getArchetype().isSpikeTimeRequired()) {
+                                    env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                }
+
+                                // If recording is enabled
+                                if(n.getArchetype().isSpikeRecordingEnabled()) {
+                                    env.printLine("$(_record_spk[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                }
+
+                                // Generate spike dagta structure updates
+                                n.generateSpikes(
+                                    env,
+                                    [&n, &queueOffset](EnvironmentExternalBase &env)
+                                    {
+                                        env.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
+                                        if(n.getArchetype().isDelayRequired()) {
+                                            env.print("[*$(_spk_que_ptr)]++]");
+                                        }
+                                        else {
+                                            env.getStream() << "[0]++]";
+                                        }
+                                        env.printLine(" = $(id);");
+                                    });
+                               
+                            },
+                            // Emit spike-like events
+                            [&n, &queueOffset, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                            {
+                                sg.generate(
+                                    env, n,
+                                    [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                                    {
+                                        // Reset spike time
+                                        if(sg.getArchetype().isPreSpikeTimeRequired()) {
+                                            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                        }
+
+                                        env.print("$(_spk_event)[" + queueOffset + "$(_spk_cnt_event)");
+                                        if(n.getArchetype().isDelayRequired()) {
+                                            env.print("[*$(_spk_que_ptr)]++]");
+                                        }
+                                        else {
+                                            env.getStream() << "[0]++]";
+                                        }
+                                        env.printLine(" = $(id);");
+
+                                        // If recording is enabled
+                                        //if(sg.getArchetype().isSpikeEventRecordingEnabled()) {
+                                        //    env.printLine("$(_record_spk[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                        //}
+                                    });
+                            });
                     }
                 }
             });
@@ -1812,17 +1858,6 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                          {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
-            // If this is a spike-like event, insert threshold check for this presynaptic neuron
-            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                groupEnv.getStream() << "if(";
-
-                // Generate weight update threshold condition
-                sg.generateSpikeEventThreshold(groupEnv, 1);
-
-                groupEnv.getStream() << ")";
-                groupEnv.getStream() << CodeStream::OB(10);
-            }
-
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupEnv.printLine("const unsigned int npost = $(_row_length)[$(id_pre)];");
@@ -1943,63 +1978,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     }
                 }
             }
-            // If this is a spike-like event, close braces around threshold check
-            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                groupEnv.getStream() << CodeStream::CB(10);
-            }
         }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const
-{
-    // Determine at what offset we should write into the spike queue
-    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
-    if(trueSpike) {
-        // Reset spike time
-        if(ng.getArchetype().isSpikeTimeRequired()) {
-            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-        }
-        ng.generateSpikes(
-            env,
-            [&ng, &queueOffset](EnvironmentExternalBase &env)
-            {
-                env.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
-                if(ng.getArchetype().isDelayRequired()) {
-                    env.print("[*$(_spk_que_ptr)]++]");
-                }
-                else {
-                    env.getStream() << "[0]++]";
-                }
-                env.printLine(" = $(id);");
-            });
-    }
-    else {
-        /* // Reset spike and spike-like-event times
-        if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
-        }*/
-        ng.generateSpikeEvents(
-            env,
-            [&ng, &queueOffset](EnvironmentExternalBase &env)
-            {
-                env.print("$(_spk_event)[" + queueOffset + "$(_spk_cnt_event)");
-                if(ng.getArchetype().isDelayRequired()) {
-                    env.print("[*$(_spk_que_ptr)]++]");
-                }
-                else {
-                    env.getStream() << "[0]++]";
-                }
-                env.printLine(" = $(id);");
-            });
-        )
-    }
-   
-    
-    // If recording is enabled
-    if(recordingEnabled) {
-        const std::string suffix = trueSpike ? "" : "_evnt";
-        env.printLine("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
     }
 }
 //--------------------------------------------------------------------------

@@ -460,9 +460,6 @@ private:
         }
     }
 
-    void genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, 
-                      bool spikeRequired, bool recordingEnabled) const;
-
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;

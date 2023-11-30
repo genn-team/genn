@@ -224,8 +224,6 @@ private:
     void genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               double dt, bool trueSpike) const;
 
-    void genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const;
-
     //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
     void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const;

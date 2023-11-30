@@ -108,10 +108,10 @@ public:
         // Public API
         //----------------------------------------------------------------------------
         void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      BackendBase::HandlerEnv genUpdate);
+                      BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
 
         void generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                    unsigned int batchSize, BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
+                                    unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -195,11 +195,11 @@ public:
     }
     
     void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
-                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
-                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
+                              BackendBase::HandlerEnv genEmitTrueSpike,
+                              BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent);
     
     void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
-    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
     
     void generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
     

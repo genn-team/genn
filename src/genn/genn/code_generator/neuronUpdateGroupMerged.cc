@@ -213,7 +213,7 @@ void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, N
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpikeEvent
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                      BackendBase::HandlerEnv genUpdate)
+                                                      BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate)
 {
     CodeStream::Scope b(env.getStream());
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
@@ -234,11 +234,11 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
                        });
     
     // Call callback to generate update
-    genUpdate(synSpkEnv);
+    genUpdate(synSpkEnv, *this);
 }
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                                    unsigned int batchSize, BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent)
+                                                                    unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent)
 {
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
@@ -285,12 +285,11 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     varEnv.print("))");
     {
         CodeStream::Scope b(varEnv.getStream());
-        //genEmitSpikeLikeEventSpike(varEnv, *this);
+        genEmitSpikeLikeEvent(varEnv, *this);
     }
     // If delays are required and event times are required
-    // **TODO** wrong test
     if(ng.getArchetype().isDelayRequired() 
-       && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) 
+       && (getArchetype().isPreSpikeEventTimeRequired() || getArchetype().isPrevPreSpikeTimeRequired())) 
     {
         varEnv.print("else");
         {
@@ -565,8 +564,8 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 }
 //--------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
-                                                   BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
-                                                   BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent)
+                                                   BackendBase::HandlerEnv genEmitTrueSpike,
+                                                   BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged::SynSpikeEvent> genEmitSpikeLikeEvent)
 {
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
  
@@ -717,7 +716,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         neuronEnv.getStream() << ")";
         {
             CodeStream::Scope b(neuronEnv.getStream());
-            genEmitTrueSpike(neuronEnv, *this);
+            genEmitTrueSpike(neuronEnv);
 
             // add after-spike reset if provided
             if (!Utils::areTokensEmpty(getArchetype().getResetCodeTokens())) {
@@ -790,10 +789,10 @@ void NeuronUpdateGroupMerged::generateSpikes(EnvironmentExternalBase &env, Backe
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
+void NeuronUpdateGroupMerged::generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate)
 {
     // Loop through merged spike event groups
-    for(auto &s : m_MergedSpikeGroups) {
+    for(auto &s : m_MergedSpikeEventGroups) {
         s.generate(env, *this, genUpdate);
     }
 }
