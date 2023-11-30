@@ -89,8 +89,20 @@ public:
     // GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpike
     //----------------------------------------------------------------------------
     //! Child group merged for synapse groups that process spikes
-    /*! There is no generic code to generate here as this is backend-specific */
     class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpikeEvent
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes events
+    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
@@ -201,6 +213,8 @@ public:
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
+    const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
     const std::vector<InSynWUMPostVars> &getMergedInSynWUMPostVarGroups() const { return m_MergedInSynWUMPostVarGroups; }
@@ -222,6 +236,7 @@ private:
     //------------------------------------------------------------------------
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
     std::vector<SynSpike> m_MergedSpikeGroups;
+    std::vector<SynSpikeEvent> m_MergedSpikeEventGroups;
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;
