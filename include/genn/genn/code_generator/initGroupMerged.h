@@ -227,11 +227,6 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
- 
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;

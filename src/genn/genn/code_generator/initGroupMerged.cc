@@ -60,6 +60,25 @@ void genScalarFill(EnvironmentExternalBase &env, const std::string &target, cons
     }
 }
 //------------------------------------------------------------------------
+template<typename G, typename F>
+void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      G &group, F &fieldGroup, const std::string &varName, unsigned int batchSize)
+{
+    // Add spike time field
+    EnvironmentGroupMergedField<G, F> timeEnv(env, group, fieldGroup);
+    timeEnv.addField(group.getTimeType().createPointer(), "_time", varName,
+                     [varName](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, varName); });
+
+
+    // Generate variable initialisation code
+    backend.genVariableInit(env, "num_neurons", "id",
+        [batchSize, varName, &fieldGroup] (EnvironmentExternalBase &varEnv)
+        {
+            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                            batchSize, fieldGroup.getArchetype().isDelayRequired(), fieldGroup.getArchetype().getNumDelaySlots());
+        });
+}
+//------------------------------------------------------------------------
 template<typename A, typename F, typename G>
 void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &env,
                           G &group, F &fieldGroup, const std::string &fieldSuffix, 
@@ -249,14 +268,12 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     // Create environment for group
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
-    //groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
-    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
-    //groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
-    //                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
+    groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
+    groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
+                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
     //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
     //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
-    // Add spike count
-    // **YUCK** getting of neuron group is a bit gross
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
     
@@ -280,14 +297,16 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
         });
 
     // Initialize spike-like-event times
-    /*if(getArchetype().isSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "_set", batchSize);
+    if(getArchetype().isPreSpikeEventTimeRequired()) {
+        genInitSpikeTime(backend, groupEnv, *this, ng,
+                         "_set", batchSize);
     }
 
     // Initialize previous spike-like-event times
-    if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "_prev_set", batchSize);
-    }*/
+    if(getArchetype().isPrevPreSpikeEventTimeRequired()) {
+        genInitSpikeTime(backend, groupEnv, *this, ng,
+                         "_prev_set", batchSize);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -466,12 +485,12 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
 
     // Initialize spike times
     if(getArchetype().isSpikeTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, "_st", batchSize);
+        genInitSpikeTime(backend, groupEnv, *this, *this, "_st", batchSize);
     }
 
     // Initialize previous spike times
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        genInitSpikeTime( backend, groupEnv, "_prev_st", batchSize);
+        genInitSpikeTime( backend, groupEnv, *this, *this, "_prev_st", batchSize);
     }
   
     // If neuron group requires delays
@@ -512,24 +531,6 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     for (auto &sg : m_MergedInSynWUMPostVarGroups) {
         sg.generate(backend, groupEnv, *this, batchSize);
     }
-}
-//------------------------------------------------------------------------
-void NeuronInitGroupMerged::genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env,
-                                             const std::string &varName, unsigned int batchSize)
-{
-    // Add spike time field
-    EnvironmentGroupMergedField<NeuronInitGroupMerged> timeEnv(env, *this);
-    timeEnv.addField(getTimeType().createPointer(), "_time", varName,
-                     [varName](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, varName); });
-
-
-    // Generate variable initialisation code
-    backend.genVariableInit(env, "num_neurons", "id",
-        [batchSize, varName, this] (EnvironmentExternalBase &varEnv)
-        {
-            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                            batchSize, getArchetype().isDelayRequired(), getArchetype().getNumDelaySlots());
-        });
 }
 
 //----------------------------------------------------------------------------
