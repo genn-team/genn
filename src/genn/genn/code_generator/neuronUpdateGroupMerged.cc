@@ -246,7 +246,8 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
     
     groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
+                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); },
+                      "", GroupMergedFieldType::STANDARD, true);
     //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent" + fieldSuffix,
     //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
@@ -271,9 +272,10 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     synEnv.getStream() << "// spike event condition " << getIndex() << std::endl;
     
     synEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
-                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
-    synEnv.addField(getTimeType().createPointer(), "_prev_set", "seT" + fieldSuffix,
-                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); });
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); },
+                    "", GroupMergedFieldType::STANDARD, true);
+    synEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET" + fieldSuffix,
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "prevSET"); });
      
     // Expose spike event times to neuron code
     const std::string timePrecision = getTimeType().getName();
@@ -317,7 +319,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' event threshold condition");
     prettyPrintExpression(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), 
                           getTypeContext(), varEnv, errorHandler);
-        
+
     varEnv.print("))");
     {
         CodeStream::Scope b(varEnv.getStream());

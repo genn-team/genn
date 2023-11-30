@@ -222,7 +222,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     env.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[lastTimestepDelaySlot]; i++)");
                                     {
                                         CodeStream::Scope b(env.getStream());
-                                        env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+                                        env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
                                     }
                                 }
                                 else {
@@ -314,7 +314,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                                 // If recording is enabled
                                 if(n.getArchetype().isSpikeRecordingEnabled()) {
-                                    env.printLine("$(_record_spk[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                    env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
                                 }
 
                                 // Generate spike dagta structure updates
@@ -361,7 +361,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                                         // If recording is enabled
                                         //if(sg.getArchetype().isSpikeEventRecordingEnabled()) {
-                                        //    env.printLine("$(_record_spk[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                        //    env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
                                         //}
                                     });
                             });
