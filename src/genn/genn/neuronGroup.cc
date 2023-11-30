@@ -546,6 +546,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
     Utils::updateHash(isSpikeEventRequired(), hash);
     Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSpikeRecordingEnabled(), hash);
@@ -584,6 +586,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
     Utils::updateHash(isSpikeEventRequired(), hash);
     Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSimRNGRequired(), hash);
@@ -635,11 +639,15 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashD
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(isSpikeEventRequired(), hash);
-    Utils::updateHash(isTrueSpikeRequired(), hash);
+    
+     // Update hash with number of fused spike and spike event conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+    Utils::updateHash(getFusedSpikeEvent().size(), hash);
+
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
-    //Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
-    assert(false);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

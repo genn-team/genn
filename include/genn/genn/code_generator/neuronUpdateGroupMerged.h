@@ -319,14 +319,35 @@ class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public NeuronGroupMerge
 {
 public:
     //----------------------------------------------------------------------------
-    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpike
+    // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike
     //----------------------------------------------------------------------------
-    //! Child group merged for synapse groups that process spikes
-    /*! There is no generic code to generate here as this is backend-specific */
+    //! Child group merged for synapse groups that require previous spike times
     class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
     {
     public:
         using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+                      BackendBase::HandlerEnv genUpdate);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged::SynSpikeEvent
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that require previous spike event times
+    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+                      BackendBase::HandlerEnv genUpdate);
     };
 
     NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
@@ -340,7 +361,9 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateUpdate(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -352,5 +375,6 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::vector<SynSpike> m_MergedSpikeGroups;
+    std::vector<SynSpikeEvent> m_MergedSpikeEventGroups;
 };
 }   // namespace GeNN::CodeGenerator

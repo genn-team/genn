@@ -328,7 +328,6 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
             EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> neuronEnv(popEnv, ng);
             buildStandardEnvironment(neuronEnv, batchSize);
 
-            // If neuron group requires delays
             if(ng.getArchetype().isDelayRequired()) {
                 if(batchSize == 1) {
                     neuronEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
@@ -337,59 +336,72 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     neuronEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr) + ($(batch) *  " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ");");
                 }
                 neuronEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
+            }
 
-                if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                    // If there is a spike for this thread, set previous spike time to time of last timestep
-                    // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                    neuronEnv.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
+            // Generate code to update previous spike times
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                ng.generateSpikes(
+                    neuronEnv,
+                    [&ng](EnvironmentExternalBase &env)
                     {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
-                    }
-                }
-                if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-                    // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                    // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                    neuronEnv.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
-                    {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
-                    }
-                }
-            }
-            // Otherwise
-            else {
-                if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                    // If there is a spike for this thread, set previous spike time to time of last timestep
-                    neuronEnv.print("if($(id) < $(_spk_cnt)[$(batch)])");
-                    {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_st)[");
-                        if (batchSize == 1) {
-                            neuronEnv.print("$(_spk)[$(id)]");
+                        if(ng.getArchetype().isDelayRequired()) {
+                            // If there is a spike for this thread, set previous spike time to time of last timestep
+                            env.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
+                            }
                         }
                         else {
-                            neuronEnv.print("$(_batch_offset) + $(_spk)[$(_batch_offset) + $(id)]");
+                            // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
+                            env.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
+                            }
                         }
-                        neuronEnv.printLine("] = $(t) - $(dt);");
-                    }
-                }
-                if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-                    // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                    neuronEnv.print("if($(id) < $(_spk_cnt_event)[$(batch)])");
+                    });
+            }
+            
+            // Generate code to update previous spike-event times
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                ng.generateSpikeEvents(
+                    neuronEnv,
+                    [&ng, batchSize](EnvironmentExternalBase &env)
                     {
-                        CodeStream::Scope b(neuronEnv.getStream());
-                        neuronEnv.print("$(_prev_set)[");
-                        if (batchSize == 1) {
-                            neuronEnv.print("$(_spk_event)[$(id)]");
+                        if(ng.getArchetype().isDelayRequired()) {
+                            // If there is a spike for this thread, set previous spike time to time of last timestep
+                            env.print("if($(id) < $(_spk_cnt)[$(batch)])");
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.print("$(_prev_st)[");
+                                if (batchSize == 1) {
+                                    env.print("$(_spk)[$(id)]");
+                                }
+                                else {
+                                    env.print("$(_batch_offset) + $(_spk)[$(_batch_offset) + $(id)]");
+                                }
+                                env.printLine("] = $(t) - $(dt);");
+                            }
                         }
                         else {
-                            neuronEnv.print("$(_batch_offset) + $(_spk_event)[$(_batch_offset) + $(id)]");
+                            // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
+                            env.print("if($(id) < $(_spk_cnt_event)[$(batch)])");
+                            {
+                                CodeStream::Scope b(env.getStream());
+                                env.print("$(_prev_set)[");
+                                if (batchSize == 1) {
+                                    env.print("$(_spk_event)[$(id)]");
+                                }
+                                else {
+                                    env.print("$(_batch_offset) + $(_spk_event)[$(_batch_offset) + $(id)]");
+                                }
+                                env.printLine("] = $(t) - $(dt);");
+                            }
                         }
-                        neuronEnv.printLine("] = $(t) - $(dt);");
-                    }
-                }
+                    });
             }
+            
             neuronEnv.getStream() << std::endl;
         });
 
@@ -673,7 +685,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + indexStr + "] + " + getThreadID() + "] = n;");
                             
                         // Update spike event time
-                        if(sg.getArchetype().isPreSpikeEventTimeRequired()) {
+                        if(ng.getArchetype().isSpikeEventTimeRequired()) {
                             env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
                         }
                     }

@@ -184,40 +184,56 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     if(n.getArchetype().isDelayRequired()) {
                         groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
                         groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[lastTimestepDelaySlot]; i++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                            }
-                        }
                     }
-                    else {
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
+
+                    // Generate code to update previous spike times
+                    if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                        n.generateSpikes(
+                            groupEnv,
+                            [&n](EnvironmentExternalBase &env)
                             {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[$(_spk)[i]] = $(t) - $(dt);");
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[0]; i++)");
+                                if(n.getArchetype().isDelayRequired()) {
+                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
+                                    {
+                                        CodeStream::Scope b(env.getStream());
+                                        env.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+                                    }
+                                }
+                                else {
+                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
+                                    {
+                                        CodeStream::Scope b(env.getStream());
+                                        env.printLine("$(_prev_st)[$(_spk)[i]] = $(t) - $(dt);");
+                                    }
+                                }
+                            });
+                    }
+                    
+                    // Generate code to update previous spike-event times
+                    if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        n.generateSpikeEvents(
+                            groupEnv,
+                            [&n](EnvironmentExternalBase &env)
                             {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[$(_spk_event)[i]] = $(t) - $(dt);");
-                            }
-                        }
+                                if(n.getArchetype().isDelayRequired()) {
+                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[lastTimestepDelaySlot]; i++)");
+                                    {
+                                        CodeStream::Scope b(env.getStream());
+                                        env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+                                    }
+                                }
+                                else {
+                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[0]; i++)");
+                                    {
+                                        CodeStream::Scope b(env.getStream());
+                                        env.printLine("$(_prev_set)[$(_spk_event)[i]] = $(t) - $(dt);");
+                                    }
+                                }
+                            });
                     }
                 }
             });
@@ -327,10 +343,10 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             {
                                 sg.generate(
                                     env, n,
-                                    [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                                    [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
                                         // Update spike event time
-                                        if(sg.getArchetype().isPreSpikeTimeRequired()) {
+                                        if(n.getArchetype().isSpikeTimeRequired()) {
                                             env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
                                         }
 

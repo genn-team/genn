@@ -258,13 +258,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             createArray(sg, "spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation());
 
-            // If NEURON group needs to record its spike times
+            // If neuron group needs to record its spike times
             if (n.second.isSpikeTimeRequired()) {
                 createArray(sg, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getSpikeTimeLocation());
             }
 
-            // If NEURON group needs to record its previous spike times
+            // If neuron group needs to record its previous spike times
             if (n.second.isPrevSpikeTimeRequired()) {
                 createArray(sg, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeTimeLocation());
@@ -278,14 +278,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             createArray(sg, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation());
 
-            // If SYNAPSE group needs to record its spike-like-event times
-            if (sg->isPreSpikeEventTimeRequired()) {
+            // If neuron group needs to record its spike-like-event times
+            if (n.second.isSpikeEventTimeRequired()) {
                 createArray(sg, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getSpikeEventTimeLocation());
             }
 
-            // If SYNAPSE group needs to record its previous spike-like-event times
-            if (sg->isPrevPreSpikeEventTimeRequired()) {
+            // If neuron group needs to record its previous spike-like-event times
+            if (n.second.isPrevSpikeEventTimeRequired()) {
                 createArray(sg, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeEventTimeLocation());
             }
