@@ -1055,6 +1055,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventFuseHashDig
         Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    //const auto &neuronVarReferences = presynaptic ? getWUInitialiser().getPreNeuronVarReferences() : getWUInitialiser().getPostNeuronVarReferences();
+    const auto &neuronVarReferences = getWUInitialiser().getPreNeuronVarReferences();
+    for(const auto &v : neuronVarReferences) {
+        Utils::updateHash(v.second.getVarName(), hash);
+    };
+
     // Loop through weight update model parameters and, if they are referenced
     // in appropriate event threshold code, include their value in hash
     //const auto &eventThresholdCodeTokens = presynaptic ? getWUInitialiser().getEventThresholdCodeTokens() : getWUInitialiser().getPostEventThresholdCodeTokens();
@@ -1100,6 +1109,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostFuseHashDigest
         Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
+    // Loop through neuron variable references and update hash with 
+    // name of target variable. These must be the same across merged group
+    // as these variable references are just implemented as aliases for neuron variables
+    //const auto &neuronVarReferences = presynaptic ? getWUInitialiser().getPreNeuronVarReferences() : getWUInitialiser().getPostNeuronVarReferences();
+    const auto &neuronVarReferences = getWUInitialiser().getPreNeuronVarReferences();
+    for(const auto &v : neuronVarReferences) {
+        Utils::updateHash(v.second.getVarName(), hash);
+    };
+
     // Loop through weight update model parameters and, if they are referenced
     // in appropriate spike or dynamics code, include their value in hash
     const auto &spikeCodeTokens = presynaptic ? getWUInitialiser().getPreSpikeCodeTokens() : getWUInitialiser().getPostSpikeCodeTokens();
@@ -1112,7 +1130,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostFuseHashDigest
         }
     }
 
-    // Loop through weight update model parameters and, if they are referenced
+    // Loop through weight update model derived parameters and, if they are referenced
     // in appropriate spike or dynamics code, include their value in hash
     for(const auto &d : getWUInitialiser().getSnippet()->getDerivedParams()) {
         if(Utils::isIdentifierReferenced(d.name, spikeCodeTokens)

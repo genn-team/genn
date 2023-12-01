@@ -490,7 +490,7 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // If there are any, fuse together
     if(!synWithSpikeEvent.empty()) {
         fuseSynapseGroups(this, synWithSpikeEvent, true, m_FusedSpikeEvent, "spike event",
-                          &SynapseGroupInternal::canWUSpikeEventBeFused, &SynapseGroupInternal::getWUSpikeEventHashDigest,
+                          &SynapseGroupInternal::canWUSpikeEventBeFused, &SynapseGroupInternal::getWUSpikeEventFuseHashDigest,
                           &SynapseGroupInternal::setFusedSpikeEventTarget);
     }
 }
