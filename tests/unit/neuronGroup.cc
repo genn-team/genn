@@ -689,7 +689,9 @@ TEST(NeuronGroup, FuseSpikeEvent)
     
     model.finalise();
 
-     // Cast synapse groups to internal types
+    // Cast synapse groups to internal types
+    auto ngPreInternal = static_cast<NeuronGroupInternal*>(ngPre);
+    auto ngPostInternal = static_cast<NeuronGroupInternal*>(ngPost);
     auto sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     auto sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     auto sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
@@ -703,6 +705,9 @@ TEST(NeuronGroup, FuseSpikeEvent)
 
     // Check that spike-event generation for synapse groups with different neuron variable reference cannot be fused
     ASSERT_NE(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg3Internal->getFusedSpikeEventTarget(ngPre));
+
+    ASSERT_EQ(ngPreInternal->getFusedSpikeEvent().size(), 3);
+    ASSERT_TRUE(ngPostInternal->getFusedSpikeEvent().empty());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)
