@@ -154,28 +154,20 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Loop through neuron groups
     const size_t batchSize = getModel().getBatchSize();
     for(const auto &n : getModel().getNeuronGroups()) {
-        // True spike variables
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
-        
+        const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
+
         // If spike or spike-like event recording is enabled
         if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
             if(!numRecordingTimesteps) {
                 throw std::runtime_error("Cannot use recording system without specifying number of recording timesteps");
             }
 
-            // Calculate number of words required and allocate arrays
-            const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
             if(n.second.isSpikeRecordingEnabled()) {
-                createArray(&n.second, "recordSpk", Type::Uint32,  numRecordingWords, 
-                            VarLocation::HOST_DEVICE);
-
-            }
-            else if(n.second.isSpikeEventRecordingEnabled()) {
-                createArray(&n.second, "recordSpkEvent", Type::Uint32,  numRecordingWords, 
+                createArray(&n.second, "recordSpk", Type::Uint32, numRecordingWords, 
                             VarLocation::HOST_DEVICE);
             }
-           
         }
 
         // If neuron group has axonal or back-propagation delays, add delay queue pointer
@@ -288,6 +280,11 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             if (n.second.isPrevSpikeEventTimeRequired()) {
                 createArray(sg, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeEventTimeLocation());
+            }
+
+            if(n.second.isSpikeEventRecordingEnabled()) {
+                createArray(sg, "recordSpkEvent", Type::Uint32, numRecordingWords, 
+                            VarLocation::HOST_DEVICE);
             }
         }
     }
@@ -681,7 +678,9 @@ void Runtime::pullRecordingBuffersFromDevice() const
 
         // If spike event recording is enabled, pull array from device
         if(n.second.isSpikeEventRecordingEnabled()) {
-            getArray(n.second, "recordSpk")->pullFromDevice();
+            for(const auto *sg : n.second.getFusedSpikeEvent()) {
+                getArray(*sg, "recordSpkEvent")->pullFromDevice();
+            }
         }
     }
 }
@@ -738,14 +737,14 @@ void Runtime::createDynamicParamDestinations(std::unordered_map<std::string, std
     }
 }
 //----------------------------------------------------------------------------
-Runtime::BatchEventArray Runtime::getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const
+Runtime::BatchEventArray Runtime::getRecordedEvents(unsigned int numNeurons, ArrayBase *array) const
 {
     if(!m_NumRecordingTimesteps) {
         throw std::runtime_error("Recording buffer not allocated - cannot get recorded events");
     }
 
     // Calculate number of words per-timestep
-    const size_t timestepWords = ceilDivide(group.getNumNeurons(), 32);
+    const size_t timestepWords = ceilDivide(numNeurons, 32);
 
     if(m_Timestep < *m_NumRecordingTimesteps) {
         throw std::runtime_error("Event recording data can only be accessed once buffer is full");
@@ -798,10 +797,10 @@ Runtime::BatchEventArray Runtime::getRecordedEvents(const NeuronGroup &group, Ar
     return events;
 }
 //----------------------------------------------------------------------------
-void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const
+void Runtime::writeRecordedEvents(unsigned int numNeurons, ArrayBase *array, const std::string &path) const
 {
     // Get events
-    const auto events = getRecordedEvents(group, array);
+    const auto events = getRecordedEvents(numNeurons, array);
 
     // Open file and write header
     std::ofstream file(path);

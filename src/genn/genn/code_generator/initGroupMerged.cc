@@ -282,8 +282,6 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
     groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
-    //groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-    //                  [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
     

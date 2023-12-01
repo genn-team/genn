@@ -334,25 +334,33 @@ public:
     //! Get recorded spikes from neuron group
     BatchEventArray getRecordedSpikes(const NeuronGroup &group) const
     {
-        return getRecordedEvents(group, getArray(group, "recordSpk"));
+        return getRecordedEvents(group.getNumNeurons(), 
+                                 getArray(group, "recordSpk"));
     }
 
-    //! Get recorded spike-like events from neuron group
-    BatchEventArray getRecordedSpikeEvents(const NeuronGroup &group) const
+    //! Get recorded spike-like events from synapse group
+    BatchEventArray getRecordedSpikeEvents(const SynapseGroup &group) const
     {
-        return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        const auto *pre = groupInternal.getSrcNeuronGroup();
+        return getRecordedEvents(pre->getNumNeurons(), 
+                                 getArray(groupInternal.getFusedSpikeEventTarget(pre), "recordSpkEvent"));
     }
 
     //! Write recorded spikes to CSV file
     void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
     {
-        return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
+        return writeRecordedEvents(group.getNumNeurons(), getArray(group, "recordSpk"), path);
     }
 
     //! Write recorded spike-like events to CSV file
-    void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
+    void writeRecordedSpikeEvents(const SynapseGroup &group, const std::string &path) const
     {
-        return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        const auto *pre = groupInternal.getSrcNeuronGroup();
+        return writeRecordedEvents(pre->getNumNeurons(), 
+                                 getArray(groupInternal.getFusedSpikeEventTarget(pre), "recordSpkEvent"),
+                                 path);
     }
 
 private:
@@ -380,9 +388,9 @@ private:
                      size_t count, VarLocation location, bool uninitialized = false);
     void createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
                                         const std::string &paramName, const Type::ResolvedType &type);
-    BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
+    BatchEventArray getRecordedEvents(unsigned int numNeurons, ArrayBase *array) const;
 
-    void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
+    void writeRecordedEvents(unsigned int numNeurons, ArrayBase *array, const std::string &path) const;
 
     template<typename G>
     void addMergedArrays(const G &mergedGroup)
