@@ -40,6 +40,23 @@ public:
 };
 IMPLEMENT_SNIPPET(StaticPulseBackConstantWeight);
 
+class StaticPulseEvent : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(StaticPulseEvent);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_PARAMS({"VThresh"});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar"}});
+
+    SET_EVENT_THRESHOLD_CONDITION_CODE(
+        "V > VThresh");
+
+    SET_EVENT_CODE(
+        "$(addToInSyn, $(g));\n");
+};
+IMPLEMENT_SNIPPET(StaticPulseEvent);
+
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
 public:
@@ -623,6 +640,69 @@ TEST(NeuronGroup, FusePreOutput)
     
     // Check that PSMs targetting different variables cannot be merged
     ASSERT_NE(&synInternal->getFusedPreOutputTarget(), &synTargetInternal->getFusedPreOutputTarget());
+}
+
+TEST(NeuronGroup, FuseSpikeEvent)
+{
+    ModelSpecInternal model;
+    
+    // Add two neuron groups to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *ngPre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *ngPost = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    VarValues synVarVals1{{"g", 0.1}};
+    VarValues synVarVals2{{"g", 0.2}};
+    ParamValues synParamVals1{{"VThresh", -50.0}};
+    ParamValues synParamVals2{{"VThresh", -55.0}};
+    VarReferences synPreVarReferences1{{"V", createVarRef(ngPre, "V")}};
+    VarReferences synPreVarReferences2{{"V", createVarRef(ngPre, "U")}};
+ 
+    // Add baseline synapse population
+    auto *sg0 = model.addSynapsePopulation(
+        "SG0", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    // Add synapse population with different variable values
+    auto *sg1 = model.addSynapsePopulation(
+        "SG1", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals2, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    // Add synapse population with different parameter values
+    auto *sg2 = model.addSynapsePopulation(
+        "SG2", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals2, synVarVals1, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    // Add synapse population with different pre-var references
+    auto *sg3 = model.addSynapsePopulation(
+        "SG3", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences2),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    model.finalise();
+
+     // Cast synapse groups to internal types
+    auto sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    auto sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    auto sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    auto sg3Internal = static_cast<SynapseGroupInternal*>(sg3);
+ 
+    // Check that spike-event generation for synapse groups with different per-synapse variables can be fused
+    ASSERT_EQ(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg1Internal->getFusedSpikeEventTarget(ngPre));
+    
+    // Check that spike-event generation for synapse groups with different parameters cannot be fused
+    ASSERT_NE(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg2Internal->getFusedSpikeEventTarget(ngPre));
+
+    // Check that spike-event generation for synapse groups with different neuron variable reference cannot be fused
+    ASSERT_NE(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg3Internal->getFusedSpikeEventTarget(ngPre));
 }
 
 TEST(NeuronGroup, CompareNeuronModels)
