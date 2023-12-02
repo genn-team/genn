@@ -156,7 +156,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     for(const auto &n : getModel().getNeuronGroups()) {
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
-        const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
 
         // If spike or spike-like event recording is enabled
         if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
@@ -165,7 +164,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             if(n.second.isSpikeRecordingEnabled()) {
-                createArray(&n.second, "recordSpk", Type::Uint32, numRecordingWords, 
+                const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
+                createArray(&n.second, "recordSpk", Type::Uint32, numRecordingWords,
                             VarLocation::HOST_DEVICE);
             }
         }
@@ -175,7 +175,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             createArray(&n.second, "spkQuePtr", Type::Uint32, 1, VarLocation::DEVICE);
             m_DelayQueuePointer.try_emplace(&n.second, 0);
         }
-        
+
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             auto rng = m_Backend.get().createPopulationRNG(batchSize * n.second.getNumNeurons());
@@ -283,6 +283,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             if(n.second.isSpikeEventRecordingEnabled()) {
+                const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
                 createArray(sg, "recordSpkEvent", Type::Uint32, numRecordingWords, 
                             VarLocation::HOST_DEVICE);
             }

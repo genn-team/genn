@@ -362,7 +362,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                         }
                     });
             }
-            
+
             // Generate code to update previous spike-event times
             if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
                 ng.generateSpikeEvents(
@@ -371,15 +371,15 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     {
                         if(ng.getArchetype().isDelayRequired()) {
                             // If there is a spike for this thread, set previous spike time to time of last timestep
-                            env.print("if($(id) < $(_spk_cnt)[$(batch)])");
+                            env.print("if($(id) < $(_spk_cnt_event)[$(batch)])");
                             {
                                 CodeStream::Scope b(env.getStream());
-                                env.print("$(_prev_st)[");
+                                env.print("$(_prev_set)[");
                                 if (batchSize == 1) {
-                                    env.print("$(_spk)[$(id)]");
+                                    env.print("$(_spk_event)[$(id)]");
                                 }
                                 else {
-                                    env.print("$(_batch_offset) + $(_spk)[$(_batch_offset) + $(id)]");
+                                    env.print("$(_batch_offset) + $(_spk_event)[$(_batch_offset) + $(id)]");
                                 }
                                 env.printLine("] = $(t) - $(dt);");
                             }
@@ -401,7 +401,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                         }
                     });
             }
-            
+
             neuronEnv.getStream() << std::endl;
         });
 
@@ -463,7 +463,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                   {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos;")});
     neuronEnv.add(Type::Void, "_sh_spk_count", "shSpkCount",
                   {neuronEnv.addInitialiser(shSpkCountInitStream.str())});
-    
+
     // If any neuron groups record spikes
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
                    [](const auto &n) { return n.second.isSpikeRecordingEnabled(); }))
@@ -511,7 +511,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         }
 
         // Zero shared memory used for spike-event recording
-        genRecordingSharedMemInit(env.getStream(), "Event", maxSpikeEventRecording);
+        if(maxSpikeEventRecording > 0) {
+            genRecordingSharedMemInit(env.getStream(), "Event", maxSpikeEventRecording);
+        }
     }
 
     genSharedMemBarrier(neuronEnv.getStream());
