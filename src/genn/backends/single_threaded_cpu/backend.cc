@@ -351,7 +351,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
                                         // Update spike event time
-                                        if(n.getArchetype().isSpikeTimeRequired()) {
+                                        if(n.getArchetype().isSpikeEventTimeRequired()) {
                                             env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
                                         }
 
