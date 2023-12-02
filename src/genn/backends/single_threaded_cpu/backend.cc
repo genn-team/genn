@@ -287,7 +287,12 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                         // Zero spike-like-event recording buffer
                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                            groupEnv.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                            n.generateSpikeEvents(
+                                groupEnv,
+                                [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                {
+                                    env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                                });
                         }
                     }
 
@@ -360,9 +365,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         env.printLine(" = $(id);");
 
                                         // If recording is enabled
-                                        //if(sg.getArchetype().isSpikeEventRecordingEnabled()) {
-                                        //    env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
-                                        //}
+                                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                                            env.printLine("$(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                        }
                                     });
                             });
                     }
