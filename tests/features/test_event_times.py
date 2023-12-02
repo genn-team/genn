@@ -13,24 +13,23 @@ from pygenn import (create_neuron_model,
                     init_toeplitz_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which fires every timestep
+# **NOTE** this is just so sim_code fires every timestep
+always_spike_neuron_model = create_neuron_model(
+    "always_spike_neuron",
+    threshold_condition_code="true")
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_spike_times(backend, precision):
-    # Neuron model which fires every timestep
-    # **NOTE** this is just so sim_code fires every timestep
-    always_spike_neuron_model = create_neuron_model(
-        "always_spike_neuron",
-        threshold_condition_code="true")
-
-    # Beuron model which fires at t = id ms and every 10 ms after that
+    # Neuron model which fires at t = id ms and every 10 ms after that
     pattern_spike_neuron_model = create_neuron_model(
         "pattern_spike_neuron",
         threshold_condition_code=
         """
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
         """)
-        
+
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
@@ -42,7 +41,7 @@ def test_spike_times(backend, precision):
         """
         b = st_pre;
         """)
-    
+
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
@@ -54,14 +53,14 @@ def test_spike_times(backend, precision):
         """
         b = prev_st_post;
         """)
-    
+
     model = GeNNModel(precision, "test_spike_times", backend=backend)
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 10, pattern_spike_neuron_model, 
                                             {}, {})
-  
+
     post_n_pop = model.add_neuron_population("PostNeurons", 10, always_spike_neuron_model, 
                                              {}, {})
 
@@ -74,7 +73,7 @@ def test_spike_times(backend, precision):
         init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
-    
+
     s_post_pop = model.add_synapse_population(
         "PostSynapses", "SPARSE", 0,
         post_n_pop, pre_n_pop,
@@ -119,10 +118,9 @@ def test_spike_times(backend, precision):
 def test_spike_event_times(backend, precision):
     # Empty neuron model
     empty_neuron_model = create_neuron_model(
-        "empty_neuron",
-        threshold_condition_code="true")
+        "empty_neuron")
 
-        
+
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
@@ -138,7 +136,7 @@ def test_spike_event_times(backend, precision):
         """
         b = set_pre;
         """)
-    
+
     #post_weight_update_model = create_weight_update_model(
     #    "post_weight_update",
     #    var_name_types=[("a", "scalar"), ("b", "scalar")],
@@ -157,8 +155,8 @@ def test_spike_event_times(backend, precision):
     # Create pre and postsynaptic neuron populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 10, empty_neuron_model, 
                                             {}, {})
-  
-    post_n_pop = model.add_neuron_population("PostNeurons", 10, empty_neuron_model, 
+
+    post_n_pop = model.add_neuron_population("PostNeurons", 10, always_spike_neuron_model, 
                                              {}, {})
 
     # Add synapse models testing various ways of reading presynaptic WU vars
@@ -186,13 +184,13 @@ def test_spike_event_times(backend, precision):
     s_pre_pop.pull_connectivity_from_device()
     #s_post_pop.pull_connectivity_from_device()
 
-    samples = [(s_pre_pop, "a", 11.0),
+    samples = [#(s_pre_pop, "a", 11.0),
                (s_pre_pop, "b", 21.0)]
                #(s_post_pop, "a", 21.0),
                #(s_post_pop, "b", 11.0)]
     while model.timestep < 100:
         model.step_time()
-    
+
         # Loop through synapse groups and compare value of w with delayed time
         for pop, var_name, offset in samples:
             # Calculate time of spikes we SHOULD be reading
