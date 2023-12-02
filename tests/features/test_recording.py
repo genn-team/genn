@@ -20,7 +20,7 @@ spike_event_source_array_model = create_neuron_model(
         output = false;
     }
     """,
-    var_name_types=[("startSpike", "unsigned int"), ("endSpike", "unsigned int", VarAccess.READ_ONLY),
+    var_name_types=[("startSpike", "unsigned int"), ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
                     ("output", "bool")],
     extra_global_params=[("spikeTimes", "scalar*")])
 
@@ -36,7 +36,19 @@ static_event_pulse_model = create_weight_update_model(
     """
     addToPost(g);
     """)
-    
+
+def compare_events(rec_events, event_times, event_ids):
+    # Loop through batches
+    for b, (batch_rec_event_times, batch_rec_event_ids) in enumerate(rec_events):
+        # Re-order batch events to match spike source array order
+        batch_rec_event_ordering = np.lexsort((batch_rec_event_times, batch_rec_event_ids))
+        batch_rec_event_ids = batch_rec_event_ids[batch_rec_event_ordering]
+        batch_rec_event_times = batch_rec_event_times[batch_rec_event_ordering]
+
+        # Check that recorded events match input
+        assert np.allclose(batch_rec_event_times, event_times[b])
+        assert np.array_equal(batch_rec_event_ids, event_ids[b])
+
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -44,7 +56,7 @@ def test_event_recording(backend, precision, batch_size):
     model = GeNNModel(precision, "test_event_recording", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
-    
+
     # Loop through batches
     ss_end_spikes = np.empty((batch_size, 100), dtype=int)
     ss_start_spikes = np.empty((batch_size, 100), dtype=int)
@@ -101,29 +113,23 @@ def test_event_recording(backend, precision, batch_size):
         init_weight_update(static_event_pulse_model, {"g": 1.0},
                            pre_var_refs={"output": create_var_ref(es, "output")}),
         init_postsynaptic("DeltaCurr"))
-    
+
     # Build model and load
     model.build()
     model.load(num_recording_timesteps=100)
-    
+
     # Simulate 100 timesteps
     while model.timestep < 100:
         model.step_time()
-    
+
     # Download recording data and decode
     model.pull_recording_buffers_from_device()
     rec_spikes = ss.spike_recording_data
+    rec_spike_events = sg.spike_event_recording_data
 
-    # Loop through batches
-    for b, (batch_rec_spike_times, batch_rec_spike_ids) in enumerate(rec_spikes):
-        # Re-order batch spikes to match spike source array order
-        batch_rec_spike_ordering = np.lexsort((batch_rec_spike_times, batch_rec_spike_ids))
-        batch_rec_spike_ids = batch_rec_spike_ids[batch_rec_spike_ordering]
-        batch_rec_spike_times = batch_rec_spike_times[batch_rec_spike_ordering]
-
-        # Check that recorded spikes match input
-        assert np.allclose(batch_rec_spike_times, spike_times[b])
-        assert np.array_equal(batch_rec_spike_ids, spike_ids[b])
+    # Verify spikes and spike_events are recorded correctly
+    compare_events(rec_spikes, spike_times, spike_ids)
+    compare_events(rec_spike_events, spike_times, spike_ids)
 
 if __name__ == '__main__':
-    test_event_recording("single_threaded_cpu", types.Float, 1)
+    test_event_recording("cuda", types.Float, 5)

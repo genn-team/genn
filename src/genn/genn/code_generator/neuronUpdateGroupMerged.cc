@@ -23,13 +23,13 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
     const auto *cm = getArchetype().getCurrentSourceModel();
 
-    // Create new environment to add current source fields to neuron update group 
+    // Create new environment to add current source fields to neuron update group
     EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> csEnv(env, *this, ng);
-    
+
     csEnv.getStream() << "// current source " << getIndex() << std::endl;
 
     // Substitute parameter and derived parameter names
-    csEnv.addParams(cm->getParams(), fieldSuffix, &CurrentSourceInternal::getParams, 
+    csEnv.addParams(cm->getParams(), fieldSuffix, &CurrentSourceInternal::getParams,
                     &CurrentSource::isParamHeterogeneous, &CurrentSourceInternal::isParamDynamic);
     csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
@@ -38,7 +38,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     csEnv.addLocalVarRefs<CurrentSourceNeuronVarRefAdapter>(true);
 
     // Define inject current function
-    csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}), 
+    csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}),
               "injectCurrent", "$(_" + getArchetype().getTargetVar() + ") += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
@@ -79,7 +79,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     const std::string fieldSuffix =  "InSyn" + std::to_string(getIndex());
     const auto *psm = getArchetype().getPSInitialiser().getSnippet();
 
-    // Create new environment to add PSM fields to neuron update group 
+    // Create new environment to add PSM fields to neuron update group
     EnvironmentGroupMergedField<InSynPSM, NeuronUpdateGroupMerged> psmEnv(env, *this, ng);
 
     // Add inSyn
@@ -244,19 +244,20 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
 
     // Add fields to environment
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
-    
+
     groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
                       [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "seT"); },
                       "", GroupMergedFieldType::STANDARD, true);
-    
+
     groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
+                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); },
+                      "", GroupMergedFieldType::STANDARD, true);
 
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spkEvent" + fieldSuffix,
                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkEvent"); });
-    
+
     // Call callback to generate update
     genUpdate(groupEnv, *this);
 }
@@ -266,7 +267,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 {
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
-    
+
     // Create new environment to add out syn fields to neuron update group 
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
 

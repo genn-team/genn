@@ -460,7 +460,7 @@ private:
         }
     }
 
-    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
+    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays) const;
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 

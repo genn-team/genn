@@ -468,7 +468,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
                    [](const auto &n) { return n.second.isSpikeRecordingEnabled(); }))
     {
-        genRecordingSharedMemInit(env.getStream(), "");
+        genRecordingSharedMemInit(env.getStream(), "", 1);
     }
 
     // If there are any neuron update groups
@@ -510,9 +510,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             }
         }
 
-        if(maxSpikeEventRecording > 0) {
-            genRecordingSharedMemInit(env.getStream(), "Event[" + std::to_string(maxSpikeEventRecording) + "]");
-        }
+        // Zero shared memory used for spike-event recording
+        genRecordingSharedMemInit(env.getStream(), "Event", maxSpikeEventRecording);
     }
 
     genSharedMemBarrier(neuronEnv.getStream());
@@ -551,10 +550,10 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         // If recording is enabled, set bit in recording word
                         if(ng.getArchetype().isSpikeRecordingEnabled()) {
                             if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord, 1 << " << getThreadID() << ");" << std::endl;
+                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord[0], 1 << " << getThreadID() << ");" << std::endl;
                             }
                             else {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord[0][" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
                             }
                         }
 
@@ -567,9 +566,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count_event)[" + indexStr + "], 1);");
                             env.printLine("$(_sh_spk_event)[" + indexStr + "][spkIdx] = $(id);");
                         }
-                        
+
                         // If recording is enabled, set bit in recording word
-                        if(ng.getArchetype().isSpikeRecordingEnabled()) {
+                        if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
                             if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
                                 env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecordEvent[" << indexStr << "], 1 << " << getThreadID() << ");" << std::endl;
                             }
@@ -714,7 +713,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         CodeStream::Scope c(groupEnv.getStream());
                         // If we are recording spikes, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.print("$(_record_spk)[" + globalIndex + "] = shSpkRecord");
+                            groupEnv.print("$(_record_spk)[" + globalIndex + "] = shSpkRecord[0]");
                             if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
                                 groupEnv.print("[" + getThreadID() + "]");
                             }
@@ -727,7 +726,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                 groupEnv,
                                 [&globalIndex, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                                 {
-                                    env.print("$(_record_spk_event)[" + globalIndex + "] = shSpkEventRecord[" + std::to_string(sg.getIndex()) + "]");
+                                    env.print("$(_record_spk_event)[" + globalIndex + "] = shSpkRecordEvent[" + std::to_string(sg.getIndex()) + "]");
                                     if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
                                         env.print("[" + getThreadID() + "]");
                                     }
@@ -1858,7 +1857,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 groupEnv.add(Type::Void, "_rng", 
                               genGlobalRNGSkipAhead(groupEnv.getStream(), std::to_string(numInitializeThreads) + " + id"));
             }
-            
+
             // Generate sparse synapse variable initialisation code
             genSparseSynapseVarInit<CustomConnectivityUpdateSparseInitGroupMerged>(
                 groupEnv, batchSize, cg, true,
@@ -1867,26 +1866,32 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
-{ 
+{
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const
+void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays) const
 {
+    os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << "[" << numArrays << "]";
+
     if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-        os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << ";" << std::endl;
+        os << ";" << std::endl;
         os << "if (" << getThreadID() << " == 0)";
         {
             CodeStream::Scope b(os);
-            os << "shSpkRecord" << suffix << " = 0;" << std::endl;
+            for(size_t i = 0; i < numArrays; i++) {
+                os << "shSpkRecord" << suffix << "[" << i << "] = 0;" << std::endl;
+            }
         }
     }
     else {
-        os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << "[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
+        os << "[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
         os << "if (" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
         {
             CodeStream::Scope b(os);
-            os << "shSpkRecord" << suffix << "[" << getThreadID() << "] = 0;" << std::endl;
+            for(size_t i = 0; i < numArrays; i++) {
+                os << "shSpkRecord" << suffix << "[" << i << "][" << getThreadID() << "] = 0;" << std::endl;
+            }
         }
     }
 }
