@@ -233,10 +233,6 @@ class NeuronGroupMixin(GroupMixin):
         return self._model._runtime.get_recorded_spikes(self)
 
     @property
-    def spike_event_recording_data(self):
-        return self._model._runtime.get_recorded_spike_events(self)
-
-    @property
     def size(self):
         return self.num_neurons
 
@@ -310,6 +306,10 @@ class SynapseGroupMixin(GroupMixin):
             connect_init = self.sparse_connectivity_initialiser
         self.connectivity_extra_global_params = prepare_egps(
             connect_init.snippet.get_extra_global_params(), self)
+
+    @property
+    def spike_event_recording_data(self):
+        return self._model._runtime.get_recorded_spike_events(self)
 
     @property
     def weight_update_var_size(self):

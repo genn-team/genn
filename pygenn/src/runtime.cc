@@ -104,7 +104,7 @@ PYBIND11_MODULE(runtime, m)
                  return npSpikes;
              })
         .def("get_recorded_spike_events", 
-             [](const Runtime &r, const GeNN::NeuronGroup &group)
+             [](const Runtime &r, const GeNN::SynapseGroup &group)
              {
                  const auto spikes = r.getRecordedSpikeEvents(group);
                  std::vector<std::pair<pybind11::array_t<double>, pybind11::array_t<int>>> npSpikes;
