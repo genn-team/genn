@@ -41,7 +41,7 @@ static_event_pulse_model = create_weight_update_model(
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_event_recording(backend, precision, batch_size):
-    model = GeNNModel(precision, "test_spike_recording", backend=backend)
+    model = GeNNModel(precision, "test_event_recording", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     
