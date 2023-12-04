@@ -182,14 +182,14 @@ bool NeuronGroup::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                   [](SynapseGroupInternal *sg){ return sg->isTrueSpikeRequired(); }))
+                   [](SynapseGroupInternal *sg){ return sg->isPreSpikeRequired(); }))
     {
         return true;
     }
 
     // If any INCOMING synapse groups require postsynaptic learning, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                   [](SynapseGroupInternal *sg){ return !Utils::areTokensEmpty(sg->getWUInitialiser().getPostLearnCodeTokens()); }))
+                   [](SynapseGroupInternal *sg){ return sg->isPostSpikeRequired(); }))
     {
         return true;
     }
@@ -456,15 +456,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // spikes and outgoing groups which require spikes
     std::vector<SynapseGroupInternal*> synWithSpike;
     std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpike),
-                 [](SynapseGroupInternal *sg)
-                 {
-                     return !Utils::areTokensEmpty(sg->getWUInitialiser().getPostLearnCodeTokens());
-                 });
+                 [](SynapseGroupInternal *sg) { return sg->isPostSpikeRequired(); });
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpike),
-                 [](SynapseGroupInternal *sg)
-                 {
-                     return sg->isTrueSpikeRequired();
-                 });
+                 [](SynapseGroupInternal *sg) { return sg->isPreSpikeRequired(); });
     
     // If there are any, fuse together
     if(!synWithSpike.empty()) {
@@ -476,16 +470,10 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // Copy incoming synapse groups which require back-projected 
     // spike-events and outgoing groups which require spike-events
     std::vector<SynapseGroupInternal*> synWithSpikeEvent;
-    //std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpikeEvent),
-    //             [](SynapseGroupInternal *sg)
-    //             {
-    //                 return !Utils::areTokensEmpty(sg->getWUInitialiser().getPostLearnCodeTokens());
-    //             });
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpikeEvent),
+                 [](SynapseGroupInternal *sg) { return sg->isPostSpikeEventRequired(); });
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpikeEvent),
-                 [](SynapseGroupInternal *sg)
-                 {
-                     return sg->isPreSpikeEventRequired();
-                 });
+                 [](SynapseGroupInternal *sg) { return sg->isPreSpikeEventRequired(); });
     
     // If there are any, fuse together
     if(!synWithSpikeEvent.empty()) {

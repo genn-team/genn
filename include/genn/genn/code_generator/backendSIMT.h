@@ -464,6 +464,9 @@ private:
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 
+    void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
+                               double dt, unsigned int batchSize, bool trueSpike) const;
+
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {

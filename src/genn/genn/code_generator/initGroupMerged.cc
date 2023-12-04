@@ -64,10 +64,9 @@ template<typename G, typename F>
 void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, G &group, F &fieldGroup, 
                       const std::string &fieldSuffix, const std::string &varName, unsigned int batchSize)
 {
-    // Add spike time field
     EnvironmentGroupMergedField<G, F> timeEnv(env, group, fieldGroup);
     timeEnv.addField(group.getTimeType().createPointer(), "_time", varName + fieldSuffix,
-                     [varName](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, varName); });
+                     [&fieldGroup, varName](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(fieldGroup, i, g, varName); });
 
 
     // Generate variable initialisation code
@@ -258,33 +257,12 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     
     // Initialize spike times
     if(ng.getArchetype().isSpikeTimeRequired()) {
-        //genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "sT", batchSize);
-        groupEnv.addField(getTimeType().createPointer(), "_st", "st" + fieldSuffix,
-                          [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "ST"); });
-
-
-        // Generate variable initialisation code
-        backend.genVariableInit(groupEnv, "num_neurons", "id",
-            [batchSize, &ng] (EnvironmentExternalBase &varEnv)
-            {
-                genVariableFill(varEnv, "_st", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                                batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
-            });
+        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "ST", batchSize);
     }
 
     // Initialize previous spike times
     if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-        groupEnv.addField(getTimeType().createPointer(), "_prev_st", "prevST" + fieldSuffix,
-                          [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "PrevST"); });
-
-
-        // Generate variable initialisation code
-        backend.genVariableInit(groupEnv, "num_neurons", "id",
-            [batchSize, &ng] (EnvironmentExternalBase &varEnv)
-            {
-                genVariableFill(varEnv, "_prev_st", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                                batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
-            });
+        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "PrevST", batchSize);
     }
 }
 
@@ -299,15 +277,11 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     // Create environment for group
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
-    groupEnv.addField(getTimeType().createPointer(), "_set", "seT",
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
-    groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET",
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvent"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCntEvent"); });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spkEvent" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkEvent"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkEvent"); });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",
@@ -327,12 +301,12 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
 
     // Initialize spike-like-event times
     if(ng.getArchetype().isSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "seT", batchSize);
+        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "SET", batchSize);
     }
 
     // Initialize previous spike-like-event times
     if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "prevSET", batchSize);
+        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "PrevSET", batchSize);
     }
 }
 

@@ -22,11 +22,11 @@ using namespace GeNN::CodeGenerator;
                        &NeuronGroupInternal::getHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg) { return (sg.isPreSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                       [](const SynapseGroupInternal &sg) { return (sg.isPreSpikeEventRequired() || sg.isPreSpikeRequired()); },
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg){ return !Utils::areTokensEmpty(sg.getWUInitialiser().getPostLearnCodeTokens()); },
+                       [](const SynapseGroupInternal &sg){ return (sg.isPostSpikeEventRequired() || sg.isPostSpikeRequired()); },
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedSynapseDynamicsGroups,
@@ -123,7 +123,7 @@ using namespace GeNN::CodeGenerator;
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                    (sg.isWUVarInitRequired()
-                                   || (backend.isPostsynapticRemapRequired() && !Utils::areTokensEmpty(sg.getWUInitialiser().getPostLearnCodeTokens()))));
+                                   || (backend.isPostsynapticRemapRequired() && (sg.isPostSpikeRequired() || sg.isPostSpikeEventRequired()))));
                        },
                        &SynapseGroupInternal::getWUInitHashDigest);
 

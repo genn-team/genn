@@ -277,26 +277,29 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for spike events
         for(const auto *sg: n.second.getFusedSpikeEvent()) {
             LOGD_RUNTIME << "\tFused spike event '" << sg->getName() << "'";
-            createArray(sg, "spkCntEvent", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+
+            // Prefix array names depending on whether neuron group is source or target of merged synapse group
+            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
+            createArray(sg, prefix + "SpkCntEvent", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeEventLocation(), false, 2);
-            createArray(sg, "spkEvent", Type::Uint32, numNeuronDelaySlots, 
+            createArray(sg, prefix + "SpkEvent", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeEventLocation(), false, 2);
 
             // If neuron group needs to record its spike-like-event times
             if (n.second.isSpikeEventTimeRequired()) {
-                createArray(sg, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                createArray(sg, prefix + "SET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getSpikeEventTimeLocation(), false, 2);
             }
 
             // If neuron group needs to record its previous spike-like-event times
             if (n.second.isPrevSpikeEventTimeRequired()) {
-                createArray(sg, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                createArray(sg, prefix + "PrevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeEventTimeLocation(), false, 2);
             }
 
             if(n.second.isSpikeEventRecordingEnabled()) {
                 const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
-                createArray(sg, "recordSpkEvent", Type::Uint32, numRecordingWords, 
+                createArray(sg, prefix + "RecordSpkEvent", Type::Uint32, numRecordingWords, 
                             VarLocation::HOST_DEVICE, false, 2);
             }
         }
@@ -369,7 +372,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // **TODO** remap is not always required
-            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUInitialiser().getPostLearnCodeTokens())) {
+            if(m_Backend.get().isPostsynapticRemapRequired() 
+               && (s.second.isPostSpikeRequired() || s.second.isPostSpikeEventRequired())) 
+            {
                 // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();

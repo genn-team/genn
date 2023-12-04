@@ -534,7 +534,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         }
 
                         // generate the code for processing true spike events
-                        if (s.getArchetype().isTrueSpikeRequired()) {
+                        if (s.getArchetype().isPreSpikeRequired()) {
                             genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         }
                         funcEnv.getStream() << std::endl;
@@ -562,58 +562,14 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> groupEnv(funcEnv, s);
                         buildStandardEnvironment(groupEnv, 1);
 
-                        // Get number of postsynaptic spikes
-                        if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[$(_post_delay_slot)];");
-                        }
-                        else {
-                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[0];");
+                        // generate the code for processing spike-like events
+                        if (s.getArchetype().isPostSpikeEventRequired()) {
+                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
                         }
 
-                        // Loop through postsynaptic spikes
-                        groupEnv.getStream() << "for (unsigned int j = 0; j < numSpikes; j++)";
-                        {
-                            CodeStream::Scope b(groupEnv.getStream());
-
-                            // **TODO** prod types
-                            const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "$(_post_delay_offset) + " : "";
-                            groupEnv.printLine("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];");
-
-                            // Loop through column of presynaptic neurons
-                            if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                groupEnv.printLine("const unsigned int npre = $(_col_length)[spike];");
-                                groupEnv.getStream() << "for (unsigned int i = 0; i < npre; i++)";
-                            }
-                            else {
-                                groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
-                            }
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(groupEnv, s);
-
-                                if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    // Add initialisers to calculate column and row-major indices
-                                    // **TODO** fast divide optimisations
-                                    const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;");
-                                    const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];");
-                                    const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);");
-
-                                    // Add presynaptic and synapse index to environment
-                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit});
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit});
-                                }
-                                else {
-                                    // Add presynaptic and synapse index to environment
-                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;")});
-                                }
-
-                                synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
-                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-            
-                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
-                            }
+                        // generate the code for processing true spike events
+                        if (s.getArchetype().isPostSpikeRequired()) {
+                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         }
                         groupEnv.getStream() << std::endl;
                     }
@@ -1998,6 +1954,72 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         synEnv.getStream() << CodeStream::CB(20);
                     }
                 }
+            }
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
+                                    double dt, bool trueSpike) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "_event";
+
+    // Get number of postsynaptic spikes
+    if (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[$(_post_delay_slot)];");
+    }
+    else {
+        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[0];");
+    }
+
+    // Loop through postsynaptic spikes
+    env.getStream() << "for (unsigned int j = 0; j < numSpikes; j++)";
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // **TODO** prod types
+        const std::string offsetTrueSpkPost = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "$(_post_delay_offset) + " : "";
+        env.printLine("const unsigned int spike = $(_trg_spk" + eventSuffix + ")[" + offsetTrueSpkPost + "j];");
+
+        // Loop through column of presynaptic neurons
+        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            env.printLine("const unsigned int npre = $(_col_length)[spike];");
+            env.getStream() << "for (unsigned int i = 0; i < npre; i++)";
+        }
+        else {
+            env.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+        }
+        {
+            CodeStream::Scope b(env.getStream());
+            EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(env, sg);
+
+            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                // Add initialisers to calculate column and row-major indices
+                // **TODO** fast divide optimisations
+                const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;");
+                const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];");
+                const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);");
+
+                // Add presynaptic and synapse index to environment
+                synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit});
+                synEnv.add(Type::Uint32.addConst(), "id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit});
+            }
+            else {
+                // Add presynaptic and synapse index to environment
+                synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
+                            {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;")});
+            }
+
+            synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
+            synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+            
+            if(trueSpike) {
+                sg.generateSpikeUpdate(synEnv, 1, dt);
+            }
+            else {
+                sg.generateSpikeEventUpdate(synEnv, 1, dt);
             }
         }
     }

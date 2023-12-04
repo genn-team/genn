@@ -8,9 +8,11 @@
 //----------------------------------------------------------------------------
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
 #define SET_PRE_EVENT_CODE(EVENT_CODE) virtual std::string getPreEventCode() const override{ return EVENT_CODE; }
+#define SET_POST_EVENT_CODE(EVENT_CODE) virtual std::string getPostEventCode() const override{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_PRE_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPreEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
+#define SET_POST_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPostEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
 
 #define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const override{ return PRE_SPIKE_CODE; }
 #define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }
@@ -43,6 +45,11 @@ public:
         the presynaptic event threshold condition is met*/
     virtual std::string getPreEventCode() const{ return ""; }
 
+    //! Gets code run when postsynaptic events are received
+    /*! Postsynaptic events are triggered for all postsynaptic neurons where 
+        the postsynaptic event threshold condition is met*/
+    virtual std::string getPostEventCode() const{ return ""; }
+
     //! Gets code to include in the learnSynapsesPost kernel/function.
     /*! For examples when modelling STDP, this is where the effect of postsynaptic
         spikes which occur _after_ presynaptic spikes are applied. */
@@ -53,6 +60,9 @@ public:
 
     //! Gets codes to test for presynaptic events
     virtual std::string getPreEventThresholdConditionCode() const{ return ""; }
+
+    //! Gets codes to test for postsynaptic events
+    virtual std::string getPostEventThresholdConditionCode() const{ return ""; }
 
     //! Gets code to be run once per spiking presynaptic
     //! neuron before sim code is run on synapses
@@ -126,6 +136,9 @@ public:
     //! Update hash from presynaptic event-triggering components of model
     boost::uuids::detail::sha1::digest_type getPreEventHashDigest() const;
 
+    //! Update hash from postsynaptic event-triggering components of model
+    boost::uuids::detail::sha1::digest_type getPostEventHashDigest() const;
+    
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
@@ -162,9 +175,11 @@ public:
     
     const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
     const std::vector<Transpiler::Token> &getPreEventCodeTokens() const{ return m_PreEventCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostEventCodeTokens() const{ return m_PostEventCodeTokens; }
     const std::vector<Transpiler::Token> &getPostLearnCodeTokens() const{ return m_PostLearnCodeTokens; }
     const std::vector<Transpiler::Token> &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
     const std::vector<Transpiler::Token> &getPreEventThresholdCodeTokens() const{ return m_PreEventThresholdCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostEventThresholdCodeTokens() const{ return m_PostEventThresholdCodeTokens; }
     const std::vector<Transpiler::Token> &getPreSpikeCodeTokens() const{ return m_PreSpikeCodeTokens; }
     const std::vector<Transpiler::Token> &getPostSpikeCodeTokens() const{ return m_PostSpikeCodeTokens; }
     const std::vector<Transpiler::Token> &getPreDynamicsCodeTokens() const{ return m_PreDynamicsCodeTokens; }
@@ -178,9 +193,11 @@ private:
     //------------------------------------------------------------------------
     std::vector<Transpiler::Token> m_SimCodeTokens;
     std::vector<Transpiler::Token> m_PreEventCodeTokens;
+    std::vector<Transpiler::Token> m_PostEventCodeTokens;
     std::vector<Transpiler::Token> m_PostLearnCodeTokens;
     std::vector<Transpiler::Token> m_SynapseDynamicsCodeTokens;
     std::vector<Transpiler::Token> m_PreEventThresholdCodeTokens;
+    std::vector<Transpiler::Token> m_PostEventThresholdCodeTokens;
     std::vector<Transpiler::Token> m_PreSpikeCodeTokens;
     std::vector<Transpiler::Token> m_PostSpikeCodeTokens;
     std::vector<Transpiler::Token> m_PreDynamicsCodeTokens;

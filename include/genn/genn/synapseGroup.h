@@ -174,10 +174,16 @@ public:
     bool isWUParamDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
 
     //! Does synapse group need to handle 'true' spikes/
-    bool isTrueSpikeRequired() const;
+    bool isPreSpikeRequired() const;
 
     //! Does synapse group need to handle presynaptic spike-like events?
     bool isPreSpikeEventRequired() const;
+
+    //! Does synapse group need to handle postsynaptic spikes?
+    bool isPostSpikeRequired() const;
+
+    //! Does synapse group need to handle postsynaptic spike-like events?
+    bool isPostSpikeEventRequired() const;
 
     //! Are presynaptic spike times needed?
     bool isPreSpikeTimeRequired() const;
@@ -194,8 +200,14 @@ public:
     //! Are postsynaptic spike times needed?
     bool isPostSpikeTimeRequired() const;
 
+    //! Are postsynaptic spike-like-event times needed?
+    bool isPostSpikeEventTimeRequired() const;
+
     //! Are PREVIOUS postsynaptic spike times needed?
     bool isPrevPostSpikeTimeRequired() const;
+
+    //! Are PREVIOUS postsynaptic spike-event times needed?
+    bool isPrevPostSpikeEventTimeRequired() const;
 
     const PostsynapticModels::Init &getPSInitialiser() const{ return m_PSInitialiser; }
     const WeightUpdateModels::Init &getWUInitialiser() const{ return m_WUInitialiser; }

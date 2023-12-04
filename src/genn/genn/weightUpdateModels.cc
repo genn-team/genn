@@ -24,9 +24,11 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getVars(), hash);
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getPreEventCode(), hash);
+    Utils::updateHash(getPostEventCode(), hash);
     Utils::updateHash(getLearnPostCode(), hash);
     Utils::updateHash(getSynapseDynamicsCode(), hash);
     Utils::updateHash(getPreEventThresholdConditionCode(), hash);
+    Utils::updateHash(getPostEventThresholdConditionCode(), hash);
     Utils::updateHash(getPreSpikeCode(), hash);
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPreDynamicsCode(), hash);
@@ -83,6 +85,20 @@ boost::uuids::detail::sha1::digest_type Base::getPreEventHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Base::getPostEventHashDigest() const
+{
+    // Superclass
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getPostEventThresholdConditionCode(), hash);
+    Utils::updateHash(getPostVars(), hash);
+    Utils::updateHash(getPostNeuronVarRefs(), hash);
+
+    // Return digest
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                     const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
@@ -113,9 +129,13 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
     Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", "Weight update model");
     Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", "Weight update model");
 
+    // Check if event-threshold condition code is provided, then event-handler is also provided
     if(getPreEventCode().empty() != getPreEventThresholdConditionCode().empty()) {
         throw std::runtime_error("Weight update model: to handle presynaptic spike-like events, both presynaptic event threshold condition code and presynaptic event code must be specified.");
     }    
+    if(getPostEventCode().empty() != getPostEventThresholdConditionCode().empty()) {
+        throw std::runtime_error("Weight update model: to handle postsynaptic spike-like events, both postsynaptic event threshold condition code and postsynaptic event code must be specified.");
+    }
 }
 
 
@@ -139,9 +159,11 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::Nume
     // Scan code tokens
     m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Weight update model sim code");
     m_PreEventCodeTokens = Utils::scanCode(getSnippet()->getPreEventCode(), "Weight update model presynaptic event code");
+    m_PostEventCodeTokens = Utils::scanCode(getSnippet()->getPostEventCode(), "Weight update model postsynaptic event code");
     m_PostLearnCodeTokens = Utils::scanCode(getSnippet()->getLearnPostCode(), "Weight update model learn post code");
     m_SynapseDynamicsCodeTokens = Utils::scanCode(getSnippet()->getSynapseDynamicsCode(), "Weight update model synapse dynamics code");
     m_PreEventThresholdCodeTokens = Utils::scanCode(getSnippet()->getPreEventThresholdConditionCode(), "Presynaptic weight update model event threshold code");
+    m_PostEventThresholdCodeTokens = Utils::scanCode(getSnippet()->getPostEventThresholdConditionCode(), "Postsynaptic weight update model event threshold code");
     m_PreSpikeCodeTokens = Utils::scanCode(getSnippet()->getPreSpikeCode(), "Weight update model pre spike code");
     m_PostSpikeCodeTokens = Utils::scanCode(getSnippet()->getPostSpikeCode(), "Weight update model post spike code");
     m_PreDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPreDynamicsCode(), "Weight update model pre dynamics code");

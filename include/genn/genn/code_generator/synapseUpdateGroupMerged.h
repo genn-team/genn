@@ -147,8 +147,10 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSynapseUpdate(EnvironmentExternalBase &env, 
-                               unsigned int batchSize, double dt);
+    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+                                  unsigned int batchSize, double dt);
+    void generateSpikeUpdate(EnvironmentExternalBase &env, 
+                             unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
     // Static constants

@@ -778,7 +778,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
     for(const auto &s : modelMerged.getModel().getSynapseGroups()) {
-        if(s.second.isPreSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+        if(s.second.isPreSpikeEventRequired() || s.second.isPreSpikeRequired()) {
             maxSharedMemPerThread = std::max(maxSharedMemPerThread,
                                              getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
         }
@@ -830,7 +830,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             }
 
             // If true spikes should be processed
-            if(sg.getArchetype().isTrueSpikeRequired()) {
+            if(sg.getArchetype().isPreSpikeRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
                 presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
                                                      modelMerged.getModel().getDT(), true);
@@ -867,68 +867,17 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             buildStandardEnvironment(groupEnv, batchSize);
 
-            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[" + sg.getPostSlot(batchSize) + "];");
-            
-            groupEnv.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
-            groupEnv.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
-            {
-                CodeStream::Scope b(groupEnv.getStream());
-                groupEnv.getStream() << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + 1 : " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
-
-                groupEnv.getStream() << "if (" << getThreadID() << " < numSpikesInBlock)";
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-                    groupEnv.printLine("const unsigned int spk = $(_trg_spk)[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
-                    groupEnv.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
-
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        groupEnv.printLine("$(_sh_col_length)[" + getThreadID() + "] = $(_col_length)[spk];");
-                    }
-                }
-
-                genSharedMemBarrier(groupEnv.getStream());
-                groupEnv.getStream() << "// only work on existing neurons" << std::endl;
-                groupEnv.print("if ($(id) < $(_col_stride))");
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    groupEnv.getStream() << "// loop through all incoming spikes for learning" << std::endl;
-                    groupEnv.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
-                    {
-                        CodeStream::Scope b(groupEnv.getStream());
-
-                        EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(groupEnv, sg);
-
-                        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            synEnv.print("if ($(id) < $(_sh_col_length)[j])");
-                            synEnv.getStream() << CodeStream::OB(1540);
-
-                            synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
-                                       {synEnv.addInitialiser("const unsigned int synAddress = $(_remap)[($(_sh_spk)[j] * $(_col_stride)) + $(id)];")});
-
-                            // **OPTIMIZE** we can do a fast constant divide optimization here
-                            synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                       {synEnv.addInitialiser("const unsigned int idPre = $(id_syn) / $(_row_stride);")});
-                        }
-                        else {
-                            synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
-                                       {synEnv.addInitialiser("const unsigned int synAddress = ($(id) * $(num_post)) + $(_sh_spk)[j];")});
-
-                            synEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
-                        }
-
-                        synEnv.add(Type::Uint32.addConst(), "id_post", "$(_sh_spk)[j]");
-
-                        synEnv.add(Type::AddToPre, "addToPre", getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
-
-                        sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
-
-                        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            synEnv.getStream() << CodeStream::CB(1540);
-                        }
-                    }
-                }
+            // generate the code for processing spike-like events
+            const auto &model = modelMerged.getModel();
+            if (sg.getArchetype().isPostSpikeEventRequired()) {
+                genPostsynapticUpdate(groupEnv, sg, model.getDT(), model.getBatchSize(), false);
             }
+
+            // generate the code for processing true spike events
+            if (sg.getArchetype().isPostSpikeRequired()) {
+                genPostsynapticUpdate(groupEnv, sg, model.getDT(), model.getBatchSize(),true);
+            }
+            
         }
     );
 }
@@ -1799,7 +1748,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 [this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
                 {
                     // If postsynaptic learning is required
-                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPostLearnCodeTokens())) {
+                    if(sg.getArchetype().isPostSpikeRequired() || sg.getArchetype().isPostSpikeEventRequired()) {
                         CodeStream::Scope b(env.getStream());
 
                         // Extract index of synapse's postsynaptic target
@@ -1904,6 +1853,81 @@ void BackendSIMT::genSynapseVariableRowInit(EnvironmentExternalBase &env, Handle
     varEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
                {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(id);")});
     handler(varEnv);
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
+                                        double dt, unsigned int batchSize, bool trueSpike) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "_event";
+
+    env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[" + sg.getPostSlot(batchSize) + "];");
+            
+    env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
+    env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
+    {
+        CodeStream::Scope b(env.getStream());
+        env.getStream() << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + 1 : " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
+
+        env.getStream() << "if (" << getThreadID() << " < numSpikesInBlock)";
+        {
+            CodeStream::Scope b(env.getStream());
+            const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
+            env.printLine("const unsigned int spk = $(_trg_spk" + eventSuffix + ")[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
+            env.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
+
+            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                env.printLine("$(_sh_col_length)[" + getThreadID() + "] = $(_col_length)[spk];");
+            }
+        }
+
+        genSharedMemBarrier(env.getStream());
+        env.getStream() << "// only work on existing neurons" << std::endl;
+        env.print("if ($(id) < $(_col_stride))");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.getStream() << "// loop through all incoming spikes for learning" << std::endl;
+            env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
+            {
+                CodeStream::Scope b(env.getStream());
+
+                EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(env, sg);
+
+                if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    synEnv.print("if ($(id) < $(_sh_col_length)[j])");
+                    synEnv.getStream() << CodeStream::OB(1540);
+
+                    synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
+                                {synEnv.addInitialiser("const unsigned int synAddress = $(_remap)[($(_sh_spk)[j] * $(_col_stride)) + $(id)];")});
+
+                    // **OPTIMIZE** we can do a fast constant divide optimization here
+                    synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
+                                {synEnv.addInitialiser("const unsigned int idPre = $(id_syn) / $(_row_stride);")});
+                }
+                else {
+                    synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
+                                {synEnv.addInitialiser("const unsigned int synAddress = ($(id) * $(num_post)) + $(_sh_spk)[j];")});
+
+                    synEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
+                }
+
+                synEnv.add(Type::Uint32.addConst(), "id_post", "$(_sh_spk)[j]");
+
+                synEnv.add(Type::AddToPre, "addToPre", getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(synEnv, batchSize, dt);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(synEnv, batchSize, dt);
+                }
+
+                if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    synEnv.getStream() << CodeStream::CB(1540);
+                }
+            }
+        }
+    }
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

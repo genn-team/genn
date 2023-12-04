@@ -394,8 +394,14 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
-                                                          unsigned int batchSize, double dt)
+void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+                                                             unsigned int batchSize, double dt)
+{
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostEventCodeTokens(), "postsynaptic event code", *this, batchSize, dt);
+}
+//----------------------------------------------------------------------------
+void PostsynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
+                                                        unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
 }
