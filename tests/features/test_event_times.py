@@ -74,25 +74,25 @@ def test_spike_times(backend, precision):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
 
-    #s_post_pop = model.add_synapse_population(
-    #    "PostSynapses", "SPARSE", 0,
-    #    post_n_pop, pre_n_pop,
-    #    init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
-    #    init_postsynaptic("DeltaCurr"),
-    #    init_sparse_connectivity("OneToOne"))
-    #s_post_pop.back_prop_delay_steps = 20
+    s_post_pop = model.add_synapse_population(
+        "PostSynapses", "SPARSE", 0,
+        post_n_pop, pre_n_pop,
+        init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_pop.back_prop_delay_steps = 20
 
     # Build model and load
     model.build()
     model.load()
 
     s_pre_pop.pull_connectivity_from_device()
-    #s_post_pop.pull_connectivity_from_device()
+    s_post_pop.pull_connectivity_from_device()
 
     samples = [(s_pre_pop, "a", 11.0),
-               (s_pre_pop, "b", 21.0)]
-               #(s_post_pop, "a", 21.0),
-               #(s_post_pop, "b", 11.0)]
+               (s_pre_pop, "b", 21.0),
+               (s_post_pop, "a", 21.0),
+               (s_post_pop, "b", 11.0)]
     while model.timestep < 100:
         model.step_time()
     
