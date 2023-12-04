@@ -187,9 +187,11 @@ class PyWeightUpdateModelBase : public PySnippet<WeightUpdateModels::Base>
 public:
     virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
     virtual std::string getPreEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_code", getPreEventCode); }
+    virtual std::string getPostEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_event_code", getPostEventCode); }
     virtual std::string getLearnPostCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_code", getLearnPostCode); }
     virtual std::string getSynapseDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_synapse_dynamics_code", getSynapseDynamicsCode); }
     virtual std::string getPreEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_threshold_condition_code", getPreEventThresholdConditionCode); }
+    virtual std::string getPostEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_event_threshold_condition_code", getPostEventThresholdConditionCode); }
     virtual std::string getPreSpikeCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_spike_code", getPreSpikeCode); }
     virtual std::string getPostSpikeCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_spike_code", getPostSpikeCode); }
     virtual std::string getPreDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_dynamics_code", getPreDynamicsCode); }
@@ -859,9 +861,11 @@ PYBIND11_MODULE(genn, m)
         
         .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
         .def("get_pre_event_code", &WeightUpdateModels::Base::getPreEventCode)
+        .def("get_post_event_code", &WeightUpdateModels::Base::getPostEventCode)
         .def("get_learn_post_code", &WeightUpdateModels::Base::getLearnPostCode)
         .def("get_synapse_dynamics_code", &WeightUpdateModels::Base::getSynapseDynamicsCode)
         .def("get_pre_event_threshold_condition_code", &WeightUpdateModels::Base::getPreEventThresholdConditionCode)
+        .def("get_post_event_threshold_condition_code", &WeightUpdateModels::Base::getPostEventThresholdConditionCode)
         .def("get_pre_spike_code", &WeightUpdateModels::Base::getPreSpikeCode)
         .def("get_post_spike_code", &WeightUpdateModels::Base::getPostSpikeCode)
         .def("get_pre_dynamics_code", &WeightUpdateModels::Base::getPreDynamicsCode)

@@ -998,7 +998,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
-            lambda self: [VarRef(*v) for v in var_refs]
+            lambda self: [VarRef(*v) for v in neuron_var_refs]
     
     return create_model(class_name, PostsynapticModelBase, params, 
                         param_names, derived_params, 
@@ -1011,9 +1011,12 @@ def create_weight_update_model(class_name, params=None, param_names=None,
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
-                               event_code=None, learn_post_code=None,
+                               event_code=None, pre_event_code=None, 
+                               post_event_code=None, learn_post_code=None,
                                synapse_dynamics_code=None,
                                event_threshold_condition_code=None,
+                               pre_event_threshold_condition_code=None,
+                               post_event_threshold_condition_code=None,
                                pre_spike_code=None, post_spike_code=None,
                                pre_dynamics_code=None, post_dynamics_code=None,
                                extra_global_params=None):
@@ -1026,50 +1029,66 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     create_sparse_connect_init_snippet
 
     Args:
-    class_name                      --  name of the new class
+    class_name                          --  name of the new class
 
     Keyword args:
-    param_names                     --  list of strings with param names of
-                                        the model
-    var_name_types                  --  list of pairs of strings with variable
-                                        names and types of the model
-    pre_var_name_types              --  list of pairs of strings with
-                                        presynaptic variable names and
-                                        types of the model
-    post_var_name_types             --  list of pairs of strings with
-                                        postsynaptic variable names and
-                                        types of the model
-    pre_neuron_var_refs             --  references to presynaptic neuron variables
-    post_neuron_var_refs            --  references to postsynaptic neuron variables
-    derived_params                  --  list of pairs, where the first member
-                                        is string with name of the derived
-                                        parameter and the second should be 
-                                        a functor returned by create_dpf_class
-    sim_code                        --  string with the simulation code
-    event_code                      --  string with the event code
-    learn_post_code                 --  string with the code to include in
-                                        learn_synapse_post kernel/function
-    synapse_dynamics_code           --  string with the synapse dynamics code
-    event_threshold_condition_code  --  string with the event threshold
-                                        condition code
-    pre_spike_code                  --  string with the code run once per
-                                        spiking presynaptic neuron
-    post_spike_code                 --  string with the code run once per
-                                        spiking postsynaptic neuron
-    pre_dynamics_code               --  string with the code run every
-                                        timestep on presynaptic neuron
-    post_dynamics_code              --  string with the code run every
-                                        timestep on postsynaptic neuron
-    extra_global_params             --  list of pairs of strings with names and
-                                        types of additional parameters
+    param_names                         --  list of strings with param names of
+                                            the model
+    var_name_types                      --  list of pairs of strings with variable
+                                            names and types of the model
+    pre_var_name_types                  --  list of pairs of strings with
+                                            presynaptic variable names and
+                                            types of the model
+    post_var_name_types                 --  list of pairs of strings with
+                                            postsynaptic variable names and
+                                            types of the model
+    pre_neuron_var_refs                 --  references to presynaptic neuron variables
+    post_neuron_var_refs                --  references to postsynaptic neuron variables
+    derived_params                      --  list of pairs, where the first member
+                                            is string with name of the derived
+                                            parameter and the second should be 
+                                            a functor returned by create_dpf_class
+    sim_code                            --  string with the simulation code
+    pre_event_code                      --  string with the presynaptic event code
+    post_event_code                     --  string with the postsynaptic event code
+    learn_post_code                     --  string with the code to include in
+                                            learn_synapse_post kernel/function
+    synapse_dynamics_code               --  string with the synapse dynamics code
+    pre_event_threshold_condition_code  --  string with the presynaptic event threshold
+                                            condition code
+    post_event_threshold_condition_code --  string with the postsynaptic event threshold
+                                            condition code
+    pre_spike_code                      --  string with the code run once per
+                                            spiking presynaptic neuron
+    post_spike_code                     --  string with the code run once per
+                                            spiking postsynaptic neuron
+    pre_dynamics_code                   --  string with the code run every
+                                            timestep on presynaptic neuron
+    post_dynamics_code                  --  string with the code run every
+                                            timestep on postsynaptic neuron
+    extra_global_params                 --  list of pairs of strings with names and
+                                            types of additional parameters
     """
     body = {}
+
+    if event_code is not None:
+        warn("The 'event_code' parameter has been renamed to 'pre_event_code'"
+             " and will be removed in future", DeprecationWarning)
+        pre_event_code = event_code
+    if event_threshold_condition_code is not None:
+        warn("The 'event_threshold_condition_code' parameter has been "
+             "renamed to 'pre_event_threshold_condition_code' and will "
+             "be removed in future", DeprecationWarning)
+        pre_event_threshold_condition_code = event_threshold_condition_code
 
     if sim_code is not None:
         body["get_sim_code"] = lambda self: dedent(sim_code)
 
-    if event_code is not None:
-        body["get_event_code"] = lambda self: dedent(event_code)
+    if pre_event_code is not None:
+        body["get_pre_event_code"] = lambda self: dedent(pre_event_code)
+
+    if post_event_code is not None:
+        body["get_post_event_code"] = lambda self: dedent(post_event_code)
 
     if learn_post_code is not None:
         body["get_learn_post_code"] = lambda self: dedent(learn_post_code)
@@ -1077,9 +1096,13 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     if synapse_dynamics_code is not None:
         body["get_synapse_dynamics_code"] = lambda self: dedent(synapse_dynamics_code)
 
-    if event_threshold_condition_code is not None:
-        body["get_event_threshold_condition_code"] = \
-            lambda self: dedent(event_threshold_condition_code)
+    if pre_event_threshold_condition_code is not None:
+        body["get_pre_event_threshold_condition_code"] = \
+            lambda self: dedent(pre_event_threshold_condition_code)
+    
+    if post_event_threshold_condition_code is not None:
+        body["get_post_event_threshold_condition_code"] = \
+            lambda self: dedent(post_event_threshold_condition_code)
 
     if pre_spike_code is not None:
         body["get_pre_spike_code"] = lambda self: dedent(pre_spike_code)
