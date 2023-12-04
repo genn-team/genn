@@ -87,7 +87,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.add(sg.getTimeType().addConst(), "st_post", "stPost",
                {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_st)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
-               {synEnv.addInitialiser("const " + timeStr + " prevSETPost = " + backPropDelayMs + " + $(_trg_prev_st)[" + prevPostSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_st)[" + prevPostSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "set_post", "setPost",
                {synEnv.addInitialiser("const " + timeStr + " setPost = " + backPropDelayMs + " + $(_trg_set)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_set_post", "prevSETPost",

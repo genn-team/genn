@@ -166,6 +166,13 @@ bool NeuronGroup::isPrevSpikeTimeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventTimeRequired() const
 {
+    // If any INCOMING synapse groups require POSTSYNAPTIC spike-like event times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroup *sg){ return sg->isPostSpikeEventTimeRequired(); }))
+    {
+        return true;
+    }
+    
     // If any OUTGOING synapse groups require PRESYNAPTIC spike-like event times, return true
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
                        [](SynapseGroup *sg) { return sg->isPreSpikeEventTimeRequired(); });
@@ -173,6 +180,13 @@ bool NeuronGroup::isSpikeEventTimeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isPrevSpikeEventTimeRequired() const
 {
+    // If any INCOMING synapse groups require previous POSTSYNAPTIC spike-like event times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroup *sg){ return sg->isPrevPostSpikeEventTimeRequired(); }))
+    {
+        return true;
+    }
+
     // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
                        [](SynapseGroup *sg) { return sg->isPrevPreSpikeEventTimeRequired(); });
