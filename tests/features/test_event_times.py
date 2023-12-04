@@ -124,11 +124,11 @@ def test_spike_event_times(backend, precision):
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
-        event_code=
+        pre_event_code=
         """
         a = prev_set_pre;
         """,
-        event_threshold_condition_code=
+        pre_event_threshold_condition_code=
         """
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
         """,
@@ -137,17 +137,21 @@ def test_spike_event_times(backend, precision):
         b = set_pre;
         """)
 
-    #post_weight_update_model = create_weight_update_model(
-    #    "post_weight_update",
-    #    var_name_types=[("a", "scalar"), ("b", "scalar")],
-    #    sim_code=
-    #    """
-    #    a = st_post;
-    #    """,
-    #    learn_post_code=
-    #    """
-    #    b = prev_st_post;
-    #    """)
+    post_weight_update_model = create_weight_update_model(
+        "post_weight_update",
+        var_name_types=[("a", "scalar"), ("b", "scalar")],
+        sim_code=
+        """
+        a = set_post;
+        """,
+        post_event_code=
+        """
+        b = prev_set_post;
+        """,
+        post_event_threshold_condition_code=
+        """
+        t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
+        """,)
 
     model = GeNNModel(precision, "test_spike_event_times", backend=backend)
     model.dt = 1.0
@@ -207,4 +211,4 @@ def test_spike_event_times(backend, precision):
 
 
 if __name__ == '__main__':
-    test_spike_times("cuda", types.Float)
+    test_spike_times("single_threaded_cpu", types.Float)
