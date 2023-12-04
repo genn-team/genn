@@ -529,7 +529,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         buildStandardEnvironment(groupEnv, 1);
                     
                         // generate the code for processing spike-like events
-                        if (s.getArchetype().isSpikeEventRequired()) {
+                        if (s.getArchetype().isPreSpikeEventRequired()) {
                             genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
                         }
 

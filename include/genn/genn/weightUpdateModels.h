@@ -7,7 +7,7 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
-#define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const override{ return EVENT_CODE; }
+#define SET_PRE_EVENT_CODE(EVENT_CODE) virtual std::string getPreEventCode() const override{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
@@ -39,7 +39,7 @@ public:
     virtual std::string getSimCode() const{ return ""; }
 
     //! Gets code run when events (all the instances where event threshold condition is met) are received
-    virtual std::string getEventCode() const{ return ""; }
+    virtual std::string getPreEventCode() const{ return ""; }
 
     //! Gets code to include in the learnSynapsesPost kernel/function.
     /*! For examples when modelling STDP, this is where the effect of postsynaptic
@@ -159,7 +159,7 @@ public:
     const std::unordered_map<std::string, Models::VarReference> &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
     
     const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
-    const std::vector<Transpiler::Token> &getEventCodeTokens() const{ return m_EventCodeTokens; }
+    const std::vector<Transpiler::Token> &getPreEventCodeTokens() const{ return m_PreEventCodeTokens; }
     const std::vector<Transpiler::Token> &getPostLearnCodeTokens() const{ return m_PostLearnCodeTokens; }
     const std::vector<Transpiler::Token> &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
     const std::vector<Transpiler::Token> &getEventThresholdCodeTokens() const{ return m_EventThresholdCodeTokens; }
@@ -175,7 +175,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::vector<Transpiler::Token> m_SimCodeTokens;
-    std::vector<Transpiler::Token> m_EventCodeTokens;
+    std::vector<Transpiler::Token> m_PreEventCodeTokens;
     std::vector<Transpiler::Token> m_PostLearnCodeTokens;
     std::vector<Transpiler::Token> m_SynapseDynamicsCodeTokens;
     std::vector<Transpiler::Token> m_EventThresholdCodeTokens;
@@ -301,7 +301,7 @@ public:
     SET_PARAMS({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
+    SET_PRE_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
 };

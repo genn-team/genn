@@ -22,7 +22,7 @@ using namespace GeNN::CodeGenerator;
                        &NeuronGroupInternal::getHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                       [](const SynapseGroupInternal &sg) { return (sg.isPreSpikeEventRequired() || sg.isTrueSpikeRequired()); },
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPostsynapticUpdateGroups,

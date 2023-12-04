@@ -186,7 +186,7 @@ class PyWeightUpdateModelBase : public PySnippet<WeightUpdateModels::Base>
     using Base = WeightUpdateModels::Base;
 public:
     virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
-    virtual std::string getEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_event_code", getEventCode); }
+    virtual std::string getPreEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_code", getPreEventCode); }
     virtual std::string getLearnPostCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_code", getLearnPostCode); }
     virtual std::string getSynapseDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_synapse_dynamics_code", getSynapseDynamicsCode); }
     virtual std::string getEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_event_threshold_condition_code", getEventThresholdConditionCode); }
@@ -858,7 +858,7 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<>())
         
         .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
-        .def("get_event_code", &WeightUpdateModels::Base::getEventCode)
+        .def("get_pre_event_code", &WeightUpdateModels::Base::getPreEventCode)
         .def("get_learn_post_code", &WeightUpdateModels::Base::getLearnPostCode)
         .def("get_synapse_dynamics_code", &WeightUpdateModels::Base::getSynapseDynamicsCode)
         .def("get_event_threshold_condition_code", &WeightUpdateModels::Base::getEventThresholdConditionCode)

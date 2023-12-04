@@ -484,7 +484,7 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpikeEvent),
                  [](SynapseGroupInternal *sg)
                  {
-                     return sg->isSpikeEventRequired();
+                     return sg->isPreSpikeEventRequired();
                  });
     
     // If there are any, fuse together

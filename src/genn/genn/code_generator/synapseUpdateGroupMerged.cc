@@ -342,7 +342,7 @@ const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getEventCodeTokens(), "event code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreEventCodeTokens(), "presynaptic event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 

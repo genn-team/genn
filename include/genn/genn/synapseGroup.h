@@ -176,8 +176,8 @@ public:
     //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;
 
-    //! Does synapse group need to handle spike-like events?
-    bool isSpikeEventRequired() const;
+    //! Does synapse group need to handle presynaptic spike-like events?
+    bool isPreSpikeEventRequired() const;
 
     //! Are presynaptic spike times needed?
     bool isPreSpikeTimeRequired() const;

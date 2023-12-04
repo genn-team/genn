@@ -564,10 +564,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                     {
                         const std::string indexStr = std::to_string(sg.getIndex());
-                        if(sg.getArchetype().isSpikeEventRequired()) {
-                            env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count_event)[" + indexStr + "], 1);");
-                            env.printLine("$(_sh_spk_event)[" + indexStr + "][spkIdx] = $(id);");
-                        }
+                        env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count_event)[" + indexStr + "], 1);");
+                        env.printLine("$(_sh_spk_event)[" + indexStr + "][spkIdx] = $(id);");
 
                         // If recording is enabled, set bit in recording word
                         if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -780,9 +778,9 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
     for(const auto &s : modelMerged.getModel().getSynapseGroups()) {
-        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+        if(s.second.isPreSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
             maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                              getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
+                                             getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
         }
     }
 
@@ -825,7 +823,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
             presynapticUpdateStrategy->genPreamble(groupEnv, sg, *this);
 
             // If spike events should be processed
-            if(sg.getArchetype().isSpikeEventRequired()) {
+            if(sg.getArchetype().isPreSpikeEventRequired()) {
                 CodeStream::Scope b(groupEnv.getStream());
                 presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
                                                      modelMerged.getModel().getDT(), false);

@@ -23,7 +23,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
     Utils::updateHash(getVars(), hash);
     Utils::updateHash(getSimCode(), hash);
-    Utils::updateHash(getEventCode(), hash);
+    Utils::updateHash(getPreEventCode(), hash);
     Utils::updateHash(getLearnPostCode(), hash);
     Utils::updateHash(getSynapseDynamicsCode(), hash);
     Utils::updateHash(getEventThresholdConditionCode(), hash);
@@ -134,7 +134,7 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::Nume
 
     // Scan code tokens
     m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Weight update model sim code");
-    m_EventCodeTokens = Utils::scanCode(getSnippet()->getEventCode(), "Weight update model event code");
+    m_PreEventCodeTokens = Utils::scanCode(getSnippet()->getPreEventCode(), "Weight update model presynaptic event code");
     m_PostLearnCodeTokens = Utils::scanCode(getSnippet()->getLearnPostCode(), "Weight update model learn post code");
     m_SynapseDynamicsCodeTokens = Utils::scanCode(getSnippet()->getSynapseDynamicsCode(), "Weight update model synapse dynamics code");
     m_EventThresholdCodeTokens = Utils::scanCode(getSnippet()->getEventThresholdConditionCode(), "Weight update model event threshold code");
