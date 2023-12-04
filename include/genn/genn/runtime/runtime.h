@@ -45,6 +45,7 @@ namespace GeNN::CodeGenerator
 {
 class BackendBase;
 class ModelSpecMerged;
+class NeuronGroupMergedBase;
 }
 
 namespace filesystem
@@ -361,6 +362,14 @@ public:
                                  getArray(groupInternal.getFusedSpikeEventTarget(pre), "recordSpkEvent"),
                                  path);
     }
+
+    //! Get array associated with fused event group (either spike or spike-event)
+    /*! \param ng   Parent merged neuron group
+        \param i    Index of the group within the merged group
+        \param sg   Child synapse group of neuron group at index i
+        \param name Name of variable array is associated with*/
+    ArrayBase *getFusedEventArray(const CodeGenerator::NeuronGroupMergedBase &ng, size_t i, 
+                                  const SynapseGroupInternal &sg, const std::string &name) const;
 
 private:
     //----------------------------------------------------------------------------

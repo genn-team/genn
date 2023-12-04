@@ -235,10 +235,10 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
 
     // Add spike count
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCnt"); });
     
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "Spk"); });
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(groupEnv, "num_neurons", "id",
@@ -258,12 +258,33 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     
     // Initialize spike times
     if(ng.getArchetype().isSpikeTimeRequired()) {
-        genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "sT", batchSize);
+        //genInitSpikeTime(backend, groupEnv, *this, ng, fieldSuffix, "sT", batchSize);
+        groupEnv.addField(getTimeType().createPointer(), "_st", "st" + fieldSuffix,
+                          [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "ST"); });
+
+
+        // Generate variable initialisation code
+        backend.genVariableInit(groupEnv, "num_neurons", "id",
+            [batchSize, &ng] (EnvironmentExternalBase &varEnv)
+            {
+                genVariableFill(varEnv, "_st", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                                batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+            });
     }
 
     // Initialize previous spike times
     if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-        genInitSpikeTime( backend, groupEnv, *this, ng, fieldSuffix, "prevST", batchSize);
+        groupEnv.addField(getTimeType().createPointer(), "_prev_st", "prevST" + fieldSuffix,
+                          [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "PrevST"); });
+
+
+        // Generate variable initialisation code
+        backend.genVariableInit(groupEnv, "num_neurons", "id",
+            [batchSize, &ng] (EnvironmentExternalBase &varEnv)
+            {
+                genVariableFill(varEnv, "_prev_st", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                                batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+            });
     }
 }
 

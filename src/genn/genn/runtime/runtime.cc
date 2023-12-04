@@ -254,7 +254,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         for(const auto *sg: n.second.getFusedSpike()) {
             LOGD_RUNTIME << "\tFused spike '" << sg->getName() << "'";
 
-            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "pre" : "post";
+            // Prefix array names depending on whether neuron group is source or target of merged synapse group
+            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
             createArray(sg, prefix + "SpkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeLocation(), false, 2);
             createArray(sg, prefix + "Spk", Type::Uint32, numNeuronDelaySlots, 
@@ -695,6 +696,17 @@ void Runtime::pullRecordingBuffersFromDevice() const
             }
         }
     }
+}
+//----------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedEventArray(const CodeGenerator::NeuronGroupMergedBase &ng, size_t i, 
+                                       const SynapseGroupInternal &sg, const std::string &name) const
+{
+    // Get the corresponding merged group in the parent neuron group
+    const auto &n = ng.getGroups().at(i);
+
+    // If the neuron group is the SOURCE of synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (&n.get() == sg.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(sg, prefix + name);
 }
 //----------------------------------------------------------------------------
 const ModelSpecInternal &Runtime::getModel() const
