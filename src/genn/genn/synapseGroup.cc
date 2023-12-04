@@ -600,8 +600,8 @@ bool SynapseGroup::canWUSpikeEventBeFused(const NeuronGroup *ng) const
     }
     
     // Loop through EGPs
-    //const auto &eventThresholdCodeTokens = presynaptic ? getWUInitialiser().getEventThresholdCodeTokens() : getWUInitialiser().getPostEventThresholdCodeTokens();
-    const auto &eventThresholdCodeTokens = getWUInitialiser().getEventThresholdCodeTokens();
+    //const auto &eventThresholdCodeTokens = presynaptic ? getWUInitialiser().getPreEventThresholdCodeTokens() : getWUInitialiser().getPostEventThresholdCodeTokens();
+    const auto &eventThresholdCodeTokens = getWUInitialiser().getPreEventThresholdCodeTokens();
     for(const auto &egp : getWUInitialiser().getSnippet()->getExtraGlobalParams()) {
         // If this EGP is referenced in event threshold code, return false
         if(Utils::isIdentifierReferenced(egp.name, eventThresholdCodeTokens)) {
@@ -816,7 +816,7 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
 {
     return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventThresholdCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreDynamicsCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeCodeTokens())
@@ -827,7 +827,7 @@ bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
 bool SynapseGroup::isPostTimeReferenced(const std::string &identifier) const
 {
     return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getEventThresholdCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventThresholdCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostDynamicsCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeCodeTokens())
@@ -1066,8 +1066,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventFuseHashDig
 
     // Loop through weight update model parameters and, if they are referenced
     // in appropriate event threshold code, include their value in hash
-    //const auto &eventThresholdCodeTokens = presynaptic ? getWUInitialiser().getEventThresholdCodeTokens() : getWUInitialiser().getPostEventThresholdCodeTokens();
-    const auto &eventThresholdCodeTokens = getWUInitialiser().getEventThresholdCodeTokens();
+    //const auto &eventThresholdCodeTokens = presynaptic ? getWUInitialiser().getPreEventThresholdCodeTokens() : getWUInitialiser().getPostEventThresholdCodeTokens();
+    const auto &eventThresholdCodeTokens = getWUInitialiser().getPreEventThresholdCodeTokens();
     for(const auto &p : getWUInitialiser().getSnippet()->getParams()) {
         if(Utils::isIdentifierReferenced(p.name, eventThresholdCodeTokens)){
             Type::updateHash(getWUInitialiser().getParams().at(p.name), hash);

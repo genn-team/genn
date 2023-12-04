@@ -26,7 +26,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getPreEventCode(), hash);
     Utils::updateHash(getLearnPostCode(), hash);
     Utils::updateHash(getSynapseDynamicsCode(), hash);
-    Utils::updateHash(getEventThresholdConditionCode(), hash);
+    Utils::updateHash(getPreEventThresholdConditionCode(), hash);
     Utils::updateHash(getPreSpikeCode(), hash);
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPreDynamicsCode(), hash);
@@ -75,7 +75,7 @@ boost::uuids::detail::sha1::digest_type Base::getPreEventHashDigest() const
     boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
 
-    Utils::updateHash(getEventThresholdConditionCode(), hash);
+    Utils::updateHash(getPreEventThresholdConditionCode(), hash);
     Utils::updateHash(getPreVars(), hash);
     Utils::updateHash(getPreNeuronVarRefs(), hash);
 
@@ -112,6 +112,10 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
     Utils::validateVecNames(postVarRefs, "Postsynaptic neuron variable reference");
     Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", "Weight update model");
     Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", "Weight update model");
+
+    if(getPreEventCode().empty() != getPreEventThresholdConditionCode().empty()) {
+        throw std::runtime_error("Weight update model: to handle presynaptic spike-like events, both presynaptic event threshold condition code and presynaptic event code must be specified.");
+    }    
 }
 
 
@@ -137,12 +141,11 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::Nume
     m_PreEventCodeTokens = Utils::scanCode(getSnippet()->getPreEventCode(), "Weight update model presynaptic event code");
     m_PostLearnCodeTokens = Utils::scanCode(getSnippet()->getLearnPostCode(), "Weight update model learn post code");
     m_SynapseDynamicsCodeTokens = Utils::scanCode(getSnippet()->getSynapseDynamicsCode(), "Weight update model synapse dynamics code");
-    m_EventThresholdCodeTokens = Utils::scanCode(getSnippet()->getEventThresholdConditionCode(), "Weight update model event threshold code");
+    m_PreEventThresholdCodeTokens = Utils::scanCode(getSnippet()->getPreEventThresholdConditionCode(), "Presynaptic weight update model event threshold code");
     m_PreSpikeCodeTokens = Utils::scanCode(getSnippet()->getPreSpikeCode(), "Weight update model pre spike code");
     m_PostSpikeCodeTokens = Utils::scanCode(getSnippet()->getPostSpikeCode(), "Weight update model post spike code");
     m_PreDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPreDynamicsCode(), "Weight update model pre dynamics code");
     m_PostDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPostDynamicsCode(), "Weight update model post dynamics code");
-    
 }
 //----------------------------------------------------------------------------
 void Init::finalise(double dt)

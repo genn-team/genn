@@ -201,7 +201,7 @@ bool NeuronGroup::isSpikeEventRequired() const
 {
     // Spike like events are required if any OUTGOING synapse groups has a spike like event threshold
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroupInternal *sg){ return !sg->getWUInitialiser().getSnippet()->getEventThresholdConditionCode().empty(); });
+                       [](SynapseGroupInternal *sg){ return !sg->getWUInitialiser().getSnippet()->getPreEventThresholdConditionCode().empty(); });
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const

@@ -319,7 +319,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     // Generate event condition
     varEnv.print("if((");    
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' event threshold condition");
-    prettyPrintExpression(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), 
+    prettyPrintExpression(getArchetype().getWUInitialiser().getPreEventThresholdCodeTokens(), 
                           getTypeContext(), varEnv, errorHandler);
 
     varEnv.print("))");
