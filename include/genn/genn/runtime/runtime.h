@@ -55,11 +55,11 @@ class path;
 
 #define IMPLEMENT_GROUP_OVERLOADS(GROUP)                                                                            \
 public:                                                                                                             \
-    void setDynamicParamValue(const GROUP &group, const std::string &paramName,                                          \
-                              const Type::NumericValue &value)                                                           \
+    void setDynamicParamValue(const GROUP &group, const std::string &paramName,                                     \
+                              const Type::NumericValue &value)                                                      \
     {                                                                                                               \
-        setDynamicParamValue(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
-                             value);                                                                                     \
+        setDynamicParamValue(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                 \
+                             value);                                                                                \
     }                                                                                                               \
     void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
     {                                                                                                               \
@@ -67,24 +67,23 @@ public:                                                                         
     }                                                                                                               \
     MergedDynamicFieldDestinations &getMergedParamDestinations(const GROUP &group, const std::string &paramName)    \
     {                                                                                                               \
-        return m_##GROUP##DynamicParameters.at(&group).at(paramName).second;                                      \
+        return m_##GROUP##DynamicParameters.at(&group).at(paramName).second;                                        \
     }                                                                                                               \
     ArrayBase *getArray(const GROUP &group, const std::string &varName) const                                       \
     {                                                                                                               \
         return m_##GROUP##Arrays.at(&group).at(varName).get();                                                      \
     }                                                                                                               \
 private:                                                                                                            \
-    void createArray(const GROUP *group, const std::string &varName,                                                \
-                     const Type::ResolvedType &type, size_t count,                                                  \
-                     VarLocation location, bool uninitialized = false)                                              \
+    void createArray(const GROUP *group, const std::string &varName, const Type::ResolvedType &type,                \
+                     size_t count, VarLocation location, bool uninitialized = false, unsigned int logIndent = 1)    \
     {                                                                                                               \
         createArray(m_##GROUP##Arrays[group],                                                                       \
-                    varName, type, count, location, uninitialized);                                                 \
+                    varName, type, count, location, uninitialized, logIndent);                                      \
     }                                                                                                               \
     void createDynamicParamDestinations(const GROUP *group, const std::string &paramName,                           \
-                                        const Type::ResolvedType &type)                                             \
+                                        const Type::ResolvedType &type, unsigned int logIndent = 1)                 \
     {                                                                                                               \
-        createDynamicParamDestinations(m_##GROUP##DynamicParameters[group], paramName, type);                       \
+        createDynamicParamDestinations(m_##GROUP##DynamicParameters[group], paramName, type, logIndent);            \
     }
 
 //--------------------------------------------------------------------------
@@ -385,9 +384,9 @@ private:
     void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
-                     size_t count, VarLocation location, bool uninitialized = false);
+                     size_t count, VarLocation location, bool uninitialized = false, unsigned int logIndent = 1);
     void createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
-                                        const std::string &paramName, const Type::ResolvedType &type);
+                                        const std::string &paramName, const Type::ResolvedType &type, unsigned int logIndent = 1);
     BatchEventArray getRecordedEvents(unsigned int numNeurons, ArrayBase *array) const;
 
     void writeRecordedEvents(unsigned int numNeurons, ArrayBase *array, const std::string &path) const;
@@ -433,17 +432,17 @@ private:
     }
 
     template<typename A, typename G>
-    void createEGPArrays(const G *group)
+    void createEGPArrays(const G *group, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         for(const auto &egp : adaptor.getDefs()) {
             const auto resolvedType = egp.type.resolve(getModel().getTypeContext());
-            createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name));
+            createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name), false, logIndent);
         }
     }
 
     template<typename A, typename G, typename S>
-    void createVarArrays(const G *group, size_t batchSize, bool batched, S getSizeFn)
+    void createVarArrays(const G *group, size_t batchSize, bool batched, S getSizeFn, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
@@ -455,12 +454,13 @@ private:
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t varSize = getSizeFn(var.name, varDims);
             createArray(group, var.name, resolvedType, numVarCopies * varSize,
-                        adaptor.getLoc(var.name), uninitialized);
+                        adaptor.getLoc(var.name), uninitialized, logIndent);
 
             // Loop through EGPs required to initialize neuron variable and create
             for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
                 const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
-                createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);
+                createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE,
+                            false, logIndent);
             }
         }
     }
@@ -475,7 +475,7 @@ private:
         \param batched          Should these variables ever be batched*/
     template<typename A, typename G>
     void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
-                               size_t numDelaySlots, bool batched)
+                               size_t numDelaySlots, bool batched, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         createVarArrays<A>(
@@ -486,18 +486,19 @@ private:
                 const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;
                 const size_t numElements = ((varDims & VarAccessDim::ELEMENT) ? numNeurons : 1);
                 return numVarDelaySlots * numElements;
-            });
+            },
+            logIndent);
                   
     }
 
     template<typename G>
     void createDynamicParamDestinations(const G &group, const Snippet::Base::ParamVec &params, 
-                                      bool (G::*isDynamic)(const std::string&) const)
+                                      bool (G::*isDynamic)(const std::string&) const, unsigned int logIndent = 1)
     {
         const auto &typeContext = getModel().getTypeContext();
         for(const auto &p : params) {
             if(std::invoke(isDynamic, group, p.name)) {
-                createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext));
+                createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext), logIndent);
             }
         }
     }
