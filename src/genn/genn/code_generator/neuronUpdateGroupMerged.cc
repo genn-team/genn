@@ -15,6 +15,19 @@ using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 
 //----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+template<typename G>
+std::string getEventArrayPrefix(const G &ng, size_t i, const SynapseGroupInternal &sg)
+{
+    const auto &n = ng.getGroups().at(i);
+    return (&n.get() == sg.getSrcNeuronGroup()) ? "pre" : "post";
+}
+}   // Anonymous namespace
+
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
 //----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
@@ -194,13 +207,13 @@ void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, N
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
 
     groupEnv.addField(getTimeType().createPointer(), "_st", "sT" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "sT"); },
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "ST"); },
                       "", GroupMergedFieldType::STANDARD, true);
 
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "SpkCnt"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "Spk"); });
     
     // Call callback to generate update
     genUpdate(groupEnv);
@@ -215,10 +228,10 @@ void NeuronUpdateGroupMerged::SynSpike::genCopyDelayedSpikeTimes(EnvironmentExte
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
 
     groupEnv.addField(getTimeType().createPointer(), "_st", "sT" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "sT"); },
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "ST"); },
                       "", GroupMergedFieldType::STANDARD, true);
     groupEnv.addField(getTimeType().createPointer(), "_prev_st", "prevST" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "prevST"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getArray(g, getEventArrayPrefix(ng, i, g) +"PrevST"); });
 
     // If spike times are required, copy times between delay slots
     if(ng.getArchetype().isSpikeTimeRequired()) {
@@ -916,9 +929,9 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBa
     // Add spike count and spikes to environment
     EnvironmentGroupMergedField<SynSpike, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
+                        [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "SpkCnt"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                        [&ng](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
+                        [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "Spk"); });
 
     // Update spike count
     if(ng.getArchetype().isDelayRequired()) {
@@ -1029,11 +1042,11 @@ void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike::generate(EnvironmentExterna
     // Add fields to environment
     EnvironmentGroupMergedField<SynSpike, NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(env, *this, ng);
     groupEnv.addField(getTimeType().createPointer(), "_prev_st", "prevST" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "prevST"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "PrevST"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "SpkCnt"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
-                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
+                      [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getArray(g, getEventArrayPrefix(ng, i, g) + "Spk"); });
 
     // Call callback to generate update
     genUpdate(groupEnv);

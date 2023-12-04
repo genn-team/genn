@@ -245,20 +245,21 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Create arrays for spikes
         for(const auto *sg: n.second.getFusedSpike()) {
-            createArray(sg, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "pre" : "post";
+            createArray(sg, prefix + "SpkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
                         n.second.getSpikeLocation());
-            createArray(sg, "spk", Type::Uint32, numNeuronDelaySlots, 
+            createArray(sg, prefix + "Spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation());
 
             // If neuron group needs to record its spike times
             if (n.second.isSpikeTimeRequired()) {
-                createArray(sg, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                createArray(sg, prefix + "ST", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getSpikeTimeLocation());
             }
 
             // If neuron group needs to record its previous spike times
             if (n.second.isPrevSpikeTimeRequired()) {
-                createArray(sg, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                createArray(sg, prefix + "PrevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
                             n.second.getPrevSpikeTimeLocation());
             }
         }
