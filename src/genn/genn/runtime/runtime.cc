@@ -730,9 +730,11 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                           size_t count, VarLocation location, bool uninitialized, unsigned int logIndent)
 {
-    LOGD_RUNTIME << std::string(logIndent, '\t') << "Array '" << varName << "' = " << count << " * " << type.getSize(m_Backend.get().getPointerBytes()) << " bytes (" << type.getName() << ")";
     const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location, uninitialized));
-    if(!r.second) {
+    if(r.second) {
+        LOGD_RUNTIME << std::string(logIndent, '\t') << "Array '" << varName << "' = " << count << " * " << type.getName() << "(" << r.first->second.get() << ")";
+    }
+    else {
         throw std::runtime_error("Unable to allocate array with " 
                                  "duplicate name '" + varName + "'");
     }

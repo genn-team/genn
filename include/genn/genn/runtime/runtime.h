@@ -530,6 +530,8 @@ private:
     template<typename G>
     void pushMergedGroup(const G &g)
     {
+        LOGD_RUNTIME << "Pushing merged group '" << G::name << "' index: " << g.getIndex();
+
         // Loop through groups
         const auto sortedFields = g.getSortedFields(m_Backend.get());
 
@@ -554,6 +556,7 @@ private:
         // Loop through groups in merged group
         for(unsigned int groupIndex = 0; groupIndex < g.getGroups().size(); groupIndex++) {
             // Create vector of bytes to serialise arguments into
+            LOGD_RUNTIME << "\tGroup: " << groupIndex;
             std::vector<std::byte> argumentStorage;
 
             // Create vector of arguments
@@ -572,6 +575,7 @@ private:
                         [&argumentStorage, &f, this](const ArrayBase *array)
                         {
                             // If this field should contain host pointer
+                            LOGD_RUNTIME << "\t\t" << f.name << " = array (" << array << ")";
                             const bool pointerToPointer = f.type.isPointerToPointer();
                             if(f.fieldType & CodeGenerator::GroupMergedFieldType::HOST) {
                                 array->serialiseHostPointer(argumentStorage, pointerToPointer);
@@ -595,10 +599,12 @@ private:
                         // Otherwise, if field contains numeric value
                         [&argumentStorage, &f](const Type::NumericValue &value)
                         { 
+                            LOGD_RUNTIME << "\t\t" << f.name << " = numeric (" << Type::writeNumeric(value, f.type) << ")";
                             Type::serialiseNumeric(value, f.type, argumentStorage);
                         },
                         [&argumentStorage, &f](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
                         {
+                            LOGD_RUNTIME << "\t\t" << f.name << " = dynamic numeric (" << Type::writeNumeric(value.first, f.type) << ")";
                             Type::serialiseNumeric(value.first, f.type, argumentStorage);
                         }},
                     f.getValue(*this, g.getGroups()[groupIndex], groupIndex));
