@@ -190,24 +190,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         n.generateSpikes(
                             groupEnv,
-                            [&n](EnvironmentExternalBase &env)
+                            [&n, this](EnvironmentExternalBase &env)
                             {
-                                if(n.getArchetype().isDelayRequired()) {
-                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
-                                    {
-                                        CodeStream::Scope b(env.getStream());
-                                        env.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                                    }
-                                }
-                                else {
-                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
-                                    {
-                                        CodeStream::Scope b(env.getStream());
-                                        env.printLine("$(_prev_st)[$(_spk)[i]] = $(t) - $(dt);");
-                                    }
-                                }
+                                genPrevEventTimeUpdate(env, n, true);
                             });
                     }
                     
@@ -215,24 +200,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         n.generateSpikeEvents(
                             groupEnv,
-                            [&n](EnvironmentExternalBase &env)
+                            [&n, this](EnvironmentExternalBase &env)
                             {
-                                if(n.getArchetype().isDelayRequired()) {
-                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[lastTimestepDelaySlot]; i++)");
-                                    {
-                                        CodeStream::Scope b(env.getStream());
-                                        env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                                    }
-                                }
-                                else {
-                                    // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                                    env.print("for(unsigned int i = 0; i < $(_spk_cnt_event)[0]; i++)");
-                                    {
-                                        CodeStream::Scope b(env.getStream());
-                                        env.printLine("$(_prev_set)[$(_spk_event)[i]] = $(t) - $(dt);");
-                                    }
-                                }
+                                genPrevEventTimeUpdate(env, n, false);
                             });
                     }
                 }
@@ -308,11 +278,10 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
 
                         // Generate neuron update
-                        const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
                         n.generateNeuronUpdate(
                             *this, rngEnv, 1,
                             // Emit true spikes
-                            [&n, &queueOffset, this](EnvironmentExternalBase &env)
+                            [&n, this](EnvironmentExternalBase &env)
                             {
                                 // Insert code to update WU vars
                                 n.generateWUVarUpdate(env, 1);
@@ -325,44 +294,20 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Generate spike dagta structure updates
                                 n.generateSpikes(
                                     env,
-                                    [&n, &queueOffset](EnvironmentExternalBase &env)
+                                    [&n, this](EnvironmentExternalBase &env)
                                     {
-                                        // Update spike time
-                                        if(n.getArchetype().isSpikeTimeRequired()) {
-                                            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-                                        }
-
-                                        env.print("$(_spk)[" + queueOffset + "$(_spk_cnt)");
-                                        if(n.getArchetype().isDelayRequired()) {
-                                            env.print("[*$(_spk_que_ptr)]++]");
-                                        }
-                                        else {
-                                            env.getStream() << "[0]++]";
-                                        }
-                                        env.printLine(" = $(id);");
+                                        genEmitEvent(env, n, true);
                                     });
                                
                             },
                             // Emit spike-like events
-                            [&n, &queueOffset, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                            [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                             {
                                 sg.generate(
                                     env, n,
-                                    [&n, &queueOffset](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                    [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
-                                        // Update spike event time
-                                        if(n.getArchetype().isSpikeEventTimeRequired()) {
-                                            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
-                                        }
-
-                                        env.print("$(_spk_event)[" + queueOffset + "$(_spk_cnt_event)");
-                                        if(n.getArchetype().isDelayRequired()) {
-                                            env.print("[*$(_spk_que_ptr)]++]");
-                                        }
-                                        else {
-                                            env.getStream() << "[0]++]";
-                                        }
-                                        env.printLine(" = $(id);");
+                                        genEmitEvent(env, n, false);
 
                                         // If recording is enabled
                                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -2021,6 +1966,55 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
             }
         }
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const std::string suffix = trueSpike ? "" : "_event";
+    const std::string time = trueSpike ? "st" : "set";
+    if(ng.getArchetype().isDelayRequired()) {
+        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot]; i++)");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[lastTimestepDelayOffset + $(_spk" + suffix + ")[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+        }
+    }
+    else {
+        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[0]; i++)");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[$(_spk" + suffix + ")[i]] = $(t) - $(dt);");
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+
+    // Update event time
+    if(trueSpike) {
+        if(ng.getArchetype().isSpikeTimeRequired()) {
+            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+        }
+    }
+    else {
+        if(ng.getArchetype().isSpikeEventTimeRequired()) {
+            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
+        }
+    }
+    
+    const std::string suffix = trueSpike ? "" : "_event";
+    env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
+    if(ng.getArchetype().isDelayRequired()) {
+        env.print("[*$(_spk_que_ptr)]++]");
+    }
+    else {
+        env.getStream() << "[0]++]";
+    }
+    env.printLine(" = $(id);");
 }
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const

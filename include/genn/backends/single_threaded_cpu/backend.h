@@ -226,6 +226,11 @@ private:
     void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
                                double dt, bool trueSpike) const;
 
+    void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+                                bool trueSpike) const;
+
+    void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
+
     //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
     void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const;
