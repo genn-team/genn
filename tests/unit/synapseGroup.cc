@@ -140,8 +140,8 @@ public:
     DECLARE_SNIPPET(GradedDenDelay);
 
     SET_PARAMS({"g"});
-    SET_EVENT_THRESHOLD_CONDITION_CODE("V_pre >= 0.1");
-    SET_EVENT_CODE("addToPostDelay(g * V_pre, 1);");
+    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V_pre >= 0.1");
+    SET_PRE_EVENT_CODE("addToPostDelay(g * V_pre, 1);");
 };
 IMPLEMENT_SNIPPET(GradedDenDelay);
 

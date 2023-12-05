@@ -49,10 +49,10 @@ public:
     SET_PARAMS({"VThresh"});
     SET_PRE_NEURON_VAR_REFS({{"V", "scalar"}});
 
-    SET_EVENT_THRESHOLD_CONDITION_CODE(
+    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE(
         "V > VThresh");
 
-    SET_EVENT_CODE(
+    SET_PRE_EVENT_CODE(
         "$(addToInSyn, $(g));\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseEvent);
