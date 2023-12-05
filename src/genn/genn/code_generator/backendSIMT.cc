@@ -342,10 +342,11 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                 ng.generateSpikes(
                     neuronEnv,
-                    [&ng](EnvironmentExternalBase &env)
+                    [&ng, batchSize](EnvironmentExternalBase &env)
                     {
                         if(ng.getArchetype().isDelayRequired()) {
                             // If there is a spike for this thread, set previous spike time to time of last timestep
+                            // **NOTE** spkQuePtr is updated below so this already points to last timestep
                             env.print("if($(id) < $(_spk_cnt)[lastTimestepDelaySlot])");
                             {
                                 CodeStream::Scope b(env.getStream());
@@ -353,11 +354,18 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                             }
                         }
                         else {
-                            // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                            env.print("if($(id) < $(_spk_cnt_envt)[lastTimestepDelaySlot])");
+                            // If there is a spike for this thread, set previous spike time to time of last timestep
+                            env.print("if($(id) < $(_spk_cnt)[$(batch)])");
                             {
                                 CodeStream::Scope b(env.getStream());
-                                env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
+                                env.print("$(_prev_st)[");
+                                if (batchSize == 1) {
+                                    env.print("$(_spk)[$(id)]");
+                                }
+                                else {
+                                    env.print("$(_batch_offset) + $(_spk)[$(_batch_offset) + $(id)]");
+                                }
+                                env.printLine("] = $(t) - $(dt);");
                             }
                         }
                     });
@@ -370,18 +378,12 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &en
                     [&ng, batchSize](EnvironmentExternalBase &env)
                     {
                         if(ng.getArchetype().isDelayRequired()) {
-                            // If there is a spike for this thread, set previous spike time to time of last timestep
-                            env.print("if($(id) < $(_spk_cnt_event)[$(batch)])");
+                            // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
+                            // **NOTE** spkQuePtr is updated below so this already points to last timestep
+                            env.print("if($(id) < $(_spk_cnt_event)[lastTimestepDelaySlot])");
                             {
                                 CodeStream::Scope b(env.getStream());
-                                env.print("$(_prev_set)[");
-                                if (batchSize == 1) {
-                                    env.print("$(_spk_event)[$(id)]");
-                                }
-                                else {
-                                    env.print("$(_batch_offset) + $(_spk_event)[$(_batch_offset) + $(id)]");
-                                }
-                                env.printLine("] = $(t) - $(dt);");
+                                env.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_event)[lastTimestepDelayOffset + $(id)]] = $(t) - $(dt);");
                             }
                         }
                         else {
@@ -662,7 +664,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     const std::string indexStr = std::to_string(sg.getIndex());
                     env.print("if(" + getThreadID() + " < $(_sh_spk_count_event)[" + indexStr + "])");
                     {
-                        // Use first thread to 'allocate' block of $(_spk_evnt) array for this block's spike-like events
+                        // Use first thread to 'allocate' block of $(_spk_event) array for this block's spike-like events
                         CodeStream::Scope b(env.getStream());
                         env.getStream() << "if (" << getThreadID() << " == 0)";
                         {
