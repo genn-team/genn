@@ -317,10 +317,18 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
         });     
 
     // Generate event condition
-    varEnv.print("if((");    
-    Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' event threshold condition");
-    prettyPrintExpression(getArchetype().getWUInitialiser().getPreEventThresholdCodeTokens(), 
-                          getTypeContext(), varEnv, errorHandler);
+    // **NOTE** for an incoming and outgoing synapse group to be merged together, the getPreEventHashDigest and getPostEventHashDigest 
+    // of their weight update model must match which means the pre and post event threshold condition must be the 
+    // same so we just need to pick the right one on the archetype and it'll be fine
+    varEnv.print("if((");
+    if(getArchetype().getSrcNeuronGroup() == &ng.getArchetype()) {
+        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' presynaptic event threshold condition");
+        prettyPrintExpression(getArchetype().getWUInitialiser().getPreEventThresholdCodeTokens(), getTypeContext(), varEnv, errorHandler);
+    }
+    else {
+        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic event threshold condition");
+        prettyPrintExpression(getArchetype().getWUInitialiser().getPostEventThresholdCodeTokens(), getTypeContext(), varEnv, errorHandler);
+    }
 
     varEnv.print("))");
     {
