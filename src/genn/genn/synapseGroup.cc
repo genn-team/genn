@@ -1136,8 +1136,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Utils::updateHash(getWUInitialiser().getSnippet()->getVars(), hash);
 
     Utils::updateHash(Utils::areTokensEmpty(getWUInitialiser().getSynapseDynamicsCodeTokens()), hash);
-    Utils::updateHash(isPostSpikeRequired(), hash);
-    Utils::updateHash(isPostSpikeEventRequired(), hash);
+    Utils::updateHash(isPostSpikeRequired() || isPostSpikeEventRequired(), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getWUInitialiser().getVarInitialisers()) {
