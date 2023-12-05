@@ -682,6 +682,18 @@ def test_reverse_post(backend, precision):
         $(addToPre, $(g));
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+    
+    static_pulse_reverse_event_post_model = create_weight_update_model(
+        "static_pulse_reverse_event_post",
+        post_event_code=
+        """
+        $(addToPre, $(g));
+        """,
+        post_event_threshold_condition_code=
+        """
+        (unsigned int)round(t) == id
+        """,
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
 
     model = GeNNModel(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0
@@ -692,6 +704,9 @@ def test_reverse_post(backend, precision):
         {}, {"x": 0.0})
     dense_pre_n_pop = model.add_neuron_population(
         "DensePost", 4, pre_reverse_model,
+        {}, {"x": 0.0})
+    sparse_event_pre_n_pop = model.add_neuron_population(
+        "SparseEvemtPost", 4, pre_reverse_model,
         {}, {"x": 0.0})
         
     # Create spike source array to generate one-hot pattern to decode
@@ -729,14 +744,20 @@ def test_reverse_post(backend, precision):
         dense_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_post_model, {}, {"g": dense.flatten()}),
         init_postsynaptic("DeltaCurr"))
-        
+    sparse_event_s_pop = model.add_synapse_population(
+        "SparseEventSynapse", "SPARSE", 0,
+        sparse_event_pre_n_pop, post_n_pop,
+        init_weight_update(static_pulse_reverse_event_post_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"))
+    sparse_event_s_pop.set_sparse_connections(pre_inds, post_inds)
+
     # Build model and load
     model.build()
     model.load()
 
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
-    output_populations = [sparse_pre_n_pop, dense_pre_n_pop]
+    output_populations = [sparse_pre_n_pop, sparse_event_pre_n_pop, dense_pre_n_pop]
     while model.timestep < 16:
         model.step_time()
         
