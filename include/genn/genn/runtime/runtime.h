@@ -338,13 +338,20 @@ public:
                                  getArray(group, "recordSpk"));
     }
 
-    //! Get recorded spike-like events from synapse group
-    BatchEventArray getRecordedSpikeEvents(const SynapseGroup &group) const
+    //! Get recorded presynaptic spike-like events from synapse group
+    BatchEventArray getRecordedPreSpikeEvents(const SynapseGroup &group) const
     {
         const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
-        const auto *pre = groupInternal.getSrcNeuronGroup();
-        return getRecordedEvents(pre->getNumNeurons(), 
-                                 getArray(groupInternal.getFusedSpikeEventTarget(pre), "recordSpkEvent"));
+        return getRecordedEvents(groupInternal.getSrcNeuronGroup()->getNumNeurons(), 
+                                 getFusedSrcSpikeEventArray(groupInternal, "RecordSpkEvent"));
+    }
+
+    //! Get recorded postsynaptic spike-like events from synapse group
+    BatchEventArray getRecordedPostSpikeEvents(const SynapseGroup &group) const
+    {
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return getRecordedEvents(groupInternal.getTrgNeuronGroup()->getNumNeurons(),
+                                 getFusedTrgSpikeEventArray(groupInternal, "RecordSpkEvent"));
     }
 
     //! Write recorded spikes to CSV file
@@ -353,14 +360,22 @@ public:
         return writeRecordedEvents(group.getNumNeurons(), getArray(group, "recordSpk"), path);
     }
 
-    //! Write recorded spike-like events to CSV file
-    void writeRecordedSpikeEvents(const SynapseGroup &group, const std::string &path) const
+    //! Write recorded presynaptic spike-like events to CSV file
+    void writeRecordedPreSpikeEvents(const SynapseGroup &group, const std::string &path) const
     {
         const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
-        const auto *pre = groupInternal.getSrcNeuronGroup();
-        return writeRecordedEvents(pre->getNumNeurons(), 
-                                 getArray(groupInternal.getFusedSpikeEventTarget(pre), "recordSpkEvent"),
-                                 path);
+        return writeRecordedEvents(groupInternal.getSrcNeuronGroup()->getNumNeurons(), 
+                                   getFusedSrcSpikeEventArray(groupInternal, "RecordSpkEvent"),
+                                   path);
+    }
+
+     //! Write recorded postsynaptic spike-like events to CSV file
+    void writeRecordedPostSpikeEvents(const SynapseGroup &group, const std::string &path) const
+    {
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return writeRecordedEvents(groupInternal.getTrgNeuronGroup()->getNumNeurons(), 
+                                   getFusedTrgSpikeEventArray(groupInternal, "RecordSpkEvent"),
+                                   path);
     }
 
     //! Get array associated with fused event group (either spike or spike-event)
@@ -371,6 +386,15 @@ public:
     ArrayBase *getFusedEventArray(const CodeGenerator::NeuronGroupMergedBase &ng, size_t i, 
                                   const SynapseGroupInternal &sg, const std::string &name) const;
 
+
+    ArrayBase *getFusedSrcSpikeArray(const SynapseGroupInternal &g, const std::string &name) const;
+    
+    ArrayBase *getFusedTrgSpikeArray(const SynapseGroupInternal &g, const std::string &name) const;
+    
+    ArrayBase *getFusedSrcSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const;
+
+    ArrayBase *getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const;
+   
 private:
     //----------------------------------------------------------------------------
     // Type defines

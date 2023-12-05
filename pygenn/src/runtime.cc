@@ -103,10 +103,10 @@ PYBIND11_MODULE(runtime, m)
                                 });
                  return npSpikes;
              })
-        .def("get_recorded_spike_events", 
+        .def("get_recorded_pre_spike_events", 
              [](const Runtime &r, const GeNN::SynapseGroup &group)
              {
-                 const auto spikes = r.getRecordedSpikeEvents(group);
+                 const auto spikes = r.getRecordedPreSpikeEvents(group);
                  std::vector<std::pair<pybind11::array_t<double>, pybind11::array_t<int>>> npSpikes;
                  std::transform(spikes.cbegin(), spikes.cend(), std::back_inserter(npSpikes),
                                 [](const auto &s)
@@ -116,7 +116,22 @@ PYBIND11_MODULE(runtime, m)
                                     return std::make_pair(times, ids);
                                 });
                  return npSpikes;
-             });
+             })
+        
+        .def("get_recorded_post_spike_events", 
+             [](const Runtime &r, const GeNN::SynapseGroup &group)
+             {
+                 const auto spikes = r.getRecordedPostSpikeEvents(group);
+                 std::vector<std::pair<pybind11::array_t<double>, pybind11::array_t<int>>> npSpikes;
+                 std::transform(spikes.cbegin(), spikes.cend(), std::back_inserter(npSpikes),
+                                [](const auto &s)
+                                {
+                                    const pybind11::array_t<double> times = pybind11::cast(s.first);
+                                    const pybind11::array_t<int> ids = pybind11::cast(s.second);
+                                    return std::make_pair(times, ids);
+                                });
+                 return npSpikes;
+             });;
         /*.def("get_nccl_unique_id", 
             [](SharedLibraryModel<T> &s) 
             { 

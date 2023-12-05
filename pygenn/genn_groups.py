@@ -308,8 +308,12 @@ class SynapseGroupMixin(GroupMixin):
             connect_init.snippet.get_extra_global_params(), self)
 
     @property
-    def spike_event_recording_data(self):
-        return self._model._runtime.get_recorded_spike_events(self)
+    def pre_spike_event_recording_data(self):
+        return self._model._runtime.get_recorded_pre_spike_events(self)
+    
+    @property
+    def post_spike_event_recording_data(self):
+        return self._model._runtime.get_recorded_post_spike_events(self)
 
     @property
     def weight_update_var_size(self):

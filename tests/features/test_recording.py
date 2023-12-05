@@ -125,7 +125,7 @@ def test_event_recording(backend, precision, batch_size):
     # Download recording data and decode
     model.pull_recording_buffers_from_device()
     rec_spikes = ss.spike_recording_data
-    rec_spike_events = sg.spike_event_recording_data
+    rec_spike_events = sg.pre_spike_event_recording_data
 
     # Verify spikes and spike_events are recorded correctly
     compare_events(rec_spikes, spike_times, spike_ids)

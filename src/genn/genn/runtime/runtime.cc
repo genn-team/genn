@@ -697,7 +697,8 @@ void Runtime::pullRecordingBuffersFromDevice() const
         // If spike event recording is enabled, pull array from device
         if(n.second.isSpikeEventRecordingEnabled()) {
             for(const auto *sg : n.second.getFusedSpikeEvent()) {
-                getArray(*sg, "recordSpkEvent")->pullFromDevice();
+                const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
+                getArray(*sg, prefix + "RecordSpkEvent")->pullFromDevice();
             }
         }
     }
@@ -712,6 +713,46 @@ ArrayBase *Runtime::getFusedEventArray(const CodeGenerator::NeuronGroupMergedBas
     // If the neuron group is the SOURCE of synapse group, we should use it's SOURCE prefixed array
     const std::string prefix = (&n.get() == sg.getSrcNeuronGroup()) ? "src" : "trg";
     return getArray(sg, prefix + name);
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedSrcSpikeArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group SOURCE spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getSrcNeuronGroup()));
+
+    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedTrgSpikeArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group TARGET spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getTrgNeuronGroup()));
+
+    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedSrcSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group SOURCE spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()));
+
+    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group TARGET spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getTrgNeuronGroup()));
+
+    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    return getArray(f, prefix + name); 
 }
 //----------------------------------------------------------------------------
 const ModelSpecInternal &Runtime::getModel() const

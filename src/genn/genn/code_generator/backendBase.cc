@@ -36,46 +36,6 @@ void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
                 [](const auto &, const auto &c, size_t) { return c.getSize(); });
 }
 //--------------------------------------------------------------------------
-Runtime::ArrayBase *getFusedSrcSpikeArray(const Runtime::Runtime &runtime, const SynapseGroupInternal &g, const std::string &name)
-{
-    // Get the synapse group SOURCE spike generation has been fused with
-    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getSrcNeuronGroup()));
-
-    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
-    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
-    return runtime.getArray(f, prefix + name); 
-}
-//--------------------------------------------------------------------------
-Runtime::ArrayBase *getFusedTrgSpikeArray(const Runtime::Runtime &runtime, const SynapseGroupInternal &g, const std::string &name)
-{
-    // Get the synapse group TARGET spike generation has been fused with
-    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getTrgNeuronGroup()));
-
-    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
-    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
-    return runtime.getArray(f, prefix + name); 
-}
-//--------------------------------------------------------------------------
-Runtime::ArrayBase *getFusedSrcSpikeEventArray(const Runtime::Runtime &runtime, const SynapseGroupInternal &g, const std::string &name)
-{
-    // Get the synapse group SOURCE spike generation has been fused with
-    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()));
-
-    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
-    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
-    return runtime.getArray(f, prefix + name); 
-}
-//--------------------------------------------------------------------------
-Runtime::ArrayBase *getFusedTrgSpikeEventArray(const Runtime::Runtime &runtime, const SynapseGroupInternal &g, const std::string &name)
-{
-    // Get the synapse group TARGET spike generation has been fused with
-    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getTrgNeuronGroup()));
-
-    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
-    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
-    return runtime.getArray(f, prefix + name); 
-}
-//--------------------------------------------------------------------------
 template<typename G>
 void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
@@ -224,41 +184,41 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
-                 [](const auto &runtime, const auto &g, size_t){ return getFusedSrcSpikeArray(runtime, g, "SpkCnt"); });
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "SpkCnt"); });
     env.addField(Uint32.createPointer(), "_src_spk", "srcSpk",
-                 [](const auto &runtime, const auto &g, size_t){ return getFusedSrcSpikeArray(runtime, g, "Spk"); });
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "Spk"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt_event", "srcSpkCntEvent",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeEventArray(runtime, g, "SpkCntEvent"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkCntEvent"); });
     env.addField(Uint32.createPointer(), "_src_spk_event", "srcSpkEvent",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeEventArray(runtime, g, "SpkEvent"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeArray(runtime, g, "ST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeArray(g, "ST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeArray(runtime, g, "PrevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeArray(g, "PrevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeEventArray(runtime, g, "SET"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SET"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedSrcSpikeEventArray(runtime, g, "PrevSET" ); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "PrevSET" ); });
     
     // Target neuron fields
     env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeArray(runtime, g, "SpkCnt"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "SpkCnt"); });
     env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeArray(runtime, g, "Spk"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "Spk"); });
     env.addField(Uint32.createPointer(), "_trg_spk_cnt_event", "trgSpkCntEvent",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeEventArray(runtime, g, "SpkCntEvent"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkCntEvent"); });
     env.addField(Uint32.createPointer(), "_trg_spk_event", "trgSpkEvent",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeEventArray(runtime, g, "SpkEvent"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeArray(runtime, g, "ST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "ST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeArray(runtime, g, "PrevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "PrevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_set", "trgSET",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeEventArray(runtime, g, "SET"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SET"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_set", "trgPrevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return getFusedTrgSpikeEventArray(runtime, g, "PrevSET"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "PrevSET"); });
 
     // Connectivity fields
     if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
