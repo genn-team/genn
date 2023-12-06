@@ -501,37 +501,12 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Emit true spikes
                     [&ng, this](EnvironmentExternalBase &env)
                     {
-                        if(ng.getArchetype().isTrueSpikeRequired()) {
-                            env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count), 1);");
-                            env.printLine("$(_sh_spk)[spkIdx] = $(id);");
-                        }
-                        // If recording is enabled, set bit in recording word
-                        if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                            if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord[0], 1 << " << getThreadID() << ");" << std::endl;
-                            }
-                            else {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecord[0][" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
-                            }
-                        }
-
+                        genEmitEvent(env, ng, std::nullopt);
                     },
                     // Emit spike-like events
                     [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                     {
-                        const std::string indexStr = std::to_string(sg.getIndex());
-                        env.printLine("const unsigned int spkIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count_event)[" + indexStr + "], 1);");
-                        env.printLine("$(_sh_spk_event)[" + indexStr + "][spkIdx] = $(id);");
-
-                        // If recording is enabled, set bit in recording word
-                        if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                            if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecordEvent[" << indexStr << "], 1 << " << getThreadID() << ");" << std::endl;
-                            }
-                            else {
-                                env.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkRecordEvent[" << indexStr << "][" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
-                            }
-                        }
+                        genEmitEvent(env, ng, sg.getIndex());
                     });
 
                 // Copy local stream back to local
@@ -1865,14 +1840,35 @@ void BackendSIMT::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPre
     }
 }
 //--------------------------------------------------------------------------
+void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                               std::optional<size_t> eventIndex) const
+{
+    const std::string indexStr = eventIndex ? "[" + std::to_string(*eventIndex) + "]" : "";
+    const std::string suffix = eventIndex ? "_event" : "";
+    const std::string camelSuffix = eventIndex ? "Event" : "";
+
+    env.printLine("const unsigned int eventIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count" + suffix + ")" + indexStr + ", 1);");
+    env.printLine("$(_sh_spk" + suffix + ")" + indexStr + "[eventIdx] = $(id);");
+
+    // If recording is enabled, set bit in recording word
+    const bool eventRecordingEnabled = eventIndex ? ng.getArchetype().isSpikeEventRecordingEnabled() : ng.getArchetype().isSpikeRecordingEnabled();
+    if(eventRecordingEnabled) {
+        if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
+            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) + "(&shSpkRecord" + camelSuffix + indexStr + ", 1 << " + getThreadID() + ");");
+        }
+        else {
+            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) + "(&shSpkRecord" + camelSuffix + indexStr + "[" + getThreadID() + " / 32], 1 << (" + getThreadID() + " % 32));");
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                        unsigned int batchSize, std::optional<size_t> eventIndex) const
 {
     const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
                                                         VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-    const bool trueSpike = !eventIndex;
-    const std::string indexStr = trueSpike ? "" : "[" + std::to_string(*eventIndex) + "]";
-    const std::string suffix = trueSpike ? "" : "_event";
+    const std::string indexStr = eventIndex ? "[" + std::to_string(*eventIndex) + "]" : "";
+    const std::string suffix = eventIndex ? "_event" : "";
     env.getStream() << "if (" << getThreadID() << " == 0)";
     {
         CodeStream::Scope b(env.getStream());
@@ -1893,15 +1889,15 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
 
     env.printLine("$(_spk" + suffix + ")[" + queueOffset + "$(_sh_spk_pos" + suffix + ")" + indexStr + " + " + getThreadID() + "] = n;");
                             
-    // Update spike event time
-    if(trueSpike) {
-        if(ng.getArchetype().isSpikeTimeRequired()) {
-            env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+    // Update event time
+    if(eventIndex) {
+        if(ng.getArchetype().isSpikeEventTimeRequired()) {
+            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
         }
     }
     else {
-        if(ng.getArchetype().isSpikeEventTimeRequired()) {
-            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+        if(ng.getArchetype().isSpikeTimeRequired()) {
+            env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
         }
     }
     
