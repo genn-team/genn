@@ -467,6 +467,11 @@ private:
     void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
                                double dt, unsigned int batchSize, bool trueSpike) const;
 
+    void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+                                unsigned int batchSize, bool trueSpike) const;
+    void genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                              unsigned int batchSize, std::optional<size_t> eventIndex) const;
+
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {
