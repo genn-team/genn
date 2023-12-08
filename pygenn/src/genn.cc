@@ -297,21 +297,24 @@ PYBIND11_MODULE(genn, m)
 
         .def("__and__", [](VarAccessMode a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator());
-    
+
     //! Flags defining dimensions this variables has
     pybind11::enum_<VarAccessDim>(m, "VarAccessDim")
         .value("ELEMENT", VarAccessDim::ELEMENT)
         .value("BATCH", VarAccessDim::BATCH)
-        
+
         .def("__and__", [](VarAccessDim a, VarAccessDim b){ return a & b; }, 
              pybind11::is_operator());
-    
+
     //! Supported combinations of access mode and dimension for neuron variables
     pybind11::enum_<VarAccess>(m, "VarAccess")
         .value("READ_WRITE", VarAccess::READ_WRITE)
         .value("READ_ONLY", VarAccess::READ_ONLY)
         .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
-        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON);
+        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON)
+
+        .def("__and__", [](VarAccess a, VarAccessModeAttribute b){ return a & b; },
+             pybind11::is_operator());
 
     //! Supported combinations of access mode and dimension for custom update variables
     /*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
@@ -323,7 +326,10 @@ PYBIND11_MODULE(genn, m)
         .value("REDUCE_BATCH_SUM", CustomUpdateVarAccess::REDUCE_BATCH_SUM)
         .value("REDUCE_BATCH_MAX", CustomUpdateVarAccess::REDUCE_BATCH_MAX)
         .value("REDUCE_NEURON_SUM", CustomUpdateVarAccess::REDUCE_NEURON_SUM)
-        .value("REDUCE_NEURON_MAX", CustomUpdateVarAccess::REDUCE_NEURON_MAX);
+        .value("REDUCE_NEURON_MAX", CustomUpdateVarAccess::REDUCE_NEURON_MAX)
+
+        .def("__and__", [](CustomUpdateVarAccess a, VarAccessModeAttribute b){ return a & b; },
+             pybind11::is_operator());
 
     //! Locations of variables
     pybind11::enum_<VarLocation>(m, "VarLocation")
@@ -332,10 +338,10 @@ PYBIND11_MODULE(genn, m)
         .value("ZERO_COPY", VarLocation::ZERO_COPY)
         .value("HOST_DEVICE", VarLocation::HOST_DEVICE)
         .value("HOST_DEVICE_ZERO_COPY", VarLocation::HOST_DEVICE_ZERO_COPY)
-        
+
         .def("__and__", [](VarLocation a, VarLocation b){ return a & b; }, 
              pybind11::is_operator());
-        
+
     //! Parallelism hints for synapse groups
     pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
         .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
