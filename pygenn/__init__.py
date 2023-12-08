@@ -6,7 +6,8 @@ from .genn import (create_var_ref, create_psm_var_ref, create_wu_pre_var_ref,
                    create_wu_post_var_ref, create_wu_var_ref, create_egp_ref,
                    create_psm_egp_ref, create_wu_egp_ref, 
                    CustomUpdateVarAccess, PlogSeverity, SpanType,
-                   SynapseMatrixType, VarAccess, VarAccessMode, VarLocation)
+                   SynapseMatrixType, VarAccess, VarAccessDim,
+                   VarAccessMode, VarLocation)
 from .genn_model import (GeNNModel, create_neuron_model,
                          create_postsynaptic_model,
                          create_weight_update_model,
