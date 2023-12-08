@@ -194,14 +194,14 @@ bool NeuronGroup::isPrevSpikeEventTimeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
 {
-    // If any OUTGOING synapse groups require true spikes, return true
+    // If any OUTGOING synapse groups require presynaptic spikes, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
                    [](SynapseGroupInternal *sg){ return sg->isPreSpikeRequired(); }))
     {
         return true;
     }
 
-    // If any INCOMING synapse groups require postsynaptic learning, return true
+    // If any INCOMING synapse groups require postsynaptic spikes, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                    [](SynapseGroupInternal *sg){ return sg->isPostSpikeRequired(); }))
     {
@@ -213,9 +213,21 @@ bool NeuronGroup::isTrueSpikeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventRequired() const
 {
-    // Spike like events are required if any OUTGOING synapse groups has a spike like event threshold
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroupInternal *sg){ return !sg->getWUInitialiser().getSnippet()->getPreEventThresholdConditionCode().empty(); });
+    // If any OUTGOING synapse groups require presynaptic spike events, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](SynapseGroupInternal *sg){ return sg->isPreSpikeEventRequired(); }))
+    {
+        return true;
+    }
+
+    // If any INCOMING synapse groups require postsynaptic spike events, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroupInternal *sg){ return sg->isPostSpikeEventRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const
