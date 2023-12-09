@@ -234,7 +234,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Run ML GeNN test suite
                         def commandsTest = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pytest -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
+                        pytest -s -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
                         """;
                         def statusTests = sh script:commandsTest, returnStatus:true;
                         if (statusTests != 0) {
