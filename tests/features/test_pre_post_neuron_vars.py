@@ -3,8 +3,6 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn import GeNNModel
-
 from pygenn.genn import VarAccess, VarAccessMode
 from pygenn import (create_neuron_model, create_var_ref,
                     create_weight_update_model,
@@ -87,7 +85,7 @@ post_event_weight_update_model = create_weight_update_model(
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("delay", [0, 20])
-def test_pre_post_neuron_var(backend, precision, delay):
+def test_pre_post_neuron_var(make_model, backend, precision, delay):
     # Neuron model which fires at t = id ms and every 10 ms after that
     pattern_spike_neuron_model = create_neuron_model(
         "pattern_spike_neuron",
@@ -109,9 +107,9 @@ def test_pre_post_neuron_var(backend, precision, delay):
         s = t + shift;
         """,
         var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)])
-        
 
-    model = GeNNModel(precision, "test_pre_post_neuron_var", backend=backend)
+
+    model = make_model(precision, "test_pre_post_neuron_var", backend=backend)
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations

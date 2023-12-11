@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
 from pygenn.genn import VarAccessMode, VarAccess
 
 from bitarray import bitarray
@@ -78,7 +77,7 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_connectivity_update(backend, precision, batch_size):
+def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         var_name_types=[("V", "scalar")])
@@ -182,11 +181,11 @@ def test_custom_connectivity_update(backend, precision, batch_size):
         const unsigned int delay = (id_pre * 64) + id_pre;
         add_synapse(id_pre, weight, delay, weight);
         """)
-        
-    model = GeNNModel(precision, "test_custom_connectivity_update", backend=backend)
+
+    model = make_model(precision, "test_custom_connectivity_update", backend=backend)
     model.batch_size = batch_size
     model.dt = 1.0
-    
+
     # Create pre and postsynaptic populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 64, "SpikeSource", {}, {}); 
     post_n_pop = model.add_neuron_population("PostNeurons", 64, "SpikeSource", {}, {}); 
@@ -277,7 +276,7 @@ def test_custom_connectivity_update(backend, precision, batch_size):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_connectivity_update_delay(backend, precision):
+def test_custom_connectivity_update_delay(test_wu_var, backend, precision):
     pre_neuron_model = create_neuron_model(
         "pre_neuron",
         sim_code=
@@ -351,7 +350,7 @@ def test_custom_connectivity_update_delay(backend, precision):
         }
         """)
 
-    model = GeNNModel(precision, "test_custom_connectivity_update_delay", backend=backend)
+    model = make_model(precision, "test_custom_connectivity_update_delay", backend=backend)
     model.dt = 1.0
     
     # Create pre and postsynaptic populations

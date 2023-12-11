@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel, VarAccess, VarAccessMode
+from pygenn import VarAccess, VarAccessMode
 
 from pygenn import (create_neuron_model, create_var_ref, 
                     create_weight_update_model, init_postsynaptic,
@@ -52,8 +52,8 @@ def compare_events(rec_events, event_times, event_ids):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_event_recording(backend, precision, batch_size):
-    model = GeNNModel(precision, "test_event_recording", backend=backend)
+def test_event_recording(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_event_recording", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
 

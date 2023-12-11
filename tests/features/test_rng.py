@@ -3,8 +3,6 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn import GeNNModel
-
 from pygenn import (create_current_source_model, 
                     create_custom_connectivity_update_model,
                     create_custom_update_model,
@@ -21,7 +19,7 @@ from pygenn import (create_current_source_model,
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_sim(backend, precision, batch_size):
+def test_sim(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         sim_code=
@@ -60,7 +58,7 @@ def test_sim(backend, precision, batch_size):
         pre_var_name_types=[("preUniform", "scalar"), ("preNormal", "scalar")],
         post_var_name_types=[("postUniform", "scalar"), ("postNormal", "scalar")])
 
-    model = GeNNModel(precision, "test_sim", backend=backend)
+    model = make_model(precision, "test_sim", backend=backend)
     model.batch_size = batch_size
 
     # Add neuron and current source populations
@@ -134,7 +132,7 @@ def test_sim(backend, precision, batch_size):
 @pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_init(backend, precision):
+def test_init(make_model, backend, precision):
     # How to initialise various sorts of variable
     var_init = {"uniform": ("scalar", init_var("Uniform", {"min": 0.0, "max": 1.0}), stats.uniform, []), 
                 "normal": ("scalar", init_var("Normal", {"mean": 0.0, "sd": 1.0}), stats.norm, []), 
@@ -166,7 +164,7 @@ def test_init(backend, precision):
         pre_var_name_types=create_vars("pre_"),
         post_var_name_types=create_vars("post_"))
         
-    model = GeNNModel(precision, "test_init", backend=backend)
+    model = make_model(precision, "test_init", backend=backend)
 
     ss1_pop = model.add_neuron_population("SpikeSource1", 1, "SpikeSource", {}, {});
     ss2_pop = model.add_neuron_population("SpikeSource2", 50000, "SpikeSource", {}, {});

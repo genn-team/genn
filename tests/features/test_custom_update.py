@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
 from pygenn.genn import CustomUpdateVarAccess, VarAccess, VarAccessMode
 
 from scipy.special import softmax
@@ -25,7 +24,7 @@ from pygenn import (create_current_source_model,
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update(backend, precision, batch_size):
+def test_custom_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
@@ -72,7 +71,7 @@ def test_custom_update(backend, precision, batch_size):
          """,
          var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
  
-    model = GeNNModel(precision, "test_custom_update", backend=backend)
+    model = make_model(precision, "test_custom_update", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     
@@ -216,7 +215,7 @@ def test_custom_update(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_delay(backend, precision, batch_size):
+def test_custom_update_delay(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         var_name_types=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
@@ -252,7 +251,7 @@ def test_custom_update_delay(backend, precision, batch_size):
          """,
          var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
 
-    model = GeNNModel(precision, "test_custom_update_delay", backend=backend)
+    model = make_model(precision, "test_custom_update_delay", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     
@@ -312,7 +311,7 @@ def test_custom_update_delay(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_transpose(backend, precision, batch_size):
+def test_custom_update_transpose(make_model, backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
         "static_pulse_duplicate",
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
@@ -322,7 +321,7 @@ def test_custom_update_transpose(backend, precision, batch_size):
         """)
 
 
-    model = GeNNModel(precision, "test_custom_update_transpose", backend=backend)
+    model = make_model(precision, "test_custom_update_transpose", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     
@@ -368,7 +367,7 @@ def test_custom_update_transpose(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_neuron_reduce(backend, precision, batch_size):
+def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size):
     reduction_neuron_model = create_neuron_model(
         "reduction_neuron",
         var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
@@ -403,8 +402,8 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
                   ("MaxX", "scalar", VarAccessMode.READ_ONLY),
                   ("SumExpX", "scalar", VarAccessMode.READ_ONLY),
                   ("Y", "scalar", VarAccessMode.READ_WRITE)])
-              
-    model = GeNNModel(precision, "test_custom_update_neuron_reduce", backend=backend)
+
+    model = make_model(precision, "test_custom_update_neuron_reduce", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
 
@@ -448,7 +447,7 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_update_batch_reduction(backend, precision, batch_size):
+def test_custom_update_batch_reduction(make_model, backend, precision, batch_size):
     # **TODO** once VarAccess is refactored, we should really be able to reduce neuron shared across batch dimension
     neuron_model = create_neuron_model(
         "neuron",
@@ -471,8 +470,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
         var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
                   ("SumX", "scalar", VarAccessMode.REDUCE_SUM)])
 
-    model = GeNNModel(precision, "test_custom_update_batch_reduction", 
-                      backend=backend)
+    model = make_model(precision, "test_custom_update_batch_reduction",
+                       backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     

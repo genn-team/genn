@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn.genn import SpanType, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
@@ -66,8 +64,8 @@ horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward(backend, precision):    
-    model = GeNNModel(precision, "test_forward", backend=backend)
+def test_forward(make_model, backend, precision):
+    model = make_model(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -250,8 +248,8 @@ def test_forward(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_den_delay(backend, precision):
-    model = GeNNModel(precision, "test_forward_den_delay", backend=backend)
+def test_forward_den_delay(make_model, backend, precision):
+    model = make_model(precision, "test_forward_den_delay", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -318,8 +316,8 @@ def test_forward_den_delay(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_procedural(backend, precision):
-    model = GeNNModel(precision, "test_forward_procedural", backend=backend)
+def test_forward_procedural(make_model, backend, precision):
+    model = make_model(precision, "test_forward_procedural", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -374,8 +372,8 @@ def test_forward_procedural(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_kernel(backend, precision):
-    model = GeNNModel(precision, "test_forward_kernel", backend=backend)
+def test_forward_kernel(make_model, backend, precision):
+    model = make_model(precision, "test_forward_kernel", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to present test pattern
@@ -475,8 +473,8 @@ def test_forward_kernel(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_kernel_procedural(backend, precision):
-    model = GeNNModel(precision, "test_forward_kernel_procedural", backend=backend)
+def test_forward_kernel_procedural(make_model, backend, precision):
+    model = make_model(precision, "test_forward_kernel_procedural", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to present test pattern
@@ -536,7 +534,7 @@ def test_forward_kernel_procedural(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse(backend, precision):
+def test_reverse(make_model, backend, precision):
     pre_reverse_spike_source_model = create_neuron_model(
         "pre_reverse_spike_source",
         var_name_types=[("startSpike", "unsigned int"), 
@@ -587,7 +585,7 @@ def test_reverse(backend, precision):
         """)
 
 
-    model = GeNNModel(precision, "test_reverse", backend=backend)
+    model = make_model(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
     # Create spike source arrays with extra x variable 
@@ -666,7 +664,7 @@ def test_reverse(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse_post(backend, precision):
+def test_reverse_post(make_model, backend, precision):
     pre_reverse_model = create_neuron_model(
         "pre_reverse",
         var_name_types=[("x", "scalar")],
@@ -695,7 +693,7 @@ def test_reverse_post(backend, precision):
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
 
-    model = GeNNModel(precision, "test_reverse_post", backend=backend)
+    model = make_model(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0
 
     # Add presynaptic populations to sum reverse input

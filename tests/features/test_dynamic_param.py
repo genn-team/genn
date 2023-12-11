@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn import (create_current_source_model, 
                     create_custom_connectivity_update_model,
                     create_custom_update_model,
@@ -18,7 +16,7 @@ from pygenn import (create_current_source_model,
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_dynamic_param(backend, precision):
+def test_dynamic_param(make_model, backend, precision):
     neuron_model = create_neuron_model(
         "neuron",
         sim_code=
@@ -90,7 +88,7 @@ def test_dynamic_param(backend, precision):
         pre_var_name_types=[("xDevice", "scalar"), ("xHost", "scalar"),
                             ("shift", "scalar")])
 
-    model = GeNNModel(precision, "test_dynamic_param", backend=backend)
+    model = make_model(precision, "test_dynamic_param", backend=backend)
     model.dt = 1.0
     
     shift = np.arange(0.0, 100.0, 10.0)

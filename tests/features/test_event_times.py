@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
@@ -21,7 +19,7 @@ always_spike_neuron_model = create_neuron_model(
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_spike_times(backend, precision):
+def test_spike_times(make_model, backend, precision):
     # Neuron model which fires at t = id ms and every 10 ms after that
     pattern_spike_neuron_model = create_neuron_model(
         "pattern_spike_neuron",
@@ -54,7 +52,7 @@ def test_spike_times(backend, precision):
         b = prev_st_post;
         """)
 
-    model = GeNNModel(precision, "test_spike_times", backend=backend)
+    model = make_model(precision, "test_spike_times", backend=backend)
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations
@@ -115,7 +113,7 @@ def test_spike_times(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_spike_event_times(backend, precision):
+def test_spike_event_times(make_model, backend, precision):
     # Empty neuron model
     empty_neuron_model = create_neuron_model(
         "empty_neuron")
@@ -153,7 +151,7 @@ def test_spike_event_times(backend, precision):
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
         """,)
 
-    model = GeNNModel(precision, "test_spike_event_times", backend=backend)
+    model = make_model(precision, "test_spike_event_times", backend=backend)
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations
