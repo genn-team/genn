@@ -276,7 +276,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_custom_connectivity_update_delay(test_wu_var, backend, precision):
+def test_custom_connectivity_update_delay(make_model, backend, precision):
     pre_neuron_model = create_neuron_model(
         "pre_neuron",
         sim_code=
