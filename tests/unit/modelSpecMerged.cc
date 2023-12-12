@@ -1347,8 +1347,7 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
 
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",
-                {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}},
-                {}, {}, {});
+                {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}});
          });
 }
 //--------------------------------------------------------------------------

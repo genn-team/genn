@@ -339,8 +339,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created NeuronGroup */
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
-                                     const ParamValues &paramValues,
-                                     const VarValues &varInitialisers);
+                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {});
 
     //! Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -351,7 +350,7 @@ public:
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
-                                     const ParamValues &paramValues, const VarValues &varInitialisers)
+                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {})
     {
         return addNeuronPopulation(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
     }
@@ -423,7 +422,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName,
-                                    const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences = {});
+                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, const VarReferences &neuronVarReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
@@ -434,7 +433,8 @@ public:
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
-                                    const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences = {})
+                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, 
+                                    const VarReferences &neuronVarReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
                                 targetNeuronGroupName, paramValues, varInitialisers, neuronVarReferences);
@@ -449,8 +449,8 @@ public:
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
-                                  const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const VarReferences &varReferences, const EGPReferences &egpReferences = {});
+                                  const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
+                                  const VarReferences &varReferences = {}, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom update with references to weight update model variable to the 
     //! model using a custom update model managed by the user
@@ -519,10 +519,10 @@ public:
         \return pointer to newly created CustomConnectivityUpdate */
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
                                                           const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
-                                                          const ParamValues &paramValues, const VarValues &varInitialisers,
-                                                          const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
-                                                          const WUVarReferences &varReferences, const VarReferences &preVarReferences,
-                                                          const VarReferences &postVarReferences);
+                                                          const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
+                                                          const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
+                                                          const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
+                                                          const VarReferences &postVarReferences = {});
 
     //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 
     //! postsynaptic state variables and variable references using a singleton custom connectivity update model created 
@@ -543,10 +543,10 @@ public:
     template<typename CustomConnectivityUpdateModel>
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
                                                           const std::string &targetSynapseGroupName,
-                                                          const ParamValues &paramValues, const VarValues &varInitialisers,
-                                                          const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
-                                                          const WUVarReferences &varReferences, const VarReferences &preVarReferences,
-                                                          const VarReferences &postVarReferences)
+                                                          const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
+                                                          const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
+                                                          const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
+                                                          const VarReferences &postVarReferences = {})
     {
         return addCustomConnectivityUpdate(name, updateGroupName, targetSynapseGroupName, 
                                            CustomConnectivityUpdateModel::getInstance(), paramValues,
