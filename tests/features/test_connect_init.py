@@ -56,7 +56,3 @@ def test_connect_init(make_model, backend, precision):
     # Check neurons are uniformly distributed within each row/column
     assert stats.chisquare(np.bincount(fixed_number_post_s_pop.get_sparse_post_inds(), minlength=100)).pvalue > 0.05
     assert stats.chisquare(np.bincount(fixed_number_pre_s_pop.get_sparse_pre_inds(), minlength=100)).pvalue > 0.05
-
-
-if __name__ == '__main__':
-    test_connect_init("cuda", types.Float)

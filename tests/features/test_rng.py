@@ -236,7 +236,3 @@ def test_init(make_model, backend, precision):
             # Check p-value exceed our confidence internal
             if p < confidence_interval:
                 assert False, f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})"
-
-
-if __name__ == '__main__':
-    test_init("cuda", types.Float)

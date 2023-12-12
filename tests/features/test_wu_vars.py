@@ -349,6 +349,3 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
             w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
-
-if __name__ == '__main__':
-    test_wu_var_cont("cuda", types.Float, True, 0)

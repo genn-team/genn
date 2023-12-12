@@ -206,7 +206,3 @@ def test_spike_event_times(make_model, backend, precision):
             var_value = pop.vars[var_name].values
             if not np.allclose(delayed_time, var_value):
                 assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
-
-
-if __name__ == '__main__':
-    test_spike_times("single_threaded_cpu", types.Float)

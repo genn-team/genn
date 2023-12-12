@@ -130,6 +130,3 @@ def test_event_recording(make_model, backend, precision, batch_size):
     # Verify spikes and spike_events are recorded correctly
     compare_events(rec_spikes, spike_times, spike_ids)
     compare_events(rec_spike_events, spike_times, spike_ids)
-
-if __name__ == '__main__':
-    test_event_recording("cuda", types.Float, 5)

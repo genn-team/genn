@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import pytest
 from pygenn import types
 
@@ -771,7 +771,3 @@ def test_reverse_post(make_model, backend, precision):
             output_value = np.sum(output_place_values[output_binary])
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-
-if __name__ == '__main__':
-    test_forward("cuda", types.Float)
-    

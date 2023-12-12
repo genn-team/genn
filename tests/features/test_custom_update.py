@@ -560,8 +560,3 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
         max_value = max_pop.vars["MaxX"].values
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
-
-
-if __name__ == '__main__':
-    test_custom_update("cuda", types.Float, 1)
-    

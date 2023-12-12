@@ -413,6 +413,3 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
     _check_connectivity(s_pop_2, lambda i: 63,
                         lambda i: _clear_bit(dense_bitarray, 60),
                         [(s_pop_2, "g", False)])
-
-if __name__ == '__main__':
-    test_custom_connectivity_update_delay("cuda", types.Float)

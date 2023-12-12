@@ -151,6 +151,3 @@ def test_dynamic_param(make_model, backend, precision):
 
             # Set dynamic parameter
             v.group.set_dynamic_param_value(p, model.t ** 2)
-
-if __name__ == '__main__':
-    test_dynamic_param("cuda", types.Float)

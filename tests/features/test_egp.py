@@ -180,6 +180,3 @@ def test_egp_ref(make_model, backend, precision):
 
         n_pop.vars["x"].pull_from_device()
         assert np.allclose(n_pop.vars["x"].view, correct)
-
-if __name__ == '__main__':
-    test_egp_var_init("cuda", types.Float)

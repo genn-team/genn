@@ -413,7 +413,3 @@ def test_reverse(make_model, backend, precision):
 
         assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
-
-if __name__ == '__main__':
-    test_reverse("cuda", types.Float)
-
