@@ -1319,15 +1319,15 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
     const std::array<double, 3> initParams1{1.0, 1.0, 1.0};
     const std::array<double, 3> initParams2{2.0, 1.0, 1.0};
     const std::array<double, 3> initParams3{1.0, 2.0, 1.0};
-    const std::array<double, 3> initParams4{1.0, 1.0, 1.0};
+    const std::array<double, 3> initParams4{1.0, 1.0, 2.0};
     
     // Make array of parameter tuples to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::array<double, 3>, bool> modelModifiers[] = {
         {initParams1,   true},
         {initParams1,   true},
-        {initParams2,   true},
-        {initParams3,   true},
-        {initParams4,   true}};
+        {initParams2,   false},
+        {initParams3,   false},
+        {initParams4,   false}};
     
     test(modelModifiers, 
          [](const std::array<double, 3> &params, ModelSpecInternal &model)
