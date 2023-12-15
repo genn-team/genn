@@ -404,28 +404,28 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def("add_current_source",  
              static_cast<CurrentSource* (ModelSpecInternal::*)(
-                const std::string&, const CurrentSourceModels::Base*, const std::string&, 
+                const std::string&, std::shared_ptr<const CurrentSourceModels::Base>, const std::string&, 
                 const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
-                const std::string&, const std::string&, const std::string&, const CustomConnectivityUpdateModels::Base*, 
+                const std::string&, const std::string&, const std::string&, std::shared_ptr<const CustomConnectivityUpdateModels::Base>, 
                 const ParamValues&, const VarValues&, const VarValues&, const VarValues&, 
                 const WUVarReferences&, const VarReferences&, const VarReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
             pybind11::return_value_policy::reference)
         .def("add_custom_update",  
              static_cast<CustomUpdate* (ModelSpecInternal::*)(
-                const std::string&, const std::string&, const CustomUpdateModels::Base*, 
+                const std::string&, const std::string&, std::shared_ptr<const CustomUpdateModels::Base>, 
                 const ParamValues&, const VarValues&, const VarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
             pybind11::return_value_policy::reference)
         .def("add_custom_update",  
              static_cast<CustomUpdateWU* (ModelSpecInternal::*)(
-                const std::string&, const std::string&, const CustomUpdateModels::Base*, 
+                const std::string&, const std::string&, std::shared_ptr<const CustomUpdateModels::Base>, 
                 const ParamValues&, const VarValues&, const WUVarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
             pybind11::return_value_policy::reference)
         .def("add_neuron_population",  
              static_cast<NeuronGroup* (ModelSpecInternal::*)(
-                const std::string&, unsigned int, const NeuronModels::Base*, 
+                const std::string&, unsigned int, std::shared_ptr<const NeuronModels::Base>, 
                 const ParamValues&, const VarValues&)>(&ModelSpecInternal::addNeuronPopulation), 
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
@@ -713,7 +713,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.SnippetBase
     //------------------------------------------------------------------------
-    pybind11::class_<Snippet::Base, PySnippet<>>(m, "SnippetBase")
+    pybind11::class_<Snippet::Base, std::shared_ptr<Snippet::Base>, PySnippet<>>(m, "SnippetBase")
         .def("get_params", &Snippet::Base::getParams)
         .def("get_derived_params", &Snippet::Base::getDerivedParams)
         .def("get_extra_global_params", &Snippet::Base::getExtraGlobalParams);
@@ -721,7 +721,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.InitSparseConnectivitySnippetBase
     //------------------------------------------------------------------------
-    pybind11::class_<InitSparseConnectivitySnippet::Base, Snippet::Base, PyInitSparseConnectivitySnippetBase>(m, "InitSparseConnectivitySnippetBase")
+    pybind11::class_<InitSparseConnectivitySnippet::Base, std::shared_ptr<InitSparseConnectivitySnippet::Base>, Snippet::Base, PyInitSparseConnectivitySnippetBase>(m, "InitSparseConnectivitySnippetBase")
         .def(pybind11::init<>())
         .def("get_row_build_code", &InitSparseConnectivitySnippet::Base::getRowBuildCode)
         .def("get_col_build_code", &InitSparseConnectivitySnippet::Base::getColBuildCode)
@@ -733,7 +733,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.InitToeplitzConnectivitySnippetBase
     //------------------------------------------------------------------------
-    pybind11::class_<InitToeplitzConnectivitySnippet::Base, Snippet::Base, PyInitToeplitzConnectivitySnippetBase>(m, "InitToeplitzConnectivitySnippetBase")
+    pybind11::class_<InitToeplitzConnectivitySnippet::Base, std::shared_ptr<InitToeplitzConnectivitySnippet::Base>, Snippet::Base, PyInitToeplitzConnectivitySnippetBase>(m, "InitToeplitzConnectivitySnippetBase")
         .def(pybind11::init<>())
         .def("get_diagonal_build_code", &InitToeplitzConnectivitySnippet::Base::getDiagonalBuildCode)
         .def("get_calc_max_row_length_func", &InitToeplitzConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
@@ -742,7 +742,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.InitVarSnippetBase
     //------------------------------------------------------------------------
-    pybind11::class_<InitVarSnippet::Base, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBase")
+    pybind11::class_<InitVarSnippet::Base, std::shared_ptr<InitVarSnippet::Base>, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBase")
         .def(pybind11::init<>())
 
         .def("get_code", &InitVarSnippet::Base::getCode);
@@ -795,7 +795,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CurrentSourceModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CurrentSourceModels::Base, Snippet::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
+    pybind11::class_<CurrentSourceModels::Base, std::shared_ptr<CurrentSourceModels::Base>, Snippet::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
         .def(pybind11::init<>())
 
         .def("get_vars", &CurrentSourceModels::Base::getVars)
@@ -806,7 +806,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomConnectivityUpdateModels::Base, Snippet::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
+    pybind11::class_<CustomConnectivityUpdateModels::Base, std::shared_ptr<CustomConnectivityUpdateModels::Base>, Snippet::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
         .def(pybind11::init<>())
 
         .def("get_vars", &CustomConnectivityUpdateModels::Base::getVars)
@@ -823,7 +823,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CustomUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<CustomUpdateModels::Base, Snippet::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
+    pybind11::class_<CustomUpdateModels::Base, std::shared_ptr<CustomUpdateModels::Base>, Snippet::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &CustomUpdateModels::Base::getVars)
@@ -835,7 +835,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.NeuronModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<NeuronModels::Base, Snippet::Base, PyNeuronModelBase>(m, "NeuronModelBase")
+    pybind11::class_<NeuronModels::Base, std::shared_ptr<NeuronModels::Base>, Snippet::Base, PyNeuronModelBase>(m, "NeuronModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &NeuronModels::Base::getVars)
@@ -850,7 +850,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.PostsynapticModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<PostsynapticModels::Base, Snippet::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
+    pybind11::class_<PostsynapticModels::Base, std::shared_ptr<PostsynapticModels::Base>, Snippet::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
         .def(pybind11::init<>())
         
         .def("get_vars", &PostsynapticModels::Base::getVars)
@@ -862,7 +862,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
     //------------------------------------------------------------------------
-    pybind11::class_<WeightUpdateModels::Base, Snippet::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
+    pybind11::class_<WeightUpdateModels::Base, std::shared_ptr<WeightUpdateModels::Base>, Snippet::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
         .def(pybind11::init<>())
         
         .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
@@ -886,21 +886,21 @@ PYBIND11_MODULE(genn, m)
     // genn.SparseConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
-        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<std::shared_ptr<const InitSparseConnectivitySnippet::Base>, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def_property_readonly("snippet", &InitSparseConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
         
     //------------------------------------------------------------------------
     // genn.ToeplitzConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
-        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<std::shared_ptr<const InitToeplitzConnectivitySnippet::Base>, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def_property_readonly("snippet", &InitToeplitzConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.VarInit
     //------------------------------------------------------------------------
     pybind11::class_<InitVarSnippet::Init>(m, "VarInit")
-        .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<std::shared_ptr<const InitVarSnippet::Base>, const std::unordered_map<std::string, Type::NumericValue>&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
@@ -908,14 +908,14 @@ PYBIND11_MODULE(genn, m)
     // genn.WeightUpdateInit
     //------------------------------------------------------------------------
     pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
-        .def(pybind11::init<const WeightUpdateModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<std::shared_ptr<const WeightUpdateModels::Base>, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
         .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<std::shared_ptr<const PostsynapticModels::Base>, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------

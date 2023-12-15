@@ -10,9 +10,9 @@ using namespace GeNN::PostsynapticModels;
 namespace
 {
 template<typename T>
-const Base *getBaseInstance()
+std::shared_ptr<const Base> getBaseInstance()
 {
-    return static_cast<const Base*>(T::getInstance());
+    return std::static_pointer_cast<const Base>(T::getInstance());
 }
 }
 
