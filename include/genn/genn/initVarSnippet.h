@@ -45,7 +45,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(std::shared_ptr<const Base> snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
     Init(double constant);
 
     //------------------------------------------------------------------------

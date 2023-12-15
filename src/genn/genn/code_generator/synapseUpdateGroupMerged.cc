@@ -18,7 +18,7 @@ template<typename G>
 void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
                                G &sg, unsigned int batchSize, double dt)
 {
-    const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
+    const auto wu = sg.getArchetype().getWUInitialiser().getSnippet();
 
     EnvironmentGroupMergedField<G> synEnv(env, sg);
 

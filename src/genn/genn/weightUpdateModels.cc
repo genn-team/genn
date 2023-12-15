@@ -142,7 +142,7 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
+Init::Init(std::shared_ptr<const Base> snippet, const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
            const std::unordered_map<std::string, Models::VarReference> &preNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &postNeuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers), 

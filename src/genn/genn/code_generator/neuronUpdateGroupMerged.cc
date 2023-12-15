@@ -21,7 +21,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
                                                       unsigned int batchSize)
 {
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
-    const auto *cm = getArchetype().getCurrentSourceModel();
+    const auto cm = getArchetype().getCurrentSourceModel();
 
     // Create new environment to add current source fields to neuron update group
     EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> csEnv(env, *this, ng);
@@ -77,7 +77,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                                                  NeuronUpdateGroupMerged &ng, unsigned int batchSize)
 {
     const std::string fieldSuffix =  "InSyn" + std::to_string(getIndex());
-    const auto *psm = getArchetype().getPSInitialiser().getSnippet();
+    const auto psm = getArchetype().getPSInitialiser().getSnippet();
 
     // Create new environment to add PSM fields to neuron update group
     EnvironmentGroupMergedField<InSynPSM, NeuronUpdateGroupMerged> psmEnv(env, *this, ng);
@@ -266,7 +266,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
                                                                     unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent)
 {
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
-    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
+    const auto wum = getArchetype().getWUInitialiser().getSnippet();
 
     // Create new environment to add out syn fields to neuron update group 
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
@@ -379,7 +379,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "InSynWUMPost" + std::to_string(getIndex());
-    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
+    const auto wum = getArchetype().getWUInitialiser().getSnippet();
 
     // If there are any statements to execute here
     const auto &tokens = dynamicsNotSpike ? getArchetype().getWUInitialiser().getPostDynamicsCodeTokens() : getArchetype().getWUInitialiser().getPostSpikeCodeTokens();
@@ -466,7 +466,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "OutSynWUMPre" + std::to_string(getIndex());
-    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
+    const auto wum = getArchetype().getWUInitialiser().getSnippet();
     
     // If there are any statements to execute here
     const auto &tokens = dynamicsNotSpike ? getArchetype().getWUInitialiser().getPreDynamicsCodeTokens() : getArchetype().getWUInitialiser().getPreSpikeCodeTokens();
@@ -615,7 +615,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                                    BackendBase::HandlerEnv genEmitTrueSpike,
                                                    BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged::SynSpikeEvent> genEmitSpikeLikeEvent)
 {
-    const NeuronModels::Base *nm = getArchetype().getNeuronModel();
+    const auto nm = getArchetype().getNeuronModel();
  
     // Add default input variable
     // **NOTE** this is hidden as only their chosen target gets exposed to PSM and current source

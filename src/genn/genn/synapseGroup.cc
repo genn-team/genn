@@ -566,7 +566,7 @@ bool SynapseGroup::canPSBeFused(const NeuronGroup *ng) const
     // If any postsynaptic model variables aren't initialised to constant values, this synapse group's postsynaptic model can't be merged
     // **NOTE** hash check will compare these constant values
     if(std::any_of(getPSInitialiser().getVarInitialisers().cbegin(), getPSInitialiser().getVarInitialisers().cend(), 
-                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (std::dynamic_pointer_cast<const InitVarSnippet::Constant>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
@@ -614,7 +614,7 @@ bool SynapseGroup::canWUSpikeEventBeFused(const NeuronGroup *ng) const
     // **NOTE** hash check will compare these constant values
     const auto &varInitialisers = presynaptic ? getWUInitialiser().getPreVarInitialisers() : getWUInitialiser().getPostVarInitialisers();
     if(std::any_of(varInitialisers.cbegin(), varInitialisers.cend(), 
-                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (std::dynamic_pointer_cast<const InitVarSnippet::Constant>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
@@ -648,7 +648,7 @@ bool SynapseGroup::canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const
     // **NOTE** hash check will compare these constant values
     const auto &varInitialisers = presynaptic ? getWUInitialiser().getPreVarInitialisers() : getWUInitialiser().getPostVarInitialisers();
     if(std::any_of(varInitialisers.cbegin(), varInitialisers.cend(), 
-                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (std::dynamic_pointer_cast<const InitVarSnippet::Constant>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }

@@ -384,7 +384,7 @@ private:
             EnvironmentGroupMergedField<G> groupEnv(env, cg);
 
             // Loop through variables
-            const auto *cm = cg.getArchetype().getCustomUpdateModel();
+            const auto cm = cg.getArchetype().getCustomUpdateModel();
             for(const auto &v : cm->getVars()) {
                 // If variable is reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {

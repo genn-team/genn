@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -19,21 +20,20 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_SNIPPET(TYPE)                           \
-private:                                                \
-    GENN_EXPORT static TYPE *s_Instance;                \
-public:                                                 \
-    static const TYPE *getInstance()                    \
-    {                                                   \
-        if(s_Instance == NULL)                          \
-        {                                               \
-            s_Instance = new TYPE;                      \
-        }                                               \
-        return s_Instance;                              \
+#define DECLARE_SNIPPET(TYPE)                                   \
+private:                                                        \
+    GENN_EXPORT static std::shared_ptr<const TYPE> s_Instance;  \
+public:                                                         \
+    static std::shared_ptr<const TYPE> getInstance()            \
+    {                                                           \
+        if(!s_Instance) {                                       \
+            s_Instance = std::make_shared<const TYPE>();        \
+        }                                                       \
+        return s_Instance;                                      \
     }
 
 
-#define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL
+#define IMPLEMENT_SNIPPET(TYPE) std::shared_ptr<const TYPE> TYPE::s_Instance
 
 #define SET_PARAMS(...) virtual ParamVec getParams() const override{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
@@ -210,7 +210,7 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
+    Init(std::shared_ptr<const SnippetBase> snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
         : m_Snippet(snippet), m_Params(params)
     {
     }
@@ -218,7 +218,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    const SnippetBase *getSnippet() const{ return m_Snippet; }
+    std::shared_ptr<const SnippetBase> getSnippet() const{ return m_Snippet; }
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
@@ -241,7 +241,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const SnippetBase *m_Snippet;
+    std::shared_ptr<const SnippetBase> m_Snippet;
     std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
 };

@@ -84,7 +84,7 @@ public:
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
 
     //! Gets the neuron model used by this group
-    const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
+    std::shared_ptr<const NeuronModels::Base> getNeuronModel() const{ return m_NeuronModel; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
@@ -134,7 +134,7 @@ public:
     bool isSpikeEventRecordingEnabled() const { return m_SpikeEventRecordingEnabled; }
 
 protected:
-    NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
+    NeuronGroup(const std::string &name, int numNeurons, std::shared_ptr<const NeuronModels::Base> neuronModel,
                 const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -239,7 +239,7 @@ private:
 
     const unsigned int m_NumNeurons;
 
-    const NeuronModels::Base *m_NeuronModel;
+    std::shared_ptr<const NeuronModels::Base> m_NeuronModel;
     const std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;

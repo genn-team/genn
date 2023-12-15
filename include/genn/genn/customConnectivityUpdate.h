@@ -50,7 +50,7 @@ public:
     const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom connectivity update model used by this group
-    const CustomConnectivityUpdateModels::Base *getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
+    std::shared_ptr<const CustomConnectivityUpdateModels::Base> getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const { return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
@@ -87,7 +87,7 @@ public:
 
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
-                             const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
+                             std::shared_ptr<const CustomConnectivityUpdateModels::Base> customConnectivityUpdateModel,
                              const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
@@ -145,7 +145,7 @@ private:
     const std::string m_UpdateGroupName;
     SynapseGroupInternal *m_SynapseGroup;
 
-    const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
+    std::shared_ptr<const CustomConnectivityUpdateModels::Base> m_CustomConnectivityUpdateModel;
     const std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;

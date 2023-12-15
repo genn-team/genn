@@ -48,7 +48,7 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 // GeNN::PostsynapticModels::Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
+Init::Init(std::shared_ptr<const Base> snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_NeuronVarReferences(neuronVarReferences)

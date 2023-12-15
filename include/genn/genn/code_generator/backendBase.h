@@ -476,7 +476,7 @@ private:
     {
         // Loop through variables
         std::vector<ReductionTarget> reductionTargets;
-        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        const auto cm = cg.getArchetype().getCustomUpdateModel();
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {

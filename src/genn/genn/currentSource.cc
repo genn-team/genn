@@ -52,7 +52,7 @@ void CurrentSource::setTargetVar(const std::string &varName)
     }
 }
 //----------------------------------------------------------------------------
-CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+CurrentSource::CurrentSource(const std::string &name, std::shared_ptr<const CurrentSourceModels::Base> currentSourceModel,
                              const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
                              VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)

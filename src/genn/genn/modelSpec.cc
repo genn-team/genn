@@ -155,7 +155,7 @@ unsigned int ModelSpec::getNumNeurons() const
                            });
 }
 // ---------------------------------------------------------------------------
-NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
+NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, std::shared_ptr<const NeuronModels::Base> model,
                                             const ParamValues &paramValues, const VarValues &varInitialisers)
 {
     // Add neuron group to map
@@ -186,7 +186,7 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
     }
 }
 // ---------------------------------------------------------------------------
-CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName, 
+CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, std::shared_ptr<const CurrentSourceModels::Base> model, const std::string &targetNeuronGroupName, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences)
 {
     auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
@@ -207,7 +207,7 @@ CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName,
     }
 }
 // ---------------------------------------------------------------------------
-CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
+CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, std::shared_ptr<const CustomUpdateModels::Base> model,
                                          const ParamValues &paramValues, const VarValues &varInitialisers,
                                          const VarReferences &varReferences, const EGPReferences &egpReferences)
 {
@@ -226,8 +226,27 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
     }
 }
 // ---------------------------------------------------------------------------
+CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, std::shared_ptr<const CustomUpdateModels::Base>  model, 
+                                           const ParamValues &paramValues, const VarValues &varInitialisers,
+                                           const WUVarReferences &varReferences, const EGPReferences &egpReferences)
+{
+    // Add neuron group to map
+    auto result = m_CustomWUUpdates.try_emplace(
+        name,
+        name, updateGroupName, model,
+        paramValues, varInitialisers, varReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+// ---------------------------------------------------------------------------
 CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
-                                                                 const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                                 const std::string &targetSynapseGroupName, std::shared_ptr<const CustomConnectivityUpdateModels::Base> model, 
                                                                  const ParamValues &paramValues, const VarValues &varInitialisers,
                                                                  const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
                                                                  const WUVarReferences &varReferences, const VarReferences &preVarReferences,
@@ -246,25 +265,6 @@ CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::stri
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a custom connectivity update with duplicate name:" + name);
-    }
-    else {
-        return &result.first->second;
-    }
-}
-// ---------------------------------------------------------------------------
-CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
-                                           const ParamValues &paramValues, const VarValues &varInitialisers,
-                                           const WUVarReferences &varReferences, const EGPReferences &egpReferences)
-{
-    // Add neuron group to map
-    auto result = m_CustomWUUpdates.try_emplace(
-        name,
-        name, updateGroupName, model,
-        paramValues, varInitialisers, varReferences, egpReferences,
-        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
-
-    if(!result.second) {
-        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
     }
     else {
         return &result.first->second;

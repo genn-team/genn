@@ -338,7 +338,7 @@ public:
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created NeuronGroup */
-    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, std::shared_ptr<const NeuronModels::Base> model,
                                      const ParamValues &paramValues = {}, const VarValues &varInitialisers = {});
 
     //! Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
@@ -421,7 +421,7 @@ public:
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
-    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName,
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, std::shared_ptr<const CurrentSourceModels::Base> model, const std::string &targetNeuronGroupName,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, const VarReferences &neuronVarReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
@@ -448,7 +448,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
-    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
+    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, std::shared_ptr<const CustomUpdateModels::Base> model,
                                   const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                   const VarReferences &varReferences = {}, const EGPReferences &egpReferences = {});
 
@@ -461,7 +461,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
-    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
+    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, std::shared_ptr<const CustomUpdateModels::Base> model, 
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
                                     const WUVarReferences &varReferences, const EGPReferences &egpReferences = {});
 
@@ -518,7 +518,7 @@ public:
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomConnectivityUpdate */
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
-                                                          const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                          const std::string &targetSynapseGroupName, std::shared_ptr<const CustomConnectivityUpdateModels::Base> model, 
                                                           const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                                           const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
                                                           const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},

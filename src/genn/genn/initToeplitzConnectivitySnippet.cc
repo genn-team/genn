@@ -34,7 +34,7 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
+Init::Init(std::shared_ptr<const Base> snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
 :   Snippet::Init<Base>(snippet, params)
 {
     // Validate

@@ -552,7 +552,7 @@ public:
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
-        const auto *snippet = initialiser.getSnippet();
+        const auto snippet = initialiser.getSnippet();
         for(const auto &p : snippet->getParams()) {
             // If parameter is dynamic
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
@@ -590,7 +590,7 @@ public:
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
-        const auto *snippet = initialiser.getSnippet();
+        const auto snippet = initialiser.getSnippet();
         for(const auto &d : snippet->getDerivedParams()) {
             // If parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
@@ -616,7 +616,7 @@ public:
     {
         // Loop through parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
-        const auto *snippet = initialiser.getSnippet();
+        const auto snippet = initialiser.getSnippet();
         for(const auto &p : snippet->getParams()) {
             // If parameter is heterogeneous, add field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
@@ -642,7 +642,7 @@ public:
     {
         // Loop through derived parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
-        const auto *snippet = initialiser.getSnippet();
+        const auto snippet = initialiser.getSnippet();
         for(const auto &d : snippet->getDerivedParams()) {
             // If derived parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());

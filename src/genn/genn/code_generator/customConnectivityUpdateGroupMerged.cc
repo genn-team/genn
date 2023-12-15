@@ -101,7 +101,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                   {updateEnv.addInitialiser("const " + indexTypeName + " synStride = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
 
     // Substitute parameter and derived parameter names
-    const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+    const auto cm = getArchetype().getCustomConnectivityUpdateModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                         &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
                         &CustomConnectivityUpdateInternal::isParamDynamic);
@@ -400,7 +400,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
 
         // Substitute parameter and derived parameter names
-        const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+        const auto cm = getArchetype().getCustomConnectivityUpdateModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                            &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
                            &CustomConnectivityUpdateInternal::isParamDynamic);

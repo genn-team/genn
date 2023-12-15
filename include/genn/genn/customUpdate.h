@@ -44,7 +44,7 @@ public:
     const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom update model used by this group
-    const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
+    std::shared_ptr<const CustomUpdateModels::Base> getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
@@ -67,7 +67,7 @@ public:
     VarAccessDim getDims() const{ return m_Dims; }
 
 protected:
-    CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+    CustomUpdateBase(const std::string &name, const std::string &updateGroupName, std::shared_ptr<const CustomUpdateModels::Base> customUpdateModel, 
                      const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                      const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -185,7 +185,7 @@ private:
     std::string m_Name;
     std::string m_UpdateGroupName;
 
-    const CustomUpdateModels::Base *m_CustomUpdateModel;
+    std::shared_ptr<const CustomUpdateModels::Base> m_CustomUpdateModel;
     std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
@@ -279,7 +279,7 @@ public:
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
+                 std::shared_ptr<const CustomUpdateModels::Base> customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                  const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -332,7 +332,7 @@ public:
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
+                   std::shared_ptr<const CustomUpdateModels::Base> customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                    const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 

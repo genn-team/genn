@@ -51,7 +51,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const auto cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
                     &CustomUpdateGroupMerged::isParamHeterogeneous,
                     &CustomUpdateInternal::isParamDynamic);
@@ -180,7 +180,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const auto cm = getArchetype().getCustomUpdateModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
                     &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
                     &CustomUpdateWUInternal::isParamDynamic);

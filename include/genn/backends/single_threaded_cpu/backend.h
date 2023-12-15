@@ -242,7 +242,7 @@ private:
     template<typename G, typename R>
     void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
     {
-        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        const auto cm = cg.getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
             if(v.access & VarAccessModeAttribute::REDUCE) {
