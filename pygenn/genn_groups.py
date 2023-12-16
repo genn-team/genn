@@ -228,6 +228,10 @@ class NeuronGroupMixin(GroupMixin):
         self.extra_global_params = prepare_egps(
             self.neuron_model.get_extra_global_params(), self)
 
+        # **YUCK** in order to ensure model stays in scope
+        # as long as the group, keep Python reference
+        self._neuron_model = self.neuron_model
+
     @property
     def spike_recording_data(self):
         return self._model._runtime.get_recorded_spikes(self)
@@ -306,6 +310,11 @@ class SynapseGroupMixin(GroupMixin):
             connect_init = self.sparse_connectivity_initialiser
         self.connectivity_extra_global_params = prepare_egps(
             connect_init.snippet.get_extra_global_params(), self)
+        
+        # **YUCK** in order to ensure models stays in scope
+        # as long as the group, keep Python reference
+        self._ps_model = self.ps_initialiser.snippet
+        self._wu_model = self.wu_initialiser.snippet
 
     @property
     def pre_spike_event_recording_data(self):
@@ -607,6 +616,10 @@ class CurrentSourceMixin(GroupMixin):
         self.extra_global_params = prepare_egps(
             self.current_source_model.get_extra_global_params(), self)
         
+        # **YUCK** in order to ensure model stays in scope
+        # as long as the group, keep Python reference
+        self._current_source_model = self.current_source_model
+
     @property
     def size(self):
         """Number of neuron in the injected population"""
@@ -647,7 +660,11 @@ class CustomUpdateMixin(GroupMixin):
                                  var_space, self)
         self.extra_global_params = prepare_egps(
             self.custom_update_model.get_extra_global_params(), self)
- 
+        
+        # **YUCK** in order to ensure model stays in scope
+        # as long as the group, keep Python reference
+        self._custom_update_model = self.custom_update_model
+
     def load(self):
         batch_size = (self._model.batch_size
                       if self._dims & VarAccessDim.BATCH
@@ -682,6 +699,10 @@ class CustomUpdateWUMixin(GroupMixin):
                                  var_space, self, SynapseVariable)
         self.extra_global_params = prepare_egps(
             self.custom_update_model.get_extra_global_params(), self)
+        
+        # **YUCK** in order to ensure model stays in scope
+        # as long as the group, keep Python reference
+        self._custom_update_model = self.custom_update_model
 
     def load(self):
         # Assert that population doesn't have procedural connectivity
@@ -734,7 +755,11 @@ class CustomConnectivityUpdateMixin(GroupMixin):
                                       post_var_space, self)
         self.extra_global_params = prepare_egps(
             self.model.get_extra_global_params(), self)
-    
+        
+        # **YUCK** in order to ensure model stays in scope
+        # as long as the group, keep Python reference
+        self._model = self.model
+
     @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
         return self.vars[var_name].values
