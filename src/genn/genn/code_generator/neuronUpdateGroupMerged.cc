@@ -712,8 +712,14 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     neuronEnv.getStream() << "// calculate membrane potential" << std::endl;
 
+    // **YUCK** because we want local variables declared in sim code to be accessible in 
+    // threshold condition and reset, manually create internal environments here
+    Transpiler::TypeChecker::EnvironmentInternal neuronTypeCheckEnv(neuronEnv);
+    Transpiler::PrettyPrinter::EnvironmentInternal neuronPrettyPrintEnv(neuronEnv);
+    
     Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' sim code");
-    prettyPrintStatements(getArchetype().getSimCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
+    prettyPrintStatements(getArchetype().getSimCodeTokens(), getTypeContext(), 
+                          neuronTypeCheckEnv, neuronPrettyPrintEnv, errorHandler);
 
     {
         // Generate var update for outgoing synaptic populations with presynaptic update code
@@ -746,7 +752,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         neuronEnv.getStream() << "if ((";
         
         Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' threshold condition code");
-        prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
+        prettyPrintExpression(getArchetype().getThresholdConditionCodeTokens(), getTypeContext(), 
+                              neuronTypeCheckEnv, neuronPrettyPrintEnv, errorHandler);
             
         neuronEnv.getStream() << ")";
         if (nm->isAutoRefractoryRequired()) {
@@ -762,7 +769,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                 neuronEnv.getStream() << "// spike reset code" << std::endl;
                 
                 Transpiler::ErrorHandler errorHandler("Neuron group '" + getArchetype().getName() + "' reset code");
-                prettyPrintStatements(getArchetype().getResetCodeTokens(), getTypeContext(), neuronEnv, errorHandler);
+                prettyPrintStatements(getArchetype().getResetCodeTokens(), getTypeContext(), 
+                                      neuronTypeCheckEnv, neuronPrettyPrintEnv, errorHandler);
             }
         }
 
