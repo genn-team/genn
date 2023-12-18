@@ -108,21 +108,6 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         }
         env.printLine("const unsigned int npost = $(_row_length)[preInd];");
 
-        /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-            os << "if(";
-
-            Substitutions threshSubs(&popSubs);
-            threshSubs.addVarSubstitution("id_pre", "preInd");
-
-            // Generate weight update threshold condition
-            sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
-
-            // end code substitutions ----
-            os << ")";
-
-            os << CodeStream::OB(130);
-        }*/
-
         if(numThreadsPerSpike > 1) {
             env.getStream() << "for(unsigned int i = thread; i < npost; i += " << numThreadsPerSpike << ", synAddress += " << numThreadsPerSpike << ")";
         }
@@ -154,10 +139,6 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             
         }
 
-        /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-            os << CodeStream::CB(130);
-        }*/
-        
         // Add lOutPre to global memory
         if(sg.getArchetype().isPresynapticOutputRequired()) {
             env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "preInd") + "], lOutPre);");
@@ -270,24 +251,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                     
                 }
 
-                /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    env.getStream() << "if(";
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-                        env.getStream() << "(B(group->gp[gid / 32], gid & 31)) && ";
-                    }
-
-                    Substitutions threshSubs(&popSubs);
-                    threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
-
-                    // Generate weight update threshold condition
-                    sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
-
-                    // end code substitutions ----
-                    os << ")";
-                    os << CodeStream::OB(130);
-                }
-                else */if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     env.getStream() << "if (B(" << env["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(135);
                 }
 
@@ -344,10 +308,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                     synEnv.getStream() << CodeStream::CB(140); // end if (id < npost)
                 }
 
-                /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    os << CodeStream::CB(130); // end if (eCode)
-                }
-                else */if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     env.getStream() << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
                 }
             }
@@ -653,19 +614,6 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
             {
                 CodeStream::Scope b(env.getStream());
 
-                /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    os << "if(";
-
-                    Substitutions threshSubs(&popSubs);
-                    threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
-
-                    // Generate weight update threshold condition
-                    sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
-
-                    os << ")";
-                    os << CodeStream::OB(130);
-                }*/
-
                 // Read row word
                 env.printLine("uint32_t connectivityWord = $(_gp)[($(_sh_spk" + eventSuffix + ")[j] * rowWords) + $(id)];");
 
@@ -706,11 +654,6 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
 
                     synEnv.getStream() << "ibit++;" << std::endl;
                 }
-
-
-                /*if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                    os << CodeStream::CB(130); // end if (eCode)
-                }*/
             }
         }
     }
