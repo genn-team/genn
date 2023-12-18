@@ -537,7 +537,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // **NOTE** we do this right at the top so that local copies can be used by child groups
                     // **NOTE** always copy variables if variable is delayed
                     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
-                        ng, ng, ng.getTypeContext(), wuEnv, "", "l", true, true,
+                        ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
                         [batchSize, &ng](const std::string &varName, VarAccess d)
                         {
                             const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());

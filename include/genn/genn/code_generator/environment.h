@@ -432,7 +432,7 @@ public:
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
              const std::vector<size_t> &initialisers = {})
     {
-        this->addInternal(type, name, std::make_tuple(false, false, LazyString{value, *this}, std::nullopt), initialisers);
+        this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -923,10 +923,10 @@ public:
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
                               const std::string &fieldSuffix, const std::string &localPrefix,
-                              bool hidden, bool allowDuplicates, PolicyArgs&&... policyArgs)
+                              bool hidden, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), 
         m_FieldGroup(fieldGroup),  m_Context(context), m_Contents(m_ContentsStream), 
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_AllowDuplicates(allowDuplicates)
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -960,8 +960,7 @@ public:
                                         [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
                                             return this->getArray(runtime, group.getGroups().at(i), v);
-                                        },
-                                        GroupMergedFieldType::STANDARD, m_AllowDuplicates);
+                                        });
 
             if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
                 getContextStream() << "const ";
@@ -1049,7 +1048,6 @@ private:
     CodeStream m_Contents;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    bool m_AllowDuplicates;
     std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
 };
 

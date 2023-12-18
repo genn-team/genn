@@ -43,7 +43,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false, false,
+        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -126,7 +126,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false, false,
+        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -194,9 +194,7 @@ void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, N
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
 
     groupEnv.addField(getTimeType().createPointer(), "_st", "sT" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "ST"); },
-                      "", GroupMergedFieldType::STANDARD, true);
-
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "ST"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCnt"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
@@ -215,8 +213,7 @@ void NeuronUpdateGroupMerged::SynSpike::genCopyDelayedSpikeTimes(EnvironmentExte
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
 
     groupEnv.addField(getTimeType().createPointer(), "_st", "sT" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "ST"); },
-                      "", GroupMergedFieldType::STANDARD, true);
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "ST"); });
     groupEnv.addField(getTimeType().createPointer(), "_prev_st", "prevST" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "PrevST"); });
 
@@ -246,12 +243,10 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
 
     groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "SET"); },
-                      "", GroupMergedFieldType::STANDARD, true);
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "SET"); });
 
     groupEnv.addField(Type::Uint32.createPointer(), "_record_spk_event", "recordSpkEvent" + fieldSuffix,
-                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "RecordSpkEvent"); },
-                      "", GroupMergedFieldType::STANDARD, true);
+                      [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "RecordSpkEvent"); });
 
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCntEvent"); });
@@ -274,8 +269,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     synEnv.getStream() << "// spike event condition " << getIndex() << std::endl;
     
     synEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
-                    [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "SET"); },
-                    "", GroupMergedFieldType::STANDARD, true);
+                    [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "SET"); });
     synEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET" + fieldSuffix,
                     [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "PrevSET"); });
      
@@ -299,10 +293,9 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** always copy variables if synapse group is delayed
-    // **NOTE** duplicates are allowed here as dynamics and spike might add same field
     const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
     EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
+        *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
         [batchSize, delayed, &ng](const std::string&, VarAccess d)
         {
             return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -400,10 +393,9 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
   
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
-        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -430,7 +422,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
     if(getArchetype().getBackPropDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
          // Create environment and add fields for variable 
         EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
-        varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false, true);
+        varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false);
         
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
@@ -487,10 +479,9 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
-        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -517,7 +508,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
     if(getArchetype().getDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
         // Create environment and add fields for variable 
         EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
-        varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false, true);
+        varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false);
 
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPreVars()) {
@@ -635,7 +626,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true, true,
+        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
         [batchSize, this](const std::string &varName, VarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
