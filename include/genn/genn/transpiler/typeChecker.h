@@ -87,10 +87,10 @@ typedef std::function<void(EnvironmentBase&, ErrorHandlerBase&)> StatementHandle
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment, 
                           const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
                           StatementHandler forEachSynapseHandler = nullptr);
 
-ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentBase &environment, 
+ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentInternal &environment, 
                           const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 }   // namespace GeNN::Transpiler::TypeChecker

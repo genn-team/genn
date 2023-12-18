@@ -484,17 +484,15 @@ std::string EnvironmentInternal::getName(const std::string &name, std::optional<
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentBase &environment, 
+void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentInternal &environment, 
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
                                             StatementHandler forEachSynapseHandler)
 {
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, context, resolvedTypes, forEachSynapseHandler);
+    Visitor visitor(statements, environment, context, resolvedTypes, forEachSynapseHandler);
 }
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment,
+void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
 {
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, internalEnvironment, context, resolvedTypes);
+    Visitor visitor(expression, environment, context, resolvedTypes);
 }

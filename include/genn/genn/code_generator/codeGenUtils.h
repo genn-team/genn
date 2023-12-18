@@ -55,17 +55,22 @@ inline size_t padSize(size_t size, size_t blockSize)
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
 
-//--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing an expression
- */
- //--------------------------------------------------------------------------
+//! Parse, type check and pretty print previously scanned vector of tokens representing an expression
+GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler);
+
+//! Parse, type check and pretty print previously scanned vector of tokens representing an expression
 GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                                        EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler);
 
-//--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing a statemebt
- */
- //--------------------------------------------------------------------------
+//! Parse, type check and pretty print previously scanned vector of tokens representing a statement
+GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext,
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
+                                       Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
+
+//! Parse, type check and pretty print previously scanned vector of tokens representing a statement
 GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
                                        Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);

@@ -879,22 +879,20 @@ std::vector<Type::ResolvedType> EnvironmentInternal::getTypes(const Token &name,
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment, 
                                                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler,
                                                          StatementHandler forEachSynapseHandler)
 {
     ResolvedTypeMap expressionTypes;
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, expressionTypes, 
+    Visitor visitor(statements, environment, expressionTypes, 
                     context, errorHandler, forEachSynapseHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentInternal &environment,
                                                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, internalEnvironment, expressionTypes, context, errorHandler);
+    Visitor visitor(expression, environment, expressionTypes, context, errorHandler);
     return expressionTypes;
 }

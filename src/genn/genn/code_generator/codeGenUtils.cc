@@ -47,7 +47,8 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
 }
 //----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
-                           EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler)
 {
     using namespace Transpiler;
 
@@ -58,16 +59,28 @@ void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const T
     }
 
     // Resolve types
-    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, typeContext, errorHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeCheckEnv, typeContext, errorHandler);
     if(errorHandler.hasError()) {
         throw std::runtime_error("Type check error " + errorHandler.getContext());
     }
 
     // Pretty print
-    PrettyPrinter::print(expression, env, typeContext, resolvedTypes);
+    PrettyPrinter::print(expression, prettyPrintEnv, typeContext, resolvedTypes);
+}
+//----------------------------------------------------------------------------
+void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                           EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
+{
+    using namespace Transpiler;
+
+    // Create top-level internal environments and pretty-print
+    TypeChecker::EnvironmentInternal typeCheckEnv(env);
+    PrettyPrinter::EnvironmentInternal prettyPrintEnv(env);
+    prettyPrintExpression(tokens, typeContext, typeCheckEnv, prettyPrintEnv, errorHandler);
 }
  //--------------------------------------------------------------------------
-void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext,
+                           Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
                            Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                            Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
@@ -80,13 +93,28 @@ void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const T
     }
 
     // Resolve types
-    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, env, typeContext, errorHandler, forEachSynapseTypeCheckHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, typeCheckEnv, typeContext, 
+                                                errorHandler, forEachSynapseTypeCheckHandler);
     if(errorHandler.hasError()) {
         throw std::runtime_error("Type check error " + errorHandler.getContext());
     }
 
     // Pretty print
-    PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);
+    PrettyPrinter::print(updateStatements, prettyPrintEnv, typeContext, 
+                         resolvedTypes, forEachSynapsePrettyPrintHandler);
+}
+ //--------------------------------------------------------------------------
+void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+                           Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                           Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
+{
+    using namespace Transpiler;
+
+    // Create top-level internal environments and pretty-print
+    TypeChecker::EnvironmentInternal typeCheckEnv(env);
+    PrettyPrinter::EnvironmentInternal prettyPrintEnv(env);
+    prettyPrintStatements(tokens, typeContext, typeCheckEnv, prettyPrintEnv, errorHandler,
+                          forEachSynapseTypeCheckHandler, forEachSynapsePrettyPrintHandler);
 }
 //--------------------------------------------------------------------------
 std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env)
