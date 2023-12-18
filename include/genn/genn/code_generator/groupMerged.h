@@ -362,24 +362,14 @@ public:
     }
 
     void addField(const Type::ResolvedType &type, const std::string &name, typename ChildGroupMerged<G>::GetFieldValueFunc getFieldValue,
-                  GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD, bool allowDuplicate = false)
+                  GroupMergedFieldType fieldType = GroupMergedFieldType::STANDARD)
     {
         // Add field to data structure
         auto r = m_Fields.insert({name, type, fieldType, getFieldValue});
 
-        // If field wasn't successfully inserted
-        if(!r.second) {
-            // If duplicate fields are allowed
-            if(allowDuplicate) {
-                // If other properties of the field don't match
-                if(r.first->type != type || r.first->fieldType != fieldType) {
-                    throw std::runtime_error("Unable to add duplicate field '" + name + "' with different properties to merged group");
-                }
-            }
-            // Otherwise, give error
-            else {
-                throw std::runtime_error("Unable to add duplicate field '" + name + "' to merged group");
-            }
+        // If field wasn't successfully and inserted other properties of the field don't match
+        if(!r.second && (r.first->type != type || r.first->fieldType != fieldType)) {
+            throw std::runtime_error("Unable to add duplicate field '" + name + "' with different properties to merged group");
         }
      }
 

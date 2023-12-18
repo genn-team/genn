@@ -165,7 +165,7 @@ public:
     const G &getGroup() const{ return m_Group; }
 
 protected:
-    using Payload = std::tuple<bool, bool, LazyString, std::optional<typename G::Field>>;
+    using Payload = std::tuple<bool, LazyString, std::optional<typename G::Field>>;
 
     EnvironmentFieldPolicy(G &group, F &fieldGroup)
     :   m_Group(group), m_FieldGroup(fieldGroup)
@@ -180,15 +180,15 @@ protected:
     std::string getNameInternal(const Payload &payload)
     {
         // If a field is specified
-        const auto str = std::get<2>(payload).str();
-        if(std::get<3>(payload)) {
+        const auto str = std::get<1>(payload).str();
+        if(std::get<2>(payload)) {
             // If there is no value specified, access field directly
             if(str.empty()) {
-                 return "group->" + std::get<3>(payload).value().name;
+                 return "group->" + std::get<2>(payload).value().name;
             }
             // Otherwise, treat value as index
             else {
-                return "group->" + std::get<3>(payload).value().name + "[" + str + "]"; 
+                return "group->" + std::get<2>(payload).value().name + "[" + str + "]"; 
             }
         }
         // Otherwise, use value directly
@@ -200,9 +200,9 @@ protected:
     void setRequired(Payload &payload)
     {
         // If a field is specified but it hasn't already been added
-        if (std::get<3>(payload) && !std::get<0>(payload)) {
+        if (std::get<2>(payload) && !std::get<0>(payload)) {
             // Extract field from payload
-            const auto &field = std::get<3>(payload).value();
+            const auto &field = std::get<2>(payload).value();
             const auto &group = getGroup();
 
             // Add to field group using lambda function to potentially map from group to field
@@ -212,7 +212,7 @@ protected:
                                         {
                                             return field.getValue(runtime, group.getGroups().at(i), i);
                                         },
-                                        field.fieldType, std::get<1>(payload));
+                                        field.fieldType);
 
             // Set flag so field doesn't get re-added
             std::get<0>(payload) = true;
@@ -439,24 +439,23 @@ public:
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
                   const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
-                  bool allowDuplicates = false, const std::vector<size_t> &initialisers = {})
+                  const std::vector<size_t> &initialisers = {})
     {
         typename G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
-        this->addInternal(type, name, std::make_tuple(false, allowDuplicates, LazyString{indexSuffix, *this}, std::make_optional(field)),
+        this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
                   typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  bool allowDuplicates = false, const std::vector<size_t> &initialisers = {})
+                  const std::vector<size_t> &initialisers = {})
     {
-         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, allowDuplicates, initialisers);
+         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
-                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous, IsDynamicFn isDynamic, 
-                   bool allowDuplicates = false)
+                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous, IsDynamicFn isDynamic)
     {
         // Loop through params
         for(const auto &p : params) {
@@ -470,7 +469,7 @@ public:
                              return std::make_pair(std::invoke(getParamValues, g).at(p.name), 
                                                    std::ref(runtime.getMergedParamDestinations(g, p.name)));
                          },
-                         "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
+                         "", GroupMergedFieldType::DYNAMIC);
             }
             // Otherwise, if parameter is heterogeneous across merged group
             else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
@@ -478,8 +477,7 @@ public:
                          [p, getParamValues](auto&, const auto &g, size_t)
                          {
                              return std::invoke(getParamValues, g).at(p.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -491,8 +489,7 @@ public:
     }
 
     void addDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &fieldSuffix,
-                          GetParamValuesFn getDerivedParamValues, IsHeterogeneousFn isHeterogeneous, 
-                          bool allowDuplicates = false)
+                          GetParamValuesFn getDerivedParamValues, IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through derived params
         for(const auto &d : derivedParams) {
@@ -504,8 +501,7 @@ public:
                          [d, getDerivedParamValues](auto&, const auto &g, size_t)
                          {
                              return std::invoke(getDerivedParamValues, g).at(d.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
@@ -516,8 +512,7 @@ public:
         }
     }
 
-    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", 
-                              const std::string &fieldSuffix = "", bool allowDuplicates = false)
+    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", const std::string &fieldSuffix = "")
     {
         // Loop through EGPs
         for(const auto &e : egps) {
@@ -530,12 +525,11 @@ public:
                      {
                          return runtime.getArray(g, e.name + arraySuffix); 
                      },
-                     "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
+                     "", GroupMergedFieldType::DYNAMIC);
         }
     }
 
-    void addExtraGlobalParamRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &fieldSuffix = "",
-                                 bool allowDuplicates = false)
+    void addExtraGlobalParamRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &fieldSuffix = "")
     {
         // Loop through EGP references
         for(const auto &e : egpRefs) {
@@ -548,14 +542,13 @@ public:
                      {
                          return g.getEGPReferences().at(e.name).getTargetArray(runtime);
                      },
-                     "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
+                     "", GroupMergedFieldType::DYNAMIC);
         }
     }
 
     template<typename I>
     void addInitialiserParams(const std::string &fieldSuffix, GetInitialiserFn<I> getInitialiser, 
-                              IsHeterogeneousFn isHeterogeneous, std::optional<IsDynamicFn> isDynamic = std::nullopt,
-                              bool allowDuplicates = false)
+                              IsHeterogeneousFn isHeterogeneous, std::optional<IsDynamicFn> isDynamic = std::nullopt)
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
@@ -572,7 +565,7 @@ public:
                              return std::make_pair(std::invoke(getInitialiser, g).getParams().at(p.name), 
                                                    std::ref(runtime.getMergedParamDestinations(g, p.name)));
                          },
-                         "", GroupMergedFieldType::DYNAMIC, allowDuplicates);
+                         "", GroupMergedFieldType::DYNAMIC);
             }
             // Otherwise, if parameter is heterogeneous across merged group
             else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
@@ -581,8 +574,7 @@ public:
                          [p, getInitialiser](auto&, const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getParams().at(p.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -594,7 +586,7 @@ public:
 
     template<typename I>
     void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getInitialiser, 
-                                     IsHeterogeneousFn isHeterogeneous, bool allowDuplicates = false)
+                                     IsHeterogeneousFn isHeterogeneous)
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
@@ -608,8 +600,7 @@ public:
                          [d, getInitialiser](auto&, const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getDerivedParams().at(d.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment
             else {
@@ -620,8 +611,8 @@ public:
     }
 
     template<typename A>
-    void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &varName, 
-                          const std::string &fieldSuffix = "", bool allowDuplicates = false)
+    void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, 
+                          const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
@@ -635,8 +626,7 @@ public:
                          [p, varName](auto&, const auto &g, size_t)
                          {
                              return A(g).getInitialisers().at(varName).getParams().at(p.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
@@ -647,8 +637,8 @@ public:
     }
 
     template<typename A>
-    void addVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, const std::string &varName, 
-                                 const std::string &fieldSuffix = "", bool allowDuplicates = false)
+    void addVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, 
+                                 const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through derived parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
@@ -662,8 +652,7 @@ public:
                          [d, varName](auto&, const auto &g, size_t)
                          {
                              return A(g).getInitialisers().at(varName).getDerivedParams().at(d.name);
-                         },
-                         "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                         });
             }
             // Otherwise, just add a const-qualified valuie to the type environment with archetype value
             else {
@@ -675,7 +664,7 @@ public:
 
     template<typename A>
     void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "",
-                 bool readOnly = false, bool hidden = false, bool allowDuplicates = false)
+                 bool readOnly = false, bool hidden = false)
     {
         // Loop through variables
         // Loop through variables
@@ -691,21 +680,21 @@ public:
                      { 
                          return runtime.getArray(A(g).getTarget(), v.name);
                      },
-                     getIndexFn(v.access, v.name), GroupMergedFieldType::STANDARD, allowDuplicates);
+                     getIndexFn(v.access, v.name));
         }
     }
 
     template<typename A>
     void addVars(const std::string &indexSuffix, const std::string &fieldSuffix = "",
-                 bool readOnly = false, bool hidden = false, bool allowDuplicates = false)
+                 bool readOnly = false, bool hidden = false)
     {
         addVars<A>([&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
-                   fieldSuffix, readOnly, hidden, allowDuplicates);
+                   fieldSuffix, readOnly, hidden);
     }
 
     template<typename A>
     void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "",
-                    bool readOnly = false, bool hidden = false, bool allowDuplicates = false)
+                    bool readOnly = false, bool hidden = false)
     {
         // Loop through variable references
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -720,22 +709,20 @@ public:
                      { 
                          return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
                      },
-                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)),
-                     GroupMergedFieldType::STANDARD, allowDuplicates);
+                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
         }
     }
 
     template<typename A>
     void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "",
-                    bool readOnly = false, bool hidden = false, bool allowDuplicates = false)
+                    bool readOnly = false, bool hidden = false)
     {
         addVarRefs<A>([&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
-                      fieldSuffix, readOnly, hidden, allowDuplicates);
+                      fieldSuffix, readOnly, hidden);
     }
 
     template<typename A>
-    void addVarPointers(const std::string &fieldSuffix = "", 
-                        bool hidden = false, bool allowDuplicates = false)
+    void addVarPointers(const std::string &fieldSuffix = "", bool hidden = false)
     {
         // Loop through variables and add private pointer field 
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -746,13 +733,12 @@ public:
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(g, v.name);
-                     }, 
-                     "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                     });
         }
     }
 
     template<typename A>
-    void addVarRefPointers(bool hidden = false, bool allowDuplicates = false)
+    void addVarRefPointers(bool hidden = false)
     {
         // Loop through variable references and add private pointer field 
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -763,7 +749,7 @@ public:
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
-                     }, "", GroupMergedFieldType::STANDARD, allowDuplicates);
+                     });
         }
     }
 
