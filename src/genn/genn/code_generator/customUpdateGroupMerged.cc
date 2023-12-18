@@ -58,6 +58,10 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
+    
+    // Expose batch size
+    cuEnv.add(Type::Uint32.addConst(), "num_batch", 
+              std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
@@ -187,6 +191,10 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateWUInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
+
+    // Expose batch size
+    cuEnv.add(Type::Uint32.addConst(), "num_batch", 
+              std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
