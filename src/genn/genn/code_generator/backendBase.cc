@@ -60,7 +60,8 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
         for (size_t d = 0; d < kernelSize.size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
                              [d](const auto&, const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
             }
 
@@ -243,7 +244,8 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         for (size_t d = 0; d < kernelSize.size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
                                 [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
             }
 
