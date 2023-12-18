@@ -758,7 +758,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
-        self._model = self.model
+        self._ccu_model = self.model
 
     @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
