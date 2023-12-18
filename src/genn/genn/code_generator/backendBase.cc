@@ -110,7 +110,6 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); });
 
     // If batching is enabled, calculate batch offset
-    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         env.add(Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
@@ -264,7 +263,6 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     }
 
     // If batching is enabled
-    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
         env.add(Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
@@ -362,7 +360,6 @@ template<typename G>
 void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // If batching is enabled, calculate batch offset
-    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     const bool batched = (env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1);
     if(batched) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
@@ -401,7 +398,6 @@ template<typename G>
 void buildStandardCustomUpdateWUEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // Add batch offset if group is batched
-    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if((env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(_size) * $(batch);")});
@@ -412,7 +408,6 @@ template<typename G>
 void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
     // Add fields for number of pre and postsynaptic neurons
-    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     env.addField(Type::Uint32.addConst(), "num_pre",
                  Type::Uint32, "numSrcNeurons", 
                  [](const auto&, const auto &cg, size_t) 
