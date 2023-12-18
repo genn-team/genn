@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <functional>
 #include <string>
+#include <unordered_set>
 
 // GeNN includes
 #include "gennExport.h"
@@ -51,6 +52,36 @@ public:
     {
         return getName(name);
     }
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::PrettyPrinter::EnvironmentInternal
+//---------------------------------------------------------------------------
+class GENN_EXPORT EnvironmentInternal : public EnvironmentBase
+{
+public:
+    EnvironmentInternal(EnvironmentBase &enclosing)
+    :   m_Enclosing(enclosing)
+    {
+    }
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual std::string define(const std::string &name) final;
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type) final;
+
+    virtual CodeGenerator::CodeStream &getStream()
+    {
+        return m_Enclosing.getStream();
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    EnvironmentBase &m_Enclosing;
+    std::unordered_set<std::string> m_LocalVariables;
 };
 
 typedef std::function<void(EnvironmentBase&, std::function<void(EnvironmentBase&)>)> StatementHandler;
