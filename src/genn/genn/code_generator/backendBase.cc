@@ -246,7 +246,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
                 env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
                              Type::Uint32, "kernelSize" + std::to_string(d),
-                                [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
+                             [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
             }
 
             // Multiply size by dimension
