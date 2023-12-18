@@ -16,7 +16,7 @@ namespace
 {
 template<typename G>
 void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
-                               G &sg, unsigned int batchSize, double dt)
+                               G &sg, unsigned int batchSize, double dt, bool allowDuplicates = false)
 {
     const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
 
@@ -24,9 +24,9 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
 
     // Substitute parameter and derived parameter names
     synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
-                                &G::isWUParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
-    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUDerivedParamHeterogeneous);
-    synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
+                                &G::isWUParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic, allowDuplicates);
+    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUDerivedParamHeterogeneous, allowDuplicates);
+    synEnv.addExtraGlobalParams(wu->getExtraGlobalParams(), "", "", allowDuplicates);
 
     // Add referenced pre and postsynaptic neuron variables
     synEnv.template addVarRefs<SynapseWUPreNeuronVarRefAdapter>(
@@ -35,26 +35,28 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             return sg.getPreVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize, 
                                      v.getVarDims(), "$(id_pre)");
         }, 
-        "", true);
+        "", true, false, allowDuplicates);
     synEnv.template addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
             return sg.getPostVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
                                       v.getVarDims(), "$(id_post)");
         }, 
-        "", true);
+        "", true, false, allowDuplicates);
 
     // Substitute names of pre and postsynaptic weight update variable
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
-        }, "", true);
+        },
+        "", true, false, allowDuplicates);
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPostWUVarIndex(batchSize, getVarAccessDim(a), "$(id_post)");
-        }, "", true);
+        }, 
+        "", true, false, allowDuplicates);
 
     
     // If this synapse group has a kernel
@@ -99,7 +101,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
-            });
+            }, 
+            "", false, false, allowDuplicates);
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -116,9 +119,12 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
                     // Substitute in parameters and derived parameters for initialising variables
                     // **THINK** synEnv has quite a lot of unwanted stuff at t
                     EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
-                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(&G::isVarInitParamHeterogeneous, var.name);
-                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(&G::isVarInitDerivedParamHeterogeneous, var.name);
-                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
+                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(&G::isVarInitParamHeterogeneous, var.name,
+                                                                              "", allowDuplicates);
+                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(&G::isVarInitDerivedParamHeterogeneous, var.name,
+                                                                                     "", allowDuplicates);
+                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name,
+                                                    "", allowDuplicates);
 
                     // Add read-write environment entry for variable
                     varInitEnv.add(resolvedType, "value", "_l" + var.name);
@@ -141,7 +147,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getKernelVarIndex(batchSize, getVarAccessDim(a), "$(id_kernel)");
-            });
+            },
+            "", true, false, allowDuplicates);
     }
 
 
@@ -346,7 +353,7 @@ const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreEventCodeTokens(), "presynaptic event code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreEventCodeTokens(), "presynaptic event code", *this, batchSize, dt, true);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
@@ -407,7 +414,7 @@ void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternal
 void PostsynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
                                                         unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostLearnCodeTokens(), "learn post code", *this, batchSize, dt, true);
 }
 
 //----------------------------------------------------------------------------
