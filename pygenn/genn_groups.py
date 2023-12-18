@@ -282,7 +282,7 @@ class SynapseGroupMixin(GroupMixin):
         
         self.src = source
         self.trg = target
-        self.in_syn = None
+        self.out_post = None
         self.connections_set = False
 
         # Prepare weight update model variables and EGPS
@@ -379,7 +379,7 @@ class SynapseGroupMixin(GroupMixin):
         ndarray of presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            rl = (self._row_lengths._view if self._connectivity_initialiser_provided
+            rl = (self._row_lengths.view if self._connectivity_initialiser_provided
                   else self.row_lengths)
 
             if rl is None:
@@ -413,8 +413,8 @@ class SynapseGroupMixin(GroupMixin):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind._view[i * self.max_connections: (i * self.max_connections) + r]
-                        for i, r in enumerate(self._row_lengths._view)])
+                    self._ind.view[i * self.max_connections: (i * self.max_connections) + r]
+                        for i, r in enumerate(self._row_lengths.view)])
 
         else:
             raise Exception("get_sparse_post_inds only supports"
@@ -476,7 +476,7 @@ class SynapseGroupMixin(GroupMixin):
                     # If data is available
                     if self.connections_set:
                         # Copy in row length
-                        self._row_lengths._view[:] = self.row_lengths
+                        self._row_lengths.view[:] = self.row_lengths
 
                         # Create (x)range containing the index where each row starts in ind
                         row_start_idx = range(0, self.weight_update_var_size,
@@ -486,7 +486,7 @@ class SynapseGroupMixin(GroupMixin):
                         syn = 0
                         for i, r in zip(row_start_idx, self.row_lengths):
                             # Copy row from non-padded indices into correct location
-                            self._ind._view[i:i + r] = self.ind[syn:syn + r]
+                            self._ind.view[i:i + r] = self.ind[syn:syn + r]
                             syn += r
                     elif not self._connectivity_initialiser_provided:
                         raise Exception("For sparse projections, the connections"
@@ -588,7 +588,7 @@ class SynapseGroupMixin(GroupMixin):
     def unload(self):
         self._ind = None
         self._row_lengths = None
-        self.in_syn = None
+        self.out_post = None
 
         self._unload_vars()
         self._unload_vars(self.pre_vars)
