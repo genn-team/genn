@@ -148,6 +148,35 @@ void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
     genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), std::forward<Args>(args)...);
 }
 //-----------------------------------------------------------------------
+void genFilteredGroupStartIDs(CodeStream &, size_t&, size_t&)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename G, typename F, typename ...Args>
+void genFilteredGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                              const std::vector<T> &mergedGroups, G getPaddedNumThreads, F filter,
+                              Args&&... args)
+{
+    // Loop through merged groups
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
+            genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
+        }
+    }
+
+    // Generate any remaining groups
+    genFilteredGroupStartIDs(os, idStart, totalConstMem, std::forward<Args>(args)...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genFilteredMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
+                                           Args&&... args)
+{
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genFilteredGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), std::forward<Args>(args)...);
+}
+//-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 {
@@ -796,6 +825,16 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
                    [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
 
+    // Generate data structure for accessing merged groups
+    // **THINK** I don't think there was any need for these to be filtered
+    // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
+    // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
+    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
+
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
         // Generate kernel
@@ -807,6 +846,20 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
            || std::any_of(modelMerged.getMergedCustomConnectivityUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityUpdateGroups().cend(),
                           [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(customUpdateEnv.getStream(), totalConstMem,
+                                                  modelMerged.getMergedCustomUpdateGroups(),
+                                                  [&model, this](const CustomUpdateInternal &cg){ return getPaddedNumCustomUpdateThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
+
+                                                  modelMerged.getMergedCustomUpdateWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
+                                                  
+                                                  modelMerged.getMergedCustomConnectivityUpdateGroups(),
+                                                  [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
+                                                  [g](const CustomConnectivityUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
+
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
                 CodeStream::Scope b(customUpdateEnv.getStream());
@@ -838,6 +891,10 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
                        [&g](const auto &cg){ return (cg.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateTransposeWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
             {
                 CodeStream::Scope b(customUpdateEnv.getStream());
@@ -950,23 +1007,6 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     
     // Generate preamble
     preambleHandler(os);
-
-    // Generate data structure for accessing merged groups
-    // **THINK** I don't think there was any need for these to be filtered
-    // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
-    // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
-    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
-                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
-                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
-                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
-    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
-    const unsigned int batchSize = model.getBatchSize();
-    genMergedKernelDataStructures(
-        os, totalConstMem, 
-        modelMerged.getMergedCustomUpdateGroups(), [batchSize, this](const CustomUpdateInternal &cg){ return getPaddedNumCustomUpdateThreads(cg, batchSize); },
-        modelMerged.getMergedCustomUpdateWUGroups(), [batchSize, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, batchSize); },
-        modelMerged.getMergedCustomConnectivityUpdateGroups(),  [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
-        modelMerged.getMergedCustomUpdateTransposeWUGroups(), [batchSize, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, batchSize); });
 
     os << customUpdateStream.str();
 }
