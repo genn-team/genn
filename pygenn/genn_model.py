@@ -48,6 +48,7 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
+import re
 import sys
 from textwrap import dedent
 from warnings import warn
@@ -132,6 +133,23 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
     else:
         backend_modules[b] = m
 
+# Regular expressions used for upgrading legacy function calls in code strings
+_function_upgrades = [
+    (re.compile(r"\$\(gennrand_uniform\)"), r"gennrand_uniform()"),
+    (re.compile(r"\$\(gennrand_normal\)"), r"gennrand_normal()"),
+    (re.compile(r"\$\(gennrand_exponential\)"), r"gennrand_exponential()"),
+    (re.compile(r"\$\(gennrand_log_normal,(.*)\)"), r"gennrand_log_normal(\1)"),
+    (re.compile(r"\$\(gennrand_gamma,(.*)\)"), r"gennrand_gamma(\1)"),
+    (re.compile(r"\$\(gennrand_binomial,(.*)\)"), r"gennrand_binomial(\1)"),
+    (re.compile(r"\$\(addToPre,(.*)\)"), r"addToPre(\1)"),
+    (re.compile(r"\$\(addToInSyn,(.*)\)"), r"addToPost(\1)"),
+    (re.compile(r"\$\(addToInSynDelay,(.*),(.*)\)"), r"addToPostDelay(\1, \2)"),
+    (re.compile(r"\$\(addSynapse,(.*)\)"), r"addSynapse(\1)"),
+    (re.compile(r"\$\(endRow\)"), None),
+    (re.compile(r"\$\(endCol\)"), None)]
+
+# Regular expression used for upgrading variable references in code strings
+_var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
@@ -823,7 +841,40 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
                                     prepare_param_vals(params))
 
+def upgrade_code_string(code, class_name):
+    # Apply function substitutions
+    upgraded = False
+    for obj, replace in _function_upgrades:
+        # If there's no supported replacement
+        if replace is None:
+            # Search and give error if found
+            match = obj.search(code)
+            if match is not None:
+                raise RuntimeError(f"'{match.group(0)}' call in "
+                                   f"'{class_name}' is no longer supported")
+        # Otherwise
+        else:
+            # Replace pattern in code
+            code, n_subs = obj.subn(replace, code)
+            
+            # If any substitutions were made, give warning
+            if n_subs > 0:
+                upgraded = True
 
+    # Replace old style $(XX) variables with plain XX
+    # **NOTE** this is done after functions as single-parameter
+    # function calls and variables were indistinguishable with old syntax
+    code, n_subs = _var_upgrade.subn("\1", code)
+    if n_subs > 0:
+        upgraded = True
+    
+    # If any upgrades were made, give warning
+    if upgraded:
+        warn(f"Legacy $() syntax in '{class_name}' has been automatically "
+             f"removed but this functionality will be removed in future so "
+             f"please update your model", DeprecationWarning)
+    return code;
+    
 def create_model(class_name, base, params, param_names, derived_params,
                  extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
