@@ -873,7 +873,7 @@ def upgrade_code_string(code, class_name):
         warn(f"Legacy $() syntax in '{class_name}' has been automatically "
              f"removed but this functionality will be removed in future so "
              f"please update your model", DeprecationWarning)
-    return code;
+    return code
     
 def create_model(class_name, base, params, param_names, derived_params,
                  extra_global_params, custom_body):
@@ -980,14 +980,17 @@ def create_neuron_model(class_name, params=None, param_names=None,
     body = {}
 
     if sim_code is not None:
-        body["get_sim_code"] = lambda self: dedent(sim_code)
+        body["get_sim_code"] =\
+            lambda self: dedent(upgrade_code_string(sim_code, class_name))
 
     if threshold_condition_code is not None:
         body["get_threshold_condition_code"] = \
-            lambda self: dedent(threshold_condition_code)
+            lambda self: dedent(upgrade_code_string(threshold_condition_code,
+                                                    class_name))
 
     if reset_code is not None:
-        body["get_reset_code"] = lambda self: dedent(reset_code)
+        body["get_reset_code"] = lambda self: dedent(upgrade_code_string(reset_code,
+                                                                         class_name))
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
@@ -1038,10 +1041,13 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     body = {}
 
     if decay_code is not None:
-        body["get_decay_code"] = lambda self: dedent(decay_code)
+        body["get_decay_code"] =\
+            lambda self: dedent(upgrade_code_string(decay_code, class_name))
 
     if apply_input_code is not None:
-        body["get_apply_input_code"] = lambda self: dedent(apply_input_code)
+        body["get_apply_input_code"] =\
+            lambda self: dedent(upgrade_code_string(apply_input_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1133,39 +1139,58 @@ def create_weight_update_model(class_name, params=None, param_names=None,
         pre_event_threshold_condition_code = event_threshold_condition_code
 
     if sim_code is not None:
-        body["get_sim_code"] = lambda self: dedent(sim_code)
+        body["get_sim_code"] =\
+            lambda self: dedent(upgrade_code_string(sim_code, class_name))
 
     if pre_event_code is not None:
-        body["get_pre_event_code"] = lambda self: dedent(pre_event_code)
+        body["get_pre_event_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_event_code,
+                                                    class_name))
 
     if post_event_code is not None:
-        body["get_post_event_code"] = lambda self: dedent(post_event_code)
+        body["get_post_event_code"] =\
+            lambda self: dedent(upgrade_code_string(post_event_code,
+                                                    class_name))
 
     if learn_post_code is not None:
-        body["get_learn_post_code"] = lambda self: dedent(learn_post_code)
+        body["get_learn_post_code"] =\
+            lambda self: dedent(upgrade_code_string(learn_post_code,
+                                                    class_name))
 
     if synapse_dynamics_code is not None:
-        body["get_synapse_dynamics_code"] = lambda self: dedent(synapse_dynamics_code)
+        body["get_synapse_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(synapse_dynamics_code,
+                                                    class_name))
 
     if pre_event_threshold_condition_code is not None:
         body["get_pre_event_threshold_condition_code"] = \
-            lambda self: dedent(pre_event_threshold_condition_code)
+            lambda self: dedent(upgrade_code_string(pre_event_threshold_condition_code,
+                                                    class_name))
     
     if post_event_threshold_condition_code is not None:
         body["get_post_event_threshold_condition_code"] = \
-            lambda self: dedent(post_event_threshold_condition_code)
+            lambda self: dedent(upgrade_code_string(post_event_threshold_condition_code,
+                                                    class_name))
 
     if pre_spike_code is not None:
-        body["get_pre_spike_code"] = lambda self: dedent(pre_spike_code)
+        body["get_pre_spike_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_spike_code,
+                                                    class_name))
 
     if post_spike_code is not None:
-        body["get_post_spike_code"] = lambda self: dedent(post_spike_code)
+        body["get_post_spike_code"] =\
+            lambda self: dedent(upgrade_code_string(post_spike_code,
+                                                    class_name))
 
     if pre_dynamics_code is not None:
-        body["get_pre_dynamics_code"] = lambda self: dedent(pre_dynamics_code)
+        body["get_pre_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_dynamics_code,
+                                                    class_name))
 
     if post_dynamics_code is not None:
-        body["get_post_dynamics_code"] = lambda self: dedent(post_dynamics_code)
+        body["get_post_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(post_dynamics_code,
+                                                    class_name))
     
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1222,7 +1247,9 @@ def create_current_source_model(class_name, params=None, param_names=None,
     body = {}
 
     if injection_code is not None:
-        body["get_injection_code"] = lambda self: dedent(injection_code)
+        body["get_injection_code"] =\
+            lambda self: dedent(upgrade_code_string(injection_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1272,7 +1299,8 @@ def create_custom_update_model(class_name, params=None, param_names=None,
     body = {}
 
     if update_code is not None:
-        body["get_update_code"] = lambda self: dedent(update_code)
+        body["get_update_code"] =\
+            lambda self: dedent(upgrade_code_string(update_code, class_name))
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
@@ -1332,10 +1360,14 @@ def create_custom_connectivity_update_model(class_name, params=None,
     body = {}
 
     if row_update_code is not None:
-        body["get_row_update_code"] = lambda self: dedent(row_update_code)
+        body["get_row_update_code"] =\
+            lambda self: dedent(upgrade_code_string(row_update_code,
+                                                    class_name))
 
     if host_update_code is not None:
-        body["get_host_update_code"] = lambda self: dedent(host_update_code)
+        body["get_host_update_code"] =\
+            lambda self: dedent(upgrade_code_string(host_update_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1392,7 +1424,9 @@ def create_var_init_snippet(class_name, params=None, param_names=None,
     body = {}
 
     if var_init_code is not None:
-        body["get_code"] = lambda self: dedent(var_init_code)
+        body["get_code"] =\
+            lambda self: dedent(upgrade_code_string(var_init_code,
+                                                    class_name))
 
     return create_model(class_name, InitVarSnippetBase, 
                         params, param_names, derived_params, 
@@ -1443,10 +1477,14 @@ def create_sparse_connect_init_snippet(class_name, params=None,
     body = {}
 
     if row_build_code is not None:
-        body["get_row_build_code"] = lambda self: dedent(row_build_code)
+        body["get_row_build_code"] =\
+            lambda self: dedent(upgrade_code_string(row_build_code,
+                                                    class_name))
 
     if col_build_code is not None:
-        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+        body["get_col_build_code"] =\
+            lambda self: dedent(upgrade_code_string(col_build_code,
+                                                    class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
@@ -1503,10 +1541,8 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
 
     if diagonal_build_code is not None:
         body["get_diagonal_build_code"] =\
-            lambda self: dedent(diagonal_build_code)
-
-    if col_build_code is not None:
-        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+            lambda self: dedent(upgrade_code_string(diagonal_build_code,
+                                                    class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
