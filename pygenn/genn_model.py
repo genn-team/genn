@@ -133,8 +133,8 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
     else:
         backend_modules[b] = m
 
-# Regular expressions used for upgrading legacy function calls in code strings
-_function_upgrades = [
+# Regular expressions used for upgrading function calls and variables in code strings
+_code_upgrades = [
     (re.compile(r"\$\(gennrand_uniform\)"), r"gennrand_uniform()"),
     (re.compile(r"\$\(gennrand_normal\)"), r"gennrand_normal()"),
     (re.compile(r"\$\(gennrand_exponential\)"), r"gennrand_exponential()"),
@@ -145,10 +145,18 @@ _function_upgrades = [
     (re.compile(r"\$\(addToInSyn,(.*)\)"), r"addToPost(\1)"),
     (re.compile(r"\$\(addToInSynDelay,(.*),(.*)\)"), r"addToPostDelay(\1, \2)"),
     (re.compile(r"\$\(addSynapse,(.*)\)"), r"addSynapse(\1)"),
+    (re.compile(r"\$\(sT_pre\)"), r"st_pre"),
+    (re.compile(r"\$\(sT_post\)"), r"st_post"),
+    (re.compile(r"\$\(seT_pre\)"), r"set_pre"),
+    (re.compile(r"\$\(seT_post\)"), r"set_post"),
+    (re.compile(r"\$\(prev_sT_pre\)"), r"prev_st_pre"),
+    (re.compile(r"\$\(prev_sT_post\)"), r"prev_st_post"),
+    (re.compile(r"\$\(prev_seT_pre\)"), r"prev_set_pre"),
+    (re.compile(r"\$\(prev_seT_post\)"), r"prev_set_post"),
     (re.compile(r"\$\(endRow\)"), None),
     (re.compile(r"\$\(endCol\)"), None)]
 
-# Regular expression used for upgrading variable references in code strings
+# Regular expression used for upgrading remaining variable references in code strings
 _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
 class GeNNModel(ModelSpecInternal):
@@ -842,10 +850,10 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
                                     prepare_param_vals(params))
 
 def upgrade_code_string(code, class_name):
-    # Apply function substitutions
+    # Apply special-case upgrades
     upgraded = False
 
-    for obj, replace in _function_upgrades:
+    for obj, replace in _code_upgrades:
         # If there's no supported replacement
         if replace is None:
             # Search and give error if found
