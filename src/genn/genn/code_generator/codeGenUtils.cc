@@ -1,22 +1,7 @@
 #include "code_generator/codeGenUtils.h"
 
-// Is C++ regex library operational?
-// We assume it is for:
-// 1) Compilers that don't define __GNUCC__
-// 2) Clang
-// 3) GCC 5.X.Y and future
-// 4) Any future (4.10.Y?) GCC 4.X.Y releases
-// 5) GCC 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
-// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working until 4.9.1)
-#if !defined(__GNUC__) || \
-    __clang__ || \
-    __GNUC__ > 4 || \
-    (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
-                      (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
-    #include <regex>
-#else
-    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1"
-#endif
+// Standard C++ library
+#include <regex>
 
 // Standard C includes
 #include <cstring>

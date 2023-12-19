@@ -223,7 +223,7 @@ private:
     \c sim code is:
 
     \code
-    "$(addToInSyn, $(g));\n"
+    "addToPost(g);\n"
     \endcode*/
 class StaticPulse : public Base
 {
@@ -274,7 +274,7 @@ public:
     \c sim code is:
 
     \code
-    " $(addToInSynDelay, $(g), $(d));\n\
+    "addToPostDelay(g, d);"
     \endcode*/
 class StaticPulseDendriticDelay : public Base
 {
@@ -302,13 +302,13 @@ public:
 
     \c event code is:
     \code
-    $(addToInSyn, $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope)));
+    addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));
     \endcode
 
     \c event threshold condition code is:
 
     \code
-    $(V_pre) > $(Epre)
+    V_pre > Epre
     \endcode
     \note The pre-synaptic variables are referenced with the suffix `_pre` in synapse related code
     such as an the event threshold test. Users can also access post-synaptic neuron variables using the suffix `_post`.*/
@@ -321,7 +321,7 @@ public:
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
-    SET_PRE_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
+    SET_PRE_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
 };
 
 //----------------------------------------------------------------------------
@@ -387,34 +387,34 @@ public:
     DECLARE_SNIPPET(PiecewiseSTDP);
 
     SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-                     "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
+                "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
         "addToPost(g);\n"
-        "scalar dt = sT_post - t - tauShift; \n"
+        "scalar dt = st_post - t - tauShift; \n"
         "scalar dg = 0;\n"
         "if (dt > lim0)  \n"
         "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
         "    dg = slope0 * dt + off1; \n"
         "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + ($(off1)); \n"
-        "else dg = - ($(off2)) ; \n"
-        "$(gRaw) += dg; \n"
-        "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
+        "    dg = slope1 * dt + (off1); \n"
+        "else dg = - (off2) ; \n"
+        "gRaw += dg; \n"
+        "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
     SET_LEARN_POST_CODE(
-        "scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n"
+        "scalar dt = t - st_pre - (tauShift); \n"
         "scalar dg =0; \n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -(off0) ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
-        "else dg = -($(off2)) ; \n"
-        "$(gRaw) += dg; \n"
-        "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
+        "    dg = slope0 * dt + (off1); \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + (off1); \n"
+        "else dg = -(off2) ; \n"
+        "gRaw += dg; \n"
+        "g=gMax/2.0 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
 
     SET_DERIVED_PARAMS({
         {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},

@@ -22,8 +22,8 @@ public:
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "$(addToPre, $(g));\n");
+        "addToPost(g);\n"
+        "addToPre(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseBack);
 
@@ -35,8 +35,8 @@ public:
     SET_PARAMS({"g"});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "$(addToPre, $(g));\n");
+        "addToPost(g);\n"
+        "addToPre(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseBackConstantWeight);
 
@@ -53,7 +53,7 @@ public:
         "V > VThresh");
 
     SET_PRE_EVENT_CODE(
-        "$(addToInSyn, $(g));\n");
+        "addToPost(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseEvent);
 
@@ -65,8 +65,8 @@ public:
     SET_PARAMS({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
-    SET_SIM_CODE("$(w)= $(s);\n");
-    SET_POST_SPIKE_CODE("$(s) = $(t) * $(p);\n");
+    SET_SIM_CODE("w= s;\n");
+    SET_POST_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPost);
 
@@ -78,8 +78,8 @@ public:
     SET_PARAMS({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
-    SET_SIM_CODE("$(w)= $(s);\n");
-    SET_PRE_SPIKE_CODE("$(s) = $(t) * $(p);\n");
+    SET_SIM_CODE("w= s;\n");
+    SET_PRE_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPre);
 
@@ -89,10 +89,10 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (dt * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+        "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn*=expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
+    SET_CURRENT_CONVERTER_CODE("x");
 
     SET_PARAMS({"tau"});
 
@@ -111,20 +111,20 @@ public:
 
     SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 0.0}});
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn2) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn2 + Ioffset) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= dt;\n"
+        "  RefracTime -= dt;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance
@@ -152,20 +152,20 @@ public:
     DECLARE_SNIPPET(LIFRandom);
 
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn) + $(Ioffset) + $(gennrand_normal)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn + Ioffset + gennrand_normal) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  RefracTime -= DT;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance
@@ -198,22 +198,22 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
     
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "const scalar dt = $(t) - $(sT_post); \n"
+        "addToPost(g);\n"
+        "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g - (Aminus * postTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g + (Aplus * preTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    SET_PRE_SPIKE_CODE("preTrace += 1.0;\n");
+    SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }

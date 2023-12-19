@@ -13,9 +13,9 @@ using namespace GeNN;
 class ExpCurrCopy : public PostsynapticModels::Base
 {
 public:
-    SET_DECAY_CODE("$(inSyn) *= $(expDecay);");
+    SET_DECAY_CODE("inSyn *= expDecay;");
 
-    SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
+    SET_CURRENT_CONVERTER_CODE("init * inSyn");
 
     SET_PARAMS({"tau"});
 

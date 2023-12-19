@@ -38,7 +38,7 @@ public:
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -65,21 +65,21 @@ public:
     
     SET_SIM_CODE(
         "addToPost(g);\n"
-        "const scalar dt = $(t) - $(sT_post); \n"
+        "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g - (Aminus * postTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g + (Aplus * preTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += S;\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += S;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= tauPlusDecay;\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= tauMinusDecay;\n");
+    SET_PRE_SPIKE_CODE("preTrace += S;\n");
+    SET_POST_SPIKE_CODE("postTrace += S;\n");
+    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditiveSpikeParam);
 
@@ -94,21 +94,21 @@ public:
     
     SET_SIM_CODE(
         "addToPost(g);\n"
-        "const scalar dt = $(t) - $(sT_post); \n"
+        "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g - (Aminus * postTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g + (Aplus * preTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= tauPlusDecay;\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= tauMinusDecay;\n");
+    SET_PRE_SPIKE_CODE("preTrace += 1.0;\n");
+    SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditiveDecayParam);
 
@@ -221,20 +221,20 @@ public:
 
    SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 0.0}});
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn2) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn2 + Ioffset) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= dt;\n"
+        "  RefracTime -= dt;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance

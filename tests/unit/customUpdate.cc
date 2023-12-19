@@ -39,7 +39,7 @@ public:
                       {"dCommon", "scalar", VarAccess::READ_ONLY},
                       {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
 
-    SET_SIM_CODE("$(addToInSynDelay, $(gCommon) + $(g), $(dCommon) + $(d));\n");
+    SET_SIM_CODE("addToPostDelay(gCommon + g, dCommon + d);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseDendriticDelaySplit);
 
@@ -47,7 +47,7 @@ class Sum : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum);
 
-    SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
+    SET_UPDATE_CODE("sum = a + b;\n");
 
     SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
@@ -59,7 +59,7 @@ class Sum2 : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum2);
 
-    SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
+    SET_UPDATE_CODE("a = mult * (a + b);\n");
 
     SET_CUSTOM_UPDATE_VARS({{"mult", "scalar", CustomUpdateVarAccess::READ_ONLY}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
@@ -71,7 +71,7 @@ class Sum3 : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum3);
 
-    SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
+    SET_UPDATE_CODE("sum = scale * (a + b);\n");
 
     SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE},
@@ -94,7 +94,7 @@ class EGPScale : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(EGPScale);
 
-    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+    SET_UPDATE_CODE("a = b * c[id];\n");
 
     SET_EXTRA_GLOBAL_PARAMS({{"c", "scalar*"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
@@ -106,7 +106,7 @@ class EGPRefScale : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(EGPRefScale);
 
-    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+    SET_UPDATE_CODE("a = b * c[id];\n");
 
     SET_EXTRA_GLOBAL_PARAM_REFS({{"c", "scalar*"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
@@ -118,7 +118,7 @@ class EGPRefScaleInt : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(EGPRefScaleInt);
 
-    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+    SET_UPDATE_CODE("a = b * c[id];\n");
 
     SET_EXTRA_GLOBAL_PARAM_REFS({{"c", "int*"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 

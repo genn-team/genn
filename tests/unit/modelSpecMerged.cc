@@ -58,27 +58,27 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
-        "$(preTrace) = ($(preTrace) * exp(-dt / $(tauPlus))) + 1.0;\n");
+        "scalar dt = t - sT_pre;\n"
+        "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_post);\n"
-        "$(postTrace) = ($(postTrace) * exp(-dt / $(tauMinus))) + 1.0;\n");
+        "scalar dt = t - sT_post;\n"
+        "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(t) - $(sT_post); \n"
+        "addToPost(g);\n"
+        "scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauMinus));\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * timing);\n"
-        "    $(g) = fmax($(Wmin), newWeight);\n"
+        "    const scalar timing = postTrace * exp(-dt / tauMinus);\n"
+        "    const scalar newWeight = g - (Aminus * timing);\n"
+        "    g = fmax(Wmin, newWeight);\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
+        "scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauPlus));\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * timing);\n"
-        "    $(g) = fmin($(Wmax), newWeight);\n"
+        "    const scalar timing = postTrace * exp(-dt / tauPlus);\n"
+        "    const scalar newWeight = g + (Aplus * timing);\n"
+        "    g = fmin(Wmax, newWeight);\n"
         "}\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditive);

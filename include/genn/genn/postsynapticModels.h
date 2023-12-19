@@ -10,7 +10,7 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_DECAY_CODE(DECAY_CODE) virtual std::string getDecayCode() const override{ return DECAY_CODE; }
-#define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const override{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
+#define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const override{ return "Isyn += " CURRENT_CONVERTER_CODE ";"; }
 #define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const override{ return APPLY_INPUT_CODE; }
 #define SET_NEURON_VAR_REFS(...) virtual VarRefVec getNeuronVarRefs() const override{ return __VA_ARGS__; }
 
@@ -99,9 +99,9 @@ class ExpCurr : public Base
 public:
     DECLARE_SNIPPET(ExpCurr);
 
-    SET_DECAY_CODE("$(inSyn) *= $(expDecay);");
+    SET_DECAY_CODE("inSyn *= expDecay;");
 
-    SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
+    SET_CURRENT_CONVERTER_CODE("init * inSyn");
 
     SET_PARAMS({"tau"});
 
@@ -124,9 +124,9 @@ class ExpCond : public Base
 public:
     DECLARE_SNIPPET(ExpCond);
 
-    SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
+    SET_DECAY_CODE("inSyn*=expDecay;");
 
-    SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
+    SET_CURRENT_CONVERTER_CODE("inSyn * (E - V)");
 
     SET_PARAMS({"tau", "E"});
 
@@ -145,6 +145,6 @@ class DeltaCurr : public Base
 public:
     DECLARE_SNIPPET(DeltaCurr);
 
-    SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
+    SET_CURRENT_CONVERTER_CODE("inSyn; inSyn = 0");
 };
 }   // namespace GeNN::PostsynapticModels

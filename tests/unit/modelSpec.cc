@@ -17,10 +17,10 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+        "x = (DT * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn*=expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
+    SET_CURRENT_CONVERTER_CODE("x");
 
     SET_PARAMS({"tau"});
 
@@ -37,7 +37,7 @@ class Sum : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Sum);
 
-    SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
+    SET_UPDATE_CODE("sum = a + b;\n");
 
     SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
