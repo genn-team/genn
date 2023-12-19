@@ -366,7 +366,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExt
                                   &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
     Transpiler::ErrorHandler errorHandler("Synapse group procedural connectivity '" + getArchetype().getName() + "' row build code");
     prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
@@ -384,7 +384,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
                                   &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitParamHeterogeneous);
     groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "ToeplitzConnect", "");
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' Toeplitz connectivity diagonal build code");
