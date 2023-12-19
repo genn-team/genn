@@ -844,6 +844,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
 def upgrade_code_string(code, class_name):
     # Apply function substitutions
     upgraded = False
+
     for obj, replace in _function_upgrades:
         # If there's no supported replacement
         if replace is None:
@@ -864,10 +865,10 @@ def upgrade_code_string(code, class_name):
     # Replace old style $(XX) variables with plain XX
     # **NOTE** this is done after functions as single-parameter
     # function calls and variables were indistinguishable with old syntax
-    code, n_subs = _var_upgrade.subn("\1", code)
+    code, n_subs = _var_upgrade.subn(r"\1", code)
     if n_subs > 0:
         upgraded = True
-    
+
     # If any upgrades were made, give warning
     if upgraded:
         warn(f"Legacy $() syntax in '{class_name}' has been automatically "
