@@ -1020,8 +1020,8 @@ def create_neuron_model(class_name, params=None, param_names=None,
 
 def create_postsynaptic_model(class_name, params=None, param_names=None,
                               var_name_types=None, neuron_var_refs=None,
-                              derived_params=None, decay_code=None,
-                              apply_input_code=None, 
+                              derived_params=None, sim_code=None, 
+                              decay_code=None, apply_input_code=None, 
                               extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
@@ -1042,21 +1042,21 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
                             should be a functor returned by create_dpf_class
+    sim_code            --  string with the decay code
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     extra_global_params --  list of pairs of strings with names and
                             types of additional parameters
     """
     body = {}
-
-    if decay_code is not None:
-        body["get_decay_code"] =\
-            lambda self: dedent(upgrade_code_string(decay_code, class_name))
-
-    if apply_input_code is not None:
-        body["get_apply_input_code"] =\
-            lambda self: dedent(upgrade_code_string(apply_input_code,
-                                                    class_name))
+    if decay_code is not None or apply_input_code is not None:
+        raise RuntimeError("Creating postsynaptic models with seperate "
+                           "'decay_code' and 'apply_code' code strings is no "
+                           "longer supported. Please provide 'sim_code' using "
+                           "the injectCurrent(X) function to provide input.")
+    if sim_code is not None:
+        body["get_sim_code"] =\
+            lambda self: dedent(upgrade_code_string(sim_code, class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \

@@ -173,8 +173,7 @@ public:
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
     
-    virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
-    virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
+    virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
 };
 
 //----------------------------------------------------------------------------
@@ -846,7 +845,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_additional_input_vars", &NeuronModels::Base::getAdditionalInputVars)
         
         .def("is_auto_refractory_required", &NeuronModels::Base::isAutoRefractoryRequired);
-        
+
     //------------------------------------------------------------------------
     // genn.PostsynapticModelBase
     //------------------------------------------------------------------------
@@ -856,9 +855,8 @@ PYBIND11_MODULE(genn, m)
         .def("get_vars", &PostsynapticModels::Base::getVars)
         .def("get_neuron_var_refs", &PostsynapticModels::Base::getNeuronVarRefs)
         
-        .def("get_decay_code", &PostsynapticModels::Base::getDecayCode)
-        .def("get_apply_input_code", &PostsynapticModels::Base::getApplyInputCode);
-    
+        .def("get_sim_code", &PostsynapticModels::Base::getSimCode);
+
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
     //------------------------------------------------------------------------
