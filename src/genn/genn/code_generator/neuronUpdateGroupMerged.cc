@@ -120,9 +120,10 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // **TODO** naming convention
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
-        
-    // Allow synapse group's PS output var to override what Isyn points to
-    psmEnv.add(getScalarType(), "Isyn", "$(_" + getArchetype().getPostTargetVar() + ")");
+    
+    // Define inject current function
+    psmEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}),
+              "injectCurrent", "$(_" + getArchetype().getPostTargetVar() + ") += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
@@ -133,11 +134,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
         });
 
     // Pretty print code back to environment
-    Transpiler::ErrorHandler applyInputErrorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic model apply input code");
-    prettyPrintStatements(getArchetype().getPSInitialiser().getApplyInputCodeTokens(), getTypeContext(), varEnv, applyInputErrorHandler);
-
-    Transpiler::ErrorHandler decayErrorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic model decay code");
-    prettyPrintStatements(getArchetype().getPSInitialiser().getDecayCodeTokens(), getTypeContext(), varEnv, decayErrorHandler);
+    Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic model apply sim code");
+    prettyPrintStatements(getArchetype().getPSInitialiser().getSimCodeTokens(), getTypeContext(), varEnv, errorHandler);
 
     // Write back linSyn
     varEnv.printLine("$(_out_post)[" + ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = linSyn;");

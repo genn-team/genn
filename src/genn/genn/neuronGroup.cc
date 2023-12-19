@@ -336,8 +336,7 @@ bool NeuronGroup::isSimRNGRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroupInternal *sg)
                        {
-                           return (Utils::isRNGRequired(sg->getPSInitialiser().getApplyInputCodeTokens()) ||
-                                   Utils::isRNGRequired(sg->getPSInitialiser().getDecayCodeTokens()));
+                           return Utils::isRNGRequired(sg->getPSInitialiser().getSimCodeTokens());
                        });
 }
 //----------------------------------------------------------------------------

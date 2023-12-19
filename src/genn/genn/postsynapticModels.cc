@@ -22,8 +22,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
     Utils::updateHash(getVars(), hash);
     Utils::updateHash(getNeuronVarRefs(), hash);
-    Utils::updateHash(getDecayCode(), hash);
-    Utils::updateHash(getApplyInputCode(), hash);
+    Utils::updateHash(getSimCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -60,13 +59,12 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::Nume
     Models::checkVarReferenceTypes(getNeuronVarReferences(), getSnippet()->getNeuronVarRefs());
 
     // Scan code tokens
-    m_DecayCodeTokens = Utils::scanCode(getSnippet()->getDecayCode(), "Postsynaptic model decay code");
-    m_ApplyInputCodeTokens = Utils::scanCode(getSnippet()->getApplyInputCode(), "Postsynaptic model apply input code");
+    m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Postsynaptic model sim code");
 }
 //----------------------------------------------------------------------------
 bool Init::isRNGRequired() const
 {
-    return (Utils::isRNGRequired(m_DecayCodeTokens) || Utils::isRNGRequired(m_ApplyInputCodeTokens));
+    return Utils::isRNGRequired(m_SimCodeTokens);
 }
 //----------------------------------------------------------------------------
 bool Init::isVarInitRequired() const
