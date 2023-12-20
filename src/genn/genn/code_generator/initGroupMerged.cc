@@ -857,9 +857,16 @@ boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDige
 // ----------------------------------------------------------------------------
 void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
+    // Create environment for group
+    EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, *this);
+
+    // Expose batch size
+    const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;
+    groupEnv.add(Type::Uint32.addConst(), "num_batch", std::to_string(updateBatchSize));
+
     // Initialise custom update variables
-    genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, env, *this, "", "size", 1, 
-                                                 (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1);        
+    genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, groupEnv, *this, "", "num_neurons", 1, 
+                                                 updateBatchSize);
 }
 
 // ----------------------------------------------------------------------------
@@ -913,11 +920,15 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
         groupEnv.getStream() << CodeStream::OB(3);
         groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
     }
- 
+    
+    // Expose batch size
+    const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;
+    groupEnv.add(Type::Uint32.addConst(), "num_batch", std::to_string(updateBatchSize));
+
     // Loop through rows
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        groupEnv, *this, stride, (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
+        groupEnv, *this, stride, updateBatchSize, false,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             if (kernel) {
@@ -970,9 +981,14 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 // ----------------------------------------------------------------------------
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
+    EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(env, *this);
+ 
+    // Expose batch size
+    const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;
+    groupEnv.add(Type::Uint32.addConst(), "num_batch", std::to_string(updateBatchSize));
+
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        env, *this, "$(num_pre) * $(_row_stride)",
-        (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
+        groupEnv, *this, "$(num_pre) * $(_row_stride)", updateBatchSize, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
@@ -1005,7 +1021,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerg
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
-    genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, env, *this, "", "size", 0, 1);
+    genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, env, *this, "", "num_neurons", 0, 1);
 }
 
 // ----------------------------------------------------------------------------
@@ -1035,7 +1051,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMer
 void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
     // Initialise presynaptic custom connectivity update variables
-    genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, env, *this, "", "size", 0, 1);
+    genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, env, *this, "", "num_neurons", 0, 1);
 }
 
 // ----------------------------------------------------------------------------

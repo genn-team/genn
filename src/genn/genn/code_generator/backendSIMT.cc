@@ -846,7 +846,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             // If update is a batch reduction
             if(cg.getArchetype().isBatchReduction()) {
                 groupEnv.printLine("// only do this for existing neurons");
-                groupEnv.print("if($(id) < $(size))");
+                groupEnv.print("if($(id) < $(num_neurons))");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
                     
@@ -905,7 +905,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     // Loop through warps of data
                     // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
                     // if this isn't thsizee case (TF uses a threshold of 1024), we should do something smarter
-                    batchEnv.print("for(unsigned int idx = lane; idx < $(size); idx += 32)");
+                    batchEnv.print("for(unsigned int idx = lane; idx < $(num_neurons); idx += 32)");
                     {
                         CodeStream::Scope b(batchEnv.getStream());
 
@@ -949,7 +949,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
                     const std::string blockSizeStr = std::to_string(blockSize);
-                    const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * (($(size) + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
+                    const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * (($(num_neurons) + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
@@ -966,7 +966,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 buildStandardEnvironment(batchEnv, batchSize);
                 
                 batchEnv.getStream() << "// only do this for existing neurons" << std::endl;
-                batchEnv.print("if($(id) < $(size))");
+                batchEnv.print("if($(id) < $(num_neurons))");
                 {
                     CodeStream::Scope b(batchEnv.getStream());
                     cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
@@ -1351,7 +1351,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             buildStandardEnvironment(groupEnv, batchSize);
 
             groupEnv.getStream() << "// only do this for existing variables" << std::endl;
-            groupEnv.print("if($(id) < $(size))");
+            groupEnv.print("if($(id) < $(num_neurons))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
 
@@ -1393,8 +1393,8 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(env, cg);
             buildStandardEnvironment(groupEnv);
             
-            groupEnv.getStream() << "// only do this for existing variables" << std::endl;
-            groupEnv.print("if($(id) < $(size))");
+            groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+            groupEnv.print("if($(id) < $(num_neurons))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
 
@@ -1433,8 +1433,8 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(env, cg);
             buildStandardEnvironment(groupEnv);
 
-            groupEnv.getStream() << "// only do this for existing variables" << std::endl;
-            groupEnv.print("if($(id) < $(size))");
+            groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
+            groupEnv.print("if($(id) < $(num_neurons))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
 

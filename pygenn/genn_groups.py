@@ -43,7 +43,7 @@ def _get_synapse_var_shape(var_dims, sg, batch_size):
             return num_copies + (np.product(sg.kernel_size),)
         else:
             # **YUCK** this isn't correct - only backend knows correct stride
-            return num_copies + (sg.src.size * sg.max_connections,)
+            return num_copies + (sg.src.num_neurons * sg.max_connections,)
     else:
         return num_copies + (1,)
 
@@ -236,10 +236,6 @@ class NeuronGroupMixin(GroupMixin):
     def spike_recording_data(self):
         return self._model._runtime.get_recorded_spikes(self)
 
-    @property
-    def size(self):
-        return self.num_neurons
-
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
         # If spike data is present on the host
@@ -250,7 +246,7 @@ class NeuronGroupMixin(GroupMixin):
         self._load_vars(
             self.neuron_model.get_vars(),
             lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access), self.size,
+                get_var_access_dim(v.access), self.num_neurons,
                 self._model.batch_size, d),
             self.vars, self.get_var_location,
             lambda v: (delay_group if self._is_var_queue_required(v.name)
@@ -328,9 +324,9 @@ class SynapseGroupMixin(GroupMixin):
     def weight_update_var_size(self):
         """Size of each weight update variable"""
         if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return self.trg.size * self.src.size
+            return self.trg.num_neurons * self.src.num_neurons
         elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            return self.max_connections * self.src.size
+            return self.max_connections * self.src.num_neurons
         elif self.matrix_type & SynapseMatrixWeight.KERNEL:
             return int(np.product(self.kernel_size))
         else:
@@ -352,7 +348,8 @@ class SynapseGroupMixin(GroupMixin):
             self.synapse_order = np.lexsort((post_indices, pre_indices))
 
             # Count the number of synapses in each row
-            row_lengths = np.bincount(pre_indices, minlength=self.src.size)
+            row_lengths = np.bincount(pre_indices,
+                                      minlength=self.src.num_neurons)
             row_lengths = row_lengths.astype(np.uint32)
 
             # Use maximum for max connections
@@ -365,7 +362,7 @@ class SynapseGroupMixin(GroupMixin):
             # Cache the row lengths
             self.row_lengths = row_lengths
 
-            assert len(self.row_lengths) == self.src.size
+            assert len(self.row_lengths) == self.src.num_neurons
         else:
             raise Exception("set_sparse_connections only supports"
                             "ragged format sparse connectivity")
@@ -519,7 +516,7 @@ class SynapseGroupMixin(GroupMixin):
             self._load_vars(
                 wu_snippet.get_pre_vars(),
                 lambda v, d: _get_neuron_var_shape(
-                    get_var_access_dim(v.access), self.src.size,
+                    get_var_access_dim(v.access), self.src.num_neurons,
                     self._model.batch_size, d),
                 self.pre_vars, self.get_wu_pre_var_location,
                 lambda v: pre_delay_group)
@@ -532,7 +529,7 @@ class SynapseGroupMixin(GroupMixin):
             self._load_vars(
                 wu_snippet.get_post_vars(),
                 lambda v, d: _get_neuron_var_shape(
-                    get_var_access_dim(v.access), self.trg.size,
+                    get_var_access_dim(v.access), self.trg.num_neurons,
                     self._model.batch_size, d),
                 self.post_vars, self.get_wu_post_var_location,
                 lambda v: post_delay_group)
@@ -544,7 +541,7 @@ class SynapseGroupMixin(GroupMixin):
                 self.ps_initialiser.snippet.get_vars(),
                 lambda v, d: _get_neuron_var_shape(
                     get_var_access_dim(v.access),
-                    self.trg.size,
+                    self.trg.num_neurons,
                     self._model.batch_size),
                 self.psm_vars, self.get_ps_var_location)
                 
@@ -553,7 +550,7 @@ class SynapseGroupMixin(GroupMixin):
                 # Get array
                 self.out_post = self._get_array(
                     "outPost", self._model.precision,
-                    (self._model.batch_size, self.trg.size))
+                    (self._model.batch_size, self.trg.num_neurons))
 
         # Load extra global parameters
         self._load_egp()
@@ -620,18 +617,13 @@ class CurrentSourceMixin(GroupMixin):
         # as long as the group, keep Python reference
         self._current_source_model = self.current_source_model
 
-    @property
-    def size(self):
-        """Number of neuron in the injected population"""
-        return self.target_pop.size
-
-
     def load(self):
         # Load current source variables
         self._load_vars(
             self.current_source_model.get_vars(),
             lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access), self.size,
+                get_var_access_dim(v.access),
+                self.target_pop.num_neurons,
                 self._model.batch_size))
 
         # Load current source extra global parameters
@@ -673,7 +665,7 @@ class CustomUpdateMixin(GroupMixin):
             self.custom_update_model.get_vars(),
             lambda v, d: _get_neuron_var_shape(
                 get_var_access_dim(v.access, self._dims),
-                self.size, batch_size))
+                self.num_neurons, batch_size))
         self._load_egp()
  
     def load_init_egps(self):
@@ -776,12 +768,14 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         self._load_vars(
             self.model.get_pre_vars(),
             lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access), self.synapse_group.src.size, 1),
+                get_var_access_dim(v.access),
+                self.synapse_group.src.num_neurons, 1),
             self.pre_vars, self.get_pre_var_location)
         self._load_vars(
             self.model.get_post_vars(), 
             lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access), self.synapse_group.trg.size, 1),
+                get_var_access_dim(v.access),
+                self.synapse_group.trg.num_neurons, 1),
             self.post_vars, self.get_post_var_location)
 
         # Load custom update extra global parameters

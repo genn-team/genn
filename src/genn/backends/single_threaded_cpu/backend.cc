@@ -613,7 +613,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {
@@ -641,7 +641,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {

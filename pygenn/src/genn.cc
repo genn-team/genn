@@ -527,7 +527,7 @@ PYBIND11_MODULE(genn, m)
     // genn.CustomUpdate
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdate, CustomUpdateBase>(m, "CustomUpdate", pybind11::dynamic_attr())
-        .def_property_readonly("size", &CustomUpdate::getSize)
+        .def_property_readonly("num_neurons", &CustomUpdate::getNumNeurons)
         .def_property_readonly("var_references", &CustomUpdate::getVarReferences)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties

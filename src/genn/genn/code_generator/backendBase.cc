@@ -31,8 +31,8 @@ template<typename G>
 void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
 {
     // Add size field
-    env.addField(Type::Uint32.addConst(), "size",
-                Type::Uint32, "size", 
+    env.addField(Type::Uint32.addConst(), "num_neurons",
+                Type::Uint32, "numNeurons", 
                 [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
 }
 //--------------------------------------------------------------------------
@@ -365,7 +365,7 @@ void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, u
     const bool batched = (env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1);
     if(batched) {
         env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
-                {env.addInitialiser("const unsigned int batchOffset = $(size) * $(batch);")});
+                {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
     }
             
     // If axonal delays are required
@@ -381,7 +381,7 @@ void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, u
         env.add(Type::Uint32.addConst(), "_delay_slot", "delaySlot",
                 {env.addInitialiser("const unsigned int delaySlot = * $(_spk_que_ptr);")});
         env.add(Type::Uint32.addConst(), "_delay_offset", "delayOffset",
-                {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(size);")});
+                {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(num_neurons);")});
 
         // If batching is also enabled, calculate offset including delay and batch
         if(batched) {
@@ -614,8 +614,8 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUU
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
 {
-    env.addField(Type::Uint32.addConst(), "size", 
-                 Type::Uint32, "size",
+    env.addField(Type::Uint32.addConst(), "num_neurons", 
+                 Type::Uint32, "numNeurons",
                  [](const auto &, const auto &c, size_t) 
                  { 
                      return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
@@ -625,8 +625,8 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const
 {
-    env.addField(Type::Uint32.addConst(), "size", 
-                 Type::Uint32, "size",
+    env.addField(Type::Uint32.addConst(), "num_neurons", 
+                 Type::Uint32, "numNeurons",
                  [](const auto &, const auto &c, size_t) 
                  { 
                      return c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); 
