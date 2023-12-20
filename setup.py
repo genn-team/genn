@@ -3,7 +3,7 @@ import sys
 from copy import deepcopy
 from platform import system, uname
 from psutil import cpu_count
-from shutil import copy, copytree, rmtree
+from shutil import copytree, rmtree
 from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
