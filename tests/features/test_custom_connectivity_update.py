@@ -45,8 +45,8 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
     post_inds = sg.get_sparse_post_inds()
 
     # Loop through rows
-    row_lengths = np.bincount(pre_inds, minlength=sg.src.size)
-    for i in range(sg.src.size):
+    row_lengths = np.bincount(pre_inds, minlength=sg.src.num_neurons)
+    for i in range(sg.src.num_neurons):
         # Check row lengths
         assert row_lengths[i] == get_row_length_fn(i)
 
@@ -56,7 +56,7 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
 
         # Build bitarray of row connectivity
         # **YUCK** converting to list
-        row_bits = bitarray(sg.trg.size)
+        row_bits = bitarray(sg.trg.num_neurons)
         row_bits.setall(0)
         row_bits[list(row_inds)] = 1
         
@@ -224,7 +224,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
         remove_synapse_host_egp_model,
         {}, {}, {}, {}, 
         {}, {}, {})
-    num_words = post_n_pop.size * ((pre_n_pop.size + 31) // 32)
+    num_words = post_n_pop.num_neurons * ((pre_n_pop.num_neurons + 31) // 32)
     remove_synapse_host_egp_ccu.extra_global_params["d"].set_init_values(
         np.empty(num_words, dtype=np.uint32))
     
