@@ -850,7 +850,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDige
     Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
     // Update hash with size of custom update
-    updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getNumNeurons(); }, hash);
 
     return hash.get_digest();
 }

@@ -163,7 +163,7 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
     numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomUpdateInitGroups(),
                                                [this](const CustomUpdateInternal &cg)
                                                {
-                                                   return padKernelSize(cg.getSize(), KernelInitialize);
+                                                   return padKernelSize(cg.getNumNeurons(), KernelInitialize);
                                                });
     
     // Add on total number of threads used for custom WU update initialization
@@ -211,7 +211,7 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
         return padKernelSize(32 * numCopies, KernelCustomUpdate);
     }
     else if (cg.getDims() & VarAccessDim::ELEMENT) {
-        return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+        return numCopies * padKernelSize(cg.getNumNeurons(), KernelCustomUpdate);
     }
     else {
         return padKernelSize(numCopies, KernelCustomUpdate);
@@ -1344,7 +1344,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
     env.getStream() << "// Custom update groups" << std::endl;
     genParallelGroup<CustomUpdateInitGroupMerged>(
         env, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedCustomUpdateInitGroups,
-        [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
+        [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getNumNeurons(), KernelInitialize); },
         [batchSize, this](EnvironmentExternalBase &env, CustomUpdateInitGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, cg);

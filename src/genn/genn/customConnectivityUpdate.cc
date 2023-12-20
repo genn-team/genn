@@ -146,14 +146,14 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
 
     // Give error if any presynaptic variable reference sizes differ from source neuron group
     if(std::any_of(m_PreVarReferences.cbegin(), m_PreVarReferences.cend(),
-                   [this](const auto&v) { return v.second.getSize() != m_SynapseGroup->getSrcNeuronGroup()->getNumNeurons(); }))
+                   [this](const auto&v) { return v.second.getNumNeurons() != m_SynapseGroup->getSrcNeuronGroup()->getNumNeurons(); }))
     {
         throw std::runtime_error("All referenced presynaptic variables must have the same size as presynaptic population.");
     }
 
     // Give error if any postsynaptic variable reference sizes differ from target neuron group
     if(std::any_of(m_PostVarReferences.cbegin(), m_PostVarReferences.cend(),
-                   [this](const auto &v) { return v.second.getSize() != m_SynapseGroup->getTrgNeuronGroup()->getNumNeurons(); }))
+                   [this](const auto &v) { return v.second.getNumNeurons() != m_SynapseGroup->getTrgNeuronGroup()->getNumNeurons(); }))
     {
         throw std::runtime_error("All referenced postsynaptic variables must have the same size as postsynaptic population.");
     }

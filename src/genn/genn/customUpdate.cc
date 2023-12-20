@@ -156,7 +156,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
+    m_VarReferences(varReferences), m_NumNeurons(varReferences.empty() ? 0 : varReferences.begin()->second.getNumNeurons()), m_DelayNeuronGroup(nullptr)
 {
     // Validate parameters, variables and variable references
     getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
@@ -181,7 +181,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                   [this](const auto &v) { return v.second.getSize() != m_Size; }))
+                   [this](const auto &v) { return v.second.getNumNeurons() != m_NumNeurons; }))
     {
         throw std::runtime_error("All referenced variables must have the same size.");
     }

@@ -33,7 +33,7 @@ void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
     // Add size field
     env.addField(Type::Uint32.addConst(), "size",
                 Type::Uint32, "size", 
-                [](const auto &, const auto &c, size_t) { return c.getSize(); });
+                [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
 }
 //--------------------------------------------------------------------------
 template<typename G>

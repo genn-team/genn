@@ -33,7 +33,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
     // Update hash with each group's custom update size
-    updateHash([](const auto &cg) { return cg.getSize(); }, hash);
+    updateHash([](const auto &cg) { return cg.getNumNeurons(); }, hash);
 
     // Update hash with each group's parameters, derived parameters and variable references
     updateHash([](const auto &cg) { return cg.getParams(); }, hash);
@@ -271,7 +271,7 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) { return c.getSize(); });
+                 [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {

@@ -418,7 +418,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Allocate custom update variables
     for(const auto &c : getModel().getCustomUpdates()) {
         LOGD_RUNTIME << "Allocating memory for custom update '" << c.first << "'";
-        createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getSize(), batchSize, 1, 
+        createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getNumNeurons(), batchSize, 1, 
                                                       c.second.getDims() & VarAccessDim::BATCH);
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);

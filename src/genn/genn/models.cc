@@ -67,7 +67,7 @@ const std::string &VarReference::getVarName() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-unsigned int VarReference::getSize() const
+unsigned int VarReference::getNumNeurons() const
 {
     return std::visit(
             Utils::Overload{
@@ -76,7 +76,7 @@ unsigned int VarReference::getSize() const
             [](const WUPreRef &ref) { return ref.group->getSrcNeuronGroup()->getNumNeurons(); },
             [](const WUPostRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
             [](const CSRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
-            [](const CURef &ref) { return ref.group->getSize(); },
+            [](const CURef &ref) { return ref.group->getNumNeurons(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); }},
         m_Detail);

@@ -182,7 +182,7 @@ public:
     const std::string &getVarName() const;
 
     //! Get size of variable
-    unsigned int getSize() const;
+    unsigned int getNumNeurons() const;
     
     //! Does this variable reference's target belong to neuron group
     bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;

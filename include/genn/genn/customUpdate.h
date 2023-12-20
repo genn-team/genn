@@ -275,7 +275,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     const std::unordered_map<std::string, Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
-    unsigned int getSize() const { return m_Size; }
+    unsigned int getNumNeurons() const { return m_NumNeurons; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
@@ -315,7 +315,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::unordered_map<std::string, Models::VarReference> m_VarReferences;
-    unsigned int m_Size;
+    unsigned int m_NumNeurons;
     const NeuronGroup *m_DelayNeuronGroup;
 };
 
