@@ -115,7 +115,7 @@ TEST(Models, NeuronVarReference)
     auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     auto neuronVoltage = createVarRef(ng, "V");
-    ASSERT_EQ(neuronVoltage.getSize(), 10);
+    ASSERT_EQ(neuronVoltage.getNumNeurons(), 10);
 
     try {
         auto neuronMagic = createVarRef(ng, "Magic");
@@ -167,7 +167,7 @@ TEST(Models, CurrentSourceVarReference)
                                                                         cs0ParamVals, cs0VarVals);
                                                                         
     auto csCurrent = createVarRef(cs0, "current");
-    ASSERT_EQ(csCurrent.getSize(), 10);
+    ASSERT_EQ(csCurrent.getNumNeurons(), 10);
 
     try {
         auto csMagic = createVarRef(cs0, "Magic");
@@ -194,7 +194,7 @@ TEST(Models, PSMVarReference)
         initPostsynaptic<AlphaCurr>({{"tau", 5.0}}, {{"x", 0.0}}));
 
     auto psmX = createPSMVarRef(sg1, "x");
-    ASSERT_EQ(psmX.getSize(), 25);
+    ASSERT_EQ(psmX.getNumNeurons(), 25);
 
     // Test error if variable doesn't exist
     try {
@@ -243,7 +243,7 @@ TEST(Models, WUPreVarReference)
     // Finalize model
     model.finalise();
 
-    ASSERT_EQ(wuPre.getSize(), 10);
+    ASSERT_EQ(wuPre.getNumNeurons(), 10);
     ASSERT_EQ(wuPre.getDelayNeuronGroup(), nullptr);
     ASSERT_EQ(wuPre2.getDelayNeuronGroup(), pre);
 }
@@ -288,7 +288,7 @@ TEST(Models, WUPostVarReference)
     // Finalize model
     model.finalise();
 
-    ASSERT_EQ(wuPost.getSize(), 25);
+    ASSERT_EQ(wuPost.getNumNeurons(), 25);
     ASSERT_EQ(wuPost.getDelayNeuronGroup(), nullptr);
     ASSERT_EQ(wuPost2.getDelayNeuronGroup(), post);
 }
