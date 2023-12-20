@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from pygenn import types
 
@@ -86,7 +87,7 @@ def test_num_sim(make_model, backend, precision, batch_size):
         var_refs=[("ref", "unsigned int", VarAccessMode.READ_ONLY)],
         update_code=
         """
-        num_neurons_test = num_neurons;
+        num_neurons_test = size;
         num_batch_test = num_batch;
         """)
     
@@ -124,7 +125,46 @@ def test_num_sim(make_model, backend, precision, batch_size):
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, synapse_var_init, pre_var_init, post_var_init),
         init_postsynaptic(postsynaptic_update_model, {}, neuron_var_init))
-    
+
+    var_refs = {"ref": create_var_ref(n_pop, "num_neurons_test")}
+    cu = model.add_custom_update("CU", "Test", custom_update_model,
+                                 {}, neuron_var_init, var_refs)
+
+    wu_var_refs = {"ref": create_wu_var_ref(syn, "num_pre_syn_test")}
+    cuw = model.add_custom_update("CUW", "Test", custom_update_wu_model,
+                                  {}, synapse_var_init, wu_var_refs)
+
     # Build model and load
     model.build()
     model.load()
+
+    # Simulate one timestep
+    model.step_time()
+    model.custom_update("Test")
+
+    # Check variables are set correctly
+    vars = [(n_pop.vars["num_neurons_test"], 4),
+            (n_pop.vars["num_batch_test"], batch_size),
+            (cs.vars["num_neurons_test"], 4),
+            (cs.vars["num_batch_test"], batch_size),
+            (syn.vars["num_pre_syn_test"], 2),
+            (syn.vars["num_post_syn_test"], 4),
+            (syn.vars["num_batch_syn_test"], batch_size),
+            (syn.pre_vars["num_neurons_pre_test"], 2),
+            (syn.pre_vars["num_batch_pre_test"], batch_size),
+            (syn.post_vars["num_neurons_post_test"], 4),
+            (syn.post_vars["num_batch_post_test"], batch_size),
+            (cu.vars["num_neurons_test"], 4),
+            (cu.vars["num_batch_test"], batch_size),
+            (cuw.vars["num_pre_syn_test"], 2),
+            (cuw.vars["num_post_syn_test"], 4),
+            (cuw.vars["num_batch_syn_test"], batch_size),]
+    for v, val in vars:
+        v.pull_from_device()
+        
+        # Check p-value exceed our confidence internal
+        if not np.allclose(v.values, val):
+            assert False, f"'{v.group.name}' '{v.name}' has wrong value ({v.values} rather than {val}"
+
+    
+    
