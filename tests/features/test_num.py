@@ -89,7 +89,7 @@ def test_num(make_model, backend, precision, batch_size):
         var_refs=[("ref", "unsigned int", VarAccessMode.READ_ONLY)],
         update_code=
         """
-        num_neurons_test = size * 2;
+        num_neurons_test = num_neurons * 2;
         num_batch_test = num_batch * 2;
         """)
 
@@ -191,7 +191,7 @@ def test_num(make_model, backend, precision, batch_size):
             (cu.vars["num_batch_test"], batch_size),
             (cuw.vars["num_pre_syn_test"], 2),
             (cuw.vars["num_post_syn_test"], 4),
-            (cuw.vars["num_batch_syn_test"], batch_size),]
+            (cuw.vars["num_batch_syn_test"], batch_size)]
 
     # Check variables after initialisation
     for v, val in vars:
