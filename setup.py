@@ -2,7 +2,9 @@ import os
 import sys
 from copy import deepcopy
 from platform import system, uname
-from shutil import copytree, rmtree
+from psutil import cpu_count
+from shutil import copy, copytree, rmtree
+from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
 
@@ -220,6 +222,64 @@ for module_stem, source_stem, kwargs in backends:
                                          [os.path.join(pygenn_src, source_stem + "Backend.cc")],
                                          **backend_extension_kwargs))
 
+class BuildGeNNExt(build_ext):
+    def build_extensions(self):
+        # Build set of required backends
+        required_backends = set(
+            l for e in self.extensions for l in e.libraries 
+            if "_backend_" in l)
+
+        # If compiler is MSVC
+        if self.compiler.compiler_type == "msvc":
+            # Ensure output directory has trailing slash
+            out_dir = os.path.join(pygenn_path, "")
+
+            # Loop through required backends
+            for b in required_backends:
+                # Remove extension from backend name
+                backend_title = os.path.splitext(b)[0]
+
+                # Check that backend title ends with configuration
+                # and starts with genn_
+                assert backend_title.endswith(genn_lib_suffix)
+                assert backend_title.startswith("genn_")
+                
+                # Slice out name of project
+                project = backend_title[5:-len(genn_lib_suffix)]
+                
+                # Build
+                check_call(["msbuild", "genn.sln", f"/t:{project}", 
+                            f"/p:Configuration={genn_lib_suffix[1:]}", 
+                            "/m", "/verbosity:quiet", 
+                            f"/p:OutDir={out_dir}"],
+                           cwd=genn_path)
+        # Otherwise
+        else:
+            # Loop through required backends
+            for b in required_backends:
+                # Remove extension from backend name
+                backend_title = os.path.splitext(b)[0]
+
+                # Check that backend title ends with configuration
+                # and starts with genn_
+                assert backend_title.endswith(genn_lib_suffix)
+                assert backend_title.startswith("libgenn_")
+                
+                # Slice out name of target
+                target = backend_title[8:-len(genn_lib_suffix)]
+                
+                # Define make arguments
+                make_arguments = ["make", target, "DYNAMIC=1",
+                                  f"LIBRARY_DIRECTORY={pygenn_path}",
+                                  f"-j {cpu_count(logical=False)}"]
+                if debug_build:
+                    make_arguments.append("DEBUG=1")
+                
+                # Build
+                check_call(make_arguments, cwd=genn_path)
+
+        super().build_extensions()
+
 # Read version from txt file
 with open(os.path.join(genn_path, "version.txt")) as version_file:
     version = version_file.read().strip()
@@ -233,6 +293,7 @@ setup(
     url="https://github.com/genn_team/genn",
     ext_package="pygenn",
     ext_modules=ext_modules,
+    cmdclass={"build_ext": BuildGeNNExt},
     zip_safe=False,
     python_requires=">=3.6",
     install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
