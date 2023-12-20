@@ -31,7 +31,7 @@ opencl_path = os.environ.get("OPENCL_PATH")
 # Is OpenCL installed
 opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 
-# Are we on Linux? 
+# Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
 
@@ -89,7 +89,7 @@ genn_extension_kwargs = {
 
 # If this is Windows
 if WIN:
-    # Turn off warnings about dll-interface being required for stuff to be 
+    # Turn off warnings about dll-interface being required for stuff to be
     # used by clients and prevent windows.h exporting TOO many awful macros
     genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
 
@@ -111,7 +111,7 @@ if coverage_build:
         genn_extension_kwargs["extra_link_args"].append("--coverage")
     elif MAC:
         genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-    
+
 
 # By default build single-threaded CPU backend
 backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
@@ -148,7 +148,7 @@ if opencl_installed:
         opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
     else:
         opencl_library_dir = os.path.join(opencl_path, "lib64")
-    
+
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("opencl", "opencl",
@@ -226,7 +226,7 @@ class BuildGeNNExt(build_ext):
     def build_extensions(self):
         # Build set of required backends
         required_backends = set(
-            l for e in self.extensions for l in e.libraries 
+            l for e in self.extensions for l in e.libraries
             if "_backend_" in l)
 
         # If compiler is MSVC
@@ -243,14 +243,14 @@ class BuildGeNNExt(build_ext):
                 # and starts with genn_
                 assert backend_title.endswith(genn_lib_suffix)
                 assert backend_title.startswith("genn_")
-                
+
                 # Slice out name of project
                 project = backend_title[5:-len(genn_lib_suffix)]
-                
+
                 # Build
-                check_call(["msbuild", "genn.sln", f"/t:{project}", 
-                            f"/p:Configuration={genn_lib_suffix[1:]}", 
-                            "/m", "/verbosity:quiet", 
+                check_call(["msbuild", "genn.sln", f"/t:{project}",
+                            f"/p:Configuration={genn_lib_suffix[1:]}",
+                            "/m", "/verbosity:quiet",
                             f"/p:OutDir={out_dir}"],
                            cwd=genn_path)
         # Otherwise
@@ -263,18 +263,18 @@ class BuildGeNNExt(build_ext):
                 # Check that backend title ends with configuration
                 # and starts with genn_
                 assert backend_title.endswith(genn_lib_suffix)
-                assert backend_title.startswith("libgenn_")
-                
+                assert backend_title.startswith("genn_")
+
                 # Slice out name of target
-                target = backend_title[8:-len(genn_lib_suffix)]
-                
+                target = backend_title[5:-len(genn_lib_suffix)]
+
                 # Define make arguments
                 make_arguments = ["make", target, "DYNAMIC=1",
                                   f"LIBRARY_DIRECTORY={pygenn_path}",
-                                  f"-j {cpu_count(logical=False)}"]
+                                  f"--jobs={cpu_count(logical=False)}"]
                 if debug_build:
                     make_arguments.append("DEBUG=1")
-                
+                print(make_arguments)
                 # Build
                 check_call(make_arguments, cwd=genn_path)
 
@@ -297,5 +297,4 @@ setup(
     zip_safe=False,
     python_requires=">=3.6",
     install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
-                      "importlib-metadata>=1.0;python_version<'3.8'"],
-)
+                      "importlib-metadata>=1.0;python_version<'3.8'"])
