@@ -228,53 +228,38 @@ class BuildGeNNExt(build_ext):
         required_backends = set(
             l for e in self.extensions for l in e.libraries
             if "_backend_" in l)
+        
+        # Ensure output directory has trailing slash to make MSVC happy
+        out_dir = os.path.join(pygenn_path, "")
 
-        # If compiler is MSVC
-        if self.compiler.compiler_type == "msvc":
-            # Ensure output directory has trailing slash
-            out_dir = os.path.join(pygenn_path, "")
+        # Loop through required backends
+        for b in required_backends:
+            # Remove extension from backend name
+            backend_title = os.path.splitext(b)[0]
 
-            # Loop through required backends
-            for b in required_backends:
-                # Remove extension from backend name
-                backend_title = os.path.splitext(b)[0]
+            # Check that backend title ends with configuration
+            # and starts with genn_
+            assert backend_title.endswith(genn_lib_suffix)
+            assert backend_title.startswith("genn_")
 
-                # Check that backend title ends with configuration
-                # and starts with genn_
-                assert backend_title.endswith(genn_lib_suffix)
-                assert backend_title.startswith("genn_")
+            # Slice out name of target
+            target = backend_title[5:-len(genn_lib_suffix)]
 
-                # Slice out name of project
-                project = backend_title[5:-len(genn_lib_suffix)]
-
-                # Build
-                check_call(["msbuild", "genn.sln", f"/t:{project}",
+            # If compiler is MSVC
+            if self.compiler.compiler_type == "msvc":
+                check_call(["msbuild", "genn.sln", f"/t:{target}",
                             f"/p:Configuration={genn_lib_suffix[1:]}",
                             "/m", "/verbosity:quiet",
                             f"/p:OutDir={out_dir}"],
                            cwd=genn_path)
-        # Otherwise
-        else:
-            # Loop through required backends
-            for b in required_backends:
-                # Remove extension from backend name
-                backend_title = os.path.splitext(b)[0]
-
-                # Check that backend title ends with configuration
-                # and starts with genn_
-                assert backend_title.endswith(genn_lib_suffix)
-                assert backend_title.startswith("genn_")
-
-                # Slice out name of target
-                target = backend_title[5:-len(genn_lib_suffix)]
-
+            else:
                 # Define make arguments
                 make_arguments = ["make", target, "DYNAMIC=1",
                                   f"LIBRARY_DIRECTORY={pygenn_path}",
                                   f"--jobs={cpu_count(logical=False)}"]
                 if debug_build:
                     make_arguments.append("DEBUG=1")
-                print(make_arguments)
+
                 # Build
                 check_call(make_arguments, cwd=genn_path)
 
