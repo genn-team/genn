@@ -463,11 +463,17 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
-        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
-        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
-        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
-        generateInit(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
-        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
+        {
+            std::ofstream neuronUpdateStream((outputPath / "neuronUpdateCUDAOptim.cc").str());
+            std::ofstream customUpdateStream((outputPath / "customUpdateCUDAOptim.cc").str());
+            std::ofstream synapseUpdateStream((outputPath / "synapseUpdateCUDAOptim.cc").str());
+            std::ofstream initStream((outputPath / "initCUDAOptim.cc").str());
+            generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateInit(initStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
+        }
 
         // Loop through modules
         std::vector<std::thread> threads;

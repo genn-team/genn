@@ -27,6 +27,12 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+void writeStringStream(const filesystem::path &file, const std::ostringstream &stream)
+{
+    std::ofstream fileStream(file.str());
+    fileStream << stream.str();
+}
+//--------------------------------------------------------------------------
 void copyFile(const filesystem::path &file, const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
     // Get full path to input and output files
@@ -95,20 +101,34 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     // Create directory for generated code
     filesystem::create_directory(outputPath);
 
+    // Get memory spaces available to this backend
+    // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+    auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
+    
+    // Generate modules into string streams
+    // **NOTE** because code generation is one-pass, this needs to be done whether code needs compiling or not
+    std::ostringstream synapseUpdateStream;
+    std::ostringstream neuronUpdateStream;
+    std::ostringstream customUpdateStream;
+    std::ostringstream initStream;
+
+    generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces);
+    generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces);
+    generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces);
+    generateInit(initStream, modelMerged, backend, memorySpaces);
+
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    if(true/*forceRebuild || shouldRebuildModel(outputPath, hashDigest)*/) {
-        // Get memory spaces available to this backend
-        // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
-        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
-
-        // Generate modules
-        // **NOTE** these are ordered in terms of memory-space priority
-        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
-        generateInit(outputPath, modelMerged, backend, memorySpaces);
+    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest)) {
+        
+        // Generate runner
         generateRunner(outputPath, modelMerged, backend);
+
+        // Write module files to disk
+        writeStringStream(outputPath / "neuronUpdate.cc", neuronUpdateStream);
+        writeStringStream(outputPath / "customUpdate.cc", customUpdateStream);
+        writeStringStream(outputPath / "synapseUpdate.cc", synapseUpdateStream);
+        writeStringStream(outputPath / "init.cc", initStream);
 
         // Get list of files to copy into generated code
         const auto backendSharePath = sharePath / "backends";
@@ -158,12 +178,11 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     return std::vector<std::string>{"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
 }
 //--------------------------------------------------------------------------
-void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateNeuronUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
                           BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
-    // Create output stream to write to file and wrap in CodeStream
-    std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
-    CodeStream neuronUpdate(neuronUpdateStream);
+    // Wrap output stream in CodeStream
+    CodeStream neuronUpdate(stream);
 
     neuronUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     neuronUpdate << std::endl;
@@ -179,12 +198,11 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         });
 }
 //--------------------------------------------------------------------------
-void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateCustomUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
                           BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
-    // Create output stream to write to file and wrap in CodeStream
-    std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
-    CodeStream customUpdate(customUpdateStream);
+    // Wrap output stream in CodeStream
+    CodeStream customUpdate(stream);
 
     customUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     customUpdate << std::endl;
@@ -203,12 +221,11 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         });
 }
 //--------------------------------------------------------------------------
-void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateSynapseUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
                            BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
-    // Create output stream to write to file and wrap in CodeStream
-    std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
-    CodeStream synapseUpdate(synapseUpdateStream);
+    // Wrap output stream in CodeStream
+    CodeStream synapseUpdate(stream);
 
     synapseUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     synapseUpdate << std::endl;
@@ -225,12 +242,11 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
         });
 }
 //--------------------------------------------------------------------------
-void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateInit(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
                   BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
-    // Create output stream to write to file and wrap in CodeStream
-    std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
-    CodeStream init(initStream);
+    // Wrap output stream in CodeStream
+    CodeStream init(stream);
 
     init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 
