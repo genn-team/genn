@@ -145,11 +145,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def runTestsCommand = """
                             rm -f "${outputFilename}"
 
-                            # Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
-                            make clean COVERAGE=1 1>> "${outputFilename}" 2>&1
-
-                            make single_threaded_cpu COVERAGE=1 1>> "${outputFilename}" 2>&1
-
                             # Clean and build unit tests
                             cd tests/unit
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
@@ -171,9 +166,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             DEL "${outputFilename}"
 
-                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:minimal /p:Configuration=Release
+                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:quiet /p:Configuration=Release
 
-                            msbuild tests/tests.sln /m /verbosity:minimal /p:Configuration=Release
+                            msbuild tests/tests.sln /m /verbosity:quiet /p:Configuration=Release
 
                             PUSHD tests/unit
                             unit_Release.exe --gtest_output="xml:test_results_unit.xml"
@@ -290,19 +285,19 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating dynamic libraries";
                             msbuildCommand = """
                             CALL %VC_VARS_BAT%
-                            msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
+                            msbuild genn.sln /m /verbosity:quiet /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
                             """;
 
                             // If node has suitable CUDA, also build CUDA backend
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
+                            if("cuda10" in nodeLabel || "cuda11" in nodeLabel || "cuda12" in nodeLabel) {
                                 msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
                                 """;
                             }
                             // If this node has OpenCL, also build OpenCL backend
                             if(nodeLabel.contains("opencl")) {
                                 msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
                                 """;
                             }
 
