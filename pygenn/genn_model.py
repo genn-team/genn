@@ -56,7 +56,6 @@ from weakref import proxy
 
 # 3rd party imports
 import numpy as np
-from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from .genn import (generate_code, init_logging, CurrentSource,
@@ -97,7 +96,7 @@ if system() == "Windows":
     # Get environment and cache in class, convertings
     # all keys to upper-case for consistency
     _msvc_env = msvc.msvc14_get_vc_env("x86_amd64")
-    _msvc_env = {k.upper(): v for k, v in iteritems(_msvc_env)}
+    _msvc_env = {k.upper(): v for k, v in _msvc_env.items()}
     
     # Update process's environment with this
     # **NOTE** this handles both child processes (manually launching msbuild)
@@ -376,7 +375,7 @@ class GeNNModel(ModelSpecInternal):
         target = self._validate_neuron_group(target, "target")
 
         # If matrix type is a string, loop up enumeration value
-        if isinstance(matrix_type, string_types):
+        if isinstance(matrix_type, str):
             matrix_type = getattr(SynapseMatrixType, matrix_type)
 
         # If no connectivity initialiser is passed, 
@@ -573,7 +572,7 @@ class GeNNModel(ModelSpecInternal):
         self._preferences = self._backend_module.Preferences()
 
         # Set attributes on preferences object from kwargs
-        for k, v in iteritems(self._preference_kwargs):
+        for k, v in self._preference_kwargs.items():
             if hasattr(self._preferences, k):
                 setattr(self._preferences, k, v)
         
@@ -614,47 +613,47 @@ class GeNNModel(ModelSpecInternal):
 
         # Loop through neuron populations and load any
         # extra global parameters required for initialization
-        for pop_data in itervalues(self.neuron_populations):
+        for pop_data in self.neuron_populations.values():
             pop_data.load_init_egps()
 
         # Loop through synapse populations and load any 
         # extra global parameters required for initialization
-        for pop_data in itervalues(self.synapse_populations):
+        for pop_data in self.synapse_populations.values():
             pop_data.load_init_egps()
 
         # Loop through current sources
-        for src_data in itervalues(self.current_sources):
+        for src_data in self.current_sources.values():
             src_data.load_init_egps()
 
         # Loop through custom connectivity updates
-        for cu_data in itervalues(self.custom_connectivity_updates):
+        for cu_data in self.custom_connectivity_updates.values():
             cu_data.load_init_egps()
 
         # Loop through custom updates
-        for cu_data in itervalues(self.custom_updates):
+        for cu_data in self.custom_updates.values():
             cu_data.load_init_egps()
 
         # Initialize model
         self._runtime.initialize()
 
         # Loop through neuron populations
-        for pop_data in itervalues(self.neuron_populations):
+        for pop_data in self.neuron_populations.values():
             pop_data.load(num_recording_timesteps)
 
         # Loop through synapse populations
-        for pop_data in itervalues(self.synapse_populations):
+        for pop_data in self.synapse_populations.values():
             pop_data.load()
 
         # Loop through current sources
-        for src_data in itervalues(self.current_sources):
+        for src_data in self.current_sources.values():
             src_data.load()
 
         # Loop through custom connectivity updates
-        for cu_data in itervalues(self.custom_connectivity_updates):
+        for cu_data in self.custom_connectivity_updates.values():
             cu_data.load()
 
         # Loop through custom updates
-        for cu_data in itervalues(self.custom_updates):
+        for cu_data in self.custom_updates.values():
             cu_data.load()
 
         # Now everything is set up call the sparse initialisation function
@@ -667,23 +666,23 @@ class GeNNModel(ModelSpecInternal):
 
     def unload(self):
         # Loop through custom updates and unload
-        for cu_data in itervalues(self.custom_updates):
+        for cu_data in self.custom_updates.values():
             cu_data.unload()
         
         # Loop through custom connectivity updates and unload
-        for cu_data in itervalues(self.custom_connectivity_updates):
+        for cu_data in self.custom_connectivity_updates.values():
             cu_data.unload()
     
         # Loop through current sources and unload
-        for src_data in itervalues(self.current_sources):
+        for src_data in self.current_sources.values():
             src_data.unload()
 
         # Loop through synapse populations and unload
-        for pop_data in itervalues(self.synapse_populations):
+        for pop_data in self.synapse_populations.values():
             pop_data.unload()
 
         # Loop through neuron populations and unload
-        for pop_data in itervalues(self.neuron_populations):
+        for pop_data in self.neuron_populations.values():
             pop_data.unload()
 
         # Close runtime
@@ -720,7 +719,7 @@ class GeNNModel(ModelSpecInternal):
 
     def _validate_neuron_group(self, group, context):
         # If group is a string
-        if isinstance(group, string_types):
+        if isinstance(group, str):
             # If it's the name of a neuron group, return it
             if group in self.neuron_populations:
                 return self.neuron_populations[group]

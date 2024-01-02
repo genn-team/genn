@@ -3,7 +3,6 @@ This module provides classes which automate model checks and parameter
 conversions for GeNN Groups
 """
 from deprecated import deprecated
-from six import iteritems, iterkeys, itervalues
 from warnings import warn
 from weakref import proxy
 import numpy as np
@@ -168,7 +167,7 @@ class GroupMixin(object):
             egp_dict = self.extra_global_params
 
         # Loop through extra global params
-        for egp_name, egp_data in iteritems(egp_dict):
+        for egp_name, egp_data in egp_dict.items():
             if egp_data.init_values is not None:
                 # Allocate memory
                 self._model._runtime.allocate_array(
@@ -190,7 +189,7 @@ class GroupMixin(object):
             var_dict = self.vars
 
         # Loop through variables and load any associated initialisation egps
-        for var_name, var_data in iteritems(var_dict):
+        for var_name, var_data in var_dict.items():
             self._load_egp(var_data.extra_global_params, var_name)
 
     def _unload_vars(self, var_dict=None):
@@ -199,7 +198,7 @@ class GroupMixin(object):
             var_dict = self.vars
 
         # Loop through variables and clear views
-        for v in itervalues(var_dict):
+        for v in var_dict.values():
             v._unload()
 
     def _unload_egps(self, egp_dict=None):
@@ -208,7 +207,7 @@ class GroupMixin(object):
             egp_dict = self.extra_global_params
 
         # Loop through extra global params and clear views
-        for e in itervalues(egp_dict):
+        for e in egp_dict.values():
             e._unload()
 
 class NeuronGroupMixin(GroupMixin):

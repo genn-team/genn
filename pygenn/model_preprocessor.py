@@ -8,7 +8,6 @@ from deprecated import deprecated
 from numbers import Number
 from weakref import proxy, ref, ProxyTypes
 import numpy as np
-from six import iteritems, iterkeys, itervalues, string_types
 from .genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarInit)
 from .init_var_snippets import Uninitialised
@@ -126,7 +125,7 @@ class VariableBase(ArrayBase):
 
     def _unload(self):
         super(VariableBase, self)._unload()
-        for e in itervalues(self.extra_global_params):
+        for e in self.extra_global_params.values():
             e._unload()
 
 class Variable(VariableBase):
@@ -328,7 +327,7 @@ def get_var_init(var_space):
     dict mapping variable names to VarInit objects
     """
     var_init = {}
-    for name, value in iteritems(var_space):
+    for name, value in var_space.items():
         if isinstance(value, VarInit):
             var_init[name] = value
          # If no values are specified - mark as uninitialised
@@ -367,7 +366,7 @@ def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     
     # If model is a string, get function with 
     # this name from module and call it
-    if isinstance(snippet, string_types):
+    if isinstance(snippet, str):
         return getattr(built_in_snippet_module, snippet)()
     # Otherwise, if model is derived off correct 
     # base class, return it directly
