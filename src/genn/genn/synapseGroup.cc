@@ -162,6 +162,13 @@ void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayT
     m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setAxonalDelaySteps(unsigned int timesteps)
+{
+    m_AxonalDelaySteps = timesteps;
+
+    m_SrcNeuronGroup->checkNumDelaySlots(m_AxonalDelaySteps);
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setSpanType(SpanType spanType)
 {
     if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)) {
@@ -284,14 +291,14 @@ bool SynapseGroup::isZeroCopyEnabled() const
             || m_WUPostVarLocation.anyZeroCopy() || m_WUExtraGlobalParamLocation.anyZeroCopy());
 }
 //----------------------------------------------------------------------------
-SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
+SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType,
                            const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
+    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
@@ -303,7 +310,6 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-  
     
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getPSInitialiser().getNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs(),
@@ -450,10 +456,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
-
-    // Check that the source neuron group supports the desired number of delay steps
-    srcNeuronGroup->checkNumDelaySlots(delaySteps);
-}
+ }
 //----------------------------------------------------------------------------
 void SynapseGroup::setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &target)
 {
@@ -839,7 +842,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUInitialiser().getSnippet()->getHashDigest(), hash);
-    Utils::updateHash(getDelaySteps(), hash);
+    Utils::updateHash(getAxonalDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Type::updateHash(getSparseIndType(), hash);
@@ -898,7 +901,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostHashDigest(con
     boost::uuids::detail::sha1 hash;
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreHashDigest(), hash);
-        Utils::updateHash((getDelaySteps() != 0), hash);
+        Utils::updateHash((getAxonalDelaySteps() != 0), hash);
     }
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
@@ -953,7 +956,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventHashDigest(
     boost::uuids::detail::sha1 hash;
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreEventHashDigest(), hash);
-        Utils::updateHash((getDelaySteps() != 0), hash);
+        Utils::updateHash((getAxonalDelaySteps() != 0), hash);
     }
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostEventHashDigest(), hash);
@@ -1009,7 +1012,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUSpikeEventFuseHashDig
     boost::uuids::detail::sha1 hash;
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreEventHashDigest(), hash);
-        Utils::updateHash(getDelaySteps(), hash);
+        Utils::updateHash(getAxonalDelaySteps(), hash);
     }
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostEventHashDigest(), hash);
@@ -1061,7 +1064,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostFuseHashDigest
     boost::uuids::detail::sha1 hash;
     if(presynaptic) {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPreHashDigest(), hash);
-        Utils::updateHash(getDelaySteps(), hash);
+        Utils::updateHash(getAxonalDelaySteps(), hash);
     }
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);

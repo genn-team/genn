@@ -56,7 +56,7 @@ public:
 
     std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
-        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDims, index);
+        return getPreVarIndex(getArchetype().getAxonalDelaySteps() != 0, batchSize, varDims, index);
     }
     
     std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const

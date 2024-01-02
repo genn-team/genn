@@ -452,7 +452,7 @@ const SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::strin
     }
 }
 // ---------------------------------------------------------------------------
-SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
+SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string& src, const std::string& trg,
                                               const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser, 
                                               const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
                                               const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
@@ -464,7 +464,7 @@ SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMa
     // Add synapse group to map
     auto result = m_LocalSynapseGroups.try_emplace(
         name,
-        name, mtype, delaySteps,
+        name, mtype,
         wumInitialiser, psmInitialiser, 
         srcNeuronGrp, trgNeuronGrp,
         connectivityInitialiser, toeplitzConnectivityInitialiser, 

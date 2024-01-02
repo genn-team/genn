@@ -291,7 +291,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
     // Create an environment which caches variables in local variables if they are accessed
     // **NOTE** always copy variables if synapse group is delayed
-    const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
+    const bool delayed = (getArchetype().getAxonalDelaySteps() != 0);
     EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
         [batchSize, delayed, &ng](const std::string&, VarAccess d)
@@ -391,7 +391,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
   
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
-        const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
+        const bool delayed = (getArchetype().getBackPropDelaySteps() != 0);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
@@ -417,7 +417,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
-    if(getArchetype().getBackPropDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
+    if(getArchetype().getBackPropDelaySteps() != 0 && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
          // Create environment and add fields for variable 
         EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
         varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false);
@@ -477,7 +477,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
-        const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
+        const bool delayed = (getArchetype().getAxonalDelaySteps() != 0);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
@@ -503,7 +503,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
-    if(getArchetype().getDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
+    if(getArchetype().getAxonalDelaySteps() != 0 && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
         // Create environment and add fields for variable 
         EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
         varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false);
@@ -775,7 +775,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
             const bool preVars = std::any_of(getMergedOutSynWUMPreCodeGroups().cbegin(), getMergedOutSynWUMPreCodeGroups().cend(),
                                              [](const OutSynWUMPreCode &sg)
                                              {
-                                                 return ((sg.getArchetype().getDelaySteps() != NO_DELAY)
+                                                 return ((sg.getArchetype().getAxonalDelaySteps() != 0)
                                                          && Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPreDynamicsCodeTokens()));
                                              });
 
@@ -784,7 +784,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
             const bool postVars = std::any_of(getMergedInSynWUMPostCodeGroups().cbegin(), getMergedInSynWUMPostCodeGroups().cend(),
                                               [](const auto &sg)
                                               {
-                                                  return ((sg.getArchetype().getBackPropDelaySteps() != NO_DELAY)
+                                                  return ((sg.getArchetype().getBackPropDelaySteps() != 0)
                                                            && Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPostDynamicsCodeTokens()));
                                               });
 

@@ -66,7 +66,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
 
     // Calculate axonal delays to add to (somatic) spike times and subsitute in presynaptic spike and spike-like event times
     const std::string timeStr = sg.getTimeType().getName();
-    const std::string axonalDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getDelaySteps() + 1u), sg.getTimeType());
+    const std::string axonalDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getAxonalDelaySteps() + 1u), sg.getTimeType());
     const bool preDelay = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired();
     const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
     const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");

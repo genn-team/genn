@@ -287,7 +287,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 
     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
     if(env.getGroup().getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        const unsigned int numDelaySteps = env.getGroup().getArchetype().getDelaySteps();
+        const unsigned int numDelaySteps = env.getGroup().getArchetype().getAxonalDelaySteps();
         const unsigned int numSrcDelaySlots = env.getGroup().getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
 
         std::ostringstream preDelaySlotInit;

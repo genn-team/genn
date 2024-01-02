@@ -14,14 +14,14 @@ class SynapseGroupInternal : public SynapseGroup
 public:
     using GroupExternal = SynapseGroup;
 
-    SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
+    SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType,
                          const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                          VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   SynapseGroup(name, matrixType, delaySteps, wumInitialiser, psmInitialiser,
+    :   SynapseGroup(name, matrixType, wumInitialiser, psmInitialiser,
                      srcNeuronGroup, trgNeuronGroup, connectivityInitialiser, 
                      toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
                      defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)
@@ -216,7 +216,7 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
 
-    bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
+    bool isVarDelayed(const std::string&) const{ return (m_SG.getAxonalDelaySteps() != 0); }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 

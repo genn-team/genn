@@ -237,7 +237,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for variables from fused incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             LOGD_RUNTIME << "\tFused WU pre incoming synapse group '" << sg->getName() << "'";
-            const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
+            const unsigned int preDelaySlots = (sg->getAxonalDelaySteps() == 0) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
             createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), 
                                                           batchSize, preDelaySlots, true, 2);
         }
@@ -245,7 +245,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for variables from fused outgoing synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) {
             LOGD_RUNTIME << "\tFused WU post outgoing synapse group '" << sg->getName() << "'";
-            const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
+            const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == 0) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
             createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), 
                                                            batchSize, postDelaySlots, true, 2);
         }

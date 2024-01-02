@@ -109,7 +109,10 @@ public:
     
     //! Sets the maximum dendritic delay for synapses in this synapse group
     void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
-    
+
+    //! Sets the number of delay steps used to delay events and variables between presynaptic neuron and synapse
+    void setAxonalDelaySteps(unsigned int timesteps);
+
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
     void setSpanType(SpanType spanType);
@@ -118,7 +121,7 @@ public:
     // **TODO** this shouldn't be in SynapseGroup - it's backend-specific
     void setNumThreadsPerSpike(unsigned int numThreadsPerSpike);
 
-    //! Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses
+    //! Sets the number of delay steps used to delay events and variables between postsynaptic neuron and synapse
     void setBackPropDelaySteps(unsigned int timesteps);
 
     //! Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices
@@ -131,8 +134,8 @@ public:
 
     SpanType getSpanType() const{ return m_SpanType; }
     unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
-    unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
+    unsigned int getAxonalDelaySteps() const{ return m_AxonalDelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
@@ -227,7 +230,7 @@ public:
     const std::string &getPreTargetVar() const{ return m_PreTargetVar; }
     
 protected:
-    SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
+    SynapseGroup(const std::string &name, SynapseMatrixType matrixType,
                  const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
@@ -438,7 +441,7 @@ private:
     unsigned int m_NumThreadsPerSpike;
 
     //! Global synaptic conductance delay for the group (in time steps)
-    unsigned int m_DelaySteps;
+    unsigned int m_AxonalDelaySteps;
 
     //! Global backpropagation delay for postsynaptic spikes to synapse (in time
     unsigned int m_BackPropDelaySteps;

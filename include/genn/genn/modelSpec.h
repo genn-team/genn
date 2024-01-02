@@ -39,8 +39,6 @@ Part of the code generation and generated code sections.
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
-#define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
-
 namespace GeNN
 {
 using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
@@ -366,8 +364,6 @@ public:
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                             string containing unique name of synapse population.
         \param mtype                            how the synaptic matrix associated with this synapse population should be represented.
-        \param delaySteps                       integer specifying number of timesteps delay this synaptic connection should incur
-                                                (or NO_DELAY for none)
         \param src                              string specifying name of presynaptic (source) population
         \param trg                              string specifying name of postsynaptic (target) population
         \param wum                              weight update model to use for synapse group.
@@ -377,12 +373,12 @@ public:
                                                 SynapseMatrixConnectivity::SPARSE or SynapseMatrixConnectivity::BITMASK.
                                                 Typically wrapped with it's parameters using ``initConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string& src, const std::string& trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
-        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
+        return addSynapsePopulation(name, mtype, src, trg,
                                     wumInitialiser, psmInitialiser, 
                                     connectivityInitialiser, uninitialisedToeplitz);
     }
@@ -390,8 +386,6 @@ public:
      //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                             string containing unique name of synapse population.
         \param mtype                            how the synaptic matrix associated with this synapse population should be represented.
-        \param delaySteps                       integer specifying number of timesteps delay this synaptic connection should incur
-                                                (or NO_DELAY for none)
         \param src                              string specifying name of presynaptic (source) population
         \param trg                              string specifying name of postsynaptic (target) population
         \param wum                              weight update model to use for synapse group.
@@ -400,11 +394,11 @@ public:
          \param connectivityInitialiser          toeplitz connectivity initialisation snippet used to initialise connectivity for
                                                 SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string& src, const std::string& trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
-        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
+        return addSynapsePopulation(name, mtype, src, trg,
                                     wumInitialiser, psmInitialiser, 
                                     uninitialisedConnectivity(), connectivityInitialiser);
     }
@@ -607,7 +601,7 @@ private:
     //! Find a synapse group by name
     const SynapseGroupInternal *findSynapseGroupInternal(const std::string &name) const;
 
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string &src, const std::string &trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string &src, const std::string &trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser);
 

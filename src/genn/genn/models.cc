@@ -99,7 +99,7 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
                 return (ref.group->isDelayRequired() && ref.group->isVarQueueRequired(ref.var.name)) ? ref.group : nullptr;
             },
             [](const WUPreRef &ref)->NeuronGroup* {
-                return (ref.group->getDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
+                return (ref.group->getAxonalDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
             },
             [](const WUPostRef &ref)->NeuronGroup* {
                 return (ref.group->getBackPropDelaySteps() > 0) ? ref.group->getTrgNeuronGroup() : nullptr;
