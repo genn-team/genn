@@ -330,21 +330,21 @@ output.spike_recording_enabled = True
 
 # Add synapse populations
 input_hidden = model.add_synapse_population(
-    "InputHidden", "DENSE", 0,
+    "InputHidden", "DENSE",
     input, hidden,
     init_weight_update(superspike_model, superspike_params, input_hidden_init_vars, superspike_pre_init_vars, superspike_post_init_vars,
                        post_var_refs={"V": create_var_ref(hidden, "V"), "errTilda": create_var_ref(hidden, "errTilda")}),
     init_postsynaptic("ExpCurr", {"tau": 5.0}))
 
 hidden_output = model.add_synapse_population(
-    "HiddenOutput", "DENSE", 0,
+    "HiddenOutput", "DENSE",
     hidden, output,
     init_weight_update(superspike_model, superspike_params, hidden_output_init_vars, superspike_pre_init_vars, superspike_post_init_vars,
                        post_var_refs={"V": create_var_ref(output, "V"), "errTilda": create_var_ref(output, "errTilda")}),
     init_postsynaptic("ExpCurr", {"tau": 5.0}))
 
 output_hidden = model.add_synapse_population(
-    "OutputHidden", "DENSE", 0,
+    "OutputHidden", "DENSE",
     output, hidden,
     init_weight_update(feedback_model, {}, {"w": 0.0}, pre_var_refs={"errTilda": create_var_ref(output, "errTilda")}),
     init_postsynaptic("DeltaCurr"))

@@ -262,7 +262,7 @@ for trg_layer in LAYER_NAMES:
                                                                  {"g": init_var("NormalClipped", w_dist),
                                                                   "d": init_var("NormalClippedDelay", d_dist)})
                         # Add synapse population
-                        syn_pop = model.add_synapse_population(synapse_name, matrix_type, 0,
+                        syn_pop = model.add_synapse_population(synapse_name, matrix_type,
                             neuron_populations[src_name], neuron_populations[trg_name],
                             static_synapse_init, exp_curr_init,
                             init_sparse_connectivity("FixedNumberTotalWithReplacement", connect_params))
@@ -284,7 +284,7 @@ for trg_layer in LAYER_NAMES:
                                                                  {"g": init_var("NormalClipped", w_dist),
                                                                   "d": init_var("NormalClippedDelay", d_dist)})
                         # Add synapse population
-                        syn_pop = model.add_synapse_population(synapse_name, matrix_type, 0,
+                        syn_pop = model.add_synapse_population(synapse_name, matrix_type,
                             neuron_populations[src_name], neuron_populations[trg_name],
                             static_synapse_init, exp_curr_init,
                             init_sparse_connectivity("FixedNumberTotalWithReplacement", connect_params))
