@@ -122,26 +122,31 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
 
     # Add synapse models testing various ways of reading presynaptic WU vars
     s_pre_learn_post_sparse_pop = model.add_synapse_population(
-        "PreLearnPostSparseSynapses", "SPARSE", delay,
+        "PreLearnPostSparseSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(pre_learn_post_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(post_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_learn_post_sparse_pop.axonal_delay_steps = delay
+
     s_pre_sim_sparse_pop = model.add_synapse_population(
-        "PreSimSparseSynapses", "SPARSE", delay,
+        "PreSimSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_sim_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_sim_sparse_pop.axonal_delay_steps = delay
+
     s_pre_event_sparse_pop = model.add_synapse_population(
-        "PreEventSparseSynapses", "SPARSE", delay,
+        "PreEventSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_event_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_event_sparse_pop.axonal_delay_steps = delay
         
     # Add synapse models testing various ways of reading post WU vars
     s_post_learn_post_sparse_pop = model.add_synapse_population(

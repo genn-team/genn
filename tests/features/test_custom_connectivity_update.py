@@ -361,12 +361,13 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
 
     # Create synapse groups
     s_pop_1 = model.add_synapse_population(
-        "Syn1", "SPARSE", 5,
+        "Syn1", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_weight_update_model, {}, {"g": init_var(weight_init_snippet)},
                            pre_var_refs={"removeIdx": create_var_ref(pre_n_pop, "removeIdx")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(dense_connect_init_snippet))
+    s_pop_1.axonal_delay_steps = 5
 
     s_pop_2 = model.add_synapse_population(
         "Syn2", "SPARSE",
