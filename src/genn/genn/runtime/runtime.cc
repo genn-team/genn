@@ -188,6 +188,18 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
         }
 
+        // If neuron group needs to record its spike times
+        if (n.second.isSpikeTimeRequired()) {
+            createArray(&n.second, "ST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                        n.second.getSpikeTimeLocation());
+        }
+
+        // If neuron group needs to record its previous spike times
+        if (n.second.isPrevSpikeTimeRequired()) {
+            createArray(&n.second, "PrevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                        n.second.getPrevSpikeTimeLocation());
+        }
+
         // Create destinations for any dynamic parameters
         createDynamicParamDestinations<NeuronGroupInternal>(n.second, n.second.getNeuronModel()->getParams(),
                                                             &NeuronGroup::isParamDynamic);
@@ -260,18 +272,6 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                         n.second.getSpikeLocation(), false, 2);
             createArray(sg, prefix + "Spk", Type::Uint32, numNeuronDelaySlots, 
                         n.second.getSpikeLocation(), false, 2);
-
-            // If neuron group needs to record its spike times
-            if (n.second.isSpikeTimeRequired()) {
-                createArray(sg, prefix + "ST", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                            n.second.getSpikeTimeLocation(), false, 2);
-            }
-
-            // If neuron group needs to record its previous spike times
-            if (n.second.isPrevSpikeTimeRequired()) {
-                createArray(sg, prefix + "PrevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                            n.second.getPrevSpikeTimeLocation(), false, 2);
-            }
         }
 
         // Create arrays for spike events

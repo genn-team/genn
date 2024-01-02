@@ -291,6 +291,12 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
                                 }
 
+                                // Update event time
+                                if(n.getArchetype().isSpikeTimeRequired()) {
+                                    const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                    env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                }
+
                                 // Generate spike dagta structure updates
                                 n.generateSpikes(
                                     env,
@@ -308,6 +314,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
                                         genEmitEvent(env, n, false);
+
+                                        if(n.getArchetype().isSpikeEventTimeRequired()) {
+                                            const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
+                                        }
 
                                         // If recording is enabled
                                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -1993,19 +2004,6 @@ void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpi
 void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
 {
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
-
-    // Update event time
-    if(trueSpike) {
-        if(ng.getArchetype().isSpikeTimeRequired()) {
-            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-        }
-    }
-    else {
-        if(ng.getArchetype().isSpikeEventTimeRequired()) {
-            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
-        }
-    }
-    
     const std::string suffix = trueSpike ? "" : "_event";
     env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
     if(ng.getArchetype().isDelayRequired()) {

@@ -89,11 +89,11 @@ void genInitEvents(const BackendBase &backend, EnvironmentGroupMergedField<G, Ne
         });
 }
 //------------------------------------------------------------------------
-template<typename G, typename F>
-void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, G &group, F &fieldGroup, 
+template<typename G>
+void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, G &group, NeuronInitGroupMerged &fieldGroup, 
                       const std::string &fieldSuffix, const std::string &varName, unsigned int batchSize)
 {
-    EnvironmentGroupMergedField<G, F> timeEnv(env, group, fieldGroup);
+    EnvironmentGroupMergedField<G, NeuronInitGroupMerged> timeEnv(env, group, fieldGroup);
     timeEnv.addField(group.getTimeType().createPointer(), "_time", varName + fieldSuffix,
                      [&fieldGroup, varName](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(fieldGroup, i, g, varName); });
 
@@ -104,6 +104,18 @@ void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, 
         {
             genVariableFill(varEnv, "_time", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                             batchSize, fieldGroup.getArchetype().isDelayRequired(), fieldGroup.getArchetype().getNumDelaySlots());
+        });
+}
+//------------------------------------------------------------------------
+void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, NeuronInitGroupMerged &group, 
+                      const std::string &varName, unsigned int batchSize)
+{
+    // Generate variable initialisation code
+    backend.genVariableInit(env, "num_neurons", "id",
+        [batchSize, varName, &group] (EnvironmentExternalBase &varEnv)
+        {
+            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                            batchSize, group.getArchetype().isDelayRequired(), group.getArchetype().getNumDelaySlots());
         });
 }
 //------------------------------------------------------------------------
@@ -263,16 +275,6 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
 
     // Initialise spikes
     genInitEvents(backend, groupEnv, ng, fieldSuffix, true, batchSize);
-    
-    // Initialize spike times
-    if(ng.getArchetype().isSpikeTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "ST", batchSize);
-    }
-
-    // Initialize previous spike times
-    if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "PrevST", batchSize);
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -484,6 +486,16 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
             {
                 varEnv.printLine("*$(_spk_que_ptr) = 0;");
             });
+    }
+
+    // Initialize spike times
+    if(getArchetype().isSpikeTimeRequired()) {
+        genInitEventTime(backend, groupEnv, *this, "_st", batchSize);
+    }
+
+    // Initialize previous spike times
+    if(getArchetype().isPrevSpikeTimeRequired()) {
+        genInitEventTime(backend, groupEnv, *this, "_prev_st", batchSize);
     }
 
     // Initialise neuron variables

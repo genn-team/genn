@@ -550,6 +550,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         });
                     ng.generateWUVarUpdate(wuEnv, batchSize);
 
+                    // Update event time
+                    if(ng.getArchetype().isSpikeTimeRequired()) {
+                        const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
+                        groupEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+                    }
+                   
                     ng.generateSpikes(
                         groupEnv,
                         [batchSize, &ng, this](EnvironmentExternalBase &env)
@@ -567,6 +574,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     {
                         CodeStream::Scope b(env.getStream());
                         env.printLine("const unsigned int n = $(_sh_spk_event)[" + std::to_string(sg.getIndex()) + "][" + getThreadID() + "];");
+
+                        if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                                VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
+                            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                        }
+
                         genCopyEventToGlobal(env, ng, batchSize, sg.getIndex(), false);
                     }
                 });
@@ -1868,8 +1882,6 @@ void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMe
 void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                        unsigned int batchSize, size_t index, bool trueSpike) const
 {
-    const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                        VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
     const std::string indexStr = std::to_string(index);
     const std::string suffix = trueSpike ? "" : "_event";
     env.getStream() << "if (" << getThreadID() << " == 0)";
@@ -1890,20 +1902,9 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
                             
     genSharedMemBarrier(env.getStream());
 
+    const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                        VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
     env.printLine("$(_spk" + suffix + ")[" + queueOffset + "$(_sh_spk_pos" + suffix + ")[" + indexStr + "] + " + getThreadID() + "] = n;");
-                            
-    // Update event time
-    if(trueSpike) {
-        if(ng.getArchetype().isSpikeTimeRequired()) {
-            env.printLine("$(_st)[" + queueOffset + "n] = $(t);");
-        }
-    }
-    else {
-        if(ng.getArchetype().isSpikeEventTimeRequired()) {
-            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
-        }
-    }
-    
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
