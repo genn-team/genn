@@ -29,7 +29,7 @@ cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 opencl_path = os.environ.get("OPENCL_PATH")
 
 # Is OpenCL installed
-opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
+opencl_installed = False #opencl_path is not None and os.path.exists(opencl_path)
 
 # Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
@@ -99,11 +99,20 @@ if WIN:
     # Add FFI library with correct suffix
     # **TODO** just call this ffi
     genn_extension_kwargs["libraries"].append("libffi" + genn_lib_suffix)
-# Otherwise, if this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
-# directories so libGeNN and backends can be found wherever package is installed
-elif LINUX:
-    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
-    genn_extension_kwargs["libraries"].append("ffi")
+
+    # Add GeNN and FFI libraries to dependencies
+    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "genn" + genn_lib_suffix + ".dll"),
+                                        os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
+# Otherwise
+else:
+    # Add GeNN library to dependencies
+    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so")]
+
+    # If this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
+    # directories so libGeNN and backends can be found wherever package is installed
+    if LINUX:
+        genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+        genn_extension_kwargs["libraries"].append("ffi")
 
 if coverage_build:
     if LINUX:
@@ -111,7 +120,6 @@ if coverage_build:
         genn_extension_kwargs["extra_link_args"].append("--coverage")
     elif MAC:
         genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-
 
 # By default build single-threaded CPU backend
 backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
@@ -208,8 +216,14 @@ for module_stem, source_stem, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if WIN:
+        backend_extension_kwargs["depends"].append(
+            os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
+
         package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
     else:
+        backend_extension_kwargs["depends"].append(
+            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
+
         package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
 
     # Add backend include directory to both SWIG and C++ compiler options
