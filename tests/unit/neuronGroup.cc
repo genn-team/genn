@@ -340,56 +340,57 @@ TEST(NeuronGroup, FuseWUMPrePost)
     
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation(
-        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with different value for parameter accessed in presynaptic code
     auto *synPreParam = model.addSynapsePopulation(
-        "SynPreParam", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynPreParam", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParamsPre, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with different value for parameter accessed in presynaptic code
     auto *synPostParam = model.addSynapsePopulation(
-        "SynPostParam", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynPostParam", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParamsPost, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with different value for parameter only accessed in synapse code
     auto *synSynParam = model.addSynapsePopulation(
-        "SynSynParam", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynSynParam", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParamsSyn, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with different presynaptic variable initialiser
     auto *synPreVar2 = model.addSynapsePopulation(
-        "SynPreVar2", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynPreVar2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals2, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with different postsynaptic variable initialiser
     auto *synPostVar2 = model.addSynapsePopulation(
-        "SynPostVar2", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynPostVar2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumPostVarVals2),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create synapse group with axonal delay
     auto *synAxonalDelay = model.addSynapsePopulation(
-        "SynAxonalDelay", SynapseMatrixType::DENSE, 10,
+        "SynAxonalDelay", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
+    synAxonalDelay->setAxonalDelaySteps(10);
+
     // Create synapse group with backprop delay
     auto *synBackPropDelay = model.addSynapsePopulation(
-        "SynBackPropDelay", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynBackPropDelay", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<STDPAdditive>(wumParams, wumVarVals, wumPreVarVals, wumPostVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -455,28 +456,28 @@ TEST(NeuronGroup, FusePSM)
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation(
-        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
     
     // Create second synapse group
     auto *syn2 = model.addSynapsePopulation(
-        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
     
     // Create synapse group with different value for PSM parameter
     auto *synParam = model.addSynapsePopulation(
-        "SynParam", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynParam", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals2, {}));
     
     // Create synapse group with different target variable
     auto *synTarget = model.addSynapsePopulation(
-        "SynTarget", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynTarget", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
@@ -484,7 +485,7 @@ TEST(NeuronGroup, FusePSM)
     
     // Create synapse group with different max dendritic delay
     auto *synDelay = model.addSynapsePopulation(
-        "SynDelay", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynDelay", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
@@ -538,28 +539,28 @@ TEST(NeuronGroup, FuseVarPSM)
 
     // Create baseline synapse group
     auto *syn1 = model.addSynapsePopulation(
-        "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn1", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst1));
     
     // Create second synapse group with same model and constant initialisers
     auto *syn2 = model.addSynapsePopulation(
-        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst1));
 
     // Create third synapse group with same model and different constant initialisers
     auto *syn3 = model.addSynapsePopulation(
-        "Syn3", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn3", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst2));
     
      // Create fourth synapse group with same model and random variable initialisers
     auto *syn4 = model.addSynapsePopulation(
-        "Syn4", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn4", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsRand));
@@ -607,21 +608,21 @@ TEST(NeuronGroup, FusePreOutput)
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation(
-        "Syn", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseBack>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Create second synapse group
     auto *syn2 = model.addSynapsePopulation(
-        "Syn2", SynapseMatrixType::DENSE, NO_DELAY,
+        "Syn2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseBack>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Create synapse group with different target variable
     auto *synTarget = model.addSynapsePopulation(
-        "SynTarget", SynapseMatrixType::DENSE, NO_DELAY,
+        "SynTarget", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseBack>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -660,28 +661,28 @@ TEST(NeuronGroup, FuseSpikeEvent)
  
     // Add baseline synapse population
     auto *sg0 = model.addSynapsePopulation(
-        "SG0", SynapseMatrixType::DENSE, NO_DELAY,
+        "SG0", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Add synapse population with different variable values
     auto *sg1 = model.addSynapsePopulation(
-        "SG1", SynapseMatrixType::DENSE, NO_DELAY,
+        "SG1", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals2, {}, {}, synPreVarReferences1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add synapse population with different parameter values
     auto *sg2 = model.addSynapsePopulation(
-        "SG2", SynapseMatrixType::DENSE, NO_DELAY,
+        "SG2", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseEvent>(synParamVals2, synVarVals1, {}, {}, synPreVarReferences1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Add synapse population with different pre-var references
     auto *sg3 = model.addSynapsePopulation(
-        "SG3", SynapseMatrixType::DENSE, NO_DELAY,
+        "SG3", SynapseMatrixType::DENSE,
         "Pre", "Post",
         initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences2),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -935,60 +936,60 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     VarValues alphaCurrVarVals{{"x", 0.0}};
     VarValues alphaCurrVarVals1{{"x", 0.1}};
     model.addSynapsePopulation(
-        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG0", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons0",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG1", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons0",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<AlphaCurr>(alphaCurrParamVals, alphaCurrVarVals));
 
     // Do the same for Neuron1
     model.addSynapsePopulation(
-        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG2", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons1",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG3", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons1",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<AlphaCurr>(alphaCurrParamVals, alphaCurrVarVals));
 
     // Do the same, but with different parameters for Neuron2,
     model.addSynapsePopulation(
-        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG4", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons2",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG5", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons2",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<AlphaCurr>(alphaCurrParamVals1, alphaCurrVarVals1));
 
     // Do the same, but in the opposite order for Neuron3
     model.addSynapsePopulation(
-        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG6", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons3",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<AlphaCurr>(alphaCurrParamVals, alphaCurrVarVals));
     model.addSynapsePopulation(
-        "SG7", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG7", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons3",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add two incoming synapse groups with DeltaCurr postsynaptic models sources to Neurons4
     model.addSynapsePopulation(
-        "SG8", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG8", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons4",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG9", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG9", SynapseMatrixType::SPARSE,
         "SpikeSource", "Neurons4",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -1059,48 +1060,48 @@ TEST(NeuronGroup, ComparePreOutput)
     // Add two outgoing synapse groups to NeuronsPre0
     ParamValues staticPulseParamVals{{"g", 0.1}};
     model.addSynapsePopulation(
-        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG0", SynapseMatrixType::SPARSE,
         "NeuronsPre0", "NeuronsPost0",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG1", SynapseMatrixType::SPARSE,
         "NeuronsPre0", "NeuronsPost1",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Do the same for NeuronsPre1
     model.addSynapsePopulation(
-        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG2", SynapseMatrixType::SPARSE,
         "NeuronsPre1", "NeuronsPost0",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG3", SynapseMatrixType::SPARSE,
         "NeuronsPre1", "NeuronsPost1",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     // Add three outgoing groups to NeuronPre2
     model.addSynapsePopulation(
-        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG4", SynapseMatrixType::SPARSE,
         "NeuronsPre2", "NeuronsPost0",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG5", SynapseMatrixType::SPARSE,
         "NeuronsPre2", "NeuronsPost1",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG6", SynapseMatrixType::SPARSE,
         "NeuronsPre2", "NeuronsPost2",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add one outgoing groups to NeuronPre3
     model.addSynapsePopulation(
-        "SG7", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG7", SynapseMatrixType::SPARSE,
         "NeuronsPre3", "NeuronsPost0",
         initWeightUpdate<StaticPulseBackConstantWeight>(staticPulseParamVals, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -1153,45 +1154,45 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Connect neuron group 1 to neuron group 0 with pre weight update model
     model.addSynapsePopulation(
-        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG0", SynapseMatrixType::SPARSE,
         "Neurons1", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams, {}, testPreVarVals1, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Also connect neuron group 2 to neuron group 0 with pre weight update model
     model.addSynapsePopulation(
-        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG1", SynapseMatrixType::SPARSE,
         "Neurons2", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams, {}, testPreVarVals1, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Also connect neuron group 3 to neuron group 0 with pre weight update model, but different parameters
     model.addSynapsePopulation(
-        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG2", SynapseMatrixType::SPARSE,
         "Neurons3", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams2, {}, testPreVarVals1, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Connect neuron group 4 to neuron group 0 with 2*pre weight update model
     model.addSynapsePopulation(
-        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG3", SynapseMatrixType::SPARSE,
         "Neurons4", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams, {}, testPreVarVals1, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG4", SynapseMatrixType::SPARSE,
         "Neurons4", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams, {}, testPreVarVals1, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Connect neuron group 5 to neuron group 0 with pre weight update model and static pulse
     model.addSynapsePopulation(
-        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG5", SynapseMatrixType::SPARSE,
         "Neurons5", "Neurons0",
         initWeightUpdate<WeightUpdateModelPre>(testParams, {}, testPreVarVals2, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG6", SynapseMatrixType::SPARSE,
         "Neurons5", "Neurons0",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -1261,45 +1262,45 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Connect neuron group 0 to neuron group 1 with post weight update model
     model.addSynapsePopulation(
-        "SG0", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG0", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons1",
         initWeightUpdate<WeightUpdateModelPost>(testParams, {}, {}, testPostVarVals1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Also connect neuron group 0 to neuron group 2 with post weight update model
     model.addSynapsePopulation(
-        "SG1", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG1", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons2",
         initWeightUpdate<WeightUpdateModelPost>(testParams, {}, {}, testPostVarVals1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Also connect neuron group 0 to neuron group 3 with post weight update model but different parameters
     model.addSynapsePopulation(
-        "SG2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG2", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons3",
         initWeightUpdate<WeightUpdateModelPost>(testParams2, {}, {}, testPostVarVals1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Connect neuron group 0 to neuron group 3 with 2*post weight update model
     model.addSynapsePopulation(
-        "SG3", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG3", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons4",
         initWeightUpdate<WeightUpdateModelPost>(testParams, {}, {}, testPostVarVals1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG4", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG4", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons4",
         initWeightUpdate<WeightUpdateModelPost>(testParams, {}, {}, testPostVarVals1),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Connect neuron group 0 to neuron group 4 with post weight update model and static pulse
     model.addSynapsePopulation(
-        "SG5", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG5", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons5",
         initWeightUpdate<WeightUpdateModelPost>(testParams, {}, {}, testPostVarVals2),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     model.addSynapsePopulation(
-        "SG6", SynapseMatrixType::SPARSE, NO_DELAY,
+        "SG6", SynapseMatrixType::SPARSE,
         "Neurons0", "Neurons5",
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(staticPulseParamVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
