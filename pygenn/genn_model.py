@@ -736,7 +736,7 @@ class GeNNModel(ModelSpecInternal):
 
     def _validate_synapse_group(self, group, context):
         # If group is a string
-        if isinstance(group, string_types):
+        if isinstance(group, str):
             # If it's the name of a neuron group, return it
             if group in self.synapse_populations:
                 return self.synapse_populations[group]
