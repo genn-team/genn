@@ -8,17 +8,17 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda11", "windows"] as Set,
     ["cuda10", "windows"] as Set,
-    ["cuda9", "windows"] as Set,
+    ["cuda11", "windows"] as Set,
+    ["cuda12", "windows"] as Set,
     ["amd", "windows"] as Set,
-    ["cuda11", "linux"] as Set,
     ["cuda10", "linux"] as Set,
-    ["cuda9", "linux"] as Set,
+    ["cuda11", "linux"] as Set,
+    ["cuda12", "linux"] as Set,
     ["amd", "linux"] as Set,
-    ["cuda11", "mac"] as Set,
     ["cuda10", "mac"] as Set,
-    ["cuda9", "mac"] as Set,
+    ["cuda11", "mac"] as Set,
+    ["cuda12", "mac"] as Set,
     ["amd", "mac"] as Set]
 
 //--------------------------------------------------------------------------
@@ -205,16 +205,6 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Installing PyGeNN (${NODE_NAME})") {
                     dir("genn") {
-                        // Build dynamic LibGeNN with coverage support
-                        echo "Building LibGeNN";
-                        def commandsLibGeNN = """
-                        make DYNAMIC=1 COVERAGE=1 LIBRARY_DIRECTORY=`pwd`/pygenn 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
-                        """;
-                        def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
-                        if (statusLibGeNN != 0) {
-                            setBuildStatus("Building LibGeNN (${NODE_NAME})", "FAILURE");
-                        }
-
                         // Build PyGeNN module
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
@@ -281,16 +271,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                 buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
                         if(isUnix()) {
-                            // Build set of dynamic libraries
-                            echo "Creating dynamic libraries";
-                            makeCommand = """
-                            make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
-                            """;
-                            def makeStatusCode = sh script:makeCommand, returnStatus:true
-                            if(makeStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-
                             // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
