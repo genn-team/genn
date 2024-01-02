@@ -198,9 +198,9 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.createPointer(), "_src_spk_event", "srcSpkEvent",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "ST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "PrevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SET"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
@@ -218,9 +218,9 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.createPointer(), "_trg_spk_event", "trgSpkEvent",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "ST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "sT"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "PrevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "prevST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_set", "trgSET",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SET"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_set", "trgPrevSET",

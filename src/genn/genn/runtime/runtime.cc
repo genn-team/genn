@@ -190,13 +190,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
-            createArray(&n.second, "ST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getSpikeTimeLocation());
         }
 
         // If neuron group needs to record its previous spike times
         if (n.second.isPrevSpikeTimeRequired()) {
-            createArray(&n.second, "PrevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+            createArray(&n.second, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
                         n.second.getPrevSpikeTimeLocation());
         }
 
