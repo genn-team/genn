@@ -269,12 +269,13 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
     syn1_pop.axonal_delay_steps = 5
     
     syn2_pop = model.add_synapse_population(
-        "Syn2", "DENSE", 5,
+        "Syn2", "DENSE",
         pre_pop, post_pop,
         init_weight_update(pre_weight_update_model, {}, {"g": 0.0}, {"pre": 0.0},
                            pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
         init_postsynaptic("DeltaCurr"))
-    
+    syn2_pop.axonal_delay_steps = 5
+
     model.add_custom_update("NeuronDelaySetTime", "Test", set_time_custom_update_model,
                             {}, {}, {"R": create_var_ref(pre_pop, "V")})
     model.add_custom_update("WUPreDelaySetTime", "Test", set_time_custom_update_model,
