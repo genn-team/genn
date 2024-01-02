@@ -274,6 +274,9 @@ class BuildGeNNExt(build_ext):
                 if debug_build:
                     make_arguments.append("DEBUG=1")
 
+                if coverage_build:
+                    make_arguments.append("COVERAGE=1")
+
                 # Build
                 check_call(make_arguments, cwd=genn_path)
 
@@ -295,5 +298,5 @@ setup(
     cmdclass={"build_ext": BuildGeNNExt},
     zip_safe=False,
     python_requires=">=3.6",
-    install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
+    install_requires=["numpy>=1.17", "deprecated", "psutil",
                       "importlib-metadata>=1.0;python_version<'3.8'"])
