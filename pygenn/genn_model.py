@@ -155,6 +155,17 @@ _code_upgrades = [
     (re.compile(r"\$\(endRow\)"), None),
     (re.compile(r"\$\(endCol\)"), None)]
 
+# Helpers to wrap lambda function so as to extract
+# underlying value from NumericValue parameters!
+# **NOTE** seperate function is required to ensure f is bound correctly
+def _wrap_max_length_lambda(f):
+    return lambda num_pre, num_post, pars: f(num_pre, num_post,
+                                             {n: p.value 
+                                             for n, p in pars.items()})
+
+def _wrap_kernel_size_lambda(f):
+    return lambda pars: f({n: p.value for n, p in pars.items()})
+
 # Regular expression used for upgrading remaining variable references in code strings
 _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
@@ -385,6 +396,9 @@ class GeNNModel(ModelSpecInternal):
                 init_sparse_connectivity_snippets.Uninitialised(), {})
 
         # Use superclass to add population
+        print(pop_name, matrix_type, source.name, target.name,
+              weight_update_init[0], postsynaptic_init[0],
+              connectivity_init)
         s_group = super(GeNNModel, self).add_synapse_population(
             pop_name, matrix_type, source.name, target.name, 
             weight_update_init[0], postsynaptic_init[0],
@@ -1495,15 +1509,15 @@ def create_sparse_connect_init_snippet(class_name, params=None,
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
-            lambda self: calc_max_row_len_func
+            lambda self: _wrap_max_length_lambda(calc_max_row_len_func)
 
     if calc_max_col_len_func is not None:
         body["get_calc_max_col_length_func"] = \
-            lambda self: calc_max_col_len_func
+            lambda self: _wrap_max_length_lambda(calc_max_col_len_func)
 
     if calc_kernel_size_func is not None:
         body["get_calc_kernel_size_func"] = \
-            lambda self: calc_kernel_size_func
+            lambda self: _wrap_kernel_size_lambda(calc_kernel_size_func)
 
     return create_model(class_name, InitSparseConnectivitySnippetBase, params,
                         param_names, derived_params, 
@@ -1553,11 +1567,11 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
-            lambda self: make_cmlf(calc_max_row_len_func)
+            lambda self: _wrap_max_length_lambda(calc_max_row_len_func)
 
     if calc_kernel_size_func is not None:
         body["get_calc_kernel_size_func"] = \
-            lambda self: make_cksf(calc_kernel_size_func)
+            lambda self: _wrap_kernel_size_lambda(calc_kernel_size_func)
 
     return create_model(class_name, InitToeplitzConnectivitySnippetBase,
                         params, param_names, derived_params,
