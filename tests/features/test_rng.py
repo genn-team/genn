@@ -73,7 +73,7 @@ def test_sim(make_model, backend, precision, batch_size):
     post_n_pop = model.add_neuron_population("PostNeurons", 1000, "SpikeSource", 
                                              {}, {})
     s_pop = model.add_synapse_population(
-        "Synapses", "SPARSE", 0,
+        "Synapses", "SPARSE",
         n_pop, post_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -175,13 +175,13 @@ def test_init(make_model, backend, precision):
                                   {}, init_vars())
 
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss1_pop, n_pop,
         init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
         init_postsynaptic(nop_postsynaptic_update_model, {}, init_vars("psm_")))
         
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss2_pop, n_pop,
         init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
         init_postsynaptic("DeltaCurr"),

@@ -192,21 +192,21 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
 
     # Create synapse groups
     s_pop_1 = model.add_synapse_population(
-        "Syn1", "SPARSE", 0,
+        "Syn1", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
     s_pop_2 = model.add_synapse_population(
-        "Syn2", "SPARSE", 0,
+        "Syn2", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
     
     s_pop_3 = model.add_synapse_population(
-        "Syn3", "SPARSE", 0,
+        "Syn3", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
         init_postsynaptic("DeltaCurr"),
@@ -369,7 +369,7 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
         init_sparse_connectivity(dense_connect_init_snippet))
 
     s_pop_2 = model.add_synapse_population(
-        "Syn2", "SPARSE", 0,
+        "Syn2", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(post_weight_update_model, {}, {"g": init_var(weight_init_snippet)},
                            post_var_refs={"remove": create_var_ref(post_n_pop, "remove")}),

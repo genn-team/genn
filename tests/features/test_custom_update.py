@@ -83,12 +83,12 @@ def test_custom_update(make_model, backend, precision, batch_size):
                                   {}, {"X": 0.0, "XShared": 0.0})
     
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic(postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0}))
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
@@ -98,7 +98,7 @@ def test_custom_update(make_model, backend, precision, batch_size):
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
                    "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
     kernel_s_pop = model.add_synapse_population(
-        "ToeplitzSynapses", "TOEPLITZ", 0,
+        "ToeplitzSynapses", "TOEPLITZ",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
@@ -260,12 +260,14 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                                           {}, {"V": 0.0, "U": 0.0});
     post_pop = model.add_neuron_population("Post", 10, neuron_model, 
                                            {}, {"V": 0.0, "U": 0.0})
-    model.add_synapse_population(
-        "Syn1", "DENSE", 5,
+    syn1_pop = model.add_synapse_population(
+        "Syn1", "DENSE",
         pre_pop, post_pop,
         init_weight_update(weight_update_model, {}, {"g": 0.0},
                            pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
         init_postsynaptic("DeltaCurr"))
+    syn1_pop.axonal_delay_steps = 5
+    
     syn2_pop = model.add_synapse_population(
         "Syn2", "DENSE", 5,
         pre_pop, post_pop,
@@ -333,12 +335,12 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     g = (np.random.normal(size=(batch_size, 100 * 100)) if batch_size > 1 
          else np.random.normal(size=(100 * 100)))
     forward_s_pop = model.add_synapse_population(
-        "ForwardSynapses", "DENSE", 0,
+        "ForwardSynapses", "DENSE",
         pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_duplicate_model, {}, {"g": g}),
         init_postsynaptic("DeltaCurr"))
     transpose_s_pop = model.add_synapse_population(
-        "TransposeSynapses", "DENSE", 0,
+        "TransposeSynapses", "DENSE",
         post_n_pop, pre_n_pop,
         init_weight_update(static_pulse_duplicate_model, {}, {"g": 0.0}),
         init_postsynaptic("DeltaCurr"))
@@ -486,7 +488,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     x_dense_s = (np.random.uniform(high=100.0, size=(batch_size, 1000)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=1000))
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}),
         init_postsynaptic("DeltaCurr"))
@@ -496,7 +498,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     pre_ind_sparse = np.repeat(np.arange(10), 10)
     post_ind_sparse = np.random.randint(0, 100, len(pre_ind_sparse))
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -508,7 +510,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
                    "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
     kern_s_pop = model.add_synapse_population(
-        "ToeplitzSynapses", "TOEPLITZ", 0,
+        "ToeplitzSynapses", "TOEPLITZ",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}),
         init_postsynaptic("DeltaCurr"),

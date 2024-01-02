@@ -156,7 +156,7 @@ def test_num(make_model, backend, precision, batch_size):
     post_var_init = {"num_neurons_post_test": init_var(num_neurons_snippet),
                      "num_batch_post_test": init_var(num_batch_snippet)}
     syn = model.add_synapse_population(
-        "Syn", "DENSE", 0,
+        "Syn", "DENSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, synapse_var_init, pre_var_init, post_var_init),
         init_postsynaptic(postsynaptic_update_model, {}, neuron_var_init))

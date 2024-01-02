@@ -111,7 +111,7 @@ def test_dynamic_param(make_model, backend, precision):
     cu.set_param_dynamic("input")
 
     s_pop = model.add_synapse_population(
-        "Synapse", "SPARSE", 0,
+        "Synapse", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {"input": 0.0}, {"x": 0.0, "shift": shift}),
         init_postsynaptic(postsynaptic_model, {"psmInput": 0.0}, {"psmX": 0.0, "psmShift": shift}))

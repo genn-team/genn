@@ -97,7 +97,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseConstantWeightNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "SparseConstantWeightSynapse", "SPARSE", 0,
+        "SparseConstantWeightSynapse", "SPARSE",
         pre_pop, sparse_constant_weight_n_pop,
         init_weight_update(continous_constant_weight_update_model, {"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -110,7 +110,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseConstantWeightPreSpanNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_constant_weight_pre_s_pop = model.add_synapse_population(
-        "SparseConstantWeightPreSpanSynapse", "SPARSE", 0,
+        "SparseConstantWeightPreSpanSynapse", "SPARSE",
         pre_pop, sparse_constant_weight_pre_n_pop,
         init_weight_update(continous_constant_weight_update_model, {"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -123,7 +123,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostSparseConstantWeightNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     manual_sparse_constant_weight_s_pop = model.add_synapse_population(
-        "ManualSparseConstantWeightSynapse", "SPARSE", 0,
+        "ManualSparseConstantWeightSynapse", "SPARSE",
         pre_pop, manual_sparse_constant_weight_n_pop,
         init_weight_update(continous_constant_weight_update_model, {"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -136,7 +136,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "SparseSynapse", "SPARSE", 0,
+        "SparseSynapse", "SPARSE",
         pre_pop, sparse_n_pop,
         init_weight_update(continous_weight_update_model, vars={"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -149,7 +149,7 @@ def test_forward(make_model, backend, precision):
         "PostSparsePreSpanNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_pre_s_pop = model.add_synapse_population(
-        "SparsePreSpanSynapse", "SPARSE", 0,
+        "SparsePreSpanSynapse", "SPARSE",
         pre_pop, sparse_pre_n_pop,
         init_weight_update(continous_weight_update_model, vars={"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -163,7 +163,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseHybridNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_hybrid_s_pop = model.add_synapse_population(
-        "SparseHybridSynapse", "SPARSE", 0,
+        "SparseHybridSynapse", "SPARSE",
         pre_pop, sparse_hybrid_n_pop,
  
         init_weight_update(continous_weight_update_model, vars={"g": 1.0},
@@ -178,7 +178,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostSparseNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     manual_sparse_s_pop = model.add_synapse_population(
-        "ManualSparseSynapse", "SPARSE", 0,
+        "ManualSparseSynapse", "SPARSE",
         pre_pop, manual_sparse_n_pop,
         init_weight_update(continous_weight_update_model, vars={"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -191,7 +191,7 @@ def test_forward(make_model, backend, precision):
         "PostBitmaskNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "BitmaskSynapse", "SPARSE", 0,
+        "BitmaskSynapse", "SPARSE",
         pre_pop, bitmask_n_pop,
         init_weight_update(continous_constant_weight_update_model, {"g": 1.0},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -203,7 +203,7 @@ def test_forward(make_model, backend, precision):
         "PostDenseNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "PostDenseSynapse", "DENSE", 0,
+        "PostDenseSynapse", "DENSE",
         pre_pop, dense_n_pop,
         init_weight_update(continous_weight_update_model, vars={"g": init_var(decoder_dense_model, {})},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -214,7 +214,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostDenseNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "ManualPostDenseSynapse", "DENSE", 0,
+        "ManualPostDenseSynapse", "DENSE",
         pre_pop, manual_dense_n_pop,
         init_weight_update(continous_weight_update_model, vars={"g": dense.flatten()},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -274,7 +274,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostDenseNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     dense_s_pop = model.add_synapse_population(
-        "PostDenseSynapse", "DENSE", 0,
+        "PostDenseSynapse", "DENSE",
         pre_pop, dense_n_pop,
         init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -286,7 +286,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostSparseNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     sparse_s_pop = model.add_synapse_population(
-        "PostSparseSynapse", "SPARSE", 0,
+        "PostSparseSynapse", "SPARSE",
         pre_pop, sparse_n_pop,
         init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -299,7 +299,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostSparsePreSpanNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     sparse_pre_s_pop = model.add_synapse_population(
-        "PostSparsePreSpanSynapse", "SPARSE", 0,
+        "PostSparsePreSpanSynapse", "SPARSE",
         pre_pop, sparse_pre_n_pop, 
         init_weight_update(continous_den_delay_wum, {}, {"g": 1.0, "d": delay},
                            pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
@@ -384,7 +384,7 @@ def test_reverse(make_model, backend, precision):
 
     # Add connectivity
     s_pop = model.add_synapse_population(
-        "SparseSynapse", "SPARSE", 0,
+        "SparseSynapse", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(continous_reverse_model, {}, {"g": weights},
                            pre_var_refs={"x": create_var_ref(pre_n_pop, "x")}),
@@ -392,7 +392,7 @@ def test_reverse(make_model, backend, precision):
     s_pop.set_sparse_connections(pre_inds, post_inds)
 
     s_pre_pop = model.add_synapse_population(
-        "SparsePreSynapse", "SPARSE", 0,
+        "SparsePreSynapse", "SPARSE",
         pre_pre_n_pop, post_n_pop,
         init_weight_update(continous_reverse_model, {}, {"g": weights},
                            pre_var_refs={"x": create_var_ref(pre_pre_n_pop, "x")}),

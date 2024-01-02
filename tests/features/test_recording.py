@@ -108,7 +108,7 @@ def test_event_recording(make_model, backend, precision, batch_size):
     # Because spike events are recorded per synapse group, add 
     post = model.add_neuron_population("Post", 1, "SpikeSource")
     sg = model.add_synapse_population(
-        "Synapses", "DENSE", 0,
+        "Synapses", "DENSE",
         es, post,
         init_weight_update(static_event_pulse_model, {"g": 1.0},
                            pre_var_refs={"output": create_var_ref(es, "output")}),

@@ -66,14 +66,15 @@ def test_spike_times(make_model, backend, precision):
     np_scalar = np.float32 if precision == types.Float else np.float64
     float_min = np.finfo(np_scalar).min
     s_pre_pop = model.add_synapse_population(
-        "PreSynapses", "SPARSE", 20,
+        "PreSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_pop.axonal_delay_steps = 20
 
     s_post_pop = model.add_synapse_population(
-        "PostSynapses", "SPARSE", 0,
+        "PostSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
         init_postsynaptic("DeltaCurr"),
@@ -171,7 +172,7 @@ def test_spike_event_times(make_model, backend, precision):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_pop = model.add_synapse_population(
-        "PostSynapses", "SPARSE", 0,
+        "PostSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
         init_postsynaptic("DeltaCurr"),

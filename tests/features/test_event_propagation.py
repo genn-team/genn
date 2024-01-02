@@ -94,7 +94,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseConstantWeightNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "SparseConstantWeightSynapse", "SPARSE", 0,
+        "SparseConstantWeightSynapse", "SPARSE",
         ss_pop, sparse_constant_weight_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -106,7 +106,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseConstantWeightPreSpanNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_constant_weight_pre_s_pop = model.add_synapse_population(
-        "SparseConstantWeightPreSpanSynapse", "SPARSE", 0,
+        "SparseConstantWeightPreSpanSynapse", "SPARSE",
         ss_pop, sparse_constant_weight_pre_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -118,7 +118,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostSparseConstantWeightNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     manual_sparse_constant_weight_s_pop = model.add_synapse_population(
-        "ManualSparseConstantWeightSynapse", "SPARSE", 0,
+        "ManualSparseConstantWeightSynapse", "SPARSE",
         ss_pop, manual_sparse_constant_weight_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"))
@@ -130,7 +130,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "SparseSynapse", "SPARSE", 0,
+        "SparseSynapse", "SPARSE",
         ss_pop, sparse_n_pop,
         init_weight_update("StaticPulse", {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -142,7 +142,7 @@ def test_forward(make_model, backend, precision):
         "PostSparsePreSpanNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_pre_s_pop = model.add_synapse_population(
-        "SparsePreSpanSynapse", "SPARSE", 0,
+        "SparsePreSpanSynapse", "SPARSE",
         ss_pop, sparse_pre_n_pop,
         init_weight_update("StaticPulse", {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -155,7 +155,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseHybridNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     sparse_hybrid_s_pop = model.add_synapse_population(
-        "SparseHybridSynapse", "SPARSE", 0,
+        "SparseHybridSynapse", "SPARSE",
         ss_pop, sparse_hybrid_n_pop,
  
         init_weight_update("StaticPulse", {}, {"g": 1.0}, {}, {}),
@@ -169,7 +169,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostSparseNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     manual_sparse_s_pop = model.add_synapse_population(
-        "ManualSparseSynapse", "SPARSE", 0,
+        "ManualSparseSynapse", "SPARSE",
         ss_pop, manual_sparse_n_pop,
         init_weight_update("StaticPulse", {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -181,7 +181,7 @@ def test_forward(make_model, backend, precision):
         "PostBitmaskNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "BitmaskSynapse", "SPARSE", 0,
+        "BitmaskSynapse", "SPARSE",
         ss_pop, bitmask_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -192,7 +192,7 @@ def test_forward(make_model, backend, precision):
         "PostDenseNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "PostDenseSynapse", "DENSE", 0,
+        "PostDenseSynapse", "DENSE",
         ss_pop, dense_n_pop,
         init_weight_update("StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}),
         init_postsynaptic("DeltaCurr"))
@@ -202,7 +202,7 @@ def test_forward(make_model, backend, precision):
         "ManualPostDenseNeuron", 4, post_neuron_model,
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "ManualPostDenseSynapse", "DENSE", 0,
+        "ManualPostDenseSynapse", "DENSE",
         ss_pop, manual_dense_n_pop,
         init_weight_update("StaticPulse", {}, {"g": dense.flatten()}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -212,7 +212,7 @@ def test_forward(make_model, backend, precision):
         "PostSparseEventNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "SparseEventSynapse", "SPARSE", 0,
+        "SparseEventSynapse", "SPARSE",
         ss_pop, sparse_event_n_pop,
         init_weight_update(static_event_pulse_model, {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -263,7 +263,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostDenseNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     dense_s_pop = model.add_synapse_population(
-        "PostDenseSynapse", "DENSE", 0,
+        "PostDenseSynapse", "DENSE",
         ss_pop, dense_n_pop,
         init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -274,7 +274,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostSparseNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     sparse_s_pop = model.add_synapse_population(
-        "PostSparseSynapse", "SPARSE", 0,
+        "PostSparseSynapse", "SPARSE",
         ss_pop, sparse_n_pop,
         init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -286,7 +286,7 @@ def test_forward_den_delay(make_model, backend, precision):
         "PostSparsePreSpanNeuron", 1, post_neuron_model,
         {}, {"x": 0.0})
     sparse_pre_s_pop = model.add_synapse_population(
-        "PostSparsePreSpanSynapse", "SPARSE", 0,
+        "PostSparsePreSpanSynapse", "SPARSE",
         ss_pop, sparse_pre_n_pop, 
         init_weight_update("StaticPulseDendriticDelay", {}, {"g": 1.0, "d": delay}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -330,7 +330,7 @@ def test_forward_procedural(make_model, backend, precision):
         "PostProceduralConstantWeightNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "ProceduralConstantWeightSynapse", "PROCEDURAL", 0,
+        "ProceduralConstantWeightSynapse", "PROCEDURAL",
         ss_pop, procedural_constant_weight_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
@@ -341,7 +341,7 @@ def test_forward_procedural(make_model, backend, precision):
         "PostDenseProceduralNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "DenseProceduralSynapse", "DENSE_PROCEDURALG", 0,
+        "DenseProceduralSynapse", "DENSE_PROCEDURALG",
         ss_pop, dense_procedural_n_pop,
         init_weight_update("StaticPulse", {}, {"g": init_var(decoder_dense_model, {})}),
         init_postsynaptic("DeltaCurr"))
@@ -406,14 +406,14 @@ def test_forward_kernel(make_model, backend, precision):
                             "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
                             "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
     model.add_synapse_population(
-        "ToeplitzHorizSynapse", "TOEPLITZ", 0,
+        "ToeplitzHorizSynapse", "TOEPLITZ",
         pre_pop, post_toeplitz_horiz_pop,
  
         init_weight_update("StaticPulse", {}, {"g": horizontal_kernel.flatten()}),
         init_postsynaptic("DeltaCurr"),
         init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
     model.add_synapse_population(
-        "ToeplitzVertSynapse", "TOEPLITZ", 0,
+        "ToeplitzVertSynapse", "TOEPLITZ",
         pre_pop, post_toeplitz_vert_pop,
  
         init_weight_update("StaticPulse", {}, {"g": vertical_kernel.flatten()}),
@@ -427,7 +427,7 @@ def test_forward_kernel(make_model, backend, precision):
                    "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
                    "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
     sparse_horiz_s_pop = model.add_synapse_population(
-        "SparseHorizSynapse", "SPARSE", 0,
+        "SparseHorizSynapse", "SPARSE",
         pre_pop, post_sparse_horiz_pop,
  
         init_weight_update("StaticPulse", {}, {"g": init_var("Kernel")}),
@@ -436,7 +436,7 @@ def test_forward_kernel(make_model, backend, precision):
     sparse_horiz_s_pop.vars["g"].extra_global_params["kernel"].set_init_values(horizontal_kernel.flatten())
 
     sparse_vert_s_pop = model.add_synapse_population(
-        "SparseVertSynapse", "SPARSE", 0,
+        "SparseVertSynapse", "SPARSE",
         pre_pop, post_sparse_vert_pop,
  
         init_weight_update("StaticPulse", {}, {"g": init_var("Kernel")}),
@@ -501,13 +501,13 @@ def test_forward_kernel_procedural(make_model, backend, precision):
                    "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
                    "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
     model.add_synapse_population(
-        "HorizSynapse", "PROCEDURAL_KERNELG", 0,
+        "HorizSynapse", "PROCEDURAL_KERNELG",
         pre_pop, post_horiz_pop,
         init_weight_update("StaticPulse", {}, {"g": horizontal_kernel.flatten()}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("Conv2D", conv_params))
     model.add_synapse_population(
-        "VertSynapse", "PROCEDURAL_KERNELG", 0,
+        "VertSynapse", "PROCEDURAL_KERNELG",
         pre_pop, post_vert_pop,
         init_weight_update("StaticPulse", {}, {"g": vertical_kernel.flatten()}),
         init_postsynaptic("DeltaCurr"),
@@ -625,14 +625,14 @@ def test_reverse(make_model, backend, precision):
     
     # Add connectivity
     s_pop = model.add_synapse_population(
-        "SparseSynapse", "SPARSE", 0,
+        "SparseSynapse", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
         init_postsynaptic("DeltaCurr"))
     s_pop.set_sparse_connections(pre_inds, post_inds)
     
     s_pre_pop = model.add_synapse_population(
-        "SparsePreSynapse", "SPARSE", 0,
+        "SparsePreSynapse", "SPARSE",
         pre_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
         init_postsynaptic("DeltaCurr"))
@@ -640,7 +640,7 @@ def test_reverse(make_model, backend, precision):
     s_pre_pop.span_type = SpanType.PRESYNAPTIC
 
     s_event_pop = model.add_synapse_population(
-        "SparseEventSynapse", "SPARSE", 0,
+        "SparseEventSynapse", "SPARSE",
         pre_event_n_pop, post_n_pop,
         init_weight_update(static_event_pulse_reverse_model, {}, {"g": weights}),
         init_postsynaptic("DeltaCurr"))
@@ -732,18 +732,18 @@ def test_reverse_post(make_model, backend, precision):
 
     # Add connectivity
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapse", "SPARSE", 0,
+        "SparseSynapse", "SPARSE",
         sparse_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_post_model, {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"))
     sparse_s_pop.set_sparse_connections(pre_inds, post_inds)
     model.add_synapse_population(
-        "DenseSynapse", "DENSE", 0,
+        "DenseSynapse", "DENSE",
         dense_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_post_model, {}, {"g": dense.flatten()}),
         init_postsynaptic("DeltaCurr"))
     sparse_event_s_pop = model.add_synapse_population(
-        "SparseEventSynapse", "SPARSE", 0,
+        "SparseEventSynapse", "SPARSE",
         sparse_event_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_event_post_model, {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"))
