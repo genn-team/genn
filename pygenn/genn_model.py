@@ -396,9 +396,6 @@ class GeNNModel(ModelSpecInternal):
                 init_sparse_connectivity_snippets.Uninitialised(), {})
 
         # Use superclass to add population
-        print(pop_name, matrix_type, source.name, target.name,
-              weight_update_init[0], postsynaptic_init[0],
-              connectivity_init)
         s_group = super(GeNNModel, self).add_synapse_population(
             pop_name, matrix_type, source.name, target.name, 
             weight_update_init[0], postsynaptic_init[0],
