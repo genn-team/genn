@@ -512,7 +512,8 @@ class SynapseGroupMixin(GroupMixin):
         # If population's presynaptic weight update hasn't been 
         # fused, load weight update model presynaptic variables
         if not self._wu_pre_model_fused:
-            pre_delay_group = None if (self.delay_steps == 0) else self.src
+            pre_delay_group = (None if (self.axonal_delay_steps == 0)
+                               else self.src)
             self._load_vars(
                 wu_snippet.get_pre_vars(),
                 lambda v, d: _get_neuron_var_shape(

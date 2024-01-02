@@ -429,13 +429,13 @@ PYBIND11_MODULE(genn, m)
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
-                const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
+                const std::string&, SynapseMatrixType, const std::string&, const std::string&,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
-                const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
+                const std::string&, SynapseMatrixType, const std::string&, const std::string&,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
             pybind11::return_value_policy::reference)
@@ -583,7 +583,6 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &SynapseGroup::getName)
-        .def_property_readonly("delay_steps", &SynapseGroupInternal::getDelaySteps)
         .def_property_readonly("ps_initialiser", &SynapseGroup::getPSInitialiser)
         .def_property_readonly("wu_initialiser", &SynapseGroup::getWUInitialiser)
         .def_property_readonly("kernel_size", &SynapseGroup::getKernelSize)
@@ -602,6 +601,7 @@ PYBIND11_MODULE(genn, m)
         .def_property("span_type",&SynapseGroup::getSpanType, &SynapseGroup::setSpanType)
         .def_property("num_threads_per_spike",&SynapseGroup::getNumThreadsPerSpike, &SynapseGroup::setNumThreadsPerSpike)
         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
+        .def_property("axonal_delay_steps",&SynapseGroup::getAxonalDelaySteps, &SynapseGroup::setAxonalDelaySteps)
         .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
          // **NOTE** we use the 'publicist' pattern to expose some protected properties
         .def_property_readonly("_ps_model_fused", &SynapseGroupInternal::isPSModelFused)

@@ -352,7 +352,7 @@ class GeNNModel(ModelSpecInternal):
         self.neuron_populations[pop_name] = n_group
         return n_group
 
-    def add_synapse_population(self, pop_name, matrix_type, delay_steps,
+    def add_synapse_population(self, pop_name, matrix_type,
                                source, target, weight_update_init,
                                postsynaptic_init, connectivity_init=None):
         """Add a synapse population to the GeNN model
@@ -360,7 +360,6 @@ class GeNNModel(ModelSpecInternal):
         Args:
         pop_name             --  name of the new population
         matrix_type          --  SynapseMatrixType describing type of the matrix
-        delay_steps          --  delay in number of steps
         source               --  source neuron group (either name or NeuronGroup object)
         target               --  target neuron group (either name or NeuronGroup object)
         
@@ -388,7 +387,7 @@ class GeNNModel(ModelSpecInternal):
 
         # Use superclass to add population
         s_group = super(GeNNModel, self).add_synapse_population(
-            pop_name, matrix_type, delay_steps, source.name, target.name, 
+            pop_name, matrix_type, source.name, target.name, 
             weight_update_init[0], postsynaptic_init[0],
             connectivity_init)
 
