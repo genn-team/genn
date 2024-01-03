@@ -36,6 +36,7 @@ def test_spike_times(make_model, backend, precision):
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
+        pre_var_name_types=[("c", "scalar")],
         sim_code=
         """
         a = prev_st_pre;
@@ -43,6 +44,10 @@ def test_spike_times(make_model, backend, precision):
         learn_post_code=
         """
         b = st_pre;
+        """,
+        pre_spike_code=
+        """
+        c = st_pre;
         """)
 
     post_weight_update_model = create_weight_update_model(
@@ -73,7 +78,8 @@ def test_spike_times(make_model, backend, precision):
     s_pre_pop = model.add_synapse_population(
         "PreSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
-        init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}, 
+                           {"c": float_min}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_pre_pop.axonal_delay_steps = 20
@@ -93,16 +99,17 @@ def test_spike_times(make_model, backend, precision):
     s_pre_pop.pull_connectivity_from_device()
     s_post_pop.pull_connectivity_from_device()
 
-    samples = [(s_pre_pop, "a", 11.0),
-               (s_pre_pop, "b", 21.0),
-               (s_post_pop, "a", 21.0),
-               (s_post_pop, "b", 11.0),
-               (pre_n_pop, "a", None)]
+    samples = [(s_pre_pop.vars["a"], 11.0),
+               (s_pre_pop.vars["b"], 21.0),
+               (s_post_pop.vars["a"], 21.0),
+               (s_post_pop.vars["b"], 11.0),
+               (pre_n_pop.vars["a"], None)]
+               #(s_pre_pop.pre_vars["c"], None)]
     while model.timestep < 100:
         model.step_time()
         
         # Loop through synapse groups and compare value of w with delayed time
-        for pop, var_name, offset in samples:
+        for var, offset in samples:
             # Calculate time of spikes we SHOULD be reading
             if offset is None:
                 delayed_time = np.arange(10) + (10.0 * np.floor((model.t - 2.0 - np.arange(10)) / 10.0))
@@ -115,10 +122,10 @@ def test_spike_times(make_model, backend, precision):
                 delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
                 delayed_time[delayed_time < 21.0] = float_min
 
-            pop.vars[var_name].pull_from_device()
-            var_value = pop.vars[var_name].values
+            var.pull_from_device()
+            var_value = var.current_values
             if not np.allclose(delayed_time, var_value):
-                assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
+                assert False, f"{var.group.name} var '{var.name}' has wrong value ({var_value} rather than {delayed_time})"
 
 
 
