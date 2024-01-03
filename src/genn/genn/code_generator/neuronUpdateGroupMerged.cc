@@ -669,7 +669,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
     neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
-                  {neuronChildEnv.addInitialiser("const " + getTimeType().getName() + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
+                  {neuronEnv.addInitialiser("const " + getTimeType().getName() + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
 
     // If a threshold condition is provided
     if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
