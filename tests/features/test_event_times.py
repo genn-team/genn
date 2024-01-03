@@ -23,6 +23,11 @@ def test_spike_times(make_model, backend, precision):
     # Neuron model which fires at t = id ms and every 10 ms after that
     pattern_spike_neuron_model = create_neuron_model(
         "pattern_spike_neuron",
+        var_name_types=[("a", "scalar")],
+        sim_code=
+        """
+        a = st;
+        """,
         threshold_condition_code=
         """
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
@@ -56,15 +61,15 @@ def test_spike_times(make_model, backend, precision):
     model.dt = 1.0
 
     # Create pre and postsynaptic neuron populations
+    np_scalar = np.float32 if precision == types.Float else np.float64
+    float_min = np.finfo(np_scalar).min
     pre_n_pop = model.add_neuron_population("PreNeurons", 10, pattern_spike_neuron_model, 
-                                            {}, {})
+                                            {}, {"a": float_min})
 
     post_n_pop = model.add_neuron_population("PostNeurons", 10, always_spike_neuron_model, 
                                              {}, {})
 
     # Add synapse models testing various ways of reading presynaptic WU vars
-    np_scalar = np.float32 if precision == types.Float else np.float64
-    float_min = np.finfo(np_scalar).min
     s_pre_pop = model.add_synapse_population(
         "PreSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
@@ -91,19 +96,24 @@ def test_spike_times(make_model, backend, precision):
     samples = [(s_pre_pop, "a", 11.0),
                (s_pre_pop, "b", 21.0),
                (s_post_pop, "a", 21.0),
-               (s_post_pop, "b", 11.0)]
+               (s_post_pop, "b", 11.0),
+               (pre_n_pop, "a", None)]
     while model.timestep < 100:
         model.step_time()
-    
+        
         # Loop through synapse groups and compare value of w with delayed time
         for pop, var_name, offset in samples:
             # Calculate time of spikes we SHOULD be reading
-            # **NOTE** we delay by 22 timesteps because:
-            # 1) delay = 20
-            # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
-            # 3) t is incremented one timestep at te end of StepGeNN
-            delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
-            delayed_time[delayed_time < 21.0] = float_min
+            if offset is None:
+                delayed_time = np.arange(10) + (10.0 * np.floor((model.t - 2.0 - np.arange(10)) / 10.0))
+                delayed_time[delayed_time < 0.0] = float_min
+            else:
+                # **NOTE** we delay by 22 timesteps because:
+                # 1) delay = 20
+                # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
+                # 3) t is incremented one timestep at te end of StepGeNN
+                delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
+                delayed_time[delayed_time < 21.0] = float_min
 
             pop.vars[var_name].pull_from_device()
             var_value = pop.vars[var_name].values
