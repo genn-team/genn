@@ -360,7 +360,14 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
 
         // If we're generating dynamics code, add local neuron variable references
         synEnv.addLocalVarRefs<SynapseWUPostNeuronVarRefAdapter>(true);
-  
+
+        // Substitute spike time
+        // **NOTE** previous spike time is meaningless in neuron kernel
+        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                  VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+        synEnv.add(getTimeType().addConst(), "st_post", "lsTPost", 
+                   {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPost = $(_st)[" + spikeTimeReadIndex + "];")});
+
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != 0);
@@ -446,6 +453,13 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // If we're generating dynamics code, add local neuron variable references
         synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
+
+        // Substitute spike time
+        // **NOTE** previous spike time is meaningless in neuron kernel
+        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                  VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+        synEnv.add(getTimeType().addConst(), "st_pre", "lsTPre", 
+                   {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPre = $(_st)[" + spikeTimeReadIndex + "];")});
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
@@ -592,15 +606,6 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                            {neuronChildEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
     }
 
-    // Substitute spike times
-    const std::string timePrecision = getTimeType().getName();
-    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
-                                                           VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-    neuronChildEnv.add(getTimeType().addConst(), "st", "lsT", 
-                       {neuronChildEnv.addInitialiser("const " + timePrecision + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
-    neuronChildEnv.add(getTimeType().addConst(), "prev_st", "lprevST", 
-                       {neuronChildEnv.addInitialiser("const " + timePrecision + " lprevST = $(_prev_st)[" + spikeTimeReadIndex + "];")});
-
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
@@ -659,6 +664,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams, &NeuronUpdateGroupMerged::isDerivedParamHeterogeneous);
     neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams());
     
+    // Substitute spike time
+    // **NOTE** previous spike time is meaningless in neuron kernel
+    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
+                                                           VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+    neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
+                  {neuronChildEnv.addInitialiser("const " + getTimeType().getName() + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
 
     // If a threshold condition is provided
     if (!Utils::areTokensEmpty(getArchetype().getThresholdConditionCodeTokens())) {
@@ -775,13 +786,14 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                 CodeStream::Scope b(neuronEnv.getStream());
                 
                  // If spike times are required, copy times between delay slots
+                const std::string spikeTimeWriteIndex = getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
                 if(getArchetype().isSpikeTimeRequired()) {
-                    neuronEnv.printLine("$(_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(st);");
+                    neuronEnv.printLine("$(_st)[" + spikeTimeWriteIndex + "] = $(st);");
                 }
 
                 // If previous spike times are required, copy times between delay slots
                 if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronEnv.printLine("$(_prev_st)[" + getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_st);");
+                    neuronEnv.printLine("$(_prev_st)[" + spikeTimeWriteIndex + "] = $(_prev_st)[" + spikeTimeReadIndex + "];");
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
