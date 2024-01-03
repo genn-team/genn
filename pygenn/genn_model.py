@@ -1086,8 +1086,10 @@ def create_weight_update_model(class_name, params=None, param_names=None,
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
-                               event_code=None, pre_event_code=None, 
-                               post_event_code=None, learn_post_code=None,
+                               pre_spike_syn_code=None, event_code=None, 
+                               pre_event_syn_code=None, 
+                               post_event_syn_code=None, learn_post_code=None,
+                               post_spike_syn_code=None,
                                synapse_dynamics_code=None,
                                event_threshold_condition_code=None,
                                pre_event_threshold_condition_code=None,
@@ -1123,11 +1125,10 @@ def create_weight_update_model(class_name, params=None, param_names=None,
                                             is string with name of the derived
                                             parameter and the second should be 
                                             a functor returned by create_dpf_class
-    sim_code                            --  string with the simulation code
-    pre_event_code                      --  string with the presynaptic event code
-    post_event_code                     --  string with the postsynaptic event code
-    learn_post_code                     --  string with the code to include in
-                                            learn_synapse_post kernel/function
+    pre_spike_syn_code                  --  string with the presynaptic spike code
+    pre_event_syn_code                  --  string with the presynaptic event code
+    post_event_syn_code                 --  string with the postsynaptic event code
+    post_spike_syn_code                 --  string with the postsynaptic spike code
     synapse_dynamics_code               --  string with the synapse dynamics code
     pre_event_threshold_condition_code  --  string with the presynaptic event threshold
                                             condition code
@@ -1145,34 +1146,46 @@ def create_weight_update_model(class_name, params=None, param_names=None,
                                             types of additional parameters
     """
     body = {}
-
+    
+    if sim_code is not None:
+        print("MERR! WARN")
+        warn("The 'sim_code' parameter has been renamed to "
+             "'pre_spike_syn_code' and will be removed in future",
+             DeprecationWarning)
+        pre_spike_syn_code = sim_code
+    if learn_post_code is not None:
+        warn("The 'learn_post_code' parameter has been renamed to "
+            "'post_spike_syn_code' and will be removed in future",
+            DeprecationWarning)
+        post_spike_syn_code = learn_post_code
     if event_code is not None:
-        warn("The 'event_code' parameter has been renamed to 'pre_event_code'"
+        warn("The 'event_code' parameter has been renamed to 'pre_event_syn_code'"
              " and will be removed in future", DeprecationWarning)
-        pre_event_code = event_code
+        pre_event_syn_code = event_code
     if event_threshold_condition_code is not None:
         warn("The 'event_threshold_condition_code' parameter has been "
              "renamed to 'pre_event_threshold_condition_code' and will "
              "be removed in future", DeprecationWarning)
         pre_event_threshold_condition_code = event_threshold_condition_code
 
-    if sim_code is not None:
-        body["get_sim_code"] =\
-            lambda self: dedent(upgrade_code_string(sim_code, class_name))
-
-    if pre_event_code is not None:
-        body["get_pre_event_code"] =\
-            lambda self: dedent(upgrade_code_string(pre_event_code,
+    if pre_spike_syn_code is not None:
+        body["get_pre_spike_syn_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_spike_syn_code,
                                                     class_name))
 
-    if post_event_code is not None:
-        body["get_post_event_code"] =\
-            lambda self: dedent(upgrade_code_string(post_event_code,
+    if pre_event_syn_code is not None:
+        body["get_pre_event_syn_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_event_syn_code,
                                                     class_name))
 
-    if learn_post_code is not None:
-        body["get_learn_post_code"] =\
-            lambda self: dedent(upgrade_code_string(learn_post_code,
+    if post_event_syn_code is not None:
+        body["get_post_event_syn_code"] =\
+            lambda self: dedent(upgrade_code_string(post_event_syn_code,
+                                                    class_name))
+
+    if post_spike_syn_code is not None:
+        body["get_post_spike_syn_code"] =\
+            lambda self: dedent(upgrade_code_string(post_spike_syn_code,
                                                     class_name))
 
     if synapse_dynamics_code is not None:

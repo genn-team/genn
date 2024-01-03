@@ -184,10 +184,10 @@ class PyWeightUpdateModelBase : public PySnippet<WeightUpdateModels::Base>
 {
     using Base = WeightUpdateModels::Base;
 public:
-    virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
-    virtual std::string getPreEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_code", getPreEventCode); }
-    virtual std::string getPostEventCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_event_code", getPostEventCode); }
-    virtual std::string getLearnPostCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_learn_post_code", getLearnPostCode); }
+    virtual std::string getPreSpikeSynCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_spike_syn_code", getPreSpikeSynCode); }
+    virtual std::string getPreEventSynCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_syn_code", getPreEventSynCode); }
+    virtual std::string getPostEventSynCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_event_syn_code", getPostEventSynCode); }
+    virtual std::string getPostSpikeSynCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_spike_syn_code", getPostSpikeSynCode); }
     virtual std::string getSynapseDynamicsCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_synapse_dynamics_code", getSynapseDynamicsCode); }
     virtual std::string getPreEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_pre_event_threshold_condition_code", getPreEventThresholdConditionCode); }
     virtual std::string getPostEventThresholdConditionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_post_event_threshold_condition_code", getPostEventThresholdConditionCode); }
@@ -863,10 +863,10 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<WeightUpdateModels::Base, Snippet::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
         .def(pybind11::init<>())
         
-        .def("get_sim_code", &WeightUpdateModels::Base::getSimCode)
-        .def("get_pre_event_code", &WeightUpdateModels::Base::getPreEventCode)
-        .def("get_post_event_code", &WeightUpdateModels::Base::getPostEventCode)
-        .def("get_learn_post_code", &WeightUpdateModels::Base::getLearnPostCode)
+        .def("get_pre_spike_syn_code", &WeightUpdateModels::Base::getPreSpikeSynCode)
+        .def("get_pre_event_syn_code", &WeightUpdateModels::Base::getPreEventSynCode)
+        .def("get_post_event_syn_code", &WeightUpdateModels::Base::getPostEventSynCode)
+        .def("get_post_spike_syn_code", &WeightUpdateModels::Base::getPostSpikeSynCode)
         .def("get_synapse_dynamics_code", &WeightUpdateModels::Base::getSynapseDynamicsCode)
         .def("get_pre_event_threshold_condition_code", &WeightUpdateModels::Base::getPreEventThresholdConditionCode)
         .def("get_post_event_threshold_condition_code", &WeightUpdateModels::Base::getPostEventThresholdConditionCode)
