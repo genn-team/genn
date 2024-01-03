@@ -683,7 +683,7 @@ def test_reverse_post(make_model, backend, precision):
     
     static_pulse_reverse_event_post_model = create_weight_update_model(
         "static_pulse_reverse_event_post",
-        post_event_code=
+        post_event_syn_code=
         """
         $(addToPre, $(g));
         """,
