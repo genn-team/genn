@@ -71,7 +71,8 @@ class GroupMixin(object):
         self._model._runtime.set_dynamic_param_value(self, name,
                                                      NumericValue(value))
     
-    @deprecated("Please call pull_from_device directly on variable")
+    @deprecated("Please call pull_from_device directly on variable",
+                category=FutureWarning)
     def pull_var_from_device(self, var_name):
         """Pull variable from the device for a given population
 
@@ -80,7 +81,8 @@ class GroupMixin(object):
         """
         self.vars[var_name].pull_from_device()
 
-    @deprecated("Please call pull_from_device directly on extra global parameter")
+    @deprecated("Please call pull_from_device directly on extra global parameter",
+                category=FutureWarning)
     def pull_extra_global_param_from_device(self, egp_name):
         """Pull extra global parameter from device
 
@@ -89,7 +91,8 @@ class GroupMixin(object):
         """
         self.extra_global_params[egp_name].pull_from_device()
 
-    @deprecated("Please call push_to_device directly on variable")
+    @deprecated("Please call push_to_device directly on variable",
+                category=FutureWarning)
     def push_var_to_device(self, var_name):
         """Push population state variable to the device
 
@@ -98,7 +101,8 @@ class GroupMixin(object):
         """
         self.vars[var_name].push_to_device()
 
-    @deprecated("Please call push_to_device directly on extra global parameter")
+    @deprecated("Please call push_to_device directly on extra global parameter",
+                category=FutureWarning)
     def push_extra_global_param_to_device(self, egp_name):
         """Push extra global parameter to device
 
@@ -331,7 +335,8 @@ class SynapseGroupMixin(GroupMixin):
         else:
             raise Exception("Matrix format not supported")
 
-    @deprecated("Please access values directly on variable")
+    @deprecated("Please access values directly on variable",
+                category=FutureWarning)
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 
@@ -428,17 +433,20 @@ class SynapseGroupMixin(GroupMixin):
             self._ind.push_to_device()
             self._row_lengths.push_to_device()
     
-    @deprecated("Please call pull_from_device directly on out_post")
+    @deprecated("Please call pull_from_device directly on out_post",
+                category=FutureWarning)
     def pull_in_syn_from_device(self):
         """Pull synaptic input current from device"""
         self.out_post.pull_from_device()
     
-    @deprecated("Please call push_to_device directly on out_post")
+    @deprecated("Please call push_to_device directly on out_post",
+                category=FutureWarning)
     def push_in_syn_to_device(self):
         """Push synaptic input current to device"""
         self.out_post.push_to_device()
 
-    @deprecated("Please call pull_from_device directly on extra global parameter")
+    @deprecated("Please call pull_from_device directly on extra global parameter",
+                category=FutureWarning)
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
@@ -447,7 +455,8 @@ class SynapseGroupMixin(GroupMixin):
         """
         self.psm_extra_global_params[egp_name].pull_from_device()
 
-    @deprecated("Please call push_to_device directly on extra global parameter")
+    @deprecated("Please call push_to_device directly on extra global parameter",
+                category=FutureWarning)
     def push_psm_extra_global_param_to_device(self, egp_name):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
@@ -715,7 +724,8 @@ class CustomUpdateWUMixin(GroupMixin):
         # Load custom update extra global parameters
         self._load_egp()
     
-    @deprecated("Please access values directly on variable")
+    @deprecated("Please access values directly on variable",
+                category=FutureWarning)
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 
@@ -752,7 +762,8 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         # as long as the group, keep Python reference
         self._ccu_model = self.model
 
-    @deprecated("Please access values directly on variable")
+    @deprecated("Please access values directly on variable",
+                category=FutureWarning)
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 

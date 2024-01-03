@@ -270,12 +270,14 @@ class GeNNModel(ModelSpecInternal):
             self._backend_module = backend_modules[backend_name]
     
     @property
-    @deprecated("The name of this property was inconsistent, use dt instead")
+    @deprecated("The name of this property was inconsistent, use dt instead",
+                category=FutureWarning)
     def dT(self):
         return self.dt
     
     @dT.setter
-    @deprecated("The name of this property was inconsistent, use dt instead")
+    @deprecated("The name of this property was inconsistent, use dt instead",
+                category=FutureWarning)
     def dT(self, dt):
         self.dt = dt
     
@@ -824,7 +826,8 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
                              pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
 
-@deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
+@deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead",
+            category=FutureWarning)
 def init_connectivity(init_sparse_connect_snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
@@ -890,7 +893,7 @@ def upgrade_code_string(code, class_name):
     if upgraded:
         warn(f"Legacy $() syntax in '{class_name}' has been automatically "
              f"removed but this functionality will be removed in future so "
-             f"please update your model", DeprecationWarning)
+             f"please update your model", FutureWarning)
     return code
     
 def create_model(class_name, base, params, param_names, derived_params,
@@ -928,7 +931,7 @@ def create_model(class_name, base, params, param_names, derived_params,
 
     if param_names is not None:
         warn("The 'param_names' parameter has been renamed to 'params' "
-             "and will be removed in future", DeprecationWarning)
+             "and will be removed in future", FutureWarning)
         params = param_names
 
     if params is not None:
@@ -1148,24 +1151,23 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     body = {}
     
     if sim_code is not None:
-        print("MERR! WARN")
         warn("The 'sim_code' parameter has been renamed to "
              "'pre_spike_syn_code' and will be removed in future",
-             DeprecationWarning)
+             FutureWarning)
         pre_spike_syn_code = sim_code
     if learn_post_code is not None:
         warn("The 'learn_post_code' parameter has been renamed to "
             "'post_spike_syn_code' and will be removed in future",
-            DeprecationWarning)
+            FutureWarning)
         post_spike_syn_code = learn_post_code
     if event_code is not None:
         warn("The 'event_code' parameter has been renamed to 'pre_event_syn_code'"
-             " and will be removed in future", DeprecationWarning)
+             " and will be removed in future", FutureWarning)
         pre_event_syn_code = event_code
     if event_threshold_condition_code is not None:
         warn("The 'event_threshold_condition_code' parameter has been "
              "renamed to 'pre_event_threshold_condition_code' and will "
-             "be removed in future", DeprecationWarning)
+             "be removed in future", FutureWarning)
         pre_event_threshold_condition_code = event_threshold_condition_code
 
     if pre_spike_syn_code is not None:
@@ -1587,7 +1589,8 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
                         params, param_names, derived_params,
                         extra_global_params, body)
 
-@deprecated("this wrapper is now unnecessary - use callables directly")
+@deprecated("This wrapper is now unnecessary - use callables directly",
+            category=FutureWarning)
 def create_dpf_class(dp_func):
     """Helper function to create derived parameter function class
 
@@ -1597,7 +1600,8 @@ def create_dpf_class(dp_func):
     """
     return lambda: dp_func
 
-@deprecated("this wrapper is now unnecessary - use callables directly")
+@deprecated("This wrapper is now unnecessary - use callables directly",
+            category=FutureWarning)
 def create_cmlf_class(cml_func):
     """Helper function to create function class for calculating sizes of
     matrices initialised with sparse connectivity initialisation snippet
@@ -1609,7 +1613,8 @@ def create_cmlf_class(cml_func):
     """
     return lambda: cml_func
 
-@deprecated("this wrapper is now unnecessary - use callables directly")
+@deprecated("This wrapper is now unnecessary - use callables directly",
+            category=FutureWarning)
 def create_cksf_class(cks_func):
     """Helper function to create function class for calculating sizes 
     of kernels from connectivity initialiser parameters 

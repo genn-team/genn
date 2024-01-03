@@ -87,7 +87,8 @@ class VariableBase(ArrayBase):
         """
         self.extra_global_params[param_name].set_init_values(param_values)
 
-    @deprecated("Please use set_init_values method instead")
+    @deprecated("Please use set_init_values method instead",
+                category=FutureWarning)
     def set_values(self, values):
         self.set_init_values(values)
 
@@ -271,7 +272,8 @@ class ExtraGlobalParameter(Array):
         self.name = variable_name
         self.set_init_values(init_values)
 
-    @deprecated("Please use set_init_values method instead")
+    @deprecated("Please use set_init_values method instead",
+                category=FutureWarning)
     def set_values(self, values):
         self.set_init_values(values)
 
