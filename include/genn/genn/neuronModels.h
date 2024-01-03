@@ -343,7 +343,7 @@ public:
         "   V = Vrest;\n"
         "}"
         "else if((t - spikeTime) > trefract){\n"
-        "   if(gennrand_uniform < firingProb[offset + id]){\n"
+        "   if(gennrand_uniform() < firingProb[offset + id]){\n"
         "       V = Vspike;\n"
         "       spikeTime = t;\n"
         "   }\n"
@@ -379,7 +379,7 @@ public:
 
     SET_SIM_CODE(
         "if(timeStepToSpike <= 0.0f) {\n"
-        "    timeStepToSpike += isi * gennrand_exponential;\n"
+        "    timeStepToSpike += isi * gennrand_exponential();\n"
         "}\n"
         "timeStepToSpike -= 1.0;\n"
     );
